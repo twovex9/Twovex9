@@ -1,0 +1,33 @@
+<!--
+  Herbruikbare paginatiebalk onder een data-tabel (zelfde look als Medewerkers / Nieuws).
+
+  1) Plaats dit direct onder </div> van .table-wrapper, nog binnen .table-card.
+  2) Vervang PREFIX door een unieke prefix per pagina (bijv. employees, orders, news).
+  3) Koppel in JavaScript: PREFIX-pager-range, PREFIX-rows-per-page, PREFIX-pager-page,
+     PREFIX-pager-first t/m PREFIX-pager-last — zie script.js (initEmployeesPagination),
+     nieuws.js (initNewsPagination) of opleidingen.js (render + getFilteredOpleidingen).
+-->
+        <div class="table-footer table-footer--pagebar">
+          <div class="footer-left">
+            <span id="PREFIX-pager-range" class="pager-range">0 of 0 total.</span>
+          </div>
+          <div class="footer-right">
+            <label class="footer-rows-wrap" for="PREFIX-rows-per-page">
+              <span class="footer-rows-label">Rows per page</span>
+              <select id="PREFIX-rows-per-page" class="footer-rows-select" aria-label="Rows per page">
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50" selected>50</option>
+              </select>
+            </label>
+            <span id="PREFIX-pager-page" class="pager-page-label">Page 1 of 1</span>
+            <span class="pager" role="navigation" aria-label="Pagination">
+              <button type="button" class="pager-btn" id="PREFIX-pager-first" disabled aria-label="First page">&laquo;</button>
+              <button type="button" class="pager-btn" id="PREFIX-pager-prev" disabled aria-label="Previous page">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="PREFIX-pager-next" disabled aria-label="Next page">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="PREFIX-pager-last" disabled aria-label="Last page">&raquo;</button>
+            </span>
+          </div>
+        </div>

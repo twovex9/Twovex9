@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salarisadministratie — HR</title>
+  <link rel="stylesheet" href="styles.css?v=sa-10">
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="#" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="opleidingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Opleidingen</span><span class="top-dropdown-subtitle">Beheer opleidingen</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Taken</a>
+            <a href="#" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Beleid</a>
+            <a href="#" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="index.html" class="side-link">Medewerkers</a>
+        <a href="competenties.html" class="side-link">Competenties</a>
+        <a href="opleidingen.html" class="side-link">Opleidingen</a>
+        <a href="locaties.html" class="side-link">Locaties</a>
+        <div class="side-group" data-side-group="salarishuis">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
+            <span class="side-group__label">Salarishuis</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
+            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
+            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested" target="_blank" rel="noopener noreferrer">Wijzigingsgeschiedenis</a>
+          </div>
+        </div>
+        <a href="bureaus.html" class="side-link">Bureau's</a>
+        <a href="salarisadministratie-exporter.html" class="side-link is-active">Salarisadministratie</a>
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
+            <span class="side-group__label">Compensatie</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
+            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
+            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
+            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
+            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
+            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
+          </div>
+        </div>
+        <a href="nieuws.html" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
+
+    <main class="content content--hr-list sa-page">
+      <div class="content-header">
+        <h1>Salarisadministratie</h1>
+      </div>
+
+      <div class="emp-tabs" id="sa-main-tabs" role="tablist" aria-label="Salarisadministratie">
+        <button type="button" class="emp-tab is-active" data-sa-tab="export" aria-selected="true">Exporteren</button>
+        <button type="button" class="emp-tab" data-sa-tab="ort" aria-selected="false">ORT-configuratie</button>
+      </div>
+
+      <div class="emp-tab-panel is-active" id="sa-panel-export">
+        <section class="emp-section">
+          <div class="sa-export-head">
+            <div>
+              <h3>Maandelijkse export</h3>
+              <p class="emp-section-sub">Genereer een CSV voor externe salarisverwerking.</p>
+            </div>
+            <div class="sa-chip" id="sa-alert-chip" hidden>
+              <span class="sa-chip-dot" aria-hidden="true"></span>
+              Onvolledige gegevens
+            </div>
+          </div>
+
+          <div class="sa-field-grid">
+            <label class="emp-field">
+              <span>Maand</span>
+              <select id="sa-month" class="comp-modal-input" aria-label="Maand">
+                <option value="1">Januari</option>
+                <option value="2">Februari</option>
+                <option value="3">Maart</option>
+                <option value="4" selected>April</option>
+                <option value="5">Mei</option>
+                <option value="6">Juni</option>
+                <option value="7">Juli</option>
+                <option value="8">Augustus</option>
+                <option value="9">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </label>
+            <label class="emp-field">
+              <span>Jaar</span>
+              <select id="sa-year" class="comp-modal-input" aria-label="Jaar">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="sa-validation">
+            <div class="sa-validation__title">Validatiestatus</div>
+            <div class="sa-validation__list" id="sa-validation-list" aria-live="polite"></div>
+            <div class="sa-export-footer">
+              <p class="sa-export-summary" id="sa-validation-summary">0 medewerkers met onvolledige gegevens</p>
+              <button type="button" class="btn-primary btn-with-ico" id="sa-generate-btn">
+                <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+                Export genereren
+              </button>
+            </div>
+            <label class="sa-dl-now">
+              <input type="checkbox" id="sa-download-now" />
+              <span>Na genereren direct downloaden</span>
+            </label>
+          </div>
+        </section>
+
+        <h2 class="sa-history-heading" id="sa-history-heading">Exportgeschiedenis</h2>
+        <section class="table-card" aria-labelledby="sa-history-heading">
+          <div class="table-wrapper">
+            <table class="employees-table sa-table" id="sa-history-table">
+              <thead>
+                <tr>
+                  <th>Datum</th>
+                  <th>Periode</th>
+                  <th>Medewerkers</th>
+                  <th>Geëxporteerd door</th>
+                  <th class="th-dl">Downloaden</th>
+                </tr>
+              </thead>
+              <tbody id="sa-history-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div class="emp-tab-panel" id="sa-panel-ort">
+        <section class="emp-section">
+          <h3>ORT-configuratie</h3>
+          <p class="emp-section-sub">ORT-percentages per CAO, dag en tijdsvenster.</p>
+
+          <div class="sa-ort-cao-slot">
+            <div class="emp-tabs" id="sa-ort-cao-tabs" role="tablist" aria-label="CAO-type">
+              <button type="button" class="emp-tab is-active" data-sa-cao="vvt" aria-selected="true">CAO VVT</button>
+              <button type="button" class="emp-tab" data-sa-cao="jeugdzorg" aria-selected="false">CAO jeugdzorg</button>
+            </div>
+          </div>
+
+          <section class="table-card">
+            <div class="table-wrapper">
+              <table class="employees-table" id="sa-ort-rules-table">
+                <thead>
+                  <tr>
+                    <th>Dag(en)</th>
+                    <th>Tijdsperiode</th>
+                    <th>ORT %</th>
+                    <th class="th-dl">Acties</th>
+                  </tr>
+                </thead>
+                <tbody id="sa-ort-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <button type="button" class="sa-ort-add" id="sa-ort-add-btn">+ Regel toevoegen</button>
+
+          <div class="sa-ort-info" role="region" aria-label="Uitleg ORT">
+            <div class="sa-ort-info-title">Hoe ORT werkt</div>
+            <ul class="sa-ort-info-list">
+              <li>Percentages hangen af van het CAO-type van de medewerker.</li>
+              <li>Diensten over meerdere tijdsvensters worden automatisch gesplitst.</li>
+              <li>Bij overlappende regels geldt het hoogste percentage.</li>
+              <li>Feestdagen gaan voor op andere regels.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="emp-verzuim-modal-overlay" id="sa-ort-modal" style="display:none" aria-hidden="true">
+    <div class="emp-verzuim-modal" style="width:520px">
+      <div class="emp-verzuim-modal-head">
+        <h3 id="sa-ort-modal-title">Regel toevoegen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="sa-ort-modal-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <form id="sa-ort-form" novalidate>
+        <div class="emp-verzuim-modal-body">
+          <label class="emp-verzuim-modal-field sa-ort-dag-field">
+            <span class="sa-ort-dag-label">Dag(en)</span>
+            <select id="sa-ort-dag" class="comp-modal-input sa-ort-dag-select" required aria-label="Dag(en)">
+              <option value="" disabled selected hidden>Kies dag(en)</option>
+              <option value="Maandag – Vrijdag">Maandag – Vrijdag</option>
+              <option value="Zaterdag">Zaterdag</option>
+              <option value="Zondag">Zondag</option>
+              <option value="Feestdag">Feestdag</option>
+            </select>
+          </label>
+          <div class="sa-ort-modal-time">
+            <label class="emp-verzuim-modal-field">
+              <span>Van</span>
+              <input type="time" id="sa-ort-start" class="comp-modal-input" required />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Tot</span>
+              <input type="time" id="sa-ort-end" class="comp-modal-input" required />
+            </label>
+          </div>
+          <label class="emp-verzuim-modal-field">
+            <span>ORT percentage</span>
+            <input type="number" id="sa-ort-pct" class="comp-modal-input" min="0" max="500" step="1" required placeholder="140" />
+          </label>
+        </div>
+        <div class="emp-verzuim-modal-footer">
+          <button type="button" class="emp-verzuim-modal-cancel" id="sa-ort-cancel">Annuleren</button>
+          <button type="submit" class="emp-verzuim-modal-submit" id="sa-ort-save">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="salarisadministratie-exporter.js"></script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opleidingen — HR</title>
+  <link rel="stylesheet" href="styles.css?v=hrlist-1">
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="#" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Taken</a>
+            <a href="#" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Beleid</a>
+            <a href="#" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="index.html" class="side-link">Medewerkers</a>
+        <a href="competenties.html" class="side-link">Competenties</a>
+        <a href="opleidingen.html" class="side-link is-active">Opleidingen</a>
+        <a href="locaties.html" class="side-link">Locaties</a>
+        <div class="side-group" data-side-group="salarishuis">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
+            <span class="side-group__label">Salarishuis</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
+            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
+            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested" target="_blank" rel="noopener noreferrer">Wijzigingsgeschiedenis</a>
+          </div>
+        </div>
+        <a href="bureaus.html" class="side-link">Bureau's</a>
+        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
+            <span class="side-group__label">Compensatie</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
+            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
+            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
+            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
+            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
+            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
+          </div>
+        </div>
+        <a href="nieuws.html" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
+
+    <main class="content content--hr-list">
+      <div class="content-header">
+        <h1>Opleidingen</h1>
+        <div class="header-actions">
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="columns-menu-btn">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="columns-panel" role="menu" aria-labelledby="columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" role="none">
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Naam</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="skj" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> SKJ</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="aanmaakdatum" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Aanmaakdatum</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="laatst-gewijzigd" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Laatst gewijzigd</button></li>
+              </ul>
+            </div>
+          </div>
+          <button class="btn-primary" type="button" id="opl-add-btn">+ Opleiding toevoegen</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search" type="search" id="opl-search" placeholder="Zoeken..." autocomplete="off" />
+        <label class="switch">
+          <input type="checkbox" id="opl-archived-toggle" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Gearchiveerd</span>
+        </label>
+      </div>
+
+      <section class="table-card table-card--opleidingen">
+        <div class="table-wrapper">
+          <table class="employees-table" id="opl-table">
+            <thead>
+              <tr>
+                <th class="th-check"><input type="checkbox" id="opl-check-all" /></th>
+                <th data-col="naam" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Naam</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Naam"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="skj" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">SKJ</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren SKJ"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="aanmaakdatum" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Aanmaakdatum</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Aanmaakdatum"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="laatst-gewijzigd" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Laatst gewijzigd</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Laatst gewijzigd"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="opl-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer table-footer--pagebar">
+          <div class="footer-left">
+            <span id="opl-pager-range" class="pager-range">0 of 0 total.</span>
+          </div>
+          <div class="footer-right">
+            <label class="footer-rows-wrap" for="opl-rows-per-page">
+              <span class="footer-rows-label">Rows per page</span>
+              <select id="opl-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+                <option value="10">10</option>
+                <option value="15" selected>15</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+              </select>
+            </label>
+            <span id="opl-pager-page" class="pager-page-label">Page 1 of 1</span>
+            <span class="pager" role="navigation" aria-label="Paginatie">
+              <button type="button" class="pager-btn" id="opl-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+              <button type="button" class="pager-btn" id="opl-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="opl-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="opl-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+            </span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Opleiding toevoegen -->
+  <div class="emp-verzuim-modal-overlay" id="opl-add-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:480px">
+      <div class="emp-verzuim-modal-head">
+        <h3>Opleiding toevoegen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="opl-add-close-btn">&times;</button>
+      </div>
+      <form id="opl-add-form" novalidate>
+        <div class="emp-verzuim-modal-body">
+          <label class="emp-verzuim-modal-field">
+            <span>Naam</span>
+            <input type="text" id="opl-add-naam" class="comp-modal-input" required>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;margin-top:4px;font-size:15px;font-weight:500;cursor:pointer">
+            <input type="checkbox" id="opl-add-skj" style="width:20px;height:20px;accent-color:#339dc1"> SKJ
+          </label>
+        </div>
+        <div class="emp-verzuim-modal-footer">
+          <button type="button" class="emp-verzuim-modal-cancel" id="opl-add-cancel-btn">Annuleren</button>
+          <button type="submit" class="emp-verzuim-modal-submit">Toevoegen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Opleiding verwijderen -->
+  <div class="modal-overlay modal-overlay--confirm" id="opl-delete-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="opl-delete-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="opl-delete-title" class="modal-title">Opleiding archiveren</h2>
+        <button type="button" class="modal-close" id="opl-delete-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">De opleiding wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
+        <p class="employee-delete-preview" id="opl-delete-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="opl-delete-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="opl-delete-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="opl-delete-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="opl-delete-confirm-btn" disabled>Archiveren</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--confirm" id="opl-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="opl-purge-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="opl-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="opl-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Deze opleiding wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt en is niet meer terug te zetten.</p>
+        <p class="employee-delete-preview" id="opl-purge-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="opl-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="opl-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="opl-purge-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="opl-purge-confirm-btn" disabled>Definitief verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="opleidingen-defaults.js"></script>
+  <script src="opleidingen.js"></script>
+</body>
+</html>

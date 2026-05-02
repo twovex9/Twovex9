@@ -1,0 +1,1723 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medewerker — HR</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-medewerker-detail">
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="#" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Beleid</a>
+            <a href="#" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="index.html" class="side-link is-active">Medewerkers</a>
+        <a href="competenties.html" class="side-link">Competenties</a>
+        <a href="opleidingen.html" class="side-link">Opleidingen</a>
+        <a href="locaties.html" class="side-link">Locaties</a>
+        <div class="side-group" data-side-group="salarishuis">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
+            <span class="side-group__label">Salarishuis</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
+            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
+            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested" target="_blank" rel="noopener noreferrer">Wijzigingsgeschiedenis</a>
+          </div>
+        </div>
+        <a href="bureaus.html" class="side-link">Bureau's</a>
+        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
+            <span class="side-group__label">Compensatie</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
+            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
+            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
+            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
+            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
+            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
+          </div>
+        </div>
+        <a href="nieuws.html" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
+
+    <main class="content content--emp-detail">
+      <section class="emp-detail detail-page" data-v-7241f4d3="" is-editing="true">
+        <!-- LEFT: Profile card -->
+        <aside class="emp-sidebar-card detail-page__left" data-v-7241f4d3="">
+          <div class="sticky top-0" data-v-7241f4d3="">
+            <div class="border-input border border-solid rounded-lg overflow-hidden" data-v-7241f4d3="">
+              <div class="detail-page__header-wrapper" data-v-7241f4d3="">
+                <div class="detail-page__header" data-v-7241f4d3="">
+                  <div class="emp-card-hero detail-page__header-card relative bg-gradient-to-bl to-secondary from-primary" data-v-7241f4d3="">
+            <a href="index.html" class="emp-back-btn inline-flex items-center justify-center whitespace-nowrap text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-solid bg-[transparent] hover:bg-accent hover:text-accent-foreground absolute top-4 left-4 w-8 h-8 p-1 rounded-md text-light border-light" aria-label="Terug">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </a>
+            <span class="emp-hero-chip inline-flex items-center justify-center whitespace-nowrap text-xs font-medium ring-offset-background transition-colors border border-solid bg-[transparent] h-8 px-4 py-1.5 rounded-md text-light border-light mr-3">Vrijgeven voor planning</span>
+            <button type="button" class="emp-hero-menu outline-none cursor-pointer w-6 h-6 text-light" aria-label="Meer opties">•••</button>
+          </div>
+          <div class="emp-card-avatar" data-v-7241f4d3="">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="mb-4 mt-10 text-center" data-v-7241f4d3="">
+            <h2 class="emp-card-name title text-xl mb-1 text-[#344054]" id="emp-fullname">—</h2>
+            <p class="emp-card-email text-[#667085] text-sm" id="emp-email-display">—</p>
+          </div>
+
+          <div class="detail-page__info-section" data-v-7241f4d3="">
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-muted">
+            <h4>Gebruikersinstellingen</h4>
+            <label class="emp-card-control emp-card-control--settings">
+              <select id="emp-user-setting" class="emp-select">
+                <option value="Standaard">Standaard</option>
+                <option value="Planner">Planner</option>
+                <option value="HR">HR</option>
+                <option value="Leidinggevende">Leidinggevende</option>
+              </select>
+            </label>
+            <button type="button" class="emp-card-btn border border-solid bg-[transparent] h-8 px-4 py-1.5 rounded-md border-primary text-primary hover:bg-primary hover:text-white mr-3" id="emp-loginas-btn">Inloggen als medewerker</button>
+          </div>
+
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-muted">
+            <h4>Contactgegevens</h4>
+            <div class="emp-card-row">
+              <span class="emp-card-ico emp-card-ico--phone" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L9.1 10.5a16 16 0 0 0 4.4 4.4l1.05-1.07a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <span id="emp-tel-display">—</span>
+            </div>
+            <div class="emp-card-row">
+              <span class="emp-card-ico emp-card-ico--mail" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" fill="currentColor" opacity=".35"/>
+                  <path d="m22 8-10 6L2 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span id="emp-email-display2">—</span>
+            </div>
+          </div>
+
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-muted">
+            <h4>Adres</h4>
+            <div class="emp-card-row"><span id="emp-address-line1">—</span></div>
+            <div class="emp-card-row"><span id="emp-address-line2">—</span></div>
+          </div>
+
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-muted">
+            <h4>Overige informatie</h4>
+            <div class="emp-card-kv"><span>Medewerkernummer:</span><span id="emp-nr">—</span></div>
+            <div class="emp-card-kv emp-card-kv--control">
+              <span>Status:</span>
+              <select id="emp-status-input" class="emp-select emp-select--compact">
+                <option value="In dienst">In dienst</option>
+                <option value="Uit dienst">Uit dienst</option>
+              </select>
+            </div>
+            <div class="emp-card-kv emp-card-kv--control">
+              <span>Datum uit dienst:</span>
+              <input id="emp-uitdienst-input" type="date" class="emp-sidebar-input">
+            </div>
+          </div>
+
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-muted">
+            <h4>Verjaardag:</h4>
+            <div class="emp-card-kv"><span id="emp-bday-date">—</span></div>
+            <div class="emp-bday-countdown" id="emp-bday-countdown"></div>
+          </div>
+
+          <div class="emp-card-section rounded-lg border text-card-foreground shadow-sm bg-[#fcfcfd]">
+            <h4>Notities</h4>
+            <p class="emp-card-note" id="emp-note-preview">Er zijn geen notities.</p>
+          </div>
+          </div>
+          </div>
+          </div>
+        </aside>
+
+        <!-- RIGHT: Tabbed detail panels -->
+        <div class="emp-detail-main detail-page__right" data-v-7241f4d3="">
+          <nav class="emp-tabs items-center justify-center rounded-full bg-muted p-1 text-muted-foreground flex flex-wrap h-auto" role="tablist">
+            <button class="emp-tab is-active inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="details">Details</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="professioneel">Professioneel</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="opleiding">Opleiding</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="notities">Notities</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="documenten">Documenten</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verzuim">Verzuim</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verlof">Verlof</button>
+          </nav>
+
+          <!-- Tab: Details -->
+          <div class="emp-tab-panel is-active" data-panel="details">
+            <div class="emp-section emp-details-primary card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Medewerker gegevens</h3>
+
+              <div class="emp-form-grid emp-details-grid">
+                <label class="emp-field"><span>Voornaam</span><input id="emp-voornaam" type="text"></label>
+                <label class="emp-field"><span>Achternaam</span><input id="emp-achternaam" type="text"></label>
+
+                <label class="emp-field"><span>E-mailadres</span><input id="emp-email" type="email"></label>
+                <label class="emp-field"><span>Telefoonnummer</span><input id="emp-tel" type="text"></label>
+
+                <label class="emp-field"><span>Roepnaam</span><input id="emp-roepnaam" type="text"></label>
+                <label class="emp-field"><span>Initialen</span><input id="emp-initialen" type="text"></label>
+
+                <label class="emp-field emp-field--full"><span>BSN</span><input id="emp-bsn" type="text"></label>
+
+                <label class="emp-field"><span>Geboortedatum</span><input id="emp-geboortedatum" type="date"></label>
+
+                <div class="emp-field emp-field-dropdown-wrap">
+                  <span>Taal</span>
+                  <button type="button" class="emp-dropdown-btn" id="emp-taal-btn">
+                    <span id="emp-taal-value">Nederland</span>
+                    <span class="emp-dropdown-chev"></span>
+                  </button>
+                  <div class="emp-dropdown-panel" id="emp-taal-panel" hidden>
+                    <div class="emp-dropdown-search-wrap">
+                      <svg class="emp-dropdown-search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="search" class="emp-dropdown-search" id="emp-taal-search" placeholder="Zoeken..." autocomplete="off">
+                    </div>
+                    <ul class="emp-dropdown-list" id="emp-taal-list"></ul>
+                  </div>
+                </div>
+
+                <div class="emp-field emp-field-dropdown-wrap">
+                  <span>CAO Type</span>
+                  <button type="button" class="emp-dropdown-btn" id="emp-cao-btn">
+                    <span id="emp-cao-value">CAO Jeugdzorg</span>
+                    <span class="emp-dropdown-chev"></span>
+                  </button>
+                  <div class="emp-dropdown-panel" id="emp-cao-panel" hidden>
+                    <div class="emp-dropdown-search-wrap">
+                      <svg class="emp-dropdown-search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="search" class="emp-dropdown-search" id="emp-cao-search" placeholder="Zoeken..." autocomplete="off">
+                    </div>
+                    <ul class="emp-dropdown-list" id="emp-cao-list"></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]">
+                <button type="button" class="btn-primary emp-save-section button" data-section="gegevens">Wijzigingen opslaan</button>
+              </div>
+            </div>
+
+            <div class="emp-section emp-details-primary card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Adres</h3>
+
+              <div class="emp-address-grid">
+                <label class="emp-field"><span>Postcode</span><input id="emp-postcode" type="text"></label>
+                <label class="emp-field"><span>Huisnummer</span><input id="emp-huisnummer" type="text"></label>
+                <label class="emp-field"><span>Toevoeging</span><input id="emp-toevoeging" type="text"></label>
+              </div>
+
+              <div class="emp-address-grid emp-address-grid--row2">
+                <label class="emp-field"><span>Straat</span><input id="emp-straat" type="text"></label>
+                <label class="emp-field"><span>Plaats</span><input id="emp-plaats" type="text"></label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]">
+                <button type="button" class="btn-primary emp-save-section button" data-section="adres">Wijzigingen opslaan</button>
+              </div>
+            </div>
+
+            <div class="emp-section emp-details-primary card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Contactpersoon</h3>
+              <p class="emp-section-sub emp-details-sub">Voor noodgevallen en calamiteiten</p>
+
+              <div class="emp-form-grid emp-details-grid">
+                <label class="emp-field"><span>Contact naam</span><input id="emp-contact-naam" type="text"></label>
+                <label class="emp-field"><span>Telefoonnummer</span><input id="emp-contact-tel" type="text"></label>
+              </div>
+
+              <div class="emp-section-footer emp-section-footer--warn card_footer">
+                <div class="emp-warning-row-inline" id="emp-contact-warning" hidden>
+                  Minimaal één contactpersoon is verplicht
+                </div>
+                <button type="button" class="btn-primary emp-save-section button" data-section="contact">Wijzigingen opslaan</button>
+              </div>
+            </div>
+
+            <div class="emp-section emp-details-primary card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Dienstverband</h3>
+
+              <div class="emp-form-grid emp-details-grid">
+                <label class="emp-field emp-field--full"><span>Type dienstverband</span>
+                  <select id="emp-dienstverband" class="emp-select">
+                    <option value="Loondienst">Loondienst</option>
+                    <option value="Inhuur">Inhuur</option>
+                    <option value="Stagiair">Stagiair</option>
+                  </select>
+                </label>
+
+                <label class="emp-field emp-field--full"><span>Inhuurtype</span>
+                  <select id="emp-inhuurtype" class="emp-select">
+                    <option value="">—</option>
+                    <option value="Rechtstreekse plaatsing">Rechtstreekse plaatsing</option>
+                    <option value="Via uitzendbureau">Via uitzendbureau</option>
+                    <option value="ZZP">ZZP</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]">
+                <button type="button" class="btn-primary emp-save-section button" data-section="dienstverband">Wijzigingen opslaan</button>
+              </div>
+            </div>
+
+            <div class="emp-section emp-details-primary card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Inhuur</h3>
+
+              <div class="emp-form-grid emp-details-grid">
+                <label class="emp-field"><span>KvK-nummer</span><input id="emp-inhuur-kvk" type="text"></label>
+                <label class="emp-field"><span>BTW-nummer</span><input id="emp-inhuur-btw" type="text"></label>
+
+                <label class="emp-field"><span>Bedrijfsnaam</span><input id="emp-inhuur-bedrijfsnaam" type="text"></label>
+                <label class="emp-field"><span>Verzekeringspolis</span><input id="emp-inhuur-verzekering" type="text"></label>
+              </div>
+
+              <div class="emp-address-grid emp-address-grid--inhuur">
+                <label class="emp-field"><span>Postcode</span><input id="emp-inhuur-postcode" type="text"></label>
+                <label class="emp-field"><span>Huisnummer</span><input id="emp-inhuur-huisnummer" type="text"></label>
+                <label class="emp-field"><span>Toevoeging</span><input id="emp-inhuur-toevoeging" type="text"></label>
+              </div>
+
+              <div class="emp-address-grid emp-address-grid--row2 emp-address-grid--inhuur-row2">
+                <label class="emp-field"><span>Straat</span><input id="emp-inhuur-straat" type="text"></label>
+                <label class="emp-field"><span>Stad</span><input id="emp-inhuur-stad" type="text"></label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]">
+                <button type="button" class="btn-primary emp-save-section button" data-section="inhuur">Wijzigingen opslaan</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Professioneel -->
+          <div class="emp-tab-panel" data-panel="professioneel">
+            <div class="emp-prof-variant" data-prof-for="Loondienst">
+            <div class="emp-section emp-prof-rates card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Locaties</h3>
+
+              <div class="emp-loc-select-wrap">
+                <button type="button" class="emp-loc-select-btn" id="emp-loondienst-locaties-select-btn" aria-expanded="false" aria-controls="emp-loondienst-locaties-panel">
+                  <span class="emp-loc-chips" id="emp-loondienst-locaties-chips"></span>
+                  <span class="emp-loc-select-chev" aria-hidden="true"></span>
+                </button>
+
+                <div class="emp-loc-panel" id="emp-loondienst-locaties-panel" hidden>
+                  <div class="emp-loc-search-wrap">
+                    <svg class="emp-loc-search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="search" id="emp-loondienst-locaties-search" class="emp-loc-search" placeholder="Zoeken...">
+                  </div>
+                  <ul class="emp-loc-list" id="emp-loondienst-locaties-list"></ul>
+                </div>
+              </div>
+
+              <div class="emp-kernteam-card">
+                <div class="emp-kernteam-head">
+                  <div class="emp-kernteam-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 11c1.657 0 3-1.567 3-3.5S17.657 4 16 4s-3 1.567-3 3.5 1.343 3.5 3 3.5Z"/><path d="M8 11c1.657 0 3-1.567 3-3.5S9.657 4 8 4 5 5.567 5 7.5 6.343 11 8 11Z"/><path d="M2 20c0-2.761 2.239-5 5-5h2"/><path d="M12 20c0-2.761 2.239-5 5-5h1c2.761 0 4 2.239 4 5"/></svg>
+                  </div>
+                  <div>
+                    <h4>Kernteam</h4>
+                    <p>Markeer het primaire team per locatie</p>
+                  </div>
+                </div>
+                <div class="emp-kernteam-rows" id="emp-loondienst-kernteam-rows"></div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-locaties">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-rates card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Urenregistratie</h3>
+
+              <div class="emp-uren-list">
+                <label class="emp-uren-item">
+                  <input id="emp-loondienst-uren-verleentzorg" type="checkbox">
+                  <span>Verleent zorg</span>
+                </label>
+                <label class="emp-uren-item">
+                  <input id="emp-loondienst-uren-handmatig" type="checkbox">
+                  <span>Tijd Handmatig Registreren</span>
+                </label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-uren">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Professionele gegevens</h3>
+
+              <div class="emp-form-grid emp-prof-general-grid">
+                <label class="emp-field"><span>E-mailadres</span><input id="emp-loondienst-prof-email" type="email"></label>
+                <label class="emp-field"><span>Telefoonnummer</span><input id="emp-loondienst-prof-tel" type="text"></label>
+                <label class="emp-field"><span>IBAN</span><input id="emp-loondienst-prof-iban" type="text"></label>
+                <label class="emp-field"><span>Functie</span>
+                  <select id="emp-loondienst-functie" class="emp-select">
+                    <option value="">Selecteer...</option>
+                    <option value="Stagiair">Stagiair</option>
+                    <option value="Coördinator Ambulant">Coördinator Ambulant</option>
+                    <option value="Ambulant Medewerker">Ambulant Medewerker</option>
+                    <option value="HR medewerker">HR medewerker</option>
+                    <option value="Leerling Pedagogisch medewerker">Leerling Pedagogisch medewerker</option>
+                    <option value="Pedagogisch medewerker">Pedagogisch medewerker</option>
+                    <option value="Sr. Pedagogisch medewerker">Sr. Pedagogisch medewerker</option>
+                    <option value="Facilitair Medewerker">Facilitair Medewerker</option>
+                    <option value="Medewerker Financiële administratie">Medewerker Financiële administratie</option>
+                    <option value="Hoofd facilitair">Hoofd facilitair</option>
+                    <option value="Planner">Planner</option>
+                    <option value="Teamleider">Teamleider</option>
+                    <option value="Financieel Directeur">Financieel Directeur</option>
+                    <option value="Operationeel Directeur">Operationeel Directeur</option>
+                    <option value="Gedragswetenschapper">Gedragswetenschapper</option>
+                    <option value="Medewerker Kwaliteit en beleid">Medewerker Kwaliteit en beleid</option>
+                  </select>
+                </label>
+
+                <label class="emp-field"><span>Startdatum</span><input id="emp-loondienst-startdatum" type="date" placeholder="dd-mm-jjjj"></label>
+              </div>
+
+              <label class="emp-field emp-field--full">
+                <span>Competenties</span>
+                <select id="emp-loondienst-competentie" class="emp-select">
+                  <option value="">Selecteer Competenties</option>
+                </select>
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-gegevens">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Salaris</h3>
+
+              <div class="emp-form-grid emp-loondienst-salary-grid">
+                <div class="emp-field emp-field-dropdown-wrap">
+                  <span>Salarisschaal</span>
+                  <input id="emp-loondienst-salarisschaal" type="hidden" value="">
+                  <button type="button" class="emp-dropdown-btn" id="emp-loondienst-salarisschaal-btn">
+                    <span id="emp-loondienst-salarisschaal-value">Selecteer Salarisschaal</span>
+                    <span class="emp-dropdown-chev"></span>
+                  </button>
+                  <div class="emp-dropdown-panel" id="emp-loondienst-salarisschaal-panel" hidden>
+                    <ul class="emp-dropdown-list emp-salary-dropdown-list" id="emp-loondienst-salarisschaal-list"></ul>
+                  </div>
+                </div>
+
+                <div class="emp-field emp-field-dropdown-wrap">
+                  <span>Salaristrede</span>
+                  <input id="emp-loondienst-salaristrede" type="hidden" value="">
+                  <button type="button" class="emp-dropdown-btn" id="emp-loondienst-salaristrede-btn">
+                    <span id="emp-loondienst-salaristrede-value">Selecteer Salaristrede</span>
+                    <span class="emp-dropdown-chev"></span>
+                  </button>
+                  <div class="emp-dropdown-panel" id="emp-loondienst-salaristrede-panel" hidden>
+                    <ul class="emp-dropdown-list emp-salary-dropdown-list" id="emp-loondienst-salaristrede-list"></ul>
+                  </div>
+                </div>
+
+                <label class="emp-field emp-loondienst-salary-readonly"><span>36 uur salaris (Full-time)</span><input id="emp-loondienst-36uur-salaris" type="text" value="€ 0,00" readonly></label>
+                <label class="emp-field"><span>Contracturen</span><input id="emp-loondienst-contracturen" type="number" step="1" min="0" max="100"><small class="emp-warning-row-inline" id="emp-loondienst-contracturen-warning" hidden>De uren moeten tussen 0 en 100 liggen.</small></label>
+              </div>
+
+              <label class="emp-field emp-field--full emp-loondienst-salary-total">
+                <span>Salaris</span>
+                <input id="emp-loondienst-salaris" type="text" value="€ 0,00" readonly>
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-salaris">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general emp-rooster-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Rooster</h3>
+
+              <div class="emp-rooster-summary-card">
+                <div class="emp-rooster-summary-head">
+                  <p>Gem. contracturen per week</p>
+                  <div class="emp-rooster-summary-right">
+                    <strong id="emp-rooster-total">0.0 / 0 uur</strong>
+                    <span class="emp-rooster-status is-low" id="emp-rooster-status">Te weinig</span>
+                  </div>
+                </div>
+                <div class="emp-rooster-progress">
+                  <span id="emp-rooster-progress-fill"></span>
+                </div>
+                <p class="emp-rooster-summary-sub">Berekend op basis van weekrooster, met weging voor weekend afwisseling.</p>
+              </div>
+
+              <h4 class="emp-rooster-subtitle">Weekrooster</h4>
+              <div class="emp-rooster-week-scroll">
+              <div class="emp-rooster-week-grid">
+                <div class="emp-rooster-day-card" data-day="ma">
+                  <div class="emp-rooster-day-head">MA</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-ma-enabled" type="checkbox" checked><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-ma-state">Beschikbaar</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-ma-body">
+                    <label><span>Van</span><input id="emp-rooster-ma-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-ma-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-ma-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-ma-off" hidden>—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="di">
+                  <div class="emp-rooster-day-head">DI</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-di-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-di-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-di-body">
+                    <label><span>Van</span><input id="emp-rooster-di-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-di-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-di-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-di-off">—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="wo">
+                  <div class="emp-rooster-day-head">WO</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-wo-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-wo-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-wo-body">
+                    <label><span>Van</span><input id="emp-rooster-wo-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-wo-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-wo-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-wo-off">—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="do">
+                  <div class="emp-rooster-day-head">DO</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-do-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-do-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-do-body">
+                    <label><span>Van</span><input id="emp-rooster-do-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-do-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-do-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-do-off">—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="vr">
+                  <div class="emp-rooster-day-head">VR</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-vr-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-vr-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-vr-body">
+                    <label><span>Van</span><input id="emp-rooster-vr-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-vr-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-vr-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-vr-off">—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="za">
+                  <div class="emp-rooster-day-head">ZA</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-za-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-za-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-za-body">
+                    <label><span>Van</span><input id="emp-rooster-za-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-za-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-za-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-za-off">—</div>
+                </div>
+                <div class="emp-rooster-day-card" data-day="zo">
+                  <div class="emp-rooster-day-head">ZO</div>
+                  <div class="emp-rooster-day-switch-row">
+                    <label class="emp-rooster-switch"><input id="emp-rooster-zo-enabled" type="checkbox"><span></span></label>
+                    <span class="emp-rooster-day-state" id="emp-rooster-zo-state">Vrij</span>
+                  </div>
+                  <div class="emp-rooster-day-body" id="emp-rooster-zo-body">
+                    <label><span>Van</span><input id="emp-rooster-zo-start" type="time" step="900" value="09:00"></label>
+                    <label><span>Tot</span><input id="emp-rooster-zo-end" type="time" step="900" value="17:00"></label>
+                    <span class="emp-rooster-day-hours" id="emp-rooster-zo-hours">8.0u</span>
+                  </div>
+                  <div class="emp-rooster-day-off" id="emp-rooster-zo-off">—</div>
+                </div>
+              </div>
+              </div>
+
+              <h4 class="emp-rooster-subtitle">Weekend afwisseling <span>(even/oneven weken)</span></h4>
+              <div class="emp-rooster-weekend-grid">
+                <div class="emp-rooster-weekend-card" data-weekend-day="za" data-weekend-mode="alle">
+                  <div class="emp-rooster-weekend-head">
+                    <div class="emp-rooster-weekend-title-wrap">
+                      <span class="emp-rooster-weekend-dot" id="emp-rooster-weekend-za-dot" aria-hidden="true"></span>
+                      <h5>Zaterdag</h5>
+                    </div>
+                    <span class="emp-rooster-weekend-state" id="emp-rooster-weekend-za-state">(niet actief)</span>
+                  </div>
+                  <div class="emp-rooster-weekend-modes" role="group" aria-label="Weekend afwisseling zaterdag">
+                    <button type="button" class="emp-rooster-weekend-mode is-active" data-weekend-day="za" data-weekend-mode="alle">Alle</button>
+                    <button type="button" class="emp-rooster-weekend-mode" data-weekend-day="za" data-weekend-mode="even">Even</button>
+                    <button type="button" class="emp-rooster-weekend-mode" data-weekend-day="za" data-weekend-mode="oneven">Oneven</button>
+                  </div>
+                </div>
+
+                <div class="emp-rooster-weekend-card" data-weekend-day="zo" data-weekend-mode="alle">
+                  <div class="emp-rooster-weekend-head">
+                    <div class="emp-rooster-weekend-title-wrap">
+                      <span class="emp-rooster-weekend-dot" id="emp-rooster-weekend-zo-dot" aria-hidden="true"></span>
+                      <h5>Zondag</h5>
+                    </div>
+                    <span class="emp-rooster-weekend-state" id="emp-rooster-weekend-zo-state">(niet actief)</span>
+                  </div>
+                  <div class="emp-rooster-weekend-modes" role="group" aria-label="Weekend afwisseling zondag">
+                    <button type="button" class="emp-rooster-weekend-mode is-active" data-weekend-day="zo" data-weekend-mode="alle">Alle</button>
+                    <button type="button" class="emp-rooster-weekend-mode" data-weekend-day="zo" data-weekend-mode="even">Even</button>
+                    <button type="button" class="emp-rooster-weekend-mode" data-weekend-day="zo" data-weekend-mode="oneven">Oneven</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-rooster">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Periodieke maand</h3>
+              <p class="emp-section-sub emp-details-sub">Maand waarin het jaarlijkse functioneringsgesprek of de beoordeling van de medewerker plaatsvindt</p>
+
+              <div class="emp-field emp-field--full emp-field-dropdown-wrap">
+                <span>Periodieke maand</span>
+                <input id="emp-loondienst-periodieke-maand" type="hidden" value="">
+                <button type="button" class="emp-dropdown-btn" id="emp-loondienst-periodieke-maand-btn">
+                  <span id="emp-loondienst-periodieke-maand-value">Selecteer een maand</span>
+                  <span class="emp-dropdown-chev"></span>
+                </button>
+                <div class="emp-dropdown-panel" id="emp-loondienst-periodieke-maand-panel" hidden>
+                  <ul class="emp-dropdown-list" id="emp-loondienst-periodieke-maand-list"></ul>
+                </div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-periodieke-maand">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Beoordelingsdatum</h3>
+
+              <label class="emp-field emp-field--full">
+                <span>Beoordelingsdatum</span>
+                <input id="emp-loondienst-beoordelingsdatum" type="date" placeholder="dd-mm-jjjj">
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-beoordelingsdatum">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Bedrijfsvoorzieningen</h3>
+
+              <div class="emp-bedrijf-list">
+                <div class="emp-bedrijf-item" data-voorziening="laptop">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-laptop" type="checkbox"><span>Laptop</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor laptop">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-laptop-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., serial number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="sleutels">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-sleutels" type="checkbox"><span>Sleutels</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor sleutels">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-sleutels-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., key number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="telefoon">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-telefoon" type="checkbox"><span>Telefoon</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor telefoon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-telefoon-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., phone model)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="simkaart">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-simkaart" type="checkbox"><span>Simkaart</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor simkaart">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-simkaart-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., SIM number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="auto">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-auto" type="checkbox"><span>Auto</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor auto">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-auto-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., license plate)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="fiets">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-loondienst-voorz-fiets" type="checkbox"><span>Fiets</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor fiets">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-loondienst-voorz-fiets-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., frame number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-bedrijfsvoorzieningen">Wijzigingen opslaan</button></div>
+            </div>
+            </div>
+
+            <div class="emp-prof-variant" data-prof-for="Inhuur">
+            <div class="emp-section emp-prof-rates card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Uurtarieven</h3>
+
+              <div class="emp-prof-rate-box">
+                <h4 class="emp-prof-subtitle">Algemeen Uurtarief</h4>
+                <div class="emp-prof-rate-row">
+                  <div class="emp-prof-rate-copy">
+                    <p class="emp-prof-rate-label">Algemeen uurtarief</p>
+                    <p class="emp-prof-rate-desc">Dit tarief wordt gebruikt voor diensten waarvoor geen specifiek diensttype tarief is ingesteld hieronder</p>
+                  </div>
+                  <label class="emp-field emp-prof-rate-input">
+                    <input id="emp-uur-algemeen" type="text" placeholder="€ 45">
+                  </label>
+                </div>
+              </div>
+
+              <h4 class="emp-prof-subtitle emp-prof-subtitle--spaced">Diensttype Specifieke Tarieven</h4>
+              <p class="emp-prof-rate-desc emp-prof-rate-desc--wide">Overschrijf tarieven voor specifieke diensttypes. Wanneer een medewerker wordt ingepland voor een dienst, heeft het specifieke diensttype tarief voorrang boven het algemene tarief.</p>
+
+              <div class="emp-prof-rate-grid-head">
+                <span>Diensttype</span>
+                <span>Uurtarief</span>
+              </div>
+              <div class="emp-prof-rate-grid-row">
+                <div class="emp-prof-fixed-value">Boventallig</div>
+                <input id="emp-uur-diensttype" type="hidden" value="Boventallig">
+                <label class="emp-field"><input id="emp-uur-tarief" type="text" placeholder=""></label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-uurtarieven">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-rates card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Locaties</h3>
+
+              <div class="emp-loc-select-wrap">
+                <button type="button" class="emp-loc-select-btn" id="emp-locaties-select-btn" aria-expanded="false" aria-controls="emp-locaties-panel">
+                  <span class="emp-loc-chips" id="emp-locaties-chips"></span>
+                  <span class="emp-loc-select-chev" aria-hidden="true"></span>
+                </button>
+
+                <div class="emp-loc-panel" id="emp-locaties-panel" hidden>
+                  <div class="emp-loc-search-wrap">
+                    <svg class="emp-loc-search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="search" id="emp-locaties-search" class="emp-loc-search" placeholder="Zoeken...">
+                  </div>
+                  <ul class="emp-loc-list" id="emp-locaties-list"></ul>
+                </div>
+              </div>
+
+              <div class="emp-kernteam-card">
+                <div class="emp-kernteam-head">
+                  <div class="emp-kernteam-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 11c1.657 0 3-1.567 3-3.5S17.657 4 16 4s-3 1.567-3 3.5 1.343 3.5 3 3.5Z"/><path d="M8 11c1.657 0 3-1.567 3-3.5S9.657 4 8 4 5 5.567 5 7.5 6.343 11 8 11Z"/><path d="M2 20c0-2.761 2.239-5 5-5h2"/><path d="M12 20c0-2.761 2.239-5 5-5h1c2.761 0 4 2.239 4 5"/></svg>
+                  </div>
+                  <div>
+                    <h4>Kernteam</h4>
+                    <p>Markeer het primaire team per locatie</p>
+                  </div>
+                </div>
+                <div class="emp-kernteam-rows" id="emp-kernteam-rows"></div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-locaties">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-rates card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Urenregistratie</h3>
+
+              <div class="emp-uren-list">
+                <label class="emp-uren-item">
+                  <input id="emp-uren-verleentzorg" type="checkbox">
+                  <span>Verleent zorg</span>
+                </label>
+                <label class="emp-uren-item">
+                  <input id="emp-uren-handmatig" type="checkbox">
+                  <span>Tijd Handmatig Registreren</span>
+                </label>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-uren">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Professionele gegevens</h3>
+
+              <div class="emp-form-grid emp-prof-general-grid">
+                <label class="emp-field"><span>E-mailadres</span><input id="emp-prof-email" type="email"></label>
+                <label class="emp-field"><span>Telefoonnummer</span><input id="emp-prof-tel" type="text"></label>
+                <label class="emp-field"><span>IBAN</span><input id="emp-prof-iban" type="text"></label>
+
+                <div class="emp-field emp-field-dropdown-wrap emp-functie-wrap">
+                  <span>Functie</span>
+                  <input id="emp-functie" type="hidden" value="">
+                  <button type="button" class="emp-dropdown-btn" id="emp-functie-btn">
+                    <span id="emp-functie-value">Selecteer functie</span>
+                    <span class="emp-dropdown-chev"></span>
+                  </button>
+                  <div class="emp-dropdown-panel" id="emp-functie-panel" hidden>
+                    <ul class="emp-dropdown-list" id="emp-functie-list"></ul>
+                  </div>
+                </div>
+
+                <label class="emp-field"><span>Startdatum</span><input id="emp-startdatum" type="date"></label>
+              </div>
+
+              <label class="emp-field emp-field--full">
+                <span>Competenties</span>
+                <select id="emp-competentie" class="emp-select">
+                  <option value="">Selecteer Competenties</option>
+                </select>
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-gegevens">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Periodieke maand</h3>
+              <p class="emp-section-sub emp-details-sub">Maand waarin het jaarlijkse functioneringsgesprek of de beoordeling van de medewerker plaatsvindt</p>
+
+              <label class="emp-field emp-field--full">
+                <span>Periodieke maand</span>
+                <select id="emp-periodieke-maand" class="emp-select">
+                  <option value="">Selecteer een maand</option>
+                  <option value="Januari">Januari</option>
+                  <option value="Februari">Februari</option>
+                  <option value="Maart">Maart</option>
+                  <option value="April">April</option>
+                  <option value="Mei">Mei</option>
+                  <option value="Juni">Juni</option>
+                  <option value="Juli">Juli</option>
+                  <option value="Augustus">Augustus</option>
+                  <option value="September">September</option>
+                  <option value="Oktober">Oktober</option>
+                  <option value="November">November</option>
+                  <option value="December">December</option>
+                </select>
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-periodieke-maand">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Beoordelingsdatum</h3>
+
+              <label class="emp-field emp-field--full">
+                <span>Beoordelingsdatum</span>
+                <input id="emp-beoordelingsdatum" type="date" placeholder="dd-mm-jjjj">
+              </label>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-beoordelingsdatum">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Bedrijfsvoorzieningen</h3>
+
+              <div class="emp-bedrijf-list">
+                <div class="emp-bedrijf-item" data-voorziening="laptop">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-laptop" type="checkbox"><span>Laptop</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor laptop">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-laptop-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., serial number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="sleutels">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-sleutels" type="checkbox"><span>Sleutels</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor sleutels">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-sleutels-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., key number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="telefoon">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-telefoon" type="checkbox"><span>Telefoon</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor telefoon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-telefoon-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., phone model)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="simkaart">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-simkaart" type="checkbox"><span>Simkaart</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor simkaart">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-simkaart-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., SIM number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="auto">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-auto" type="checkbox"><span>Auto</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor auto">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-auto-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., license plate)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+                <div class="emp-bedrijf-item" data-voorziening="fiets">
+                  <div class="emp-bedrijf-row">
+                    <label class="emp-bedrijf-left"><input id="emp-voorz-fiets" type="checkbox"><span>Fiets</span></label>
+                    <button type="button" class="emp-bedrijf-note-btn" aria-label="Notitie voor fiets">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 0 0-2-2z"/><path d="M13.9 6.1l4 4m-3-3l-5.6 5.6L8 16l3.3-1.3L17 9"/></svg>
+                    </button>
+                  </div>
+                  <div class="emp-bedrijf-note" hidden>
+                    <input id="emp-voorz-fiets-note" class="emp-bedrijf-note-input" type="text" placeholder="Add note (e.g., frame number)">
+                    <button type="button" class="emp-bedrijf-note-save" aria-label="Notitie opslaan">✓</button>
+                    <button type="button" class="emp-bedrijf-note-cancel" aria-label="Notitie annuleren">×</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-bedrijfsvoorzieningen">Wijzigingen opslaan</button></div>
+            </div>
+            </div>
+
+            <div class="emp-section emp-prof-placeholder card rounded-lg border bg-card text-card-foreground shadow-sm" data-prof-default hidden>
+              <h3>Professioneel</h3>
+              <p class="emp-section-sub">De professionele velden voor dit type dienstverband voeg ik hier toe zodra je ze doorstuurt.</p>
+            </div>
+          </div>
+
+          <!-- Tab: Opleiding -->
+          <div class="emp-tab-panel" data-panel="opleiding">
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>SKJ</h3>
+              <label class="emp-opleiding-check-row">
+                <input id="emp-skj-registratie" type="checkbox">
+                <span>Heeft SKJ registratie</span>
+              </label>
+
+              <div class="emp-opleiding-card">
+                <div class="emp-opleiding-card-head">
+                  <h4>Opleiding</h4>
+                  <button type="button" class="emp-opleiding-add-btn" data-opleiding-list="skj">+ Opleiding toevoegen</button>
+                </div>
+                <div class="emp-opleiding-table-head">
+                  <span>Naam</span>
+                  <span>Datum</span>
+                </div>
+                <div class="emp-opleiding-table-body" data-opleiding-body="skj">
+                  <p class="emp-opleiding-empty">Er zijn nog geen opleidingen toegevoegd.</p>
+                </div>
+              </div>
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="opleiding">Wijzigingen opslaan</button></div>
+            </div>
+
+            <div class="emp-section emp-prof-general card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Education and Training</h3>
+              <div class="emp-opleiding-check-list">
+                <label class="emp-opleiding-check-row">
+                  <input id="emp-training-bhv" type="checkbox">
+                  <span>BHV</span>
+                </label>
+                <label class="emp-opleiding-check-row">
+                  <input id="emp-training-gvvg" type="checkbox">
+                  <span>GV &amp; VG</span>
+                </label>
+                <label class="emp-opleiding-check-row">
+                  <input id="emp-training-medicatie" type="checkbox">
+                  <span>Medicatie training</span>
+                </label>
+              </div>
+
+              <div class="emp-opleiding-card">
+                <div class="emp-opleiding-card-head">
+                  <h4>Opleiding</h4>
+                  <button type="button" class="emp-opleiding-add-btn" data-opleiding-list="training">+ Opleiding toevoegen</button>
+                </div>
+                <div class="emp-opleiding-table-head">
+                  <span>Naam</span>
+                  <span>Datum</span>
+                </div>
+                <div class="emp-opleiding-table-body" data-opleiding-body="training">
+                  <p class="emp-opleiding-empty">Er zijn nog geen opleidingen toegevoegd.</p>
+                </div>
+              </div>
+              <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="opleiding">Wijzigingen opslaan</button></div>
+            </div>
+
+          </div>
+
+          <div class="emp-tab-panel" data-panel="notities">
+
+            <div class="emp-section emp-notitie-editor card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Nieuwe notitie</h3>
+              <div class="emp-notitie-toolbar">
+                <button type="button" data-cmd="bold" title="Vet"><b>B</b></button>
+                <button type="button" data-cmd="italic" title="Cursief"><i>I</i></button>
+                <button type="button" data-cmd="strikeThrough" title="Doorhalen"><s>S</s></button>
+                <button type="button" data-cmd="underline" title="Onderstrepen"><u>U</u></button>
+                <button type="button" data-cmd="formatBlock" data-val="H1" title="Kop 1">H<sub>1</sub></button>
+                <button type="button" data-cmd="formatBlock" data-val="H2" title="Kop 2">H<sub>2</sub></button>
+                <button type="button" data-cmd="insertUnorderedList" title="Ongeordende lijst">&#9776;</button>
+                <button type="button" data-cmd="insertOrderedList" title="Geordende lijst">&#8801;</button>
+                <button type="button" data-cmd="insertImage" title="Afbeelding invoegen">&#128444;</button>
+              </div>
+              <div class="emp-notitie-body" id="emp-notitie-body" contenteditable="true" data-placeholder="Typ hier je notitie..."></div>
+              <div class="emp-notitie-actions">
+                <button type="button" class="emp-notitie-send-btn" id="emp-notitie-send-btn">Verzenden</button>
+              </div>
+            </div>
+
+            <div class="emp-section emp-notitie-list card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div class="emp-notitie-empty" id="emp-notitie-empty">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="#c0c5cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="14" y="6" width="36" height="52" rx="4"/>
+                  <line x1="22" y1="18" x2="42" y2="18"/>
+                  <line x1="22" y1="26" x2="42" y2="26"/>
+                  <line x1="22" y1="34" x2="36" y2="34"/>
+                  <path d="M14 6 C14 6 18 10 18 14" opacity=".4"/>
+                </svg>
+                <p>Er zijn nog geen notities toegevoegd</p>
+              </div>
+              <div class="emp-notitie-items" id="emp-notitie-items"></div>
+            </div>
+
+          </div>
+
+          <!-- Tab: Documenten -->
+          <div class="emp-tab-panel" data-panel="documenten">
+
+            <!-- Category pills -->
+            <div class="emp-doc-pills" id="emp-doc-pills"></div>
+
+            <div class="emp-doc-block">
+              <div class="emp-doc-block-head">
+                <h3>Documenten</h3>
+                <div class="emp-doc-head-actions">
+                  <div class="emp-doc-col-wrap">
+                    <button type="button" class="emp-verzuim-col-btn emp-doc-col-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg> Kolommen</button>
+                    <div class="emp-doc-col-dropdown" style="display:none">
+                      <p class="emp-verzuim-col-title">Kolommen weergeven</p>
+                      <label><input type="checkbox" data-doccol="naam" checked> Naam</label>
+                      <label><input type="checkbox" data-doccol="type" checked> Type</label>
+                      <label><input type="checkbox" data-doccol="vervaldatum" checked> Vervaldatum</label>
+                      <label><input type="checkbox" data-doccol="uploaddatum" checked> Uploaddatum</label>
+                      <label><input type="checkbox" data-doccol="laatstGewijzigd" checked> Laatst gewijzigd</label>
+                    </div>
+                  </div>
+                  <button type="button" class="emp-doc-download-all-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Alles downloaden</button>
+                  <button type="button" class="emp-doc-upload-btn" id="emp-doc-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Document uploaden</button>
+                </div>
+              </div>
+              <div class="emp-doc-toolbar-row">
+                <input type="text" class="emp-verzuim-search emp-doc-search" placeholder="Zoeken...">
+                <div class="emp-doc-toolbar-right">
+                  <label class="emp-doc-archive-toggle"><input type="checkbox" id="emp-doc-archived-toggle"> Gearchiveerd</label>
+                  <button type="button" class="emp-doc-reset-btn" id="emp-doc-reset-btn">Reset <span aria-hidden="true">&times;</span></button>
+                </div>
+              </div>
+              <div class="emp-verzuim-table-wrap emp-doc-table-wrap">
+                <table class="emp-verzuim-table emp-doc-table">
+                  <thead>
+                    <tr>
+                      <th class="emp-doc-col-check"><input type="checkbox" id="emp-doc-select-all"></th>
+                      <th class="emp-doc-col-acties">Acties</th>
+                      <th data-doccol="naam" data-sort="naam">Naam <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-doccol="type" data-sort="type">Type <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-doccol="vervaldatum" data-sort="vervaldatum">Vervaldatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-doccol="uploaddatum" data-sort="uploaddatum">Uploaddatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-doccol="laatstGewijzigd" data-sort="laatstGewijzigd">Laatst gewijzigd <span class="emp-sort-icon">&#8693;</span></th>
+                      <th class="emp-doc-col-delete"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="emp-doc-tbody"></tbody>
+                </table>
+                <p class="emp-verzuim-empty emp-doc-empty">Geen documenten gevonden</p>
+              </div>
+              <div class="emp-verzuim-pagination emp-doc-pagination">
+                <span class="emp-doc-page-info"></span>
+                <div class="emp-verzuim-page-size emp-doc-page-size">Rows per page <select id="emp-doc-page-size"><option value="50">50</option><option value="25">25</option><option value="10">10</option></select></div>
+                <div class="emp-verzuim-page-nav emp-doc-page-nav">
+                  <span class="emp-doc-page-label"></span>
+                  <button data-docpage="first">&laquo;</button>
+                  <button data-docpage="prev">&lsaquo;</button>
+                  <button data-docpage="next">&rsaquo;</button>
+                  <button data-docpage="last">&raquo;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal: Document uploaden -->
+            <div class="emp-verzuim-modal-overlay emp-doc-modal-overlay" id="emp-doc-modal" style="display:none">
+              <div class="emp-verzuim-modal emp-doc-modal">
+                <div class="emp-verzuim-modal-head">
+                  <h3 id="emp-doc-modal-title">Document uploaden</h3>
+                  <button type="button" class="emp-verzuim-modal-close" id="emp-doc-modal-close">&times;</button>
+                </div>
+                <div class="emp-verzuim-modal-body">
+                  <div class="emp-doc-dropzone" id="emp-doc-dropzone">
+                    <input type="file" id="emp-doc-modal-file" accept=".svg,.png,.xlsx,.xls,.csv,.jpg,.jpeg,.pdf,.docx,.doc" hidden>
+                    <div class="emp-doc-dropzone-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#339dc1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <p class="emp-doc-dropzone-text"><strong>Klik om te uploaden</strong> of sleep en zet neer</p>
+                    <p class="emp-doc-dropzone-hint">SVG, PNG, Excel, CSV, JPG, PDF of .docx (max. 20MB)</p>
+                    <p class="emp-doc-dropzone-filename" id="emp-doc-dropzone-filename"></p>
+                  </div>
+                  <label class="emp-verzuim-modal-field"><span>Naam</span><input type="text" id="emp-doc-modal-naam" class="emp-doc-modal-input"></label>
+                  <div class="emp-doc-modal-row">
+                    <label class="emp-verzuim-modal-field emp-doc-modal-half"><span>Type</span>
+                      <select id="emp-doc-modal-type" class="emp-doc-modal-input">
+                        <option value=""></option>
+                        <option value="Contract">Contract</option>
+                        <option value="Opleiding">Opleiding</option>
+                        <option value="VOG">VOG</option>
+                        <option value="ID">ID</option>
+                        <option value="Addendum">Addendum</option>
+                        <option value="Overig">Overig</option>
+                      </select>
+                    </label>
+                    <label class="emp-verzuim-modal-field emp-doc-modal-half"><span>Verloopdatum</span><input type="date" id="emp-doc-modal-verval"></label>
+                  </div>
+                </div>
+                <div class="emp-verzuim-modal-footer">
+                  <button type="button" class="emp-verzuim-modal-cancel" id="emp-doc-modal-cancel">Annuleren</button>
+                  <button type="button" class="emp-verzuim-modal-submit" id="emp-doc-modal-save">Toevoegen</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal: Document verwijderen -->
+            <div class="modal-overlay modal-overlay--confirm" id="emp-doc-delete-modal" hidden aria-hidden="true">
+              <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="emp-doc-delete-title" tabindex="-1">
+                <div class="modal-header">
+                  <h2 id="emp-doc-delete-title" class="modal-title">Document verwijderen</h2>
+                  <button type="button" class="modal-close" id="emp-doc-delete-close" aria-label="Sluiten">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p class="employee-delete-msg">Ben je zeker dat je dit document wilt verwijderen?</p>
+                  <p class="employee-delete-preview" id="emp-doc-delete-preview" aria-live="polite"></p>
+                  <div class="employee-delete-slider-block">
+                    <label class="employee-delete-slider-label" for="emp-doc-delete-slider">Schuif helemaal naar rechts om te bevestigen</label>
+                    <div class="employee-delete-slider-wrap">
+                      <input type="range" id="emp-doc-delete-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Bevestig verwijderen" />
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn-outline" id="emp-doc-delete-cancel">Annuleren</button>
+                  <button type="button" class="btn-primary" id="emp-doc-delete-confirm" disabled>Verwijderen</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tab: Verzuim -->
+          <div class="emp-tab-panel" data-panel="verzuim">
+
+            <!-- Korte termijn -->
+            <div class="emp-verzuim-block" data-verzuim-type="kort">
+              <div class="emp-verzuim-block-head">
+                <h3>Korte termijn</h3>
+                <div class="emp-verzuim-head-actions">
+                  <div class="emp-verzuim-col-wrap">
+                    <button type="button" class="emp-verzuim-col-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg> Kolommen</button>
+                    <div class="emp-verzuim-col-dropdown" style="display:none">
+                      <p class="emp-verzuim-col-title">Kolommen weergeven</p>
+                      <label><input type="checkbox" data-col="eerstZiektedag" checked> Eerste Ziektedag</label>
+                      <label><input type="checkbox" data-col="verwachteTerug" checked> Verwachte Terugkeerdatum</label>
+                      <label><input type="checkbox" data-col="werkelijkeTerug" checked> Werkelijke Terugkeerdatum</label>
+                      <label><input type="checkbox" data-col="beschrijving" checked> Beschrijving</label>
+                      <label><input type="checkbox" data-col="status" checked> Status</label>
+                    </div>
+                  </div>
+                  <button type="button" class="emp-verzuim-add-btn" data-verzuim-add="kort"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Verzuim toevoegen</button>
+                </div>
+              </div>
+              <div class="emp-verzuim-search-row">
+                <input type="text" class="emp-verzuim-search" placeholder="Zoeken...">
+              </div>
+              <div class="emp-verzuim-table-wrap">
+                <table class="emp-verzuim-table">
+                  <thead>
+                    <tr>
+                      <th data-col="eerstZiektedag" data-sort="eerstZiektedag">Eerste ziektedag <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="verwachteTerug" data-sort="verwachteTerug">Verwachte terugkeerdatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="werkelijkeTerug" data-sort="werkelijkeTerug">Werkelijke terugkeerdatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="beschrijving" data-sort="beschrijving">Beschrijving <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="status" data-sort="status">Status <span class="emp-sort-icon">&#8693;</span></th>
+                      <th class="emp-verzuim-col-acties">Acties</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="emp-verzuim-empty">Geen resultaten gevonden</p>
+              </div>
+              <div class="emp-verzuim-pagination">
+                <span class="emp-verzuim-page-info"></span>
+                <div class="emp-verzuim-page-size">Rows per page <select><option>50</option><option>25</option><option>10</option></select></div>
+                <div class="emp-verzuim-page-nav">
+                  <span class="emp-verzuim-page-label"></span>
+                  <button data-page="first">&laquo;</button>
+                  <button data-page="prev">&lsaquo;</button>
+                  <button data-page="next">&rsaquo;</button>
+                  <button data-page="last">&raquo;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lange Termijn -->
+            <div class="emp-verzuim-block" data-verzuim-type="lang">
+              <div class="emp-verzuim-block-head">
+                <h3>Lange Termijn</h3>
+                <div class="emp-verzuim-head-actions">
+                  <div class="emp-verzuim-col-wrap">
+                    <button type="button" class="emp-verzuim-col-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg> Kolommen</button>
+                    <div class="emp-verzuim-col-dropdown" style="display:none">
+                      <p class="emp-verzuim-col-title">Kolommen weergeven</p>
+                      <label><input type="checkbox" data-col="eerstZiektedag" checked> Eerste Ziektedag</label>
+                      <label><input type="checkbox" data-col="verwachteTerug" checked> Verwachte Terugkeerdatum</label>
+                      <label><input type="checkbox" data-col="werkelijkeTerug" checked> Werkelijke Terugkeerdatum</label>
+                      <label><input type="checkbox" data-col="beschrijving" checked> Beschrijving</label>
+                      <label><input type="checkbox" data-col="status" checked> Status</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verzuim-search-row">
+                <input type="text" class="emp-verzuim-search" placeholder="Zoeken...">
+              </div>
+              <div class="emp-verzuim-table-wrap">
+                <table class="emp-verzuim-table">
+                  <thead>
+                    <tr>
+                      <th data-col="eerstZiektedag" data-sort="eerstZiektedag">Eerste ziektedag <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="verwachteTerug" data-sort="verwachteTerug">Verwachte terugkeerdatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="werkelijkeTerug" data-sort="werkelijkeTerug">Werkelijke terugkeerdatum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="beschrijving" data-sort="beschrijving">Beschrijving <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="status" data-sort="status">Status <span class="emp-sort-icon">&#8693;</span></th>
+                      <th class="emp-verzuim-col-acties">Acties</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="emp-verzuim-empty">Geen resultaten gevonden</p>
+              </div>
+              <div class="emp-verzuim-pagination">
+                <span class="emp-verzuim-page-info"></span>
+                <div class="emp-verzuim-page-size">Rows per page <select><option>50</option><option>25</option><option>10</option></select></div>
+                <div class="emp-verzuim-page-nav">
+                  <span class="emp-verzuim-page-label"></span>
+                  <button data-page="first">&laquo;</button>
+                  <button data-page="prev">&lsaquo;</button>
+                  <button data-page="next">&rsaquo;</button>
+                  <button data-page="last">&raquo;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal: Verzuim toevoegen -->
+          </div>
+
+          <!-- Tab: Verlof -->
+          <div class="emp-tab-panel" data-panel="verlof">
+
+            <!-- Verlofsaldo -->
+            <div class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Verlofsaldo</h3>
+              <div class="emp-verlof-stats">
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Toegekende uren</span>
+                  <span class="emp-verlof-stat-value" id="verlof-toegekend">0u</span>
+                  <span class="emp-verlof-stat-sub">Totaal toegekende uren</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Gebruikte uren</span>
+                  <span class="emp-verlof-stat-value emp-verlof-stat-value--green" id="verlof-gebruikt">0u</span>
+                  <span class="emp-verlof-stat-sub">0.0% van totaal</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Resterende uren</span>
+                  <span class="emp-verlof-stat-value emp-verlof-stat-value--orange" id="verlof-resterend">0u</span>
+                  <span class="emp-verlof-stat-sub">0.0% van totaal</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Overgedragen uren totaal</span>
+                  <span class="emp-verlof-stat-value emp-verlof-stat-value--orange" id="verlof-overgedragen">0u</span>
+                  <span class="emp-verlof-stat-sub">van vorig jaar</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Overgedragen uren -->
+            <div class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div class="emp-verlof-section-head">
+                <h3>Overgedragen uren van 2025</h3>
+                <button type="button" class="emp-verlof-edit-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Bewerken</button>
+              </div>
+              <div class="emp-verlof-stats">
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Overgedragen wettelijke uren</span>
+                  <span class="emp-verlof-stat-value" id="verlof-overd-wet">0u</span>
+                  <span class="emp-verlof-stat-sub">Vervalt op 01-01 dit Jaar</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Gebruikte overgedragen wettelijke uren</span>
+                  <span class="emp-verlof-stat-value emp-verlof-stat-value--green" id="verlof-overd-wet-gebruikt">0u</span>
+                  <span class="emp-verlof-stat-sub">0.0% van totaal</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Overgedragen bovenwettelijke uren</span>
+                  <span class="emp-verlof-stat-value" id="verlof-overd-bovenwet">0u</span>
+                  <span class="emp-verlof-stat-sub">Vervalt op 01-07 dit Jaar</span>
+                </div>
+                <div class="emp-verlof-stat">
+                  <span class="emp-verlof-stat-label">Gebruikte overgedragen bovenwettelijke uren</span>
+                  <span class="emp-verlof-stat-value emp-verlof-stat-value--orange" id="verlof-overd-bovenwet-gebruikt">0u</span>
+                  <span class="emp-verlof-stat-sub">0.0% van totaal</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Verlofsaldi -->
+            <div class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h3>Verlofsaldi</h3>
+              <div class="emp-verlof-saldi-table-wrap">
+                <table class="emp-verlof-saldi-table">
+                  <thead>
+                    <tr>
+                      <th>Jaren</th>
+                      <th>Bokens</th>
+                      <th>Beschikbaar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="verlof-saldi-body">
+                    <tr><td>2026</td><td>0</td><td>0</td></tr>
+                    <tr><td>2025</td><td>0</td><td>0</td></tr>
+                    <tr><td>2024</td><td>0</td><td>0</td></tr>
+                    <tr><td>2023</td><td>0</td><td>0</td></tr>
+                    <tr><td>2022</td><td>0</td><td>0</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Verlofaanvraag geschiedenis -->
+            <div class="emp-verzuim-block" data-verlof-table="aanvraag">
+              <div class="emp-verzuim-block-head">
+                <h3>Verlofaanvraag geschiedenis</h3>
+                <div class="emp-verzuim-head-actions">
+                  <div class="columns-dropdown emp-verlof-col-wrap">
+                    <button type="button" class="btn-outline columns-btn emp-verlof-col-btn">
+                      <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      Kolommen
+                    </button>
+                    <div class="columns-panel emp-verlof-col-panel" hidden>
+                      <div class="columns-panel-title">Kolommen weergeven</div>
+                      <ul class="columns-list" role="none">
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="dataDuur" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Data &amp; Duur</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="status" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Status</button></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verlof-filter-row">
+                <input type="text" class="emp-verzuim-search" placeholder="Zoeken...">
+                <div class="emp-verlof-filter-wrap">
+                  <div class="emp-verlof-filter-dd-wrap">
+                    <button type="button" class="emp-verlof-filter-btn" data-filter="status"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Status</button>
+                    <div class="emp-verlof-filter-dropdown" style="display:none">
+                      <label><input type="checkbox" value="In afwachting" checked> In afwachting</label>
+                      <label><input type="checkbox" value="Goedgekeurd" checked> Goedgekeurd</label>
+                      <label><input type="checkbox" value="Afgewezen" checked> Afgewezen</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verzuim-table-wrap">
+                <table class="emp-verzuim-table">
+                  <thead>
+                    <tr>
+                      <th data-col="dataDuur">Data &amp; Duur <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="status">Status <span class="emp-sort-icon">&#8693;</span></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="emp-verzuim-empty">Geen resultaten gevonden</p>
+              </div>
+            </div>
+
+            <!-- Contract wijzigingsgeschiedenis -->
+            <div class="emp-verzuim-block" data-verlof-table="contract">
+              <div class="emp-verzuim-block-head">
+                <h3>Contract wijzigingsgeschiedenis</h3>
+                <div class="emp-verzuim-head-actions">
+                  <div class="columns-dropdown emp-verlof-col-wrap">
+                    <button type="button" class="btn-outline columns-btn emp-verlof-col-btn">
+                      <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      Kolommen
+                    </button>
+                    <div class="columns-panel emp-verlof-col-panel" hidden>
+                      <div class="columns-panel-title">Kolommen weergeven</div>
+                      <ul class="columns-list" role="none">
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="vorigContractUren" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Vorig Contract Uren</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="nieuwContractUren" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Nieuw Contract Uren</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="wijziging" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Wijziging</button></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verlof-filter-row">
+                <input type="text" class="emp-verzuim-search" placeholder="Zoeken...">
+                <div class="emp-verlof-filter-wrap">
+                  <div class="emp-verlof-filter-dd-wrap">
+                    <button type="button" class="emp-verlof-filter-btn" data-filter="servicejaar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Servicejaar</button>
+                    <div class="emp-verlof-filter-dropdown" style="display:none">
+                      <label><input type="checkbox" value="2023" checked> 2023</label>
+                      <label><input type="checkbox" value="2024" checked> 2024</label>
+                      <label><input type="checkbox" value="2025" checked> 2025</label>
+                      <label><input type="checkbox" value="2026" checked> 2026</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verzuim-table-wrap">
+                <table class="emp-verzuim-table">
+                  <thead>
+                    <tr>
+                      <th data-col="effectieveDatum">Effectieve datum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="vorigContractUren">Vorige contracturen <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="nieuwContractUren">Nieuwe contracturen <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="wijziging">Wijziging <span class="emp-sort-icon">&#8693;</span></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="emp-verzuim-empty">Geen resultaten gevonden</p>
+              </div>
+              <div class="emp-verzuim-pagination">
+                <span class="emp-verzuim-page-info">50 of 0 total.</span>
+                <div class="emp-verzuim-page-size">Rows per page <select><option>50</option><option>25</option><option>10</option></select></div>
+                <div class="emp-verzuim-page-nav">
+                  <span class="emp-verzuim-page-label">Page 1 of 1</span>
+                  <button data-page="first">&laquo;</button>
+                  <button data-page="prev">&lsaquo;</button>
+                  <button data-page="next">&rsaquo;</button>
+                  <button data-page="last">&raquo;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Verlofsaldo geschiedenis -->
+            <div class="emp-verzuim-block" data-verlof-table="saldogeschiedenis">
+              <div class="emp-verzuim-block-head">
+                <h3>Verlofsaldo geschiedenis</h3>
+                <div class="emp-verzuim-head-actions">
+                  <div class="columns-dropdown emp-verlof-col-wrap">
+                    <button type="button" class="btn-outline columns-btn emp-verlof-col-btn">
+                      <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      Kolommen
+                    </button>
+                    <div class="columns-panel emp-verlof-col-panel" hidden>
+                      <div class="columns-panel-title">Kolommen weergeven</div>
+                      <ul class="columns-list" role="none">
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="verloftype" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Verloftype</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="aanpassingstype" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Aanpassingstype</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="voor" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Voor</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="na" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Na</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="reden" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Reden</button></li>
+                        <li role="none"><button type="button" class="column-toggle is-checked" data-col="gewijzigdDoor" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Gewijzigd Door</button></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verlof-filter-row">
+                <input type="text" class="emp-verzuim-search" placeholder="Zoeken...">
+                <div class="emp-verlof-filter-wrap">
+                  <div class="emp-verlof-filter-dd-wrap">
+                    <button type="button" class="emp-verlof-filter-btn" data-filter="verloftype"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Verloftype</button>
+                    <div class="emp-verlof-filter-dropdown" style="display:none">
+                      <label><input type="checkbox" value="Wettelijk" checked> Wettelijk</label>
+                      <label><input type="checkbox" value="Bovenwettelijk" checked> Bovenwettelijk</label>
+                      <label><input type="checkbox" value="Compensatie" checked> Compensatie</label>
+                    </div>
+                  </div>
+                  <div class="emp-verlof-filter-dd-wrap">
+                    <button type="button" class="emp-verlof-filter-btn" data-filter="aanpassingstype"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Aanpassingstype</button>
+                    <div class="emp-verlof-filter-dropdown" style="display:none">
+                      <label><input type="checkbox" value="Verdiend" checked> Verdiend</label>
+                      <label><input type="checkbox" value="Overgedragen saldo" checked> Overgedragen saldo</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="emp-verzuim-table-wrap">
+                <table class="emp-verzuim-table">
+                  <thead>
+                    <tr>
+                      <th data-col="datum">Datum <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="verloftype">Verloftype <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="aanpassingstype">Aanpassingstype <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="voor">Voor <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="na">Na <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="reden">Reden <span class="emp-sort-icon">&#8693;</span></th>
+                      <th data-col="gewijzigdDoor">Gewijzigd Door <span class="emp-sort-icon">&#8693;</span></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="emp-verzuim-empty">Geen resultaten gevonden</p>
+              </div>
+              <div class="emp-verzuim-pagination">
+                <span class="emp-verzuim-page-info">50 of 0 total.</span>
+                <div class="emp-verzuim-page-size">Rows per page <select><option>50</option><option>25</option><option>10</option></select></div>
+                <div class="emp-verzuim-page-nav">
+                  <span class="emp-verzuim-page-label">Page 1 of 1</span>
+                  <button data-page="first">&laquo;</button>
+                  <button data-page="prev">&lsaquo;</button>
+                  <button data-page="next">&rsaquo;</button>
+                  <button data-page="last">&raquo;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal: Overgedragen uren bewerken -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals (buiten content voor correcte overlay) -->
+  <div class="emp-verzuim-modal-overlay" id="emp-verzuim-modal" style="display:none">
+    <div class="emp-verzuim-modal">
+      <div class="emp-verzuim-modal-head">
+        <h3>Verzuim toevoegen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="emp-verzuim-modal-close">&times;</button>
+      </div>
+      <div class="emp-verzuim-modal-body">
+        <label class="emp-verzuim-modal-field">
+          <span>Eerste ziektedag</span>
+          <input type="date" id="emp-verzuim-datum">
+        </label>
+        <label class="emp-verzuim-modal-field">
+          <span>Beschrijving</span>
+        </label>
+        <div class="emp-verzuim-modal-toolbar">
+          <button type="button" data-cmd="bold"><b>B</b></button>
+          <button type="button" data-cmd="italic"><i>I</i></button>
+          <button type="button" data-cmd="strikeThrough"><s>S</s></button>
+          <button type="button" data-cmd="underline"><u>U</u></button>
+          <button type="button" data-cmd="formatBlock" data-val="H1">H<sub>1</sub></button>
+          <button type="button" data-cmd="formatBlock" data-val="H2">H<sub>2</sub></button>
+          <button type="button" data-cmd="justifyLeft">&#8676;</button>
+          <button type="button" data-cmd="justifyCenter">&#8596;</button>
+          <button type="button" data-cmd="insertUnorderedList">&#9776;</button>
+          <button type="button" data-cmd="insertOrderedList">&#8801;</button>
+        </div>
+        <div class="emp-verzuim-modal-editor" id="emp-verzuim-editor" contenteditable="true"></div>
+      </div>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="emp-verzuim-modal-cancel">Annuleer</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="emp-verzuim-modal-submit">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="emp-verzuim-modal-overlay" id="emp-verlof-overd-modal" style="display:none">
+    <div class="emp-verzuim-modal">
+      <div class="emp-verzuim-modal-head">
+        <h3>Overgedragen uren 2025 bewerken</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="emp-verlof-overd-close">&times;</button>
+      </div>
+      <div class="emp-verzuim-modal-body">
+        <h4 class="emp-verlof-modal-subtitle emp-verlof-modal-subtitle--green">Overgedragen wettelijke uren</h4>
+        <hr class="emp-verlof-modal-hr emp-verlof-modal-hr--green">
+        <div class="emp-verlof-modal-grid">
+          <label class="emp-verlof-modal-field"><span>Totaal</span><input type="number" id="verlof-overd-wet-totaal" value="0"></label>
+          <label class="emp-verlof-modal-field"><span>Gebruikt</span><input type="number" id="verlof-overd-wet-gebruikt-input" value="0"></label>
+          <label class="emp-verlof-modal-field"><span>Beschikbaar</span><input type="number" id="verlof-overd-wet-beschikbaar" value="0"></label>
+        </div>
+
+        <h4 class="emp-verlof-modal-subtitle emp-verlof-modal-subtitle--green" style="margin-top:28px">Overgedragen bovenwettelijke uren</h4>
+        <hr class="emp-verlof-modal-hr emp-verlof-modal-hr--green">
+        <div class="emp-verlof-modal-grid">
+          <label class="emp-verlof-modal-field"><span>Totaal</span><input type="number" id="verlof-overd-bovenwet-totaal" value="0"></label>
+          <label class="emp-verlof-modal-field"><span>Gebruikt</span><input type="number" id="verlof-overd-bovenwet-gebruikt-input" value="0"></label>
+          <label class="emp-verlof-modal-field"><span>Beschikbaar</span><input type="number" id="verlof-overd-bovenwet-beschikbaar" value="0"></label>
+        </div>
+
+        <hr class="emp-verlof-modal-hr" style="margin-top:28px">
+        <label class="emp-verlof-modal-field" style="margin-top:16px">
+          <span>Reden</span>
+          <textarea id="verlof-overd-reden" class="emp-verlof-modal-textarea" rows="4" placeholder="Voer de reden voor deze aanpassing in..."></textarea>
+        </label>
+      </div>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="emp-verlof-overd-cancel">Annuleren</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="emp-verlof-overd-save">Wijzigingen opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="opleidingen-defaults.js"></script>
+  <script src="medewerker.js"></script>
+</body>
+</html>

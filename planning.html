@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planning — ERM</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page--planning-erm">
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell app-shell--home app-shell--planning-erm">
+    <header class="topbar topbar--erm">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown is-active">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkruimte.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#beleid" class="top-link">Beleid</a>
+            <a href="werkruimte.html#audit" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#instellingen" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <main class="content content--planning content--planning-erm">
+      <div class="planning-layout planning-layout--erm">
+        <aside class="planning-filters-card planning-filters-card--erm planning-filters-card--v3">
+          <div class="planning-erm-presets">
+            <h2 class="planning-erm-presets-title">Filter Voorinstellingen</h2>
+            <button type="button" class="planning-erm-presets-new" id="planning-presets-new-btn">
+              <span class="planning-erm-presets-plus" aria-hidden="true">+</span>
+              <span>Nieuwe voorinstelling maken</span>
+            </button>
+          </div>
+
+          <div class="planning-erm-customf">
+            <h2 class="planning-erm-customf-title">Aangepaste filters</h2>
+
+            <div class="planning-erm-fld">
+              <span class="planning-erm-fld-label" id="filter-diensttype-label">Diensttype</span>
+              <div class="planning-diensttype-dd" id="filter-diensttype-wrap">
+                <button
+                  type="button"
+                  class="planning-dienst-input planning-diensttype-trigger planning-erm-fld-trigger"
+                  id="filter-diensttype-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-labelledby="filter-diensttype-label"
+                >
+                  <span class="planning-diensttype-trigger-text" id="filter-diensttype-trigger-text">Selecteer…</span>
+                  <span class="planning-diensttype-chev" aria-hidden="true"></span>
+                </button>
+                <ul
+                  class="planning-diensttype-list"
+                  id="filter-diensttype-list"
+                  role="listbox"
+                  aria-label="Diensttypen filter (meerkeuze)"
+                  aria-multiselectable="true"
+                  hidden
+                ></ul>
+              </div>
+            </div>
+
+            <div class="planning-erm-fld">
+              <span class="planning-erm-fld-label">Toewijzingsstatus</span>
+              <div class="planning-erm-radios planning-erm-radios--assign" role="radiogroup" aria-label="Toewijzingsstatus">
+                <label class="planning-erm-radio"><input type="radio" name="planning-assign-status" value="toegewezen"> Toegewezen</label>
+                <label class="planning-erm-radio"><input type="radio" name="planning-assign-status" value="niet"> Niet toegewezen</label>
+                <label class="planning-erm-radio"><input type="radio" name="planning-assign-status" value="vervanging"> Vervanging vereist</label>
+                <label class="planning-erm-radio"><input type="radio" name="planning-assign-status" value="alle" checked> Alle</label>
+              </div>
+            </div>
+
+            <div class="planning-erm-fld">
+              <label class="planning-erm-fld-label" for="filter-teamlid">Teamlid</label>
+              <div class="planning-erm-fld-selectwrap">
+                <select id="filter-teamlid" class="planning-dienst-input planning-erm-fld-select">
+                  <option value="">Selecteer een teamlid</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="planning-erm-fld">
+              <label class="planning-erm-fld-label" for="filter-client">Cliënt</label>
+              <div class="planning-erm-fld-selectwrap">
+                <select id="filter-client" class="planning-dienst-input planning-erm-fld-select">
+                  <option value="">Selecteer Cliënt</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <input type="search" id="planning-search" class="search planning-search planning-erm-search-hidden" placeholder="Zoeken in planning…" aria-label="Zoek planning" hidden />
+
+          <div class="planning-erm-filters-foot planning-erm-filters-foot--v3">
+            <button type="button" class="planning-erm-clear-link" id="planning-clear-filters">Filters wissen</button>
+          </div>
+        </aside>
+
+        <section class="planning-main-card planning-main-card--v2 planning-main-card--v3 planning-main--erm" id="planning-calendar-section">
+          <div class="planning-erm-toolbar" role="group" aria-label="Planning toolbar">
+            <div class="planning-erm-toolbar-left">
+              <div class="planning-erm-locselwrap">
+                <select id="planning-loc-select" class="planning-erm-locsel" aria-label="Selecteer locatie">
+                  <option value="">Selecteer Locatie</option>
+                </select>
+              </div>
+              <button type="button" class="planning-erm-tb-today" id="planning-erm-today">Vandaag</button>
+              <div class="planning-erm-tb-nav" role="group" aria-label="Periode navigatie">
+                <button type="button" class="planning-erm-tb-navbtn" id="planning-erm-prev" aria-label="Vorige periode">‹</button>
+                <button type="button" class="planning-erm-tb-navbtn" id="planning-erm-next" aria-label="Volgende periode">›</button>
+              </div>
+            </div>
+            <div class="planning-erm-toolbar-center">
+              <span class="planning-erm-tb-period" id="planning-erm-period-line"></span>
+            </div>
+            <div class="planning-erm-toolbar-right">
+              <div class="planning-erm-dwm planning-erm-dwm--rl" role="tablist" aria-label="Roster / lijst">
+                <button type="button" class="planning-erm-dwm-btn is-active" id="planning-view-roster" role="tab" aria-selected="true">
+                  <span class="planning-erm-dwm-ico" aria-hidden="true">▦</span> Roster
+                </button>
+                <button type="button" class="planning-erm-dwm-btn" id="planning-view-list" role="tab" aria-selected="false">
+                  <span class="planning-erm-dwm-ico" aria-hidden="true">≡</span> Lijst
+                </button>
+              </div>
+              <div class="planning-erm-dwm" role="tablist" aria-label="Week / maand">
+                <button type="button" class="planning-erm-dwm-btn is-active" id="planning-cal-week" data-cal="week" role="tab" aria-selected="true">Week</button>
+                <button type="button" class="planning-erm-dwm-btn" id="planning-cal-month" data-cal="month" role="tab" aria-selected="false">Maand</button>
+              </div>
+              <button type="button" class="planning-erm-tb-gen" id="planning-gen-btn">Genereren</button>
+              <button type="button" class="planning-erm-tb-opt" id="planning-opt-btn">
+                <span class="planning-erm-tb-opt-plus" aria-hidden="true">+</span> Optimaliseren
+              </button>
+              <button type="button" class="btn-dienst-aanmaken" id="planning-dienst-aanmaken-btn">+ Dienst aanmaken</button>
+            </div>
+          </div>
+
+          <div class="planning-erm-kpis planning-erm-kpis--v3" id="planning-summary" aria-label="Kerngetallen"></div>
+
+          <div class="planning-main-head planning-main-head--sub planning-main-head--hidden" hidden>
+            <div>
+              <h2 class="planning-main-title" id="planning-panel-title">Weekrooster</h2>
+              <p class="planning-main-meta" id="planning-result-meta">0 diensten in deze periode</p>
+            </div>
+            <div class="planning-erm-hero__row2" id="planning-erm-monthstrip-wrap" hidden>
+              <div class="planning-erm-monthstrip" id="planning-erm-monthstrip" aria-label="Dagen in deze maand (klik voor dagweergave)"></div>
+            </div>
+          </div>
+
+          <div class="planning-erm-row-axis" hidden>
+            <div class="planning-erm-radios" role="radiogroup" aria-label="Rooster as">
+              <label class="planning-erm-radio"><input type="radio" name="planning-row-axis" value="vestiging" checked> Locatie</label>
+              <label class="planning-erm-radio"><input type="radio" name="planning-row-axis" value="afdeling"> Afdeling</label>
+              <label class="planning-erm-radio"><input type="radio" name="planning-row-axis" value="medewerker"> Medewerker</label>
+              <label class="planning-erm-radio"><input type="radio" name="planning-row-axis" value="functie"> Functie</label>
+            </div>
+            <button type="button" class="btn-outline planning-erm-clear-plan" id="planning-clear-all-btn" title="Alle diensten uit het rooster verwijderen">Gepland rooster leegmaken</button>
+            <button type="button" class="btn-outline" id="planning-export-btn">Planning export</button>
+          </div>
+
+          <div class="planning-view-panel" id="planning-view-calendar-panel">
+            <div class="planning-week-grid-wrap planning-week-grid-wrap--v3">
+              <div class="planning-week-grid" id="planning-week-grid" aria-label="Planningrooster"></div>
+            </div>
+            <p class="planning-empty" id="planning-week-empty" hidden>Geen diensten in deze periode met de huidige filters.</p>
+          </div>
+
+          <div class="planning-view-panel" id="planning-view-list-panel" hidden>
+            <div class="planning-table-wrap">
+              <table class="employees-table planning-table">
+                <thead>
+                  <tr>
+                    <th>Afdeling</th>
+                    <th>Diensttype</th>
+                    <th>Functie (rol)</th>
+                    <th>Teamlead</th>
+                    <th>Teamlid</th>
+                    <th>Cliënt</th>
+                    <th>Vestiging</th>
+                    <th>Locatie</th>
+                    <th>Start</th>
+                    <th>Einde</th>
+                    <th>Uren</th>
+                    <th>Leer</th>
+                    <th>Sterren</th>
+                    <th>Risico</th>
+                  </tr>
+                </thead>
+                <tbody id="planning-table-body"></tbody>
+              </table>
+            </div>
+            <p class="planning-empty" id="planning-empty" hidden>Geen items gevonden.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="planning-dienst-backdrop" id="planning-dienst-backdrop" hidden aria-hidden="true"></div>
+  <aside
+    class="planning-dienst-panel"
+    id="planning-dienst-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="planning-dienst-title"
+    hidden
+  >
+    <div class="planning-dienst-head">
+      <h2 id="planning-dienst-title" class="planning-dienst-title">Dienst aanmaken</h2>
+      <button type="button" class="planning-dienst-close" id="planning-dienst-close" aria-label="Sluiten"><span aria-hidden="true">×</span></button>
+    </div>
+    <form class="planning-dienst-form" id="planning-dienst-form" novalidate>
+      <div class="planning-dienst-grid">
+        <div class="planning-dienst-field planning-dienst-field--wide">
+          <span class="planning-dienst-label" id="dienst-diensttype-label">Diensttype <span class="req">*</span></span>
+          <div class="planning-diensttype-dd" id="dienst-diensttype-wrap">
+            <button
+              type="button"
+              class="planning-dienst-input planning-diensttype-trigger"
+              id="dienst-diensttype-trigger"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-labelledby="dienst-diensttype-label"
+            >
+              <span class="planning-diensttype-trigger-text" id="dienst-diensttype-trigger-text">Selecteer diensttype (compensatie)…</span>
+              <span class="planning-diensttype-chev" aria-hidden="true"></span>
+            </button>
+            <ul
+              class="planning-diensttype-list"
+              id="dienst-diensttype-list"
+              role="listbox"
+              aria-label="Diensttypen (meerkeuze, gelinkt met compensatie)"
+              aria-multiselectable="true"
+              hidden
+            ></ul>
+          </div>
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--wide">
+          <label class="planning-dienst-label" for="dienst-locatie-hr">Locatie <span class="req">*</span></label>
+          <select id="dienst-locatie-hr" class="planning-dienst-input" name="locatie_hr" required></select>
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide">
+          <span class="planning-dienst-label">Starttijd <span class="req">*</span></span>
+          <div class="planning-dienst-dtrow">
+            <div class="planning-dienst-dt">
+              <label class="visually-hidden" for="dienst-startdate">Startdatum</label>
+              <input type="date" class="planning-dienst-input planning-dienst-input--dt" id="dienst-startdate" required />
+              <span class="planning-dienst-ico" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </span>
+            </div>
+            <div class="planning-dienst-dt">
+              <label class="visually-hidden" for="dienst-starttime">Starttijd</label>
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-starttime" required step="60" />
+              <span class="planning-dienst-ico" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide">
+          <span class="planning-dienst-label">Eindtijd <span class="req">*</span></span>
+          <div class="planning-dienst-dtrow">
+            <div class="planning-dienst-dt">
+              <label class="visually-hidden" for="dienst-einddate">Einddatum</label>
+              <input type="date" class="planning-dienst-input planning-dienst-input--dt" id="dienst-einddate" required />
+            </div>
+            <div class="planning-dienst-dt">
+              <label class="visually-hidden" for="dienst-eindtime">Eindtijd</label>
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-eindtime" required step="60" />
+            </div>
+          </div>
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--short">
+          <label class="planning-dienst-label" for="dienst-pauze">Pauze (uren)</label>
+          <input type="number" class="planning-dienst-input" id="dienst-pauze" name="pauze" min="0" max="8" step="0.25" value="0" />
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--short">
+          <label class="planning-dienst-label" for="dienst-aantal">Vereist aantal medewerkers</label>
+          <input type="number" class="planning-dienst-input" id="dienst-aantal" name="aantal" min="1" max="999" value="1" />
+        </div>
+      </div>
+      <div class="planning-dienst-field planning-dienst-field--full">
+        <label class="planning-dienst-label" for="dienst-mw">Medewerkers <span class="req">*</span></label>
+        <select id="dienst-mw" class="planning-dienst-input" name="teamlid" required>
+          <option value="">Selecteer een teamlid</option>
+        </select>
+      </div>
+      <div class="planning-dienst-grid">
+        <div class="planning-dienst-field" id="dienst-client-field">
+          <label class="planning-dienst-label" for="dienst-client" id="dienst-client-label">Cliënt <span class="req">*</span></label>
+          <select id="dienst-client" class="planning-dienst-input" name="client" required></select>
+          <p class="planning-dienst-hint" id="dienst-client-hint" hidden>Selecteer de jongere die deze medewerker individueel zal begeleiden.</p>
+        </div>
+        <div class="planning-dienst-field">
+          <label class="planning-dienst-label" for="dienst-competentie">Vereiste competenties</label>
+          <select id="dienst-competentie" class="planning-dienst-input" name="competentie"></select>
+        </div>
+      </div>
+      <div class="planning-dienst-field planning-dienst-field--full">
+        <span class="planning-dienst-label" id="dienst-richtext-label">Beschrijving</span>
+        <div class="planning-dienst-rt-toolbar" role="toolbar" aria-label="Opmaak">
+          <button type="button" class="planning-dienst-rtb" data-cmd="bold" title="Vet" aria-label="Vet">B</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="italic" title="Cursief" aria-label="Cursief">I</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="strikethrough" title="Doorhalen" aria-label="Doorhalen">S</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="underline" title="Onderstreept" aria-label="Onderstreept">U</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="h1" title="Kop 1" aria-label="Kop 1">H1</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="h2" title="Kop 2" aria-label="Kop 2">H2</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="insertUnorderedList" title="Lijst" aria-label="Lijst">•</button>
+          <button type="button" class="planning-dienst-rtb" data-cmd="insertOrderedList" title="Genummerd" aria-label="Genummerd">1.</button>
+        </div>
+        <div class="planning-dienst-richtext" id="dienst-beschrijving" contenteditable="true" role="textbox" aria-labelledby="dienst-richtext-label" data-placeholder="Optionele toelichting…"></div>
+        <input type="hidden" id="dienst-beschrijving-h" name="beschrijving" value="" />
+      </div>
+      <div class="planning-dienst-herhaling">
+        <span class="planning-dienst-herhaling-t">Herhaling</span>
+        <label class="planning-dienst-toggle">
+          <input type="checkbox" id="dienst-herhaal" name="herhaal" />
+          <span>Herhaal dienst</span>
+        </label>
+      </div>
+      <div class="planning-dienst-repeat" id="dienst-repeat-options" hidden>
+        <div class="planning-dienst-grid">
+          <div class="planning-dienst-field">
+            <label class="planning-dienst-label" for="dienst-repeat-frequency">Herhaalritme</label>
+            <select id="dienst-repeat-frequency" class="planning-dienst-input">
+              <option value="weekly">Wekelijks</option>
+              <option value="daily">Dagelijks</option>
+              <option value="monthly">Maandelijks</option>
+            </select>
+          </div>
+          <div class="planning-dienst-field">
+            <label class="planning-dienst-label" for="dienst-repeat-count">Aantal keer</label>
+            <input type="number" class="planning-dienst-input" id="dienst-repeat-count" min="1" max="52" value="1" />
+          </div>
+          <div class="planning-dienst-field planning-dienst-field--wide">
+            <label class="planning-dienst-label" for="dienst-repeat-until">Niet herhalen na</label>
+            <input type="date" class="planning-dienst-input" id="dienst-repeat-until" />
+          </div>
+        </div>
+      </div>
+      <div class="planning-dienst-footer">
+        <button type="button" class="btn planning-dienst-cancel" id="planning-dienst-cancel">Annuleren</button>
+        <button type="submit" class="btn planning-dienst-submit" id="planning-dienst-submit">Toevoegen</button>
+      </div>
+    </form>
+  </aside>
+
+  <div class="modal-overlay" id="planning-add-modal" hidden aria-hidden="true">
+    <div class="modal-dialog planning-add-dialog planning-add-dialog--erm" role="dialog" aria-modal="true" aria-labelledby="planning-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="planning-add-title" class="modal-title">Nieuwe planning</h2>
+        <button type="button" class="modal-close" id="planning-add-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-form" id="planning-add-form" novalidate>
+        <div class="modal-body planning-add-grid planning-add-grid--erm">
+          <div class="modal-field"><label class="modal-label" for="plan-add-afdeling">Afdeling / team</label><select id="plan-add-afdeling" class="modal-input modal-select" required></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-diensttype">Diensttype</label><select id="plan-add-diensttype" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-functie">Functie (titel in rooster)</label><input id="plan-add-functie" class="modal-input" type="text" placeholder="Bijv. Verzorgende IG" /></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-vestiging">Vestiging</label><select id="plan-add-vestiging" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-locatie">Locatie</label><select id="plan-add-locatie" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-teamlead">Teamlead</label><select id="plan-add-teamlead" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-teamlid">Teamlid</label><select id="plan-add-teamlid" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-client">Cliënt</label><select id="plan-add-client" class="modal-input modal-select"></select></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-start">Start</label><input id="plan-add-start" class="modal-input" type="datetime-local" required /></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-einde">Einde</label><input id="plan-add-einde" class="modal-input" type="datetime-local" required /></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-leer">Leer (0–3)</label><input id="plan-add-leer" class="modal-input" type="number" min="0" max="3" value="0" /></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-sterren">Sterren (0–3)</label><input id="plan-add-sterren" class="modal-input" type="number" min="0" max="3" value="0" /></div>
+          <div class="modal-field modal-field--rowspan2"><label class="modal-label planning-checkbox"><input type="checkbox" id="plan-add-conflict" /> Markeer als aandacht (conflict / risico)</label></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="planning-add-cancel-btn">Annuleren</button>
+          <button type="submit" class="btn-primary" id="planning-add-submit">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="planning-view-modal" hidden aria-hidden="true">
+    <div class="modal-dialog planning-view-dialog" role="dialog" aria-modal="true" aria-labelledby="planning-view-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="planning-view-title" class="modal-title">Dienst bekijken</h2>
+        <button type="button" class="modal-close" id="planning-view-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body planning-view-body" id="planning-view-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="planning-view-close-sec">Sluiten</button>
+        <button type="button" class="btn-primary" id="planning-view-edit-btn">Bewerken</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="planning.js"></script>
+</body>
+</html>

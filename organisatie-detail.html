@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organisatie — HR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="werkruimte.html#incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="werkruimte.html#kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="werkruimte.html#verlof" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#beleid" class="top-link">Beleid</a>
+            <a href="werkruimte.html#audit" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#organisatie" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#instellingen" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
+      <nav class="side-nav" aria-label="Cliënten module">
+        <a href="clienten.html" class="side-link">Cliënten</a>
+        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
+        <div class="side-group" data-side-group="cl-beschikkingen">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
+            <span class="side-group__label">Beschikkingen</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
+            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="beschikkingen.html" class="side-link side-link--nested">Overzicht</a>
+            <a href="facturen.html" class="side-link side-link--nested">Facturen</a>
+          </div>
+        </div>
+        <a href="organisatie.html" class="side-link is-active" title="Overzicht organisaties">Organisatie</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
+        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
+        <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
+        <span class="side-link side-link--unavailable" title="Nog niet beschikbaar">Facturen importeren</span>
+        <div class="side-group" data-side-group="cl-incidenten">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="false" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, open submenu">
+            <span class="side-group__label">Incidenten</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Incidentenoverzicht</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Dashboard</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Categorieën</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Verbeteringsmaatregelen</span>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+      </div>
+    </aside>
+
+    <main class="content content--hr-list content--gemeente-detail">
+      <div class="content-header">
+        <h1 id="od-page-title">Organisatie</h1>
+        <div class="header-actions">
+          <a href="organisatie.html" class="btn-outline">Terug naar lijst</a>
+        </div>
+      </div>
+
+      <p class="client-detail-missing" id="od-missing" hidden>
+        <span id="od-missing-body">Organisatie niet gevonden.</span>
+        <a href="organisatie.html" class="client-detail-missing__link">Terug naar organisatie</a>
+      </p>
+
+      <div class="gemeente-detail-layout" id="od-root" hidden>
+        <section class="gemeente-detail-vcard" aria-label="Organisatie samenvatting">
+          <div class="gemeente-detail-hero">
+            <div class="gemeente-detail-hero-top">
+              <span class="gemeente-detail-hero-ico" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+              </span>
+              <div class="gemeente-detail-kebab-wrap">
+                <button type="button" class="icon-btn gemeente-detail-kebab-btn" id="od-kebab-btn" aria-expanded="false" aria-haspopup="true" aria-label="Meer acties">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                <div class="gemeente-detail-kebab-panel" id="od-kebab-panel" role="menu" aria-labelledby="od-kebab-btn" hidden>
+                  <a href="organisatie.html" class="gemeente-detail-kebab-link" role="menuitem">Naar overzicht organisaties</a>
+                </div>
+              </div>
+            </div>
+            <div class="gemeente-detail-hero-main">
+              <h2 class="gemeente-detail-hero-name" id="od-hero-name">—</h2>
+              <p class="gemeente-detail-hero-kicker">Organisatie</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="gemeente-detail-main-col">
+          <div class="gemeente-detail-tabs" role="tablist" aria-label="Secties">
+            <span class="gemeente-detail-tab is-active" role="tab" aria-selected="true">Details</span>
+          </div>
+          <div class="gemeente-detail-panels">
+            <section class="gemeente-detail-pan is-active" aria-labelledby="od-section-gegevens">
+              <h3 class="gemeente-detail-section-title" id="od-section-gegevens">Organisatie gegevens</h3>
+              <p class="gemeente-detail-arch-hint" id="od-arch-hint" hidden>Deze organisatie is gearchiveerd. Herstel eerst in het overzicht om te bewerken.</p>
+              <form id="od-form" novalidate>
+                <input type="hidden" id="od-id" name="id" value="" />
+                <div class="modal-field">
+                  <label class="modal-label" for="od-naam">Naam</label>
+                  <input class="modal-input" type="text" id="od-naam" name="naam" required autocomplete="organization" />
+                </div>
+                <div class="gemeente-detail-form-actions">
+                  <button type="submit" class="btn-outline" id="od-save">Wijzigingen opslaan</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="app-toast app-toast--clienten" id="od-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="clienten-data.js" defer></script>
+  <script src="organisatie-data.js" defer></script>
+  <script src="organisatie-detail.js" defer></script>
+</body>
+</html>

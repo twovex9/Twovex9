@@ -1,0 +1,408 @@
+/* top-nav-overflow.js — overflow menu for top navigation */
+(function () {
+  "use strict";
+
+  const nav = document.querySelector(".top-nav");
+  const btn = document.getElementById("top-nav-overflow-btn");
+  const panel = document.getElementById("top-nav-overflow-panel");
+  if (!nav || !btn || !panel) return;
+
+  const navItems = Array.from(nav.children);
+
+  function normalizeFileName(pathname) {
+    const cleaned = String(pathname || "").split("?")[0].split("#")[0];
+    const parts = cleaned.split("/").filter(Boolean);
+    const last = (parts[parts.length - 1] || "index.html").toLowerCase();
+    return last || "index.html";
+  }
+
+  function normalizeHash(value) {
+    const v = String(value || "").trim().toLowerCase();
+    if (!v) return "";
+    return v.startsWith("#") ? v : `#${v}`;
+  }
+
+  function parseHrefParts(href) {
+    const raw = String(href || "").trim();
+    if (!raw || raw === "#") return { file: "", hash: "" };
+    const [filePart, hashPart] = raw.split("#");
+    return {
+      file: normalizeFileName(filePart),
+      hash: normalizeHash(hashPart || ""),
+    };
+  }
+
+  function syncTopNavActiveState() {
+    const currentFile = normalizeFileName(window.location.pathname);
+    const currentHash = normalizeHash(window.location.hash);
+    const effectiveHash = currentFile === "werkruimte.html" && !currentHash ? "#urenregistratie" : currentHash;
+    const hrPages = new Set([
+      "index.html",
+      "nieuws.html",
+      "competenties.html",
+      "competentie-detail.html",
+      "opleidingen.html",
+      "opleiding-detail.html",
+      "locaties.html",
+      "locatie-detail.html",
+      "salarishuis.html",
+      "salarishuis-wijzigingsgeschiedenis.html",
+      "bureaus.html",
+      "bureau-detail.html",
+      "salarisadministratie-exporter.html",
+      "compensatie-saldi.html",
+      "compensatie-berekeningen.html",
+      "compensatie-feestdagen.html",
+      "compensatie-diensttypes.html",
+      "verzuim.html",
+      "medewerker.html"
+    ]);
+    const planningPages = new Set([
+      "planning.html"
+    ]);
+
+    const links = Array.from(nav.querySelectorAll(".top-link"));
+    links.forEach((link) => link.classList.remove("is-active"));
+
+    let activeLink = links.find((link) => {
+      const href = (link.getAttribute("href") || "").trim();
+      if (!href || href === "#") return false;
+      const parsed = parseHrefParts(href);
+      if (parsed.file !== currentFile) return false;
+      if (currentFile === "werkruimte.html" && parsed.hash) {
+        return parsed.hash === effectiveHash;
+      }
+      return true;
+    });
+
+    if (!activeLink && currentFile === "home.html") {
+      activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
+    }
+
+    if (!activeLink && planningPages.has(currentFile)) {
+      activeLink = links.find((link) => {
+        const label = getTopLinkLabel(link);
+        return label === "Planning";
+      }) || null;
+    }
+
+    if (!activeLink && hrPages.has(currentFile)) {
+      activeLink = links.find((link) => {
+        return getTopLinkLabel(link) === "HR";
+      }) || null;
+    }
+
+    const clientenWorkspaceHashes = new Set(["#clienten", "#zorgsoorten", "#beschikkingen", "#incidenten"]);
+    if (!activeLink && currentFile === "werkruimte.html" && clientenWorkspaceHashes.has(effectiveHash)) {
+      activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
+    }
+
+    if (!activeLink && (
+      currentFile === "clienten.html" ||
+      currentFile === "client-detail.html" ||
+      currentFile === "zorgsoorten.html" ||
+      currentFile === "beschikkingen.html" ||
+      currentFile === "beschikkingen-dashboard.html" ||
+      currentFile === "beschikking-detail.html" ||
+      currentFile === "facturen.html" ||
+      currentFile === "organisatie.html" ||
+      currentFile === "organisatie-detail.html" ||
+      currentFile === "gemeenten.html" ||
+      currentFile === "gemeente-detail.html" ||
+      currentFile === "urendeclaraties.html" ||
+      currentFile === "uren-budgettering.html"
+    )) {
+      activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
+    }
+
+    if (!activeLink) {
+      activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
+    }
+
+    if (activeLink) activeLink.classList.add("is-active");
+  }
+
+  function getTopLinkLabel(link) {
+    const clone = link.cloneNode(true);
+    clone.querySelectorAll(".top-link-chev").forEach((c) => c.remove());
+    return clone.textContent.trim();
+  }
+
+  const FALLBACK_ROUTE = "home.html";
+  const TOP_ROUTE_BY_LABEL = {
+      Home: "home.html",
+      Planning: "planning.html",
+      Urenregistratie: "werkruimte.html#urenregistratie",
+      HR: "index.html",
+      Cliënten: "clienten.html",
+      Kilometers: "werkruimte.html#kilometers",
+      Taken: "werkruimte.html#taken",
+      Medewerkers: "index.html",
+      Verlof: "werkruimte.html#verlof",
+      Beleid: "werkruimte.html#beleid",
+      Audit: "werkruimte.html#audit",
+      Organisatie: "werkruimte.html#organisatie",
+      Instellingen: "werkruimte.html#instellingen",
+    };
+  const DROPDOWN_ROUTE_BY_TITLE = {
+      "Overzicht planning": "planning.html",
+      "Beheer planningbeheer": "planning.html",
+      "Geregistreerde uren": "werkruimte.html#urenregistratie",
+      "Labels": "werkruimte.html#urenregistratie",
+      "Medewerkers": "index.html",
+      Cliënten: "clienten.html",
+      Zorgsoorten: "zorgsoorten.html",
+      Beschikkingen: "beschikkingen.html",
+      Facturen: "facturen.html",
+      Incidenten: "werkruimte.html#incidenten",
+      "Kilometer declaraties": "werkruimte.html#kilometers",
+      "Verlofaanvragen": "werkruimte.html#verlof",
+      "Rollen": "werkruimte.html#organisatie",
+      "Teams": "werkruimte.html#organisatie",
+    };
+
+  function resolveTopRoute(link) {
+    const label = getTopLinkLabel(link);
+    let targetHref = TOP_ROUTE_BY_LABEL[label];
+    if (targetHref) return targetHref;
+
+    const parentNavItem = link.closest(".top-nav-item");
+    const firstRealSubLink = parentNavItem?.querySelector('.top-dropdown-link[href]:not([href="#"])');
+    return firstRealSubLink?.getAttribute("href") || FALLBACK_ROUTE;
+  }
+
+  function resolveDropdownRoute(link) {
+    const title = link.querySelector(".top-dropdown-title")?.textContent?.trim() || "";
+    if (DROPDOWN_ROUTE_BY_TITLE[title]) return DROPDOWN_ROUTE_BY_TITLE[title];
+
+    const parentNavItem = link.closest(".top-nav-item");
+    const topLink = parentNavItem?.querySelector(".top-link");
+    return topLink ? resolveTopRoute(topLink) : FALLBACK_ROUTE;
+  }
+
+  function wireTopDropdownDirectRoutes() {
+
+    nav.querySelectorAll(".top-link").forEach((link) => {
+      const currentHref = (link.getAttribute("href") || "").trim();
+      if (currentHref && currentHref !== "#") return;
+
+      const targetHref = resolveTopRoute(link);
+      link.setAttribute("href", targetHref);
+    });
+
+    nav.querySelectorAll(".top-dropdown-link").forEach((link) => {
+      const currentHref = (link.getAttribute("href") || "").trim();
+      if (currentHref && currentHref !== "#") return;
+      link.setAttribute("href", resolveDropdownRoute(link));
+    });
+  }
+
+  function wireFailsafeNavigation() {
+    nav.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+
+      const topLink = target.closest(".top-link");
+      if (topLink && nav.contains(topLink)) {
+        const href = (topLink.getAttribute("href") || "").trim();
+        if (href === "" || href === "#") {
+          event.preventDefault();
+          window.location.href = resolveTopRoute(topLink);
+          return;
+        }
+      }
+
+      const ddLink = target.closest(".top-dropdown-link");
+      if (ddLink && nav.contains(ddLink)) {
+        const href = (ddLink.getAttribute("href") || "").trim();
+        if (href === "" || href === "#") {
+          event.preventDefault();
+          window.location.href = resolveDropdownRoute(ddLink);
+        }
+      }
+    }, true);
+  }
+
+  function getLabel(el) {
+    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
+    if (!link) return "";
+    const clone = link.cloneNode(true);
+    clone.querySelectorAll(".top-link-chev").forEach(c => c.remove());
+    return clone.textContent.trim();
+  }
+
+  function getHref(el) {
+    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
+    return link ? (link.getAttribute("href") || "#") : "#";
+  }
+
+  function isActive(el) {
+    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
+    return link ? link.classList.contains("is-active") : false;
+  }
+
+  function getSubLinks(el) {
+    const dd = el.querySelector(".top-dropdown");
+    if (!dd) return null;
+    const links = [];
+    dd.querySelectorAll(".top-dropdown-link").forEach(a => {
+      const title = a.querySelector(".top-dropdown-title");
+      links.push({
+        label: title ? title.textContent.trim() : a.textContent.trim(),
+        href: a.getAttribute("href") || "#"
+      });
+    });
+    return links.length ? links : null;
+  }
+
+  function resetVisibility() {
+    navItems.forEach(item => {
+      item.classList.remove("top-nav-hidden");
+    });
+  }
+
+  let rafId = null;
+  const ro = new ResizeObserver(() => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(update);
+  });
+
+  let updating = false;
+
+  function update() {
+    if (updating) return;
+    updating = true;
+
+    ro.unobserve(nav);
+
+    resetVisibility();
+
+    const navRight = nav.getBoundingClientRect().right;
+    const btnWidth = 38;
+    const threshold = navRight - btnWidth;
+    const hiddenItems = [];
+
+    for (let i = navItems.length - 1; i >= 0; i--) {
+      const item = navItems[i];
+      const rect = item.getBoundingClientRect();
+      if (rect.right > navRight + 1) {
+        hiddenItems.unshift(item);
+      }
+    }
+
+    if (hiddenItems.length === 0) {
+      btn.classList.remove("is-visible");
+      closePanel();
+      ro.observe(nav);
+      updating = false;
+      return;
+    }
+
+    hiddenItems.forEach(item => item.classList.add("top-nav-hidden"));
+
+    let stillOverflows = true;
+    while (stillOverflows) {
+      stillOverflows = false;
+      for (const item of navItems) {
+        if (item.classList.contains("top-nav-hidden")) continue;
+        const rect = item.getBoundingClientRect();
+        if (rect.right > threshold) {
+          item.classList.add("top-nav-hidden");
+          hiddenItems.push(item);
+          stillOverflows = true;
+          break;
+        }
+      }
+    }
+
+    btn.classList.add("is-visible");
+    buildPanel(navItems.filter(i => i.classList.contains("top-nav-hidden")));
+
+    requestAnimationFrame(() => {
+      ro.observe(nav);
+      updating = false;
+    });
+  }
+
+  function buildPanel(hiddenItems) {
+    panel.innerHTML = "";
+    hiddenItems.forEach(item => {
+      const label = getLabel(item);
+      if (!label) return;
+
+      const href = getHref(item);
+      const active = isActive(item);
+      const subLinks = getSubLinks(item);
+
+      if (subLinks) {
+        const wrapper = document.createElement("div");
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "top-nav-overflow-item" + (active ? " is-active" : "");
+        trigger.innerHTML = label + ' <span style="margin-left:auto;opacity:0.5;font-size:10px">▸</span>';
+        wrapper.appendChild(trigger);
+
+        const sub = document.createElement("div");
+        sub.style.display = "none";
+        sub.style.paddingLeft = "14px";
+
+        subLinks.forEach(sl => {
+          const a = document.createElement("a");
+          a.href = sl.href;
+          a.className = "top-nav-overflow-item";
+          a.textContent = sl.label;
+          sub.appendChild(a);
+        });
+
+        wrapper.appendChild(sub);
+
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const open = sub.style.display !== "none";
+          panel.querySelectorAll("[data-sub-open]").forEach(s => {
+            s.style.display = "none";
+            s.removeAttribute("data-sub-open");
+          });
+          if (!open) {
+            sub.style.display = "block";
+            sub.setAttribute("data-sub-open", "");
+          }
+        });
+
+        panel.appendChild(wrapper);
+      } else {
+        const a = document.createElement("a");
+        a.href = href;
+        a.className = "top-nav-overflow-item" + (active ? " is-active" : "");
+        a.textContent = label;
+        panel.appendChild(a);
+      }
+    });
+  }
+
+  function closePanel() {
+    panel.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = panel.classList.contains("is-open");
+    if (open) {
+      closePanel();
+    } else {
+      panel.classList.add("is-open");
+      btn.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  panel.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", closePanel);
+
+  wireTopDropdownDirectRoutes();
+  wireFailsafeNavigation();
+  syncTopNavActiveState();
+  ro.observe(nav);
+  update();
+})();

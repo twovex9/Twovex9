@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cliëntdossier — HR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="werkruimte.html#incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="werkruimte.html#kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="werkruimte.html#verlof" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#beleid" class="top-link">Beleid</a>
+            <a href="werkruimte.html#audit" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#organisatie" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#instellingen" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
+      <nav class="side-nav" aria-label="Cliënten module">
+        <a href="clienten.html" class="side-link is-active" title="Overzicht cliënten">Cliënten</a>
+        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
+        <div class="side-group" data-side-group="cl-beschikkingen-d">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cld-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cld-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
+            <span class="side-group__label">Beschikkingen</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cld-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
+            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="beschikkingen.html" class="side-link side-link--nested">Overzicht</a>
+            <a href="facturen.html" class="side-link side-link--nested">Facturen</a>
+          </div>
+        </div>
+        <a href="organisatie.html" class="side-link">Organisatie</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
+        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
+        <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
+        <span class="side-link side-link--unavailable" title="Nog niet beschikbaar">Facturen importeren</span>
+        <div class="side-group" data-side-group="cl-incidenten-d">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cld-nav-incidenten-btn" aria-expanded="false" aria-controls="cld-nav-incidenten-sub" aria-label="Incidenten, open submenu">
+            <span class="side-group__label">Incidenten</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cld-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Incidentenoverzicht</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Dashboard</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Categorieën</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Verbeteringsmaatregelen</span>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+      </div>
+    </aside>
+
+    <main class="content content--hr-list content--client-detail">
+      <div class="content-header">
+        <h1 id="cd-h1">Cliëntdossier</h1>
+        <div class="header-actions">
+          <a href="clienten.html" class="btn-outline" id="cd-back-link">Terug naar lijst</a>
+        </div>
+      </div>
+
+      <p class="client-detail-missing" id="cd-missing" hidden>Cliënt niet gevonden. <a href="clienten.html" class="client-detail-missing__link">Terug naar cliënten</a></p>
+
+      <div class="client-detail-layout" id="cd-root" hidden>
+        <aside class="client-detail-vcard" aria-label="Korte samenvatting">
+          <div class="client-detail-hero">
+            <p class="client-detail-hero-label">Cliënt</p>
+            <h2 class="client-detail-hero-name" id="cd-hero-name">—</h2>
+          </div>
+          <div class="client-detail-vbody">
+            <p class="client-detail-kv"><span class="client-detail-kv-k">Cliëntnummer</span><span class="client-detail-kv-v" id="cd-hero-nr">—</span></p>
+            <div class="client-detail-block">
+              <h3 class="client-detail-h3">Zorgdata</h3>
+              <p class="client-detail-kv"><span class="client-detail-kv-k">In zorg</span><span class="client-detail-kv-v" id="cd-aside-inzorg">—</span></p>
+              <p class="client-detail-kv"><span class="client-detail-kv-k">Uit zorg</span><span class="client-detail-kv-v" id="cd-aside-uitzorg">—</span></p>
+            </div>
+            <div class="client-detail-block">
+              <h3 class="client-detail-h3">Medewerker</h3>
+              <label class="visually-hidden" for="cd-emp">Medewerker koppelen uit HR</label>
+              <select class="modal-input modal-select client-detail-search" id="cd-emp" name="medewerkerEmpId" aria-label="Medewerker uit HR-lijst"></select>
+              <p class="client-detail-hint" id="cd-emp-hint" aria-live="polite">Er is nog geen medewerker gekoppeld aan deze cliënt.</p>
+            </div>
+            <div class="client-detail-block">
+              <h3 class="client-detail-h3">Gedragswetenschapper</h3>
+              <label class="visually-hidden" for="cd-srch-gw">Zoeken gedragswetenschapper</label>
+              <input type="search" class="search client-detail-search" id="cd-srch-gw" name="gedragswetenschapperZoek" placeholder="Zoek gedragswetenschapper…" autocomplete="off" />
+              <p class="client-detail-hint" id="cd-gw-hint" aria-live="polite">Er is nog geen gedragswetenschapper gekoppeld aan deze cliënt.</p>
+            </div>
+            <div class="client-detail-block">
+              <h3 class="client-detail-h3">Rooster</h3>
+              <a href="planning.html" class="btn-outline client-detail-wide-btn" id="cd-rooster" title="Open planning">Rooster bekijken</a>
+            </div>
+            <div class="client-detail-block client-detail-block--notities">
+              <h3 class="client-detail-h3">Notities (zijbalk)</h3>
+              <label class="visually-hidden" for="cd-zij-not">Notities in zijbalk</label>
+              <textarea class="client-detail-nottext" id="cd-zij-not" name="zijbalkNotities" rows="3" placeholder="Korte aantekeningen…"></textarea>
+              <p class="client-detail-hint" id="cd-zij-not-hint" aria-live="polite">Geen notities: typ in het vak hierboven of in het tabblad Notities in.</p>
+            </div>
+            <div class="client-detail-block client-detail-block--required-forms">
+              <h3 class="client-detail-h3">Required forms</h3>
+              <label class="visually-hidden" for="cd-f-req">Required forms (referentie)</label>
+              <input
+                class="client-detail-req"
+                type="text"
+                id="cd-f-req"
+                name="requiredForms"
+                form="cd-form"
+                autocomplete="off"
+                placeholder="Bijv. toetsen, formulieren…"
+              />
+              <p class="client-detail-hint" id="cd-req-hint" aria-live="polite">Wordt mee opgeslagen met Wijzigingen opslaan.</p>
+            </div>
+          </div>
+        </aside>
+
+        <div class="client-detail-panel-wrap">
+          <div class="client-detail-tabs" role="tablist" aria-label="Dossier-secties">
+            <button type="button" class="client-detail-tab is-active" id="cd-tab-d" role="tab" aria-selected="true" aria-controls="cd-pan-d" data-cd-panel="d">Details</button>
+            <button type="button" class="client-detail-tab" id="cd-tab-b" role="tab" aria-selected="false" aria-controls="cd-pan-b" data-cd-panel="b" tabindex="-1">Beschikkingen</button>
+            <button type="button" class="client-detail-tab" id="cd-tab-p" role="tab" aria-selected="false" aria-controls="cd-pan-p" data-cd-panel="p" tabindex="-1">Betalingen</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="c" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-c">Contacten</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="n" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-n">Notities</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="j" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-j">Documenten</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="r" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-r">Rapportages</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="q" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-q">Vragenlijsten</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
+          </div>
+
+          <div class="client-detail-panels table-card" id="cd-panels">
+            <section class="client-detail-pan is-active" id="cd-pan-d" role="tabpanel" aria-labelledby="cd-tab-d" aria-hidden="false">
+              <h3 class="client-detail-pan-h">Details</h3>
+              <form id="cd-form" novalidate>
+                <div class="client-detail-form-grid">
+                  <div class="modal-field">
+                    <label class="modal-label" for="cd-f-vn">Voornaam</label>
+                    <input class="modal-input" type="text" id="cd-f-vn" name="voornaam" required autocomplete="given-name" />
+                  </div>
+                  <div class="modal-field">
+                    <label class="modal-label" for="cd-f-an">Achternaam</label>
+                    <input class="modal-input" type="text" id="cd-f-an" name="achternaam" required autocomplete="family-name" />
+                  </div>
+                  <div class="modal-field">
+                    <label class="modal-label" for="cd-f-nr">Cliëntnummer</label>
+                    <input class="modal-input" type="number" id="cd-f-nr" name="clientnummer" min="1" required />
+                  </div>
+                  <div class="modal-field">
+                    <span class="modal-label">Locatie</span>
+                    <div class="client-detail-select-b">
+                      <span class="client-detail-sdot client-detail-sdot--loc" id="cd-f-loc-dot" aria-hidden="true"></span>
+                      <select class="modal-input modal-select" id="cd-f-loc" name="locatie" aria-label="Locatie">
+                        <option value="">(Leeg — later invullen)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-field">
+                    <span class="modal-label">Fase</span>
+                    <div class="client-detail-select-b">
+                      <span class="client-detail-sdot client-detail-sdot--fase" id="cd-f-fase-dot" aria-hidden="true"></span>
+                      <select class="modal-input modal-select" id="cd-f-fase" name="fase" aria-label="Fase">
+                        <option value="in zorg">In zorg</option>
+                        <option value="in aanvraag">In aanvraag</option>
+                        <option value="uit zorg">Uit zorg</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-field">
+                    <label class="modal-label" for="cd-f-izd">In zorg (datum)</label>
+                    <input class="modal-input" type="date" id="cd-f-izd" name="inZorgDatum" />
+                  </div>
+                  <div class="modal-field client-detail-field--full">
+                    <span class="modal-label">Gemeente</span>
+                    <div class="client-detail-gemrow">
+                      <input class="modal-input" type="text" id="cd-f-gem" name="gemeente" list="cd-gem-list" />
+                      <datalist id="cd-gem-list"></datalist>
+                      <button type="button" class="client-detail-gem-x btn-outline" id="cd-f-gem-clear" aria-label="Gemeente wissen" title="Wis gemeente">×</button>
+                    </div>
+                  </div>
+                  <div class="modal-field">
+                    <label class="modal-label" for="cd-f-ui">Uit zorg (datum) — beheer</label>
+                    <input class="modal-input" type="date" id="cd-f-ui" name="uitZorgDatum" />
+                  </div>
+                  <div class="modal-field">
+                    <span class="modal-label">Organisatie</span>
+                    <div class="client-detail-select-b">
+                      <span class="client-detail-sdot client-detail-sdot--neut" id="cd-f-org-dot" aria-hidden="true"></span>
+                      <select class="modal-input modal-select" id="cd-f-org" name="organisatie" aria-label="Organisatie">
+                        <option value="">Selecteer Organisatie</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="client-detail-form-actions">
+                  <button type="submit" class="btn-primary" id="cd-save">Wijzigingen opslaan</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="client-detail-pan client-detail-pan--beschikkingen" id="cd-pan-b" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-besc-h">Beschikkingen</h3>
+              <div class="client-detail-besc-bar">
+                <div class="toolbar client-detail-besc-toolbar">
+                  <input class="search" type="search" id="cdb-search" placeholder="Zoeken…" autocomplete="off" aria-label="Zoek in beschikkingen" />
+                  <label class="switch switch--yellow" for="cdb-60d">
+                    <input type="checkbox" id="cdb-60d" name="cdb_60d" />
+                    <span class="switch-slider"></span>
+                    <span class="switch-label">Verloopt binnen 60d</span>
+                  </label>
+                </div>
+                <div class="header-actions client-detail-besc-actions">
+                  <div class="columns-dropdown">
+                    <button
+                      class="btn-outline columns-btn"
+                      type="button"
+                      id="cdb-columns-btn"
+                      aria-expanded="false"
+                      aria-haspopup="true"
+                      aria-label="Kolommen"
+                    >
+                      <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                      </svg>
+                      Kolommen
+                    </button>
+                    <div class="columns-panel" id="cdb-columns-panel" role="menu" aria-labelledby="cdb-columns-btn" hidden>
+                      <div class="columns-panel-title">Kolommen weergeven</div>
+                      <ul class="columns-list" id="cdb-columns-list" role="none">
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Naam
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="zorg" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Zorgsoort
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="fase" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Fase
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="periode" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Periode
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="tarief" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Tarief
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="tedecl" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Te declareren LN
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="nogdecl" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Nog niet gedeclareerd
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="decmeth" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Declaratie methode
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="status" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Status
+                          </button>
+                        </li>
+                        <li role="none">
+                          <button type="button" class="column-toggle is-checked" data-col="acties" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Rij
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <button class="btn-outline" type="button" id="cdb-export-btn" aria-label="Exporteren">
+                    <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Exporteren
+                  </button>
+                  <button class="btn-primary" type="button" id="cdb-add-btn">+ Beschikking toevoegen</button>
+                </div>
+              </div>
+
+              <div class="client-detail-besc-tableblock">
+                <div class="table-wrapper">
+                  <table class="employees-table client-detail-besc-table" id="cdb-table" data-page-size="15">
+                    <thead>
+                      <tr>
+                        <th class="th-check" data-col="select">
+                          <input type="checkbox" class="table-checkbox" id="cdb-check-all" aria-label="Selecteer alles" />
+                        </th>
+                        <th data-col="naam" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Naam</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op naam">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="zorg" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Zorgsoort</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op zorgsoort">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="fase" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Fase</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op fase">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="periode" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Periode</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op periode">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="tarief" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Tarief</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op tarief">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="tedecl" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Te declareren LN</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op te declareren">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="nogdecl" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Nog niet gedeclareerd</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op nog niet gedeclareerd">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="decmeth" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Declaratie methode</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op declaratie methode">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="status" class="th-sort">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Status</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op status">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
+                        <th data-col="acties" class="cd-besc-acties-th" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cdb-tbody">
+                      <tr
+                        class="cdb-data-row"
+                        data-besc-naam="ambulant"
+                        data-besc-binnen-60="0"
+                        data-besc-naam-norm="ambulant ambulant intens ons"
+                      >
+                        <td data-col="select">
+                          <input type="checkbox" class="table-checkbox cdb-row-check" aria-label="Selecteer rij" data-id="b1" />
+                        </td>
+                        <td data-col="naam">Ambulant</td>
+                        <td data-col="zorg"><span class="cd-besc-zorgtag">Ambulant intens</span></td>
+                        <td data-col="fase"><span class="cd-besc-fase cd-besc-fase--actief">Actief</span></td>
+                        <td data-col="periode">
+                          <span class="cd-besc-periode-ico" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <rect x="3" y="4" width="18" height="18" rx="2" />
+                              <line x1="16" y1="2" x2="16" y2="6" />
+                              <line x1="8" y1="2" x2="8" y2="6" />
+                              <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                          </span>
+                          6 jan 2024 - 5 jan 2026
+                        </td>
+                        <td data-col="tarief">€ 60,60 / uur</td>
+                        <td data-col="tedecl">—</td>
+                        <td data-col="nogdecl">—</td>
+                        <td data-col="decmeth">ONS</td>
+                        <td data-col="status"><span class="cd-besc-stat cd-besc-stat--betaald">Betaald</span></td>
+                        <td data-col="acties" class="cd-besc-actions-cell">
+                          <button type="button" class="cd-besc-more" aria-label="Rijacties" title="Meer">
+                            <svg class="cd-besc-more-ico" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <circle cx="5" cy="12" r="2" />
+                              <circle cx="12" cy="12" r="2" />
+                              <circle cx="19" cy="12" r="2" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr id="cdb-filter-empty" class="cdb-besc-filter-empty" style="display: none">
+                        <td class="cdb-besc-filter-empty-td" colspan="11">Geen resultaten. Pas zoek- of filterinstellingen aan.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="table-footer table-footer--pagebar cl-table-footer" id="cdb-table-footer" role="navigation" aria-label="Paginatie">
+                  <div class="footer-left">
+                    <span id="cdb-pager-range" class="pager-range">1-1 van 1 totaal</span>
+                  </div>
+                  <div class="footer-right">
+                    <label class="footer-rows-wrap" for="cdb-rows">
+                      <span class="footer-rows-label">Rijen per pagina</span>
+                      <select id="cdb-rows" class="footer-rows-select" name="rows" aria-label="Rijen per pagina">
+                        <option value="15" selected>15</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                      </select>
+                    </label>
+                    <span id="cdb-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+                    <span class="pager" role="navigation" aria-label="Paginatie">
+                      <button type="button" class="pager-btn" id="cdb-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+                      <button type="button" class="pager-btn" id="cdb-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+                      <button type="button" class="pager-btn" id="cdb-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+                      <button type="button" class="pager-btn" id="cdb-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-p" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Betalingen</h3>
+              <p class="client-detail-placeholder">Hier kunnen straks <strong>betalingen</strong> of factuurstromen zichtbaar gemaakt worden. Import en koppeling volgen.</p>
+              <div class="client-detail-empty-list">Geen betalingsgegevens vastgelegd.</div>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-c" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Contacten</h3>
+              <p class="client-detail-placeholder">Contactpersonen, netwerk en verwijzers komen hier. Vul later aan of koppel met een agenda.</p>
+              <ul class="client-detail-ul">
+                <li>Primair: —</li>
+                <li>Overig: —</li>
+              </ul>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-n" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Notities</h3>
+              <p class="client-detail-placeholder">Dossier-notities: gebruik de zijbalk of voeg straks vaste notitielijnen toe.</p>
+              <label class="visually-hidden" for="cd-tabnot">Dossier-notities (lang)</label>
+              <textarea class="client-detail-nottext client-detail-nottext--wide" id="cd-tabnot" rows="6" placeholder="Notities voor in dit tabblad…" name="tabNotities"></textarea>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-j" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Documenten</h3>
+              <p class="client-detail-placeholder">Hier kunnen straks <strong>documenten</strong> (PDF, brieven) beheerd of geïmporteerd worden. Upload koppelt hier aan.</p>
+              <p class="client-detail-empty-list">Nog geen bestanden: voeg lokaal toe wanneer beschikbaar is.</p>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-r" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Rapportages</h3>
+              <p class="client-detail-placeholder">Lopende en afgeronde rapporten per cliënt worden hier gegroepeerd. Export/print volgt zodra aangesloten.</p>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-q" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Vragenlijsten</h3>
+              <p class="client-detail-placeholder">Ingevulde of openstaande vragenlijsten per cliënt. Koppeling met toets- of e-forms volgt.</p>
+            </section>
+            <section class="client-detail-pan" id="cd-pan-i" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Incidenten</h3>
+              <p class="client-detail-placeholder">Zie ook <a href="werkruimte.html#incidenten" class="client-detail-inline-a">incidenten in de werkruimte</a> voor algemene registratie. Cliëntgekoppeld overzicht volgt.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="app-toast app-toast--clienten" id="cd-toast" role="status" aria-live="polite" hidden></div>
+
+  <div class="modal-overlay" id="cdb-export-modal" hidden aria-hidden="true">
+    <div class="modal-dialog cdb-export-dialog" role="dialog" aria-modal="true" aria-labelledby="cdb-export-title" aria-describedby="cdb-export-desc" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="cdb-export-title">Exporteren</h2>
+        <button type="button" class="modal-close" id="cdb-export-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body cdb-export-body">
+        <p class="cdb-export-desc" id="cdb-export-desc">
+          Selecteer de kolommen die je wilt opnemen in je export. Gebruik de zoekfunctie om kolommen te filteren en de selectievakjes om ze te selecteren.
+        </p>
+        <div class="cdb-export-toolbar">
+          <div class="cdb-export-searchwrap">
+            <input
+              type="search"
+              class="search cdb-export-search"
+              id="cdb-export-search"
+              placeholder="Kolommen zoeken…"
+              autocomplete="off"
+              aria-label="Kolommen zoeken"
+            />
+          </div>
+          <label class="cdb-export-selall" for="cdb-export-selall">
+            <input type="checkbox" class="table-checkbox" id="cdb-export-selall" />
+            <span class="cdb-export-selall-text">Selecteer alles</span>
+          </label>
+        </div>
+        <div class="cdb-export-cols" id="cdb-export-cols" role="group" aria-label="Kolommen kiezen">
+          <ul class="cdb-export-list" id="cdb-export-list-l" role="list">
+            <li class="cdb-export-item" data-cdb-exp-filter="id">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="id" />
+                <span>ID</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="achternaam">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="achternaam" />
+                <span>Achternaam</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="locatie">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="locatie" />
+                <span>Locatie</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="organisatie">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="organisatie" />
+                <span>Organisatie</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer telefoon nummer">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_tel" />
+                <span>Verwijzer telefoonnummer</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="datum in zorg">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="datum_in_zorg" />
+                <span>Datum in zorg</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="zorgsoort">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="zorgsoort" />
+                <span>Zorgsoort</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="declaratiemethode declaratie">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="decl_meth" />
+                <span>Declaratiemethode</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="einddatum">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="einddatum" />
+                <span>Einddatum</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="openstaand bedrag">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="open_bedrag" />
+                <span>Openstaand bedrag</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="ambulant uren week">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="amb_uren" />
+                <span>Ambulante uren per week</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="tarief uur uurtarief">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="tarief_uur" />
+                <span>Tarief per uur</span>
+              </label>
+            </li>
+          </ul>
+          <ul class="cdb-export-list" id="cdb-export-list-r" role="list">
+            <li class="cdb-export-item" data-cdb-exp-filter="voornaam">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="voornaam" />
+                <span>Voornaam</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="cliëntnummer client nummer">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="clientnummer" />
+                <span>Cliëntnummer</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="gemeente">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="gemeente" />
+                <span>Gemeente</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer naam">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_naam" />
+                <span>Verwijzer naam</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer e-mail e-mailadres">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_email" />
+                <span>Verwijzer e-mailadres</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="fase">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="fase" />
+                <span>Fase</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="naam">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="naam" />
+                <span>Naam</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="startdatum start">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="startdatum" />
+                <span>Startdatum</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="status">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="status" />
+                <span>Status</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="huidig maandbedrag">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="maandbedrag" />
+                <span>Huidig maandbedrag</span>
+              </label>
+            </li>
+            <li class="cdb-export-item" data-cdb-exp-filter="tarief dag">
+              <label class="cdb-export-row">
+                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="tarief_dag" />
+                <span>Tarief per dag</span>
+              </label>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="cdb-export-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="cdb-export-confirm">Exporteren</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="cdb-add-modal" hidden aria-hidden="true">
+    <div class="modal-dialog cdb-add-dialog" role="dialog" aria-modal="true" aria-labelledby="cdb-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="cdb-add-title">Beschikking toevoegen</h2>
+        <button type="button" class="modal-close" id="cdb-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-form" id="cdb-add-besc-form" novalidate>
+        <div class="modal-body">
+          <div class="client-detail-form-grid cdb-add-besc-grid">
+            <div class="modal-field">
+              <span class="modal-label" id="cdb-add-client-lbl">Cliënt</span>
+              <div class="cdb-add-client-mimic modal-input" role="group" aria-labelledby="cdb-add-client-lbl" aria-readonly="true">
+                <div class="cdb-add-client-l">
+                  <span id="cdb-add-client-name" class="cdb-add-client-txt">—</span>
+                  <span class="cl-fase-pill cl-fase-pill--in-zorg" id="cdb-add-client-fase">In zorg</span>
+                </div>
+                <span class="cdb-add-mimic-ico" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M8 9l4-4 4 4" />
+                    <path d="M8 15l4 4 4-4" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-naam">Naam</label>
+              <input class="modal-input" type="text" id="cdb-add-naam" name="naam" autocomplete="off" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-decl">Declaratie methode</label>
+              <select class="modal-input modal-select" id="cdb-add-decl" name="decl_meth">
+                <option value=""></option>
+                <option value="ONS">ONS</option>
+                <option value="iFact">iFact</option>
+                <option value="handmatig">Handmatig</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-start">Startdatum</label>
+              <div class="cdb-add-date">
+                <input class="modal-input" type="date" id="cdb-add-start" name="start" />
+                <span class="cdb-add-date-ico" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-eind">Einddatum</label>
+              <div class="cdb-add-date">
+                <input class="modal-input" type="date" id="cdb-add-eind" name="eind" />
+                <span class="cdb-add-date-ico" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-zorg">Zorgsoort</label>
+              <select class="modal-input modal-select cdb-add-select--stack" id="cdb-add-zorg" name="zorgsoort">
+                <option value="">Selecteer zorgsoort</option>
+                <option value="ambulant-intens">Ambulant intens</option>
+                <option value="dagbesteding">Dagbesteding</option>
+                <option value="woon-zorg">Woon-zorg</option>
+                <option value="overig">Overig</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cdb-add-fase">Fase</label>
+              <select class="modal-input modal-select cdb-add-select--stack" id="cdb-add-fase" name="besc_fase">
+                <option value="">Selecteer een fase</option>
+                <option value="actief">Actief</option>
+                <option value="aangevraagd">Aangevraagd</option>
+                <option value="afgehandeld">Afgehandeld</option>
+                <option value="verlopen">Verlopen</option>
+              </select>
+            </div>
+            <div class="modal-field cdb-add-besc-placeholder" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="cdb-add-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="cdb-add-submit">Toevoegen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="clienten-data.js" defer></script>
+  <script src="fase-ui.js" defer></script>
+  <script src="organisatie-data.js" defer></script>
+  <script src="beschikkingen-besc-bulk.js" defer></script>
+  <script src="beschikkingen-data.js" defer></script>
+  <script src="client-detail.js" defer></script>
+</body>
+</html>

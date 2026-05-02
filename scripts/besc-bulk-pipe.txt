@@ -1,0 +1,100 @@
+322|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+326|Verblijf en behandeling|veb|a|||357.84|dag|0|0|ONS|b
+326|Ambulant|amb|a|||90.6|uur|0|0|ONS|b
+330|Gecombineerd|geo|a|||0|week|0|0|ONS|o
+335|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+335|Verblijf en behandeling|veb|a|||376.19|dag|0|0|ONS|b
+331|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+328|verblijf en behandeling|veb|a|2026-01-09|2026-07-08|376.19|dag|9780.94|19730.33|ONS|b
+279|Ambulant|amb|a|||86.4|uur|0|0|ONS|b
+327|Gecombineerd|geo|v|2025-12-23|2026-01-04|357.85|week|0|0|ONS|o
+261|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+333|ambulant en verblijf|geo|a|2025-12-23|2026-03-23|14728|week|0|0|Handmatig|o
+328|ambulant 24 u / week gedurende 4 weken|amb|a|2025-12-11|2026-03-08|86.4|uur|0|0|ONS|b
+328|crisis 4 weken|veb|v|2025-12-11|2026-01-07|290|dag|0|1968.4|ONS|b
+330|ambulant 10 u / dag|amb|i|2025-12-15|2026-12-10|86.4|uur|0|0|ONS|b
+330|verblijf|veb|i|2025-12-15|2026-12-10|357.84|dag|9303.84|20543.71|ONS|b
+331|ambulant 10 u / dag|amb|i|2025-12-15|2026-12-10|86.4|uur|0|0|ONS|b
+331|verblijf|veb|i|2025-12-15|2026-12-10|357.84|dag|0|0|ONS|b
+323|beschikking wordt afgegeven door alkmaar|veb|i|2025-11-28|2026-06-11|357.84|dag|9303.84|15928.49|ONS|b
+322|verblijf vanaf 7 november|veb|i|||357|dag|9282|31010.28|ONS|b
+321|beschikking ambulant vanuit Timon|amb|i|||86.4|uur|0|0|Handmatig|b
+292|verblijf behandel vanaf 4/11 in aanvraag|veb|z|2025-11-03|2026-11-02|381|dag|9906|56388|ONS|b
+321|Gecombineerd|geo|a|||0|week|0|0|ONS|o
+319|Gecombineerd|geo|a|||0|week|0|0|ONS|b|Elana van Milligen
+324|ambulant 10 u / dag.|amb|a|2025-11-25|2026-01-10|86.4|uur|0|0|ONS|b
+99820|Verblijf en behandeling|veb|v|2024-01-01|2024-12-01|357.84|dag|0|0|ONS|b|Jimmy Toemen
+324|Verblijf en behandeling|veb|a|2025-11-25|2026-07-09|357.84|dag|9303.84|20543.71|ONS|b
+206|Verblijf en behandeling|veb|a|||235.08|dag|0|0|ONS|b|Shadena Bouman
+320|verblijf en behandeling|veb|a|2025-10-16|2026-03-18|357.84|dag|0|16182.72|ONS|b
+302|verlenging vanaf 18-11|veb|a|2025-11-30|2026-05-14|285.22|dag|7415.72|9653.99|ONS|b|Sara Norouz
+315|Gecombineerd|geo|a|2025-10-13|2025-12-19|7352|week|0|0|ONS|o
+228|Gecombineerd|geo|a|||0|week|0|0|ONS|o
+313|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+209|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+267|Gecombineerd|geo|a|||0|week|0|0|ONS|o
+261|Gecombineerd|veb|v|2024-01-01|2024-01-01|0.01|dag|0|0|ONS|o|Lucas Kortenhoeven
+301|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+276|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+291|Gecombineerd|geo|a|||0|week|0|0|ONS|b
+319|van 08-10-2025 tot 30-10-2025 in zorg|geo|v|2025-10-07|2025-10-29|1|week|0|0|Handmatig|o|Elana van Milligen
+225|Verblijf en behandeling|veb|a|||206.56|dag|0|0|ONS|b
+209|Verblijf en behandeling|veb|a|||0|dag|0|0|ONS|b
+267|Verblijf en behandeling|veb|a|||0|dag|0|0|ONS|o
+301|Verblijf en behandeling|veb|a|||0|dag|0|0|ONS|b
+253|Verblijf en behandeling|veb|a|||206.56|dag|0|0|ONS|b
+281|Indicatie wonen vanaf 21 okt.|veb|a|2025-10-21|2026-04-19|334.3|dag|6351.7|19723.7|ONS|b
+235|Verblijf en behandeling|veb|v|2025-09-30|2025-12-31|334.3|dag|0|0|ONS|b
+184|WLZ 14 u week|wlz|a|2025-01-01|2025-12-31|77|uur|0|5056.59|WLZ|b
+197|WLZ 13.25u week|wlz|a|2025-01-01|2025-12-31|77|uur|0|5993.68|WLZ|b
+237|WLZ 21 u/ week|wlz|a|2025-01-01|2025-12-31|77|uur|0|19852.14|WLZ|b
+203|wlz|wlz|v|2023-12-01|2023-12-31|77|uur|0|0|WLZ|b|Ahmet Kat
+200|WLZ indicatie 12.5 u / week|wlz|a|2025-10-01|2025-12-29|77|uur|0|2637.25|WLZ|b
+199|WLZ indicatie Phabek 13 u / week|wlz|a|2024-12-31|2025-12-31|77|uur|0|12037.41|WLZ|b|Phabek Mityaniq
+196|WLZ 7.5 u / week|wlz|a|2024-12-29|2025-12-29|77|uur|0|5082|WLZ|b
+318|verblijf en behandeling|veb|a|2025-10-03|2026-04-02|357.84|dag|715.68|20543.71|ONS|b
+99999|Test beschikking|amb|a|2024-12-31|2025-11-26|10|uur|0|0|Handmatig|b|Test Cliënt
+317|Verblijf en behandeling|veb|a|2025-09-23|2026-04-06|357.84|dag|2147.04|20692.56|ONS|b
+261|youz|veb|v|2024-07-01|2025-10-03|513.28|dag|0|0|Handmatig|o|Lucas Kortenhoeven
+209|Verblijf en behandeling|veb|a|||0|dag|0|0|Handmatig|b
+301|Verblijf en behandeling|veb|a|||0|dag|0|0|Handmatig|o
+99821|Verblijf en behandeling|veb|v|2025-04-24|2025-09-05|206.56|dag|0|0|Handmatig|b|Santi Veenendaal Sepulveda
+225|Verblijf en behandeling|veb|a|||206.56|dag|0|0|Handmatig|b
+178|Verblijf en behandeling|veb|a|||357.84|dag|0|0|ONS|b
+313|via enver|veb|v|2025-06-10|2025-07-02|111|dag|0|0|Handmatig|o
+12|fasehuis|veb|a|2025-04-15|2026-06-11|206.56|dag|5370.56|0|Handmatig|o
+315|handmatig|geo|v|2025-08-11|2025-10-11|7649.01|week|0|0|Handmatig|o
+216|ambulant|amb|a|2025-07-01|2025-10-31|72|uur|0|0|ONS|b
+152|fasewonen|veb|a|2025-02-06|2026-02-09|206.56|dag|0|0|Handmatig|o
+108|fasewonen|veb|a|2024-09-14|2026-01-10|206.56|dag|0|0|Handmatig|b
+267|3634,62 per week|veb|a|2025-06-26|2026-03-29|501.43|dag|0|0|Handmatig|o|Ricardo Rens
+228|bepaling jeugdhulp eindd 05042026|veb|a|2026-01-01|2026-04-02|357.76|dag|715.52|32198.4|Handmatig|b
+228|fasewonen ihub|veb|a|2024-04-07|2025-11-30|357.76|dag|0|0|Handmatig|o
+234|fasewonen|veb|i|2025-08-01|2025-09-30|206.56|dag|0|0.1|Handmatig|o
+234|fasewonen|veb|v|2024-05-02|2025-07-31|206.56|dag|0|0|Handmatig|o
+250|fasewonen|veb|a|2024-06-15|2025-11-25|206.56|dag|0|0|Handmatig|o
+253|fasewonen|veb|a|2025-03-08|2025-12-30|206.56|dag|0|0|Handmatig|o
+103|fasewonen|veb|a|2024-01-07|2025-10-22|206.56|dag|0|0|Handmatig|b|Shufrandly Faries
+308|Ambulant|amb|v|2025-05-31|2025-06-30|91.8|uur|0|0|ONS|b
+311|Verblijf en behandeling|veb|v|2025-05-09|2025-08-09|357.86|dag|0|0|ONS|b
+311|Ambulant|amb|v|2025-05-08|2025-08-08|86.4|uur|0|0|ONS|b
+225|Ambulant|amb|a|2025-06-20|2026-07-30|72|uur|0|0|ONS|b
+278|Ambulant|amb|a|2025-06-28|2026-01-09|95.4|uur|0|0|ONS|b
+284|Verblijf en behandeling|veb|a|2025-05-16|2025-07-03|357.84|dag|0|0|ONS|b
+284|Ambulant|amb|a|2025-06-02|2025-07-03|86.4|uur|0|0|ONS|b
+188|Verblijf en behandeling|veb|a|2025-01-01|2025-12-31|313.94|dag|0|0|ONS|o
+198|Ambulant|amb|a|2025-03-12|2026-09-06|66|uur|0|0|ONS|b|Nouska Westerbeek
+178|Verblijf en behandeling|veb|a|2025-02-18|2026-02-18|206.56|dag|0|0|Handmatig|o
+246|Verblijf en behandeling|veb|v|2024-05-31|2025-04-29|357.84|dag|0|0|ONS|b
+293|Verblijf en behandeling|veb|a|2025-01-16|2027-01-29|357.84|dag|9303.84|14818.27|ONS|b|Eliza Zwart
+172|Verblijf en behandeling (Castricum)|veb|a|2025-02-04|2026-02-26|357.84|dag|0|8734.99|ONS|b
+172|Ambulant (alkmaar)|amb|a|2025-05-16|2026-08-16|72|uur|0|0|ONS|b
+309|Verblijf en behandeling|veb|a|2025-02-25|2026-02-28|357.84|dag|0|9092.83|ONS|b|Danique Rietveld
+297|Ambulant|amb|i|2025-07-19|2025-12-02|87|uur|0|0|ONS|b|Storm Kueter
+99901|Verblijf en behandeling|veb|a|2025-01-01|2026-06-22|341.08|dag|8868.08|20123.72|ONS|b|Yassir Maalin
+276|Verblijf en behandeling|veb|a|2024-12-31|2026-06-30|341|dag|8866|14649.96|ONS|b
+276|Ambulant|amb|a|2025-09-01|2025-12-31|77.4|uur|0|0|ONS|b
+21|Verblijf en behandeling|veb|v|2024-12-31|2025-03-31|357.84|dag|0|0|ONS|b|Jason Beltzer
+235|Verblijf en behandeling|veb|v|2025-04-04|2025-09-29|318.68|dag|0|0|ONS|b|Diboya Boerlijst
+206|Verblijf en behandeling|veb|v|2025-03-17|2025-11-14|235.08|dag|0|0|ONS|b|Shadena Bauman
+165|Verblijf en behandeling|veb|v|2025-05-05|2025-06-01|357.84|dag|0|0|ONS|b

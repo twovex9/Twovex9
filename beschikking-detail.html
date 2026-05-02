@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beschikking — HR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="werkruimte.html#incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="werkruimte.html#kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="werkruimte.html#verlof" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#beleid" class="top-link">Beleid</a>
+            <a href="werkruimte.html#audit" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html#organisatie" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="werkruimte.html#organisatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#instellingen" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
+      <nav class="side-nav" aria-label="Cliënten module">
+        <a href="clienten.html" class="side-link">Cliënten</a>
+        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
+        <div class="side-group is-open" data-side-group="cl-beschikkingen">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-beschikkingen-btn" aria-expanded="true" aria-controls="besc-nav-beschikkingen-sub" aria-label="Beschikkingen, submenu">
+            <span class="side-group__label">Beschikkingen</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="besc-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen">
+            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="beschikkingen.html" class="side-link side-link--nested is-active" aria-current="page">Overzicht</a>
+            <a href="facturen.html" class="side-link side-link--nested">Facturen</a>
+          </div>
+        </div>
+        <a href="organisatie.html" class="side-link">Organisatie</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
+        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
+        <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
+        <span class="side-link side-link--unavailable" title="Nog niet beschikbaar">Facturen importeren</span>
+        <div class="side-group" data-side-group="cl-incidenten">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-incidenten-btn" aria-expanded="false" aria-controls="besc-nav-incidenten-sub" aria-label="Incidenten, open submenu">
+            <span class="side-group__label">Incidenten</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="besc-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Incidentenoverzicht</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Dashboard</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Categorieën</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Verbeteringsmaatregelen</span>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+      </div>
+    </aside>
+
+    <main class="content content--besc-detail" id="bdtl-main">
+      <p class="text-empty" id="bdtl-missing" hidden>Deze beschikking bestaat niet. <a href="beschikkingen.html" class="text-empty bdtl-missing__link">Terug naar overzicht</a></p>
+
+      <div id="bdtl-content" hidden>
+        <div class="bdtl-ch" id="bdtl-ch-details">
+        <div class="content-header">
+          <h1 id="bdtl-h1">Beschikking</h1>
+          <div class="header-actions">
+            <a href="beschikkingen.html" class="btn-outline" id="bdtl-back">Terug naar overzicht</a>
+          </div>
+        </div>
+        </div>
+        <div class="bdtl-ch" id="bdtl-ch-fact" hidden>
+        <div class="content-header">
+          <h1>Facturen</h1>
+          <div class="header-actions">
+            <div class="columns-dropdown fact-ov-cols">
+              <button class="btn-outline columns-btn" type="button" id="bdtl-fact-cols-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
+                <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Kolommen
+              </button>
+              <div class="columns-panel" id="bdtl-fact-cols-panel" role="menu" hidden>
+                <div class="columns-panel-title">Kolommen weergeven</div>
+                <ul class="columns-list" id="bdtl-fact-cols-list" role="none"></ul>
+              </div>
+            </div>
+            <button class="btn-outline" type="button" id="bdtl-fact-export-btn" aria-label="Exporteren">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporteren
+            </button>
+            <button class="btn-primary" type="button" id="bdtl-fact-add-btn">+ Factuur aanmaken</button>
+            <a href="beschikkingen.html" class="btn-outline" id="bdtl-back-fact">Terug naar overzicht</a>
+            <button class="employee-delete-btn fact-ov-header-del" type="button" id="bdtl-fact-del-btn" aria-label="Geselecteerde facturen verwijderen uit overzicht">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+        </div>
+        <div class="bdtl-ch" id="bdtl-ch-tarf" hidden>
+        <div class="content-header">
+          <h1>Tarieven</h1>
+          <div class="header-actions">
+            <div class="columns-dropdown fact-ov-cols">
+              <button class="btn-outline columns-btn" type="button" id="bdtl-tar-cols-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
+                <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Kolommen
+              </button>
+              <div class="columns-panel" id="bdtl-tar-cols-panel" role="menu" hidden>
+                <div class="columns-panel-title">Kolommen weergeven</div>
+                <ul class="columns-list" id="bdtl-tar-cols-list" role="none">
+                  <li class="bdtl-tar-cols-mirror" role="none">Geldig vanaf</li>
+                  <li class="bdtl-tar-cols-mirror" role="none">Weektarief</li>
+                  <li class="bdtl-tar-cols-mirror" role="none">Reden voor wijziging</li>
+                  <li class="bdtl-tar-cols-mirror" role="none">Aangemaakt op</li>
+                </ul>
+              </div>
+            </div>
+            <button class="btn-primary" type="button" id="bdtl-tar-add-btn">+ Tarief toevoegen</button>
+            <a href="beschikkingen.html" class="btn-outline" id="bdtl-back-tar">Terug naar overzicht</a>
+          </div>
+        </div>
+        </div>
+        <div class="bdtl-ch" id="bdtl-ch-note" hidden>
+        <div class="content-header">
+          <h1>Notities</h1>
+          <div class="header-actions">
+            <a href="beschikkingen.html" class="btn-outline" id="bdtl-back-note">Terug naar overzicht</a>
+          </div>
+        </div>
+        </div>
+        <div class="bdtl-ch" id="bdtl-ch-aud" hidden>
+        <div class="content-header">
+          <h1>Audit</h1>
+          <div class="header-actions">
+            <a href="beschikkingen.html" class="btn-outline" id="bdtl-back-aud">Terug naar overzicht</a>
+          </div>
+        </div>
+        </div>
+
+        <div class="besc-dtl-tabs" role="tablist" aria-label="Beschikking-secties">
+          <button type="button" class="besc-dtl-tab besc-dtl-tab--is-active" id="bdtl-tab-dtl" role="tab" aria-selected="true">Details</button>
+          <button type="button" class="besc-dtl-tab" id="bdtl-tab-fact" role="tab" aria-selected="false">Facturen</button>
+          <button type="button" class="besc-dtl-tab" id="bdtl-tab-tarf" role="tab" aria-selected="false">Tarieven</button>
+          <button type="button" class="besc-dtl-tab" id="bdtl-tab-note" role="tab" aria-selected="false">Notities</button>
+          <button type="button" class="besc-dtl-tab" id="bdtl-tab-aud" role="tab" aria-selected="false">Audit</button>
+        </div>
+
+        <div class="besc-dtl-grid">
+          <aside class="besc-dtl-aside" aria-label="Samenvatting">
+            <div class="besc-dtl-hero">
+              <p class="besc-dtl-hero-k" id="bdtl-hero-naam">—</p>
+              <p class="besc-dtl-hero-sub" id="bdtl-hero-besc">BESCHIKKING</p>
+            </div>
+            <div class="besc-dtl-aside-blk">
+              <h2 class="besc-dtl-aside-h2">Bedragen</h2>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Ontvangen</span> <span id="bdtl-ont" class="besc-dtl-eur besc-dtl-eur--ok">—</span></p>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Te declareren</span> <span id="bdtl-ted" class="besc-dtl-eur besc-dtl-eur--warn">—</span></p>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Nog niet gedeclareerd (t.o.v. vandaag)</span> <span id="bdtl-nng" class="besc-dtl-eur besc-dtl-eur--err">—</span></p>
+            </div>
+            <div class="besc-dtl-aside-blk">
+              <h2 class="besc-dtl-aside-h2">Cliënt</h2>
+              <p class="besc-dtl-aside-txt" id="bdtl-side-client">—</p>
+              <p class="besc-dtl-aside-maand" id="bdtl-side-deze-maand">Deze maand <span id="bdtl-side-maandbedr" class="besc-dtl-aside-eur besc-dtl-eur--muted">—</span></p>
+            </div>
+            <div class="besc-dtl-aside-blk">
+              <h2 class="besc-dtl-aside-h2">Periode</h2>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Startdatum</span> <span id="bdtl-side-s">—</span></p>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Einddatum</span> <span id="bdtl-side-e">—</span></p>
+            </div>
+            <div class="besc-dtl-aside-blk">
+              <h2 class="besc-dtl-aside-h2">Notities</h2>
+              <p class="besc-dtl-hint besc-dtl-side-notes" id="bdtl-side-notes">Er zijn nog geen notities</p>
+            </div>
+          </aside>
+
+          <div class="besc-dtl-panels">
+          <div class="besc-dtl-panel" id="bdtl-panel-details">
+          <section class="table-card besc-dtl-form-card" aria-labelledby="bdtl-form-title">
+            <h2 class="besc-dtl-form-h" id="bdtl-form-title">Beschikking gegevens</h2>
+            <form id="bdtl-form" novalidate>
+              <div class="client-detail-form-grid">
+                <div class="modal-field client-detail-field--full bdtl-cl-with-pill">
+                  <label class="modal-label" for="bdtl-client">Cliënt</label>
+                  <div class="bdtl-cl-row">
+                    <select class="modal-input modal-select" id="bdtl-client" name="clientId" aria-label="Cliënt"></select>
+                    <span id="bdtl-pill-clfase" class="cl-fase-pill" aria-label="Fase cliënt"></span>
+                  </div>
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-naam">Naam</label>
+                  <input class="modal-input" type="text" id="bdtl-naam" name="naam" autocomplete="off" />
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-dm">Declaratie methode</label>
+                  <select class="modal-input modal-select" id="bdtl-dm" name="declMeth" aria-label="Declaratie methode"></select>
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-start">Startdatum</label>
+                  <input class="modal-input" type="date" id="bdtl-start" name="startISO" />
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-eind">Einddatum</label>
+                  <input class="modal-input" type="date" id="bdtl-eind" name="eindISO" />
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-zorg">Zorgsoort</label>
+                  <select class="modal-input modal-select" id="bdtl-zorg" name="zorgsoortKey" aria-label="Zorgsoort"></select>
+                </div>
+                <div class="modal-field bdtl-fase-field">
+                  <span class="modal-label" id="bdtl-fas-lb">Fase</span>
+                  <div class="bdtl-fase-inline">
+                    <span class="bdtl-fase-dot" id="bdtl-fase-dot" aria-hidden="true"></span>
+                    <label class="visually-hidden" for="bdtl-fase-besc">Fase beschikking</label>
+                    <select class="modal-input modal-select" id="bdtl-fase-besc" name="fase" aria-labelledby="bdtl-fas-lb"></select>
+                  </div>
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-weekt">Weektarief <span class="bdtl-optional">(€, bij weektarief)</span></label>
+                  <input class="modal-input" type="text" id="bdtl-weekt" name="weektarief" inputmode="decimal" autocomplete="off" placeholder="Bijv. 12,50" />
+                </div>
+              </div>
+              <div class="besc-dtl-form-foot">
+                <span class="besc-dtl-hid" id="bdtl-id-hid" aria-hidden="true"></span>
+                <button type="submit" class="btn-primary" id="bdtl-save">Wijzigingen opslaan</button>
+              </div>
+            </form>
+          </section>
+          </div>
+          <div class="besc-dtl-panel content--fact-ov besc-dtl-fact-wrap" id="bdtl-panel-fact" hidden>
+        <div class="toolbar toolbar--clienten besc-ov-toolbar fact-ov-toolbar--row1 bdtl-fact-tb1">
+        <input class="search" type="search" id="bdtl-fact-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoeken in facturen" />
+        <label class="switch switch--yellow">
+          <input type="checkbox" id="bdtl-fact-expiring" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Expiring</span>
+        </label>
+        <label class="switch switch--yellow">
+          <input type="checkbox" id="bdtl-fact-archived" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Gearchiveerd</span>
+        </label>
+        </div>
+        <div class="besc-ov-filters toolbar bdtl-fact-fil">
+        <div class="besc-ov-sels" role="group" aria-label="Filters facturen">
+          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Status</span>
+            <select class="modal-input modal-select besc-ov-sel" id="bdtl-fact-sel-status" aria-label="Filter status">
+              <option value="">Alle</option>
+              <option value="betaald">Betaald</option>
+              <option value="in_behandeling">Gedeclareerd en in behandeling</option>
+              <option value="te_declareren">Te declareren</option>
+              <option value="nog_niet_betaald">Nog niet betaald</option>
+            </select>
+          </label>
+          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Declaratie methode</span>
+            <select class="modal-input modal-select besc-ov-sel" id="bdtl-fact-sel-decm" aria-label="Filter declaratie methode">
+              <option value="">Alle</option>
+              <option value="Handmatig">Handmatig</option>
+              <option value="ONS">ONS</option>
+              <option value="WLZ">WLZ</option>
+              <option value="SVB">SVB</option>
+              <option value="Overig">Overig</option>
+            </select>
+          </label>
+          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Periode</span>
+            <select class="modal-input modal-select besc-ov-sel" id="bdtl-fact-sel-per" aria-label="Filter periode">
+              <option value="">Alle</option>
+            </select>
+          </label>
+          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Betaald</span>
+            <select class="modal-input modal-select besc-ov-sel" id="bdtl-fact-sel-beta" aria-label="Filter betalingsdatum">
+              <option value="">Alle</option>
+              <option value="met">Met betaaldatum</option>
+              <option value="zonder">Zonder betaaldatum</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" class="besc-ov-reset" id="bdtl-fact-reset-filters">Reset</button>
+        </div>
+        <section class="table-card table-card--clienten fact-ov-card besc-dtl-fact-card">
+        <div class="table-wrapper">
+          <table class="employees-table facturen-table" id="bdtl-fact-table">
+            <thead>
+              <tr>
+                <th class="th-check" data-col="select" aria-label="Selectie">
+                  <input type="checkbox" class="table-checkbox" id="bdtl-fact-check-all" aria-label="Selecteer alles op deze pagina" />
+                </th>
+                <th class="th-sort" data-col="fn" data-fact-sort="fn">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Factuurnummer</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-label="Sorteren op factuurnummer"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="besch" data-fact-sort="besch">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Beschikking</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op beschikking"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="client" data-fact-sort="client">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Cliënt</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op cliënt"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="nr" data-fact-sort="nr">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Cliëntnummer</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op cliëntnummer"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="per" data-fact-sort="per">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Periode</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op periode"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="beta" data-fact-sort="beta">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Betaald</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op betaaldatum"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort" data-col="st" data-fact-sort="st">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Status</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op status"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-sort fact-th-bedrag" data-col="bedrag" data-fact-sort="bedr">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Bedrag</span>
+                    <button type="button" class="th-sort-trigger" aria-label="Sorteren op bedrag"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                </th>
+                <th class="th-nosort cl-actions-th" data-col="act" id="bdtl-fact-th-act"><span class="th-label">Acties</span></th>
+              </tr>
+            </thead>
+            <tbody id="bdtl-fact-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer table-footer--pagebar cl-table-footer">
+          <div class="footer-left">
+            <span id="bdtl-fact-pager-range" class="pager-range">0 van 0</span>
+          </div>
+          <div class="footer-right">
+            <label class="footer-rows-wrap" for="bdtl-fact-rows-per-page">
+              <span class="footer-rows-label">Rijen per pagina</span>
+              <select id="bdtl-fact-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <span id="bdtl-fact-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span class="pager" role="navigation" aria-label="Paginatie">
+              <button type="button" class="pager-btn" id="bdtl-fact-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+              <button type="button" class="pager-btn" id="bdtl-fact-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="bdtl-fact-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="bdtl-fact-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+            </span>
+          </div>
+        </div>
+        </section>
+          </div>
+          <div class="besc-dtl-panel besc-dtl-tarif-wrap" id="bdtl-panel-tarf" hidden>
+            <div class="toolbar toolbar--clienten besc-ov-toolbar bdtl-tar-tb1">
+              <input class="search" type="search" id="bdtl-tar-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoeken in tarieven" />
+              <div class="bdtl-tar-geldig-wrap" role="group" aria-label="Geldig vanaf">
+                <span class="besc-ov-sel-lbl bdtl-tar-geldig-lbl" id="bdtl-tar-geldig-lbl">Geldig vanaf</span>
+                <input class="modal-input bdtl-tar-geldig" type="date" id="bdtl-tar-geldig-van" aria-labelledby="bdtl-tar-geldig-lbl" />
+              </div>
+            </div>
+            <section class="table-card table-card--clienten besc-dtl-tarif-card" aria-label="Tarieftabel">
+              <div class="table-wrapper">
+                <table class="employees-table bdtl-tarif-table" id="bdtl-tar-table">
+                  <thead>
+                    <tr>
+                      <th class="th-check" data-col="select" scope="col" aria-label="Selectie">
+                        <input type="checkbox" class="table-checkbox" id="bdtl-tar-check-all" disabled aria-label="Selecteer alles op deze pagina" />
+                      </th>
+                      <th data-col="van" scope="col">Geldig vanaf</th>
+                      <th data-col="week" scope="col">Weektarief</th>
+                      <th data-col="reden" scope="col">Reden voor wijziging</th>
+                      <th data-col="aang" scope="col">Aangemaakt op</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bdtl-tar-tbody">
+                    <tr>
+                      <td class="bdtl-tar-empty" colspan="5">Geen resultaten gevonden</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer table-footer--pagebar cl-table-footer">
+                <div class="footer-left">
+                  <span id="bdtl-tar-pager-range" class="pager-range">0–0 van 0 totaal</span>
+                </div>
+                <div class="footer-right">
+                  <label class="footer-rows-wrap" for="bdtl-tar-rows-per-page">
+                    <span class="footer-rows-label">Rijen per pagina</span>
+                    <select id="bdtl-tar-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+                      <option value="10">10</option>
+                      <option value="15" selected>15</option>
+                      <option value="25">25</option>
+                    </select>
+                  </label>
+                  <span id="bdtl-tar-pager-page" class="pager-page-label">Pagina 1 van 0</span>
+                  <span class="pager" role="navigation" aria-label="Paginatie">
+                    <button type="button" class="pager-btn" id="bdtl-tar-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-tar-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-tar-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-tar-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="besc-dtl-panel besc-dtl-note-wrap" id="bdtl-panel-note" hidden>
+            <section class="table-card bdtl-note-composer" aria-labelledby="bdtl-note-composer-h2">
+              <h2 class="besc-dtl-form-h" id="bdtl-note-composer-h2">Nieuwe notitie</h2>
+              <p class="bdtl-note-editing" id="bdtl-note-editing-hint" hidden>Je bewerkt een bestaande notitie. <button type="button" class="bdtl-note-nieuwe-lnk" id="bdtl-note-cancel-edit">Nieuwe notitie maken</button></p>
+              <div class="bdtl-note-toolbar" role="toolbar" aria-label="Opmaak notitie">
+                <button type="button" class="bdtl-rte-btn" data-cmd="bold" title="Vet" aria-label="Vet">B</button>
+                <button type="button" class="bdtl-rte-btn" data-cmd="italic" title="Cursief" aria-label="Cursief"><em>I</em></button>
+                <button type="button" class="bdtl-rte-btn" data-cmd="insertUnorderedList" title="Lijst" aria-label="Lijst met opsommingstekens">• Lijst</button>
+                <button type="button" class="bdtl-rte-btn" data-cmd="formatBlock" data-cmd-value="H3" title="Kop" aria-label="Kop">H3</button>
+              </div>
+              <div class="bdtl-note-ed-wrap">
+                <div class="bdtl-note-editor modal-input" id="bdtl-note-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Inhoud notitie" data-empty="true" tabindex="0"></div>
+              </div>
+              <div class="bdtl-note-composer-foot">
+                <button type="button" class="btn-primary" id="bdtl-note-verzend">Verzenden</button>
+              </div>
+            </section>
+            <div class="bdtl-note-lijst" aria-label="Eerdere notities">
+              <div class="bdtl-note-empty" id="bdtl-note-empty">
+                <span class="bdtl-note-empty-ico" aria-hidden="true">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 2v4h4"/></svg>
+                </span>
+                <p class="bdtl-note-empty-txt" id="bdtl-note-empty-txt">Er zijn nog geen notities toegevoegd</p>
+              </div>
+              <ul class="bdtl-note-list" id="bdtl-note-list" hidden></ul>
+            </div>
+          </div>
+          <div class="besc-dtl-panel besc-dtl-aud-wrap" id="bdtl-panel-aud" hidden>
+            <div class="bdtl-aud-head">
+              <h2 class="besc-dtl-form-h" id="bdtl-aud-h2">Auditlog</h2>
+              <p class="bdtl-aud-sub">Monitor en bekijk acties rond deze beschikking: wie heeft bekeken, gewijzigd of vastgelegd. IP-adres is lokaal gesimuleerd in deze weergave.</p>
+            </div>
+            <div class="toolbar toolbar--clienten besc-ov-toolbar bdtl-aud-toolbar fact-ov-toolbar--row1">
+              <input class="search" type="search" id="bdtl-aud-search" placeholder="Zoeken…" autocomplete="off" aria-label="Zoeken in auditlog" />
+            </div>
+            <div class="besc-ov-filters toolbar bdtl-aud-fil">
+              <div class="besc-ov-sels" role="group" aria-label="Filters auditlog">
+                <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Resource</span>
+                  <select class="modal-input modal-select besc-ov-sel" id="bdtl-aud-sel-res" aria-label="Filter resource">
+                    <option value="">Alle</option>
+                    <option value="Beschikking">Beschikking</option>
+                  </select>
+                </label>
+                <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Veroorzaker</span>
+                  <select class="modal-input modal-select besc-ov-sel" id="bdtl-aud-sel-user" aria-label="Filter veroorzaker">
+                    <option value="">Alle</option>
+                  </select>
+                </label>
+                <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Actie-type</span>
+                  <select class="modal-input modal-select besc-ov-sel" id="bdtl-aud-sel-act" aria-label="Filter actie-type">
+                    <option value="">Alle</option>
+                    <option value="bekijken">Bekijken</option>
+                    <option value="aanmaken">Aanmaken</option>
+                    <option value="bewerken">Bewerken</option>
+                  </select>
+                </label>
+              </div>
+              <div class="columns-dropdown fact-ov-cols bdtl-aud-cols-dd">
+                <button class="btn-outline columns-btn" type="button" id="bdtl-aud-cols-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
+                  <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  Kolommen
+                </button>
+                <div class="columns-panel" id="bdtl-aud-cols-panel" role="menu" hidden>
+                  <div class="columns-panel-title">Kolommen weergeven</div>
+                  <ul class="columns-list" id="bdtl-aud-cols-list" role="none"></ul>
+                </div>
+              </div>
+            </div>
+            <section class="table-card table-card--clienten bdtl-aud-card" aria-label="Auditlog">
+              <div class="table-wrapper">
+                <table class="employees-table bdtl-aud-table" id="bdtl-aud-table">
+                  <thead>
+                    <tr>
+                      <th data-bdtl-aud-col="ts" data-col="ts" scope="col">Tijdstempel</th>
+                      <th data-bdtl-aud-col="act" data-col="act" scope="col">Actie</th>
+                      <th data-bdtl-aud-col="user" data-col="user" scope="col">Veroorzaker</th>
+                      <th data-bdtl-aud-col="det" data-col="det" scope="col">Details</th>
+                      <th data-bdtl-aud-col="ip" data-col="ip" scope="col">IP-adres</th>
+                      <th data-bdtl-aud-col="res" data-col="res" scope="col">Resource</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bdtl-aud-tbody">
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer table-footer--pagebar cl-table-footer" id="bdtl-aud-foot">
+                <div class="footer-left">
+                  <span id="bdtl-aud-pager-range" class="pager-range">0 van 0</span>
+                </div>
+                <div class="footer-right">
+                  <label class="footer-rows-wrap" for="bdtl-aud-rows">
+                    <span class="footer-rows-label">Rijen per pagina</span>
+                    <select id="bdtl-aud-rows" class="footer-rows-select" aria-label="Rijen per pagina">
+                      <option value="10">10</option>
+                      <option value="15" selected>15</option>
+                      <option value="25">25</option>
+                    </select>
+                  </label>
+                  <span id="bdtl-aud-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+                  <span class="pager" role="navigation" aria-label="Paginatie auditlog">
+                    <button type="button" class="pager-btn" id="bdtl-aud-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-aud-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-aud-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+                    <button type="button" class="pager-btn" id="bdtl-aud-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="modal-overlay" id="bdtl-fact-export-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--fact-export" role="dialog" aria-modal="true" aria-labelledby="bdtl-fact-export-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bdtl-fact-export-title">Exporteren</h2>
+        <button type="button" class="modal-close" id="bdtl-fact-export-x" aria-label="Sluiten">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="fact-export-intro">Selecteer de kolommen die je wilt opnemen in je export. Gebruik de zoekfunctie om kolommen te filteren en de selectievakjes om ze te selecteren.</p>
+        <div class="fact-export-toolbar">
+          <div class="fact-export-search-wrap">
+            <svg class="fact-export-search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input class="modal-input fact-export-search" type="search" id="bdtl-fact-export-search" placeholder="Kolommen zoeken..." autocomplete="off" aria-label="Kolommen zoeken" />
+          </div>
+          <label class="fact-export-selall">
+            <input type="checkbox" id="bdtl-fact-export-all" checked aria-label="Selecteer alle kolommen" />
+            <span class="fact-export-selall-lbl">Selecteer alles</span>
+          </label>
+        </div>
+        <div class="fact-export-grid" id="bdtl-fact-export-grid" role="group" aria-label="Te exporteren kolommen"></div>
+        <div class="modal-field fact-export-format-field">
+          <label class="modal-label" for="bdtl-fact-export-format">Bestandsformaat</label>
+          <select class="modal-input modal-select" id="bdtl-fact-export-format" aria-label="Bestandsformaat">
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="txt">Tekstbestand (.txt)</option>
+            <option value="xlsx" selected>Excel (.xlsx)</option>
+            <option value="csv">Spreadsheet (.csv)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="bdtl-fact-export-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="bdtl-fact-export-confirm">Exporteren</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="bdtl-fact-add-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--fact-add" role="dialog" aria-modal="true" aria-labelledby="bdtl-fact-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bdtl-fact-add-title">Beschikking uitbetaling toevoegen</h2>
+        <button type="button" class="modal-close" id="bdtl-fact-add-x" aria-label="Sluiten">×</button>
+      </div>
+      <form class="modal-form" id="bdtl-fact-add-form" novalidate>
+        <div class="modal-body client-detail-form-grid fact-add-form-grid">
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-fact-add-fn">Factuurnummer</label>
+            <input class="modal-input" type="text" id="bdtl-fact-add-fn" name="fn" autocomplete="off" inputmode="numeric" placeholder="" aria-label="Factuurnummer" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-fact-add-besch">Beschikking</label>
+            <select class="modal-input modal-select modal-select--chevron-right" id="bdtl-fact-add-besch" name="besch" required aria-label="Beschikking">
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-fact-add-s">Startdatum</label>
+            <input class="modal-input" type="date" id="bdtl-fact-add-s" name="start" aria-label="Startdatum" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-fact-add-e">Einddatum</label>
+            <input class="modal-input" type="date" id="bdtl-fact-add-e" name="eind" aria-label="Einddatum" />
+          </div>
+          <div class="modal-field client-detail-field--full fact-add-field--status">
+            <span class="modal-label" id="bdtl-fact-add-st-lbl">Status</span>
+            <div class="fact-add-st-combo" id="bdtl-fact-add-st-combo">
+              <input type="hidden" name="st" id="bdtl-fact-add-st" value="" />
+              <button type="button" class="fact-add-st-trigger" id="bdtl-fact-add-st-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="bdtl-fact-add-st-lbl" aria-controls="bdtl-fact-add-st-menu" aria-label="Status kiezen">
+                <span class="fact-add-st-trigger-text fact-add-st-trigger-text--placeholder" id="bdtl-fact-add-st-text">Selecteer een status…</span>
+                <span class="fact-add-st-chev" aria-hidden="true"></span>
+              </button>
+              <ul class="fact-add-st-menu" id="bdtl-fact-add-st-menu" role="listbox" aria-label="Statusopties" hidden>
+                <li class="fact-add-st-li" role="presentation">
+                  <button type="button" class="status-pill fact-status-pill fact-status-pill--in-behandeling fact-add-st-opt" role="option" data-value="Gedeclareerd en in behandeling" tabindex="0">Gedeclareerd en in behandeling</button>
+                </li>
+                <li class="fact-add-st-li" role="presentation">
+                  <button type="button" class="status-pill fact-status-pill fact-status-pill--betaald fact-add-st-opt" role="option" data-value="Betaald" tabindex="0">Betaald</button>
+                </li>
+                <li class="fact-add-st-li" role="presentation">
+                  <button type="button" class="status-pill fact-status-pill fact-status-pill--te-declareren fact-add-st-opt" role="option" data-value="Te declareren" tabindex="0">Te declareren</button>
+                </li>
+                <li class="fact-add-st-li" role="presentation">
+                  <button type="button" class="status-pill fact-status-pill fact-status-pill--nog-niet-betaald fact-add-st-opt" role="option" data-value="Nog niet betaald" tabindex="0">Nog niet betaald</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bdtl-fact-add-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bdtl-fact-add-ok">Toevoegen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay" id="bdtl-tar-add-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--tar-add" role="dialog" aria-modal="true" aria-labelledby="bdtl-tar-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bdtl-tar-add-title">Tarief toevoegen</h2>
+        <button type="button" class="modal-close" id="bdtl-tar-add-x" aria-label="Sluiten">×</button>
+      </div>
+      <form class="modal-form" id="bdtl-tar-add-form" novalidate>
+        <div class="modal-body client-detail-form-grid bdtl-tar-add-form-grid">
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-tar-add-geldig">Geldig vanaf <span aria-hidden="true">*</span><span class="visually-hidden"> (verplicht)</span></label>
+            <input class="modal-input" type="date" id="bdtl-tar-add-geldig" name="geldig" required autocomplete="off" aria-label="Geldig vanaf" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bdtl-tar-add-week">Weektarief <span aria-hidden="true">*</span><span class="visually-hidden"> (verplicht)</span></label>
+            <input class="modal-input" type="text" id="bdtl-tar-add-week" name="week" inputmode="decimal" autocomplete="off" required placeholder="Bijv. 12,50" aria-label="Weektarief" />
+          </div>
+          <div class="modal-field client-detail-field--full">
+            <label class="modal-label" for="bdtl-tar-add-reden">Reden voor wijziging</label>
+            <textarea class="modal-input bdtl-tar-add-textarea" id="bdtl-tar-add-reden" name="reden" rows="4" autocomplete="off" placeholder="" aria-label="Reden voor wijziging"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bdtl-tar-add-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bdtl-tar-add-ok">Toevoegen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay" id="bdtl-aud-dtl-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--bdtl-aud-dtl" role="dialog" aria-modal="true" aria-labelledby="bdtl-aud-dtl-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bdtl-aud-dtl-title">Auditlog — details</h2>
+        <button type="button" class="modal-close" id="bdtl-aud-dtl-x" aria-label="Sluiten">×</button>
+      </div>
+      <div class="modal-body bdtl-aud-dtl-body">
+        <div class="bdtl-aud-dtl-hero3">
+          <div class="bdtl-aud-dtl-hero3-i">
+            <p class="bdtl-aud-dtl-lbl" id="bdtl-aud-dtl-lbl-act">Actie type</p>
+            <p class="bdtl-aud-dtl-act" id="bdtl-aud-dtl-act" lang="en">—</p>
+          </div>
+          <div class="bdtl-aud-dtl-hero3-i bdtl-aud-dtl-hero3--mid">
+            <p class="bdtl-aud-dtl-lbl" id="bdtl-aud-dtl-lbl-st">Status</p>
+            <p class="bdtl-aud-dtl-pill"><span class="bdtl-aud-dtl-pill-in" id="bdtl-aud-dtl-st">Succes</span></p>
+          </div>
+          <div class="bdtl-aud-dtl-hero3-i">
+            <p class="bdtl-aud-dtl-lbl" id="bdtl-aud-dtl-lbl-res">Resource</p>
+            <p class="bdtl-aud-dtl-res-name" id="bdtl-aud-dtl-res-name">—</p>
+          </div>
+        </div>
+        <div class="bdtl-aud-dtl-event">
+          <h3 class="bdtl-aud-dtl-event-h">
+            <span class="bdtl-aud-dtl-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+            </span>
+            Evenement informatie
+          </h3>
+          <div class="bdtl-aud-dtl-grid">
+            <div class="bdtl-aud-dtl-gcol">
+              <p class="bdtl-aud-dtl-lbl bdtl-aud-dtl-lbl--row">
+                <span class="bdtl-aud-dtl-ico" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                </span>
+                Tijdstempel
+              </p>
+              <p class="bdtl-aud-dtl-v" id="bdtl-aud-dtl-ts">—</p>
+              <p class="bdtl-aud-dtl-lbl">Gebruiker</p>
+              <p class="bdtl-aud-dtl-v" id="bdtl-aud-dtl-user">—</p>
+              <p class="bdtl-aud-dtl-lbl">Resourcetype</p>
+              <p class="bdtl-aud-dtl-v" id="bdtl-aud-dtl-rtype">—</p>
+            </div>
+            <div class="bdtl-aud-dtl-gcol">
+              <p class="bdtl-aud-dtl-lbl">Resource ID</p>
+              <p class="bdtl-aud-dtl-v" id="bdtl-aud-dtl-rid">—</p>
+              <p class="bdtl-aud-dtl-lbl">IP-adres</p>
+              <p class="bdtl-aud-dtl-v" id="bdtl-aud-dtl-ip">—</p>
+              <p class="bdtl-aud-dtl-lbl">User agent</p>
+              <p class="bdtl-aud-dtl-v bdtl-aud-dtl-ua" id="bdtl-aud-dtl-ua">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bdtl-aud-dtl-foot">
+        <button type="button" class="btn-primary" id="bdtl-aud-dtl-close">Sluiten</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay modal-overlay--confirm" id="bdtl-fact-arch-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bdtl-fact-arch-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="bdtl-fact-arch-title" class="modal-title">Naar gearchiveerd</h2>
+        <button type="button" class="modal-close" id="bdtl-fact-arch-x" aria-label="Sluiten">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Geselecteerde factuurregels komen in het gearchiveerde overzicht. Je kunt ze daar weer herstellen of definitief verwijderen.</p>
+        <p class="employee-delete-preview" id="bdtl-fact-arch-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="bdtl-fact-arch-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="bdtl-fact-arch-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="bdtl-fact-arch-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="bdtl-fact-arch-ok" disabled>Archiveren</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay modal-overlay--confirm" id="bdtl-fact-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bdtl-fact-purge-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="bdtl-fact-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="bdtl-fact-purge-x" aria-label="Sluiten">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Dit haalt geselecteerde regels permanent weg. Voor aangemaakte regels: uit de lijst; voor overige regels: uit dit overzicht totdat je de pagina opnieuw laadt.</p>
+        <p class="employee-delete-preview" id="bdtl-fact-purge-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="bdtl-fact-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="bdtl-fact-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="bdtl-fact-purge-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="bdtl-fact-purge-ok" disabled>Definitief verwijderen</button>
+      </div>
+    </div>
+  </div>
+  <div class="app-toast app-toast--clienten" id="bdtl-toast" role="status" aria-live="polite" hidden></div>
+  <div class="app-toast app-toast--clienten" id="bdtl-fact-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="clienten-data.js" defer></script>
+  <script src="fase-ui.js" defer></script>
+  <script src="beschikkingen-besc-bulk.js" defer></script>
+  <script src="beschikkingen-data.js" defer></script>
+  <script src="beschikking-detail.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
+  <script src="export-formats.js" defer></script>
+  <script src="facturen-bulk.js" defer></script>
+  <script src="facturen.js" defer></script>
+</body>
+</html>

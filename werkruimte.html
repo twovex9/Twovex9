@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Werkruimte</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+
+  <div class="app-shell app-shell--home">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Beleid</a>
+            <a href="#" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="#" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+              </div>
+            </div>
+            <a href="#" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <main class="content content--workspace">
+      <section class="workspace-header-card">
+        <h1 id="workspace-title">Werkruimte</h1>
+        <p id="workspace-subtitle">Overzicht en acties</p>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="workspace-card">
+          <div class="workspace-card-head">
+            <h2>Overzicht</h2>
+            <span class="workspace-chip" id="workspace-counter">0 records</span>
+          </div>
+          <div class="workspace-stats" id="workspace-stats"></div>
+        </div>
+
+        <div class="workspace-card">
+          <div class="workspace-admin-bar">
+            <label class="switch switch--yellow workspace-toggle">
+              <input type="checkbox" id="workspace-show-archived" />
+              <span class="switch-slider"></span>
+              <span class="switch-label">Toon gearchiveerd</span>
+            </label>
+            <div class="workspace-admin-actions">
+              <button type="button" class="btn-outline" id="workspace-bulk-archive-btn" disabled>Archiveer selectie</button>
+              <button type="button" class="btn-outline" id="workspace-bulk-restore-btn" disabled>Herstel selectie</button>
+              <button type="button" class="btn-outline" id="workspace-reset-btn">Reset module</button>
+            </div>
+          </div>
+          <div class="workspace-card-head">
+            <h2>Items</h2>
+            <div class="workspace-actions">
+              <button type="button" class="btn-outline" id="workspace-export-btn">Export CSV</button>
+              <button type="button" class="btn-primary" id="workspace-add-btn">+ Item toevoegen</button>
+            </div>
+          </div>
+          <input type="search" id="workspace-search" class="search workspace-search" placeholder="Zoeken..." aria-label="Zoek records" />
+          <div class="workspace-table-wrap">
+            <table class="employees-table workspace-table">
+              <thead>
+                <tr>
+                  <th class="workspace-th-check">
+                    <input type="checkbox" id="workspace-select-all" class="table-checkbox" aria-label="Selecteer alles" />
+                  </th>
+                  <th>Naam</th>
+                  <th>Status</th>
+                  <th>Laatst bijgewerkt</th>
+                  <th>Door</th>
+                  <th class="workspace-th-trash" aria-label="Archiveren"></th>
+                </tr>
+              </thead>
+              <tbody id="workspace-table-body"></tbody>
+            </table>
+          </div>
+          <p class="workspace-empty" id="workspace-empty" hidden>Geen items gevonden.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="workspace-add-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="workspace-add-title" class="modal-title">Item toevoegen</h2>
+        <button type="button" class="modal-close" id="workspace-add-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-form" id="workspace-add-form" novalidate>
+        <div class="modal-body">
+          <div class="modal-field">
+            <label class="modal-label" for="workspace-item-name">Naam</label>
+            <input id="workspace-item-name" class="modal-input" type="text" required />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="workspace-item-status">Status</label>
+            <select id="workspace-item-status" class="modal-input modal-select">
+              <option value="Actief">Actief</option>
+              <option value="Concept">Concept</option>
+              <option value="Afgerond">Afgerond</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="workspace-add-cancel-btn">Annuleren</button>
+          <button type="submit" class="btn-primary">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--confirm" id="workspace-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-archive-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="workspace-archive-title" class="modal-title">Item archiveren</h2>
+        <button type="button" class="modal-close" id="workspace-archive-close-btn" aria-label="Sluiten">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Het item wordt gearchiveerd. Zet <strong>Toon gearchiveerd</strong> aan om gearchiveerde items te bekijken.</p>
+        <p class="employee-delete-preview" id="workspace-archive-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="workspace-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input
+              type="range"
+              id="workspace-archive-slider"
+              class="employee-delete-slider"
+              min="0"
+              max="100"
+              value="0"
+              step="1"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              aria-label="Bevestig archiveren"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="workspace-archive-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="workspace-archive-confirm-btn" disabled>Archiveren</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--confirm" id="workspace-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-purge-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="workspace-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="workspace-purge-close-btn" aria-label="Sluiten">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Dit item wordt <strong>permanent</strong> uit de lijst gehaald. Dit kan niet ongedaan worden gemaakt.</p>
+        <p class="employee-delete-preview" id="workspace-purge-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="workspace-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input
+              type="range"
+              id="workspace-purge-slider"
+              class="employee-delete-slider"
+              min="0"
+              max="100"
+              value="0"
+              step="1"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              aria-label="Bevestig definitief verwijderen"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="workspace-purge-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="workspace-purge-confirm-btn" disabled>Definitief verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="werkruimte.js"></script>
+</body>
+</html>
