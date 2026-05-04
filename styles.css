@@ -1630,17 +1630,18 @@ h1 {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
-  /* Tabelkop-titels mogen wel op meerdere regels (op spaties of via Nederlandse
-     hyphenation), maar nooit letter-per-letter verticaal stapelen.
-     Daarom expliciet 'normal' op alle wrap-eigenschappen: hierdoor neemt de
-     kolom in table-layout:auto altijd minstens de breedte van het volledige
-     woord (geen per-karakter min-content). Past de tabel daardoor niet meer
-     in het venster, dan scrollt .table-wrapper horizontaal — de juiste UX. */
+  /* Tabelkop-titels mogen op meerdere regels splitsen op spaties (bv.
+     "Required forms" -> "Required" / "forms"), maar nooit letter-per-letter
+     stapelen en ook niet op syllabes (bv. "BE-SCHIK-KING") afgebroken worden.
+     'normal' op alle wrap-eigenschappen + hyphens:none zorgt dat een enkel
+     woord altijd op 1 regel blijft en de kolom breed genoeg wordt voor het
+     volledige woord. Past de tabel daardoor niet in het venster, dan scrollt
+     .table-wrapper horizontaal — de juiste UX op smalle schermen. */
   word-wrap: normal;
   overflow-wrap: normal;
   word-break: normal;
+  hyphens: none;
   line-height: 1.28;
-  hyphens: auto;
   /* Maskert scrollende rijen onder de sticky kop (o.a. avatar-kolom) */
   box-shadow: 0 1px 0 var(--line);
 }
@@ -14639,26 +14640,31 @@ button.besc-dtl-tab:hover {
   font-weight: 700;
 }
 
+/* Layout: aside-samenvatting komt altijd BOVEN het paneel, niet ernaast.
+   Reden: de Facturen- en Tarieven-tabellen in de panelen hebben veel kolommen
+   en moeten over de volle content-breedte beschikken om leesbaar te blijven,
+   ook op halfscherm. De aside zelf legt z'n inhoud horizontaal uit als er
+   ruimte is (zie .besc-dtl-aside hieronder). */
 .besc-dtl-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) 1fr;
+  grid-template-columns: 1fr;
   gap: var(--r-lg);
   align-items: start;
 }
 
-/* Stack-breekpunt gelijkgetrokken met .comp-detail-layout (1100px) zodat de
-   rechterkolom op halfscherm voldoende breedte krijgt voor brede tabellen
-   zoals de Facturen-tabel. */
-@media (max-width: 1100px) {
-  .besc-dtl-grid {
-    grid-template-columns: 1fr;
-  }
+/* Aside ligt nu boven het paneel (zie .besc-dtl-grid) en spreidt zich daarom
+   horizontaal uit: hero als banner over de volle breedte, daaronder 4
+   info-blokken (Bedragen / Cliënt / Periode / Notities) naast elkaar. Op
+   smallere viewports vouwt auto-fit ze automatisch over meerdere regels. */
+.besc-dtl-aside {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--r-md);
+  align-items: stretch;
 }
 
-.besc-dtl-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--r-md);
+.besc-dtl-aside > .besc-dtl-hero {
+  grid-column: 1 / -1;
 }
 
 .besc-dtl-hero {
