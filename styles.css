@@ -1630,11 +1630,14 @@ h1 {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  /* word-break: normal voorkomt dat lange titels (bv. CLIËNTNUMMER, ORGANISATIE)
-     letter-per-letter verticaal stapelen op smalle schermen. Wrappen mag op
-     spaties of via Nederlandse hyphenation; per-karakter splitsen niet. */
+  /* Tabelkop-titels mogen wel op meerdere regels (op spaties of via Nederlandse
+     hyphenation), maar nooit letter-per-letter verticaal stapelen.
+     Daarom expliciet 'normal' op alle wrap-eigenschappen: hierdoor neemt de
+     kolom in table-layout:auto altijd minstens de breedte van het volledige
+     woord (geen per-karakter min-content). Past de tabel daardoor niet meer
+     in het venster, dan scrollt .table-wrapper horizontaal — de juiste UX. */
+  word-wrap: normal;
+  overflow-wrap: normal;
   word-break: normal;
   line-height: 1.28;
   hyphens: auto;
@@ -14379,9 +14382,11 @@ button.planning-erm-new {
   width: 100%;
 }
 
-/* Status: volledige pill-tekst (globale tabel dwingt anders nowrap + ellipsis op elke td) */
+/* Status: volledige pill-tekst (globale tabel dwingt anders nowrap + ellipsis op elke td).
+   min-width afgestemd op de langste pill ("Gedeclareerd en in behandeling") zodat
+   de pill nooit over de Acties-kolom heen schuift op smalle viewports. */
 .employees-table.facturen-table thead th[data-col="st"] {
-  min-width: max(14rem, max-content);
+  min-width: max(16rem, max-content);
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -14391,7 +14396,7 @@ button.planning-erm-new {
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
-  min-width: max(14rem, max-content);
+  min-width: max(16rem, max-content);
   vertical-align: middle;
 }
 
@@ -14641,7 +14646,10 @@ button.besc-dtl-tab:hover {
   align-items: start;
 }
 
-@media (max-width: 960px) {
+/* Stack-breekpunt gelijkgetrokken met .comp-detail-layout (1100px) zodat de
+   rechterkolom op halfscherm voldoende breedte krijgt voor brede tabellen
+   zoals de Facturen-tabel. */
+@media (max-width: 1100px) {
   .besc-dtl-grid {
     grid-template-columns: 1fr;
   }
