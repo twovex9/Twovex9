@@ -55,8 +55,34 @@
     return row;
   }
 
+  function updateZorgsoortById(id, patch) {
+    var i = findIndexById(id);
+    if (i < 0) return null;
+    var next = Object.assign({}, ZS[i]);
+    if (patch && Object.prototype.hasOwnProperty.call(patch, "naam")) {
+      var n = String(patch.naam == null ? "" : patch.naam).trim();
+      if (!n) return null;
+      next.naam = n;
+    }
+    if (patch && Object.prototype.hasOwnProperty.call(patch, "tarieftype")) {
+      var t = String(patch.tarieftype || "").toLowerCase();
+      if (t !== "dag" && t !== "uur" && t !== "week") return null;
+      next.tarieftype = t;
+    }
+    ZS[i] = next;
+    return Object.assign({}, next);
+  }
+
+  function getZorgsoortById(id) {
+    var i = findIndexById(id);
+    if (i < 0) return null;
+    return Object.assign({}, ZS[i]);
+  }
+
   global.getZorgsoortItems = getZorgsoortItems;
+  global.getZorgsoortById = getZorgsoortById;
   global.setZorgsoortArchivedById = setZorgsoortArchivedById;
   global.deleteZorgsoortById = deleteZorgsoortById;
   global.addZorgsoort = addZorgsoort;
+  global.updateZorgsoortById = updateZorgsoortById;
 })(typeof window !== "undefined" ? window : this);

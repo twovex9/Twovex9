@@ -558,6 +558,18 @@
       e.preventDefault();
       var aid = t.closest(".zs-archive-btn").getAttribute("data-id");
       if (aid) openZsArchive(aid);
+      return;
+    }
+
+    if (t && t.closest && (t.closest("input[type='checkbox']") || t.closest("button") || t.closest("a"))) {
+      return;
+    }
+    var row = t && t.closest ? t.closest("tr.zs-data-row") : null;
+    if (row) {
+      var rid = row.getAttribute("data-id");
+      if (rid) {
+        window.location.href = "zorgsoort-detail.html?id=" + encodeURIComponent(rid);
+      }
     }
   });
 

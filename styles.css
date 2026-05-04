@@ -12579,7 +12579,8 @@ button.planning-erm-new {
   gap: var(--page-table-card-gap);
 }
 
-.clienten-table tbody tr.cl-table-row--client {
+.clienten-table tbody tr.cl-table-row--client,
+.clienten-table tbody tr.zs-data-row {
   cursor: pointer;
 }
 
