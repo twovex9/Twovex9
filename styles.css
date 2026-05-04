@@ -1632,7 +1632,10 @@ h1 {
   text-overflow: clip;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  word-break: break-word;
+  /* word-break: normal voorkomt dat lange titels (bv. CLIËNTNUMMER, ORGANISATIE)
+     letter-per-letter verticaal stapelen op smalle schermen. Wrappen mag op
+     spaties of via Nederlandse hyphenation; per-karakter splitsen niet. */
+  word-break: normal;
   line-height: 1.28;
   hyphens: auto;
   /* Maskert scrollende rijen onder de sticky kop (o.a. avatar-kolom) */
