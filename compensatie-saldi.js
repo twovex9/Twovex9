@@ -27,7 +27,12 @@
     return x - Math.floor(x);
   }
 
-  function buildRows() {
+  /**
+   * Bouwt de demo-data op basis van een deterministische hash. Wordt alleen
+   * gebruikt als fallback wanneer de Supabase-cache nog leeg is (eerste
+   * page-load op een nieuwe browser, vóór de bootstrap is voltooid).
+   */
+  function buildSeedRows() {
     var rows = [];
     var i;
     for (i = 0; i < 81; i++) {
@@ -55,7 +60,15 @@
     return rows;
   }
 
-  var allRows = buildRows();
+  function loadRows() {
+    if (window.compSaldiDB && typeof window.compSaldiDB.getAllSync === "function") {
+      var fromDb = window.compSaldiDB.getAllSync();
+      if (fromDb && fromDb.length) return fromDb;
+    }
+    return buildSeedRows();
+  }
+
+  var allRows = loadRows();
 
   function fmtNum(n) {
     var v = Math.round(Number(n) * 100) / 100;
@@ -350,4 +363,13 @@
   });
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst (eerste page-load op een nieuwe browser).
+  window.addEventListener("besa:comp-saldi-updated", function () {
+    try {
+      allRows = loadRows();
+      render();
+    } catch (e) { /* */ }
+  });
 })();

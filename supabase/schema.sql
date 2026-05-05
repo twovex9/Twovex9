@@ -2565,3 +2565,277 @@ create policy "anon kan saladmin_ort bewerken"
 drop policy if exists "anon kan saladmin_ort verwijderen" on public.saladmin_ort;
 create policy "anon kan saladmin_ort verwijderen"
   on public.saladmin_ort for delete to anon using (true);
+
+
+-- ============================================================================
+-- comp_saldi (Compensatie module — saldi per medewerker)
+-- ============================================================================
+create table if not exists public.comp_saldi (
+  id text primary key,
+  medewerker text not null default '',
+  team text not null default '',
+  verdiend numeric(10,2) not null default 0,
+  gebruikt numeric(10,2) not null default 0,
+  saldo numeric(10,2) not null default 0,
+  geschiktheid_label text not null default '',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists comp_saldi_team_idx on public.comp_saldi (team);
+
+drop trigger if exists trg_comp_saldi_set_modified on public.comp_saldi;
+create trigger trg_comp_saldi_set_modified
+  before update on public.comp_saldi
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.comp_saldi enable row level security;
+
+drop policy if exists `"anon kan comp_saldi lezen`" on public.comp_saldi;
+create policy `"anon kan comp_saldi lezen`"
+  on public.comp_saldi for select to anon using (true);
+drop policy if exists `"anon kan comp_saldi toevoegen`" on public.comp_saldi;
+create policy `"anon kan comp_saldi toevoegen`"
+  on public.comp_saldi for insert to anon with check (true);
+drop policy if exists `"anon kan comp_saldi bewerken`" on public.comp_saldi;
+create policy `"anon kan comp_saldi bewerken`"
+  on public.comp_saldi for update to anon using (true) with check (true);
+drop policy if exists `"anon kan comp_saldi verwijderen`" on public.comp_saldi;
+create policy `"anon kan comp_saldi verwijderen`"
+  on public.comp_saldi for delete to anon using (true);
+
+-- ============================================================================
+-- comp_berekeningen (Compensatie module — berekenings-records per dag)
+-- ============================================================================
+create table if not exists public.comp_berekeningen (
+  id text primary key,
+  datum_ts bigint not null,
+  medewerker text not null default '',
+  contract_u integer not null default 0,
+  gepland_u integer not null default 0,
+  compensatie_min integer not null default 0,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists comp_berekeningen_datum_idx on public.comp_berekeningen (datum_ts);
+create index if not exists comp_berekeningen_medewerker_idx on public.comp_berekeningen (lower(medewerker));
+
+drop trigger if exists trg_comp_berekeningen_set_modified on public.comp_berekeningen;
+create trigger trg_comp_berekeningen_set_modified
+  before update on public.comp_berekeningen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.comp_berekeningen enable row level security;
+
+drop policy if exists `"anon kan comp_berekeningen lezen`" on public.comp_berekeningen;
+create policy `"anon kan comp_berekeningen lezen`"
+  on public.comp_berekeningen for select to anon using (true);
+drop policy if exists `"anon kan comp_berekeningen toevoegen`" on public.comp_berekeningen;
+create policy `"anon kan comp_berekeningen toevoegen`"
+  on public.comp_berekeningen for insert to anon with check (true);
+drop policy if exists `"anon kan comp_berekeningen bewerken`" on public.comp_berekeningen;
+create policy `"anon kan comp_berekeningen bewerken`"
+  on public.comp_berekeningen for update to anon using (true) with check (true);
+drop policy if exists `"anon kan comp_berekeningen verwijderen`" on public.comp_berekeningen;
+create policy `"anon kan comp_berekeningen verwijderen`"
+  on public.comp_berekeningen for delete to anon using (true);
+
+-- 81 demo-records voor comp_saldi (gegenereerd uit hash01)
+insert into public.comp_saldi (id, medewerker, team, verdiend, gebruikt, saldo, geschiktheid_label)
+values
+  ('cs_0', 'Adriana Malovan', 'Voorburggracht', 41.95, 8.48, 34.49, ''),
+  ('cs_1', 'Nick Malovan', 'Centrum', 111.81, 94.83, 14.86, 'Ontvangt compensatie uren'),
+  ('cs_2', 'Marieke Malovan', 'Noord', 93.73, 58.56, 33.64, 'Ontvangt compensatie uren'),
+  ('cs_3', 'Thomas van Harskamp', 'Zuid', 83.57, 64.48, 20.21, 'Ontvangt compensatie uren'),
+  ('cs_4', 'Sophie van Harskamp', 'Oost', 64.69, 50.85, 7.67, ''),
+  ('cs_5', 'Lars van Harskamp', 'West', 133.81, 4.94, 131.10, 'Ontvangt compensatie uren'),
+  ('cs_6', 'Emma Jansen', 'Zorgteam A', 128.34, 69.51, 66.20, 'Ontvangt compensatie uren'),
+  ('cs_7', 'Daan Jansen', 'Zorgteam B', 80.45, 65.84, 10.59, 'Ontvangt compensatie uren'),
+  ('cs_8', 'Lisa Jansen', 'Voorburggracht', 85.81, 19.64, 62.36, ''),
+  ('cs_9', 'Noah de Vries', 'Centrum', 88.61, 61.68, 31.45, 'Ontvangt compensatie uren'),
+  ('cs_10', 'Julia de Vries', 'Noord', 31.39, 4.13, 32.92, 'Ontvangt compensatie uren'),
+  ('cs_11', 'Finn de Vries', 'Zuid', 103.08, 80.90, 24.42, 'Ontvangt compensatie uren'),
+  ('cs_12', 'Eva Bakker', 'Oost', 108.33, 18.39, 83.22, ''),
+  ('cs_13', 'Sam Bakker', 'West', 86.16, 28.17, 57.96, 'Ontvangt compensatie uren'),
+  ('cs_14', 'Iris Bakker', 'Zorgteam A', 121.89, 62.40, 64.43, 'Ontvangt compensatie uren'),
+  ('cs_15', 'Bas Visser', 'Zorgteam B', 63.90, 19.97, 47.74, 'Ontvangt compensatie uren'),
+  ('cs_16', 'Nina Visser', 'Voorburggracht', 76.69, 27.36, 42.75, ''),
+  ('cs_17', 'Tim Visser', 'Centrum', 57.54, 29.89, 26.58, 'Ontvangt compensatie uren'),
+  ('cs_18', 'Lotte Smit', 'Noord', 150.48, 17.66, 140.58, 'Ontvangt compensatie uren'),
+  ('cs_19', 'Ruben Smit', 'Zuid', 120.20, 69.35, 57.37, 'Ontvangt compensatie uren'),
+  ('cs_20', 'Anna Smit', 'Oost', 141.87, 115.85, 25.72, ''),
+  ('cs_21', 'Jesse Mulder', 'West', 122.24, 26.85, 93.01, 'Ontvangt compensatie uren'),
+  ('cs_22', 'Mila Mulder', 'Zorgteam A', 28.21, 8.29, 19.78, 'Ontvangt compensatie uren'),
+  ('cs_23', 'Luuk Mulder', 'Zorgteam B', 101.37, 70.40, 24.20, 'Ontvangt compensatie uren'),
+  ('cs_24', 'Fleur de Boer', 'Voorburggracht', 141.02, 106.37, 41.22, ''),
+  ('cs_25', 'Max de Boer', 'Centrum', 59.38, 32.29, 23.79, 'Ontvangt compensatie uren'),
+  ('cs_26', 'Sanne de Boer', 'Noord', 126.90, 9.63, 114.73, 'Ontvangt compensatie uren'),
+  ('cs_27', 'Koen Kok', 'Zuid', 56.58, 25.95, 32.50, 'Ontvangt compensatie uren'),
+  ('cs_28', 'Roos Kok', 'Oost', 129.43, 91.97, 38.97, ''),
+  ('cs_29', 'Stijn Kok', 'West', 44.36, 31.84, 12.74, 'Ontvangt compensatie uren'),
+  ('cs_30', 'Adriana Dijkstra 31', 'Zorgteam A', 67.24, 5.06, 58.72, 'Ontvangt compensatie uren'),
+  ('cs_31', 'Nick Dijkstra 32', 'Zorgteam B', 96.64, 36.59, 67.09, 'Ontvangt compensatie uren'),
+  ('cs_32', 'Marieke Dijkstra 33', 'Voorburggracht', 76.13, 65.75, 17.67, ''),
+  ('cs_33', 'Thomas Janssen 34', 'Centrum', 83.52, 67.44, 10.31, 'Ontvangt compensatie uren'),
+  ('cs_34', 'Sophie Janssen 35', 'Noord', 106.42, 47.55, 62.06, 'Ontvangt compensatie uren'),
+  ('cs_35', 'Lars Janssen 36', 'Zuid', 33.75, 10.07, 16.99, 'Ontvangt compensatie uren'),
+  ('cs_36', 'Emma van Dijk 37', 'Oost', 99.76, 42.64, 64.92, ''),
+  ('cs_37', 'Daan van Dijk 38', 'West', 141.28, 11.20, 130.58, 'Ontvangt compensatie uren'),
+  ('cs_38', 'Lisa van Dijk 39', 'Zorgteam A', 58.86, 48.55, 8.71, 'Ontvangt compensatie uren'),
+  ('cs_39', 'Noah Berg 40', 'Zorgteam B', 63.46, 19.85, 45.17, 'Ontvangt compensatie uren'),
+  ('cs_40', 'Julia Berg 41', 'Voorburggracht', 128.87, 37.37, 90.66, ''),
+  ('cs_41', 'Finn Berg 42', 'Centrum', 140.48, 74.64, 65.27, 'Ontvangt compensatie uren'),
+  ('cs_42', 'Eva Hendriks 43', 'Noord', 96.78, 50.91, 37.95, 'Ontvangt compensatie uren'),
+  ('cs_43', 'Sam Hendriks 44', 'Zuid', 32.60, 17.23, 19.03, 'Ontvangt compensatie uren'),
+  ('cs_44', 'Iris Hendriks 45', 'Oost', 85.76, 24.66, 58.43, ''),
+  ('cs_45', 'Bas van den Berg 46', 'West', 126.04, 100.73, 21.08, 'Ontvangt compensatie uren'),
+  ('cs_46', 'Nina van den Berg 47', 'Zorgteam A', 120.61, 98.97, 26.75, 'Ontvangt compensatie uren'),
+  ('cs_47', 'Tim van den Berg 48', 'Zorgteam B', 45.62, 7.41, 45.89, 'Ontvangt compensatie uren'),
+  ('cs_48', 'Lotte Scholten 49', 'Voorburggracht', 89.98, 56.49, 29.79, ''),
+  ('cs_49', 'Ruben Scholten 50', 'Centrum', 138.23, 13.60, 118.03, 'Ontvangt compensatie uren'),
+  ('cs_50', 'Anna Scholten 51', 'Noord', 131.92, 110.72, 21.69, 'Ontvangt compensatie uren'),
+  ('cs_51', 'Jesse Meijer 52', 'Zuid', 83.78, 38.85, 43.00, 'Ontvangt compensatie uren'),
+  ('cs_52', 'Mila Meijer 53', 'Oost', 71.14, 26.18, 47.89, ''),
+  ('cs_53', 'Luuk Meijer 54', 'West', 90.92, 49.17, 45.99, 'Ontvangt compensatie uren'),
+  ('cs_54', 'Fleur van Leeuwen 55', 'Zorgteam A', 44.19, 20.80, 25.34, 'Ontvangt compensatie uren'),
+  ('cs_55', 'Max van Leeuwen 56', 'Zorgteam B', 147.25, 58.09, 90.98, 'Ontvangt compensatie uren'),
+  ('cs_56', 'Sanne van Leeuwen 57', 'Voorburggracht', 55.25, 1.22, 48.11, ''),
+  ('cs_57', 'Koen Willems 58', 'Centrum', 63.94, 41.62, 21.66, 'Ontvangt compensatie uren'),
+  ('cs_58', 'Roos Willems 59', 'Noord', 100.01, 31.32, 70.00, 'Ontvangt compensatie uren'),
+  ('cs_59', 'Stijn Willems 60', 'Zuid', 100.35, 24.12, 71.01, 'Ontvangt compensatie uren'),
+  ('cs_60', 'Adriana Postma 61', 'Oost', 93.64, 65.24, 24.75, ''),
+  ('cs_61', 'Nick Postma 62', 'West', 69.01, 58.49, 17.47, 'Ontvangt compensatie uren'),
+  ('cs_62', 'Marieke Postma 63', 'Zorgteam A', 150.82, 36.43, 116.29, 'Ontvangt compensatie uren'),
+  ('cs_63', 'Thomas Kramer 64', 'Zorgteam B', 134.67, 12.98, 124.29, 'Ontvangt compensatie uren'),
+  ('cs_64', 'Sophie Kramer 65', 'Voorburggracht', 39.74, 21.93, 23.28, ''),
+  ('cs_65', 'Lars Kramer 66', 'Centrum', 109.93, 35.46, 72.17, 'Ontvangt compensatie uren'),
+  ('cs_66', 'Emma van der Laan 67', 'Noord', 38.80, 23.53, 20.69, 'Ontvangt compensatie uren'),
+  ('cs_67', 'Daan van der Laan 68', 'Zuid', 150.48, 99.86, 49.96, 'Ontvangt compensatie uren'),
+  ('cs_68', 'Lisa van der Laan 69', 'Oost', 98.78, 55.20, 39.87, ''),
+  ('cs_69', 'Noah Hoekstra 70', 'West', 85.99, 48.87, 38.54, 'Ontvangt compensatie uren'),
+  ('cs_70', 'Julia Hoekstra 71', 'Zorgteam A', 91.69, 10.11, 74.20, 'Ontvangt compensatie uren'),
+  ('cs_71', 'Finn Hoekstra 72', 'Zorgteam B', 76.66, 30.87, 43.47, 'Ontvangt compensatie uren'),
+  ('cs_72', 'Eva Blom 73', 'Voorburggracht', 81.70, 42.40, 45.40, ''),
+  ('cs_73', 'Sam Blom 74', 'Centrum', 29.57, 7.37, 17.29, 'Ontvangt compensatie uren'),
+  ('cs_74', 'Iris Blom 75', 'Noord', 119.48, 31.64, 94.40, 'Ontvangt compensatie uren'),
+  ('cs_75', 'Bas Peeters 76', 'Zuid', 74.98, 59.54, 17.83, 'Ontvangt compensatie uren'),
+  ('cs_76', 'Nina Peeters 77', 'Oost', 66.30, 35.86, 34.59, ''),
+  ('cs_77', 'Tim Peeters 78', 'West', 118.36, 68.67, 42.77, 'Ontvangt compensatie uren'),
+  ('cs_78', 'Lotte de Graaf 79', 'Zorgteam A', 140.61, 103.61, 39.80, 'Ontvangt compensatie uren'),
+  ('cs_79', 'Ruben de Graaf 80', 'Zorgteam B', 58.23, 21.63, 43.64, 'Ontvangt compensatie uren'),
+  ('cs_80', 'Anna de Graaf 81', 'Voorburggracht', 39.47, 28.15, 12.55, '')
+on conflict (id) do nothing;
+
+-- 52 demo-records voor comp_berekeningen (gegenereerd uit hash01)
+insert into public.comp_berekeningen (id, datum_ts, medewerker, contract_u, gepland_u, compensatie_min)
+values
+  ('cb_0', 1735686000000, 'Tanja Koster', 24, 0, 939),
+  ('cb_1', 1735689600000, 'Adriana Malovan', 32, 24, 1126),
+  ('cb_2', 1735779600000, 'Nick van Harskamp', 36, 20, -515),
+  ('cb_3', 1735772400000, 'Marieke Jansen', 24, 11, 3104),
+  ('cb_4', 1735862400000, 'Thomas de Vries', 32, 9, -926),
+  ('cb_5', 1735866000000, 'Sophie Bakker', 36, 0, -236),
+  ('cb_6', 1735945200000, 'Lars Visser', 24, 18, -1676),
+  ('cb_7', 1735948800000, 'Emma Smit', 32, 16, 4098),
+  ('cb_8', 1736038800000, 'Daan Mulder', 36, 19, 1917),
+  ('cb_9', 1736031600000, 'Lisa de Boer', 24, 13, 3198),
+  ('cb_10', 1736121600000, 'Noah Kok', 32, 0, 3127),
+  ('cb_11', 1736125200000, 'Julia Dijkstra', 36, 21, -3304),
+  ('cb_12', 1736204400000, 'Finn Janssen', 24, 15, 1409),
+  ('cb_13', 1736208000000, 'Eva van Dijk', 32, 13, 3890),
+  ('cb_14', 1736298000000, 'Sam Berg', 36, 31, -1975),
+  ('cb_15', 1736290800000, 'Tanja Koster', 24, 0, 2364),
+  ('cb_16', 1736380800000, 'Adriana Malovan', 32, 14, -2487),
+  ('cb_17', 1736384400000, 'Nick van Harskamp', 36, 9, 3606),
+  ('cb_18', 1736463600000, 'Marieke Jansen', 24, 24, -2228),
+  ('cb_19', 1736467200000, 'Thomas de Vries', 32, 23, -865),
+  ('cb_20', 1736557200000, 'Sophie Bakker', 36, 0, 931),
+  ('cb_21', 1736550000000, 'Lars Visser', 24, 20, -858),
+  ('cb_22', 1736640000000, 'Emma Smit', 32, 1, -528),
+  ('cb_23', 1736643600000, 'Daan Mulder', 36, 23, 835),
+  ('cb_24', 1736722800000, 'Lisa de Boer', 24, 22, -2772),
+  ('cb_25', 1736726400000, 'Noah Kok', 32, 0, 1465),
+  ('cb_26', 1736816400000, 'Julia Dijkstra', 36, 28, 4070),
+  ('cb_27', 1736809200000, 'Finn Janssen', 24, 4, -1587),
+  ('cb_28', 1736899200000, 'Eva van Dijk', 32, 29, -1703),
+  ('cb_29', 1736902800000, 'Sam Berg', 36, 6, 2495),
+  ('cb_30', 1736982000000, 'Tanja Koster', 24, 0, 3106),
+  ('cb_31', 1736985600000, 'Adriana Malovan', 32, 18, 1430),
+  ('cb_32', 1737075600000, 'Nick van Harskamp', 36, 13, -3012),
+  ('cb_33', 1737068400000, 'Marieke Jansen', 24, 10, 369),
+  ('cb_34', 1737158400000, 'Thomas de Vries', 32, 18, 2891),
+  ('cb_35', 1737162000000, 'Sophie Bakker', 36, 0, 2107),
+  ('cb_36', 1737241200000, 'Lars Visser', 24, 15, -3055),
+  ('cb_37', 1737244800000, 'Emma Smit', 32, 31, -260),
+  ('cb_38', 1737334800000, 'Daan Mulder', 36, 9, 4193),
+  ('cb_39', 1737327600000, 'Lisa de Boer', 24, 6, 3610),
+  ('cb_40', 1737417600000, 'Noah Kok', 32, 0, 237),
+  ('cb_41', 1737421200000, 'Julia Dijkstra', 36, 31, -768),
+  ('cb_42', 1737500400000, 'Finn Janssen', 24, 15, 128),
+  ('cb_43', 1737504000000, 'Eva van Dijk', 32, 3, -3150),
+  ('cb_44', 1737594000000, 'Sam Berg', 36, 18, 3557),
+  ('cb_45', 1737586800000, 'Tanja Koster', 24, 0, -1339),
+  ('cb_46', 1737676800000, 'Adriana Malovan', 32, 24, -923),
+  ('cb_47', 1737680400000, 'Nick van Harskamp', 36, 3, 1319),
+  ('cb_48', 1737759600000, 'Marieke Jansen', 24, 10, 1179),
+  ('cb_49', 1737763200000, 'Thomas de Vries', 32, 32, 309),
+  ('cb_50', 1737853200000, 'Sophie Bakker', 36, 0, -1495),
+  ('cb_51', 1737846000000, 'Lars Visser', 24, 12, 3796)
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- urendeclaraties (Cliënten module — gedebiteerde/ingediende uren per maand)
+-- ============================================================================
+create table if not exists public.urendeclaraties (
+  id text primary key,
+  client text not null default '',
+  maand_label text not null default '',
+  beschikking text not null default '',
+  zorgsoort text not null default '',
+  jaar integer not null default 2026,
+  maand integer not null default 0,
+  uurtarief numeric(10,2) not null default 0,
+  bedrag numeric(12,2) not null default 0,
+  gedebiteerde_uren numeric(8,2) not null default 0,
+  ingediende_uren numeric(8,2) not null default 0,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists urendeclaraties_client_idx on public.urendeclaraties (lower(client));
+create index if not exists urendeclaraties_jaar_idx on public.urendeclaraties (jaar);
+create index if not exists urendeclaraties_maand_idx on public.urendeclaraties (maand);
+create index if not exists urendeclaraties_zorg_idx on public.urendeclaraties (zorgsoort);
+
+drop trigger if exists trg_urendeclaraties_set_modified on public.urendeclaraties;
+create trigger trg_urendeclaraties_set_modified
+  before update on public.urendeclaraties
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.urendeclaraties enable row level security;
+
+drop policy if exists `"anon kan urendeclaraties lezen`" on public.urendeclaraties;
+create policy `"anon kan urendeclaraties lezen`"
+  on public.urendeclaraties for select to anon using (true);
+drop policy if exists `"anon kan urendeclaraties toevoegen`" on public.urendeclaraties;
+create policy `"anon kan urendeclaraties toevoegen`"
+  on public.urendeclaraties for insert to anon with check (true);
+drop policy if exists `"anon kan urendeclaraties bewerken`" on public.urendeclaraties;
+create policy `"anon kan urendeclaraties bewerken`"
+  on public.urendeclaraties for update to anon using (true) with check (true);
+drop policy if exists `"anon kan urendeclaraties verwijderen`" on public.urendeclaraties;
+create policy `"anon kan urendeclaraties verwijderen`"
+  on public.urendeclaraties for delete to anon using (true);
+
+-- 7 seed-records (uit oude statische HTML van urendeclaraties.html)
+insert into public.urendeclaraties (id, client, maand_label, beschikking, zorgsoort, jaar, maand, uurtarief, bedrag, gedebiteerde_uren, ingediende_uren)
+values
+  ('ud_1', 'Raymond Ader',    'April 2026',     'WIZ 14 u p week', 'WIZ',         2026, 3, 72.00,   0.00, 70, 0),
+  ('ud_2', 'Dries Becker',    'April 2026',     'Ambulant',        'Ambulant',    2026, 3, 72.00,   0.00, 50, 0),
+  ('ud_3', 'Lotte Janssen',   'Januari 2025',   'WIZ 8 u p week',  'WIZ',         2025, 0, 68.00, 120.00, 32, 28),
+  ('ud_4', 'Bram Claes',      'April 2025',     'Ambulant',        'Ambulant',    2025, 3, 70.00,   0.00, 44, 0),
+  ('ud_5', 'Eva Smit',        'Maart 2024',     'WIZ 12 u p week', 'WIZ',         2024, 2, 65.00,   0.00, 48, 12),
+  ('ud_6', 'Finn Verlinden',  'September 2024', 'Ambulant',        'Ambulant',    2024, 8, 70.00,   0.00, 36, 0),
+  ('ud_7', 'Greet Van Dam',   'Juni 2026',      'WIZ 6 u p week',  'WIZ',         2026, 5, 72.00,   0.00, 24, 0)
+on conflict (id) do nothing;

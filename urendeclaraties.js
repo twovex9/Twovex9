@@ -1,4 +1,4 @@
-/* Urendeclaraties — overzicht (demo-data, filters, kolommen) */
+/* Urendeclaraties — overzicht (Supabase-data via urendeclaraties-data.js, filters, kolommen) */
 (function () {
   "use strict";
 
@@ -14,6 +14,63 @@
   var colsBtn = document.getElementById("ud-cols-btn");
   var colsPanel = document.getElementById("ud-cols-panel");
   var table = document.getElementById("ud-table");
+
+  function fmtEuro(num) {
+    var n = Number(num);
+    if (!isFinite(n)) n = 0;
+    var neg = n < 0;
+    n = Math.abs(n);
+    var whole = Math.floor(n);
+    var cents = Math.round((n - whole) * 100);
+    var s = String(whole);
+    var withDots = s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    var centsStr = (cents < 10 ? "0" : "") + cents;
+    return (neg ? "-" : "") + "€\u00a0" + withDots + "," + centsStr;
+  }
+
+  function fmtUren(n) {
+    var v = Number(n);
+    if (!isFinite(v)) return "0";
+    if (Math.abs(v - Math.round(v)) < 1e-6) return String(Math.round(v));
+    return String(v).replace(".", ",");
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderRows() {
+    if (!tbody) return;
+    var items = [];
+    if (window.urendeclaratiesDB && typeof window.urendeclaratiesDB.getAllSync === "function") {
+      items = window.urendeclaratiesDB.getAllSync() || [];
+    }
+    var html = items.map(function (r) {
+      return (
+        '<tr' +
+        ' data-ud-client="' + escapeHtml(r.client) + '"' +
+        ' data-ud-zorg="' + escapeHtml(r.zorgsoort) + '"' +
+        ' data-ud-jaar="' + escapeHtml(String(r.jaar)) + '"' +
+        ' data-ud-maand="' + escapeHtml(String(r.maand)) + '"' +
+        '>' +
+        '<td data-col="sel"><input type="checkbox" class="table-checkbox" aria-label="Selecteer rij" /></td>' +
+        '<td data-col="client">' + escapeHtml(r.client) + '</td>' +
+        '<td data-col="maand">' + escapeHtml(r.maandLabel) + '</td>' +
+        '<td data-col="besc">' + escapeHtml(r.beschikking) + '</td>' +
+        '<td data-col="zorg">' + escapeHtml(r.zorgsoort) + '</td>' +
+        '<td data-col="tarif" class="cl-ud-td-money">' + fmtEuro(r.uurtarief) + '</td>' +
+        '<td data-col="bedrag" class="cl-ud-td-money">' + fmtEuro(r.bedrag) + '</td>' +
+        '<td data-col="deb" class="cl-num">' + fmtUren(r.gedebiteerdeUren) + '</td>' +
+        '<td data-col="ing" class="cl-num">' + fmtUren(r.ingediendeUren) + '</td>' +
+        '</tr>'
+      );
+    }).join("");
+    tbody.innerHTML = html;
+  }
 
   function showToast(msg) {
     if (!msg || !toastEl) return;
@@ -186,6 +243,17 @@
     });
   }
 
+  renderRows();
   applyColumnToggles();
   filterRows();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst (eerste page-load op een nieuwe browser).
+  window.addEventListener("besa:urendeclaraties-updated", function () {
+    try {
+      renderRows();
+      applyColumnToggles();
+      filterRows();
+    } catch (e) { /* */ }
+  });
 })();

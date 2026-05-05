@@ -37,7 +37,11 @@
     return neg ? "-" + s : s;
   }
 
-  function buildRows() {
+  /**
+   * Bouwt de demo-data op basis van een deterministische hash. Fallback voor
+   * wanneer de Supabase-cache nog leeg is (vóór bootstrap).
+   */
+  function buildSeedRows() {
     var rows = [];
     var base = new Date(2025, 0, 1).getTime();
     var i;
@@ -61,7 +65,15 @@
     return rows;
   }
 
-  var allRows = buildRows();
+  function loadRows() {
+    if (window.compBerekeningenDB && typeof window.compBerekeningenDB.getAllSync === "function") {
+      var fromDb = window.compBerekeningenDB.getAllSync();
+      if (fromDb && fromDb.length) return fromDb;
+    }
+    return buildSeedRows();
+  }
+
+  var allRows = loadRows();
 
   var sortKey = "";
   var sortDir = "asc";
@@ -325,4 +337,13 @@
   });
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst.
+  window.addEventListener("besa:comp-berekeningen-updated", function () {
+    try {
+      allRows = loadRows();
+      render();
+    } catch (e) { /* */ }
+  });
 })();
