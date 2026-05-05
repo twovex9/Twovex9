@@ -51,12 +51,19 @@
     var g = getStore();
     if (!g[clientId]) g[clientId] = {};
     if (!g[clientId][year]) g[clientId][year] = {};
+    var stored;
     if (n === 0 || n === "" || n === null || n === "0" || (typeof n === "number" && isNaN(n))) {
       delete g[clientId][year][String(week)];
+      stored = 0;
     } else {
-      g[clientId][year][String(week)] = Number(n);
+      stored = Number(n);
+      g[clientId][year][String(week)] = stored;
     }
     setStore(g);
+    // Fire-and-forget naar Supabase via data-laag.
+    if (window.urenBudgetDB && typeof window.urenBudgetDB.setCell === "function") {
+      try { window.urenBudgetDB.setCell(clientId, year, week, stored); } catch (e) { /* */ }
+    }
   }
 
   function mondayOfIsoWeek1(year) {
@@ -389,4 +396,11 @@
   renderTbody();
   setSortButtonStates();
   syncUi();
+
+  // Wanneer de Supabase-bootstrap of een externe wijziging de cache vernieuwt
+  // (bv. eerste page-load op een nieuwe browser), opnieuw de tabel vullen
+  // zodat de uren meteen zichtbaar zijn.
+  window.addEventListener("besa:uren-budget-updated", function () {
+    try { renderTbody(); } catch (e) { /* */ }
+  });
 })();

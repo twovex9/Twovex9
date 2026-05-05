@@ -2040,3 +2040,196 @@ values
   ('f_0955', '202506691', 'Ambulant', 'Sara Narouz', 'cl_302', '302', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 51999.47),
   ('f_0956', '202506698', 'Fasewonen', 'Mitchel Heijm', 'cl_58', '58', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 29623.43)
 on conflict (id) do nothing;
+
+-- ============================================================================
+-- organisaties (Cliënten module — referentiedata, verwijzers/zorginstellingen)
+-- ============================================================================
+--
+-- ID is text zodat we de bestaande "org_seed_X" IDs behouden — net als bij
+-- clienten/beschikkingen, om legacy referenties (cliënt.organisatie als
+-- naam-string) niet te breken.
+
+create table if not exists public.organisaties (
+  id text primary key,
+  naam text not null,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create unique index if not exists organisaties_naam_unique_active
+  on public.organisaties (lower(naam))
+  where archived = false;
+
+create index if not exists organisaties_archived_idx on public.organisaties (archived);
+
+drop trigger if exists trg_organisaties_set_modified on public.organisaties;
+create trigger trg_organisaties_set_modified
+  before update on public.organisaties
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.organisaties enable row level security;
+
+drop policy if exists "anon kan organisaties lezen" on public.organisaties;
+create policy "anon kan organisaties lezen"
+  on public.organisaties for select to anon using (true);
+
+drop policy if exists "anon kan organisaties toevoegen" on public.organisaties;
+create policy "anon kan organisaties toevoegen"
+  on public.organisaties for insert to anon with check (true);
+
+drop policy if exists "anon kan organisaties bewerken" on public.organisaties;
+create policy "anon kan organisaties bewerken"
+  on public.organisaties for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan organisaties verwijderen" on public.organisaties;
+create policy "anon kan organisaties verwijderen"
+  on public.organisaties for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan organisaties lezen" on public.organisaties;
+-- drop policy if exists "anon kan organisaties toevoegen" on public.organisaties;
+-- drop policy if exists "anon kan organisaties bewerken" on public.organisaties;
+-- drop policy if exists "anon kan organisaties verwijderen" on public.organisaties;
+-- create policy "ingelogd kan organisaties lezen"
+--   on public.organisaties for select to authenticated using (true);
+-- create policy "ingelogd kan organisaties toevoegen"
+--   on public.organisaties for insert to authenticated with check (true);
+-- create policy "ingelogd kan organisaties bewerken"
+--   on public.organisaties for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan organisaties verwijderen"
+--   on public.organisaties for delete to authenticated using (true);
+
+-- Seed van 4 standaard-organisaties. Idempotent op id.
+insert into public.organisaties (id, naam)
+values
+  ('org_seed_1', 'Planet Young'),
+  ('org_seed_2', 'Diab'),
+  ('org_seed_3', 'Your'),
+  ('org_seed_4', 'Gezozorg')
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- uren_budget (Cliënten module — uren-budgettering per week per cliënt)
+-- ============================================================================
+--
+-- Een cel = (client_id, jaar, week) → uren. Een cel met uren=0 zou normaal
+-- worden weggelaten (cleanup), maar we tolereren ook 0-rijen.
+
+create table if not exists public.uren_budget (
+  client_id text not null,
+  jaar integer not null,
+  week integer not null check (week between 1 and 53),
+  uren numeric(8,2) not null default 0,
+  laatst_gewijzigd timestamptz not null default now(),
+  primary key (client_id, jaar, week)
+);
+
+create index if not exists uren_budget_client_idx on public.uren_budget (client_id);
+create index if not exists uren_budget_jaar_idx on public.uren_budget (jaar);
+
+drop trigger if exists trg_uren_budget_set_modified on public.uren_budget;
+create trigger trg_uren_budget_set_modified
+  before update on public.uren_budget
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.uren_budget enable row level security;
+
+drop policy if exists "anon kan uren_budget lezen" on public.uren_budget;
+create policy "anon kan uren_budget lezen"
+  on public.uren_budget for select to anon using (true);
+
+drop policy if exists "anon kan uren_budget toevoegen" on public.uren_budget;
+create policy "anon kan uren_budget toevoegen"
+  on public.uren_budget for insert to anon with check (true);
+
+drop policy if exists "anon kan uren_budget bewerken" on public.uren_budget;
+create policy "anon kan uren_budget bewerken"
+  on public.uren_budget for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan uren_budget verwijderen" on public.uren_budget;
+create policy "anon kan uren_budget verwijderen"
+  on public.uren_budget for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login):
+-- create policy "ingelogd kan uren_budget lezen"
+--   on public.uren_budget for select to authenticated using (true);
+-- create policy "ingelogd kan uren_budget toevoegen"
+--   on public.uren_budget for insert to authenticated with check (true);
+-- create policy "ingelogd kan uren_budget bewerken"
+--   on public.uren_budget for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan uren_budget verwijderen"
+--   on public.uren_budget for delete to authenticated using (true);
+
+-- Geen seed-data: budgetcellen worden door de gebruiker aangemaakt.
+
+-- ============================================================================
+-- planning (HR module — rooster items per dienst)
+-- ============================================================================
+--
+-- Pragmatische opzet net als medewerkers: een aantal expliciete kolommen voor
+-- snelle queries (start/einde/teamlid/locatie/vestiging) en al het andere in
+-- 'data jsonb'. Geen harde FK naar medewerkers/clienten omdat we vrijetekst-
+-- velden ondersteunen (legacy demo-data, eigen invoer).
+
+create table if not exists public.planning (
+  id text primary key,
+  start_iso timestamptz,
+  einde_iso timestamptz,
+  diensttype text,
+  afdeling text,
+  functie text,
+  teamlead text,
+  teamlid text,
+  client text,
+  vestiging text,
+  locatie text,
+  conflict boolean not null default false,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists planning_start_idx on public.planning (start_iso);
+create index if not exists planning_teamlid_idx on public.planning (lower(teamlid));
+create index if not exists planning_locatie_idx on public.planning (lower(locatie));
+create index if not exists planning_diensttype_idx on public.planning (diensttype);
+create index if not exists planning_archived_idx on public.planning (archived);
+
+drop trigger if exists trg_planning_set_modified on public.planning;
+create trigger trg_planning_set_modified
+  before update on public.planning
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.planning enable row level security;
+
+drop policy if exists "anon kan planning lezen" on public.planning;
+create policy "anon kan planning lezen"
+  on public.planning for select to anon using (true);
+
+drop policy if exists "anon kan planning toevoegen" on public.planning;
+create policy "anon kan planning toevoegen"
+  on public.planning for insert to anon with check (true);
+
+drop policy if exists "anon kan planning bewerken" on public.planning;
+create policy "anon kan planning bewerken"
+  on public.planning for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan planning verwijderen" on public.planning;
+create policy "anon kan planning verwijderen"
+  on public.planning for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login):
+-- create policy "ingelogd kan planning lezen"
+--   on public.planning for select to authenticated using (true);
+-- create policy "ingelogd kan planning toevoegen"
+--   on public.planning for insert to authenticated with check (true);
+-- create policy "ingelogd kan planning bewerken"
+--   on public.planning for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan planning verwijderen"
+--   on public.planning for delete to authenticated using (true);
+
+-- Geen seed-data: planning-items worden door de gebruiker aangemaakt.
+-- Demo-data uit planning.js (oude prototype-seed) wordt eenmalig naar Supabase
+-- gemigreerd door planning-data.js bij eerste page-load.

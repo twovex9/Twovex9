@@ -515,5 +515,12 @@
 
   buildColumnsPanel();
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // heeft bijgewerkt. Zorgt dat een nieuwe browser direct alle organisaties
+  // ziet zonder handmatige refresh.
+  window.addEventListener("besa:organisaties-updated", function () {
+    try { render(); } catch (e) { /* */ }
+  });
 })();
 

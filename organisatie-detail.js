@@ -134,4 +134,11 @@
   } else {
     init();
   }
+
+  // Wanneer de Supabase-bootstrap de cache vult (eerste page-load op een
+  // nieuwe browser), proberen we opnieuw te initialiseren zodat de
+  // detailpagina alsnog de juiste organisatie kan ophalen.
+  window.addEventListener("besa:organisaties-updated", function () {
+    try { init(); } catch (e) { /* */ }
+  });
 })();

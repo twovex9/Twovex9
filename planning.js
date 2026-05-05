@@ -126,6 +126,10 @@ function writePlanningItems(items) {
   } catch {
     /* demo */
   }
+  // Fire-and-forget bulk-sync naar Supabase via data-laag (planning-data.js).
+  if (window.planningDB && typeof window.planningDB.pushFullCache === "function") {
+    try { window.planningDB.pushFullCache(items); } catch (e) { /* */ }
+  }
 }
 
 function normalizeItem(raw) {
@@ -2677,6 +2681,11 @@ function initPlanningPage() {
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) renderAllViews();
+  });
+  // Wanneer de Supabase-bootstrap of een externe sync de planning-cache
+  // vernieuwt, vragen we het rooster opnieuw te tekenen.
+  window.addEventListener("besa:planning-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
   });
 }
 
