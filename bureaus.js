@@ -1,4 +1,4 @@
-/* Data: bureaus-data.js */
+/* Data: bureaus-data.js (Supabase-backed via window.bureausDB) */
 
 (function () {
   var tbody = document.getElementById("bur-tbody");
@@ -11,6 +11,14 @@
   var checkAll = document.getElementById("bur-check-all");
 
   if (!tbody || !table) return;
+  if (!window.bureausDB) {
+    console.error("bureausDB ontbreekt — laad supabase-client.js + bureaus-data.js vóór bureaus.js.");
+    return;
+  }
+
+  function getBureausCached() {
+    return window.bureausDB.getAllSync();
+  }
 
   var sortKey = "";
   var sortDir = "asc";
@@ -21,7 +29,7 @@
   }
 
   function getFilteredBureaus() {
-    var items = getBureaus();
+    var items = getBureausCached();
     var showArchived = archivedToggle ? archivedToggle.checked : false;
 
     items = items.filter(function (o) {
@@ -337,10 +345,15 @@
     if (pPreview) pPreview.textContent = "";
   }
 
-  function confirmBurPurge() {
+  async function confirmBurPurge() {
     if (!purgeTargetId || (pConfirmBtn && pConfirmBtn.disabled)) return;
-    if (typeof deleteBureau === "function") deleteBureau(purgeTargetId);
+    var idToPurge = purgeTargetId;
     closeBurPurgeModal();
+    try {
+      await window.bureausDB.delete(idToPurge);
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+    }
     render();
   }
 
@@ -380,15 +393,15 @@
     if (delPreview) delPreview.textContent = "";
   }
 
-  function confirmBurArchive() {
+  async function confirmBurArchive() {
     if (!deleteTargetId || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    var now = new Date().toISOString();
-    var list = getBureaus().map(function (o) {
-      if (o.id !== deleteTargetId) return o;
-      return Object.assign({}, o, { archived: true, laatstGewijzigd: now });
-    });
-    saveBureaus(list);
+    var idToArchive = deleteTargetId;
     closeBurDeleteModal();
+    try {
+      await window.bureausDB.archive(idToArchive);
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+    }
     render();
   }
 
@@ -426,18 +439,17 @@
     }
   });
 
-  tbody.addEventListener("click", function (e) {
+  tbody.addEventListener("click", async function (e) {
     var resEl = e.target.closest(".hr-restore-btn");
     if (resEl && resEl.getAttribute("data-bur-id")) {
       e.preventDefault();
       e.stopPropagation();
       var rid = resEl.getAttribute("data-bur-id");
-      var nowR = new Date().toISOString();
-      var listR = getBureaus().map(function (o) {
-        if (o.id !== rid) return o;
-        return Object.assign({}, o, { archived: false, laatstGewijzigd: nowR });
-      });
-      saveBureaus(listR);
+      try {
+        await window.bureausDB.restore(rid);
+      } catch (err) {
+        console.error("Herstellen mislukt:", err);
+      }
       render();
       return;
     }
@@ -465,7 +477,7 @@
   });
 
   if (addForm) {
-    addForm.addEventListener("submit", function (e) {
+    addForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       var naamInput = document.getElementById("bur-add-naam");
       var naam = naamInput ? naamInput.value.trim() : "";
@@ -473,21 +485,27 @@
         if (naamInput) naamInput.focus();
         return;
       }
-      var list = getBureaus();
-      var now = new Date().toISOString();
-      list.push({
-        id: bureauGenId(),
-        naam: naam,
-        aanmaakdatum: now,
-        laatstGewijzigd: now,
-        archived: false,
-      });
-      saveBureaus(list);
+      try {
+        await window.bureausDB.add({ naam: naam });
+      } catch (err) {
+        console.error("Bureau toevoegen mislukt:", err);
+        return;
+      }
       closeAddModal();
       currentPage = 0;
       render();
     });
   }
 
-  render();
+  function initialRender() {
+    var cached = getBureausCached();
+    if (cached.length > 0) {
+      render();
+    } else if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:#9ca3af;">Bureau\'s laden…</td></tr>';
+    }
+  }
+
+  window.addEventListener("besa:bureaus-updated", render);
+  initialRender();
 })();

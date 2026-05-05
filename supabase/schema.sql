@@ -183,7 +183,149 @@ create policy "anon kan opleidingen verwijderen"
 -- create policy "ingelogd kan opleidingen verwijderen"
 --   on public.opleidingen for delete to authenticated using (true);
 
--- Seed-data opleidingen (idempotent)
+-- ============================================================================
+-- zorgsoorten (Cliënten module — referentiedata)
+-- ============================================================================
+
+create table if not exists public.zorgsoorten (
+  id uuid primary key default gen_random_uuid(),
+  naam text not null,
+  tarieftype text not null check (tarieftype in ('dag', 'uur', 'week')),
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create unique index if not exists zorgsoorten_naam_unique_active
+  on public.zorgsoorten (lower(naam))
+  where archived = false;
+
+create index if not exists zorgsoorten_archived_idx on public.zorgsoorten (archived);
+
+drop trigger if exists trg_zorgsoorten_set_modified on public.zorgsoorten;
+create trigger trg_zorgsoorten_set_modified
+  before update on public.zorgsoorten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.zorgsoorten enable row level security;
+
+drop policy if exists "anon kan zorgsoorten lezen" on public.zorgsoorten;
+create policy "anon kan zorgsoorten lezen"
+  on public.zorgsoorten for select to anon using (true);
+
+drop policy if exists "anon kan zorgsoorten toevoegen" on public.zorgsoorten;
+create policy "anon kan zorgsoorten toevoegen"
+  on public.zorgsoorten for insert to anon with check (true);
+
+drop policy if exists "anon kan zorgsoorten bewerken" on public.zorgsoorten;
+create policy "anon kan zorgsoorten bewerken"
+  on public.zorgsoorten for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan zorgsoorten verwijderen" on public.zorgsoorten;
+create policy "anon kan zorgsoorten verwijderen"
+  on public.zorgsoorten for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan zorgsoorten lezen" on public.zorgsoorten;
+-- drop policy if exists "anon kan zorgsoorten toevoegen" on public.zorgsoorten;
+-- drop policy if exists "anon kan zorgsoorten bewerken" on public.zorgsoorten;
+-- drop policy if exists "anon kan zorgsoorten verwijderen" on public.zorgsoorten;
+-- create policy "ingelogd kan zorgsoorten lezen"
+--   on public.zorgsoorten for select to authenticated using (true);
+-- create policy "ingelogd kan zorgsoorten toevoegen"
+--   on public.zorgsoorten for insert to authenticated with check (true);
+-- create policy "ingelogd kan zorgsoorten bewerken"
+--   on public.zorgsoorten for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan zorgsoorten verwijderen"
+--   on public.zorgsoorten for delete to authenticated using (true);
+
+insert into public.zorgsoorten (naam, tarieftype)
+select v.naam, v.tarieftype
+from (values
+  ('Gecombineerd', 'week'),
+  ('Wlz', 'uur'),
+  ('Ambulant extern', 'uur'),
+  ('Fasewonen', 'dag'),
+  ('Ambulant intern', 'uur'),
+  ('Verblijf en behandeling', 'dag')
+) as v(naam, tarieftype)
+where not exists (
+  select 1 from public.zorgsoorten z where lower(z.naam) = lower(v.naam)
+);
+
+-- ============================================================================
+-- bureaus (HR module — referentiedata)
+-- ============================================================================
+
+create table if not exists public.bureaus (
+  id uuid primary key default gen_random_uuid(),
+  naam text not null,
+  standaard_uurtarief numeric(10, 2),
+  fee_per_uur numeric(10, 2),
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create unique index if not exists bureaus_naam_unique_active
+  on public.bureaus (lower(naam))
+  where archived = false;
+
+create index if not exists bureaus_archived_idx on public.bureaus (archived);
+
+drop trigger if exists trg_bureaus_set_modified on public.bureaus;
+create trigger trg_bureaus_set_modified
+  before update on public.bureaus
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.bureaus enable row level security;
+
+drop policy if exists "anon kan bureaus lezen" on public.bureaus;
+create policy "anon kan bureaus lezen"
+  on public.bureaus for select to anon using (true);
+
+drop policy if exists "anon kan bureaus toevoegen" on public.bureaus;
+create policy "anon kan bureaus toevoegen"
+  on public.bureaus for insert to anon with check (true);
+
+drop policy if exists "anon kan bureaus bewerken" on public.bureaus;
+create policy "anon kan bureaus bewerken"
+  on public.bureaus for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan bureaus verwijderen" on public.bureaus;
+create policy "anon kan bureaus verwijderen"
+  on public.bureaus for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan bureaus lezen" on public.bureaus;
+-- drop policy if exists "anon kan bureaus toevoegen" on public.bureaus;
+-- drop policy if exists "anon kan bureaus bewerken" on public.bureaus;
+-- drop policy if exists "anon kan bureaus verwijderen" on public.bureaus;
+-- create policy "ingelogd kan bureaus lezen"
+--   on public.bureaus for select to authenticated using (true);
+-- create policy "ingelogd kan bureaus toevoegen"
+--   on public.bureaus for insert to authenticated with check (true);
+-- create policy "ingelogd kan bureaus bewerken"
+--   on public.bureaus for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan bureaus verwijderen"
+--   on public.bureaus for delete to authenticated using (true);
+
+insert into public.bureaus (naam, standaard_uurtarief, fee_per_uur)
+select v.naam, v.tarief, v.fee
+from (values
+  ('Zorgkracht Direct', 47::numeric, null::numeric),
+  ('BLND', null::numeric, null::numeric),
+  ('Optimum Flex', null::numeric, null::numeric),
+  ('Level Up', null::numeric, null::numeric)
+) as v(naam, tarief, fee)
+where not exists (
+  select 1 from public.bureaus b where lower(b.naam) = lower(v.naam)
+);
+
+-- ============================================================================
+-- Seed-data opleidingen (verplaatst van bovenaan; idempotent)
+-- ============================================================================
+
 insert into public.opleidingen (naam, skj)
 select v.naam, false
 from (values

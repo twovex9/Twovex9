@@ -1,88 +1,198 @@
-/* Zorgsoorten (demo) — leesbaar via getZorgsoortItems */
+/**
+ * Data-laag voor 'zorgsoorten' (Cliënten module — referentiedata).
+ *
+ * Bron van waarheid: Supabase tabel public.zorgsoorten.
+ * localStorage["zorgsoorten"] dient als read-cache zodat synchrone lezers
+ * onveranderd kunnen blijven werken.
+ *
+ * Public async API:
+ *   await window.zorgsoortenDB.bootstrap()
+ *   await window.zorgsoortenDB.refresh()
+ *   await window.zorgsoortenDB.add({naam, tarieftype})
+ *   await window.zorgsoortenDB.update(id, patch)   // {naam?, tarieftype?, archived?}
+ *   await window.zorgsoortenDB.archive(id)
+ *   await window.zorgsoortenDB.restore(id)
+ *   await window.zorgsoortenDB.delete(id)
+ *
+ * Sync helpers:
+ *   window.zorgsoortenDB.getAllSync()
+ *   window.zorgsoortenDB.ready  (Promise)
+ *
+ * Backward-compat globals (sync, lezen uit cache):
+ *   getZorgsoortItems(), getZorgsoortById(id)
+ *
+ * Events:
+ *   "besa:zorgsoorten-updated" op `window` na elke mutatie of bootstrap.
+ *
+ * Cache-formaat:
+ *   { id, naam, tarieftype, archived, aanmaakdatum, laatstGewijzigd }
+ */
 (function (global) {
   "use strict";
 
-  var ZS = [
-    { id: "zs-1", naam: "Gecombineerd", tarieftype: "week", archived: false },
-    { id: "zs-2", naam: "Wlz", tarieftype: "uur", archived: false },
-    { id: "zs-3", naam: "Ambulant extern", tarieftype: "uur", archived: false },
-    { id: "zs-4", naam: "Fasewonen", tarieftype: "dag", archived: false },
-    { id: "zs-5", naam: "Ambulant intern", tarieftype: "uur", archived: false },
-    { id: "zs-6", naam: "Verblijf en behandeling", tarieftype: "dag", archived: false }
-  ];
+  var CACHE_KEY = "zorgsoorten";
+  var TABLE = "zorgsoorten";
+  var EVENT_NAME = "besa:zorgsoorten-updated";
+
+  function rowToObj(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      naam: row.naam,
+      tarieftype: row.tarieftype,
+      archived: !!row.archived,
+      aanmaakdatum: row.aanmaakdatum,
+      laatstGewijzigd: row.laatst_gewijzigd,
+    };
+  }
+
+  function readCache() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function dispatchUpdated() {
+    try { window.dispatchEvent(new CustomEvent(EVENT_NAME)); }
+    catch (e) { /* noop */ }
+  }
+
+  function writeCache(list) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(list)); }
+    catch (e) { /* best effort */ }
+    dispatchUpdated();
+  }
+
+  async function fetchAll() {
+    if (!window.besaSupabase) {
+      console.warn("[zorgsoortenDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
+      return readCache();
+    }
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .select("*")
+      .order("aanmaakdatum", { ascending: true });
+    if (res.error) {
+      console.error("[zorgsoortenDB] fetchAll error:", res.error);
+      throw res.error;
+    }
+    var list = (res.data || []).map(rowToObj);
+    writeCache(list);
+    return list;
+  }
+
+  var bootstrapPromise = null;
+  function bootstrap() {
+    if (!bootstrapPromise) {
+      bootstrapPromise = (async function () {
+        try { await fetchAll(); }
+        catch (e) { dispatchUpdated(); }
+      })();
+    }
+    return bootstrapPromise;
+  }
+
+  function refresh() {
+    bootstrapPromise = null;
+    return bootstrap();
+  }
+
+  function validTarief(t) {
+    var s = String(t || "").toLowerCase();
+    return s === "dag" || s === "uur" || s === "week";
+  }
+
+  async function add(input) {
+    var src = input || {};
+    var naam = String(src.naam || "").trim();
+    if (!naam) throw new Error("Naam is verplicht.");
+    if (!validTarief(src.tarieftype)) throw new Error("Tarieftype moet 'dag', 'uur' of 'week' zijn.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .insert({ naam: naam, tarieftype: String(src.tarieftype).toLowerCase(), archived: false })
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var newItem = rowToObj(res.data);
+    var list = readCache();
+    list.push(newItem);
+    writeCache(list);
+    return newItem;
+  }
+
+  async function update(id, patch) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var dbPatch = {};
+    if (typeof patch.naam === "string") dbPatch.naam = patch.naam.trim();
+    if (typeof patch.tarieftype === "string") {
+      if (!validTarief(patch.tarieftype)) throw new Error("Ongeldig tarieftype.");
+      dbPatch.tarieftype = String(patch.tarieftype).toLowerCase();
+    }
+    if (typeof patch.archived === "boolean") dbPatch.archived = patch.archived;
+    if (Object.keys(dbPatch).length === 0) {
+      var existing = readCache().find(function (z) { return z.id === id; });
+      return existing || null;
+    }
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var newItem = rowToObj(res.data);
+    var list = readCache().map(function (z) { return z.id === id ? newItem : z; });
+    writeCache(list);
+    return newItem;
+  }
+
+  async function archive(id) { return update(id, { archived: true }); }
+  async function restore(id) { return update(id, { archived: false }); }
+
+  async function remove(id) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    var list = readCache().filter(function (z) { return z.id !== id; });
+    writeCache(list);
+    return true;
+  }
+
+  function getAllSync() { return readCache(); }
 
   function getZorgsoortItems() {
-    return ZS.map(function (x) {
-      return Object.assign({}, x);
-    });
-  }
-
-  function findIndexById(id) {
-    for (var i = 0; i < ZS.length; i++) {
-      if (ZS[i].id === id) return i;
-    }
-    return -1;
-  }
-
-  function setZorgsoortArchivedById(id, archived) {
-    var i = findIndexById(id);
-    if (i < 0) return false;
-    ZS[i] = Object.assign({}, ZS[i], { archived: !!archived });
-    return true;
-  }
-
-  function deleteZorgsoortById(id) {
-    var next = ZS.filter(function (z) {
-      return z.id !== id;
-    });
-    if (next.length === ZS.length) return false;
-    ZS = next;
-    return true;
-  }
-
-  function addZorgsoort(naam, tarieftype) {
-    var n = (naam == null ? "" : String(naam)).trim();
-    if (!n) return null;
-    var t = String(tarieftype || "").toLowerCase();
-    if (t !== "dag" && t !== "uur" && t !== "week") return null;
-    var nextNum = 0;
-    ZS.forEach(function (z) {
-      var m = String(z && z.id ? z.id : "").match(/^zs-(\d+)$/);
-      if (m) nextNum = Math.max(nextNum, parseInt(m[1], 10));
-    });
-    var row = { id: "zs-" + (nextNum + 1), naam: n, tarieftype: t, archived: false };
-    ZS.push(row);
-    return row;
-  }
-
-  function updateZorgsoortById(id, patch) {
-    var i = findIndexById(id);
-    if (i < 0) return null;
-    var next = Object.assign({}, ZS[i]);
-    if (patch && Object.prototype.hasOwnProperty.call(patch, "naam")) {
-      var n = String(patch.naam == null ? "" : patch.naam).trim();
-      if (!n) return null;
-      next.naam = n;
-    }
-    if (patch && Object.prototype.hasOwnProperty.call(patch, "tarieftype")) {
-      var t = String(patch.tarieftype || "").toLowerCase();
-      if (t !== "dag" && t !== "uur" && t !== "week") return null;
-      next.tarieftype = t;
-    }
-    ZS[i] = next;
-    return Object.assign({}, next);
+    return readCache().map(function (x) { return Object.assign({}, x); });
   }
 
   function getZorgsoortById(id) {
-    var i = findIndexById(id);
-    if (i < 0) return null;
-    return Object.assign({}, ZS[i]);
+    var item = readCache().find(function (x) { return x.id === id; });
+    return item ? Object.assign({}, item) : null;
   }
 
+  var api = {
+    bootstrap: bootstrap,
+    refresh: refresh,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
+    getAllSync: getAllSync,
+  };
+
+  Object.defineProperty(api, "ready", {
+    get: function () { return bootstrap(); },
+  });
+
+  global.zorgsoortenDB = api;
   global.getZorgsoortItems = getZorgsoortItems;
   global.getZorgsoortById = getZorgsoortById;
-  global.setZorgsoortArchivedById = setZorgsoortArchivedById;
-  global.deleteZorgsoortById = deleteZorgsoortById;
-  global.addZorgsoort = addZorgsoort;
-  global.updateZorgsoortById = updateZorgsoortById;
+
+  // Auto-bootstrap zodra dit script laadt.
+  bootstrap();
 })(typeof window !== "undefined" ? window : this);

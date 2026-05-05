@@ -1,4 +1,4 @@
-/* global getZorgsoortItems, setZorgsoortArchivedById, deleteZorgsoortById, addZorgsoort, showSaveModal */
+/* global showSaveModal */
 (function () {
   "use strict";
 
@@ -19,8 +19,14 @@
   var pendingPurgeId = "";
 
   if (!tbody || !table) return;
-  if (typeof getZorgsoortItems !== "function") return;
-  if (typeof setZorgsoortArchivedById !== "function" || typeof deleteZorgsoortById !== "function" || typeof addZorgsoort !== "function") return;
+  if (!window.zorgsoortenDB) {
+    console.error("zorgsoortenDB ontbreekt — laad supabase-client.js + zorgsoorten-data.js vóór zorgsoorten.js.");
+    return;
+  }
+
+  function getZorgsoortenCached() {
+    return window.zorgsoortenDB.getAllSync();
+  }
 
   var sortKey = "naam";
   var sortDir = "asc";
@@ -80,7 +86,7 @@
   }
 
   function findZorgsoortById(id) {
-    var items = getZorgsoortItems() || [];
+    var items = getZorgsoortenCached() || [];
     for (var i = 0; i < items.length; i++) {
       if (items[i] && items[i].id === id) return items[i];
     }
@@ -88,7 +94,7 @@
   }
 
   function getFiltered() {
-    var items = getZorgsoortItems() || [];
+    var items = getZorgsoortenCached() || [];
     var showArch = archivedToggle && archivedToggle.checked;
     items = items.filter(function (r) {
       if (!r) return false;
@@ -353,7 +359,7 @@
     });
   }
   if (zsAddForm) {
-    zsAddForm.addEventListener("submit", function (e) {
+    zsAddForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       var nm = zsAddNaam ? (zsAddNaam.value || "").trim() : "";
       var tr = zsAddTarief && zsAddTarief.value ? zsAddTarief.value : "";
@@ -365,8 +371,10 @@
         showToast("Kies een tarieftype (Dag, Uur of Week)");
         return;
       }
-      var created = addZorgsoort(nm, tr);
-      if (!created) {
+      try {
+        await window.zorgsoortenDB.add({ naam: nm, tarieftype: tr });
+      } catch (err) {
+        console.error("Zorgsoort toevoegen mislukt:", err);
         showToast("Opslaan is niet gelukt");
         return;
       }
@@ -484,26 +492,36 @@
     zsPurgeSlider.addEventListener("change", syncZsPurgeSlider);
   }
 
-  document.getElementById("zs-ar-confirm") && document.getElementById("zs-ar-confirm").addEventListener("click", function () {
+  document.getElementById("zs-ar-confirm") && document.getElementById("zs-ar-confirm").addEventListener("click", async function () {
     if (!pendingArchiveId) return;
     var s = document.getElementById("zs-ar-slider");
     if (s && parseInt(s.value, 10) < 100) return;
-    if (setZorgsoortArchivedById(pendingArchiveId, true)) {
+    var idToArchive = pendingArchiveId;
+    closeZsArchive();
+    try {
+      await window.zorgsoortenDB.archive(idToArchive);
       if (typeof showSaveModal === "function") showSaveModal("Zorgsoort is gearchiveerd.", "Gearchiveerd");
       else showToast("Zorgsoort gearchiveerd");
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+      showToast("Archiveren is niet gelukt");
     }
-    closeZsArchive();
     render();
   });
-  document.getElementById("zs-purge-confirm") && document.getElementById("zs-purge-confirm").addEventListener("click", function () {
+  document.getElementById("zs-purge-confirm") && document.getElementById("zs-purge-confirm").addEventListener("click", async function () {
     if (!pendingPurgeId) return;
     var s = document.getElementById("zs-purge-slider");
     if (s && parseInt(s.value, 10) < 100) return;
-    if (deleteZorgsoortById(pendingPurgeId)) {
+    var idToPurge = pendingPurgeId;
+    closeZsPurge();
+    try {
+      await window.zorgsoortenDB.delete(idToPurge);
       if (typeof showSaveModal === "function") showSaveModal("Zorgsoort is definitief verwijderd.", "Verwijderd");
       else showToast("Zorgsoort verwijderd");
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+      showToast("Verwijderen is niet gelukt");
     }
-    closeZsPurge();
     render();
   });
   document.getElementById("zs-ar-close") && document.getElementById("zs-ar-close").addEventListener("click", closeZsArchive);
@@ -536,14 +554,20 @@
     }
   });
 
-  tbody.addEventListener("click", function (e) {
+  tbody.addEventListener("click", async function (e) {
     var t = e.target;
     if (t && t.closest && t.closest(".zs-restore-btn")) {
       e.preventDefault();
       var id = t.closest(".zs-restore-btn").getAttribute("data-id");
-      if (id && setZorgsoortArchivedById(id, false)) {
-        if (typeof showSaveModal === "function") showSaveModal("Zorgsoort is hersteld.", "Hersteld");
-        else showToast("Zorgsoort hersteld");
+      if (id) {
+        try {
+          await window.zorgsoortenDB.restore(id);
+          if (typeof showSaveModal === "function") showSaveModal("Zorgsoort is hersteld.", "Hersteld");
+          else showToast("Zorgsoort hersteld");
+        } catch (err) {
+          console.error("Herstellen mislukt:", err);
+          showToast("Herstellen is niet gelukt");
+        }
       }
       render();
       return;
@@ -573,5 +597,15 @@
     }
   });
 
-  render();
+  function initialRender() {
+    var cached = getZorgsoortenCached();
+    if (cached.length > 0) {
+      render();
+    } else if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="4" class="cl-empty-cell">Zorgsoorten laden…</td></tr>';
+    }
+  }
+
+  window.addEventListener("besa:zorgsoorten-updated", render);
+  initialRender();
 })();

@@ -1,11 +1,11 @@
-/* bureau-detail.js — detailpagina bureau (koppelt aan bureaus-data.js) */
+/* bureau-detail.js — detailpagina bureau (Supabase data-laag via window.bureausDB) */
 (function () {
   "use strict";
 
   var params = new URLSearchParams(window.location.search);
   var burId = params.get("id");
 
-  if (!burId) {
+  if (!burId || !window.bureausDB) {
     window.location.href = "bureaus.html";
     return;
   }
@@ -41,15 +41,12 @@
     }, 2200);
   }
 
-  function findBureau() {
-    var list = getBureaus();
-    return list.filter(function (o) { return o.id === burId; })[0];
-  }
-
-  var bur = findBureau();
-  if (!bur) {
-    window.location.href = "bureaus.html";
-    return;
+  function findBureauCached() {
+    var list = window.bureausDB.getAllSync() || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === burId) return list[i];
+    }
+    return null;
   }
 
   var heroName = document.getElementById("bur-hero-name");
@@ -75,40 +72,65 @@
     return Math.round(n * 100) / 100;
   }
 
-  function hydrate() {
-    heroName.textContent = bur.naam || "—";
+  function hydrate(bur) {
+    if (!bur) return;
+    if (heroName) heroName.textContent = bur.naam || "—";
     document.title = (bur.naam || "Bureau") + " — HR";
     if (naamInput) naamInput.value = bur.naam || "";
     if (uurtariefInput) uurtariefInput.value = toInputNumberValue(bur.standaardUurtarief);
     if (feeInput) feeInput.value = toInputNumberValue(bur.feePerUur);
   }
 
-  hydrate();
-
   if (saveBtn) {
-    saveBtn.addEventListener("click", function () {
+    saveBtn.addEventListener("click", async function () {
       var newName = naamInput ? naamInput.value.trim() : "";
       if (!newName) {
         if (naamInput) naamInput.focus();
         return;
       }
-
-      var all = getBureaus();
-      var idx = all.findIndex(function (o) { return o.id === burId; });
-      if (idx === -1) return;
-
-      var row = all[idx];
-      row.naam = newName;
-      row.standaardUurtarief = parseMoneyLike(uurtariefInput ? uurtariefInput.value : "");
-      row.feePerUur = parseMoneyLike(feeInput ? feeInput.value : "");
-      row.laatstGewijzigd = new Date().toISOString();
-
-      saveBureaus(all);
-      bur = row;
-      hydrate();
+      var patch = {
+        naam: newName,
+        standaardUurtarief: parseMoneyLike(uurtariefInput ? uurtariefInput.value : ""),
+        feePerUur: parseMoneyLike(feeInput ? feeInput.value : ""),
+      };
+      var updated;
+      try {
+        updated = await window.bureausDB.update(burId, patch);
+      } catch (err) {
+        console.error("Bureau opslaan mislukt:", err);
+        showToast("Opslaan is niet gelukt");
+        return;
+      }
+      if (!updated) {
+        showToast("Opslaan is niet gelukt");
+        return;
+      }
+      hydrate(updated);
       if (typeof showSaveModal === "function") showSaveModal("Bureau is opgeslagen.");
       else showToast("bureau opgeslagen");
     });
   }
-})();
 
+  function tryInitialRender() {
+    var bur = findBureauCached();
+    if (bur) {
+      hydrate(bur);
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener("besa:bureaus-updated", function () {
+    var bur = findBureauCached();
+    if (!bur) {
+      window.location.href = "bureaus.html";
+      return;
+    }
+    hydrate(bur);
+  });
+
+  if (!tryInitialRender()) {
+    if (heroName) heroName.textContent = "Laden…";
+    Promise.resolve(window.bureausDB.ready).catch(function () { /* error reeds gelogd */ });
+  }
+})();
