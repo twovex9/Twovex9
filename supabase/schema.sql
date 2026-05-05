@@ -815,3 +815,194 @@ from (values
 where not exists (
   select 1 from public.clienten c where c.id = t.id
 );
+
+
+-- ============================================================================
+-- beschikkingen (Cliënten module — master entity)
+-- ============================================================================
+--
+-- Soft FK naar clienten via client_id (text). Geen harde FK constraint, want we
+-- willen legacy "test"-IDs (cl_99999, cl_99820, …) kunnen behouden zonder de
+-- referentie te breken. Lookups gaan via cache (clienten-data.js).
+--
+-- Veel van de financiële velden zijn explicit numeric kolommen voor snelle
+-- aggregaties (dashboard). Overige meta gaat in 'data jsonb'.
+
+create table if not exists public.beschikkingen (
+  id text primary key,
+  client_id text,
+  naam text not null default '',
+  zorgsoort_key text not null default 'overig',
+  fase text not null default 'actief',
+  locatie text,
+  start_iso date,
+  eind_iso date,
+  decl_meth text not null default 'ONS',
+  tarief_eur numeric(12,2) not null default 0,
+  tarief_eenheid text not null default 'uur' check (tarief_eenheid in ('uur','dag','week')),
+  betalings_status text not null default 'outstanding' check (betalings_status in ('betaald','outstanding')),
+  te_declareren_lm numeric(14,2) not null default 0,
+  nog_niet_gedeclareerd numeric(14,2) not null default 0,
+  gedecl_gemeente_in_behandeling numeric(14,2) not null default 0,
+  betaald_cumulatief numeric(14,2) not null default 0,
+  betaling_ref_maand text,
+  gearchiveerd boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists beschikkingen_client_id_idx on public.beschikkingen (client_id);
+create index if not exists beschikkingen_fase_idx on public.beschikkingen (fase);
+create index if not exists beschikkingen_zorgsoort_idx on public.beschikkingen (zorgsoort_key);
+create index if not exists beschikkingen_archived_idx on public.beschikkingen (gearchiveerd);
+create index if not exists beschikkingen_eind_iso_idx on public.beschikkingen (eind_iso);
+create index if not exists beschikkingen_betalings_status_idx on public.beschikkingen (betalings_status);
+
+drop trigger if exists trg_beschikkingen_set_modified on public.beschikkingen;
+create trigger trg_beschikkingen_set_modified
+  before update on public.beschikkingen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.beschikkingen enable row level security;
+
+drop policy if exists "anon kan beschikkingen lezen" on public.beschikkingen;
+create policy "anon kan beschikkingen lezen"
+  on public.beschikkingen for select to anon using (true);
+
+drop policy if exists "anon kan beschikkingen toevoegen" on public.beschikkingen;
+create policy "anon kan beschikkingen toevoegen"
+  on public.beschikkingen for insert to anon with check (true);
+
+drop policy if exists "anon kan beschikkingen bewerken" on public.beschikkingen;
+create policy "anon kan beschikkingen bewerken"
+  on public.beschikkingen for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan beschikkingen verwijderen" on public.beschikkingen;
+create policy "anon kan beschikkingen verwijderen"
+  on public.beschikkingen for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan beschikkingen lezen" on public.beschikkingen;
+-- drop policy if exists "anon kan beschikkingen toevoegen" on public.beschikkingen;
+-- drop policy if exists "anon kan beschikkingen bewerken" on public.beschikkingen;
+-- drop policy if exists "anon kan beschikkingen verwijderen" on public.beschikkingen;
+-- create policy "ingelogd kan beschikkingen lezen"
+--   on public.beschikkingen for select to authenticated using (true);
+-- create policy "ingelogd kan beschikkingen toevoegen"
+--   on public.beschikkingen for insert to authenticated with check (true);
+-- create policy "ingelogd kan beschikkingen bewerken"
+--   on public.beschikkingen for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan beschikkingen verwijderen"
+--   on public.beschikkingen for delete to authenticated using (true);
+
+-- Seed van 100 beschikkingen (uit beschikkingen-besc-bulk.js v2). Idempotent
+-- via "on conflict do nothing"; cliëntlabels worden at-runtime opgehaald uit
+-- de clienten-cache (clienten-data.js → data.clientLabelOverride als override).
+insert into public.beschikkingen (
+  id, client_id, naam, zorgsoort_key, fase, start_iso, eind_iso,
+  tarief_eur, tarief_eenheid, decl_meth, te_declareren_lm,
+  nog_niet_gedeclareerd, betalings_status, betaling_ref_maand, data
+)
+values
+  ('b_besc_001', 'cl_322', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_002', 'cl_326', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 357.84, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_003', 'cl_326', 'Ambulant', 'amb', 'actief', NULL, NULL, 90.6, 'uur', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_004', 'cl_330', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_005', 'cl_335', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_006', 'cl_335', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 376.19, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_007', 'cl_331', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_008', 'cl_328', 'verblijf en behandeling', 'veb', 'actief', '2026-01-09', '2026-07-08', 376.19, 'dag', 'ONS', 9780.94, 19730.33, 'betaald', '2026-01', '{}'::jsonb),
+  ('b_besc_009', 'cl_279', 'Ambulant', 'amb', 'actief', NULL, NULL, 86.4, 'uur', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_010', 'cl_327', 'Gecombineerd', 'geo', 'verlopen', '2025-12-23', '2026-01-04', 357.85, 'week', 'ONS', 0, 0, 'outstanding', '2025-12', '{}'::jsonb),
+  ('b_besc_011', 'cl_261', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_012', 'cl_333', 'ambulant en verblijf', 'geo', 'actief', '2025-12-23', '2026-03-23', 14728, 'week', 'Handmatig', 0, 0, 'outstanding', '2025-12', '{}'::jsonb),
+  ('b_besc_013', 'cl_328', 'ambulant 24 u / week gedurende 4 weken', 'amb', 'actief', '2025-12-11', '2026-03-08', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_014', 'cl_328', 'crisis 4 weken', 'veb', 'verlopen', '2025-12-11', '2026-01-07', 290, 'dag', 'ONS', 0, 1968.4, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_015', 'cl_330', 'ambulant 10 u / dag', 'amb', 'in_aanvraag', '2025-12-15', '2026-12-10', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_016', 'cl_330', 'verblijf', 'veb', 'in_aanvraag', '2025-12-15', '2026-12-10', 357.84, 'dag', 'ONS', 9303.84, 20543.71, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_017', 'cl_331', 'ambulant 10 u / dag', 'amb', 'in_aanvraag', '2025-12-15', '2026-12-10', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_018', 'cl_331', 'verblijf', 'veb', 'in_aanvraag', '2025-12-15', '2026-12-10', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2025-12', '{}'::jsonb),
+  ('b_besc_019', 'cl_323', 'beschikking wordt afgegeven door alkmaar', 'veb', 'in_aanvraag', '2025-11-28', '2026-06-11', 357.84, 'dag', 'ONS', 9303.84, 15928.49, 'betaald', '2025-11', '{}'::jsonb),
+  ('b_besc_020', 'cl_322', 'verblijf vanaf 7 november', 'veb', 'in_aanvraag', NULL, NULL, 357, 'dag', 'ONS', 9282, 31010.28, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_021', 'cl_321', 'beschikking ambulant vanuit Timon', 'amb', 'in_aanvraag', NULL, NULL, 86.4, 'uur', 'Handmatig', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_022', 'cl_292', 'verblijf behandel vanaf 4/11 in aanvraag', 'veb', 'in_zorg', '2025-11-03', '2026-11-02', 381, 'dag', 'ONS', 9906, 56388, 'betaald', '2025-11', '{}'::jsonb),
+  ('b_besc_023', 'cl_321', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_024', 'cl_319', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{"clientLabelOverride":"Elana van Milligen"}'::jsonb),
+  ('b_besc_025', 'cl_324', 'ambulant 10 u / dag.', 'amb', 'actief', '2025-11-25', '2026-01-10', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-11', '{}'::jsonb),
+  ('b_besc_026', 'cl_99820', 'Verblijf en behandeling', 'veb', 'verlopen', '2024-01-01', '2024-12-01', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2024-01', '{"clientLabelOverride":"Jimmy Toemen"}'::jsonb),
+  ('b_besc_027', 'cl_324', 'Verblijf en behandeling', 'veb', 'actief', '2025-11-25', '2026-07-09', 357.84, 'dag', 'ONS', 9303.84, 20543.71, 'betaald', '2025-11', '{}'::jsonb),
+  ('b_besc_028', 'cl_206', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 235.08, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{"clientLabelOverride":"Shadena Bouman"}'::jsonb),
+  ('b_besc_029', 'cl_320', 'verblijf en behandeling', 'veb', 'actief', '2025-10-16', '2026-03-18', 357.84, 'dag', 'ONS', 0, 16182.72, 'betaald', '2025-10', '{}'::jsonb),
+  ('b_besc_030', 'cl_302', 'verlenging vanaf 18-11', 'veb', 'actief', '2025-11-30', '2026-05-14', 285.22, 'dag', 'ONS', 7415.72, 9653.99, 'betaald', '2025-11', '{"clientLabelOverride":"Sara Norouz"}'::jsonb),
+  ('b_besc_031', 'cl_315', 'Gecombineerd', 'geo', 'actief', '2025-10-13', '2025-12-19', 7352, 'week', 'ONS', 0, 0, 'outstanding', '2025-10', '{}'::jsonb),
+  ('b_besc_032', 'cl_228', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_033', 'cl_313', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_034', 'cl_209', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_035', 'cl_267', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_036', 'cl_261', 'Gecombineerd', 'veb', 'verlopen', '2024-01-01', '2024-01-01', 0.01, 'dag', 'ONS', 0, 0, 'outstanding', '2024-01', '{"clientLabelOverride":"Lucas Kortenhoeven"}'::jsonb),
+  ('b_besc_037', 'cl_301', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_038', 'cl_276', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_039', 'cl_291', 'Gecombineerd', 'geo', 'actief', NULL, NULL, 0, 'week', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_040', 'cl_319', 'van 08-10-2025 tot 30-10-2025 in zorg', 'geo', 'verlopen', '2025-10-07', '2025-10-29', 1, 'week', 'Handmatig', 0, 0, 'outstanding', '2025-10', '{"clientLabelOverride":"Elana van Milligen"}'::jsonb),
+  ('b_besc_041', 'cl_225', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 206.56, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_042', 'cl_209', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_043', 'cl_267', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'ONS', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_044', 'cl_301', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_045', 'cl_253', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 206.56, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_046', 'cl_281', 'Indicatie wonen vanaf 21 okt.', 'veb', 'actief', '2025-10-21', '2026-04-19', 334.3, 'dag', 'ONS', 6351.7, 19723.7, 'betaald', '2025-10', '{}'::jsonb),
+  ('b_besc_047', 'cl_235', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-09-30', '2025-12-31', 334.3, 'dag', 'ONS', 0, 0, 'betaald', '2025-09', '{}'::jsonb),
+  ('b_besc_048', 'cl_184', 'WLZ 14 u week', 'wlz', 'actief', '2025-01-01', '2025-12-31', 77, 'uur', 'WLZ', 0, 5056.59, 'betaald', '2025-01', '{}'::jsonb),
+  ('b_besc_049', 'cl_197', 'WLZ 13.25u week', 'wlz', 'actief', '2025-01-01', '2025-12-31', 77, 'uur', 'WLZ', 0, 5993.68, 'betaald', '2025-01', '{}'::jsonb),
+  ('b_besc_050', 'cl_237', 'WLZ 21 u/ week', 'wlz', 'actief', '2025-01-01', '2025-12-31', 77, 'uur', 'WLZ', 0, 19852.14, 'betaald', '2025-01', '{}'::jsonb),
+  ('b_besc_051', 'cl_203', 'wlz', 'wlz', 'verlopen', '2023-12-01', '2023-12-31', 77, 'uur', 'WLZ', 0, 0, 'betaald', '2023-12', '{"clientLabelOverride":"Ahmet Kat"}'::jsonb),
+  ('b_besc_052', 'cl_200', 'WLZ indicatie 12.5 u / week', 'wlz', 'actief', '2025-10-01', '2025-12-29', 77, 'uur', 'WLZ', 0, 2637.25, 'betaald', '2025-10', '{}'::jsonb),
+  ('b_besc_053', 'cl_199', 'WLZ indicatie Phabek 13 u / week', 'wlz', 'actief', '2024-12-31', '2025-12-31', 77, 'uur', 'WLZ', 0, 12037.41, 'betaald', '2024-12', '{"clientLabelOverride":"Phabek Mityaniq"}'::jsonb),
+  ('b_besc_054', 'cl_196', 'WLZ 7.5 u / week', 'wlz', 'actief', '2024-12-29', '2025-12-29', 77, 'uur', 'WLZ', 0, 5082, 'betaald', '2024-12', '{}'::jsonb),
+  ('b_besc_055', 'cl_318', 'verblijf en behandeling', 'veb', 'actief', '2025-10-03', '2026-04-02', 357.84, 'dag', 'ONS', 715.68, 20543.71, 'betaald', '2025-10', '{}'::jsonb),
+  ('b_besc_056', 'cl_99999', 'Test beschikking', 'amb', 'actief', '2024-12-31', '2025-11-26', 10, 'uur', 'Handmatig', 0, 0, 'betaald', '2024-12', '{"clientLabelOverride":"Test Cliënt"}'::jsonb),
+  ('b_besc_057', 'cl_317', 'Verblijf en behandeling', 'veb', 'actief', '2025-09-23', '2026-04-06', 357.84, 'dag', 'ONS', 2147.04, 20692.56, 'betaald', '2025-09', '{}'::jsonb),
+  ('b_besc_058', 'cl_261', 'youz', 'veb', 'verlopen', '2024-07-01', '2025-10-03', 513.28, 'dag', 'Handmatig', 0, 0, 'outstanding', '2024-07', '{"clientLabelOverride":"Lucas Kortenhoeven"}'::jsonb),
+  ('b_besc_059', 'cl_209', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'Handmatig', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_060', 'cl_301', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'Handmatig', 0, 0, 'outstanding', NULL, '{}'::jsonb),
+  ('b_besc_061', 'cl_99821', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-04-24', '2025-09-05', 206.56, 'dag', 'Handmatig', 0, 0, 'betaald', '2025-04', '{"clientLabelOverride":"Santi Veenendaal Sepulveda"}'::jsonb),
+  ('b_besc_062', 'cl_225', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 206.56, 'dag', 'Handmatig', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_063', 'cl_178', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 357.84, 'dag', 'ONS', 0, 0, 'betaald', NULL, '{}'::jsonb),
+  ('b_besc_064', 'cl_313', 'via enver', 'veb', 'verlopen', '2025-06-10', '2025-07-02', 111, 'dag', 'Handmatig', 0, 0, 'outstanding', '2025-06', '{}'::jsonb),
+  ('b_besc_065', 'cl_12', 'fasehuis', 'veb', 'actief', '2025-04-15', '2026-06-11', 206.56, 'dag', 'Handmatig', 5370.56, 0, 'outstanding', '2025-04', '{}'::jsonb),
+  ('b_besc_066', 'cl_315', 'handmatig', 'geo', 'verlopen', '2025-08-11', '2025-10-11', 7649.01, 'week', 'Handmatig', 0, 0, 'outstanding', '2025-08', '{}'::jsonb),
+  ('b_besc_067', 'cl_216', 'ambulant', 'amb', 'actief', '2025-07-01', '2025-10-31', 72, 'uur', 'ONS', 0, 0, 'betaald', '2025-07', '{}'::jsonb),
+  ('b_besc_068', 'cl_152', 'fasewonen', 'veb', 'actief', '2025-02-06', '2026-02-09', 206.56, 'dag', 'Handmatig', 0, 0, 'outstanding', '2025-02', '{}'::jsonb),
+  ('b_besc_069', 'cl_108', 'fasewonen', 'veb', 'actief', '2024-09-14', '2026-01-10', 206.56, 'dag', 'Handmatig', 0, 0, 'betaald', '2024-09', '{}'::jsonb),
+  ('b_besc_070', 'cl_267', '3634,62 per week', 'veb', 'actief', '2025-06-26', '2026-03-29', 501.43, 'dag', 'Handmatig', 0, 0, 'outstanding', '2025-06', '{"clientLabelOverride":"Ricardo Rens"}'::jsonb),
+  ('b_besc_071', 'cl_228', 'bepaling jeugdhulp eindd 05042026', 'veb', 'actief', '2026-01-01', '2026-04-02', 357.76, 'dag', 'Handmatig', 715.52, 32198.4, 'betaald', '2026-01', '{}'::jsonb),
+  ('b_besc_072', 'cl_228', 'fasewonen ihub', 'veb', 'actief', '2024-04-07', '2025-11-30', 357.76, 'dag', 'Handmatig', 0, 0, 'outstanding', '2024-04', '{}'::jsonb),
+  ('b_besc_073', 'cl_234', 'fasewonen', 'veb', 'in_aanvraag', '2025-08-01', '2025-09-30', 206.56, 'dag', 'Handmatig', 0, 0.1, 'outstanding', '2025-08', '{}'::jsonb),
+  ('b_besc_074', 'cl_234', 'fasewonen', 'veb', 'verlopen', '2024-05-02', '2025-07-31', 206.56, 'dag', 'Handmatig', 0, 0, 'outstanding', '2024-05', '{}'::jsonb),
+  ('b_besc_075', 'cl_250', 'fasewonen', 'veb', 'actief', '2024-06-15', '2025-11-25', 206.56, 'dag', 'Handmatig', 0, 0, 'outstanding', '2024-06', '{}'::jsonb),
+  ('b_besc_076', 'cl_253', 'fasewonen', 'veb', 'actief', '2025-03-08', '2025-12-30', 206.56, 'dag', 'Handmatig', 0, 0, 'outstanding', '2025-03', '{}'::jsonb),
+  ('b_besc_077', 'cl_103', 'fasewonen', 'veb', 'actief', '2024-01-07', '2025-10-22', 206.56, 'dag', 'Handmatig', 0, 0, 'betaald', '2024-01', '{"clientLabelOverride":"Shufrandly Faries"}'::jsonb),
+  ('b_besc_078', 'cl_308', 'Ambulant', 'amb', 'verlopen', '2025-05-31', '2025-06-30', 91.8, 'uur', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb),
+  ('b_besc_079', 'cl_311', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-05-09', '2025-08-09', 357.86, 'dag', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb),
+  ('b_besc_080', 'cl_311', 'Ambulant', 'amb', 'verlopen', '2025-05-08', '2025-08-08', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb),
+  ('b_besc_081', 'cl_225', 'Ambulant', 'amb', 'actief', '2025-06-20', '2026-07-30', 72, 'uur', 'ONS', 0, 0, 'betaald', '2025-06', '{}'::jsonb),
+  ('b_besc_082', 'cl_278', 'Ambulant', 'amb', 'actief', '2025-06-28', '2026-01-09', 95.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-06', '{}'::jsonb),
+  ('b_besc_083', 'cl_284', 'Verblijf en behandeling', 'veb', 'actief', '2025-05-16', '2025-07-03', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb),
+  ('b_besc_084', 'cl_284', 'Ambulant', 'amb', 'actief', '2025-06-02', '2025-07-03', 86.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-06', '{}'::jsonb),
+  ('b_besc_085', 'cl_188', 'Verblijf en behandeling', 'veb', 'actief', '2025-01-01', '2025-12-31', 313.94, 'dag', 'ONS', 0, 0, 'outstanding', '2025-01', '{}'::jsonb),
+  ('b_besc_086', 'cl_198', 'Ambulant', 'amb', 'actief', '2025-03-12', '2026-09-06', 66, 'uur', 'ONS', 0, 0, 'betaald', '2025-03', '{"clientLabelOverride":"Nouska Westerbeek"}'::jsonb),
+  ('b_besc_087', 'cl_178', 'Verblijf en behandeling', 'veb', 'actief', '2025-02-18', '2026-02-18', 206.56, 'dag', 'Handmatig', 0, 0, 'outstanding', '2025-02', '{}'::jsonb),
+  ('b_besc_088', 'cl_246', 'Verblijf en behandeling', 'veb', 'verlopen', '2024-05-31', '2025-04-29', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2024-05', '{}'::jsonb),
+  ('b_besc_089', 'cl_293', 'Verblijf en behandeling', 'veb', 'actief', '2025-01-16', '2027-01-29', 357.84, 'dag', 'ONS', 9303.84, 14818.27, 'betaald', '2025-01', '{"clientLabelOverride":"Eliza Zwart"}'::jsonb),
+  ('b_besc_090', 'cl_172', 'Verblijf en behandeling (Castricum)', 'veb', 'actief', '2025-02-04', '2026-02-26', 357.84, 'dag', 'ONS', 0, 8734.99, 'betaald', '2025-02', '{}'::jsonb),
+  ('b_besc_091', 'cl_172', 'Ambulant (alkmaar)', 'amb', 'actief', '2025-05-16', '2026-08-16', 72, 'uur', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb),
+  ('b_besc_092', 'cl_309', 'Verblijf en behandeling', 'veb', 'actief', '2025-02-25', '2026-02-28', 357.84, 'dag', 'ONS', 0, 9092.83, 'betaald', '2025-02', '{"clientLabelOverride":"Danique Rietveld"}'::jsonb),
+  ('b_besc_093', 'cl_297', 'Ambulant', 'amb', 'in_aanvraag', '2025-07-19', '2025-12-02', 87, 'uur', 'ONS', 0, 0, 'betaald', '2025-07', '{"clientLabelOverride":"Storm Kueter"}'::jsonb),
+  ('b_besc_094', 'cl_99901', 'Verblijf en behandeling', 'veb', 'actief', '2025-01-01', '2026-06-22', 341.08, 'dag', 'ONS', 8868.08, 20123.72, 'betaald', '2025-01', '{"clientLabelOverride":"Yassir Maalin"}'::jsonb),
+  ('b_besc_095', 'cl_276', 'Verblijf en behandeling', 'veb', 'actief', '2024-12-31', '2026-06-30', 341, 'dag', 'ONS', 8866, 14649.96, 'betaald', '2024-12', '{}'::jsonb),
+  ('b_besc_096', 'cl_276', 'Ambulant', 'amb', 'actief', '2025-09-01', '2025-12-31', 77.4, 'uur', 'ONS', 0, 0, 'betaald', '2025-09', '{}'::jsonb),
+  ('b_besc_097', 'cl_21', 'Verblijf en behandeling', 'veb', 'verlopen', '2024-12-31', '2025-03-31', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2024-12', '{"clientLabelOverride":"Jason Beltzer"}'::jsonb),
+  ('b_besc_098', 'cl_235', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-04-04', '2025-09-29', 318.68, 'dag', 'ONS', 0, 0, 'betaald', '2025-04', '{"clientLabelOverride":"Diboya Boerlijst"}'::jsonb),
+  ('b_besc_099', 'cl_206', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-03-17', '2025-11-14', 235.08, 'dag', 'ONS', 0, 0, 'betaald', '2025-03', '{"clientLabelOverride":"Shadena Bauman"}'::jsonb),
+  ('b_besc_100', 'cl_165', 'Verblijf en behandeling', 'veb', 'verlopen', '2025-05-05', '2025-06-01', 357.84, 'dag', 'ONS', 0, 0, 'betaald', '2025-05', '{}'::jsonb)
+on conflict (id) do nothing;

@@ -1,54 +1,50 @@
-/* global getClientenItems */
+/* global window */
 /**
- * Eén bron voor Beschikkingen-overzicht + dashboard (localStorage V2).
- * Wijzigingen lopen via setBeschikkingenItems / addBeschikking* — daarna 'beschikkingen:changed'.
+ * Beschikkingen — Supabase data-laag met localStorage als read-cache.
+ *
+ * Architectuur:
+ *  - Source of truth: Supabase tabel `beschikkingen`.
+ *  - localStorage onder key "beschikkingenItemsV2" = read-cache (compat met
+ *    bestaande synchrone reads).
+ *  - Schrijfacties (add/update/remove) gaan async naar Supabase; de cache
+ *    wordt geüpdatet en het event "beschikkingen:changed" blijft gefired
+ *    (backward-compat voor de overzicht-/dashboard-pagina's).
+ *  - Runtime-verrijking: clientLabel + locatie worden afgeleid uit de
+ *    clienten-cache (clienten-data.js). Daarom wordt bij elk
+ *    "besa:clienten-updated" event de cache opnieuw uit de raw rows
+ *    opgebouwd zodat de gerenderde labels meteen in sync staan.
+ *
+ * Backward-compat globals (gebruikt door beschikkingen.js, beschikkingen-overzicht.js,
+ * beschikkingen-dashboard.js, beschikking-detail.js, facturen.js, client-detail.js,
+ * organisatie-data.js, …): zie onderaan dit bestand.
  */
 (function (global) {
   "use strict";
 
-  var KEY = "beschikkingenItemsV2";
-  var KEY_V1 = "beschikkingenItemsV1";
+  var TABLE = "beschikkingen";
+  var CACHE_KEY = "beschikkingenItemsV2";
   var SEEDED = "beschikkingenSeededV2";
-  /** Eenmalige correctie: oude plakholdernaam "Beschikking" vervangen door referentie-uit screenshot */
-  var NAAM_SCREENFIX_FLAG = "beschikkingenNaamScreenfixV2";
-  /** Legacy: 99-rij snapshot (BESA_RIGI99) */
-  var RIGI99_FLAG = "BESC_RIGI99_V3";
-  /** Opvolger: 100+ rijen uit BESA_BESC (pipe → beschikkingen-besc-bulk.js) @see BESC_BULK_DATA_VER */
-  var BESC_BULK_DATA_VER_ST = "BESC_BULK_DATA_VER_ST";
-
-  /**
-   * "Naam"-waarden overgenomen uit de RIGI-/Beschikkingen-screens (kolom Naam, niet zorgsoort).
-   * Geen generieke "Beschikking" + cijfer — uitsluitend onderstaande of door gebruiker ingetypt.
-   */
-  var BESC_NAMEN_REFERENTIE = [
-    "Gecombineerd",
-    "gecombineerd",
-    "Verblijf en behandeling",
-    "verblijf en behandeling",
-    "verblijf",
-    "Ambulant",
-    "ambulant",
-    "ambulant 10 u / dag",
-    "WLZ",
-    "WLZ 7.5 u / week",
-    "WLZ 14 u week",
-    "fasewonen",
-    "Fasewonen",
-  ];
+  var MIGRATION_FLAG_KEY = "beschikkingenMigratedToSupabase.v1";
+  // Eerste deploy: localStorage-cache moet 1× geleegd worden zodat we niet de
+  // oude bulk-seed (van vóór de migratie) blijven tonen naast de Supabase-data.
+  var CACHE_RESET_FLAG = "beschikkingenCacheResetV1";
 
   var ZS_LABELS = {
     "ambulant-intens": "Ambulant intern",
-    ambulant: "Ambulant intern",
+    "ambulant": "Ambulant intern",
     "ambulant-intern": "Ambulant intern",
     "ambulant-extern": "Ambulant extern",
-    fasewonen: "Fase wonen",
+    "amb": "Ambulant intern",
+    "fasewonen": "Fase wonen",
     "woon-zorg": "Fase wonen",
-    dagbesteding: "Dagbesteding",
+    "dagbesteding": "Dagbesteding",
     "verblijf-behandeling": "Verblijf en behandeling",
-    vlz: "VLZ",
-    wlz: "WLZ",
-    gecombineerd: "Gecombineerd",
-    overig: "Overig",
+    "veb": "Verblijf en behandeling",
+    "vlz": "VLZ",
+    "wlz": "WLZ",
+    "gecombineerd": "Gecombineerd",
+    "geo": "Gecombineerd",
+    "overig": "Overig",
   };
 
   function zorgLabel(k) {
@@ -56,55 +52,16 @@
     return ZS_LABELS[k] || String(k);
   }
 
-  function simpleHash(s) {
-    s = String(s == null ? "" : s);
-    var h = 0;
-    for (var i = 0; i < s.length; i += 1) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-    return Math.abs(h);
-  }
-
-  function pad2(n) {
-    return n < 10 ? "0" + n : String(n);
-  }
-
+  function pad2(n) { return n < 10 ? "0" + n : String(n); }
   function isoYMD(d) {
     if (!(d instanceof Date) || isNaN(d.getTime())) return "";
     return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
   }
-
   function ymdToMonth(ymd) {
     if (!ymd || String(ymd).length < 7) return "";
     return String(ymd).slice(0, 7);
   }
-
-  function readKey(k) {
-    try {
-      var raw = global.localStorage.getItem(k);
-      if (!raw) return null;
-      var a = JSON.parse(raw);
-      return Array.isArray(a) ? a : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function read() {
-    return readKey(KEY);
-  }
-
-  function readV1() {
-    return readKey(KEY_V1);
-  }
-
-  function writeRaw(list) {
-    try {
-      global.localStorage.setItem(KEY, JSON.stringify(Array.isArray(list) ? list : []));
-    } catch (e) { /* */ }
-  }
-
-  function genId() {
-    return "b_" + Date.now().toString(36) + "_" + String(Math.random()).slice(2, 9);
-  }
+  function isoNow() { return new Date().toISOString(); }
 
   function n2(x) {
     if (x == null || x === "") return 0;
@@ -112,14 +69,147 @@
       var ts = x.trim();
       if (ts === "" || ts === "—" || ts === "-") return 0;
       if (ts.indexOf(",") >= 0) ts = ts.replace(/\./g, "").replace(/,/g, ".");
-      x = parseFloat(ts, 10);
+      x = parseFloat(ts);
     }
     var n = Number(x);
     if (isNaN(n)) return 0;
     return Math.round(n * 100) / 100;
   }
 
-  function notifyBeschikkingenChanged() {
+  function genId() {
+    return "b_" + Date.now().toString(36) + "_" + String(Math.random()).slice(2, 9);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mapping DB ⇄ frontend object
+  // ---------------------------------------------------------------------------
+
+  /** Verrijk een DB-rij met clientLabel + locatie via clienten-cache. */
+  function rowToObj(row) {
+    if (!row) return null;
+    var data = row.data && typeof row.data === "object" ? row.data : {};
+    var startISO = row.start_iso || "";
+    var eindISO = row.eind_iso || "";
+
+    // Lookup cliënt voor label/locatie. Mag falen — fallback gebruiken.
+    var cl = null;
+    try {
+      if (typeof global.getClientenById === "function" && row.client_id) {
+        cl = global.getClientenById(row.client_id);
+      }
+    } catch (e) { /* */ }
+
+    var clBase = "";
+    if (cl) {
+      clBase = (String(cl.voornaam || "").trim() + " " + String(cl.achternaam || "").trim()).trim();
+    }
+    var clientLabel = data.clientLabelOverride || clBase || "—";
+    var locatie = row.locatie && String(row.locatie).trim()
+      ? String(row.locatie).trim()
+      : (cl && cl.locatie ? String(cl.locatie).trim() : "—");
+
+    return {
+      id: row.id,
+      schemaVersion: 2,
+      clientId: row.client_id || "",
+      clientLabel: clientLabel,
+      naam: row.naam || "",
+      zorgsoortKey: row.zorgsoort_key || "overig",
+      zorgsoortLabel: zorgLabel(row.zorgsoort_key || "overig"),
+      locatie: locatie || "—",
+      fase: row.fase || "actief",
+      startISO: startISO,
+      eindISO: eindISO,
+      gearchiveerd: !!row.gearchiveerd,
+      declMeth: row.decl_meth || "ONS",
+      teDeclarerenLM: n2(row.te_declareren_lm),
+      nogNietGedeclareerd: n2(row.nog_niet_gedeclareerd),
+      gedeclGemeenteInBehandeling: n2(row.gedecl_gemeente_in_behandeling),
+      betaaldCumulatief: n2(row.betaald_cumulatief),
+      betalingsStatus: row.betalings_status === "betaald" ? "betaald" : "outstanding",
+      tariefEur: n2(row.tarief_eur),
+      tariefEenheid: ["uur", "dag", "week"].indexOf(String(row.tarief_eenheid || "uur")) >= 0
+        ? row.tarief_eenheid : "uur",
+      betalingRefMaand: row.betaling_ref_maand
+        || (startISO && startISO.length >= 7 ? ymdToMonth(startISO) : ""),
+      // Houd extra meta bij voor toekomstige uitbreidingen.
+      _data: data,
+    };
+  }
+
+  function objToInsertPayload(o) {
+    var safe = o || {};
+    var startISO = safe.startISO && String(safe.startISO).length >= 10 ? String(safe.startISO).slice(0, 10) : null;
+    var eindISO = safe.eindISO && String(safe.eindISO).length >= 10 ? String(safe.eindISO).slice(0, 10) : null;
+    var data = (safe._data && typeof safe._data === "object") ? Object.assign({}, safe._data) : {};
+    // clientLabelOverride alleen behouden als hij niet uit clienten-cache komt.
+    if (safe.clientLabel && !data.clientLabelOverride) {
+      // Niet automatisch override-en op basis van afgeleide labels — anders
+      // overschrijven we de runtime cliëntnaam. Override blijft alleen als
+      // expliciet gezet in `_data`.
+    }
+    var locatie = safe.locatie && safe.locatie !== "—" ? String(safe.locatie) : null;
+    return {
+      id: safe.id || genId(),
+      client_id: safe.clientId || null,
+      naam: String(safe.naam || ""),
+      zorgsoort_key: safe.zorgsoortKey || "overig",
+      fase: safe.fase || "actief",
+      locatie: locatie,
+      start_iso: startISO,
+      eind_iso: eindISO,
+      decl_meth: safe.declMeth || "ONS",
+      tarief_eur: n2(safe.tariefEur),
+      tarief_eenheid: ["uur", "dag", "week"].indexOf(String(safe.tariefEenheid || "uur")) >= 0
+        ? safe.tariefEenheid : "uur",
+      betalings_status: safe.betalingsStatus === "betaald" ? "betaald" : "outstanding",
+      te_declareren_lm: n2(safe.teDeclarerenLM),
+      nog_niet_gedeclareerd: n2(safe.nogNietGedeclareerd),
+      gedecl_gemeente_in_behandeling: n2(safe.gedeclGemeenteInBehandeling),
+      betaald_cumulatief: n2(safe.betaaldCumulatief),
+      betaling_ref_maand: safe.betalingRefMaand || (startISO ? ymdToMonth(startISO) : null),
+      gearchiveerd: !!safe.gearchiveerd,
+      data: data,
+    };
+  }
+
+  function objToUpdatePayload(o) {
+    var p = objToInsertPayload(o);
+    delete p.id;
+    return p;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cache + raw store
+  // ---------------------------------------------------------------------------
+  // We bewaren de raw DB-rows in module-state zodat we — bij wijziging in de
+  // clienten-cache — de afgeleide objecten opnieuw kunnen samenstellen.
+  var rawRows = [];
+
+  function readCache() {
+    try {
+      var raw = global.localStorage.getItem(CACHE_KEY);
+      if (!raw) return [];
+      var p = JSON.parse(raw);
+      return Array.isArray(p) ? p : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeCache(items) {
+    try {
+      global.localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+    } catch (e) { /* */ }
+  }
+
+  function rebuildCacheFromRaw() {
+    var items = (rawRows || []).map(rowToObj).filter(Boolean);
+    writeCache(items);
+    return items;
+  }
+
+  function notifyChanged() {
     try {
       var ev;
       if (typeof CustomEvent === "function") {
@@ -133,436 +223,268 @@
     try {
       global.localStorage.setItem("beschikkingen:changedAt", String(Date.now()));
     } catch (e2) { /* */ }
-  }
-
-  function bedragUitId(id) {
-    var b = 800 + (simpleHash("€" + id) % 420000) / 100;
-    return Math.round(b * 100) / 100;
-  }
-
-  function isPlatshouderNaam(n) {
-    if (n == null) return true;
-    var s = String(n).trim();
-    if (s === "") return true;
-    if (/^beschikking(\s+[\d.,\s]+)?$/i.test(s)) return true;
-    return false;
-  }
-
-  function kiesNaamUitReferentie(id, clientId, salt) {
-    var h = simpleHash(String(id) + "|" + String(clientId) + "|naam|" + String(salt == null ? 0 : salt));
-    var L = BESC_NAMEN_REFERENTIE.length;
-    if (L < 1) return "Gecombineerd";
-    return BESC_NAMEN_REFERENTIE[h % L];
-  }
-
-  function applyNaamScreenfixIfNeeded() {
     try {
-      if (global.localStorage.getItem(NAAM_SCREENFIX_FLAG) === "1") return;
-      var v2 = read();
-      if (!v2 || !v2.length) {
-        return;
+      global.dispatchEvent(new CustomEvent("besa:beschikkingen-updated"));
+    } catch (e3) { /* */ }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Supabase fetch + bootstrap
+  // ---------------------------------------------------------------------------
+  async function fetchAll() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.besaSupabase
+      .from(TABLE)
+      .select("*")
+      .order("eind_iso", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true });
+    if (res.error) throw res.error;
+    return res.data || [];
+  }
+
+  /** Eenmalige migratie van bestaande localStorage data. */
+  async function maybeMigrateLocalToSupabase() {
+    try {
+      if (global.localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
+      if (!global.besaSupabase) return false;
+
+      var head = await global.besaSupabase
+        .from(TABLE)
+        .select("id", { count: "exact", head: true });
+      if (head.error) return false;
+      if ((head.count || 0) > 0) {
+        try { global.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
       }
-      var wijzig = false;
-      var v = [];
-      for (var t = 0; t < v2.length; t += 1) {
-        var r0 = v2[t];
-        if (!r0) { v.push(r0); continue; }
-        if (!isPlatshouderNaam(r0.naam)) {
-          v.push(r0);
-          continue;
-        }
-        wijzig = true;
-        var c = Object.assign({}, r0);
-        c.naam = kiesNaamUitReferentie(c.id, c.clientId, t);
-        v.push(c);
+
+      var local = readCache();
+      if (!Array.isArray(local) || local.length === 0) {
+        try { global.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
       }
-      if (wijzig) {
-        setBeschikkingenItemsRaw(
-          v.map(function (x) { return normalizeRow(x); }),
-          true
-        );
-        try {
-          global.localStorage.setItem(NAAM_SCREENFIX_FLAG, "1");
-        } catch (e3) { /* */ }
-        return;
+
+      console.info("[beschikkingenDB] Eenmalige migratie van " + local.length + " beschikkingen naar Supabase…");
+      var payload = local.map(function (r) { return objToInsertPayload(r); });
+      var ins = await global.besaSupabase
+        .from(TABLE)
+        .insert(payload)
+        .select();
+      if (ins.error) {
+        console.error("[beschikkingenDB] Migratie mislukt:", ins.error);
+        return false;
       }
-      try {
-        global.localStorage.setItem(NAAM_SCREENFIX_FLAG, "1");
-      } catch (e4) { /* */ }
+      try { global.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+      console.info("[beschikkingenDB] Migratie geslaagd: " + (ins.data || []).length + " rijen geüpload.");
+      return true;
+    } catch (err) {
+      console.error("[beschikkingenDB] Migratiefout:", err);
+      return false;
+    }
+  }
+
+  /** Cache 1× resetten zodat oude bulk-seed niet meer naast Supabase staat. */
+  function maybeResetLegacyCache() {
+    try {
+      if (global.localStorage.getItem(CACHE_RESET_FLAG) === "1") return;
+      // Reset alleen wanneer migratie-flag nog NIET gezet is. Zodra migratie
+      // gelopen heeft, weten we dat de cache schoon is en hoeven we 'm niet
+      // weg te gooien (anders verliest de gebruiker zijn werk).
+      // Dit is een one-shot voor users die de migratie nog niet hadden.
+      var migrated = global.localStorage.getItem(MIGRATION_FLAG_KEY) === "1";
+      if (!migrated) {
+        // Alleen droppen als de cache geen records had die nog gemigreerd
+        // moeten worden — anders gaan we via maybeMigrateLocalToSupabase().
+        // We doen dit conservatief: we droppen niet, maar markeren wel de flag.
+      }
+      global.localStorage.setItem(CACHE_RESET_FLAG, "1");
     } catch (e) { /* */ }
   }
 
-  function migrateV1Rij(r) {
-    if (!r || r.schemaVersion === 2) return normalizeRow(r);
-    var st = String(r.status || "");
-    var fase = (r.fase || "actief").toLowerCase();
-    if (fase === "aangevraagd" || fase === "aangevraag") fase = "in_aanvraag";
-    if (st === "open_aanvraag") fase = "in_aanvraag";
-    var bedr = n2(r.bedrag);
-    var bPay = (st === "betaald" ? "betaald" : "outstanding");
-    var naMig = r.naam;
-    if (isPlatshouderNaam(naMig)) {
-      naMig = kiesNaamUitReferentie(r.id, r.clientId, 0);
-    }
-    return normalizeRow({
-      id: r.id,
-      clientId: r.clientId,
-      clientLabel: r.clientLabel,
-      naam: naMig,
-      zorgsoortKey: r.zorgsoortKey,
-      zorgsoortLabel: r.zorgsoortLabel,
-      locatie: r.locatie,
-      fase: fase,
-      startISO: r.startISO,
-      eindISO: r.eindISO,
-      gearchiveerd: !!r.gearchiveerd,
-      declMeth: r.declMeth || "ONS",
-      teDeclarerenLM: st === "te_declareren" ? bedr : 0,
-      nogNietGedeclareerd: st === "achterstand" ? bedr : n2((st !== "open_aanvraag" && st !== "betaald" ? bedr * 0.3 : 0) + 0.01 * simpleHash("n" + r.id)),
-      gedeclGemeenteInBehandeling: st === "in_behandeling" ? bedr : 0,
-      betaaldCumulatief: st === "betaald" ? bedr : 0,
-      betalingsStatus: bPay,
-      tariefEur: 80 + (simpleHash("f" + r.id) % 20000) / 100,
-      tariefEenheid: (simpleHash("u" + r.id) % 3 === 0 ? "week" : (simpleHash("u" + r.id) % 2 ? "uur" : "dag")),
-      betalingRefMaand: r.betalingMaand || (r.startISO ? ymdToMonth(r.startISO) : ymdToMonth(isoYMD(new Date()))),
-    });
-  }
+  var readyPromise = null;
 
-  function normalizeRow(x) {
-    if (!x || typeof x !== "object") return x;
-    var f = String(x.fase || "actief").toLowerCase().replace(/\s+/g, "_");
-    if (f === "aangevraagd") f = "in_aanvraag";
-    if (f === "in_zorg" || f === "inzorg") f = "in_zorg";
-    if (f === "uit_zorg" || f === "uitzorg") f = "uit_zorg";
-    if (f === "in_dienst" || f === "indienst") f = "in_dienst";
-    if (f === "uit_dienst" || f === "uitdienst") f = "uit_dienst";
-    var faseNorm = "actief";
-    if (f === "in_aanvraag") faseNorm = "in_aanvraag";
-    else if (f === "verlopen" || f === "afgehandeld") faseNorm = f;
-    else if (f === "in_zorg") faseNorm = "in_zorg";
-    else if (f === "uit_zorg") faseNorm = "uit_zorg";
-    else if (f === "in_dienst") faseNorm = "in_dienst";
-    else if (f === "uit_dienst") faseNorm = "uit_dienst";
-    var bStat = (x.betalingsStatus || "").toLowerCase() === "betaald" ? "betaald" : "outstanding";
-    var o = {
-      id: x.id || genId(),
-      schemaVersion: 2,
-      clientId: x.clientId,
-      clientLabel: x.clientLabel == null ? "" : String(x.clientLabel),
-      naam: x.naam == null ? "" : String(x.naam),
-      zorgsoortKey: x.zorgsoortKey || "overig",
-      zorgsoortLabel: x.zorgsoortLabel || zorgLabel(x.zorgsoortKey),
-      locatie: x.locatie == null ? "" : String(x.locatie).trim() || "—",
-      fase: faseNorm,
-      startISO: x.startISO == null ? "" : String(x.startISO),
-      eindISO: x.eindISO == null ? "" : String(x.eindISO),
-      gearchiveerd: !!x.gearchiveerd,
-      declMeth: x.declMeth == null ? "ONS" : String(x.declMeth),
-      teDeclarerenLM: n2(x.teDeclarerenLM),
-      nogNietGedeclareerd: n2(x.nogNietGedeclareerd),
-      gedeclGemeenteInBehandeling: n2(x.gedeclGemeenteInBehandeling),
-      betaaldCumulatief: n2(x.betaaldCumulatief),
-      betalingsStatus: bStat,
-      tariefEur: n2(x.tariefEur != null ? x.tariefEur : 0),
-      tariefEenheid: ["uur", "dag", "week"].indexOf(String(x.tariefEenheid || "uur").toLowerCase()) >= 0
-        ? String(x.tariefEenheid).toLowerCase() : "uur",
-      betalingRefMaand: (function () {
-        if (x.betalingRefMaand && x.betalingRefMaand.length === 7) return x.betalingRefMaand;
-        if (x.betalingMaand && x.betalingMaand.length === 7) return x.betalingMaand;
-        if (x.startISO && x.startISO.length >= 7) return ymdToMonth(x.startISO);
-        return ymdToMonth(isoYMD(new Date()));
-      })(),
-    };
-    o.zorgsoortLabel = zorgLabel(o.zorgsoortKey);
-    if (o.tariefEur < 0.01 && o.fase === "in_aanvraag") o.tariefEur = 0;
-    return o;
-  }
-
-  function zorgKeyBijReferentieNaam(na) {
-    var s = String(na || "").toLowerCase();
-    if (s.indexOf("wlz") >= 0) return "wlz";
-    if (s.indexOf("gecombineerd") >= 0) return "gecombineerd";
-    if (s.indexOf("verblijf en behandeling") >= 0) return "verblijf-behandeling";
-    if (s.indexOf("verblijf") >= 0) return "verblijf-behandeling";
-    if (s.indexOf("ambulant") >= 0 && s.indexOf("extern") >= 0) return "ambulant-extern";
-    if (s.indexOf("ambulant") >= 0) return "ambulant";
-    if (s.indexOf("fasewonen") >= 0) return "woon-zorg";
-    return null;
-  }
-
-  function buildSeedRijV2(cl, i) {
-    if (!cl) return null;
-    var h = simpleHash(String(cl.id) + "|b2|" + i);
-    var zks = Object.keys(ZS_LABELS);
-    var naamVal = kiesNaamUitReferentie("s" + String(i), cl.id, h);
-    var zkA = zorgKeyBijReferentieNaam(naamVal);
-    var zk = zkA != null ? zkA : zks[h % zks.length];
-    var faseR = h % 5 === 0 ? "in_aanvraag" : "actief";
-    if (faseR === "in_aanvraag" && h % 9 === 0) faseR = "actief";
-    var payB = h % 4 === 0 ? "betaald" : "outstanding";
-    if (faseR === "in_aanvraag") payB = "outstanding";
-    var base = bedragUitId(cl.id + "-b" + i);
-    var tLM = faseR === "in_aanvraag" || payB === "betaald" ? 0 : n2((h % 7) * 123.45 + base * 0.1);
-    var nNG = faseR === "in_aanvraag" || payB === "betaald" ? 0 : n2((h % 9) * 2000.12 + base * 0.25);
-    var gIB = (payB === "outstanding" && faseR === "actief" && h % 3 === 0) ? n2(5000 + h * 10) : 0;
-    var bCum = payB === "betaald" ? n2(20000 + base * 2) : 0;
-    if (faseR === "in_aanvraag") tLM = nNG = gIB = bCum = 0;
-
-    var d0 = new Date();
-    d0.setMonth(d0.getMonth() - (h % 12));
-    var dE = new Date();
-    dE.setDate(dE.getDate() + (h % 20 === 0 ? 20 : 120) + (h % 40));
-
-    var tEen = h % 3;
-    return normalizeRow({
-      id: genId(),
-      clientId: cl.id,
-      clientLabel: (String(cl.voornaam || "").trim() + " " + String(cl.achternaam || "").trim()).trim() || "—",
-      naam: naamVal,
-      zorgsoortKey: zk,
-      zorgsoortLabel: zorgLabel(zk),
-      locatie: String(cl.locatie || "").trim() || "—",
-      fase: faseR,
-      startISO: isoYMD(d0),
-      eindISO: h % 5 === 0 || h % 13 === 0 ? isoYMD(dE) : (h % 4 === 0 ? (function () {
-        var t = new Date();
-        t.setDate(t.getDate() + 45 + (h % 20));
-        return isoYMD(t);
-      })() : ""),
-      gearchiveerd: h % 37 === 0,
-      declMeth: h % 3 ? "ONS" : (h % 5 ? "Handmatig" : "WLZ"),
-      teDeclarerenLM: tLM,
-      nogNietGedeclareerd: nNG,
-      gedeclGemeenteInBehandeling: gIB,
-      betaaldCumulatief: bCum,
-      betalingsStatus: payB,
-      tariefEur: 60 + (h % 200) * 0.2 + tEen,
-      tariefEenheid: tEen === 0 ? "uur" : (tEen === 1 ? "dag" : "week"),
-      betalingRefMaand: d0.getFullYear() + "-" + pad2(d0.getMonth() + 1),
-    });
-  }
-
-  function seedUitClienten() {
-    if (typeof getClientenItems !== "function") return [];
-    var clients = getClientenItems() || [];
-    if (!clients.length) return [];
-    var act = clients.filter(function (c) { return c && !c.archived; });
-    if (!act.length) act = clients;
-    var out = [];
-    for (var i = 0; i < 99; i += 1) {
-      var cl = act[i % act.length];
-      var row = buildSeedRijV2(cl, i);
-      if (row) out.push(row);
-    }
-    return out;
-  }
-
-  function rigiClientFromNum(n) {
-    var num = typeof n === "number" && !isNaN(n) ? n : parseInt(String(n == null ? "" : n), 10);
-    if (isNaN(num)) num = 0;
-    if (typeof getClientenItems !== "function") {
-      return { id: "cl_" + n, voornaam: "", achternaam: "", locatie: "—" };
-    }
-    var items = getClientenItems() || [];
-    if (num === 99999) {
-      return { id: "cl_99999", voornaam: "Test", achternaam: "Cliënt", locatie: "—" };
-    }
-    if (num === 99901) {
-      return { id: "cl_99901", voornaam: "Yassir", achternaam: "Maalin", locatie: "—" };
-    }
-    if (num === 99820) {
-      return { id: "cl_99820", voornaam: "Jimmy", achternaam: "Toemen", locatie: "—" };
-    }
-    if (num === 99821) {
-      return { id: "cl_99821", voornaam: "Santi", achternaam: "Veenendaal Sepulveda", locatie: "—" };
-    }
-    var j;
-    for (j = 0; j < items.length; j += 1) {
-      if (items[j] && String(items[j].id) === "cl_" + num) return items[j];
-    }
-    for (j = 0; j < items.length; j += 1) {
-      if (!items[j]) continue;
-      if (items[j].clientnummer != null && !isNaN(items[j].clientnummer) && Number(items[j].clientnummer) === Number(num)) {
-        return items[j];
+  function bootstrap() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async function () {
+      try {
+        maybeResetLegacyCache();
+        await maybeMigrateLocalToSupabase();
+        rawRows = await fetchAll();
+        rebuildCacheFromRaw();
+        try { global.localStorage.setItem(SEEDED, "1"); } catch (e) { /* */ }
+        notifyChanged();
+      } catch (err) {
+        console.error("[beschikkingenDB] Bootstrap mislukt:", err);
       }
-    }
-    return { id: "cl_" + num, voornaam: "Onbekend", achternaam: "(" + num + ")", locatie: "—" };
+    })();
+    return readyPromise;
   }
 
-  function rigiStableId(idx) {
-    var n = idx + 1;
-    if (n < 10) return "b_rigi_00" + n;
-    if (n < 100) return "b_rigi_0" + n;
-    return "b_rigi_" + n;
-  }
-
-  function bescStableId(idx) {
-    var n = String(idx + 1);
-    while (n.length < 3) n = "0" + n;
-    return "b_besc_" + n;
-  }
-
-  function faseFromBulkLetter(fc) {
-    if (fc === "i" || fc === "in") return "in_aanvraag";
-    if (fc === "v") return "verlopen";
-    if (fc === "z") return "in_zorg";
-    return "actief";
-  }
-
-  function expandBulkTupToRow(t, idx, idOverride) {
-    var cl = rigiClientFromNum(t.n);
-    var zmap = { geo: "gecombineerd", veb: "verblijf-behandeling", amb: "ambulant", wlz: "wlz" };
-    var zk = zmap[t.zk] || "gecombineerd";
-    var fase = faseFromBulkLetter(String(t.f == null ? "a" : t.f).toLowerCase());
-    var pay = t.p === "b" ? "betaald" : "outstanding";
-    var clBase = (String(cl.voornaam || "").trim() + " " + String(cl.achternaam || "").trim()).trim() || "—";
-    var label = t.lbl != null && String(t.lbl).trim() !== "" ? String(t.lbl).trim() : clBase;
-    var idUse = idOverride != null && idOverride !== "" ? idOverride : bescStableId(idx);
-    return normalizeRow({
-      id: idUse,
-      clientId: cl.id,
-      clientLabel: label,
-      naam: t.nm,
-      zorgsoortKey: zk,
-      locatie: String(cl.locatie || "").trim() || "—",
-      fase: fase,
-      startISO: t.s || "",
-      eindISO: t.e || "",
-      gearchiveerd: false,
-      declMeth: t.dm || "ONS",
-      teDeclarerenLM: n2(t.tlm),
-      nogNietGedeclareerd: n2(t.nng),
-      gedeclGemeenteInBehandeling: 0,
-      betaaldCumulatief: 0,
-      betalingsStatus: pay,
-      tariefEur: n2(t.t),
-      tariefEenheid: t.u || "uur",
-      betalingRefMaand: t.s && t.s.length >= 7 ? ymdToMonth(t.s) : ymdToMonth(isoYMD(new Date())),
-    });
-  }
-
-  function tryInstallBescBulkSnapshot() {
+  async function refresh() {
     try {
-      if (!global.BESA_BESC || !Array.isArray(global.BESA_BESC) || global.BESA_BESC.length < 1) return;
-      if (typeof getClientenItems !== "function") return;
-      var fileVer = String(global.BESC_BULK_DATA_VER != null ? global.BESC_BULK_DATA_VER : "1");
-      var st = null;
-      try {
-        st = global.localStorage.getItem(BESC_BULK_DATA_VER_ST);
-      } catch (e0) { /* */ }
-      if (st === fileVer) return;
-      var rows = [];
-      for (var b = 0; b < global.BESA_BESC.length; b += 1) {
-        rows.push(expandBulkTupToRow(global.BESA_BESC[b], b));
-      }
-      setBeschikkingenItemsRaw(rows, true);
-      try {
-        global.localStorage.setItem(BESC_BULK_DATA_VER_ST, fileVer);
-        global.localStorage.setItem(RIGI99_FLAG, "1");
-        global.localStorage.setItem(SEEDED, "1");
-      } catch (e) { /* */ }
-      notifyBeschikkingenChanged();
-    } catch (e2) { /* */ }
+      rawRows = await fetchAll();
+      rebuildCacheFromRaw();
+      notifyChanged();
+      return readCache();
+    } catch (err) {
+      console.error("[beschikkingenDB] Refresh mislukt:", err);
+      return readCache();
+    }
   }
 
-  function tryInstallRigi99Snapshot() {
-    try {
-      if (global.localStorage.getItem(RIGI99_FLAG) === "1") return;
-      if (global.BESA_BESC && Array.isArray(global.BESA_BESC) && global.BESA_BESC.length) return;
-      if (!global.BESA_RIGI99 || !Array.isArray(global.BESA_RIGI99) || global.BESA_RIGI99.length !== 99) return;
-      if (typeof getClientenItems !== "function") return;
-      var rows = [];
-      for (var r = 0; r < 99; r += 1) {
-        var tupR = Object.assign({}, global.BESA_RIGI99[r]);
-        if (tupR.f === "in" || !tupR.f) tupR.f = "i";
-        rows.push(expandBulkTupToRow(tupR, r, rigiStableId(r)));
-      }
-      setBeschikkingenItemsRaw(rows, true);
-      try {
-        global.localStorage.setItem(RIGI99_FLAG, "1");
-        global.localStorage.setItem(SEEDED, "1");
-      } catch (e) { /* */ }
-      notifyBeschikkingenChanged();
-    } catch (e2) { /* */ }
+  // Wanneer de clienten-cache verandert (bv. bootstrap klaar of edit), bouwen
+  // we de afgeleide objecten opnieuw zodat clientLabel/locatie meteen klopt.
+  global.addEventListener("besa:clienten-updated", function () {
+    if (rawRows && rawRows.length) {
+      rebuildCacheFromRaw();
+      notifyChanged();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // CRUD (async)
+  // ---------------------------------------------------------------------------
+  async function add(row) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var payload = objToInsertPayload(row);
+    var res = await global.besaSupabase
+      .from(TABLE)
+      .insert(payload)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    rawRows.push(res.data);
+    var obj = rowToObj(res.data);
+    var cache = readCache();
+    cache.push(obj);
+    writeCache(cache);
+    notifyChanged();
+    return obj;
   }
+
+  async function updateRow(id, partial) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) throw new Error("Geen id");
+    var existing = getByIdSync(id) || {};
+    var merged = Object.assign({}, existing, partial || {});
+    merged.id = id;
+    var payload = objToUpdatePayload(merged);
+    var res = await global.besaSupabase
+      .from(TABLE)
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    // Update raw + cache
+    var rawIdx = rawRows.findIndex(function (r) { return r && r.id === id; });
+    if (rawIdx >= 0) rawRows[rawIdx] = res.data; else rawRows.push(res.data);
+    var obj = rowToObj(res.data);
+    var cache = readCache();
+    var idx = cache.findIndex(function (r) { return r && r.id === id; });
+    if (idx >= 0) cache[idx] = obj; else cache.push(obj);
+    writeCache(cache);
+    notifyChanged();
+    return obj;
+  }
+
+  async function remove(id) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) return false;
+    var res = await global.besaSupabase
+      .from(TABLE)
+      .delete()
+      .eq("id", id);
+    if (res.error) throw res.error;
+    rawRows = rawRows.filter(function (r) { return r && r.id !== id; });
+    var cache = readCache().filter(function (r) { return r && r.id !== id; });
+    writeCache(cache);
+    notifyChanged();
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Synchrone helpers (vanuit cache) — backward compat
+  // ---------------------------------------------------------------------------
+  function getAllSync() {
+    return readCache();
+  }
+
+  function getByIdSync(id) {
+    if (id == null) return null;
+    var s = String(id);
+    var items = readCache();
+    var found = items.find(function (r) { return r && String(r.id) === s; });
+    return found ? Object.assign({}, found) : null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backward-compat globals
+  // ---------------------------------------------------------------------------
 
   function getBeschikkingenItems() {
-    tryInstallBescBulkSnapshot();
-    tryInstallRigi99Snapshot();
-    var v2 = read();
-    if (v2 && v2.length) {
-      applyNaamScreenfixIfNeeded();
-      v2 = read();
-      return (v2 || []).map(function (r) { return Object.assign({}, normalizeRow(migrateV1Rij(r))); });
+    var cache = readCache();
+    if (!cache.length) {
+      bootstrap(); // triggert async load; UI re-render via "beschikkingen:changed"
     }
-    if (Array.isArray(v2) && v2.length === 0 && global.localStorage.getItem(SEEDED) === "1")
-      return [];
-
-    var v1 = readV1();
-    if (v1 && v1.length) {
-      var mig = v1.map(function (r) { return migrateV1Rij(r); });
-      setBeschikkingenItemsRaw(mig, true);
-      try {
-        global.localStorage.removeItem(KEY_V1);
-      } catch (e) { /* */ }
-      return mig.map(function (r) { return Object.assign({}, r); });
-    }
-
-    var seed = seedUitClienten();
-    if (!seed || !seed.length) {
-      seed = [
-        normalizeRow({
-          id: genId(),
-          clientId: "cl_177",
-          clientLabel: "Demo cliënt",
-          naam: "Gecombineerd",
-          zorgsoortKey: "gecombineerd",
-          zorgsoortLabel: "Gecombineerd",
-          locatie: "satelliet woning",
-          fase: "actief",
-          startISO: "2024-01-15",
-          eindISO: "",
-          teDeclarerenLM: 2000,
-          nogNietGedeclareerd: 5000,
-          gedeclGemeenteInBehandeling: 0,
-          betaaldCumulatief: 0,
-          betalingsStatus: "outstanding",
-          tariefEur: 86.4,
-          tariefEenheid: "uur",
-          betalingRefMaand: ymdToMonth("2024-01-15"),
-        }),
-      ];
-    }
-    setBeschikkingenItemsRaw(seed, true);
-    try {
-      global.localStorage.setItem(SEEDED, "1");
-    } catch (e) { /* */ }
-    return (read() || []).map(function (r) { return Object.assign({}, normalizeRow(r)); });
+    return cache.map(function (r) { return Object.assign({}, r); });
   }
 
-  function setBeschikkingenItemsRaw(list, skipNotify) {
-    var norm = (Array.isArray(list) ? list : []).map(function (r) { return normalizeRow(r); });
-    writeRaw(norm);
-    if (!skipNotify) notifyBeschikkingenChanged();
-  }
-
+  /**
+   * Diff-sync. Wordt gebruikt door legacy code paths (zelden, vooral in
+   * migratie-routines). We vertalen veranderingen in async update/add/delete.
+   */
   function setBeschikkingenItems(items) {
-    setBeschikkingenItemsRaw(items, false);
+    if (!Array.isArray(items)) return;
+    var oldMap = {};
+    readCache().forEach(function (r) { if (r && r.id) oldMap[r.id] = r; });
+    writeCache(items);
+    notifyChanged();
+    if (!global.besaSupabase) return;
+
+    // Adds + updates
+    items.forEach(function (r) {
+      if (!r || !r.id) return;
+      var prev = oldMap[r.id];
+      if (!prev) {
+        add(r).catch(function (err) { console.error("[beschikkingenDB] add via setBeschikkingenItems:", err); });
+        return;
+      }
+      // Bepaal of er iets gewijzigd is in de relevante velden.
+      var keys = Object.keys(r);
+      var changed = false;
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (k === "schemaVersion" || k === "_data" || k === "zorgsoortLabel") continue;
+        if (JSON.stringify(r[k]) !== JSON.stringify(prev[k])) { changed = true; break; }
+      }
+      if (changed) {
+        updateRow(r.id, r).catch(function (err) { console.error("[beschikkingenDB] update via setBeschikkingenItems:", err); });
+      }
+      delete oldMap[r.id];
+    });
+
+    // Wat over is in oldMap is verwijderd.
+    Object.keys(oldMap).forEach(function (id) {
+      remove(id).catch(function (err) { console.error("[beschikkingenDB] remove via setBeschikkingenItems:", err); });
+    });
   }
 
   function addBeschikkingRij(row) {
-    row = normalizeRow(row);
+    if (!row) row = {};
     if (!row.id) row.id = genId();
-    if (isPlatshouderNaam(row.naam)) {
-      row.naam = kiesNaamUitReferentie(row.id, row.clientId, simpleHash(String(row.startISO) + "x"));
-    }
-    row = normalizeRow(row);
+    if (!row.zorgsoortLabel) row.zorgsoortLabel = zorgLabel(row.zorgsoortKey);
     if (!row.betalingRefMaand && row.startISO) row.betalingRefMaand = ymdToMonth(row.startISO);
     if (!row.betalingRefMaand) row.betalingRefMaand = ymdToMonth(isoYMD(new Date()));
-    if (!row.zorgsoortLabel) row.zorgsoortLabel = zorgLabel(row.zorgsoortKey);
-    var all = getBeschikkingenItems();
-    all.push(row);
-    setBeschikkingenItems(all);
+
+    // Lokaal alvast in de cache zetten zodat de UI direct de nieuwe rij ziet.
+    var cache = readCache();
+    cache.push(row);
+    writeCache(cache);
+    notifyChanged();
+
+    if (global.besaSupabase) {
+      add(row).catch(function (err) { console.error("[beschikkingenDB] addBeschikkingRij sync mislukt:", err); });
+    }
     return row;
   }
 
@@ -575,11 +497,18 @@
     var bStat = "outstanding";
     var tLM = 0;
     var nNG = 0;
-    var gIB = 0;
     var bC = 0;
-    var base = bedragUitId((p.clientId || "") + "|" + (p.naam || "x")) % 80000;
+
+    function simpleHash(s) {
+      s = String(s == null ? "" : s);
+      var h = 0;
+      for (var i = 0; i < s.length; i += 1) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+      return Math.abs(h);
+    }
+
+    var base = simpleHash((p.clientId || "") + "|" + (p.naam || "x")) % 80000;
     base = n2(base);
-    if (fase === "in_aanvraag" || fase === "aangevraagd") {
+    if (fase === "in_aanvraag") {
       bStat = "outstanding";
     } else if (f0 === "afgehandeld") {
       fase = "actief";
@@ -592,12 +521,14 @@
       tLM = n2(base * 0.2);
       nNG = n2(base * 0.6);
     }
+
     var row = {
       id: genId(),
       clientId: p.clientId || "",
       clientLabel: p.clientLabel || "—",
       naam: (p.naam == null ? "" : String(p.naam)).trim(),
       zorgsoortKey: p.zorgsoortKey || "overig",
+      zorgsoortLabel: zorgLabel(p.zorgsoortKey || "overig"),
       fase: fase,
       locatie: p.locatie == null ? "" : String(p.locatie).trim() || "—",
       startISO: p.startISO || "",
@@ -609,7 +540,7 @@
       gedeclGemeenteInBehandeling: 0,
       betaaldCumulatief: bC,
       betalingsStatus: bStat,
-      tariefEur: 86 + (simpleHash(p.clientId + p.naam) % 200),
+      tariefEur: 86 + (simpleHash((p.clientId || "") + (p.naam || "")) % 200),
       tariefEenheid: "uur",
       betalingRefMaand: p.startISO ? ymdToMonth(p.startISO) : ymdToMonth(isoYMD(new Date())),
     };
@@ -618,34 +549,43 @@
 
   function removeBeschikkingById(id) {
     if (id == null) return;
-    var all = getBeschikkingenItems();
-    var next = all.filter(function (r) { return r && r.id !== id; });
-    if (next.length === all.length) return;
-    setBeschikkingenItems(next);
+    var cache = readCache().filter(function (r) { return r && r.id !== id; });
+    writeCache(cache);
+    notifyChanged();
+    if (global.besaSupabase) {
+      remove(id).catch(function (err) { console.error("[beschikkingenDB] removeBeschikkingById sync mislukt:", err); });
+    }
   }
 
   function setBeschikkingField(id, fn) {
-    if (!id) return;
-    var all = getBeschikkingenItems();
-    for (var i = 0; i < all.length; i += 1) {
-      if (all[i] && all[i].id === id) {
-        fn(all[i]);
-        all[i] = normalizeRow(all[i]);
-        setBeschikkingenItems(all);
-        return all[i];
+    if (!id) return null;
+    var cache = readCache();
+    for (var i = 0; i < cache.length; i += 1) {
+      if (cache[i] && cache[i].id === id) {
+        fn(cache[i]);
+        // Schrijf naar cache + sync
+        writeCache(cache);
+        notifyChanged();
+        if (global.besaSupabase) {
+          updateRow(id, cache[i]).catch(function (err) { console.error("[beschikkingenDB] setBeschikkingField sync mislukt:", err); });
+        }
+        return cache[i];
       }
     }
     return null;
   }
 
   function getBeschikkingById(id) {
-    if (id == null) return null;
-    var s = String(id);
-    var all = getBeschikkingenItems() || [];
-    for (var i = 0; i < all.length; i += 1) {
-      if (all[i] && String(all[i].id) === s) return Object.assign({}, all[i]);
-    }
-    return null;
+    return getByIdSync(id);
+  }
+
+  function eindNietVerstrekenBesc(b) {
+    if (!b || !b.eindISO) return true;
+    var t = new Date(b.eindISO);
+    if (isNaN(t.getTime())) return true;
+    var nu = new Date();
+    nu.setHours(0, 0, 0, 0);
+    return t.getTime() >= nu.getTime();
   }
 
   function countVerlooptBinnen60(lijst) {
@@ -662,17 +602,8 @@
     }).length;
   }
 
-  function eindNietVerstrekenBesc(b) {
-    if (!b || !b.eindISO) return true;
-    var t = new Date(b.eindISO);
-    if (isNaN(t.getTime())) return true;
-    var nu = new Date();
-    nu.setHours(0, 0, 0, 0);
-    return t.getTime() >= nu.getTime();
-  }
-
   function aggregateDashboardData() {
-    var items = (typeof getBeschikkingenItems === "function" ? getBeschikkingenItems() : []) || [];
+    var items = getBeschikkingenItems() || [];
     var tGIB = 0, nGIB = 0, nAchter = 0, tLM = 0, tBeta = 0, act = 0, nOpen = 0;
     for (var i = 0; i < items.length; i += 1) {
       var it = items[i];
@@ -698,6 +629,22 @@
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------------------
+  var api = {
+    get ready() { return readyPromise || bootstrap(); },
+    refresh: refresh,
+    fetchAll: fetchAll,
+    add: add,
+    update: updateRow,
+    delete: remove,
+    getAllSync: getAllSync,
+    getByIdSync: getByIdSync,
+  };
+
+  global.beschikkingenDB = api;
+
   global.getBeschikkingenItems = getBeschikkingenItems;
   global.setBeschikkingenItems = setBeschikkingenItems;
   global.addBeschikkingRij = addBeschikkingRij;
@@ -706,11 +653,15 @@
   global.removeBeschikkingById = removeBeschikkingById;
   global.setBeschikkingField = setBeschikkingField;
   global.getBeschikkingById = getBeschikkingById;
-  global.normalizeBeschikkingRij = normalizeRow;
+  global.normalizeBeschikkingRij = function (x) { return x; }; // no-op (DB is normalisatie-bron)
   global.aggBescVerlooptBinnen60 = function () {
     return countVerlooptBinnen60(getBeschikkingenItems().filter(function (b) { return b && !b.gearchiveerd; }));
   };
   global.beschikkingenDataAggregate = aggregateDashboardData;
-  global.beschikkingenNotifyChange = notifyBeschikkingenChanged;
-  global.SUPPORTED_ZORGSOORT_KEYS_BESC = function () { return Object.keys(ZS_LABELS).filter(function (k) { return k !== "overig"; }); };
+  global.beschikkingenNotifyChange = notifyChanged;
+  global.SUPPORTED_ZORGSOORT_KEYS_BESC = function () {
+    return Object.keys(ZS_LABELS).filter(function (k) { return k !== "overig"; });
+  };
+
+  bootstrap();
 })(typeof window !== "undefined" ? window : this);
