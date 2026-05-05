@@ -133,29 +133,17 @@
   }
 
   function getHrEmployeeRows() {
-    var list = [];
-    if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
-      list = window.medewerkersDB.getAllSync();
-    }
-    // Fallback voor het geval medewerkers-data.js nog niet gebootstrapt heeft.
-    if (!Array.isArray(list) || list.length === 0) {
-      list = readLsArray(HR_EMP_KEY);
-      if (!list.length) list = readLsArray(HR_EMP_LEGACY_KEY);
-      var edits = readLsObject(HR_EMP_EDITS_KEY);
-      list = (list || []).map(function (raw) {
-        if (!raw) return null;
-        var eid = raw.empId != null && String(raw.empId) !== "" ? String(raw.empId) : raw.id != null && String(raw.id) !== "" ? String(raw.id) : "";
-        if (!eid) return null;
-        return Object.assign({}, raw, edits[eid] && typeof edits[eid] === "object" ? edits[eid] : {});
-      }).filter(Boolean);
-    }
+    var list = readLsArray(HR_EMP_KEY);
+    if (!list.length) list = readLsArray(HR_EMP_LEGACY_KEY);
+    var edits = readLsObject(HR_EMP_EDITS_KEY);
     var out = [];
     (list || []).forEach(function (raw) {
       if (!raw) return;
       var eid = raw.empId != null && String(raw.empId) !== "" ? String(raw.empId) : raw.id != null && String(raw.id) !== "" ? String(raw.id) : "";
       if (!eid) return;
-      if (raw.archived) return;
-      out.push({ id: eid, name: hrDisplayName(raw) });
+      var m = Object.assign({}, raw, edits[eid] && typeof edits[eid] === "object" ? edits[eid] : {});
+      if (m.archived) return;
+      out.push({ id: eid, name: hrDisplayName(m) });
     });
     out.sort(function (a, b) {
       return a.name.toLowerCase().localeCompare(b.name.toLowerCase(), "nl", { sensitivity: "base" });
@@ -431,10 +419,6 @@
   });
   window.addEventListener("pageshow", function (e) {
     if (e.persisted) onHrListMaybeChanged();
-  });
-  // Verfris dropdowns zodra medewerkers-data uit Supabase binnenkomt of muteert.
-  window.addEventListener("besa:medewerkers-updated", function () {
-    onHrListMaybeChanged();
   });
 
   document.getElementById("cd-f-gem-clear").addEventListener("click", function () {

@@ -44,12 +44,6 @@
   }
 
   function mergedEmployees() {
-    if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
-      var fromDb = window.medewerkersDB.getAllSync();
-      if (Array.isArray(fromDb) && fromDb.length > 0) return fromDb;
-    }
-    // Fallback: legacy localStorage-overlay (voor het geval medewerkers-data.js
-    // nog niet gebootstrapt heeft of de gebruiker offline is).
     var items = readJson(ITEMS_KEY, []);
     if (!Array.isArray(items)) items = [];
     var edits = readJson(EDITS_KEY, {});
@@ -261,11 +255,4 @@
       if (opl) hydrate(opl);
     });
   }
-
-  // Re-render de medewerkers-lijst zodra medewerkers-data uit Supabase
-  // binnenkomt (of na een update). Zo verschijnen koppelingen automatisch.
-  window.addEventListener("besa:medewerkers-updated", function () {
-    var opl = findOpleiding();
-    if (opl) hydrate(opl);
-  });
 })();
