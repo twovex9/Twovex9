@@ -1,35 +1,36 @@
+/**
+ * Opleidingen — lijstpagina (HR module).
+ *
+ * Reads gaan via window.opleidingenDB.getAllSync() (cache).
+ * Writes gaan via de async API van window.opleidingenDB en worden door die
+ * module ook in Supabase weggeschreven. Re-render gebeurt automatisch via
+ * het "besa:opleidingen-updated" event.
+ *
+ * Backward-compatibility: voor pagina's die opleidingen.js inlezen voor de
+ * helper-functies (zoals oude opleiding-detail.html dat deed), exposen we
+ * ook getOpleidingen()/saveOpleidingen()/oplFmtDate() globaal. Deze gebruiken
+ * de cache zodat alle synchrone callers hetzelfde data zien.
+ */
+
 var OPL_STORAGE_KEY = "opleidingen";
 
-var _oplIdCounter = 0;
-function oplGenId() {
-  _oplIdCounter++;
-  return "opl_" + Date.now().toString(36) + "_" + _oplIdCounter + "_" + Math.random().toString(36).slice(2, 8);
-}
-
 function getOpleidingen() {
+  if (window.opleidingenDB && typeof window.opleidingenDB.getAllSync === "function") {
+    return window.opleidingenDB.getAllSync();
+  }
   try {
     var raw = localStorage.getItem(OPL_STORAGE_KEY);
     var list = raw ? JSON.parse(raw) : [];
-    var changed = false;
-    list.forEach(function (o) { if (!o.id) { o.id = oplGenId(); changed = true; } });
-    if (changed) localStorage.setItem(OPL_STORAGE_KEY, JSON.stringify(list));
-    return list;
+    return Array.isArray(list) ? list : [];
   } catch (e) { return []; }
 }
 
+// Behouden als compatibility-shim. Schrijven hoort via opleidingenDB te
+// gebeuren; deze functie schrijft alleen naar de cache en wordt door de
+// data-laag zelf gebruikt na succesvolle Supabase-writes.
 function saveOpleidingen(list) {
-  try {
-    localStorage.setItem(OPL_STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {
-    console.error("saveOpleidingen fout:", e);
-  }
-}
-
-function deleteOpleiding(id) {
-  if (!id) return false;
-  var list = getOpleidingen().filter(function (o) { return o.id !== id; });
-  saveOpleidingen(list);
-  return true;
+  try { localStorage.setItem(OPL_STORAGE_KEY, JSON.stringify(list)); }
+  catch (e) { console.error("saveOpleidingen fout:", e); }
 }
 
 function oplFmtDate(iso) {
@@ -103,6 +104,19 @@ function oplFmtDate(iso) {
     return items;
   }
 
+  function renderEmptyState(message) {
+    tbody.innerHTML = "";
+    var tr = document.createElement("tr");
+    var td = document.createElement("td");
+    td.colSpan = 6;
+    td.textContent = message;
+    td.style.textAlign = "center";
+    td.style.padding = "24px";
+    td.style.color = "#9ca3af";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+
   function render() {
     var items = getFilteredOpleidingen();
 
@@ -116,15 +130,7 @@ function oplFmtDate(iso) {
 
     tbody.innerHTML = "";
     if (!page.length) {
-      var tr = document.createElement("tr");
-      var td = document.createElement("td");
-      td.colSpan = 6;
-      td.textContent = "Geen opleidingen gevonden";
-      td.style.textAlign = "center";
-      td.style.padding = "24px";
-      td.style.color = "#9ca3af";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
+      renderEmptyState("Geen opleidingen gevonden");
     } else {
       page.forEach(function (o) {
         var tr = document.createElement("tr");
@@ -218,7 +224,19 @@ function oplFmtDate(iso) {
     if (checkAll) checkAll.checked = false;
   }
 
-  // Pagination (zelfde gefilterde set als de tabel)
+  function initialRender() {
+    if (getOpleidingen().length === 0) {
+      renderEmptyState("Opleidingen worden geladen…");
+    } else {
+      render();
+    }
+  }
+
+  window.addEventListener("besa:opleidingen-updated", function () {
+    render();
+  });
+
+  // Pagination
   ["first", "prev", "next", "last"].forEach(function (action) {
     var btn = document.getElementById("opl-pager-" + action);
     if (!btn) return;
@@ -283,7 +301,6 @@ function oplFmtDate(iso) {
     document.querySelectorAll(".th-sort-menu").forEach(function (m) { m.setAttribute("hidden", ""); });
   });
 
-  // Sort menus
   document.querySelectorAll(".th-sort-trigger").forEach(function (trigger) {
     trigger.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -320,14 +337,13 @@ function oplFmtDate(iso) {
     });
   });
 
-  // Check all
   if (checkAll) {
     checkAll.addEventListener("change", function () {
       tbody.querySelectorAll(".opl-row-check").forEach(function (cb) { cb.checked = checkAll.checked; });
     });
   }
 
-  // Add opleiding modal
+  // ── Add opleiding modal ──
   var addBtn = document.getElementById("opl-add-btn");
   var addModal = document.getElementById("opl-add-modal");
   var addCloseBtn = document.getElementById("opl-add-close-btn");
@@ -343,24 +359,29 @@ function oplFmtDate(iso) {
   if (addModal) addModal.addEventListener("click", function (e) { if (e.target === addModal) closeAddModal(); });
 
   if (addForm) {
-    addForm.addEventListener("submit", function (e) {
+    addForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       var naamInput = document.getElementById("opl-add-naam");
       var skjInput = document.getElementById("opl-add-skj");
       var naam = naamInput ? naamInput.value.trim() : "";
       if (!naam) { if (naamInput) naamInput.focus(); return; }
-      var list = getOpleidingen();
-      var now = new Date().toISOString();
-      list.push({ id: oplGenId(), naam: naam, skj: skjInput ? skjInput.checked : false, aanmaakdatum: now, laatstGewijzigd: now, archived: false });
-      saveOpleidingen(list);
-      if (naamInput) naamInput.value = "";
-      if (skjInput) skjInput.checked = false;
-      closeAddModal();
-      render();
+      var submitBtn = addForm.querySelector('[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        await window.opleidingenDB.add({ naam: naam, skj: skjInput ? !!skjInput.checked : false });
+        if (naamInput) naamInput.value = "";
+        if (skjInput) skjInput.checked = false;
+        closeAddModal();
+      } catch (err) {
+        console.error("Toevoegen mislukt:", err);
+        alert("Toevoegen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
   }
 
-  // Delete modal
+  // ── Archive modal ──
   var delModal = document.getElementById("opl-delete-modal");
   var delSlider = document.getElementById("opl-delete-slider");
   var delConfirmBtn = document.getElementById("opl-delete-confirm-btn");
@@ -369,6 +390,7 @@ function oplFmtDate(iso) {
   var delPreview = document.getElementById("opl-delete-preview");
   var deleteTarget = null;
 
+  // ── Purge (definitief verwijderen) modal ──
   var opPurgeModal = document.getElementById("opl-purge-modal");
   var opPurgeSlider = document.getElementById("opl-purge-slider");
   var opPurgeConfirm = document.getElementById("opl-purge-confirm-btn");
@@ -387,37 +409,35 @@ function oplFmtDate(iso) {
   }
 
   function resetOplPurgeSlider() {
-    if (opPurgeSlider) {
-      opPurgeSlider.value = "0";
-      syncOplPurgeSlider();
-    }
+    if (opPurgeSlider) { opPurgeSlider.value = "0"; syncOplPurgeSlider(); }
   }
 
   function openOplPurgeModal(id, naam) {
     oplPurgeTarget = id;
     if (opPurgePreview) opPurgePreview.textContent = naam;
     resetOplPurgeSlider();
-    if (opPurgeModal) {
-      opPurgeModal.removeAttribute("hidden");
-      opPurgeModal.setAttribute("aria-hidden", "false");
-    }
+    if (opPurgeModal) { opPurgeModal.removeAttribute("hidden"); opPurgeModal.setAttribute("aria-hidden", "false"); }
   }
 
   function closeOplPurgeModal() {
-    if (opPurgeModal) {
-      opPurgeModal.setAttribute("hidden", "");
-      opPurgeModal.setAttribute("aria-hidden", "true");
-    }
+    if (opPurgeModal) { opPurgeModal.setAttribute("hidden", ""); opPurgeModal.setAttribute("aria-hidden", "true"); }
     oplPurgeTarget = null;
     resetOplPurgeSlider();
     if (opPurgePreview) opPurgePreview.textContent = "";
   }
 
-  function confirmOplPurge() {
+  async function confirmOplPurge() {
     if (!oplPurgeTarget || (opPurgeConfirm && opPurgeConfirm.disabled)) return;
-    deleteOpleiding(oplPurgeTarget);
-    closeOplPurgeModal();
-    render();
+    var target = oplPurgeTarget;
+    if (opPurgeConfirm) opPurgeConfirm.disabled = true;
+    try {
+      await window.opleidingenDB.delete(target);
+      closeOplPurgeModal();
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+      alert("Verwijderen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (opPurgeConfirm) opPurgeConfirm.disabled = false;
+    }
   }
 
   function syncDelSlider() {
@@ -446,31 +466,31 @@ function oplFmtDate(iso) {
     if (delPreview) delPreview.textContent = "";
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleteTarget || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    var now = new Date().toISOString();
-    var list = getOpleidingen().map(function (o) {
-      if (o.id !== deleteTarget) return o;
-      return Object.assign({}, o, { archived: true, laatstGewijzigd: now });
-    });
-    saveOpleidingen(list);
-    closeDeleteModal();
-    render();
+    var target = deleteTarget;
+    if (delConfirmBtn) delConfirmBtn.disabled = true;
+    try {
+      await window.opleidingenDB.archive(target);
+      closeDeleteModal();
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+      alert("Archiveren mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (delConfirmBtn) delConfirmBtn.disabled = false;
+    }
   }
 
-  tbody.addEventListener("click", function (e) {
+  tbody.addEventListener("click", async function (e) {
     var resOpl = e.target.closest(".hr-restore-btn");
     if (resOpl && resOpl.getAttribute("data-opl-id")) {
       e.preventDefault();
       e.stopPropagation();
       var rido = resOpl.getAttribute("data-opl-id");
-      var nwo = new Date().toISOString();
-      var lsto = getOpleidingen().map(function (o) {
-        if (o.id !== rido) return o;
-        return Object.assign({}, o, { archived: false, laatstGewijzigd: nwo });
-      });
-      saveOpleidingen(lsto);
-      render();
+      try { await window.opleidingenDB.restore(rido); }
+      catch (err) {
+        console.error("Herstellen mislukt:", err);
+        alert("Herstellen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      }
       return;
     }
     var purO = e.target.closest(".opl-purge-btn");
@@ -523,5 +543,5 @@ function oplFmtDate(iso) {
     }
   });
 
-  render();
+  initialRender();
 })();

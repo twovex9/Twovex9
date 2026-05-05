@@ -1,4 +1,10 @@
-/* opleiding-detail.js — detail HR-opleiding (localStorage: opleidingen) */
+/**
+ * Opleiding-detailpagina (HR module).
+ *
+ * Reads en writes lopen via window.opleidingenDB. Bij eerste laden proberen
+ * we de cache te gebruiken; als die nog leeg is wachten we op het update-
+ * event dat de data-laag dispatched zodra Supabase-data binnen is.
+ */
 (function () {
   "use strict";
 
@@ -20,6 +26,21 @@
     } catch (e) {
       return fallback;
     }
+  }
+
+  function getOpleidingenCached() {
+    if (window.opleidingenDB && typeof window.opleidingenDB.getAllSync === "function") {
+      return window.opleidingenDB.getAllSync();
+    }
+    try {
+      var raw = localStorage.getItem("opleidingen");
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function findOpleiding() {
+    return getOpleidingenCached().filter(function (o) { return o.id === oplId; })[0];
   }
 
   function mergedEmployees() {
@@ -92,17 +113,6 @@
     }, 2200);
   }
 
-  function findOpleiding() {
-    var list = typeof getOpleidingen === "function" ? getOpleidingen() : [];
-    return list.filter(function (o) { return o.id === oplId; })[0];
-  }
-
-  var opl = findOpleiding();
-  if (!opl) {
-    window.location.href = "opleidingen.html";
-    return;
-  }
-
   var naamEl = document.getElementById("opl-hero-name");
   var countEl = document.getElementById("opl-medewerkers-count");
   var naamInput = document.getElementById("opl-detail-naam");
@@ -155,22 +165,22 @@
     listEl.appendChild(ul);
   }
 
-  function hydrate() {
+  function hydrate(opl) {
+    if (!opl) return;
     var naam = opl.naam || "—";
-    naamEl.textContent = naam;
-    naamInput.value = opl.naam || "";
-    skjInput.checked = Boolean(opl.skj);
+    if (naamEl) naamEl.textContent = naam;
+    if (naamInput) naamInput.value = opl.naam || "";
+    if (skjInput) skjInput.checked = Boolean(opl.skj);
     document.title = (opl.naam || "Opleiding") + " — HR";
-    countEl.textContent = String(linkedEmployees(opl.naam).length);
+    if (countEl) countEl.textContent = String(linkedEmployees(opl.naam).length);
     renderMedewerkersList(opl.naam);
   }
 
-  hydrate();
-
+  // Tabs
   var tabs = document.querySelectorAll(".emp-tab[data-tab]");
   var panels = {
     details: document.getElementById("opl-tab-details"),
-    medewerkers: document.getElementById("opl-tab-medewerkers")
+    medewerkers: document.getElementById("opl-tab-medewerkers"),
   };
 
   tabs.forEach(function (tab) {
@@ -179,35 +189,70 @@
       tab.classList.add("is-active");
       var key = tab.getAttribute("data-tab");
       Object.keys(panels).forEach(function (k) {
-        panels[k].style.display = k === key ? "" : "none";
+        if (panels[k]) panels[k].style.display = k === key ? "" : "none";
       });
     });
   });
 
-  document.getElementById("opl-detail-save").addEventListener("click", function () {
-    var newName = naamInput.value.trim();
-    if (!newName) {
-      naamInput.focus();
-      return;
+  var saveBtn = document.getElementById("opl-detail-save");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async function () {
+      var newName = naamInput ? naamInput.value.trim() : "";
+      if (!newName) {
+        if (naamInput) naamInput.focus();
+        return;
+      }
+      saveBtn.disabled = true;
+      try {
+        var updated = await window.opleidingenDB.update(oplId, {
+          naam: newName,
+          skj: skjInput ? Boolean(skjInput.checked) : false,
+        });
+        if (updated) hydrate(updated);
+        if (typeof showSaveModal === "function") showSaveModal("Opleiding is opgeslagen.");
+        else showToast("Opleiding opgeslagen");
+      } catch (err) {
+        console.error("Opslaan mislukt:", err);
+        alert("Opslaan mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+  }
+
+  // Initial render: probeer cache. Als opleiding er nog niet in zit, wachten
+  // op besa:opleidingen-updated event (dat na bootstrap automatisch komt).
+  function tryInitialRender() {
+    var opl = findOpleiding();
+    if (opl) { hydrate(opl); return true; }
+    return false;
+  }
+
+  if (!tryInitialRender()) {
+    var resolved = false;
+    function onUpdate() {
+      if (resolved) return;
+      var opl = findOpleiding();
+      if (opl) {
+        resolved = true;
+        window.removeEventListener("besa:opleidingen-updated", onUpdate);
+        hydrate(opl);
+      }
     }
+    window.addEventListener("besa:opleidingen-updated", onUpdate);
 
-    var all = typeof getOpleidingen === "function" ? getOpleidingen() : [];
-    var idx = all.findIndex(function (o) { return o.id === oplId; });
-    if (idx === -1) return;
-
-    var row = all[idx];
-    row.naam = newName;
-    row.skj = Boolean(skjInput.checked);
-    row.laatstGewijzigd = new Date().toISOString();
-
-    if (typeof saveOpleidingen === "function") saveOpleidingen(all);
-    opl = row;
-
-    naamEl.textContent = newName;
-    document.title = newName + " — HR";
-    countEl.textContent = String(linkedEmployees(newName).length);
-    renderMedewerkersList(newName);
-    if (typeof showSaveModal === "function") showSaveModal("Opleiding is opgeslagen.");
-    else showToast("Opleiding opgeslagen");
-  });
+    if (window.opleidingenDB && window.opleidingenDB.ready) {
+      window.opleidingenDB.ready.then(function () {
+        if (!resolved && !findOpleiding()) {
+          window.location.href = "opleidingen.html";
+        }
+      });
+    }
+  } else {
+    // Cache had de opleiding al; toch nog luisteren voor live-updates.
+    window.addEventListener("besa:opleidingen-updated", function () {
+      var opl = findOpleiding();
+      if (opl) hydrate(opl);
+    });
+  }
 })();
