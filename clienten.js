@@ -734,4 +734,11 @@
   document.getElementById("cl-purge-close") && document.getElementById("cl-purge-close").addEventListener("click", closePurge);
   document.getElementById("cl-purge-cancel") && document.getElementById("cl-purge-cancel").addEventListener("click", closePurge);
   refreshClOrgDatalist();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // heeft bijgewerkt. Zorgt dat een nieuwe browser/sessie ook direct alle
+  // cliënten ziet zonder handmatige refresh.
+  window.addEventListener("besa:clienten-updated", function () {
+    try { render(); refreshClOrgDatalist(); } catch (e) { /* */ }
+  });
 })();

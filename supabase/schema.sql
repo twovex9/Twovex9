@@ -656,3 +656,162 @@ create policy "anon kan medewerkers verwijderen"
 --   on public.medewerkers for delete to authenticated using (true);
 
 -- Geen seed-data: medewerkers worden door de gebruiker in de UI aangemaakt.
+
+-- ============================================================================
+-- clienten (Cliënten module — master entity)
+-- ============================================================================
+--
+-- ID is text (geen uuid) zodat bestaande IDs als 'cl_342' blijven werken in
+-- legacy data (beschikkingen verwijzen daarheen). Nieuwe records krijgen
+-- client-side gegenereerde ID's (bv. 'cl_1746...').
+
+create table if not exists public.clienten (
+  id text primary key,
+  voornaam text not null default '',
+  achternaam text not null default '',
+  clientnummer integer,
+  locatie text,
+  fase text default 'in zorg',
+  gemeente text,
+  organisatie text,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create unique index if not exists clienten_clientnummer_unique_active
+  on public.clienten (clientnummer)
+  where archived = false and clientnummer is not null;
+
+create index if not exists clienten_naam_idx on public.clienten (lower(achternaam), lower(voornaam));
+create index if not exists clienten_archived_idx on public.clienten (archived);
+create index if not exists clienten_fase_idx on public.clienten (fase);
+create index if not exists clienten_locatie_idx on public.clienten (lower(locatie));
+create index if not exists clienten_gemeente_idx on public.clienten (lower(gemeente));
+
+drop trigger if exists trg_clienten_set_modified on public.clienten;
+create trigger trg_clienten_set_modified
+  before update on public.clienten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.clienten enable row level security;
+
+drop policy if exists "anon kan clienten lezen" on public.clienten;
+create policy "anon kan clienten lezen"
+  on public.clienten for select to anon using (true);
+
+drop policy if exists "anon kan clienten toevoegen" on public.clienten;
+create policy "anon kan clienten toevoegen"
+  on public.clienten for insert to anon with check (true);
+
+drop policy if exists "anon kan clienten bewerken" on public.clienten;
+create policy "anon kan clienten bewerken"
+  on public.clienten for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan clienten verwijderen" on public.clienten;
+create policy "anon kan clienten verwijderen"
+  on public.clienten for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan clienten lezen" on public.clienten;
+-- drop policy if exists "anon kan clienten toevoegen" on public.clienten;
+-- drop policy if exists "anon kan clienten bewerken" on public.clienten;
+-- drop policy if exists "anon kan clienten verwijderen" on public.clienten;
+-- create policy "ingelogd kan clienten lezen"
+--   on public.clienten for select to authenticated using (true);
+-- create policy "ingelogd kan clienten toevoegen"
+--   on public.clienten for insert to authenticated with check (true);
+-- create policy "ingelogd kan clienten bewerken"
+--   on public.clienten for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan clienten verwijderen"
+--   on public.clienten for delete to authenticated using (true);
+
+-- Seed van 85 cliënten. Idempotent: alleen invoegen als de id nog niet bestaat.
+insert into public.clienten (id, voornaam, achternaam, clientnummer, locatie, fase, gemeente, organisatie)
+select t.id, t.voornaam, t.achternaam, t.clientnummer, t.locatie, t.fase, t.gemeente, t.organisatie
+from (values
+  ('cl_342','Jalaysa','Jansen',342,'Voorburggracht','in zorg','Dijk en Waard',''),
+  ('cl_341','Lisanne','de Zeeuw',341,'Leonard Bramerstraat','in zorg','Rotterdam',''),
+  ('cl_337','Arsalan','Koula',337,'Voorburggracht','in zorg','Dijk en Waard',''),
+  ('cl_221','Ronique','Thakoer',221,'Varnebroek','in zorg','Rotterdam','Youz'),
+  ('cl_339','Haifaa','Alnakshbandi',339,'Voorburggracht','in zorg','Alkmaar',''),
+  ('cl_326','Jordy','Lont',326,'Voorburggracht','in zorg','Den Helder',''),
+  ('cl_335','Romano','Leone',335,'Varnebroek','in zorg','Alkmaar',''),
+  ('cl_333','Bella','van Meurs',333,'Magdalenenstraat','in zorg','','Planet Young'),
+  ('cl_327','Dylaila','Birney',327,'Magdalenenstraat','in zorg','','IHub'),
+  ('cl_328','Maik','Meijerink',328,'Breedstraat','in zorg','Alkmaar',''),
+  ('cl_330','Dana','Ligthart',330,'Voorburggracht','in aanvraag','Dijk en Waard',''),
+  ('cl_331','Dano','de Wagt',331,'Breedstraat','in aanvraag','Dijk en Waard',''),
+  ('cl_323','Kim','Duinhoven',323,'Varnebroek','in aanvraag','Alkmaar',''),
+  ('cl_322','Nadia','Trela',322,'Voorburggracht','in aanvraag','Medemblik',''),
+  ('cl_321','Oskar','Delendowski',321,'Magdalenenstraat','in zorg','',''),
+  ('cl_324','Gianluca','Frangiamore de Sola',324,'Magdalenenstraat','in zorg','Bergen (NH)',''),
+  ('cl_320','Divano','Vrij',320,'Voorburggracht','in zorg','Enkhuizen',''),
+  ('cl_319','Elona','van Milligen',319,'','in zorg','YOUZ/Rotterdam','Youz'),
+  ('cl_318','Destiny','Boot',318,'Varnebroek','in zorg','Alkmaar',''),
+  ('cl_317','Shardely','Eybrecht',317,'Breedstraat','in zorg','Den Helder',''),
+  ('cl_313','Sara','Kapli',313,'Magdalenenstraat','uit zorg','',''),
+  ('cl_315','Tshayren','Landveld',315,'Magdalenenstraat','in zorg','YOUZ','Youz'),
+  ('cl_216','Nikki','Boekel',216,'','in zorg','Dijk en Waard',''),
+  ('cl_308','Dylan','Kauffman',308,'','uit zorg','Dijk en Waard',''),
+  ('cl_311','Iris','Brouwer',311,'Voorburggracht','uit zorg','Texel',''),
+  ('cl_90','Annabel','Dikmans',90,'','in zorg','Haarlemmermeer',''),
+  ('cl_209','Sara','Ali',209,'','in zorg','YOUZ/Rotterdam','Youz'),
+  ('cl_261','Lucas','Kortenhoeven',261,'','uit zorg','YOUZ/Rotterdam','Youz'),
+  ('cl_108','Neshanti','di Perna',108,'Breedstraat','in zorg','','Gripzorg'),
+  ('cl_297','Storm','Kueter',297,'Magdalenenstraat','in zorg','Leidschendam-Voorburg',''),
+  ('cl_152','Roma','Baltus',152,'Breedstraat','uit zorg','','Gripzorg'),
+  ('cl_198','Nouska','Westerbeek',198,'','in zorg','WMO',''),
+  ('cl_267','Ricardo','Rens',267,'Varnebroek','in zorg','Rotterdam','Youz'),
+  ('cl_204','Donique','de Nijs',204,'','in zorg','WMO',''),
+  ('cl_301','Grace','de Moor',301,'Voorburggracht','in zorg','YOUZ','Youz'),
+  ('cl_292','Lotte','Schuiling',292,'Voorburggracht','in zorg','Sliedrecht',''),
+  ('cl_309','Danique','Rietveld',309,'Varnebroek','in zorg','Alkmaar',''),
+  ('cl_176','Nora','Halbesma',176,'Voorburggracht','uit zorg','Alkmaar',''),
+  ('cl_283','Mitch','Kloosterman',283,'Breedstraat','uit zorg','Velsen/Kennemerland',''),
+  ('cl_181','Joeliza','van den Dool',181,'Voorburggracht','uit zorg','Dijk en Waard',''),
+  ('cl_21','Jason','Beltzer',21,'Voorburggracht','uit zorg','Dijk en Waard',''),
+  ('cl_246','Albina','Zeneli',246,'Voorburggracht','uit zorg','Dijk en Waard',''),
+  ('cl_279','Elize','Jongebloed',279,'Magdalenenstraat','in zorg','Alkmaar',''),
+  ('cl_172','Noëlla','Duijvestijn',172,'Breedstraat','in zorg','Castricum',''),
+  ('cl_171','Jay','Stevens',171,'Varnebroek','in zorg','Heiloo',''),
+  ('cl_275','Danielle','Lamping',275,'Varnebroek','in zorg','Dijk en Waard',''),
+  ('cl_293','Eliza','Zwart',293,'Breedstraat','in zorg','Heiloo',''),
+  ('cl_259','Roël','Spiering',259,'Varnebroek','uit zorg','Uitgeest',''),
+  ('cl_165','Cloe','Brown',165,'Varnebroek','in zorg','Castricum',''),
+  ('cl_268','Jay Arnold','Buter',268,'Varnebroek','uit zorg','Dijk en Waard',''),
+  ('cl_291','Jorgia','Schoenmaker',291,'Magdalenenstraat','in zorg','Zaanstad',''),
+  ('cl_281','Colin','Wijngaard',281,'Varnebroek','in zorg','SED Stede Broec',''),
+  ('cl_228','Silas','Breederveld',228,'Magdalenenstraat','in zorg','Thub','IHub'),
+  ('cl_290','Deborah','van den Eijnden',290,'Magdalenenstraat','uit zorg','Beverwijk',''),
+  ('cl_276','Dion','Martis Abukar',276,'Voorburggracht','uit zorg','Beverwijk',''),
+  ('cl_85','Jamey','Hofman',85,'','in zorg','Den Helder',''),
+  ('cl_300','Manaf','Ghallab',300,'Voorburggracht','in zorg','Hollands Kroon',''),
+  ('cl_284','Elin','Verburg',284,'Voorburggracht','uit zorg','Alkmaar',''),
+  ('cl_177','Danischa','de Vilder',177,'satelliet woning','in zorg','Dijk en Waard',''),
+  ('cl_12','Dries','Dekker',12,'Magdalenenstraat','in zorg','Dijk en Waard',''),
+  ('cl_269','Kiyaro','Lambert',269,'Breedstraat','in zorg','Dijk en Waard',''),
+  ('cl_199','Phobek','Mityaniq',199,'Breedstraat','in zorg','WLZ',''),
+  ('cl_196','Linda','Otto',196,'satelliet woning','in zorg','WLZ',''),
+  ('cl_197','Nino','Joosten',197,'Breedstraat','in zorg','WLZ',''),
+  ('cl_184','Raymond','Ader',184,'Breedstraat','in zorg','WLZ',''),
+  ('cl_203','Ahmet','Kat',203,'','uit zorg','WLZ',''),
+  ('cl_250','Tycho','Kauffman',250,'Breedstraat','in zorg','Alkmaar','Gripzorg'),
+  ('cl_234','Oliver','Schoenmakers',234,'Magdalenenstraat','in zorg','Alkmaar','Gripzorg'),
+  ('cl_103','Shufrandly','Faries',103,'Breedstraat','uit zorg','Dijk en Waard','Gripzorg'),
+  ('cl_253','Sayed','Danish',253,'Breedstraat','uit zorg','Alkmaar','Gripzorg'),
+  ('cl_225','Tamaika','Cooks',225,'Magdalenenstraat','in zorg','','Gripzorg'),
+  ('cl_237','Mahesh','Don',237,'Breedstraat','uit zorg','WLZ',''),
+  ('cl_178','Denisha','Wortel',178,'Breedstraat','in zorg','','Gripzorg'),
+  ('cl_206','Shadena','Bauman',206,'Magdalenenstraat','in zorg','Schagen',''),
+  ('cl_302','Sara','Narouz',302,'Magdalenenstraat','in zorg','Schagen',''),
+  ('cl_58','Mitchel','Heijm',58,'Breedstraat','in zorg','Ouder-Amstel',''),
+  ('cl_278','Pelle','van Stee',278,'Magdalenenstraat','in zorg','Schagen',''),
+  ('cl_188','Joyce','Voetel',188,'Magdalenenstraat','in zorg','SED Stede Broec',''),
+  ('cl_235','Diboya','Boerlijst',235,'Magdalenenstraat','in zorg','SED Stede Broec',''),
+  ('cl_200','Jira','Tharwarmporn',200,'satelliet woning','in zorg','WLZ','')
+) as t(id, voornaam, achternaam, clientnummer, locatie, fase, gemeente, organisatie)
+where not exists (
+  select 1 from public.clienten c where c.id = t.id
+);

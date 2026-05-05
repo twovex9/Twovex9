@@ -1,206 +1,109 @@
 /* global window */
 /**
- * Cliënten – persist + initiële seed (85 unieke records uit aangeleverde overzichten)
- * Rijen: voornaam, achternaam, cliëntnummer, locatie, fase-index (0=in zorg, 1=in aanvraag, 2=uit zorg), gemeente, organisatie
+ * Cliënten — Supabase data-laag met localStorage als read-cache.
+ *
+ * Architectuur (zie ook competenties-data.js / medewerkers-data.js):
+ *  - Source of truth: Supabase tabel `clienten`.
+ *  - localStorage onder key "clientenItems" = read-cache. Synchrone reads vanuit
+ *    bestaande paginacode blijven werken zolang de cache geladen is.
+ *  - Schrijfacties gaan async naar Supabase; bij succes wordt de cache geüpdatet
+ *    en wordt het event "besa:clienten-updated" gedispatched.
+ *  - Backward-compat globals (`getClientenItems`, `upsertClienten`,
+ *    `setClientenItems`, `deleteClientenById`, `getClientenById`, etc.) blijven
+ *    bestaan zodat alle 9 HTML-pagina's die clienten-data.js laden niets hoeven
+ *    te wijzigen. Schrijf-globals doen "fire-and-forget" calls naar Supabase.
+ *
+ * Toekomst (auth): zie commented-out RLS policies in supabase/schema.sql. De
+ * data-laag zelf hoeft daarvoor niet te wijzigen.
  */
-(function () {
+(function (global) {
   "use strict";
 
-  var CLIENTEN_STORAGE_KEY = "clientenItems";
-  var CLIENTEN_SEED_FLAG = "clientenSeededFromBulk.v2";
+  var TABLE = "clienten";
+  var CACHE_KEY = "clientenItems";
+  var SEED_FLAG = "clientenSeededFromBulk.v2";
+  var MIGRATION_FLAG_KEY = "clientenMigratedToSupabase.v1";
 
   var FASES = ["in zorg", "in aanvraag", "uit zorg"];
 
-  var RAW = [
-    ["Jalaysa", "Jansen", 342, "Voorburggracht", 0, "Dijk en Waard", ""],
-    ["Lisanne", "de Zeeuw", 341, "Leonard Bramerstraat", 0, "Rotterdam", ""],
-    ["Arsalan", "Koula", 337, "Voorburggracht", 0, "Dijk en Waard", ""],
-    ["Ronique", "Thakoer", 221, "Varnebroek", 0, "Rotterdam", "Youz"],
-    ["Haifaa", "Alnakshbandi", 339, "Voorburggracht", 0, "Alkmaar", ""],
-    ["Jordy", "Lont", 326, "Voorburggracht", 0, "Den Helder", ""],
-    ["Romano", "Leone", 335, "Varnebroek", 0, "Alkmaar", ""],
-    ["Bella", "van Meurs", 333, "Magdalenenstraat", 0, "", "Planet Young"],
-    ["Dylaila", "Birney", 327, "Magdalenenstraat", 0, "", "IHub"],
-    ["Maik", "Meijerink", 328, "Breedstraat", 0, "Alkmaar", ""],
-    ["Dana", "Ligthart", 330, "Voorburggracht", 1, "Dijk en Waard", ""],
-    ["Dano", "de Wagt", 331, "Breedstraat", 1, "Dijk en Waard", ""],
-    ["Kim", "Duinhoven", 323, "Varnebroek", 1, "Alkmaar", ""],
-    ["Nadia", "Trela", 322, "Voorburggracht", 1, "Medemblik", ""],
-    ["Oskar", "Delendowski", 321, "Magdalenenstraat", 0, "", ""],
-    ["Gianluca", "Frangiamore de Sola", 324, "Magdalenenstraat", 0, "Bergen (NH)", ""],
-    ["Divano", "Vrij", 320, "Voorburggracht", 0, "Enkhuizen", ""],
-    ["Elona", "van Milligen", 319, "", 0, "YOUZ/Rotterdam", "Youz"],
-    ["Destiny", "Boot", 318, "Varnebroek", 0, "Alkmaar", ""],
-    ["Shardely", "Eybrecht", 317, "Breedstraat", 0, "Den Helder", ""],
-    ["Sara", "Kapli", 313, "Magdalenenstraat", 2, "", ""],
-    ["Tshayren", "Landveld", 315, "Magdalenenstraat", 0, "YOUZ", "Youz"],
-    ["Nikki", "Boekel", 216, "", 0, "Dijk en Waard", ""],
-    ["Dylan", "Kauffman", 308, "", 2, "Dijk en Waard", ""],
-    ["Iris", "Brouwer", 311, "Voorburggracht", 2, "Texel", ""],
-    ["Annabel", "Dikmans", 90, "", 0, "Haarlemmermeer", ""],
-    ["Sara", "Ali", 209, "", 0, "YOUZ/Rotterdam", "Youz"],
-    ["Lucas", "Kortenhoeven", 261, "", 2, "YOUZ/Rotterdam", "Youz"],
-    ["Neshanti", "di Perna", 108, "Breedstraat", 0, "", "Gripzorg"],
-    ["Storm", "Kueter", 297, "Magdalenenstraat", 0, "Leidschendam-Voorburg", ""],
-    ["Roma", "Baltus", 152, "Breedstraat", 2, "", "Gripzorg"],
-    ["Nouska", "Westerbeek", 198, "", 0, "WMO", ""],
-    ["Ricardo", "Rens", 267, "Varnebroek", 0, "Rotterdam", "Youz"],
-    ["Donique", "de Nijs", 204, "", 0, "WMO", ""],
-    ["Grace", "de Moor", 301, "Voorburggracht", 0, "YOUZ", "Youz"],
-    ["Lotte", "Schuiling", 292, "Voorburggracht", 0, "Sliedrecht", ""],
-    ["Danique", "Rietveld", 309, "Varnebroek", 0, "Alkmaar", ""],
-    ["Nora", "Halbesma", 176, "Voorburggracht", 2, "Alkmaar", ""],
-    ["Mitch", "Kloosterman", 283, "Breedstraat", 2, "Velsen/Kennemerland", ""],
-    ["Joeliza", "van den Dool", 181, "Voorburggracht", 2, "Dijk en Waard", ""],
-    ["Jason", "Beltzer", 21, "Voorburggracht", 2, "Dijk en Waard", ""],
-    ["Albina", "Zeneli", 246, "Voorburggracht", 2, "Dijk en Waard", ""],
-    ["Elize", "Jongebloed", 279, "Magdalenenstraat", 0, "Alkmaar", ""],
-    ["Noëlla", "Duijvestijn", 172, "Breedstraat", 0, "Castricum", ""],
-    ["Jay", "Stevens", 171, "Varnebroek", 0, "Heiloo", ""],
-    ["Danielle", "Lamping", 275, "Varnebroek", 0, "Dijk en Waard", ""],
-    ["Eliza", "Zwart", 293, "Breedstraat", 0, "Heiloo", ""],
-    ["Roël", "Spiering", 259, "Varnebroek", 2, "Uitgeest", ""],
-    ["Cloe", "Brown", 165, "Varnebroek", 0, "Castricum", ""],
-    ["Jay Arnold", "Buter", 268, "Varnebroek", 2, "Dijk en Waard", ""],
-    ["Jorgia", "Schoenmaker", 291, "Magdalenenstraat", 0, "Zaanstad", ""],
-    ["Colin", "Wijngaard", 281, "Varnebroek", 0, "SED Stede Broec", ""],
-    ["Silas", "Breederveld", 228, "Magdalenenstraat", 0, "Thub", "IHub"],
-    ["Deborah", "van den Eijnden", 290, "Magdalenenstraat", 2, "Beverwijk", ""],
-    ["Dion", "Martis Abukar", 276, "Voorburggracht", 2, "Beverwijk", ""],
-    ["Jamey", "Hofman", 85, "", 0, "Den Helder", ""],
-    ["Manaf", "Ghallab", 300, "Voorburggracht", 0, "Hollands Kroon", ""],
-    ["Elin", "Verburg", 284, "Voorburggracht", 2, "Alkmaar", ""],
-    ["Danischa", "de Vilder", 177, "satelliet woning", 0, "Dijk en Waard", ""],
-    ["Dries", "Dekker", 12, "Magdalenenstraat", 0, "Dijk en Waard", ""],
-    ["Kiyaro", "Lambert", 269, "Breedstraat", 0, "Dijk en Waard", ""],
-    ["Phobek", "Mityaniq", 199, "Breedstraat", 0, "WLZ", ""],
-    ["Linda", "Otto", 196, "satelliet woning", 0, "WLZ", ""],
-    ["Nino", "Joosten", 197, "Breedstraat", 0, "WLZ", ""],
-    ["Raymond", "Ader", 184, "Breedstraat", 0, "WLZ", ""],
-    ["Ahmet", "Kat", 203, "", 2, "WLZ", ""],
-    ["Tycho", "Kauffman", 250, "Breedstraat", 0, "Alkmaar", "Gripzorg"],
-    ["Oliver", "Schoenmakers", 234, "Magdalenenstraat", 0, "Alkmaar", "Gripzorg"],
-    ["Shufrandly", "Faries", 103, "Breedstraat", 2, "Dijk en Waard", "Gripzorg"],
-    ["Sayed", "Danish", 253, "Breedstraat", 2, "Alkmaar", "Gripzorg"],
-    ["Tamaika", "Cooks", 225, "Magdalenenstraat", 0, "", "Gripzorg"],
-    ["Mahesh", "Don", 237, "Breedstraat", 2, "WLZ", ""],
-    ["Denisha", "Wortel", 178, "Breedstraat", 0, "", "Gripzorg"],
-    ["Shadena", "Bauman", 206, "Magdalenenstraat", 0, "Schagen", ""],
-    ["Sara", "Narouz", 302, "Magdalenenstraat", 0, "Schagen", ""],
-    ["Mitchel", "Heijm", 58, "Breedstraat", 0, "Ouder-Amstel", ""],
-    ["Pelle", "van Stee", 278, "Magdalenenstraat", 0, "Schagen", ""],
-    ["Joyce", "Voetel", 188, "Magdalenenstraat", 0, "SED Stede Broec", ""],
-    ["Diboya", "Boerlijst", 235, "Magdalenenstraat", 0, "SED Stede Broec", ""],
-    ["Jira", "Tharwarmporn", 200, "satelliet woning", 0, "WLZ", ""],
-  ];
-
-  function clientenIsoNow() {
+  function isoNow() {
     return new Date().toISOString();
-  }
-
-  function rowToClient(tup) {
-    var fi = Math.max(0, Math.min(2, tup[4] | 0));
-    return {
-      id: "cl_" + String(tup[2]),
-      voornaam: String(tup[0] || "").trim(),
-      achternaam: String(tup[1] || "").trim(),
-      clientnummer: Number(tup[2]),
-      locatie: String(tup[3] || "").trim(),
-      fase: FASES[fi],
-      gemeente: String(tup[5] || "").trim(),
-      organisatie: String(tup[6] || "").trim(),
-      requiredForms: "",
-      uitZorgDatum: "",
-      inZorgDatum: "",
-      medewerkerZoek: "",
-      medewerkerEmpId: "",
-      gedragswetenschapperZoek: "",
-      detailNotities: [],
-      zijbalkNotities: "",
-      tabNotities: "",
-      aanmaakdatum: clientenIsoNow(),
-      laatstGewijzigd: clientenIsoNow(),
-      archived: false,
-    };
-  }
-
-  function buildSeedFromRaw() {
-    return RAW.map(rowToClient);
-  }
-
-  function clientenReadStorage() {
-    try {
-      var raw = window.localStorage.getItem(CLIENTEN_STORAGE_KEY);
-      if (!raw) return null;
-      var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function clientenWriteStorage(items) {
-    try {
-      window.localStorage.setItem(CLIENTEN_STORAGE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
-  function getClientenItems() {
-    var items = clientenReadStorage();
-    if (items && items.length) return items;
-    if (window.localStorage.getItem(CLIENTEN_SEED_FLAG)) return [];
-    var seed = buildSeedFromRaw();
-    clientenWriteStorage(seed);
-    try {
-      window.localStorage.setItem(CLIENTEN_SEED_FLAG, "1");
-    } catch (e) {
-      /* ignore */
-    }
-    return seed;
-  }
-
-  function setClientenItems(items) {
-    return clientenWriteStorage(Array.isArray(items) ? items : []);
   }
 
   function generateClientenId() {
     return "cl_" + String(Date.now()) + "_" + String(Math.random()).slice(2, 8);
   }
 
-  function upsertClienten(client) {
-    var items = getClientenItems();
-    if (!client.id) client.id = generateClientenId();
-    if (!client.aanmaakdatum) client.aanmaakdatum = clientenIsoNow();
-    client.laatstGewijzigd = clientenIsoNow();
-    var idx = items.findIndex(function (c) {
-      return c && c.id === client.id;
+  // ---------------------------------------------------------------------------
+  // Mapping tussen Supabase-rij en frontend-object
+  // ---------------------------------------------------------------------------
+  // Een aantal velden zijn expliciete kolommen (zoekbaar/sorteerbaar in DB).
+  // Alle andere velden gaan in `data jsonb` zodat we zonder schemamigraties
+  // kunnen blijven uitbreiden.
+
+  var EXPLICIT_FIELDS = [
+    "id",
+    "voornaam",
+    "achternaam",
+    "clientnummer",
+    "locatie",
+    "fase",
+    "gemeente",
+    "organisatie",
+    "archived",
+  ];
+
+  function rowToObj(row) {
+    if (!row) return null;
+    var data = row.data && typeof row.data === "object" ? row.data : {};
+    var obj = Object.assign({}, data, {
+      id: row.id,
+      voornaam: row.voornaam || "",
+      achternaam: row.achternaam || "",
+      clientnummer: row.clientnummer == null ? "" : Number(row.clientnummer),
+      locatie: row.locatie || "",
+      fase: row.fase || "in zorg",
+      gemeente: row.gemeente || "",
+      organisatie: row.organisatie || "",
+      archived: !!row.archived,
+      aanmaakdatum: row.aanmaakdatum || isoNow(),
+      laatstGewijzigd: row.laatst_gewijzigd || isoNow(),
     });
-    if (idx === -1) {
-      items.push(client);
-    } else {
-      items[idx] = Object.assign({}, items[idx], client);
-      items[idx].laatstGewijzigd = clientenIsoNow();
-    }
-    return setClientenItems(items);
+    return ensureClientDetailFields(obj);
   }
 
-  function deleteClientenById(id) {
-    var items = getClientenItems().filter(function (c) {
-      return c.id !== id;
+  function objToInsertPayload(c) {
+    var safe = c || {};
+    var data = {};
+    Object.keys(safe).forEach(function (k) {
+      if (EXPLICIT_FIELDS.indexOf(k) >= 0) return;
+      if (k === "aanmaakdatum" || k === "laatstGewijzigd" || k === "laatst_gewijzigd") return;
+      data[k] = safe[k];
     });
-    return setClientenItems(items);
+    var nr = parseInt(safe.clientnummer, 10);
+    return {
+      id: safe.id || generateClientenId(),
+      voornaam: String(safe.voornaam || "").trim(),
+      achternaam: String(safe.achternaam || "").trim(),
+      clientnummer: Number.isFinite(nr) ? nr : null,
+      locatie: safe.locatie == null ? null : String(safe.locatie),
+      fase: safe.fase || "in zorg",
+      gemeente: safe.gemeente == null ? null : String(safe.gemeente),
+      organisatie: safe.organisatie == null ? null : String(safe.organisatie),
+      archived: !!safe.archived,
+      data: data,
+    };
   }
 
-  function getClientenById(id) {
-    if (!id) return null;
-    var items = getClientenItems() || [];
-    return items.find(function (c) {
-      return c && String(c.id) === String(id);
-    }) || null;
+  function objToUpdatePayload(c) {
+    var p = objToInsertPayload(c);
+    delete p.id;
+    return p;
   }
 
+  // ---------------------------------------------------------------------------
+  // Detailvelden — zorgt dat de UI nooit op `undefined` crasht
+  // ---------------------------------------------------------------------------
   function ensureClientDetailFields(c) {
     if (!c || typeof c !== "object") return c;
     if (c.requiredForms == null) c.requiredForms = "";
@@ -215,12 +118,337 @@
     return c;
   }
 
-  window.getClientenItems = getClientenItems;
-  window.setClientenItems = setClientenItems;
-  window.generateClientenId = generateClientenId;
-  window.upsertClienten = upsertClienten;
-  window.deleteClientenById = deleteClientenById;
-  window.getClientenById = getClientenById;
-  window.ensureClientDetailFields = ensureClientDetailFields;
-  window.FASEN_CLIËNT = FASES;
-})();
+  // ---------------------------------------------------------------------------
+  // Cache (localStorage)
+  // ---------------------------------------------------------------------------
+  function readCache() {
+    try {
+      var raw = window.localStorage.getItem(CACHE_KEY);
+      if (!raw) return [];
+      var p = JSON.parse(raw);
+      return Array.isArray(p) ? p : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeCache(items) {
+    try {
+      window.localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify(Array.isArray(items) ? items : [])
+      );
+    } catch (e) {
+      /* */
+    }
+  }
+
+  function dispatchUpdated() {
+    try {
+      window.dispatchEvent(new CustomEvent("besa:clienten-updated"));
+    } catch (e) {
+      /* */
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Supabase fetch + bootstrap
+  // ---------------------------------------------------------------------------
+  async function fetchAll() {
+    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .select("*")
+      .order("achternaam", { ascending: true })
+      .order("voornaam", { ascending: true });
+    if (res.error) throw res.error;
+    return (res.data || []).map(rowToObj).filter(Boolean);
+  }
+
+  /**
+   * Eenmalige migratie: als Supabase leeg is en de gebruiker had al cliënten
+   * in localStorage staan, upload die dan eenmalig naar Supabase.
+   */
+  async function maybeMigrateLocalToSupabase() {
+    try {
+      if (window.localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
+      if (!window.besaSupabase) return false;
+
+      var head = await window.besaSupabase
+        .from(TABLE)
+        .select("id", { count: "exact", head: true });
+      if (head.error) return false;
+      if ((head.count || 0) > 0) {
+        try { window.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
+      }
+
+      var local = readCache();
+      if (!Array.isArray(local) || local.length === 0) {
+        try { window.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
+      }
+
+      console.info("[clientenDB] Eenmalige migratie van " + local.length + " cliënten naar Supabase…");
+      var payload = local.map(function (c) { return objToInsertPayload(c); });
+      var ins = await window.besaSupabase
+        .from(TABLE)
+        .insert(payload)
+        .select();
+      if (ins.error) {
+        console.error("[clientenDB] Migratie mislukt:", ins.error);
+        return false;
+      }
+      try { window.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+      console.info("[clientenDB] Migratie geslaagd: " + (ins.data || []).length + " cliënten geüpload.");
+      return true;
+    } catch (err) {
+      console.error("[clientenDB] Migratiefout:", err);
+      return false;
+    }
+  }
+
+  var readyPromise = null;
+
+  function bootstrap() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async function () {
+      try {
+        await maybeMigrateLocalToSupabase();
+        var items = await fetchAll();
+        writeCache(items);
+        try { window.localStorage.setItem(SEED_FLAG, "1"); } catch (e) { /* */ }
+        dispatchUpdated();
+      } catch (err) {
+        console.error("[clientenDB] Bootstrap mislukt:", err);
+        // Cache blijft staan zodat de UI toch iets toont.
+      }
+    })();
+    return readyPromise;
+  }
+
+  async function refresh() {
+    try {
+      var items = await fetchAll();
+      writeCache(items);
+      dispatchUpdated();
+      return items;
+    } catch (err) {
+      console.error("[clientenDB] Refresh mislukt:", err);
+      return readCache();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CRUD
+  // ---------------------------------------------------------------------------
+  async function add(client) {
+    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    var payload = objToInsertPayload(client);
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .insert(payload)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var obj = rowToObj(res.data);
+    var cache = readCache();
+    cache.push(obj);
+    writeCache(cache);
+    dispatchUpdated();
+    return obj;
+  }
+
+  async function update(id, partial) {
+    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) throw new Error("Geen id");
+    // We doen een READ -> MERGE -> UPDATE zodat we het volledige object naar de
+    // jsonb-kolom kunnen schrijven. Dat is robuust tegen race-condities binnen
+    // dezelfde gebruiker (1 cliënt tegelijk).
+    var existing = getByIdSync(id) || {};
+    var merged = Object.assign({}, existing, partial || {});
+    merged.id = id;
+    var payload = objToUpdatePayload(merged);
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var obj = rowToObj(res.data);
+    var cache = readCache();
+    var idx = cache.findIndex(function (c) { return c && String(c.id) === String(id); });
+    if (idx >= 0) cache[idx] = obj; else cache.push(obj);
+    writeCache(cache);
+    dispatchUpdated();
+    return obj;
+  }
+
+  async function archive(id) {
+    return update(id, { archived: true });
+  }
+
+  async function restore(id) {
+    return update(id, { archived: false });
+  }
+
+  async function remove(id) {
+    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) throw new Error("Geen id");
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .delete()
+      .eq("id", id);
+    if (res.error) throw res.error;
+    var cache = readCache().filter(function (c) { return c && String(c.id) !== String(id); });
+    writeCache(cache);
+    dispatchUpdated();
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Synchrone helpers (vanuit cache) — backward compat
+  // ---------------------------------------------------------------------------
+  function getAllSync() {
+    return readCache().map(ensureClientDetailFields);
+  }
+
+  function getByIdSync(id) {
+    if (!id) return null;
+    var items = readCache();
+    var found = items.find(function (c) { return c && String(c.id) === String(id); });
+    return found ? ensureClientDetailFields(Object.assign({}, found)) : null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backward-compat globals
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Synchrone read voor bestaande paginacode. Triggert async bootstrap als de
+   * cache nog leeg is, maar geeft direct de huidige cache terug.
+   */
+  function getClientenItems() {
+    var cache = readCache();
+    if (!cache.length) {
+      // Triggert bootstrap (no-op als al gestart). Geeft tussentijds [] terug,
+      // re-render gebeurt via "besa:clienten-updated".
+      bootstrap();
+    }
+    return cache.map(ensureClientDetailFields);
+  }
+
+  /**
+   * Gebruikt door bulk-acties (archiveren/herstellen). We nemen de diff met de
+   * cache en vertalen die in async update/delete-calls. Niet ideaal, maar in
+   * de huidige UX wordt setClientenItems alleen aangeroepen na 1 wijziging
+   * tegelijk (archive of restore).
+   */
+  function setClientenItems(items) {
+    if (!Array.isArray(items)) return;
+    var oldMap = {};
+    readCache().forEach(function (c) { if (c && c.id) oldMap[c.id] = c; });
+    writeCache(items);
+    items.forEach(function (c) {
+      if (!c || !c.id) return;
+      var prev = oldMap[c.id];
+      if (!prev) {
+        if (window.clientenDB) {
+          add(c).catch(function (err) { console.error("[clientenDB] add via setClientenItems mislukt:", err); });
+        }
+        return;
+      }
+      // Vergelijk relevante velden
+      var changed = false;
+      var keys = Object.keys(c);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (k === "laatstGewijzigd") continue;
+        if (JSON.stringify(c[k]) !== JSON.stringify(prev[k])) { changed = true; break; }
+      }
+      if (changed) {
+        update(c.id, c).catch(function (err) { console.error("[clientenDB] update via setClientenItems mislukt:", err); });
+      }
+    });
+  }
+
+  /**
+   * Upsert vanuit oudere code paths (bv. client-detail.js save). Bij een
+   * bestaand id voert dit een async update uit, anders een async add.
+   */
+  function upsertClienten(client) {
+    if (!client) return false;
+    if (!client.id) client.id = generateClientenId();
+    // Eerst lokaal in de cache zetten zodat sync reads de wijziging zien.
+    var cache = readCache();
+    var idx = cache.findIndex(function (c) { return c && String(c.id) === String(client.id); });
+    var merged;
+    if (idx >= 0) {
+      merged = Object.assign({}, cache[idx], client, { laatstGewijzigd: isoNow() });
+      cache[idx] = merged;
+    } else {
+      merged = Object.assign({ aanmaakdatum: isoNow(), laatstGewijzigd: isoNow() }, client);
+      cache.push(merged);
+    }
+    writeCache(cache);
+    dispatchUpdated();
+
+    // En vervolgens fire-and-forget naar Supabase synchroniseren.
+    if (window.besaSupabase) {
+      var p = idx >= 0
+        ? update(client.id, merged)
+        : add(merged);
+      p.catch(function (err) {
+        console.error("[clientenDB] upsertClienten sync mislukt:", err);
+      });
+    }
+    return true;
+  }
+
+  function deleteClientenById(id) {
+    if (!id) return false;
+    var cache = readCache().filter(function (c) { return c && String(c.id) !== String(id); });
+    writeCache(cache);
+    dispatchUpdated();
+    if (window.besaSupabase) {
+      remove(id).catch(function (err) { console.error("[clientenDB] delete sync mislukt:", err); });
+    }
+    return true;
+  }
+
+  function getClientenById(id) {
+    return getByIdSync(id);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------------------
+  var api = {
+    get ready() { return readyPromise || bootstrap(); },
+    refresh: refresh,
+    fetchAll: fetchAll,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
+    getAllSync: getAllSync,
+    getByIdSync: getByIdSync,
+  };
+
+  global.clientenDB = api;
+
+  // Backward-compat globals (gebruikt door clienten.js, client-detail.js,
+  // beschikkingen.js, beschikking-detail.js, organisatie.js, facturen.js, …).
+  global.getClientenItems = getClientenItems;
+  global.setClientenItems = setClientenItems;
+  global.generateClientenId = generateClientenId;
+  global.upsertClienten = upsertClienten;
+  global.deleteClientenById = deleteClientenById;
+  global.getClientenById = getClientenById;
+  global.ensureClientDetailFields = ensureClientDetailFields;
+  global.FASEN_CLIËNT = FASES;
+
+  bootstrap();
+})(typeof window !== "undefined" ? window : this);

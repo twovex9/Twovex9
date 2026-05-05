@@ -202,6 +202,20 @@
   if (typeof ensureClientDetailFields === "function" && c0) ensureClientDetailFields(c0);
 
   if (!qid || !c0) {
+    // Mogelijk staat de cliënt nog niet in de cache omdat de Supabase-bootstrap
+    // niet klaar is. Eén keer wachten op de update-event en dan herladen.
+    if (qid && !c0) {
+      var clientDetailReloaded = false;
+      window.addEventListener("besa:clienten-updated", function onClientenUpdated() {
+        if (clientDetailReloaded) return;
+        var found = typeof getClientenById === "function" ? getClientenById(qid) : null;
+        if (found) {
+          clientDetailReloaded = true;
+          window.removeEventListener("besa:clienten-updated", onClientenUpdated);
+          window.location.reload();
+        }
+      });
+    }
     if (missing) missing.removeAttribute("hidden");
     if (h1) h1.textContent = "Cliëntdossier";
     return;
