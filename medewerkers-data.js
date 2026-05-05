@@ -195,6 +195,92 @@
     }
   }
 
+  /**
+   * Eenmalige migratie van de legacy 'employeeEditsById' overlay (verzuim,
+   * notities, documenten, verlofOvergedragen, etc.) naar de medewerkers.data
+   * jsonb kolom in Supabase. Daarna wordt de localStorage-overlay gewist.
+   *
+   * Elke entry uit employeeEditsById wordt alleen gemigreerd als:
+   *   - de key (= medewerker-id) overeenkomt met een bestaande medewerker in
+   *     de cache (geen 'legacy:...' fallback-keys);
+   *   - er minstens één relevant overlay-veld in de entry staat.
+   */
+  var EDITS_MIGRATION_FLAG = "besaEmpEditsMigrationDone_v1";
+  var EDITS_LEGACY_KEY = "employeeEditsById";
+  var OVERLAY_FIELDS_TO_MIGRATE = [
+    "verzuim",
+    "notities",
+    "documenten",
+    "verlofOvergedragen",
+  ];
+
+  async function maybeMigrateEmployeeEditsByIdOnce() {
+    try {
+      if (localStorage.getItem(EDITS_MIGRATION_FLAG) === "1") return false;
+      if (!window.besaSupabase) return false;
+
+      var raw = localStorage.getItem(EDITS_LEGACY_KEY);
+      if (!raw) {
+        try { localStorage.setItem(EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+        return false;
+      }
+      var edits;
+      try { edits = JSON.parse(raw); } catch (e) { edits = null; }
+      if (!edits || typeof edits !== "object") {
+        try { localStorage.setItem(EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+        return false;
+      }
+
+      var byId = {};
+      var cache = readCache();
+      for (var i = 0; i < cache.length; i++) {
+        if (cache[i] && cache[i].id) byId[cache[i].id] = true;
+      }
+
+      var migrated = 0;
+      var skipped = 0;
+      var keys = Object.keys(edits);
+      for (var k = 0; k < keys.length; k++) {
+        var empId = keys[k];
+        if (!empId || typeof empId !== "string") continue;
+        if (empId.indexOf("legacy:") === 0) { skipped++; continue; }
+        if (!byId[empId]) { skipped++; continue; }
+
+        var entry = edits[empId];
+        if (!entry || typeof entry !== "object") continue;
+
+        var patch = {};
+        var hasField = false;
+        for (var f = 0; f < OVERLAY_FIELDS_TO_MIGRATE.length; f++) {
+          var field = OVERLAY_FIELDS_TO_MIGRATE[f];
+          if (Object.prototype.hasOwnProperty.call(entry, field)) {
+            patch[field] = entry[field];
+            hasField = true;
+          }
+        }
+        if (!hasField) continue;
+
+        try {
+          await update(empId, patch);
+          migrated++;
+        } catch (err) {
+          console.warn("[medewerkersDB] employeeEditsById migratie van " + empId + " mislukt:", err);
+        }
+      }
+
+      if (migrated > 0) {
+        console.info("[medewerkersDB] employeeEditsById migratie: " + migrated + " medewerker-overlays naar Supabase verplaatst (" + skipped + " overgeslagen).");
+      }
+      try { localStorage.setItem(EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+      // localStorage-overlay opruimen (legacy data zit nu in DB).
+      try { localStorage.removeItem(EDITS_LEGACY_KEY); } catch (e) { /* */ }
+      return migrated > 0;
+    } catch (err) {
+      console.error("[medewerkersDB] employeeEditsById migratie fout:", err);
+      return false;
+    }
+  }
+
   var bootstrapPromise = null;
   function bootstrap() {
     if (!bootstrapPromise) {
@@ -202,6 +288,9 @@
         try {
           await maybeMigrateLocalToSupabase();
           await fetchAll();
+          // Pas migratie van overlays uitvoeren NA fetchAll, want we hebben de
+          // cache nodig om geldige medewerker-ids te kennen.
+          await maybeMigrateEmployeeEditsByIdOnce();
         } catch (e) {
           dispatchUpdated();
         }

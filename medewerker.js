@@ -3,6 +3,19 @@ function getSelectedEmployee() {
     const raw = window.sessionStorage.getItem("selectedEmployee");
     if (!raw) return null;
     const selected = JSON.parse(raw);
+
+    // Primair: lees de actuele versie uit de medewerkers-data cache (gevoed
+    // door Supabase). Daarmee zijn velden zoals verzuim/notities/documenten/
+    // verlofOvergedragen direct beschikbaar zonder de legacy overlay.
+    if (window.medewerkersDB && typeof window.medewerkersDB.getByIdSync === "function") {
+      const fresh = window.medewerkersDB.getByIdSync(selected?.empId || selected?.id);
+      if (fresh) {
+        return Object.assign({}, selected, fresh);
+      }
+    }
+
+    // Fallback: legacy localStorage-overlay (alleen relevant tot de eenmalige
+    // migratie naar Supabase via medewerkersDB heeft gelopen).
     const editsById = readEmployeeEdits();
     if (selected?.empId && editsById[selected.empId]) {
       return Object.assign({}, selected, editsById[selected.empId]);
@@ -25,6 +38,30 @@ function getSelectedEmployee() {
     return match ? Object.assign({}, selected, match) : selected;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Schrijf een veld-update voor de medewerker door naar Supabase via
+ * medewerkersDB. Fire-and-forget: de UI heeft de state al lokaal toegepast.
+ * Vervangt de oude employeeEditsById-overlay-logic.
+ */
+function persistEmployeeFieldsToDb(emp, patch) {
+  if (!emp || !patch || typeof patch !== "object") return;
+  if (!window.medewerkersDB || typeof window.medewerkersDB.update !== "function") return;
+  const id = emp.id || emp.empId;
+  if (!id) return;
+  // medewerkersDB.update verwacht een UUID als id (geen "legacy:..." sleutels).
+  if (typeof id !== "string" || id.indexOf("legacy:") === 0) return;
+  try {
+    const p = window.medewerkersDB.update(id, patch);
+    if (p && typeof p.catch === "function") {
+      p.catch(function (err) {
+        console.error("[medewerker] update naar Supabase mislukt:", err);
+      });
+    }
+  } catch (err) {
+    console.error("[medewerker] update naar Supabase exception:", err);
   }
 }
 
@@ -1434,11 +1471,7 @@ function saveVerzuimState() {
   const emp = getSelectedEmployee();
   if (!emp) return;
   emp.verzuim = getVerzuimState();
-  const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-  const id = emp.id || emp.naam;
-  if (!allEdits[id]) allEdits[id] = {};
-  allEdits[id].verzuim = emp.verzuim;
-  localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+  persistEmployeeFieldsToDb(emp, { verzuim: emp.verzuim });
 }
 
 function initVerzuimSection() {
@@ -1738,11 +1771,7 @@ function initVerlofOverdragenModal() {
     const emp = getSelectedEmployee();
     if (emp) {
       emp.verlofOvergedragen = st;
-      const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-      const id = emp.id || emp.naam;
-      if (!allEdits[id]) allEdits[id] = {};
-      allEdits[id].verlofOvergedragen = st;
-      localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+      persistEmployeeFieldsToDb(emp, { verlofOvergedragen: st });
     }
     updateCards(st);
     closeModal();
@@ -1981,11 +2010,7 @@ function initNotitiesSection() {
     const emp = getSelectedEmployee();
     if (!emp) return;
     emp.notities = getNotitiesState().map((n) => ({ html: n.html, date: n.date }));
-    const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-    const id = emp.id || emp.naam;
-    if (!allEdits[id]) allEdits[id] = {};
-    allEdits[id].notities = emp.notities;
-    localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+    persistEmployeeFieldsToDb(emp, { notities: emp.notities });
   }
 
   sendBtn.addEventListener("click", () => {
@@ -2612,15 +2637,7 @@ function saveDocumentenState() {
   emp.documenten = getDocumentenState().map(function (d) {
     return { naam: d.naam, type: d.type, vervaldatum: d.vervaldatum, uploaddatum: d.uploaddatum, laatstGewijzigd: d.laatstGewijzigd, archived: d.archived || false, fileData: d.fileData || "", fileName: d.fileName || "", fileMime: d.fileMime || "" };
   });
-  var allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-  var id = emp.empId || emp.id || emp.naam;
-  if (!allEdits[id]) allEdits[id] = {};
-  allEdits[id].documenten = emp.documenten;
-  try {
-    localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
-  } catch (e) {
-    console.warn("localStorage vol — bestand te groot om op te slaan als base64.");
-  }
+  persistEmployeeFieldsToDb(emp, { documenten: emp.documenten });
 }
 
 function initDocumentenSection() {
