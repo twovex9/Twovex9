@@ -1536,40 +1536,32 @@ h1 {
   background: var(--bg-muted);
 }
 
-/* Tabel vult de volle breedte van het witte vlak (rechts netjes uitgelijnd) */
+/* Tabel groeit met zijn inhoud zodat .table-wrapper horizontaal kan scrollen
+   zodra de kolommen niet meer in het scherm passen. Dit gedrag was eerder
+   alleen actief op .table-card--employees en onder een 1200px-mediaquery,
+   maar geldt nu voor alle .employees-table varianten (m.u.v. .nieuws-table
+   die hieronder weer 'fixed' krijgt). Daardoor blijven alle cellen op een
+   smal scherm volledig leesbaar — de wrapper scrollt links/rechts in plaats
+   van tekst af te kappen met "...". */
 .employees-table {
   border-collapse: collapse;
-  width: 100%;
-  min-width: 100%;
-  table-layout: fixed;
-}
-
-/* Medewerkers: auto layout + min-widths — leesbare kolommen, horizontaal scrollen */
-.table-card--employees .employees-table:not(.nieuws-table) {
   width: max-content;
   min-width: 100%;
   table-layout: auto;
 }
 
-.table-card--employees .employees-table:not(.nieuws-table) th,
-.table-card--employees .employees-table:not(.nieuws-table) td {
+.employees-table:not(.nieuws-table) th,
+.employees-table:not(.nieuws-table) td {
   width: auto;
   max-width: none;
 }
 
-@media (max-width: 1200px) {
-  .table-wrapper > table {
-    width: max-content;
-    min-width: 100%;
-    table-layout: auto;
-  }
-
-  .table-wrapper > table th,
-  .table-wrapper > table td {
-    width: auto;
-    max-width: none;
-    white-space: nowrap;
-  }
+/* Nieuws blijft een nette 100%-brede lijst zonder horizontale scroll.
+   Hier wrappen titels/tekst gewoon binnen de cellen. */
+.employees-table.nieuws-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .table-card--employees .employees-table:not(.nieuws-table) th[data-col="avatar"],
@@ -1607,11 +1599,20 @@ h1 {
   border-bottom: 1px solid var(--line);
 }
 
-/* Datacellen: één regel + ellipsis als het te lang is */
+/* Datacellen: één regel zodat de cel zijn natuurlijke breedte krijgt en de
+   tabel als geheel breder kan worden dan de container. .table-wrapper heeft
+   overflow-x: auto, dus links/rechts scrollen werkt vanzelf wanneer nodig.
+   Geen text-overflow ellipsis meer: de gebruiker moet de volledige inhoud
+   altijd kunnen zien (door horizontaal te scrollen). Voor .nieuws-table
+   blijft tekst wél netjes wrappen — die override staat verderop. */
 .employees-table tbody td {
+  white-space: nowrap;
+}
+
+.employees-table.nieuws-table tbody td {
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Koppen: volledige tekst door afbreken over meerdere regels (hoogte i.p.v. breedte) */
@@ -1675,9 +1676,9 @@ h1 {
 .th-sort-inner {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
 }
 
@@ -1686,13 +1687,16 @@ h1 {
   min-width: 0;
 }
 
+/* Compactere knop zodat de pijltjes visueel onderdeel van de titel zijn,
+   maar de hit-area blijft groot genoeg om comfortabel te klikken (de
+   omliggende th-sort-cel vangt clicks af tot de buitenrand). */
 .th-sort-trigger {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: none;
   border-radius: var(--r-xs);
@@ -1703,7 +1707,7 @@ h1 {
 }
 
 .th-sort-trigger:hover {
-  background: rgba(0, 0, 0, 0.07);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .th-sort-arrows {
@@ -1825,25 +1829,25 @@ h1 {
   text-align: center;
 }
 
+/* Kolombreedte-hints. Met table-layout: auto zijn percentages weinig nuttig:
+   we gebruiken min-widths zodat cellen op een breed scherm comfortabel breed
+   zijn maar op een smal scherm via .table-wrapper horizontaal gescrold worden
+   (geen text-overflow ellipsis meer). */
 .employees-table th[data-col="email"],
 .employees-table td[data-col="email"] {
-  width: 11%;
-  max-width: 220px;
-  min-width: 0;
+  min-width: 180px;
 }
 
 .employees-table th[data-col="voornaam"],
 .employees-table td[data-col="voornaam"],
 .employees-table th[data-col="achternaam"],
 .employees-table td[data-col="achternaam"] {
-  width: 9%;
-  min-width: 0;
+  min-width: 100px;
 }
 
 .employees-table th[data-col="fase"],
 .employees-table td[data-col="fase"] {
-  width: 8%;
-  min-width: 0;
+  min-width: 96px;
 }
 
 .employees-table tbody tr {
