@@ -14383,27 +14383,33 @@ button.planning-erm-new {
   width: 100%;
 }
 
-/* Status: volledige pill-tekst (globale tabel dwingt anders nowrap + ellipsis op elke td).
-   min-width afgestemd op de langste pill ("Gedeclareerd en in behandeling") zodat
-   de pill nooit over de Acties-kolom heen schuift op smalle viewports. */
-.employees-table.facturen-table thead th[data-col="st"] {
-  min-width: max(16rem, max-content);
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
+/* Status-kolom: pill mag NOOIT over de aangrenzende kolommen heen schuiven.
+   Drie samenwerkende garanties:
+   1. Vaste kolombreedte via 'width' + 'min-width' op th én td (table-layout:auto
+      respecteert min-width op een td niet altijd hard onder druk; 'width' is
+      een sterkere hint).
+   2. 'overflow: hidden' op de cel zodat een (onverwacht) te brede pill niet
+      visueel kan uitlopen — wordt geclipt i.p.v. over de buurkolom heen.
+   3. 'max-width: 100%' + 'white-space: normal' op de pill zodat lange pill-
+      tekst ("Gedeclareerd en in behandeling") binnen de pill afbreekt naar
+      meerdere regels in plaats van te overflowen. */
+.employees-table.facturen-table thead th[data-col="st"],
 .employees-table.facturen-table tbody td[data-col="st"] {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: nowrap;
-  min-width: max(16rem, max-content);
+  width: 17rem;
+  min-width: 17rem;
   vertical-align: middle;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .employees-table.facturen-table tbody td[data-col="st"] .status-pill.fact-status-pill {
-  flex-shrink: 0;
-  max-width: none;
+  flex-shrink: 1;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .fact-status-pill--in-behandeling {
