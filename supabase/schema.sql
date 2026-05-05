@@ -401,6 +401,115 @@ select * from (values
 where not exists (select 1 from public.locaties);
 
 -- ============================================================================
+-- gemeenten (Cliënten module — referentiedata, ~224 NL gemeenten)
+-- ============================================================================
+
+create table if not exists public.gemeenten (
+  id uuid primary key default gen_random_uuid(),
+  naam text not null,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create unique index if not exists gemeenten_naam_unique_active
+  on public.gemeenten (lower(naam))
+  where archived = false;
+
+create index if not exists gemeenten_archived_idx on public.gemeenten (archived);
+
+drop trigger if exists trg_gemeenten_set_modified on public.gemeenten;
+create trigger trg_gemeenten_set_modified
+  before update on public.gemeenten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.gemeenten enable row level security;
+
+drop policy if exists "anon kan gemeenten lezen" on public.gemeenten;
+create policy "anon kan gemeenten lezen"
+  on public.gemeenten for select to anon using (true);
+
+drop policy if exists "anon kan gemeenten toevoegen" on public.gemeenten;
+create policy "anon kan gemeenten toevoegen"
+  on public.gemeenten for insert to anon with check (true);
+
+drop policy if exists "anon kan gemeenten bewerken" on public.gemeenten;
+create policy "anon kan gemeenten bewerken"
+  on public.gemeenten for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan gemeenten verwijderen" on public.gemeenten;
+create policy "anon kan gemeenten verwijderen"
+  on public.gemeenten for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan gemeenten lezen" on public.gemeenten;
+-- drop policy if exists "anon kan gemeenten toevoegen" on public.gemeenten;
+-- drop policy if exists "anon kan gemeenten bewerken" on public.gemeenten;
+-- drop policy if exists "anon kan gemeenten verwijderen" on public.gemeenten;
+-- create policy "ingelogd kan gemeenten lezen"
+--   on public.gemeenten for select to authenticated using (true);
+-- create policy "ingelogd kan gemeenten toevoegen"
+--   on public.gemeenten for insert to authenticated with check (true);
+-- create policy "ingelogd kan gemeenten bewerken"
+--   on public.gemeenten for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan gemeenten verwijderen"
+--   on public.gemeenten for delete to authenticated using (true);
+
+-- Seed van Nederlandse gemeenten + bijzondere ingangen (Ihub, WLZ, WMO, YOUZ).
+-- Idempotent: alleen invoegen als de naam nog niet bestaat.
+insert into public.gemeenten (naam)
+select t.naam
+from unnest(array[
+  'Aa en Hunze','Aalsmeer','Aalten','Achtkarspelen','Alblasserdam','Albrandswaard',
+  'Alkmaar','Almelo','Almere','Alphen aan den Rijn','Alphen-Chaam','Altena',
+  'Ameland','Amersfoort','Amstelveen','Amsterdam','Apeldoorn','Arnhem',
+  'Beek','Beekdaelen','Beesel','Berg en Dal','Bergeijk','Bergen (L)','Bergen (NH)',
+  'Breda','Bronckhorst','Brummen','Bunnik','Bunschoten','Buren',
+  'Capelle aan den IJssel','Castricum','Coevorden','Cranendonck','Cuijk','Culemborg',
+  'Dalfsen','De Bilt','De Fryske Marren',
+  'Elburg','Emmen','Enkhuizen','Enschede','Epe','Ermelo','Etten-Leur',
+  'Geertruidenberg','Geldrop-Mierlo','Gemert-Bakel','Gennep','Gilze en Rijen',
+  'Goeree-Overflakkee','Goes','Goirle','Gooise Meren','Gorinchem','Gouda','Grave',
+  'Groningen','Gulpen-Wittem',
+  'Haaksbergen','Haarlem','Haarlemmermeer','Halderberge','Hardenberg','Harderwijk',
+  'Hardinxveld-Giessendam','Harlingen','Hattem','Heemskerk','Heemstede','Heerde',
+  'Heerenveen','Heerlen','Heeze-Leende','Heiloo','Hellendoorn','Hellevoetsluis',
+  'Helmond','Hendrik-Ido-Ambacht','Hengelo','Het Hogeland','Heumen','Heusden',
+  'Hillegom','Hilvarenbeek','Hilversum','Hoeksche Waard','Hof van Twente',
+  'Hollands Kroon','Hoogeveen','Hoorn','Horst aan de Maas','Houten','Huizen','Hulst',
+  'Ihub','IJsselstein',
+  'Kaag en Braassem','Kampen','Kapelle','Katwijk','Kerkrade','Koggenland',
+  'Krimpen aan den IJssel','Krimpenerwaard',
+  'Laarbeek','Landerd','Landgraaf','Landsmeer','Langedijk','Lansingerland','Laren',
+  'Leeuwarden','Leiden','Leiderdorp','Leidschendam-Voorburg','Lingewaard','Lisse',
+  'Lochem','Lopik','Loppersum','Losser',
+  'Maasdriel','Maasgouw','Maashorst','Maassluis','Maastricht','Medemblik','Meerssen',
+  'Meierijstad','Meppel','Middelburg','Midden-Delfland','Midden-Drenthe',
+  'Midden-Groningen','Mill en Sint Hubert','Moerdijk','Molenlanden','Montferland',
+  'Montfoort','Mook en Middelaar',
+  'Neder-Betuwe','Nederweert','Nieuwegein','Nieuwkoop','Nijkerk','Nijmegen',
+  'Nissewaard','Noardeast-Fryslân','Noord-Beveland','Noordenveld','Noordoostpolder',
+  'Noordwijk','Nuenen, Gerwen en Nederwetten','Nunspeet',
+  'Oegstgeest','Oirschot','Oisterwijk','Oldambt','Oldebroek','Oldenzaal','Olst-Wijhe',
+  'Ommen','Oost Gelre','Oostzaan','Opsterland','Oss','Oude IJsselstreek','Overbetuwe',
+  'Peel en Maas','Putten',
+  'Raalte','Renkum','Renswoude','Reusel-De Mierden','Rheden','Ridderkerk','Rijswijk',
+  'Roerdalen','Roosendaal','Rozendaal',
+  'Schagen','Schoolder','SED Stede Broec','Sliedrecht','Soest','Someren',
+  'Son en Breugel','Stadskanaal','Steenbergen','Stein','Súdwest-Fryslân',
+  'Terschelling','Texel','Tiel','Twenterand',
+  'Uitgeest','Utrecht',
+  'Valkenswaard','Veendam','Velsen/Kennemerland','Venlo','Vianen','Vlaardingen','Vlagtwedde',
+  'Wageningen','Waterland','Weesp','West-Betuwe','Wierden','Wijk bij Duurstede',
+  'Winterswijk','WLZ','WMO','Woensdrecht',
+  'YOUZ','YOUZ/Rotterdam',
+  'Zaandam','Zeewolde','Zeist','Zoetermeer','Zwolle'
+]) as t(naam)
+where not exists (
+  select 1 from public.gemeenten g where lower(g.naam) = lower(t.naam)
+);
+
+-- ============================================================================
 -- Seed-data opleidingen (verplaatst van bovenaan; idempotent)
 -- ============================================================================
 

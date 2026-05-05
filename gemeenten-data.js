@@ -1,162 +1,225 @@
-/* global window, localStorage, GEMEENTEN_STAM_NAMEN */
 /**
- * Stamtabel gemeenten (Cliënten-module) — localStorage.
- * Seed: unieke namen uit gebruikerslijst (zie gemeenten-bulk.js).
+ * Data-laag voor 'gemeenten' (Cliënten module — referentiedata).
+ *
+ * Bron van waarheid: Supabase tabel public.gemeenten.
+ * localStorage["hr_gemeenten_v1"] dient als read-cache.
+ *
+ * Public async API:
+ *   await window.gemeentenDB.bootstrap()
+ *   await window.gemeentenDB.refresh()
+ *   await window.gemeentenDB.add(naam)
+ *   await window.gemeentenDB.update(id, patch)   // {naam?, archived?}
+ *   await window.gemeentenDB.archive(id)
+ *   await window.gemeentenDB.restore(id)
+ *   await window.gemeentenDB.delete(id)
+ *
+ * Sync helpers:
+ *   window.gemeentenDB.getAllSync()
+ *   window.gemeentenDB.ready  (Promise)
+ *
+ * Backward-compat globals (sync, lezen uit cache; write-shims dispatchen async):
+ *   getGemeentenItems(), addGemeente(naam), updateGemeenteById(id, naam),
+ *   setGemeenteArchivedById(id, bool), deleteGemeenteById(id)
+ *
+ * Events:
+ *   "besa:gemeenten-updated" op `window` na elke mutatie of bootstrap.
  */
-(function () {
+(function (global) {
   "use strict";
 
-  var HR_GEM_KEY = "hr_gemeenten_v1";
-  var HR_GEM_SEED = "hr_gemeenten_seeded_v1";
+  var CACHE_KEY = "hr_gemeenten_v1";
+  var TABLE = "gemeenten";
+  var EVENT_NAME = "besa:gemeenten-updated";
 
-  function readJson() {
-    try {
-      var raw = localStorage.getItem(HR_GEM_KEY);
-      if (!raw) return [];
-      var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function writeJson(arr) {
-    localStorage.setItem(HR_GEM_KEY, JSON.stringify(arr));
-  }
-
-  function seedNamen() {
-    var g = typeof window !== "undefined" ? window.GEMEENTEN_STAM_NAMEN : null;
-    if (Array.isArray(g) && g.length) return g.map(String);
-    return [];
-  }
-
-  function ensureSeeded() {
-    if (localStorage.getItem(HR_GEM_SEED) === "1") {
-      if (readJson().length) return;
-    }
-    var cur = readJson();
-    if (cur.length) {
-      localStorage.setItem(HR_GEM_SEED, "1");
-      return;
-    }
-    var namen = seedNamen();
-    var now = new Date().toISOString();
-    var init = namen.map(function (naam, i) {
-      return {
-        id: "gem_seed_" + String(i + 1),
-        naam: naam,
-        archived: false,
-        aanmaakdatum: now,
-        laatstGewijzigd: now,
-      };
-    });
-    writeJson(init);
-    localStorage.setItem(HR_GEM_SEED, "1");
-  }
-
-  function normalizeItem(o) {
-    if (!o || typeof o !== "object") return null;
-    var id = String(o.id || "").trim() || "gem_" + String(Date.now()) + "_" + Math.random().toString(36).slice(2, 8);
-    var naam = String(o.naam == null ? "" : o.naam).trim();
-    if (!naam) return null;
+  function rowToObj(row) {
+    if (!row) return null;
     return {
-      id: id,
-      naam: naam,
-      archived: o.archived === true,
-      aanmaakdatum: o.aanmaakdatum != null ? String(o.aanmaakdatum) : new Date().toISOString(),
-      laatstGewijzigd: o.laatstGewijzigd != null ? String(o.laatstGewijzigd) : new Date().toISOString(),
+      id: row.id,
+      naam: row.naam,
+      archived: !!row.archived,
+      aanmaakdatum: row.aanmaakdatum,
+      laatstGewijzigd: row.laatst_gewijzigd,
     };
   }
 
-  function getGemeentenItems() {
-    ensureSeeded();
-    return readJson().map(normalizeItem).filter(Boolean);
+  function readCache() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
   }
 
-  function setGemeentenItems(list) {
-    if (!Array.isArray(list)) return;
-    var out = list.map(normalizeItem).filter(Boolean);
-    writeJson(out);
+  function dispatchUpdated() {
+    try { window.dispatchEvent(new CustomEvent(EVENT_NAME)); }
+    catch (e) { /* noop */ }
   }
 
-  function hasDuplicateNaam(naam, exceptId) {
-    var t = (naam == null ? "" : String(naam).trim().toLowerCase());
-    if (!t) return false;
-    return getGemeentenItems().some(function (o) {
-      if (!o) return false;
-      if (exceptId && o.id === exceptId) return false;
-      if (o.archived) return false;
-      return String(o.naam || "")
-        .trim()
-        .toLowerCase() === t;
+  function writeCache(list) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(list)); }
+    catch (e) { /* best effort */ }
+    dispatchUpdated();
+  }
+
+  async function fetchAll() {
+    if (!window.besaSupabase) {
+      console.warn("[gemeentenDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
+      return readCache();
+    }
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .select("*")
+      .order("naam", { ascending: true });
+    if (res.error) {
+      console.error("[gemeentenDB] fetchAll error:", res.error);
+      throw res.error;
+    }
+    var list = (res.data || []).map(rowToObj);
+    writeCache(list);
+    return list;
+  }
+
+  var bootstrapPromise = null;
+  function bootstrap() {
+    if (!bootstrapPromise) {
+      bootstrapPromise = (async function () {
+        try { await fetchAll(); }
+        catch (e) { dispatchUpdated(); }
+      })();
+    }
+    return bootstrapPromise;
+  }
+
+  function refresh() {
+    bootstrapPromise = null;
+    return bootstrap();
+  }
+
+  async function add(naam) {
+    var t = String(naam == null ? "" : naam).trim();
+    if (!t) throw new Error("Naam is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .insert({ naam: t, archived: false })
+      .select()
+      .single();
+    if (res.error) {
+      // Specifieke duplicate-naam-foutafhandeling.
+      if (res.error.code === "23505") {
+        var err = new Error("Deze gemeentenaam bestaat al.");
+        err.code = "duplicate_naam";
+        throw err;
+      }
+      throw res.error;
+    }
+    var newItem = rowToObj(res.data);
+    var list = readCache();
+    list.push(newItem);
+    list.sort(function (a, b) {
+      return String(a.naam || "").toLowerCase().localeCompare(String(b.naam || "").toLowerCase());
     });
+    writeCache(list);
+    return newItem;
   }
 
-  function addGemeente(naam) {
-    var t = (naam == null ? "" : String(naam).trim());
-    if (!t) return null;
-    if (hasDuplicateNaam(t)) return null;
-    var items = getGemeentenItems();
-    var id = "gem_" + String(Date.now()) + "_" + Math.random().toString(36).slice(2, 7);
-    var now = new Date().toISOString();
-    var row = { id: id, naam: t, archived: false, aanmaakdatum: now, laatstGewijzigd: now };
-    items.push(row);
-    setGemeentenItems(items);
-    return row;
-  }
-
-  function updateGemeenteById(id, newNaam) {
-    if (!id) return null;
-    var t = (newNaam == null ? "" : String(newNaam).trim());
-    if (!t) return null;
-    if (hasDuplicateNaam(t, id)) return null;
-    var items = getGemeentenItems();
-    var pos = -1;
-    for (var i = 0; i < items.length; i++) {
-      if (items[i] && items[i].id === id) {
-        pos = i;
-        break;
-      }
+  async function update(id, patch) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var dbPatch = {};
+    if (typeof patch.naam === "string") {
+      var nm = patch.naam.trim();
+      if (!nm) throw new Error("Naam mag niet leeg zijn.");
+      dbPatch.naam = nm;
     }
-    if (pos === -1) return null;
-    items[pos].naam = t;
-    items[pos].laatstGewijzigd = new Date().toISOString();
-    setGemeentenItems(items);
-    return items[pos];
-  }
-
-  function setGemeenteArchivedById(id, archived) {
-    var items = getGemeentenItems();
-    for (var i = 0; i < items.length; i++) {
-      if (items[i] && items[i].id === id) {
-        items[i].archived = !!archived;
-        items[i].laatstGewijzigd = new Date().toISOString();
-        setGemeentenItems(items);
-        return true;
-      }
+    if (typeof patch.archived === "boolean") dbPatch.archived = patch.archived;
+    if (Object.keys(dbPatch).length === 0) {
+      var existing = readCache().find(function (g) { return g.id === id; });
+      return existing || null;
     }
-    return false;
-  }
-
-  function deleteGemeenteById(id) {
-    var items = getGemeentenItems();
-    for (var i = 0; i < items.length; i++) {
-      if (items[i] && items[i].id === id) {
-        var rest = items.filter(function (x) {
-          return !x || x.id !== id;
-        });
-        setGemeentenItems(rest);
-        return true;
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (res.error) {
+      if (res.error.code === "23505") {
+        var err = new Error("Deze gemeentenaam bestaat al.");
+        err.code = "duplicate_naam";
+        throw err;
       }
+      throw res.error;
     }
-    return false;
+    var newItem = rowToObj(res.data);
+    var list = readCache().map(function (g) { return g.id === id ? newItem : g; });
+    writeCache(list);
+    return newItem;
   }
 
-  window.getGemeentenItems = getGemeentenItems;
-  window.setGemeentenItems = setGemeentenItems;
-  window.addGemeente = addGemeente;
-  window.updateGemeenteById = updateGemeenteById;
-  window.setGemeenteArchivedById = setGemeenteArchivedById;
-  window.deleteGemeenteById = deleteGemeenteById;
-  window._ensureGemeentenSeeded = ensureSeeded;
-})();
+  async function archive(id) { return update(id, { archived: true }); }
+  async function restore(id) { return update(id, { archived: false }); }
+
+  async function remove(id) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    var list = readCache().filter(function (g) { return g.id !== id; });
+    writeCache(list);
+    return true;
+  }
+
+  function getAllSync() { return readCache(); }
+
+  /* ── Backward-compat globals ── */
+
+  function getGemeentenItems() {
+    return readCache().map(function (x) { return Object.assign({}, x); });
+  }
+
+  function addGemeenteCompat(naam) {
+    add(naam).catch(function (err) { console.error("addGemeente:", err); });
+    return null;
+  }
+
+  function updateGemeenteByIdCompat(id, naam) {
+    update(id, { naam: naam }).catch(function (err) { console.error("updateGemeenteById:", err); });
+    return null;
+  }
+
+  function setGemeenteArchivedByIdCompat(id, archived) {
+    update(id, { archived: !!archived }).catch(function (err) { console.error("setGemeenteArchivedById:", err); });
+    return true;
+  }
+
+  function deleteGemeenteByIdCompat(id) {
+    remove(id).catch(function (err) { console.error("deleteGemeenteById:", err); });
+    return true;
+  }
+
+  var api = {
+    bootstrap: bootstrap,
+    refresh: refresh,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
+    getAllSync: getAllSync,
+  };
+
+  Object.defineProperty(api, "ready", {
+    get: function () { return bootstrap(); },
+  });
+
+  global.gemeentenDB = api;
+  global.getGemeentenItems = getGemeentenItems;
+  global.addGemeente = addGemeenteCompat;
+  global.updateGemeenteById = updateGemeenteByIdCompat;
+  global.setGemeenteArchivedById = setGemeenteArchivedByIdCompat;
+  global.deleteGemeenteById = deleteGemeenteByIdCompat;
+
+  // Auto-bootstrap zodra dit script laadt.
+  bootstrap();
+})(typeof window !== "undefined" ? window : this);

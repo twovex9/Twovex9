@@ -1,4 +1,4 @@
-/* global getGemeentenItems, addGemeente, setGemeenteArchivedById, deleteGemeenteById, showSaveModal */
+/* global showSaveModal */
 (function () {
   "use strict";
 
@@ -29,8 +29,13 @@
   ];
 
   if (!tbody || !table) return;
-  if (typeof getGemeentenItems !== "function" || typeof addGemeente !== "function" || typeof setGemeenteArchivedById !== "function" || typeof deleteGemeenteById !== "function") {
+  if (!window.gemeentenDB) {
+    console.error("gemeentenDB ontbreekt — laad supabase-client.js + gemeenten-data.js vóór gemeenten.js.");
     return;
+  }
+
+  function getGemeentenCached() {
+    return window.gemeentenDB.getAllSync();
   }
 
   function showToast(msg) {
@@ -56,7 +61,7 @@
   }
 
   function findById(id) {
-    return (getGemeentenItems() || []).find(function (o) {
+    return (getGemeentenCached() || []).find(function (o) {
       return o && o.id === id;
     }) || null;
   }
@@ -68,7 +73,7 @@
   }
 
   function getFiltered() {
-    var items = (getGemeentenItems() || []).map(function (x) {
+    var items = (getGemeentenCached() || []).map(function (x) {
       return x;
     });
     var showArch = archivedToggle && archivedToggle.checked;
@@ -351,16 +356,22 @@
 
   document.getElementById("gem-add-btn") && document.getElementById("gem-add-btn").addEventListener("click", function (e) { e.preventDefault(); openAdd(); });
   if (addForm) {
-    addForm.addEventListener("submit", function (e) {
+    addForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       var nm = addNaam && addNaam.value ? addNaam.value.trim() : "";
       if (!nm) {
         showToast("Vul een naam in.");
         return;
       }
-      var c = addGemeente(nm);
-      if (!c) {
-        showToast("Deze gemeentenaam bestaat al.");
+      try {
+        await window.gemeentenDB.add(nm);
+      } catch (err) {
+        if (err && err.code === "duplicate_naam") {
+          showToast("Deze gemeentenaam bestaat al.");
+        } else {
+          console.error("Gemeente toevoegen mislukt:", err);
+          showToast("Opslaan is niet gelukt");
+        }
         return;
       }
       closeAdd();
@@ -437,24 +448,34 @@
     syncPurgeSlider();
   }
 
-  document.getElementById("gem-ar-confirm") && document.getElementById("gem-ar-confirm").addEventListener("click", function () {
+  document.getElementById("gem-ar-confirm") && document.getElementById("gem-ar-confirm").addEventListener("click", async function () {
     if (!pendingArchiveId) return;
     if (arSl && parseInt(arSl.value, 10) < 100) return;
-    if (setGemeenteArchivedById(pendingArchiveId, true)) {
+    var idToArchive = pendingArchiveId;
+    closeArchive();
+    try {
+      await window.gemeentenDB.archive(idToArchive);
       if (typeof showSaveModal === "function") showSaveModal("De gemeente is gearchiveerd.", "Gearchiveerd");
       else showToast("Gearchiveerd");
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+      showToast("Archiveren is niet gelukt");
     }
-    closeArchive();
     render();
   });
-  document.getElementById("gem-purge-confirm") && document.getElementById("gem-purge-confirm").addEventListener("click", function () {
+  document.getElementById("gem-purge-confirm") && document.getElementById("gem-purge-confirm").addEventListener("click", async function () {
     if (!pendingPurgeId) return;
     if (pSl && parseInt(pSl.value, 10) < 100) return;
-    if (deleteGemeenteById(pendingPurgeId)) {
+    var idToPurge = pendingPurgeId;
+    closePurge();
+    try {
+      await window.gemeentenDB.delete(idToPurge);
       if (typeof showSaveModal === "function") showSaveModal("De gemeente is definitief verwijderd.", "Verwijderd");
       else showToast("Definitief verwijderd");
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+      showToast("Verwijderen is niet gelukt");
     }
-    closePurge();
     render();
   });
   document.getElementById("gem-ar-close") && document.getElementById("gem-ar-close").addEventListener("click", closeArchive);
@@ -478,14 +499,20 @@
     window.location.href = "gemeente-detail.html?id=" + encodeURIComponent(id);
   }
 
-  tbody.addEventListener("click", function (e) {
+  tbody.addEventListener("click", async function (e) {
     var t = e.target;
     if (t && t.closest && t.closest(".gem-restore-btn")) {
       e.preventDefault();
       var id0 = t.closest(".gem-restore-btn").getAttribute("data-id");
-      if (id0 && setGemeenteArchivedById(id0, false)) {
-        if (typeof showSaveModal === "function") showSaveModal("De gemeente is hersteld.", "Hersteld");
-        else showToast("Hersteld");
+      if (id0) {
+        try {
+          await window.gemeentenDB.restore(id0);
+          if (typeof showSaveModal === "function") showSaveModal("De gemeente is hersteld.", "Hersteld");
+          else showToast("Hersteld");
+        } catch (err) {
+          console.error("Herstellen mislukt:", err);
+          showToast("Herstellen is niet gelukt");
+        }
       }
       render();
       return;
@@ -517,5 +544,16 @@
   });
 
   buildColumnsPanel();
-  render();
+
+  function initialRender() {
+    var cached = getGemeentenCached();
+    if (cached.length > 0) {
+      render();
+    } else if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="3" class="cl-empty-cell">Gemeenten laden…</td></tr>';
+    }
+  }
+
+  window.addEventListener("besa:gemeenten-updated", render);
+  initialRender();
 })();

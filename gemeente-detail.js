@@ -1,4 +1,5 @@
-/* global getGemeentenItems, updateGemeenteById, showSaveModal */
+/* gemeente-detail.js — detailpagina gemeente (Supabase data-laag via window.gemeentenDB) */
+/* global showSaveModal */
 (function () {
   "use strict";
 
@@ -37,11 +38,13 @@
     }, 2400);
   }
 
-  function findGemeente(id) {
-    if (!id || typeof getGemeentenItems !== "function") return null;
-    return (getGemeentenItems() || []).find(function (g) {
-      return g && g.id === id;
-    }) || null;
+  function findGemeenteCached(id) {
+    if (!id || !window.gemeentenDB) return null;
+    var list = window.gemeentenDB.getAllSync() || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === id) return list[i];
+    }
+    return null;
   }
 
   function closeKebab() {
@@ -63,33 +66,26 @@
     if (saveBtn) saveBtn.disabled = arch;
   }
 
-  function init() {
-    if (typeof getGemeentenItems !== "function" || typeof updateGemeenteById !== "function") {
-      if (missingBody) missingBody.textContent = "Gegevens konden niet worden geladen.";
-      if (missingEl) missingEl.hidden = false;
-      return;
-    }
+  var gemeenteId = queryId();
+  var listenersAttached = false;
 
-    var id = queryId();
-    if (!id) {
-      if (missingBody) missingBody.textContent = "Geen gemeente geselecteerd.";
-      if (missingEl) missingEl.hidden = false;
-      return;
-    }
+  function showLoading() {
+    if (heroName) heroName.textContent = "Laden…";
+    if (pageTitle) pageTitle.textContent = "Gemeente";
+  }
 
-    var r = findGemeente(id);
-    if (!r) {
-      if (missingBody) missingBody.textContent = "Gemeente niet gevonden.";
-      if (missingEl) missingEl.hidden = false;
-      return;
-    }
+  function showError(message) {
+    if (missingBody) missingBody.textContent = message;
+    if (missingEl) missingEl.hidden = false;
+    if (rootEl) rootEl.hidden = true;
+  }
 
-    if (missingEl) missingEl.hidden = true;
-    if (rootEl) rootEl.hidden = false;
-    applyFromRecord(r);
+  function attachInteractions() {
+    if (listenersAttached) return;
+    listenersAttached = true;
 
     if (form) {
-      form.addEventListener("submit", function (e) {
+      form.addEventListener("submit", async function (e) {
         e.preventDefault();
         var idu = idInput && idInput.value ? idInput.value.trim() : "";
         var nm = naamInput && naamInput.value ? naamInput.value.trim() : "";
@@ -98,13 +94,23 @@
           showToast("Vul een naam in.");
           return;
         }
-        var done = updateGemeenteById(idu, nm);
-        if (!done) {
-          showToast("Opslaan mislukt. Bestaat de naam al?");
+        var done;
+        try {
+          done = await window.gemeentenDB.update(idu, { naam: nm });
+        } catch (err) {
+          if (err && err.code === "duplicate_naam") {
+            showToast("Opslaan mislukt. Bestaat de naam al?");
+          } else {
+            console.error("Gemeente opslaan mislukt:", err);
+            showToast("Opslaan is niet gelukt");
+          }
           return;
         }
-        var next = findGemeente(idu);
-        if (next) applyFromRecord(next);
+        if (!done) {
+          showToast("Opslaan is niet gelukt");
+          return;
+        }
+        applyFromRecord(done);
         if (typeof showSaveModal === "function") showSaveModal("De wijzigingen zijn opgeslagen.");
         else showToast("Opgeslagen.");
       });
@@ -124,6 +130,41 @@
       kebabPanel.addEventListener("click", function (ev) { ev.stopPropagation(); });
     }
     document.addEventListener("click", closeKebab);
+  }
+
+  function init() {
+    if (!window.gemeentenDB) {
+      showError("Gegevens konden niet worden geladen.");
+      return;
+    }
+    if (!gemeenteId) {
+      showError("Geen gemeente geselecteerd.");
+      return;
+    }
+
+    var r = findGemeenteCached(gemeenteId);
+    if (r) {
+      if (missingEl) missingEl.hidden = true;
+      if (rootEl) rootEl.hidden = false;
+      applyFromRecord(r);
+      attachInteractions();
+    } else {
+      showLoading();
+    }
+
+    window.addEventListener("besa:gemeenten-updated", function () {
+      var r2 = findGemeenteCached(gemeenteId);
+      if (!r2) {
+        showError("Gemeente niet gevonden.");
+        return;
+      }
+      if (missingEl) missingEl.hidden = true;
+      if (rootEl) rootEl.hidden = false;
+      applyFromRecord(r2);
+      attachInteractions();
+    });
+
+    Promise.resolve(window.gemeentenDB.ready).catch(function () { /* error reeds gelogd */ });
   }
 
   if (document.readyState === "loading") {
