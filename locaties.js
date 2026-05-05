@@ -1,4 +1,4 @@
-/* Data: locaties-data.js (getLocaties, saveLocaties, locGenId, locFmtDate, …) */
+/* Data: locaties-data.js (Supabase-backed via window.locatiesDB) */
 
 (function () {
   var tbody = document.getElementById("loc-tbody");
@@ -11,6 +11,14 @@
   var checkAll = document.getElementById("loc-check-all");
 
   if (!tbody || !table) return;
+  if (!window.locatiesDB) {
+    console.error("locatiesDB ontbreekt — laad supabase-client.js + locaties-data.js vóór locaties.js.");
+    return;
+  }
+
+  function getLocatiesCached() {
+    return window.locatiesDB.getAllSync();
+  }
 
   var sortKey = "";
   var sortDir = "asc";
@@ -27,7 +35,7 @@
   }
 
   function getFilteredLocaties() {
-    var items = getLocaties();
+    var items = getLocatiesCached();
     var showArchived = archivedToggle ? archivedToggle.checked : false;
 
     items = items.filter(function (o) {
@@ -371,10 +379,15 @@
     if (lpPreview) lpPreview.textContent = "";
   }
 
-  function confirmLocPurge() {
+  async function confirmLocPurge() {
     if (!locPurgeTargetId || (lpConfirmBtn && lpConfirmBtn.disabled)) return;
-    if (typeof deleteLocatie === "function") deleteLocatie(locPurgeTargetId);
+    var idToPurge = locPurgeTargetId;
     closeLocPurgeModal();
+    try {
+      await window.locatiesDB.delete(idToPurge);
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+    }
     render();
   }
 
@@ -414,15 +427,15 @@
     if (delPreview) delPreview.textContent = "";
   }
 
-  function confirmLocArchive() {
+  async function confirmLocArchive() {
     if (!deleteTargetId || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    var now = new Date().toISOString();
-    var list = getLocaties().map(function (o) {
-      if (o.id !== deleteTargetId) return o;
-      return Object.assign({}, o, { archived: true, laatstGewijzigd: now });
-    });
-    saveLocaties(list);
+    var idToArchive = deleteTargetId;
     closeLocDeleteModal();
+    try {
+      await window.locatiesDB.archive(idToArchive);
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+    }
     render();
   }
 
@@ -460,18 +473,17 @@
     }
   });
 
-  tbody.addEventListener("click", function (e) {
+  tbody.addEventListener("click", async function (e) {
     var resL = e.target.closest(".hr-restore-btn");
     if (resL && resL.getAttribute("data-loc-id")) {
       e.preventDefault();
       e.stopPropagation();
       var rida = resL.getAttribute("data-loc-id");
-      var nowA = new Date().toISOString();
-      var listA = getLocaties().map(function (o) {
-        if (o.id !== rida) return o;
-        return Object.assign({}, o, { archived: false, laatstGewijzigd: nowA });
-      });
-      saveLocaties(listA);
+      try {
+        await window.locatiesDB.restore(rida);
+      } catch (err) {
+        console.error("Herstellen mislukt:", err);
+      }
       render();
       return;
     }
@@ -499,7 +511,7 @@
   });
 
   if (addForm) {
-    addForm.addEventListener("submit", function (e) {
+    addForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       var naamInput = document.getElementById("loc-add-naam");
       var pcEl = document.getElementById("loc-add-postcode");
@@ -512,31 +524,36 @@
         if (naamInput) naamInput.focus();
         return;
       }
-      var list = getLocaties();
-      var now = new Date().toISOString();
-      var neu = {
-        id: locGenId(),
+      var input = {
         naam: naam,
         kleur: "#64748b",
-        postcode: pcEl ? pcEl.value.trim().replace(/\s+/g, "") : "",
+        postcode: pcEl ? pcEl.value.trim() : "",
         huisnummer: hnEl ? hnEl.value.trim() : "",
         toevoeging: tvEl ? tvEl.value.trim() : "",
         straat: stEl ? stEl.value.trim() : "",
         plaats: plEl ? plEl.value.trim() : "",
-        adres: "",
-        aanmaakdatum: now,
-        laatstGewijzigd: now,
-        archived: false,
       };
-      locNormalizeRecord(neu);
-      neu.adres = locComposeAdres(neu);
-      list.push(neu);
-      saveLocaties(list);
+      try {
+        await window.locatiesDB.add(input);
+      } catch (err) {
+        console.error("Locatie toevoegen mislukt:", err);
+        return;
+      }
       closeAddModal();
       currentPage = 0;
       render();
     });
   }
 
-  render();
+  function initialRender() {
+    var cached = getLocatiesCached();
+    if (cached.length > 0) {
+      render();
+    } else if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#9ca3af;">Locaties laden…</td></tr>';
+    }
+  }
+
+  window.addEventListener("besa:locaties-updated", render);
+  initialRender();
 })();

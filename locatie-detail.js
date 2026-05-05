@@ -1,11 +1,11 @@
-/* locatie-detail.js — detailpagina locatie (koppelt aan locaties-data.js) */
+/* locatie-detail.js — detailpagina locatie (Supabase data-laag via window.locatiesDB) */
 (function () {
   "use strict";
 
   var params = new URLSearchParams(window.location.search);
   var locId = params.get("id");
 
-  if (!locId) {
+  if (!locId || !window.locatiesDB) {
     window.location.href = "locaties.html";
     return;
   }
@@ -61,15 +61,12 @@
     }
   }
 
-  function findLocatie() {
-    var list = getLocaties();
-    return list.filter(function (o) { return o.id === locId; })[0];
-  }
-
-  var loc = findLocatie();
-  if (!loc) {
-    window.location.href = "locaties.html";
-    return;
+  function findLocatieCached() {
+    var list = window.locatiesDB.getAllSync() || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === locId) return list[i];
+    }
+    return null;
   }
 
   var naamEl = document.getElementById("loc-hero-name");
@@ -81,69 +78,96 @@
   var straat = document.getElementById("loc-detail-straat");
   var plaats = document.getElementById("loc-detail-plaats");
 
-  function hydrate() {
-    naamEl.textContent = loc.naam || "—";
-    naamInput.value = loc.naam || "";
-    postcode.value = loc.postcode || "";
-    huisnummer.value = loc.huisnummer || "";
-    toevoeging.value = loc.toevoeging || "";
-    straat.value = loc.straat || "";
-    plaats.value = loc.plaats || "";
+  function hydrate(loc) {
+    if (!loc) return;
+    if (naamEl) naamEl.textContent = loc.naam || "—";
+    if (naamInput) naamInput.value = loc.naam || "";
+    if (postcode) postcode.value = loc.postcode || "";
+    if (huisnummer) huisnummer.value = loc.huisnummer || "";
+    if (toevoeging) toevoeging.value = loc.toevoeging || "";
+    if (straat) straat.value = loc.straat || "";
+    if (plaats) plaats.value = loc.plaats || "";
     document.title = (loc.naam || "Locatie") + " — HR";
-    countEl.textContent = String(countMedewerkersOpLocatie(loc.naam));
+    if (countEl) countEl.textContent = String(countMedewerkersOpLocatie(loc.naam));
   }
 
-  hydrate();
-
-  document.getElementById("loc-detail-qr-btn").addEventListener("click", function () {
-    showToast("QR-code wordt gegenereerd…");
-  });
+  var qrBtn = document.getElementById("loc-detail-qr-btn");
+  if (qrBtn) {
+    qrBtn.addEventListener("click", function () {
+      showToast("QR-code wordt gegenereerd…");
+    });
+  }
 
   var tabs = document.querySelectorAll(".emp-tab[data-tab]");
   var panels = {
     details: document.getElementById("loc-tab-details"),
     medewerkers: document.getElementById("loc-tab-medewerkers"),
   };
-
   tabs.forEach(function (tab) {
     tab.addEventListener("click", function () {
       tabs.forEach(function (t) { t.classList.remove("is-active"); });
       tab.classList.add("is-active");
       var key = tab.getAttribute("data-tab");
       Object.keys(panels).forEach(function (k) {
-        panels[k].style.display = k === key ? "" : "none";
+        if (panels[k]) panels[k].style.display = k === key ? "" : "none";
       });
     });
   });
 
-  document.getElementById("loc-detail-save").addEventListener("click", function () {
-    var newName = naamInput.value.trim();
-    if (!newName) {
-      naamInput.focus();
+  var saveBtn = document.getElementById("loc-detail-save");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async function () {
+      var newName = naamInput ? naamInput.value.trim() : "";
+      if (!newName) {
+        if (naamInput) naamInput.focus();
+        return;
+      }
+      var patch = {
+        naam: newName,
+        postcode: postcode ? postcode.value.trim() : "",
+        huisnummer: huisnummer ? huisnummer.value.trim() : "",
+        toevoeging: toevoeging ? toevoeging.value.trim() : "",
+        straat: straat ? straat.value.trim() : "",
+        plaats: plaats ? plaats.value.trim() : "",
+      };
+      var updated;
+      try {
+        updated = await window.locatiesDB.update(locId, patch);
+      } catch (err) {
+        console.error("Locatie opslaan mislukt:", err);
+        showToast("Opslaan is niet gelukt");
+        return;
+      }
+      if (!updated) {
+        showToast("Opslaan is niet gelukt");
+        return;
+      }
+      hydrate(updated);
+      if (typeof showSaveModal === "function") showSaveModal("Adres is opgeslagen.");
+      else showToast("adres opgeslagen");
+    });
+  }
+
+  function tryInitialRender() {
+    var loc = findLocatieCached();
+    if (loc) {
+      hydrate(loc);
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener("besa:locaties-updated", function () {
+    var loc = findLocatieCached();
+    if (!loc) {
+      window.location.href = "locaties.html";
       return;
     }
-
-    var all = getLocaties();
-    var idx = all.findIndex(function (o) { return o.id === locId; });
-    if (idx === -1) return;
-
-    var row = all[idx];
-    row.naam = newName;
-    row.postcode = postcode ? postcode.value.trim() : "";
-    row.huisnummer = huisnummer ? huisnummer.value.trim() : "";
-    row.toevoeging = toevoeging ? toevoeging.value.trim() : "";
-    row.straat = straat ? straat.value.trim() : "";
-    row.plaats = plaats ? plaats.value.trim() : "";
-    row.adres = locComposeAdres(row);
-    row.laatstGewijzigd = new Date().toISOString();
-
-    saveLocaties(all);
-    loc = row;
-
-    naamEl.textContent = newName;
-    document.title = newName + " — HR";
-    countEl.textContent = String(countMedewerkersOpLocatie(newName));
-    if (typeof showSaveModal === "function") showSaveModal("Adres is opgeslagen.");
-    else showToast("adres opgeslagen");
+    hydrate(loc);
   });
+
+  if (!tryInitialRender()) {
+    if (naamEl) naamEl.textContent = "Laden…";
+    Promise.resolve(window.locatiesDB.ready).catch(function () { /* error reeds gelogd */ });
+  }
 })();

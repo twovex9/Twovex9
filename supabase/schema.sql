@@ -323,6 +323,84 @@ where not exists (
 );
 
 -- ============================================================================
+-- locaties (HR module — referentiedata met adres + kleur)
+-- ============================================================================
+
+create table if not exists public.locaties (
+  id uuid primary key default gen_random_uuid(),
+  naam text not null,
+  adres text,
+  kleur text not null default '#64748b',
+  postcode text,
+  huisnummer text,
+  toevoeging text,
+  straat text,
+  plaats text,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+-- Geen unique-naam-index: locaties kunnen rechtmatig dezelfde naam dragen
+-- (bijv. drie satellietwoningen).
+create index if not exists locaties_naam_idx on public.locaties (lower(naam));
+create index if not exists locaties_archived_idx on public.locaties (archived);
+
+drop trigger if exists trg_locaties_set_modified on public.locaties;
+create trigger trg_locaties_set_modified
+  before update on public.locaties
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.locaties enable row level security;
+
+drop policy if exists "anon kan locaties lezen" on public.locaties;
+create policy "anon kan locaties lezen"
+  on public.locaties for select to anon using (true);
+
+drop policy if exists "anon kan locaties toevoegen" on public.locaties;
+create policy "anon kan locaties toevoegen"
+  on public.locaties for insert to anon with check (true);
+
+drop policy if exists "anon kan locaties bewerken" on public.locaties;
+create policy "anon kan locaties bewerken"
+  on public.locaties for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan locaties verwijderen" on public.locaties;
+create policy "anon kan locaties verwijderen"
+  on public.locaties for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan locaties lezen" on public.locaties;
+-- drop policy if exists "anon kan locaties toevoegen" on public.locaties;
+-- drop policy if exists "anon kan locaties bewerken" on public.locaties;
+-- drop policy if exists "anon kan locaties verwijderen" on public.locaties;
+-- create policy "ingelogd kan locaties lezen"
+--   on public.locaties for select to authenticated using (true);
+-- create policy "ingelogd kan locaties toevoegen"
+--   on public.locaties for insert to authenticated with check (true);
+-- create policy "ingelogd kan locaties bewerken"
+--   on public.locaties for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan locaties verwijderen"
+--   on public.locaties for delete to authenticated using (true);
+
+-- Seed alleen als de tabel volledig leeg is (vermijdt dubbele satellieten).
+insert into public.locaties (naam, adres, kleur, postcode, huisnummer, toevoeging, straat, plaats, aanmaakdatum, laatst_gewijzigd)
+select * from (values
+  ('Kantoor Magdalenenstraat', 'Magdalenenstraat 17, Alkmaar', '#ab94ff', '', '17', '', 'Magdalenenstraat', 'Alkmaar', '2026-04-09T12:32:00+00'::timestamptz, '2026-04-09T12:32:00+00'::timestamptz),
+  ('Zijperstraat', 'Zijperstraat 35, 1823CX Alkmaar', '#60a5fa', '1823CX', '35', '', 'Zijperstraat', 'Alkmaar', '2026-03-16T20:37:00+00'::timestamptz, '2026-03-16T20:37:00+00'::timestamptz),
+  ('Leonard Bramerstraat', 'Leonard Bramerstraat 7, 1816TR Alkmaar', '#34d399', '1816TR', '7', '', 'Leonard Bramerstraat', 'Alkmaar', '2026-03-10T14:15:00+00'::timestamptz, '2026-03-10T14:15:00+00'::timestamptz),
+  ('Breedstraat', 'Breedstraat 38, 1811DE Alkmaar', '#fbbf24', '1811DE', '38', '', 'Breedstraat', 'Alkmaar', '2026-02-01T09:00:00+00'::timestamptz, '2026-03-28T11:22:00+00'::timestamptz),
+  ('Magdalenenstraat', 'Magdalenenstraat 22, 1811EG Alkmaar', '#f472b6', '1811EG', '22', '', 'Magdalenenstraat', 'Alkmaar', '2025-11-05T10:30:00+00'::timestamptz, '2026-03-03T16:40:00+00'::timestamptz),
+  ('Varnebroek', 'Varnebroekerweg 10, 1724MP Heerhugowaard', '#a78bfa', '1724MP', '10', '', 'Varnebroekerweg', 'Heerhugowaard', '2025-08-14T08:45:00+00'::timestamptz, '2026-01-01T12:00:00+00'::timestamptz),
+  ('Voorburggracht', 'Voorburggracht 5, 1811JK Alkmaar', '#38bdf8', '1811JK', '5', '', 'Voorburggracht', 'Alkmaar', '2025-09-19T13:20:00+00'::timestamptz, '2025-08-20T09:15:00+00'::timestamptz),
+  ('Achterwacht', 'Achterwacht 3, 1811LM Alkmaar', '#fb923c', '1811LM', '3', '', 'Achterwacht', 'Alkmaar', '2025-07-11T15:00:00+00'::timestamptz, '2026-02-07T14:08:00+00'::timestamptz),
+  ('satelliet woning', 'N/A', '#94a3b8', '', '', '', '', '', '2026-04-01T08:00:00+00'::timestamptz, '2026-04-01T08:00:00+00'::timestamptz),
+  ('satelliet woning', 'N/A', '#94a3b8', '', '', '', '', '', '2026-04-01T08:05:00+00'::timestamptz, '2026-04-01T08:05:00+00'::timestamptz),
+  ('satelliet woning', 'N/A', '#94a3b8', '', '', '', '', '', '2026-04-01T08:10:00+00'::timestamptz, '2026-04-01T08:10:00+00'::timestamptz)
+) as seed
+where not exists (select 1 from public.locaties);
+
+-- ============================================================================
 -- Seed-data opleidingen (verplaatst van bovenaan; idempotent)
 -- ============================================================================
 

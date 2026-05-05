@@ -1,11 +1,35 @@
-var LOC_STORAGE_KEY = "hr_locaties";
+/**
+ * Data-laag voor 'locaties' (HR module — referentiedata met adres + kleur).
+ *
+ * Bron van waarheid: Supabase tabel public.locaties.
+ * localStorage["hr_locaties"] dient als read-cache.
+ *
+ * Public async API:
+ *   await window.locatiesDB.bootstrap()
+ *   await window.locatiesDB.refresh()
+ *   await window.locatiesDB.add({naam, postcode?, huisnummer?, toevoeging?, straat?, plaats?, kleur?})
+ *   await window.locatiesDB.update(id, patch)
+ *     // patch: {naam?, postcode?, huisnummer?, toevoeging?, straat?, plaats?, kleur?, archived?}
+ *   await window.locatiesDB.archive(id)
+ *   await window.locatiesDB.restore(id)
+ *   await window.locatiesDB.delete(id)
+ *
+ * Sync helpers:
+ *   window.locatiesDB.getAllSync()
+ *   window.locatiesDB.ready  (Promise)
+ *
+ * Backward-compat globals:
+ *   getLocaties()              → leest uit cache
+ *   locFmtDate(iso)            → ongewijzigd
+ *   locComposeAdres(o)         → ongewijzigd
+ *   locParseAdresInto(o)       → ongewijzigd
+ *   locNormalizeRecord(o)      → ongewijzigd (operatie op cliëntside object)
+ *
+ * Events:
+ *   "besa:locaties-updated" op `window` na elke mutatie of bootstrap.
+ */
 
-var _locIdCounter = 0;
-function locGenId() {
-  _locIdCounter++;
-  return "loc_" + Date.now().toString(36) + "_" + _locIdCounter + "_" + Math.random().toString(36).slice(2, 8);
-}
-
+/* ── Pure utility-functies (worden ook door andere pagina's gebruikt) ── */
 function locComposeAdres(o) {
   var straat = (o.straat || "").trim();
   var hn = (o.huisnummer || "").trim();
@@ -66,213 +90,6 @@ function locNormalizeRecord(o) {
   return dirty;
 }
 
-function locDefaultSeed() {
-  return [
-    {
-      id: "loc_seed_kantoor_magdalenenstraat",
-      naam: "Kantoor Magdalenenstraat",
-      adres: "Magdalenenstraat 17, Alkmaar",
-      kleur: "#ab94ff",
-      postcode: "",
-      huisnummer: "17",
-      toevoeging: "",
-      straat: "Magdalenenstraat",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2026-04-09T12:32:00",
-      laatstGewijzigd: "2026-04-09T12:32:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_zijperstraat",
-      naam: "Zijperstraat",
-      adres: "Zijperstraat 35, 1823CX Alkmaar",
-      kleur: "#60a5fa",
-      postcode: "1823CX",
-      huisnummer: "35",
-      toevoeging: "",
-      straat: "Zijperstraat",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2026-03-16T20:37:00",
-      laatstGewijzigd: "2026-03-16T20:37:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_leonard_bramerstraat",
-      naam: "Leonard Bramerstraat",
-      adres: "Leonard Bramerstraat 7, 1816TR Alkmaar",
-      kleur: "#34d399",
-      postcode: "1816TR",
-      huisnummer: "7",
-      toevoeging: "",
-      straat: "Leonard Bramerstraat",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2026-03-10T14:15:00",
-      laatstGewijzigd: "2026-03-10T14:15:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_breedstraat",
-      naam: "Breedstraat",
-      adres: "Breedstraat 38, 1811DE Alkmaar",
-      kleur: "#fbbf24",
-      postcode: "1811DE",
-      huisnummer: "38",
-      toevoeging: "",
-      straat: "Breedstraat",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2026-02-01T09:00:00",
-      laatstGewijzigd: "2026-03-28T11:22:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_magdalenenstraat",
-      naam: "Magdalenenstraat",
-      adres: "Magdalenenstraat 22, 1811EG Alkmaar",
-      kleur: "#f472b6",
-      postcode: "1811EG",
-      huisnummer: "22",
-      toevoeging: "",
-      straat: "Magdalenenstraat",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2025-11-05T10:30:00",
-      laatstGewijzigd: "2026-03-03T16:40:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_varnebroek",
-      naam: "Varnebroek",
-      adres: "Varnebroekerweg 10, 1724MP Heerhugowaard",
-      kleur: "#a78bfa",
-      postcode: "1724MP",
-      huisnummer: "10",
-      toevoeging: "",
-      straat: "Varnebroekerweg",
-      plaats: "Heerhugowaard",
-      aanmaakdatum: "2025-08-14T08:45:00",
-      laatstGewijzigd: "2026-01-01T12:00:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_voorburggracht",
-      naam: "Voorburggracht",
-      adres: "Voorburggracht 5, 1811JK Alkmaar",
-      kleur: "#38bdf8",
-      postcode: "1811JK",
-      huisnummer: "5",
-      toevoeging: "",
-      straat: "Voorburggracht",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2025-09-19T13:20:00",
-      laatstGewijzigd: "2025-08-20T09:15:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_achterwacht",
-      naam: "Achterwacht",
-      adres: "Achterwacht 3, 1811LM Alkmaar",
-      kleur: "#fb923c",
-      postcode: "1811LM",
-      huisnummer: "3",
-      toevoeging: "",
-      straat: "Achterwacht",
-      plaats: "Alkmaar",
-      aanmaakdatum: "2025-07-11T15:00:00",
-      laatstGewijzigd: "2026-02-07T14:08:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_satelliet_1",
-      naam: "satelliet woning",
-      adres: "N/A",
-      kleur: "#94a3b8",
-      postcode: "",
-      huisnummer: "",
-      toevoeging: "",
-      straat: "",
-      plaats: "",
-      aanmaakdatum: "2026-04-01T08:00:00",
-      laatstGewijzigd: "2026-04-01T08:00:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_satelliet_2",
-      naam: "satelliet woning",
-      adres: "N/A",
-      kleur: "#94a3b8",
-      postcode: "",
-      huisnummer: "",
-      toevoeging: "",
-      straat: "",
-      plaats: "",
-      aanmaakdatum: "2026-04-01T08:05:00",
-      laatstGewijzigd: "2026-04-01T08:05:00",
-      archived: false,
-    },
-    {
-      id: "loc_seed_satelliet_3",
-      naam: "satelliet woning",
-      adres: "N/A",
-      kleur: "#94a3b8",
-      postcode: "",
-      huisnummer: "",
-      toevoeging: "",
-      straat: "",
-      plaats: "",
-      aanmaakdatum: "2026-04-01T08:10:00",
-      laatstGewijzigd: "2026-04-01T08:10:00",
-      archived: false,
-    },
-  ];
-}
-
-function getLocaties() {
-  try {
-    var raw = localStorage.getItem(LOC_STORAGE_KEY);
-    if (!raw) {
-      var seed = locDefaultSeed();
-      localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(seed));
-      return seed;
-    }
-    var list = JSON.parse(raw);
-    if (!Array.isArray(list)) {
-      var fallback = locDefaultSeed();
-      localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(fallback));
-      return fallback;
-    }
-    var changed = false;
-    list.forEach(function (o) {
-      if (!o.id) {
-        o.id = locGenId();
-        changed = true;
-      }
-      if (locNormalizeRecord(o)) changed = true;
-    });
-    if (changed) localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(list));
-    return list;
-  } catch (e) {
-    var s = locDefaultSeed();
-    try {
-      localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(s));
-    } catch (e2) {}
-    return s;
-  }
-}
-
-function saveLocaties(list) {
-  try {
-    localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {
-    console.error("saveLocaties fout:", e);
-  }
-}
-
-function deleteLocatie(id) {
-  if (!id) return false;
-  var list = getLocaties().filter(function (o) { return o.id !== id; });
-  saveLocaties(list);
-  return true;
-}
-
 function locFmtDate(iso) {
   if (!iso) return "";
   var d = new Date(iso);
@@ -284,3 +101,198 @@ function locFmtDate(iso) {
   var mi = String(d.getMinutes()).padStart(2, "0");
   return dd + "-" + mm + "-" + yy + " " + hh + ":" + mi;
 }
+
+/* ── Supabase data-laag ── */
+(function (global) {
+  "use strict";
+
+  var CACHE_KEY = "hr_locaties";
+  var TABLE = "locaties";
+  var EVENT_NAME = "besa:locaties-updated";
+
+  function rowToObj(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      naam: row.naam || "",
+      adres: row.adres || "",
+      kleur: row.kleur || "#64748b",
+      postcode: row.postcode || "",
+      huisnummer: row.huisnummer || "",
+      toevoeging: row.toevoeging || "",
+      straat: row.straat || "",
+      plaats: row.plaats || "",
+      archived: !!row.archived,
+      aanmaakdatum: row.aanmaakdatum,
+      laatstGewijzigd: row.laatst_gewijzigd,
+    };
+  }
+
+  function readCache() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function dispatchUpdated() {
+    try { window.dispatchEvent(new CustomEvent(EVENT_NAME)); }
+    catch (e) { /* noop */ }
+  }
+
+  function writeCache(list) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(list)); }
+    catch (e) { /* best effort */ }
+    dispatchUpdated();
+  }
+
+  async function fetchAll() {
+    if (!window.besaSupabase) {
+      console.warn("[locatiesDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
+      return readCache();
+    }
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .select("*")
+      .order("aanmaakdatum", { ascending: true });
+    if (res.error) {
+      console.error("[locatiesDB] fetchAll error:", res.error);
+      throw res.error;
+    }
+    var list = (res.data || []).map(rowToObj);
+    writeCache(list);
+    return list;
+  }
+
+  var bootstrapPromise = null;
+  function bootstrap() {
+    if (!bootstrapPromise) {
+      bootstrapPromise = (async function () {
+        try { await fetchAll(); }
+        catch (e) { dispatchUpdated(); }
+      })();
+    }
+    return bootstrapPromise;
+  }
+
+  function refresh() {
+    bootstrapPromise = null;
+    return bootstrap();
+  }
+
+  function buildPayload(input) {
+    var obj = Object.assign({}, input || {});
+    if (obj.postcode != null) obj.postcode = String(obj.postcode).replace(/\s+/g, "");
+    locNormalizeRecord(obj);
+    obj.adres = locComposeAdres(obj);
+    return {
+      naam: String(obj.naam || "").trim(),
+      adres: obj.adres,
+      kleur: obj.kleur || "#64748b",
+      postcode: obj.postcode || "",
+      huisnummer: obj.huisnummer || "",
+      toevoeging: obj.toevoeging || "",
+      straat: obj.straat || "",
+      plaats: obj.plaats || "",
+    };
+  }
+
+  async function add(input) {
+    var payload = buildPayload(input);
+    if (!payload.naam) throw new Error("Naam is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    payload.archived = false;
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .insert(payload)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var newItem = rowToObj(res.data);
+    var list = readCache();
+    list.push(newItem);
+    writeCache(list);
+    return newItem;
+  }
+
+  async function update(id, patch) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+
+    // Bouw merged-object op zodat adres opnieuw kan worden samengesteld als
+    // adresvelden zijn meegegeven.
+    var current = readCache().find(function (l) { return l.id === id; }) || {};
+    var merged = Object.assign({}, current, patch || {});
+    var rebuiltAdres = locComposeAdres(merged);
+
+    var dbPatch = {};
+    var fields = ["naam", "kleur", "postcode", "huisnummer", "toevoeging", "straat", "plaats"];
+    fields.forEach(function (k) {
+      if (Object.prototype.hasOwnProperty.call(patch, k)) {
+        if (k === "naam") dbPatch.naam = String(patch.naam).trim();
+        else if (k === "postcode") dbPatch.postcode = String(patch.postcode || "").replace(/\s+/g, "");
+        else dbPatch[k] = patch[k] == null ? "" : String(patch[k]);
+      }
+    });
+    var adresFieldsTouched = ["postcode", "huisnummer", "toevoeging", "straat", "plaats"]
+      .some(function (k) { return Object.prototype.hasOwnProperty.call(patch, k); });
+    if (adresFieldsTouched) dbPatch.adres = rebuiltAdres;
+    if (Object.prototype.hasOwnProperty.call(patch, "archived")) {
+      dbPatch.archived = !!patch.archived;
+    }
+    if (Object.keys(dbPatch).length === 0) return current.id ? current : null;
+
+    var res = await window.besaSupabase
+      .from(TABLE)
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (res.error) throw res.error;
+    var newItem = rowToObj(res.data);
+    var list = readCache().map(function (l) { return l.id === id ? newItem : l; });
+    writeCache(list);
+    return newItem;
+  }
+
+  async function archive(id) { return update(id, { archived: true }); }
+  async function restore(id) { return update(id, { archived: false }); }
+
+  async function remove(id) {
+    if (!id) throw new Error("id is verplicht.");
+    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    var list = readCache().filter(function (l) { return l.id !== id; });
+    writeCache(list);
+    return true;
+  }
+
+  function getAllSync() { return readCache(); }
+
+  function getLocatiesCompat() {
+    return readCache().map(function (l) { return Object.assign({}, l); });
+  }
+
+  var api = {
+    bootstrap: bootstrap,
+    refresh: refresh,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
+    getAllSync: getAllSync,
+  };
+
+  Object.defineProperty(api, "ready", {
+    get: function () { return bootstrap(); },
+  });
+
+  global.locatiesDB = api;
+  global.getLocaties = getLocatiesCompat;
+
+  // Auto-bootstrap zodra dit script laadt.
+  bootstrap();
+})(typeof window !== "undefined" ? window : this);
