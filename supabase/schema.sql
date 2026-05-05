@@ -589,3 +589,70 @@ from (values
 where not exists (
   select 1 from public.opleidingen o where lower(o.naam) = lower(v.naam)
 );
+
+-- ============================================================================
+-- medewerkers (HR module — master entity)
+-- ============================================================================
+--
+-- Pragmatische opzet: een paar zoekvelden expliciet als kolom (voor snelle
+-- queries en filtering vanuit de DB), de rest zit in 'data jsonb'. Dit is
+-- robuust tegen schemawijzigingen: nieuwe velden kunnen direct opgeslagen
+-- worden zonder migratie.
+
+create table if not exists public.medewerkers (
+  id uuid primary key default gen_random_uuid(),
+  voornaam text not null default '',
+  achternaam text not null default '',
+  email text,
+  fase text default 'In dienst',
+  dienstverband text,
+  functie text,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists medewerkers_email_idx on public.medewerkers (lower(email));
+create index if not exists medewerkers_naam_idx on public.medewerkers (lower(achternaam), lower(voornaam));
+create index if not exists medewerkers_archived_idx on public.medewerkers (archived);
+create index if not exists medewerkers_fase_idx on public.medewerkers (fase);
+
+drop trigger if exists trg_medewerkers_set_modified on public.medewerkers;
+create trigger trg_medewerkers_set_modified
+  before update on public.medewerkers
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.medewerkers enable row level security;
+
+drop policy if exists "anon kan medewerkers lezen" on public.medewerkers;
+create policy "anon kan medewerkers lezen"
+  on public.medewerkers for select to anon using (true);
+
+drop policy if exists "anon kan medewerkers toevoegen" on public.medewerkers;
+create policy "anon kan medewerkers toevoegen"
+  on public.medewerkers for insert to anon with check (true);
+
+drop policy if exists "anon kan medewerkers bewerken" on public.medewerkers;
+create policy "anon kan medewerkers bewerken"
+  on public.medewerkers for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan medewerkers verwijderen" on public.medewerkers;
+create policy "anon kan medewerkers verwijderen"
+  on public.medewerkers for delete to anon using (true);
+
+-- TOEKOMSTIGE policies (na login activatie):
+-- drop policy if exists "anon kan medewerkers lezen" on public.medewerkers;
+-- drop policy if exists "anon kan medewerkers toevoegen" on public.medewerkers;
+-- drop policy if exists "anon kan medewerkers bewerken" on public.medewerkers;
+-- drop policy if exists "anon kan medewerkers verwijderen" on public.medewerkers;
+-- create policy "ingelogd kan medewerkers lezen"
+--   on public.medewerkers for select to authenticated using (true);
+-- create policy "ingelogd kan medewerkers toevoegen"
+--   on public.medewerkers for insert to authenticated with check (true);
+-- create policy "ingelogd kan medewerkers bewerken"
+--   on public.medewerkers for update to authenticated using (true) with check (true);
+-- create policy "ingelogd kan medewerkers verwijderen"
+--   on public.medewerkers for delete to authenticated using (true);
+
+-- Geen seed-data: medewerkers worden door de gebruiker in de UI aangemaakt.

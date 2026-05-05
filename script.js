@@ -572,7 +572,7 @@ function initEmployeeDeleteModal(tbody) {
     if (preview) preview.textContent = "";
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!rowToDelete || confirmBtn.disabled) return;
     const deletedName = `${rowToDelete.querySelector('[data-col="voornaam"]')?.textContent?.trim() || ""} ${
       rowToDelete.querySelector('[data-col="achternaam"]')?.textContent?.trim() || ""
@@ -583,6 +583,10 @@ function initEmployeeDeleteModal(tbody) {
         x.id === id ? { ...x, archived: true, laatstGewijzigd: formatDateNL() } : x
       );
       writeEmployeeItems(items);
+      if (window.medewerkersDB) {
+        try { await window.medewerkersDB.archive(id); }
+        catch (err) { console.error("Archiveren mislukt:", err); }
+      }
     }
     rowToDelete.remove();
     rowToDelete = null;
@@ -662,7 +666,7 @@ function initEmployeePurgeModal(tbody) {
     cancelBtn?.focus();
   }
 
-  function confirmPurge() {
+  async function confirmPurge() {
     if (!rowToPurge || confirmBtn.disabled) return;
     const id = rowToPurge.dataset.empId || "";
     const deletedName = `${rowToPurge.querySelector('[data-col="voornaam"]')?.textContent?.trim() || ""} ${
@@ -671,6 +675,10 @@ function initEmployeePurgeModal(tbody) {
     if (id) {
       const items = readEmployeeItems().filter((x) => x.id !== id);
       writeEmployeeItems(items);
+      if (window.medewerkersDB) {
+        try { await window.medewerkersDB.delete(id); }
+        catch (err) { console.error("Verwijderen mislukt:", err); }
+      }
     }
     rowToPurge.remove();
     rowToPurge = null;
@@ -706,7 +714,7 @@ function initEmployeePurgeModal(tbody) {
 
 function initEmployeeRestore(tbody) {
   if (!tbody) return;
-  tbody.addEventListener("click", (event) => {
+  tbody.addEventListener("click", async (event) => {
     const btn = event.target.closest(".hr-restore-btn");
     if (!btn || !tbody.contains(btn)) return;
     event.preventDefault();
@@ -718,6 +726,10 @@ function initEmployeeRestore(tbody) {
       x.id === id ? { ...x, archived: false, laatstGewijzigd: formatDateNL() } : x
     );
     writeEmployeeItems(items);
+    if (window.medewerkersDB) {
+      try { await window.medewerkersDB.restore(id); }
+      catch (err) { console.error("Herstellen mislukt:", err); }
+    }
     loadEmployeesFromStorage(tbody);
     ensureEmployeeRowIds(tbody);
     applySavedEmployeeEditsToTable(tbody);
@@ -777,7 +789,7 @@ function initEmployeeAddModal(tbody) {
     event.preventDefault();
   });
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const voornaamEl = document.getElementById("employee-add-voornaam");
     const achternaamEl = document.getElementById("employee-add-achternaam");
@@ -804,8 +816,7 @@ function initEmployeeAddModal(tbody) {
     }
 
     const verjaardag = isoToNlDate(val("employee-add-verjaardag"));
-    const item = {
-      id: makeEmployeeId(),
+    const draft = {
       voornaam,
       achternaam,
       email,
@@ -833,6 +844,19 @@ function initEmployeeAddModal(tbody) {
       plaats: val("employee-add-plaats"),
       archived: false,
     };
+
+    let item;
+    if (window.medewerkersDB) {
+      try {
+        item = await window.medewerkersDB.add(draft);
+      } catch (err) {
+        console.error("Medewerker toevoegen mislukt:", err);
+        showAppToast("Toevoegen niet gelukt — probeer opnieuw");
+        return;
+      }
+    } else {
+      item = { id: makeEmployeeId(), ...draft };
+    }
 
     const tr = createEmployeeRow(item);
     tbody.insertBefore(tr, tbody.firstChild);
@@ -880,6 +904,16 @@ if (tbody) {
   initEmployeeRestore(tbody);
   initEmployeeRowNavigation(tbody);
   initEmployeesArchivedToggle(tbody);
+
+  // Bij Supabase-bootstrap of mutatie elders: cache opnieuw inladen.
+  window.addEventListener("besa:medewerkers-updated", () => {
+    loadEmployeesFromStorage(tbody);
+    ensureEmployeeRowIds(tbody);
+    applySavedEmployeeEditsToTable(tbody);
+    ensureEmployeesProfileColumns();
+    ensureEmployeesActionsColumn();
+    refreshEmployeesPagination();
+  });
 }
 
 function initEmployeesPagination() {

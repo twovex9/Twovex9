@@ -63,8 +63,16 @@ function upsertEmployeeItem(updated) {
     if (idx >= 0) list[idx] = Object.assign({}, list[idx], normalized);
     else list.unshift(normalized);
     window.localStorage.setItem(EMPLOYEE_ITEMS_STORAGE_KEY, JSON.stringify(list));
+    // Houd de "employees"-cache (legacy key, voor andere modules) in sync.
+    try { window.localStorage.setItem("employees", JSON.stringify(list)); } catch {}
   } catch {
     // Ignore storage errors in demo mode.
+  }
+  // Schrijf de wijziging asynchroon door naar Supabase. Fire-and-forget:
+  // de UI heeft de update al lokaal toegepast, en bij fout verschijnt een
+  // foutmelding in de console (geen blokkade voor de gebruiker).
+  if (window.medewerkersDB && typeof window.medewerkersDB.syncFromLocalUpsert === "function") {
+    window.medewerkersDB.syncFromLocalUpsert(updated);
   }
 }
 
