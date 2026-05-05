@@ -2233,3 +2233,335 @@ create policy "anon kan planning verwijderen"
 -- Geen seed-data: planning-items worden door de gebruiker aangemaakt.
 -- Demo-data uit planning.js (oude prototype-seed) wordt eenmalig naar Supabase
 -- gemigreerd door planning-data.js bij eerste page-load.
+
+-- ============================================================================
+-- comp_diensttypes (Compensatie module — config per diensttype)
+-- ============================================================================
+create table if not exists public.comp_diensttypes (
+  id text primary key,
+  diensttype text not null,
+  basis numeric(8,2) not null default 0,
+  overuren numeric(8,2) not null default 0,
+  regels text not null default 'full_time_only',
+  teams jsonb not null default '[]'::jsonb,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists comp_diensttypes_dt_idx on public.comp_diensttypes (diensttype);
+
+drop trigger if exists trg_comp_diensttypes_set_modified on public.comp_diensttypes;
+create trigger trg_comp_diensttypes_set_modified
+  before update on public.comp_diensttypes
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.comp_diensttypes enable row level security;
+
+drop policy if exists "anon kan comp_diensttypes lezen" on public.comp_diensttypes;
+create policy "anon kan comp_diensttypes lezen"
+  on public.comp_diensttypes for select to anon using (true);
+drop policy if exists "anon kan comp_diensttypes toevoegen" on public.comp_diensttypes;
+create policy "anon kan comp_diensttypes toevoegen"
+  on public.comp_diensttypes for insert to anon with check (true);
+drop policy if exists "anon kan comp_diensttypes bewerken" on public.comp_diensttypes;
+create policy "anon kan comp_diensttypes bewerken"
+  on public.comp_diensttypes for update to anon using (true) with check (true);
+drop policy if exists "anon kan comp_diensttypes verwijderen" on public.comp_diensttypes;
+create policy "anon kan comp_diensttypes verwijderen"
+  on public.comp_diensttypes for delete to anon using (true);
+
+-- ============================================================================
+-- comp_feestdagen (Compensatie module — feestdagen + tarief multiplier)
+-- ============================================================================
+create table if not exists public.comp_feestdagen (
+  id text primary key,
+  naam text not null,
+  datum_ts bigint not null,
+  tarief numeric(6,2) not null default 1,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists comp_feestdagen_datum_idx on public.comp_feestdagen (datum_ts);
+
+drop trigger if exists trg_comp_feestdagen_set_modified on public.comp_feestdagen;
+create trigger trg_comp_feestdagen_set_modified
+  before update on public.comp_feestdagen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.comp_feestdagen enable row level security;
+
+drop policy if exists "anon kan comp_feestdagen lezen" on public.comp_feestdagen;
+create policy "anon kan comp_feestdagen lezen"
+  on public.comp_feestdagen for select to anon using (true);
+drop policy if exists "anon kan comp_feestdagen toevoegen" on public.comp_feestdagen;
+create policy "anon kan comp_feestdagen toevoegen"
+  on public.comp_feestdagen for insert to anon with check (true);
+drop policy if exists "anon kan comp_feestdagen bewerken" on public.comp_feestdagen;
+create policy "anon kan comp_feestdagen bewerken"
+  on public.comp_feestdagen for update to anon using (true) with check (true);
+drop policy if exists "anon kan comp_feestdagen verwijderen" on public.comp_feestdagen;
+create policy "anon kan comp_feestdagen verwijderen"
+  on public.comp_feestdagen for delete to anon using (true);
+
+-- Standaard feestdagen 2026 (NL). datum_ts in milliseconden vanaf epoch (UTC).
+-- Datums zijn lokaal Nederland: gebruik 12:00 lokaal Europe/Amsterdam zodat
+-- DST-grenzen niet leiden tot een dag-shift.
+insert into public.comp_feestdagen (id, naam, datum_ts, tarief)
+values
+  ('cf_0',  '1 april',           extract(epoch from timestamp '2026-01-01 12:00')::bigint * 1000, 1.6),
+  ('cf_1',  'Koningsdag',         extract(epoch from timestamp '2026-04-27 12:00')::bigint * 1000, 1.5),
+  ('cf_2',  'Bevrijdingsdag',     extract(epoch from timestamp '2026-05-05 12:00')::bigint * 1000, 1.5),
+  ('cf_3',  'Hemelvaart',         extract(epoch from timestamp '2026-05-14 12:00')::bigint * 1000, 1.6),
+  ('cf_4',  'Pinksteren',         extract(epoch from timestamp '2026-05-24 12:00')::bigint * 1000, 1.6),
+  ('cf_5',  'Eerste kerstdag',    extract(epoch from timestamp '2026-12-25 12:00')::bigint * 1000, 2.0),
+  ('cf_6',  'Tweede kerstdag',    extract(epoch from timestamp '2026-12-26 12:00')::bigint * 1000, 2.0),
+  ('cf_7',  'Nieuwjaar',          extract(epoch from timestamp '2027-01-01 12:00')::bigint * 1000, 2.0),
+  ('cf_8',  'Goede vrijdag',      extract(epoch from timestamp '2026-04-03 12:00')::bigint * 1000, 1.5),
+  ('cf_9',  'Pasen',              extract(epoch from timestamp '2026-04-05 12:00')::bigint * 1000, 1.6),
+  ('cf_10', 'Tweede paasdag',     extract(epoch from timestamp '2026-04-06 12:00')::bigint * 1000, 1.6),
+  ('cf_11', 'Prinsjesdag',        extract(epoch from timestamp '2026-09-15 12:00')::bigint * 1000, 1.0)
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- verzuim (HR module — lange + korte verzuimdossiers in één tabel)
+-- ============================================================================
+create table if not exists public.verzuim (
+  id text primary key,
+  type text not null check (type in ('lang','kort')),
+  medewerker text not null default '',
+  eerst_ziektedag date,
+  verwachte_terug date,
+  werkelijke_terug date,
+  beschrijving text not null default '',
+  status text not null default 'Actief',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists verzuim_type_idx on public.verzuim (type);
+create index if not exists verzuim_status_idx on public.verzuim (status);
+
+drop trigger if exists trg_verzuim_set_modified on public.verzuim;
+create trigger trg_verzuim_set_modified
+  before update on public.verzuim
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.verzuim enable row level security;
+
+drop policy if exists "anon kan verzuim lezen" on public.verzuim;
+create policy "anon kan verzuim lezen"
+  on public.verzuim for select to anon using (true);
+drop policy if exists "anon kan verzuim toevoegen" on public.verzuim;
+create policy "anon kan verzuim toevoegen"
+  on public.verzuim for insert to anon with check (true);
+drop policy if exists "anon kan verzuim bewerken" on public.verzuim;
+create policy "anon kan verzuim bewerken"
+  on public.verzuim for update to anon using (true) with check (true);
+drop policy if exists "anon kan verzuim verwijderen" on public.verzuim;
+create policy "anon kan verzuim verwijderen"
+  on public.verzuim for delete to anon using (true);
+
+-- Standaard verzuim-dossiers (3 lang + 2 kort). Idempotent op id.
+insert into public.verzuim (id, type, medewerker, eerst_ziektedag, verwachte_terug, werkelijke_terug, beschrijving, status)
+values
+  ('vz_l_1', 'lang', 'Sophie de Vries',  '2025-10-14', '2026-04-01', null,         'Langdurige ziekmelding — traject begeleiding', 'Actief'),
+  ('vz_l_2', 'lang', 'Thomas Bakker',    '2025-12-02', '2026-06-15', null,         'Re-integratie in voorbereiding',                'Actief'),
+  ('vz_l_3', 'lang', 'Marieke Jansen',   '2026-01-08', '2026-03-20', '2026-02-28', 'Hersteld na specialistisch consult',            'Hersteld'),
+  ('vz_k_1', 'kort', 'Daan Visser',      '2026-03-02', '2026-03-09', '2026-03-08', 'Griep',                                          'Hersteld'),
+  ('vz_k_2', 'kort', 'Emma Smit',        '2026-03-18', '2026-03-25', null,         'Mag klachten',                                   'Actief')
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- salarisschalen (Salarishuis — schalen + tredes als jsonb)
+-- ============================================================================
+create table if not exists public.salarisschalen (
+  id text primary key,
+  title text not null,
+  rows jsonb not null default '[]'::jsonb,
+  sort_order integer not null default 0,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists salarisschalen_sort_idx on public.salarisschalen (sort_order);
+
+drop trigger if exists trg_salarisschalen_set_modified on public.salarisschalen;
+create trigger trg_salarisschalen_set_modified
+  before update on public.salarisschalen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.salarisschalen enable row level security;
+
+drop policy if exists "anon kan salarisschalen lezen" on public.salarisschalen;
+create policy "anon kan salarisschalen lezen"
+  on public.salarisschalen for select to anon using (true);
+drop policy if exists "anon kan salarisschalen toevoegen" on public.salarisschalen;
+create policy "anon kan salarisschalen toevoegen"
+  on public.salarisschalen for insert to anon with check (true);
+drop policy if exists "anon kan salarisschalen bewerken" on public.salarisschalen;
+create policy "anon kan salarisschalen bewerken"
+  on public.salarisschalen for update to anon using (true) with check (true);
+drop policy if exists "anon kan salarisschalen verwijderen" on public.salarisschalen;
+create policy "anon kan salarisschalen verwijderen"
+  on public.salarisschalen for delete to anon using (true);
+
+-- Standaard salarisschalen (12 schalen + stagevergoeding). Volledige tredes
+-- worden in jsonb opgeslagen zodat de structuur zonder schemawijziging kan
+-- evolueren. Idempotent op id.
+insert into public.salarisschalen (id, title, sort_order, rows)
+values
+  ('schaal-4', 'Schaal 4', 10, '[
+    {"trede":"0","bedrag":"€ 2.454,54"},{"trede":"1","bedrag":"€ 2.454,54"},{"trede":"2","bedrag":"€ 2.509,64"},{"trede":"3","bedrag":"€ 2.588,84"},{"trede":"4","bedrag":"€ 2.670,38"},
+    {"trede":"5","bedrag":"€ 2.754,21"},{"trede":"6","bedrag":"€ 2.841,09"},{"trede":"7","bedrag":"€ 2.930,26"},{"trede":"8","bedrag":"€ 3.023,29"},{"trede":"9","bedrag":"€ 3.118,51"},
+    {"trede":"10","bedrag":"€ 3.216,05"}
+  ]'::jsonb),
+  ('schaal-5', 'Schaal 5', 20, '[
+    {"trede":"0","bedrag":"€ 2.454,54"},{"trede":"1","bedrag":"€ 2.520,27"},{"trede":"2","bedrag":"€ 2.600,30"},{"trede":"3","bedrag":"€ 2.684,12"},{"trede":"4","bedrag":"€ 2.769,51"},
+    {"trede":"5","bedrag":"€ 2.858,62"},{"trede":"6","bedrag":"€ 2.950,10"},{"trede":"7","bedrag":"€ 3.043,85"},{"trede":"8","bedrag":"€ 3.141,40"},{"trede":"9","bedrag":"€ 3.241,97"},
+    {"trede":"10","bedrag":"€ 3.345,66"},{"trede":"11","bedrag":"€ 3.453,06"}
+  ]'::jsonb),
+  ('schaal-6', 'Schaal 6', 30, '[
+    {"trede":"0","bedrag":"€ 2.618,60"},{"trede":"1","bedrag":"€ 2.703,91"},{"trede":"2","bedrag":"€ 2.791,59"},{"trede":"3","bedrag":"€ 2.882,29"},{"trede":"4","bedrag":"€ 2.976,00"},
+    {"trede":"5","bedrag":"€ 3.072,76"},{"trede":"6","bedrag":"€ 3.172,64"},{"trede":"7","bedrag":"€ 3.275,51"},{"trede":"8","bedrag":"€ 3.382,21"},{"trede":"9","bedrag":"€ 3.491,92"},
+    {"trede":"10","bedrag":"€ 3.605,49"},{"trede":"11","bedrag":"€ 3.722,88"}
+  ]'::jsonb),
+  ('schaal-7', 'Schaal 7', 40, '[
+    {"trede":"0","bedrag":"€ 2.818,26"},{"trede":"1","bedrag":"€ 2.911,23"},{"trede":"2","bedrag":"€ 3.007,25"},{"trede":"3","bedrag":"€ 3.106,34"},{"trede":"4","bedrag":"€ 3.209,22"},
+    {"trede":"5","bedrag":"€ 3.315,13"},{"trede":"6","bedrag":"€ 3.424,11"},{"trede":"7","bedrag":"€ 3.537,68"},{"trede":"8","bedrag":"€ 3.654,29"},{"trede":"9","bedrag":"€ 3.774,69"},
+    {"trede":"10","bedrag":"€ 3.898,93"},{"trede":"11","bedrag":"€ 4.027,70"}
+  ]'::jsonb),
+  ('schaal-8', 'Schaal 8', 50, '[
+    {"trede":"0","bedrag":"€ 2.946,27"},{"trede":"1","bedrag":"€ 3.045,34"},{"trede":"2","bedrag":"€ 3.146,69"},{"trede":"3","bedrag":"€ 3.252,63"},{"trede":"4","bedrag":"€ 3.361,64"},
+    {"trede":"5","bedrag":"€ 3.473,65"},{"trede":"6","bedrag":"€ 3.590,26"},{"trede":"7","bedrag":"€ 3.710,67"},{"trede":"8","bedrag":"€ 3.834,90"},{"trede":"9","bedrag":"€ 3.963,67"},
+    {"trede":"10","bedrag":"€ 4.096,31"},{"trede":"11","bedrag":"€ 4.233,47"},{"trede":"12","bedrag":"€ 4.375,20"}
+  ]'::jsonb),
+  ('schaal-9', 'Schaal 9', 60, '[
+    {"trede":"0","bedrag":"€ 3.191,69"},{"trede":"1","bedrag":"€ 3.299,91"},{"trede":"2","bedrag":"€ 3.412,73"},{"trede":"3","bedrag":"€ 3.528,53"},{"trede":"4","bedrag":"€ 3.648,19"},
+    {"trede":"5","bedrag":"€ 3.772,40"},{"trede":"6","bedrag":"€ 3.900,42"},{"trede":"7","bedrag":"€ 4.033,05"},{"trede":"8","bedrag":"€ 4.170,21"},{"trede":"9","bedrag":"€ 4.311,95"},
+    {"trede":"10","bedrag":"€ 4.459,04"},{"trede":"11","bedrag":"€ 4.610,72"},{"trede":"12","bedrag":"€ 4.766,96"}
+  ]'::jsonb),
+  ('schaal-10', 'Schaal 10', 70, '[
+    {"trede":"0","bedrag":"€ 3.472,90"},{"trede":"1","bedrag":"€ 3.592,54"},{"trede":"2","bedrag":"€ 3.716,79"},{"trede":"3","bedrag":"€ 3.844,80"},{"trede":"4","bedrag":"€ 3.977,44"},
+    {"trede":"5","bedrag":"€ 4.114,59"},{"trede":"6","bedrag":"€ 4.256,32"},{"trede":"7","bedrag":"€ 4.403,42"},{"trede":"8","bedrag":"€ 4.555,85"},{"trede":"9","bedrag":"€ 4.712,83"},
+    {"trede":"10","bedrag":"€ 4.875,16"},{"trede":"11","bedrag":"€ 5.043,59"},{"trede":"12","bedrag":"€ 5.217,35"}
+  ]'::jsonb),
+  ('schaal-11', 'Schaal 11', 80, '[
+    {"trede":"0","bedrag":"€ 3.972,06"},{"trede":"1","bedrag":"€ 4.111,55"},{"trede":"2","bedrag":"€ 4.255,60"},{"trede":"3","bedrag":"€ 4.404,19"},{"trede":"4","bedrag":"€ 4.558,15"},
+    {"trede":"5","bedrag":"€ 4.718,16"},{"trede":"6","bedrag":"€ 4.882,77"},{"trede":"7","bedrag":"€ 5.053,50"},{"trede":"8","bedrag":"€ 5.231,05"},{"trede":"9","bedrag":"€ 5.413,97"},
+    {"trede":"10","bedrag":"€ 5.602,97"},{"trede":"11","bedrag":"€ 5.598,06"},{"trede":"12","bedrag":"€ 6.002,30"}
+  ]'::jsonb),
+  ('schaal-12', 'Schaal 12', 90, '[
+    {"trede":"0","bedrag":"€ 4.375,20"},{"trede":"1","bedrag":"€ 4.530,68"},{"trede":"2","bedrag":"€ 4.691,50"},{"trede":"3","bedrag":"€ 4.857,61"},{"trede":"4","bedrag":"€ 5.030,63"},
+    {"trede":"5","bedrag":"€ 5.208,98"},{"trede":"6","bedrag":"€ 5.394,16"},{"trede":"7","bedrag":"€ 5.585,48"},{"trede":"8","bedrag":"€ 5.783,60"},{"trede":"9","bedrag":"€ 5.988,60"},
+    {"trede":"10","bedrag":"€ 6.201,23"},{"trede":"11","bedrag":"€ 6.421,44"},{"trede":"12","bedrag":"€ 6.649,31"},{"trede":"13","bedrag":"€ 6.885,58"},
+    {"trede":"Omvangperiodiek 1","bedrag":"€ 7.130,22"},{"trede":"Omvangperiodiek 2","bedrag":"€ 7.383,22"}
+  ]'::jsonb),
+  ('stagevergoeding', 'stagevergoeding', 100, '[{"trede":"Stagevergoeding","bedrag":"€ 450,00"}]'::jsonb),
+  ('schaal-13', 'Schaal 13', 110, '[
+    {"trede":"0","bedrag":"€ 4.987,95"},{"trede":"1","bedrag":"€ 5.167,82"},{"trede":"2","bedrag":"€ 5.353,78"},{"trede":"3","bedrag":"€ 5.546,58"},{"trede":"4","bedrag":"€ 5.746,23"},
+    {"trede":"5","bedrag":"€ 5.952,77"},{"trede":"6","bedrag":"€ 6.166,91"},{"trede":"7","bedrag":"€ 6.389,46"},{"trede":"8","bedrag":"€ 6.618,85"},{"trede":"9","bedrag":"€ 6.857,39"},
+    {"trede":"10","bedrag":"€ 7.104,33"},{"trede":"11","bedrag":"€ 7.360,37"},{"trede":"12","bedrag":"€ 7.624,85"}
+  ]'::jsonb),
+  ('schaal-14', 'Schaal 14', 120, '[
+    {"trede":"0","bedrag":"€ 6.250,00"},{"trede":"1","bedrag":"€ 6.477,84"},{"trede":"2","bedrag":"€ 6.714,89"},{"trede":"3","bedrag":"€ 6.959,49"},{"trede":"4","bedrag":"€ 7.214,04"}
+  ]'::jsonb)
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- salarishuis_wijzigingen (Salarishuis — audit log)
+-- ============================================================================
+create table if not exists public.salarishuis_wijzigingen (
+  id uuid primary key default gen_random_uuid(),
+  ts bigint not null,
+  actie text not null default '',
+  detail text not null default '',
+  aanmaakdatum timestamptz not null default now()
+);
+
+create index if not exists salarishuis_wijzigingen_ts_idx on public.salarishuis_wijzigingen (ts desc);
+
+alter table public.salarishuis_wijzigingen enable row level security;
+
+drop policy if exists "anon kan salarishuis_wijzigingen lezen" on public.salarishuis_wijzigingen;
+create policy "anon kan salarishuis_wijzigingen lezen"
+  on public.salarishuis_wijzigingen for select to anon using (true);
+drop policy if exists "anon kan salarishuis_wijzigingen toevoegen" on public.salarishuis_wijzigingen;
+create policy "anon kan salarishuis_wijzigingen toevoegen"
+  on public.salarishuis_wijzigingen for insert to anon with check (true);
+drop policy if exists "anon kan salarishuis_wijzigingen verwijderen" on public.salarishuis_wijzigingen;
+create policy "anon kan salarishuis_wijzigingen verwijderen"
+  on public.salarishuis_wijzigingen for delete to anon using (true);
+
+-- ============================================================================
+-- saladmin_export_history (Salarisadministratie — export log)
+-- ============================================================================
+create table if not exists public.saladmin_export_history (
+  id text primary key,
+  created_at timestamptz not null default now(),
+  period text not null default '',
+  employees integer not null default 0,
+  by_name text not null default '',
+  csv text,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists saladmin_export_history_created_idx on public.saladmin_export_history (created_at desc);
+
+drop trigger if exists trg_saladmin_export_history_set_modified on public.saladmin_export_history;
+create trigger trg_saladmin_export_history_set_modified
+  before update on public.saladmin_export_history
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.saladmin_export_history enable row level security;
+
+drop policy if exists "anon kan saladmin_export_history lezen" on public.saladmin_export_history;
+create policy "anon kan saladmin_export_history lezen"
+  on public.saladmin_export_history for select to anon using (true);
+drop policy if exists "anon kan saladmin_export_history toevoegen" on public.saladmin_export_history;
+create policy "anon kan saladmin_export_history toevoegen"
+  on public.saladmin_export_history for insert to anon with check (true);
+drop policy if exists "anon kan saladmin_export_history bewerken" on public.saladmin_export_history;
+create policy "anon kan saladmin_export_history bewerken"
+  on public.saladmin_export_history for update to anon using (true) with check (true);
+drop policy if exists "anon kan saladmin_export_history verwijderen" on public.saladmin_export_history;
+create policy "anon kan saladmin_export_history verwijderen"
+  on public.saladmin_export_history for delete to anon using (true);
+
+insert into public.saladmin_export_history (id, created_at, period, employees, by_name, csv)
+values
+  ('seed_1', '2026-03-11T10:10:00Z'::timestamptz, 'Maart 2026',    31, 'Vennie Küster', null),
+  ('seed_2', '2026-03-18T10:10:00Z'::timestamptz, 'Februari 2026', 31, 'Vennie Küster', null),
+  ('seed_3', '2026-02-15T10:10:00Z'::timestamptz, 'Januari 2026',  33, 'Artem Fetchoj', null)
+on conflict (id) do nothing;
+
+-- ============================================================================
+-- saladmin_ort (Salarisadministratie — ORT-regels per jaar)
+-- ============================================================================
+create table if not exists public.saladmin_ort (
+  jaar integer primary key,
+  data jsonb not null default '{}'::jsonb,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+drop trigger if exists trg_saladmin_ort_set_modified on public.saladmin_ort;
+create trigger trg_saladmin_ort_set_modified
+  before update on public.saladmin_ort
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.saladmin_ort enable row level security;
+
+drop policy if exists "anon kan saladmin_ort lezen" on public.saladmin_ort;
+create policy "anon kan saladmin_ort lezen"
+  on public.saladmin_ort for select to anon using (true);
+drop policy if exists "anon kan saladmin_ort toevoegen" on public.saladmin_ort;
+create policy "anon kan saladmin_ort toevoegen"
+  on public.saladmin_ort for insert to anon with check (true);
+drop policy if exists "anon kan saladmin_ort bewerken" on public.saladmin_ort;
+create policy "anon kan saladmin_ort bewerken"
+  on public.saladmin_ort for update to anon using (true) with check (true);
+drop policy if exists "anon kan saladmin_ort verwijderen" on public.saladmin_ort;
+create policy "anon kan saladmin_ort verwijderen"
+  on public.saladmin_ort for delete to anon using (true);

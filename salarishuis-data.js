@@ -1,5 +1,15 @@
 /**
- * Salarisschalen — seed + localStorage (hr_salarisschalen_v1)
+ * Salarisschalen + wijzigingsgeschiedenis — Supabase data-laag met
+ * localStorage als read-cache.
+ *
+ * - Source of truth: `public.salarisschalen` + `public.salarishuis_wijzigingen`.
+ * - localStorage onder "hr_salarisschalen_v2" en "hr_salarishuis_wijzigingen_v1"
+ *   = read-caches; bestaande sync globals blijven werken.
+ * - `saveSalarisschalen(list)` doet sync localStorage-write + fire-and-forget
+ *   bulk-sync naar Supabase via `pushAllScalesAsync()`.
+ * - `logSalarishuisWijziging(actie, detail)` insert async een audit-rij in
+ *   Supabase, en zet die ook lokaal cap'd op MAX_HISTORY_ENTRIES.
+ *
  * Rij: { trede: string (kolom Salaristrede), bedrag: string met € }
  */
 (function (global) {
@@ -8,6 +18,10 @@
   var STORAGE_KEY = "hr_salarisschalen_v2";
   var HISTORY_KEY = "hr_salarishuis_wijzigingen_v1";
   var MAX_HISTORY_ENTRIES = 500;
+
+  var TABLE_SCHALEN = "salarisschalen";
+  var TABLE_HISTORY = "salarishuis_wijzigingen";
+  var MIGRATION_FLAG_KEY = "salarishuisMigratedToSupabase.v1";
 
   function euro(amount) {
     return "€ " + amount;
@@ -88,11 +102,161 @@
     ];
   }
 
-  function deepClone(obj) {
-    return JSON.parse(JSON.stringify(obj));
+  function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function dispatchUpdated() {
+    try { global.dispatchEvent(new CustomEvent("besa:salarishuis-updated")); } catch (e) { /* */ }
   }
 
+  // ---------------------------------------------------------------------------
+  // Async helpers Supabase
+  // ---------------------------------------------------------------------------
+  async function fetchAllScales() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.besaSupabase
+      .from(TABLE_SCHALEN)
+      .select("id, title, rows, sort_order")
+      .order("sort_order", { ascending: true });
+    if (res.error) throw res.error;
+    return (res.data || []).map(function (r) {
+      return {
+        id: r.id,
+        title: r.title || "",
+        rows: Array.isArray(r.rows) ? r.rows : [],
+      };
+    });
+  }
+
+  async function fetchAllHistory() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.besaSupabase
+      .from(TABLE_HISTORY)
+      .select("ts, actie, detail")
+      .order("ts", { ascending: false })
+      .limit(MAX_HISTORY_ENTRIES);
+    if (res.error) throw res.error;
+    return (res.data || []).map(function (r) {
+      return { ts: Number(r.ts), actie: String(r.actie || ""), detail: String(r.detail || "") };
+    });
+  }
+
+  async function maybeMigrateLocalToSupabase() {
+    try {
+      if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
+      if (!global.besaSupabase) return false;
+      var head = await global.besaSupabase.from(TABLE_SCHALEN).select("id", { count: "exact", head: true });
+      if (head.error) return false;
+      if ((head.count || 0) > 0) {
+        try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
+      }
+      var localRaw = localStorage.getItem(STORAGE_KEY);
+      if (!localRaw) {
+        try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
+      }
+      var localList;
+      try { localList = JSON.parse(localRaw); } catch (e) { localList = null; }
+      if (!Array.isArray(localList) || !localList.length) {
+        try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+        return false;
+      }
+      console.info("[salarishuisDB] Migratie van " + localList.length + " salarisschalen…");
+      var payload = localList.map(function (s, i) {
+        return {
+          id: String(s.id || ("schaal_" + i)),
+          title: String(s.title || ""),
+          rows: Array.isArray(s.rows) ? s.rows : [],
+          sort_order: i * 10,
+        };
+      });
+      var ins = await global.besaSupabase.from(TABLE_SCHALEN).insert(payload).select();
+      if (ins.error) {
+        console.error("[salarishuisDB] Migratie mislukt:", ins.error);
+        return false;
+      }
+      try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+      return true;
+    } catch (err) {
+      console.error("[salarishuisDB] Migratiefout:", err);
+      return false;
+    }
+  }
+
+  var readyPromise = null;
+  function bootstrap() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async function () {
+      try {
+        await maybeMigrateLocalToSupabase();
+        var schalen = await fetchAllScales();
+        if (schalen && schalen.length) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schalen)); } catch (e) { /* */ }
+        }
+        var history = await fetchAllHistory();
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* */ }
+        dispatchUpdated();
+      } catch (err) {
+        console.error("[salarishuisDB] Bootstrap mislukt:", err);
+      }
+    })();
+    return readyPromise;
+  }
+
+  async function pushAllScalesAsync(list) {
+    if (!global.besaSupabase) return;
+    if (!Array.isArray(list)) return;
+    try {
+      var payload = list.map(function (s, i) {
+        return {
+          id: String(s.id || ("schaal_" + i)),
+          title: String(s.title || ""),
+          rows: Array.isArray(s.rows) ? s.rows : [],
+          sort_order: i * 10,
+        };
+      });
+      var ups = await global.besaSupabase.from(TABLE_SCHALEN).upsert(payload, { onConflict: "id" });
+      if (ups.error) console.error("[salarishuisDB] upsert schalen mislukt:", ups.error);
+
+      var existingHead = await global.besaSupabase.from(TABLE_SCHALEN).select("id");
+      if (!existingHead.error) {
+        var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
+        var localIds = payload.map(function (r) { return r.id; });
+        var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
+        if (toDelete.length) {
+          var del = await global.besaSupabase.from(TABLE_SCHALEN).delete().in("id", toDelete);
+          if (del.error) console.error("[salarishuisDB] delete schalen mislukt:", del.error);
+        }
+      }
+    } catch (err) {
+      console.error("[salarishuisDB] pushAllScalesAsync error:", err);
+    }
+  }
+
+  async function insertHistoryAsync(actie, detail, ts) {
+    if (!global.besaSupabase) return;
+    try {
+      var ins = await global.besaSupabase.from(TABLE_HISTORY).insert({
+        ts: Number(ts) || Date.now(),
+        actie: String(actie || ""),
+        detail: detail != null ? String(detail) : "",
+      });
+      if (ins.error) console.error("[salarishuisDB] insert history mislukt:", ins.error);
+    } catch (err) {
+      console.error("[salarishuisDB] insertHistoryAsync error:", err);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sync API (backward-compat)
+  // ---------------------------------------------------------------------------
   function logSalarishuisWijziging(actie, detail) {
+    var ts = Date.now();
+    var entry = {
+      ts: ts,
+      actie: String(actie || ""),
+      detail: detail != null ? String(detail) : "",
+    };
     try {
       var raw = localStorage.getItem(HISTORY_KEY);
       var list = [];
@@ -100,16 +264,13 @@
         var parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) list = parsed;
       }
-      list.unshift({
-        ts: Date.now(),
-        actie: String(actie || ""),
-        detail: detail != null ? String(detail) : ""
-      });
+      list.unshift(entry);
       if (list.length > MAX_HISTORY_ENTRIES) list = list.slice(0, MAX_HISTORY_ENTRIES);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
     } catch (err) {
       console.error("logSalarishuisWijziging", err);
     }
+    insertHistoryAsync(entry.actie, entry.detail, entry.ts);
   }
 
   function getSalarishuisWijzigingen() {
@@ -118,12 +279,9 @@
       if (!raw) return [];
       var parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
+    } catch (e) { return []; }
   }
 
-  /** Ruwe check: is dit bedrag effectief nul? (voorkomt dat alles per ongeluk € 0 blijft). */
   function bedragIsEffectivelyZero(b) {
     var t = String(b == null ? "" : b)
       .replace(/€/gi, "")
@@ -152,9 +310,7 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       var defaults = salDefaultScales();
       var defaultsById = {};
-      defaults.forEach(function (d) {
-        defaultsById[d.id] = d;
-      });
+      defaults.forEach(function (d) { defaultsById[d.id] = d; });
 
       if (!raw) {
         var initial = deepClone(defaults);
@@ -209,6 +365,7 @@
     } catch (err) {
       console.error("saveSalarisschalen", err);
     }
+    pushAllScalesAsync(list);
   }
 
   function resetSalarisschalenToSeed() {
@@ -227,4 +384,18 @@
   global.salDefaultScales = salDefaultScales;
   global.logSalarishuisWijziging = logSalarishuisWijziging;
   global.getSalarishuisWijzigingen = getSalarishuisWijzigingen;
+  global.salarishuisDB = {
+    get ready() { return readyPromise || bootstrap(); },
+    refresh: async function () {
+      var schalen = await fetchAllScales();
+      if (schalen && schalen.length) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schalen)); } catch (e) { /* */ }
+      }
+      var history = await fetchAllHistory();
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) { /* */ }
+      dispatchUpdated();
+    },
+  };
+
+  bootstrap();
 })(typeof window !== "undefined" ? window : globalThis);

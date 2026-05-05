@@ -80,6 +80,9 @@
     } catch (e) {
       console.warn("saveConfigs:", e);
     }
+    if (window.compDiensttypesDB && typeof window.compDiensttypesDB.pushAll === "function") {
+      try { window.compDiensttypesDB.pushAll(arr); } catch (e) { /* */ }
+    }
   }
 
   var configs = loadConfigs();
@@ -829,4 +832,13 @@
   }
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst (bv. eerste page-load op een nieuwe browser).
+  window.addEventListener("besa:comp-diensttypes-updated", function () {
+    try {
+      configs = loadConfigs();
+      render();
+    } catch (e) { /* */ }
+  });
 })();

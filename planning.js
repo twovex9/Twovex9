@@ -2687,6 +2687,9 @@ function initPlanningPage() {
   window.addEventListener("besa:planning-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
   });
+  window.addEventListener("besa:comp-diensttypes-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
 }
 
 initPlanningPage();

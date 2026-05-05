@@ -165,6 +165,12 @@
     } catch (e) {
       console.warn("saveRows", e);
     }
+    if (window.verzuimDB && typeof window.verzuimDB.pushType === "function") {
+      var type = key === STORAGE_LANG ? "lang" : (key === STORAGE_KORT ? "kort" : null);
+      if (type) {
+        try { window.verzuimDB.pushType(type, arr); } catch (e) { /* */ }
+      }
+    }
   }
 
   var rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
@@ -744,4 +750,14 @@
   }
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de caches
+  // ververst (lang + kort).
+  window.addEventListener("besa:verzuim-updated", function () {
+    try {
+      rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
+      rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
+      render();
+    } catch (e) { /* */ }
+  });
 })();

@@ -1075,4 +1075,10 @@
   });
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst (bv. eerste page-load op een nieuwe browser).
+  window.addEventListener("besa:salarishuis-updated", function () {
+    try { render(); } catch (e) { /* */ }
+  });
 })();

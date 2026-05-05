@@ -124,6 +124,9 @@
     } catch (e) {
       console.warn("saveRows feestdagen:", e);
     }
+    if (window.compFeestdagenDB && typeof window.compFeestdagenDB.pushAll === "function") {
+      try { window.compFeestdagenDB.pushAll(allRows); } catch (e) { /* */ }
+    }
   }
 
   var allRows = loadRows();
@@ -616,4 +619,13 @@
   });
 
   render();
+
+  // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
+  // ververst.
+  window.addEventListener("besa:comp-feestdagen-updated", function () {
+    try {
+      allRows = loadRows();
+      render();
+    } catch (e) { /* */ }
+  });
 })();

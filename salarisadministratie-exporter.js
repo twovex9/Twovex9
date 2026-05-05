@@ -131,6 +131,9 @@
     try {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(list || []));
     } catch {}
+    if (window.saladminDB && typeof window.saladminDB.pushHistory === "function") {
+      try { window.saladminDB.pushHistory(list || []); } catch (e) { /* */ }
+    }
   }
 
   function downloadText(filename, text, mime) {
@@ -472,6 +475,9 @@
       try {
         localStorage.setItem(ORT_KEY, JSON.stringify(data));
       } catch (e) {}
+      if (window.saladminDB && typeof window.saladminDB.pushOrt === "function") {
+        try { window.saladminDB.pushOrt(data); } catch (e) { /* */ }
+      }
     }
 
     function ortTijdLabel(start, end) {
@@ -657,4 +663,10 @@
   setMainTab(window.location.hash === "#ort" ? "ort" : "export");
   renderValidation();
   renderHistory();
+
+  // Re-render zodra de Supabase-bootstrap de cache heeft gevuld (eerste page-
+  // load op een nieuwe browser).
+  window.addEventListener("besa:saladmin-updated", function () {
+    try { renderHistory(); } catch (e) { /* */ }
+  });
 })();

@@ -78,4 +78,7 @@
   window.addEventListener("storage", function (e) {
     if (e.key === "hr_salarishuis_wijzigingen_v1") render();
   });
+
+  // Re-render zodra de Supabase-bootstrap of een log-actie de cache ververst.
+  window.addEventListener("besa:salarishuis-updated", render);
 })();
