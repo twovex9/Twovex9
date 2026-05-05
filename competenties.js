@@ -1,30 +1,15 @@
-const STORAGE_KEY = "competenties";
-
-function genId() {
-  return "comp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-}
-
-function getCompetencies() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    let changed = false;
-    list.forEach(c => { if (!c.id) { c.id = genId(); changed = true; } });
-    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return list;
-  } catch { return []; }
-}
-
-function saveCompetencies(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-function deleteCompetency(id) {
-  if (!id) return false;
-  const list = getCompetencies().filter((c) => c.id !== id);
-  saveCompetencies(list);
-  return true;
-}
+/**
+ * Competenties — lijstpagina (HR module).
+ *
+ * Data-toegang: alle reads gaan via window.competentiesDB.getAllSync()
+ * (synchrone read uit cache). Alle writes (toevoegen, archiveren, herstellen,
+ * verwijderen) gaan via de async API van window.competentiesDB en worden
+ * door die module ook in Supabase weggeschreven.
+ *
+ * Het re-renderen na een externe update (bv. wanneer bootstrap de cache vult
+ * vanuit Supabase, of een andere tab een wijziging maakt) gebeurt via het
+ * "besa:competenties-updated" event op `window`.
+ */
 
 function fmtDate(iso) {
   if (!iso) return "";
@@ -35,6 +20,19 @@ function fmtDate(iso) {
   const hh = String(d.getHours()).padStart(2, "0");
   const mi = String(d.getMinutes()).padStart(2, "0");
   return `${dd}-${mm}-${yy} ${hh}:${mi}`;
+}
+
+function getCompetenciesCached() {
+  if (window.competentiesDB && typeof window.competentiesDB.getAllSync === "function") {
+    return window.competentiesDB.getAllSync();
+  }
+  // Fallback voor het onwaarschijnlijke geval dat de data-laag niet laadt:
+  // lees direct uit localStorage met dezelfde shape.
+  try {
+    const raw = localStorage.getItem("competenties");
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch (e) { return []; }
 }
 
 function countMedewerkers(compNaam) {
@@ -64,10 +62,10 @@ function countMedewerkers(compNaam) {
 
   function getFilteredCompetencies() {
     const showArchived = archivedToggle ? archivedToggle.checked : false;
-    let items = getCompetencies().filter((c) => (showArchived ? c.archived === true : !c.archived));
+    let items = getCompetenciesCached().filter((c) => (showArchived ? c.archived === true : !c.archived));
     const query = (searchInput?.value || "").trim().toLowerCase();
     if (query) {
-      items = items.filter((c) => c.naam.toLowerCase().includes(query));
+      items = items.filter((c) => (c.naam || "").toLowerCase().includes(query));
     }
 
     if (sortKey) {
@@ -89,6 +87,19 @@ function countMedewerkers(compNaam) {
     return items;
   }
 
+  function renderEmptyState(message) {
+    tbody.innerHTML = "";
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 6;
+    td.textContent = message;
+    td.style.textAlign = "center";
+    td.style.padding = "24px";
+    td.style.color = "#9ca3af";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+
   function render() {
     const items = getFilteredCompetencies();
 
@@ -101,15 +112,7 @@ function countMedewerkers(compNaam) {
 
     tbody.innerHTML = "";
     if (page.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 6;
-      td.textContent = "Geen competenties gevonden";
-      td.style.textAlign = "center";
-      td.style.padding = "24px";
-      td.style.color = "#9ca3af";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
+      renderEmptyState("Geen competenties gevonden");
     } else {
       page.forEach((c) => {
         const tr = document.createElement("tr");
@@ -192,6 +195,21 @@ function countMedewerkers(compNaam) {
     if (checkAll) checkAll.checked = false;
   }
 
+  // Eerste render: gebruik wat in de cache staat. Daarna dispatcht
+  // competenties-data.js het update-event zodra Supabase-data binnen is,
+  // waarna we opnieuw renderen.
+  function initialRender() {
+    if (getCompetenciesCached().length === 0) {
+      renderEmptyState("Competenties worden geladen…");
+    } else {
+      render();
+    }
+  }
+
+  window.addEventListener("besa:competenties-updated", () => {
+    render();
+  });
+
   // Pagination
   ["first", "prev", "next", "last"].forEach((action) => {
     const btn = document.getElementById("comp-pager-" + action);
@@ -211,7 +229,6 @@ function countMedewerkers(compNaam) {
   if (searchInput) searchInput.addEventListener("input", () => { currentPage = 0; render(); });
   if (archivedToggle) archivedToggle.addEventListener("change", () => { currentPage = 0; render(); });
 
-  // Column toggle (same pattern as index.html)
   const columnsBtn = document.getElementById("columns-menu-btn");
   const columnsPanel = document.getElementById("columns-panel");
 
@@ -256,7 +273,6 @@ function countMedewerkers(compNaam) {
     document.querySelectorAll(".th-sort-menu").forEach((m) => m.setAttribute("hidden", ""));
   });
 
-  // Sort menus
   document.querySelectorAll(".th-sort-trigger").forEach((trigger) => {
     trigger.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -293,14 +309,13 @@ function countMedewerkers(compNaam) {
     });
   });
 
-  // Check all
   if (checkAll) {
     checkAll.addEventListener("change", () => {
       tbody.querySelectorAll(".comp-row-check").forEach((cb) => { cb.checked = checkAll.checked; });
     });
   }
 
-  // Add competentie modal
+  // ── Add competentie modal ──
   const addBtn = document.getElementById("comp-add-btn");
   const addModal = document.getElementById("comp-add-modal");
   const addCloseBtn = document.getElementById("comp-add-close-btn");
@@ -316,21 +331,28 @@ function countMedewerkers(compNaam) {
   if (addModal) addModal.addEventListener("click", (e) => { if (e.target === addModal) closeAddModal(); });
 
   if (addForm) {
-    addForm.addEventListener("submit", (e) => {
+    addForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const naam = document.getElementById("comp-add-naam")?.value?.trim();
+      const naamInput = document.getElementById("comp-add-naam");
+      const naam = naamInput?.value?.trim();
       if (!naam) return;
-      const list = getCompetencies();
-      const now = new Date().toISOString();
-      list.push({ id: genId(), naam, aanmaakdatum: now, laatstGewijzigd: now, archived: false });
-      saveCompetencies(list);
-      document.getElementById("comp-add-naam").value = "";
-      closeAddModal();
-      render();
+      const submitBtn = addForm.querySelector('[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        await window.competentiesDB.add(naam);
+        if (naamInput) naamInput.value = "";
+        closeAddModal();
+        // render() wordt aangeroepen via het besa:competenties-updated event
+      } catch (err) {
+        console.error("Toevoegen mislukt:", err);
+        alert("Toevoegen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
   }
 
-  // Delete modal
+  // ── Archive modal ──
   const delModal = document.getElementById("comp-delete-modal");
   const delSlider = document.getElementById("comp-delete-slider");
   const delConfirmBtn = document.getElementById("comp-delete-confirm-btn");
@@ -338,8 +360,8 @@ function countMedewerkers(compNaam) {
   const delCloseBtn = document.getElementById("comp-delete-close-btn");
   const delPreview = document.getElementById("comp-delete-preview");
   let deleteTarget = null;
-  let deleteTargetNaam = "";
 
+  // ── Purge (definitief verwijderen) modal ──
   const cpModal = document.getElementById("comp-purge-modal");
   const cpSlider = document.getElementById("comp-purge-slider");
   const cpConfirmBtn = document.getElementById("comp-purge-confirm-btn");
@@ -362,7 +384,6 @@ function countMedewerkers(compNaam) {
 
   function openDeleteModal(id, naam) {
     deleteTarget = id;
-    deleteTargetNaam = naam;
     if (delPreview) delPreview.textContent = naam;
     resetDelSlider();
     if (delModal) { delModal.removeAttribute("hidden"); delModal.setAttribute("aria-hidden", "false"); }
@@ -371,7 +392,6 @@ function countMedewerkers(compNaam) {
   function closeDeleteModal() {
     if (delModal) { delModal.setAttribute("hidden", ""); delModal.setAttribute("aria-hidden", "true"); }
     deleteTarget = null;
-    deleteTargetNaam = "";
     resetDelSlider();
     if (delPreview) delPreview.textContent = "";
   }
@@ -386,62 +406,62 @@ function countMedewerkers(compNaam) {
   }
 
   function resetCompPurgeSlider() {
-    if (cpSlider) {
-      cpSlider.value = "0";
-      syncCompPurgeSlider();
-    }
+    if (cpSlider) { cpSlider.value = "0"; syncCompPurgeSlider(); }
   }
 
   function openCompPurgeModal(id, naam) {
     compPurgeTarget = id;
     if (cpPreview) cpPreview.textContent = naam;
     resetCompPurgeSlider();
-    if (cpModal) {
-      cpModal.removeAttribute("hidden");
-      cpModal.setAttribute("aria-hidden", "false");
-    }
+    if (cpModal) { cpModal.removeAttribute("hidden"); cpModal.setAttribute("aria-hidden", "false"); }
   }
 
   function closeCompPurgeModal() {
-    if (cpModal) {
-      cpModal.setAttribute("hidden", "");
-      cpModal.setAttribute("aria-hidden", "true");
-    }
+    if (cpModal) { cpModal.setAttribute("hidden", ""); cpModal.setAttribute("aria-hidden", "true"); }
     compPurgeTarget = null;
     resetCompPurgeSlider();
     if (cpPreview) cpPreview.textContent = "";
   }
 
-  function confirmCompPurge() {
+  async function confirmCompPurge() {
     if (!compPurgeTarget || (cpConfirmBtn && cpConfirmBtn.disabled)) return;
-    deleteCompetency(compPurgeTarget);
-    closeCompPurgeModal();
-    render();
+    const target = compPurgeTarget;
+    if (cpConfirmBtn) cpConfirmBtn.disabled = true;
+    try {
+      await window.competentiesDB.delete(target);
+      closeCompPurgeModal();
+    } catch (err) {
+      console.error("Verwijderen mislukt:", err);
+      alert("Verwijderen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (cpConfirmBtn) cpConfirmBtn.disabled = false;
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleteTarget || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    const now = new Date().toISOString();
-    const list = getCompetencies().map((c) =>
-      c.id === deleteTarget ? { ...c, archived: true, laatstGewijzigd: now } : c
-    );
-    saveCompetencies(list);
-    closeDeleteModal();
-    render();
+    const target = deleteTarget;
+    if (delConfirmBtn) delConfirmBtn.disabled = true;
+    try {
+      await window.competentiesDB.archive(target);
+      closeDeleteModal();
+    } catch (err) {
+      console.error("Archiveren mislukt:", err);
+      alert("Archiveren mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (delConfirmBtn) delConfirmBtn.disabled = false;
+    }
   }
 
-  tbody.addEventListener("click", (e) => {
+  tbody.addEventListener("click", async (e) => {
     const resCmp = e.target.closest(".hr-restore-btn");
     if (resCmp && resCmp.getAttribute("data-comp-id")) {
       e.preventDefault();
       e.stopPropagation();
       const ridc = resCmp.getAttribute("data-comp-id");
-      const nowC = new Date().toISOString();
-      const lstC = getCompetencies().map((c) =>
-        c.id === ridc ? { ...c, archived: false, laatstGewijzigd: nowC } : c
-      );
-      saveCompetencies(lstC);
-      render();
+      try { await window.competentiesDB.restore(ridc); }
+      catch (err) {
+        console.error("Herstel mislukt:", err);
+        alert("Herstellen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      }
       return;
     }
     const purC = e.target.closest(".comp-purge-btn");
@@ -522,5 +542,5 @@ function countMedewerkers(compNaam) {
     });
   });
 
-  render();
+  initialRender();
 })();
