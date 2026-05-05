@@ -1666,17 +1666,23 @@ h1 {
   border-radius: var(--r-sm);
 }
 
+/* Default: label en sorteer-pijltjes staan dicht tegen elkaar (links uitgelijnd).
+   Eerder stond hier 'justify-content: space-between' + 'flex: 1' op het label,
+   waardoor de pijltjes naar de rechterrand van de kolom werden geduwd zodra
+   de kolom breder was dan de titel — wat een lelijk gat tussen titel en
+   pijltjes opleverde. Right-aligned kolommen (zoals BEDRAG) overschrijven
+   dit met 'justify-content: flex-end' op hun eigen th-sort-inner. */
 .th-sort-inner {
   position: relative;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 6px;
   width: 100%;
 }
 
 .th-sort .th-label {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
