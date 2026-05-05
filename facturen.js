@@ -68,6 +68,37 @@
   }
   var factArchived = loadStrArrLS(LS_FACT_ARCHIVED);
   var factPurged = loadStrArrLS(LS_FACT_PURGED);
+
+  // Bouw raw + factArchived opnieuw op uit (mogelijk vernieuwde) FACTUREN_BULK.
+  // Wordt aangeroepen na "besa:facturen-updated" — als facturen-data.js
+  // de Supabase-data in window.FACTUREN_BULK heeft gezet.
+  function rebuildFromBulk() {
+    var bb = (typeof FACTUREN_BULK !== "undefined" && Array.isArray(FACTUREN_BULK)) ? FACTUREN_BULK : [];
+    raw = bb.slice();
+    try {
+      var supL2 = localStorage.getItem(LS_FACT_SUPP);
+      if (supL2) {
+        var supA2 = JSON.parse(supL2);
+        if (Array.isArray(supA2)) {
+          for (var sx2 = 0; sx2 < supA2.length; sx2 += 1) {
+            var s2 = supA2[sx2];
+            if (s2 && typeof s2 === "object") {
+              s2.fromSupp = true;
+              if (!s2.id) s2.id = "fslg-" + sx2 + "-" + (s2.fn || "") + "x" + (s2.client || "");
+              var dupExists = false;
+              for (var dx = 0; dx < raw.length; dx += 1) {
+                if (raw[dx] && raw[dx].id === s2.id) { dupExists = true; break; }
+              }
+              if (!dupExists) raw.push(s2);
+            }
+          }
+        }
+      }
+    } catch (eRb) { /* */ }
+    // Sync factArchived uit r.archived (Supabase is bron-van-waarheid).
+    factArchived = raw.filter(function (r) { return r && r.archived; }).map(factRowKey);
+  }
+
   (function migrateFactHiddenToArchived() {
     try {
       var o = localStorage.getItem(LS_FACT_HIDDEN);
@@ -1253,6 +1284,13 @@
     }
     raw.push(newRow);
     saveFactSuppList();
+    // Schrijf de nieuwe factuur ook door naar Supabase. Fire-and-forget;
+    // bij succes wordt het record vervangen via "besa:facturen-updated".
+    if (window.facturenDB && typeof window.facturenDB.add === "function") {
+      window.facturenDB.add(newRow).catch(function (err) {
+        console.error("[facturenDB] add (modal) sync mislukt:", err);
+      });
+    }
     closeFactAddModal();
     if (typeof showSaveModal === "function") showSaveModal("Factuur is toegevoegd.");
     else showToast("Factuur toegevoegd.");
@@ -1277,11 +1315,31 @@
     return out;
   }
 
+  // Helper: haal het echte database-id uit een factRowKey ("id:f_0001" → "f_0001").
+  function factKeyToId(k) {
+    if (!k) return null;
+    if (typeof k === "string" && k.indexOf("id:") === 0) return k.slice(3);
+    return null;
+  }
+
+  function syncFactToDb(method, id) {
+    if (!id) return;
+    if (!window.facturenDB || typeof window.facturenDB[method] !== "function") return;
+    window.facturenDB[method](id).catch(function (err) {
+      console.error("[facturenDB] " + method + " sync mislukt:", err);
+    });
+  }
+
   function factRestoreKey(k) {
     if (!k) return;
     if (factArchived.indexOf(k) === -1) return;
     factArchived = factArchived.filter(function (x) { return x !== k; });
     saveFactArchived();
+    // Update lokale raw record archived flag + sync naar DB
+    for (var i = 0; i < raw.length; i += 1) {
+      if (raw[i] && factRowKey(raw[i]) === k) { raw[i].archived = false; break; }
+    }
+    syncFactToDb("restore", factKeyToId(k));
   }
 
   function performFactArchive(keyList) {
@@ -1290,6 +1348,10 @@
       var k0 = keyList[q];
       if (!k0) continue;
       if (factArchived.indexOf(k0) === -1) factArchived.push(k0);
+      for (var ri = 0; ri < raw.length; ri += 1) {
+        if (raw[ri] && factRowKey(raw[ri]) === k0) { raw[ri].archived = true; break; }
+      }
+      syncFactToDb("archive", factKeyToId(k0));
     }
     saveFactArchived();
     return keyList.length;
@@ -1308,9 +1370,14 @@
         if (raw[i] && factRowKey(raw[i]) === kTarget) { rF = raw[i]; break; }
       }
       if (!rF) continue;
+      // Ongeacht supp/base: hard delete in Supabase als het een DB-id heeft.
+      var dbId = factKeyToId(kTarget);
+      if (dbId) syncFactToDb("delete", dbId);
       if (rF.fromSupp) {
         raw = raw.filter(function (x) { return !x || factRowKey(x) !== kTarget; });
       } else {
+        // Lokaal verbergen via factPurged-array (DB-call regelt de
+        // permanente verwijdering; bij volgende refresh is de rij weg).
         if (factPurged.indexOf(kTarget) === -1) factPurged.push(kTarget);
       }
     }
@@ -1482,4 +1549,18 @@
   if (__FP) {
     window.__bdtlFactRerender = function () { currentPage = 0; render(); };
   }
+
+  // Wanneer facturen-data.js de Supabase-data heeft binnengehaald (of bij een
+  // externe wijziging), bouw `raw` opnieuw op uit FACTUREN_BULK en re-render.
+  // Dit zorgt dat een nieuwe gebruiker (lege localStorage) toch direct alle
+  // 956+ facturen ziet, en dat archive/purge-acties op andere tabs doorkomen.
+  window.addEventListener("besa:facturen-updated", function () {
+    rebuildFromBulk();
+    // factPurged wordt bij refresh gewist: hard-deleted records zijn al weg
+    // uit FACTUREN_BULK, dus de purge-flag is overbodig.
+    factPurged = [];
+    try { localStorage.setItem(LS_FACT_PURGED, "[]"); } catch (e) { /* */ }
+    currentPage = 0;
+    render();
+  });
 })();
