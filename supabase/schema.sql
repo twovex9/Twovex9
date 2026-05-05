@@ -184,7 +184,7 @@ create policy "anon kan opleidingen verwijderen"
 --   on public.opleidingen for delete to authenticated using (true);
 
 -- ============================================================================
--- zorgsoorten (Cliënten module — referentiedata)
+-- zorgsoorten (Cli�nten module ? referentiedata)
 -- ============================================================================
 
 create table if not exists public.zorgsoorten (
@@ -254,7 +254,7 @@ where not exists (
 );
 
 -- ============================================================================
--- bureaus (HR module — referentiedata)
+-- bureaus (HR module ? referentiedata)
 -- ============================================================================
 
 create table if not exists public.bureaus (
@@ -323,7 +323,7 @@ where not exists (
 );
 
 -- ============================================================================
--- locaties (HR module — referentiedata met adres + kleur)
+-- locaties (HR module ? referentiedata met adres + kleur)
 -- ============================================================================
 
 create table if not exists public.locaties (
@@ -401,7 +401,7 @@ select * from (values
 where not exists (select 1 from public.locaties);
 
 -- ============================================================================
--- gemeenten (Cliënten module — referentiedata, ~224 NL gemeenten)
+-- gemeenten (Cli�nten module ? referentiedata, ~224 NL gemeenten)
 -- ============================================================================
 
 create table if not exists public.gemeenten (
@@ -488,7 +488,7 @@ from unnest(array[
   'Midden-Groningen','Mill en Sint Hubert','Moerdijk','Molenlanden','Montferland',
   'Montfoort','Mook en Middelaar',
   'Neder-Betuwe','Nederweert','Nieuwegein','Nieuwkoop','Nijkerk','Nijmegen',
-  'Nissewaard','Noardeast-Fryslân','Noord-Beveland','Noordenveld','Noordoostpolder',
+  'Nissewaard','Noardeast-Frysl�n','Noord-Beveland','Noordenveld','Noordoostpolder',
   'Noordwijk','Nuenen, Gerwen en Nederwetten','Nunspeet',
   'Oegstgeest','Oirschot','Oisterwijk','Oldambt','Oldebroek','Oldenzaal','Olst-Wijhe',
   'Ommen','Oost Gelre','Oostzaan','Opsterland','Oss','Oude IJsselstreek','Overbetuwe',
@@ -496,7 +496,7 @@ from unnest(array[
   'Raalte','Renkum','Renswoude','Reusel-De Mierden','Rheden','Ridderkerk','Rijswijk',
   'Roerdalen','Roosendaal','Rozendaal',
   'Schagen','Schoolder','SED Stede Broec','Sliedrecht','Soest','Someren',
-  'Son en Breugel','Stadskanaal','Steenbergen','Stein','Súdwest-Fryslân',
+  'Son en Breugel','Stadskanaal','Steenbergen','Stein','S�dwest-Frysl�n',
   'Terschelling','Texel','Tiel','Twenterand',
   'Uitgeest','Utrecht',
   'Valkenswaard','Veendam','Velsen/Kennemerland','Venlo','Vianen','Vlaardingen','Vlagtwedde',
@@ -591,7 +591,7 @@ where not exists (
 );
 
 -- ============================================================================
--- medewerkers (HR module — master entity)
+-- medewerkers (HR module ? master entity)
 -- ============================================================================
 --
 -- Pragmatische opzet: een paar zoekvelden expliciet als kolom (voor snelle
@@ -658,7 +658,7 @@ create policy "anon kan medewerkers verwijderen"
 -- Geen seed-data: medewerkers worden door de gebruiker in de UI aangemaakt.
 
 -- ============================================================================
--- clienten (Cliënten module — master entity)
+-- clienten (Cli�nten module ? master entity)
 -- ============================================================================
 --
 -- ID is text (geen uuid) zodat bestaande IDs als 'cl_342' blijven werken in
@@ -727,7 +727,7 @@ create policy "anon kan clienten verwijderen"
 -- create policy "ingelogd kan clienten verwijderen"
 --   on public.clienten for delete to authenticated using (true);
 
--- Seed van 85 cliënten. Idempotent: alleen invoegen als de id nog niet bestaat.
+-- Seed van 85 cli�nten. Idempotent: alleen invoegen als de id nog niet bestaat.
 insert into public.clienten (id, voornaam, achternaam, clientnummer, locatie, fase, gemeente, organisatie)
 select t.id, t.voornaam, t.achternaam, t.clientnummer, t.locatie, t.fase, t.gemeente, t.organisatie
 from (values
@@ -774,11 +774,11 @@ from (values
   ('cl_21','Jason','Beltzer',21,'Voorburggracht','uit zorg','Dijk en Waard',''),
   ('cl_246','Albina','Zeneli',246,'Voorburggracht','uit zorg','Dijk en Waard',''),
   ('cl_279','Elize','Jongebloed',279,'Magdalenenstraat','in zorg','Alkmaar',''),
-  ('cl_172','Noëlla','Duijvestijn',172,'Breedstraat','in zorg','Castricum',''),
+  ('cl_172','No�lla','Duijvestijn',172,'Breedstraat','in zorg','Castricum',''),
   ('cl_171','Jay','Stevens',171,'Varnebroek','in zorg','Heiloo',''),
   ('cl_275','Danielle','Lamping',275,'Varnebroek','in zorg','Dijk en Waard',''),
   ('cl_293','Eliza','Zwart',293,'Breedstraat','in zorg','Heiloo',''),
-  ('cl_259','Roël','Spiering',259,'Varnebroek','uit zorg','Uitgeest',''),
+  ('cl_259','Ro�l','Spiering',259,'Varnebroek','uit zorg','Uitgeest',''),
   ('cl_165','Cloe','Brown',165,'Varnebroek','in zorg','Castricum',''),
   ('cl_268','Jay Arnold','Buter',268,'Varnebroek','uit zorg','Dijk en Waard',''),
   ('cl_291','Jorgia','Schoenmaker',291,'Magdalenenstraat','in zorg','Zaanstad',''),
@@ -818,14 +818,14 @@ where not exists (
 
 
 -- ============================================================================
--- beschikkingen (Cliënten module — master entity)
+-- beschikkingen (Cli�nten module ? master entity)
 -- ============================================================================
 --
 -- Soft FK naar clienten via client_id (text). Geen harde FK constraint, want we
--- willen legacy "test"-IDs (cl_99999, cl_99820, …) kunnen behouden zonder de
+-- willen legacy "test"-IDs (cl_99999, cl_99820, ?) kunnen behouden zonder de
 -- referentie te breken. Lookups gaan via cache (clienten-data.js).
 --
--- Veel van de financiële velden zijn explicit numeric kolommen voor snelle
+-- Veel van de financi�le velden zijn explicit numeric kolommen voor snelle
 -- aggregaties (dashboard). Overige meta gaat in 'data jsonb'.
 
 create table if not exists public.beschikkingen (
@@ -897,8 +897,8 @@ create policy "anon kan beschikkingen verwijderen"
 --   on public.beschikkingen for delete to authenticated using (true);
 
 -- Seed van 100 beschikkingen (uit beschikkingen-besc-bulk.js v2). Idempotent
--- via "on conflict do nothing"; cliëntlabels worden at-runtime opgehaald uit
--- de clienten-cache (clienten-data.js → data.clientLabelOverride als override).
+-- via "on conflict do nothing"; cli�ntlabels worden at-runtime opgehaald uit
+-- de clienten-cache (clienten-data.js ? data.clientLabelOverride als override).
 insert into public.beschikkingen (
   id, client_id, naam, zorgsoort_key, fase, start_iso, eind_iso,
   tarief_eur, tarief_eenheid, decl_meth, te_declareren_lm,
@@ -960,7 +960,7 @@ values
   ('b_besc_053', 'cl_199', 'WLZ indicatie Phabek 13 u / week', 'wlz', 'actief', '2024-12-31', '2025-12-31', 77, 'uur', 'WLZ', 0, 12037.41, 'betaald', '2024-12', '{"clientLabelOverride":"Phabek Mityaniq"}'::jsonb),
   ('b_besc_054', 'cl_196', 'WLZ 7.5 u / week', 'wlz', 'actief', '2024-12-29', '2025-12-29', 77, 'uur', 'WLZ', 0, 5082, 'betaald', '2024-12', '{}'::jsonb),
   ('b_besc_055', 'cl_318', 'verblijf en behandeling', 'veb', 'actief', '2025-10-03', '2026-04-02', 357.84, 'dag', 'ONS', 715.68, 20543.71, 'betaald', '2025-10', '{}'::jsonb),
-  ('b_besc_056', 'cl_99999', 'Test beschikking', 'amb', 'actief', '2024-12-31', '2025-11-26', 10, 'uur', 'Handmatig', 0, 0, 'betaald', '2024-12', '{"clientLabelOverride":"Test Cliënt"}'::jsonb),
+  ('b_besc_056', 'cl_99999', 'Test beschikking', 'amb', 'actief', '2024-12-31', '2025-11-26', 10, 'uur', 'Handmatig', 0, 0, 'betaald', '2024-12', '{"clientLabelOverride":"Test Cli�nt"}'::jsonb),
   ('b_besc_057', 'cl_317', 'Verblijf en behandeling', 'veb', 'actief', '2025-09-23', '2026-04-06', 357.84, 'dag', 'ONS', 2147.04, 20692.56, 'betaald', '2025-09', '{}'::jsonb),
   ('b_besc_058', 'cl_261', 'youz', 'veb', 'verlopen', '2024-07-01', '2025-10-03', 513.28, 'dag', 'Handmatig', 0, 0, 'outstanding', '2024-07', '{"clientLabelOverride":"Lucas Kortenhoeven"}'::jsonb),
   ('b_besc_059', 'cl_209', 'Verblijf en behandeling', 'veb', 'actief', NULL, NULL, 0, 'dag', 'Handmatig', 0, 0, 'betaald', NULL, '{}'::jsonb),
@@ -1009,7 +1009,7 @@ on conflict (id) do nothing;
 
 
 -- ============================================================================
--- facturen (Cliënten module — master entity, soft FK naar clienten)
+-- facturen (Cli�nten module ? master entity, soft FK naar clienten)
 -- ============================================================================
 --
 -- De source data komt uit facturen-bulk.js (956 records). Velden worden 1-op-1
@@ -1126,11 +1126,11 @@ values
   ('f_0041', '202500293', 'WLZ', 'Jason Beltzer', 'cl_21', '21', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 56009.51),
   ('f_0042', '202500300', 'Ambulant', 'Albina Zeneli', 'cl_246', '246', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 83931.64),
   ('f_0043', '202500307', 'Fasewonen', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2021 - 31 juli 2021', '7 mrt 2025', 'Betaald', 13923.34),
-  ('f_0044', '202500314', 'verblijf', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 41882.96),
+  ('f_0044', '202500314', 'verblijf', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 41882.96),
   ('f_0045', '202500321', 'Gecombineerd', 'Jay Stevens', 'cl_171', '171', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 70780.57),
   ('f_0046', '202500328', 'Verblijf en behandeling', 'Danielle Lamping', 'cl_275', '275', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 1615.2),
   ('f_0047', '202500335', 'ambulant en verblijf', 'Eliza Zwart', 'cl_293', '293', '1 juli 2023 - 31 juli 2023', '2 mrt 2025', 'Betaald', 30571.98),
-  ('f_0048', '202500342', 'fasewonen', 'Roël Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 59356.1),
+  ('f_0048', '202500342', 'fasewonen', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 59356.1),
   ('f_0049', '202500349', 'fasehuis', 'Cloe Brown', 'cl_165', '165', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 87348.7),
   ('f_0050', '202500356', 'verblijf en behandeling', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 18182.36),
   ('f_0051', '202500363', 'verblijf vanaf 7 november', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 60007.03),
@@ -1206,11 +1206,11 @@ values
   ('f_0121', '202500853', 'verblijf', 'Jason Beltzer', 'cl_21', '21', '1 januari 2021 - 31 januari 2021', '9 mrt 2025', 'Betaald', 96556.96),
   ('f_0122', '202500860', 'Gecombineerd', 'Albina Zeneli', 'cl_246', '246', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 60065.93),
   ('f_0123', '202500867', 'Verblijf en behandeling', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 31076.85),
-  ('f_0124', '202500874', 'ambulant en verblijf', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '2 mrt 2025', 'Betaald', 3119.85),
+  ('f_0124', '202500874', 'ambulant en verblijf', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '2 mrt 2025', 'Betaald', 3119.85),
   ('f_0125', '202500881', 'fasewonen', 'Jay Stevens', 'cl_171', '171', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 73224.86),
   ('f_0126', '202500888', 'fasehuis', 'Danielle Lamping', 'cl_275', '275', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 43392.85),
   ('f_0127', '202500895', 'verblijf en behandeling', 'Eliza Zwart', 'cl_293', '293', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 14438.69),
-  ('f_0128', '202500902', 'verblijf vanaf 7 november', 'Roël Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 84657.19),
+  ('f_0128', '202500902', 'verblijf vanaf 7 november', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 84657.19),
   ('f_0129', '202500909', 'WLZ', 'Cloe Brown', 'cl_165', '165', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 56667.21),
   ('f_0130', '202500916', 'Ambulant', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 26836.17),
   ('f_0131', '202500923', 'Fasewonen', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 84014.12),
@@ -1286,11 +1286,11 @@ values
   ('f_0201', '202501413', 'ambulant en verblijf', 'Jason Beltzer', 'cl_21', '21', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 43682.59),
   ('f_0202', '202501420', 'fasewonen', 'Albina Zeneli', 'cl_246', '246', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 19525),
   ('f_0203', '202501427', 'fasehuis', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 89535.92),
-  ('f_0204', '202501434', 'verblijf en behandeling', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 61578.92),
+  ('f_0204', '202501434', 'verblijf en behandeling', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 61578.92),
   ('f_0205', '202501441', 'verblijf vanaf 7 november', 'Jay Stevens', 'cl_171', '171', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 32683.93),
   ('f_0206', '202501448', 'WLZ', 'Danielle Lamping', 'cl_275', '275', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 2851.92),
   ('f_0207', '202501455', 'Ambulant', 'Eliza Zwart', 'cl_293', '293', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 72897.76),
-  ('f_0208', '202501462', 'Fasewonen', 'Roël Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 44116.26),
+  ('f_0208', '202501462', 'Fasewonen', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 44116.26),
   ('f_0209', '202501469', 'verblijf', 'Cloe Brown', 'cl_165', '165', '1 januari 2023 - 31 januari 2023', '16 mrt 2025', 'Betaald', 16126.28),
   ('f_0210', '202501476', 'Gecombineerd', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 85295.24),
   ('f_0211', '202501483', 'Verblijf en behandeling', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 43473.19),
@@ -1366,11 +1366,11 @@ values
   ('f_0281', '202501973', 'verblijf en behandeling', 'Jason Beltzer', 'cl_21', '21', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 76965.55),
   ('f_0282', '202501980', 'verblijf vanaf 7 november', 'Albina Zeneli', 'cl_246', '246', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 80106.84),
   ('f_0283', '202501987', 'WLZ', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 51117.76),
-  ('f_0284', '202501994', 'Ambulant', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 23160.76),
+  ('f_0284', '202501994', 'Ambulant', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 23160.76),
   ('f_0285', '202502001', 'Fasewonen', 'Jay Stevens', 'cl_171', '171', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 93265.77),
   ('f_0286', '202502008', 'verblijf', 'Danielle Lamping', 'cl_275', '275', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 63433.76),
   ('f_0287', '202502015', 'Gecombineerd', 'Eliza Zwart', 'cl_293', '293', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 34479.6),
-  ('f_0288', '202502022', 'Verblijf en behandeling', 'Roël Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 5698.1),
+  ('f_0288', '202502022', 'Verblijf en behandeling', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 5698.1),
   ('f_0289', '202502029', 'ambulant en verblijf', 'Cloe Brown', 'cl_165', '165', '1 januari 2021 - 31 januari 2021', '23 mrt 2025', 'Betaald', 76708.12),
   ('f_0290', '202502036', 'fasewonen', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 46877.08),
   ('f_0291', '202502043', 'fasehuis', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 5055.03),
@@ -1446,11 +1446,11 @@ values
   ('f_0361', '202502533', 'Ambulant', 'Jason Beltzer', 'cl_21', '21', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 24091.18),
   ('f_0362', '202502540', 'Fasewonen', 'Albina Zeneli', 'cl_246', '246', '1 april 2023 - 30 april 2023', '1 mrt 2025', 'Betaald', 39565.91),
   ('f_0363', '202502547', 'verblijf', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 10576.83),
-  ('f_0364', '202502554', 'Gecombineerd', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 81619.83),
+  ('f_0364', '202502554', 'Gecombineerd', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 81619.83),
   ('f_0365', '202502561', 'Verblijf en behandeling', 'Jay Stevens', 'cl_171', '171', '1 januari 2023 - 31 januari 2023', '1 mrt 2025', 'Betaald', 52724.84),
   ('f_0366', '202502568', 'ambulant en verblijf', 'Danielle Lamping', 'cl_275', '275', '1 april 2025 - 30 april 2025', '20 mrt 2025', 'Betaald', 22892.83),
   ('f_0367', '202502575', 'fasewonen', 'Eliza Zwart', 'cl_293', '293', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 92938.67),
-  ('f_0368', '202502582', 'fasehuis', 'Roël Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '21 mrt 2025', 'Betaald', 64157.17),
+  ('f_0368', '202502582', 'fasehuis', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '21 mrt 2025', 'Betaald', 64157.17),
   ('f_0369', '202502589', 'verblijf en behandeling', 'Cloe Brown', 'cl_165', '165', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 36167.19),
   ('f_0370', '202502596', 'verblijf vanaf 7 november', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2021 - 30 april 2021', '9 mrt 2025', 'Betaald', 6336.15),
   ('f_0371', '202502603', 'WLZ', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2023 - 31 juli 2023', '21 mrt 2025', 'Betaald', 63514.1),
@@ -1526,11 +1526,11 @@ values
   ('f_0441', '202503093', 'Gecombineerd', 'Jason Beltzer', 'cl_21', '21', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 70216.81),
   ('f_0442', '202503100', 'Verblijf en behandeling', 'Albina Zeneli', 'cl_246', '246', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 98024.98),
   ('f_0443', '202503107', 'ambulant en verblijf', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2023 - 31 juli 2023', '5 mrt 2025', 'Betaald', 69035.9),
-  ('f_0444', '202503114', 'fasewonen', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 41078.9),
+  ('f_0444', '202503114', 'fasewonen', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 41078.9),
   ('f_0445', '202503121', 'fasehuis', 'Jay Stevens', 'cl_171', '171', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 12183.91),
   ('f_0446', '202503128', 'verblijf en behandeling', 'Danielle Lamping', 'cl_275', '275', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 81351.9),
   ('f_0447', '202503135', 'verblijf vanaf 7 november', 'Eliza Zwart', 'cl_293', '293', '1 juli 2025 - 31 juli 2025', '10 mrt 2025', 'Betaald', 52397.74),
-  ('f_0448', '202503142', 'WLZ', 'Roël Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 23616.24),
+  ('f_0448', '202503142', 'WLZ', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 23616.24),
   ('f_0449', '202503149', 'Ambulant', 'Cloe Brown', 'cl_165', '165', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 94626.26),
   ('f_0450', '202503156', 'Fasewonen', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 64795.22),
   ('f_0451', '202503163', 'verblijf', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 22973.17),
@@ -1606,11 +1606,11 @@ values
   ('f_0521', '202503653', 'fasewonen', 'Jason Beltzer', 'cl_21', '21', '1 januari 2023 - 31 januari 2023', '18 mrt 2025', 'Betaald', 17342.44),
   ('f_0522', '202503660', 'fasehuis', 'Albina Zeneli', 'cl_246', '246', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 57484.05),
   ('f_0523', '202503667', 'verblijf en behandeling', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 28494.97),
-  ('f_0524', '202503674', 'verblijf vanaf 7 november', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '23 mrt 2025', 'Betaald', 537.97),
+  ('f_0524', '202503674', 'verblijf vanaf 7 november', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '23 mrt 2025', 'Betaald', 537.97),
   ('f_0525', '202503681', 'WLZ', 'Jay Stevens', 'cl_171', '171', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 70642.98),
   ('f_0526', '202503688', 'Ambulant', 'Danielle Lamping', 'cl_275', '275', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 40810.97),
   ('f_0527', '202503695', 'Fasewonen', 'Eliza Zwart', 'cl_293', '293', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 11856.81),
-  ('f_0528', '202503702', 'verblijf', 'Roël Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 82075.31),
+  ('f_0528', '202503702', 'verblijf', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 82075.31),
   ('f_0529', '202503709', 'Gecombineerd', 'Cloe Brown', 'cl_165', '165', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 54085.33),
   ('f_0530', '202503716', 'Verblijf en behandeling', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 24254.29),
   ('f_0531', '202503723', 'ambulant en verblijf', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 81432.24),
@@ -1686,11 +1686,11 @@ values
   ('f_0601', '202504213', 'verblijf vanaf 7 november', 'Jason Beltzer', 'cl_21', '21', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 63468.07),
   ('f_0602', '202504220', 'WLZ', 'Albina Zeneli', 'cl_246', '246', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 16943.12),
   ('f_0603', '202504227', 'Ambulant', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 86954.04),
-  ('f_0604', '202504234', 'Fasewonen', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 58997.04),
+  ('f_0604', '202504234', 'Fasewonen', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 58997.04),
   ('f_0605', '202504241', 'verblijf', 'Jay Stevens', 'cl_171', '171', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 30102.05),
   ('f_0606', '202504248', 'Gecombineerd', 'Danielle Lamping', 'cl_275', '275', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 270.04),
   ('f_0607', '202504255', 'Verblijf en behandeling', 'Eliza Zwart', 'cl_293', '293', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 70315.88),
-  ('f_0608', '202504262', 'ambulant en verblijf', 'Roël Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 41534.38),
+  ('f_0608', '202504262', 'ambulant en verblijf', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 41534.38),
   ('f_0609', '202504269', 'fasewonen', 'Cloe Brown', 'cl_165', '165', '1 januari 2025 - 31 januari 2025', '12 mrt 2025', 'Betaald', 13544.4),
   ('f_0610', '202504276', 'fasehuis', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 82713.36),
   ('f_0611', '202504283', 'verblijf en behandeling', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 40891.31),
@@ -1766,11 +1766,11 @@ values
   ('f_0681', '202504773', 'Fasewonen', 'Jason Beltzer', 'cl_21', '21', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 96751.03),
   ('f_0682', '202504780', 'verblijf', 'Albina Zeneli', 'cl_246', '246', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 77524.96),
   ('f_0683', '202504787', 'Gecombineerd', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 48535.88),
-  ('f_0684', '202504794', 'Verblijf en behandeling', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 20578.88),
+  ('f_0684', '202504794', 'Verblijf en behandeling', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '-', 'Gedeclareerd en in behandeling', 20578.88),
   ('f_0685', '202504801', 'ambulant en verblijf', 'Jay Stevens', 'cl_171', '171', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 90683.89),
   ('f_0686', '202504808', 'fasewonen', 'Danielle Lamping', 'cl_275', '275', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 60851.88),
   ('f_0687', '202504815', 'fasehuis', 'Eliza Zwart', 'cl_293', '293', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 31897.72),
-  ('f_0688', '202504822', 'verblijf en behandeling', 'Roël Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 3116.22),
+  ('f_0688', '202504822', 'verblijf en behandeling', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 3116.22),
   ('f_0689', '202504829', 'verblijf vanaf 7 november', 'Cloe Brown', 'cl_165', '165', '1 januari 2023 - 31 januari 2023', '19 mrt 2025', 'Betaald', 74126.24),
   ('f_0690', '202504836', 'WLZ', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 44295.2),
   ('f_0691', '202504843', 'Ambulant', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 2473.15),
@@ -1846,11 +1846,11 @@ values
   ('f_0761', '202505333', 'Verblijf en behandeling', 'Jason Beltzer', 'cl_21', '21', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 43876.66),
   ('f_0762', '202505340', 'ambulant en verblijf', 'Albina Zeneli', 'cl_246', '246', '1 april 2025 - 30 april 2025', '22 mrt 2025', 'Betaald', 36984.03),
   ('f_0763', '202505347', 'fasewonen', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 7994.95),
-  ('f_0764', '202505354', 'fasehuis', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 79037.95),
+  ('f_0764', '202505354', 'fasehuis', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 79037.95),
   ('f_0765', '202505361', 'verblijf en behandeling', 'Jay Stevens', 'cl_171', '171', '1 januari 2025 - 31 januari 2025', '22 mrt 2025', 'Betaald', 50142.96),
   ('f_0766', '202505368', 'verblijf vanaf 7 november', 'Danielle Lamping', 'cl_275', '275', '1 april 2021 - 30 april 2021', '16 mrt 2025', 'Betaald', 20310.95),
   ('f_0767', '202505375', 'WLZ', 'Eliza Zwart', 'cl_293', '293', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 90356.79),
-  ('f_0768', '202505382', 'Ambulant', 'Roël Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '17 mrt 2025', 'Betaald', 61575.29),
+  ('f_0768', '202505382', 'Ambulant', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2025 - 31 oktober 2025', '17 mrt 2025', 'Betaald', 61575.29),
   ('f_0769', '202505389', 'Fasewonen', 'Cloe Brown', 'cl_165', '165', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 33585.31),
   ('f_0770', '202505396', 'verblijf', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2023 - 30 april 2023', '5 mrt 2025', 'Betaald', 3754.27),
   ('f_0771', '202505403', 'Gecombineerd', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2025 - 31 juli 2025', '17 mrt 2025', 'Betaald', 60932.22),
@@ -1926,11 +1926,11 @@ values
   ('f_0841', '202505893', 'fasehuis', 'Jason Beltzer', 'cl_21', '21', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 90002.29),
   ('f_0842', '202505900', 'verblijf en behandeling', 'Albina Zeneli', 'cl_246', '246', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 95443.1),
   ('f_0843', '202505907', 'verblijf vanaf 7 november', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2025 - 31 juli 2025', '1 mrt 2025', 'Betaald', 66454.02),
-  ('f_0844', '202505914', 'WLZ', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 38497.02),
+  ('f_0844', '202505914', 'WLZ', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 38497.02),
   ('f_0845', '202505921', 'Ambulant', 'Jay Stevens', 'cl_171', '171', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 9602.03),
   ('f_0846', '202505928', 'Fasewonen', 'Danielle Lamping', 'cl_275', '275', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 78770.02),
   ('f_0847', '202505935', 'verblijf', 'Eliza Zwart', 'cl_293', '293', '1 juli 2021 - 31 juli 2021', '6 mrt 2025', 'Betaald', 49815.86),
-  ('f_0848', '202505942', 'Gecombineerd', 'Roël Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 21034.36),
+  ('f_0848', '202505942', 'Gecombineerd', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2023 - 31 oktober 2023', '-', 'Gedeclareerd en in behandeling', 21034.36),
   ('f_0849', '202505949', 'Verblijf en behandeling', 'Cloe Brown', 'cl_165', '165', '1 januari 2025 - 31 januari 2025', '-', 'Gedeclareerd en in behandeling', 92044.38),
   ('f_0850', '202505956', 'ambulant en verblijf', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 62213.34),
   ('f_0851', '202505963', 'fasewonen', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 20391.29),
@@ -2006,11 +2006,11 @@ values
   ('f_0921', '202506453', 'WLZ', 'Jason Beltzer', 'cl_21', '21', '1 januari 2025 - 31 januari 2025', '2 mrt 2025', 'Betaald', 37127.92),
   ('f_0922', '202506460', 'Ambulant', 'Albina Zeneli', 'cl_246', '246', '1 april 2021 - 30 april 2021', '-', 'Gedeclareerd en in behandeling', 54902.17),
   ('f_0923', '202506467', 'Fasewonen', 'Elize Jongebloed', 'cl_279', '279', '1 juli 2023 - 31 juli 2023', '-', 'Gedeclareerd en in behandeling', 25913.09),
-  ('f_0924', '202506474', 'verblijf', 'Noëlla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '19 mrt 2025', 'Betaald', 96956.09),
+  ('f_0924', '202506474', 'verblijf', 'No�lla Duijvestijn', 'cl_172', '172', '1 oktober 2025 - 31 oktober 2025', '19 mrt 2025', 'Betaald', 96956.09),
   ('f_0925', '202506481', 'Gecombineerd', 'Jay Stevens', 'cl_171', '171', '1 januari 2021 - 31 januari 2021', '-', 'Gedeclareerd en in behandeling', 68061.1),
   ('f_0926', '202506488', 'Verblijf en behandeling', 'Danielle Lamping', 'cl_275', '275', '1 april 2023 - 30 april 2023', '-', 'Gedeclareerd en in behandeling', 38229.09),
   ('f_0927', '202506495', 'ambulant en verblijf', 'Eliza Zwart', 'cl_293', '293', '1 juli 2025 - 31 juli 2025', '-', 'Gedeclareerd en in behandeling', 9274.93),
-  ('f_0928', '202506502', 'fasewonen', 'Roël Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 79493.43),
+  ('f_0928', '202506502', 'fasewonen', 'Ro�l Spiering', 'cl_259', '259', '1 oktober 2021 - 31 oktober 2021', '-', 'Gedeclareerd en in behandeling', 79493.43),
   ('f_0929', '202506509', 'fasehuis', 'Cloe Brown', 'cl_165', '165', '1 januari 2023 - 31 januari 2023', '-', 'Gedeclareerd en in behandeling', 51503.45),
   ('f_0930', '202506516', 'verblijf en behandeling', 'Jay Arnold Buter', 'cl_268', '268', '1 april 2025 - 30 april 2025', '-', 'Gedeclareerd en in behandeling', 21672.41),
   ('f_0931', '202506523', 'verblijf vanaf 7 november', 'Jorgia Schoenmaker', 'cl_291', '291', '1 juli 2021 - 31 juli 2021', '-', 'Gedeclareerd en in behandeling', 78850.36),
@@ -2042,11 +2042,11 @@ values
 on conflict (id) do nothing;
 
 -- ============================================================================
--- organisaties (Cliënten module — referentiedata, verwijzers/zorginstellingen)
+-- organisaties (Cli�nten module ? referentiedata, verwijzers/zorginstellingen)
 -- ============================================================================
 --
--- ID is text zodat we de bestaande "org_seed_X" IDs behouden — net als bij
--- clienten/beschikkingen, om legacy referenties (cliënt.organisatie als
+-- ID is text zodat we de bestaande "org_seed_X" IDs behouden ? net als bij
+-- clienten/beschikkingen, om legacy referenties (cli�nt.organisatie als
 -- naam-string) niet te breken.
 
 create table if not exists public.organisaties (
@@ -2110,10 +2110,10 @@ values
 on conflict (id) do nothing;
 
 -- ============================================================================
--- uren_budget (Cliënten module — uren-budgettering per week per cliënt)
+-- uren_budget (Cli�nten module ? uren-budgettering per week per cli�nt)
 -- ============================================================================
 --
--- Een cel = (client_id, jaar, week) → uren. Een cel met uren=0 zou normaal
+-- Een cel = (client_id, jaar, week) ? uren. Een cel met uren=0 zou normaal
 -- worden weggelaten (cleanup), maar we tolereren ook 0-rijen.
 
 create table if not exists public.uren_budget (
@@ -2164,7 +2164,7 @@ create policy "anon kan uren_budget verwijderen"
 -- Geen seed-data: budgetcellen worden door de gebruiker aangemaakt.
 
 -- ============================================================================
--- planning (HR module — rooster items per dienst)
+-- planning (HR module ? rooster items per dienst)
 -- ============================================================================
 --
 -- Pragmatische opzet net als medewerkers: een aantal expliciete kolommen voor
@@ -2235,7 +2235,7 @@ create policy "anon kan planning verwijderen"
 -- gemigreerd door planning-data.js bij eerste page-load.
 
 -- ============================================================================
--- comp_diensttypes (Compensatie module — config per diensttype)
+-- comp_diensttypes (Compensatie module ? config per diensttype)
 -- ============================================================================
 create table if not exists public.comp_diensttypes (
   id text primary key,
@@ -2271,7 +2271,7 @@ create policy "anon kan comp_diensttypes verwijderen"
   on public.comp_diensttypes for delete to anon using (true);
 
 -- ============================================================================
--- comp_feestdagen (Compensatie module — feestdagen + tarief multiplier)
+-- comp_feestdagen (Compensatie module ? feestdagen + tarief multiplier)
 -- ============================================================================
 create table if not exists public.comp_feestdagen (
   id text primary key,
@@ -2324,7 +2324,7 @@ values
 on conflict (id) do nothing;
 
 -- ============================================================================
--- verzuim (HR module — lange + korte verzuimdossiers in één tabel)
+-- verzuim (HR module ? lange + korte verzuimdossiers in ��n tabel)
 -- ============================================================================
 create table if not exists public.verzuim (
   id text primary key,
@@ -2365,7 +2365,7 @@ create policy "anon kan verzuim verwijderen"
 -- Standaard verzuim-dossiers (3 lang + 2 kort). Idempotent op id.
 insert into public.verzuim (id, type, medewerker, eerst_ziektedag, verwachte_terug, werkelijke_terug, beschrijving, status)
 values
-  ('vz_l_1', 'lang', 'Sophie de Vries',  '2025-10-14', '2026-04-01', null,         'Langdurige ziekmelding — traject begeleiding', 'Actief'),
+  ('vz_l_1', 'lang', 'Sophie de Vries',  '2025-10-14', '2026-04-01', null,         'Langdurige ziekmelding ? traject begeleiding', 'Actief'),
   ('vz_l_2', 'lang', 'Thomas Bakker',    '2025-12-02', '2026-06-15', null,         'Re-integratie in voorbereiding',                'Actief'),
   ('vz_l_3', 'lang', 'Marieke Jansen',   '2026-01-08', '2026-03-20', '2026-02-28', 'Hersteld na specialistisch consult',            'Hersteld'),
   ('vz_k_1', 'kort', 'Daan Visser',      '2026-03-02', '2026-03-09', '2026-03-08', 'Griep',                                          'Hersteld'),
@@ -2373,7 +2373,7 @@ values
 on conflict (id) do nothing;
 
 -- ============================================================================
--- salarisschalen (Salarishuis — schalen + tredes als jsonb)
+-- salarisschalen (Salarishuis ? schalen + tredes als jsonb)
 -- ============================================================================
 create table if not exists public.salarisschalen (
   id text primary key,
@@ -2412,64 +2412,64 @@ create policy "anon kan salarisschalen verwijderen"
 insert into public.salarisschalen (id, title, sort_order, rows)
 values
   ('schaal-4', 'Schaal 4', 10, '[
-    {"trede":"0","bedrag":"€ 2.454,54"},{"trede":"1","bedrag":"€ 2.454,54"},{"trede":"2","bedrag":"€ 2.509,64"},{"trede":"3","bedrag":"€ 2.588,84"},{"trede":"4","bedrag":"€ 2.670,38"},
-    {"trede":"5","bedrag":"€ 2.754,21"},{"trede":"6","bedrag":"€ 2.841,09"},{"trede":"7","bedrag":"€ 2.930,26"},{"trede":"8","bedrag":"€ 3.023,29"},{"trede":"9","bedrag":"€ 3.118,51"},
-    {"trede":"10","bedrag":"€ 3.216,05"}
+    {"trede":"0","bedrag":"? 2.454,54"},{"trede":"1","bedrag":"? 2.454,54"},{"trede":"2","bedrag":"? 2.509,64"},{"trede":"3","bedrag":"? 2.588,84"},{"trede":"4","bedrag":"? 2.670,38"},
+    {"trede":"5","bedrag":"? 2.754,21"},{"trede":"6","bedrag":"? 2.841,09"},{"trede":"7","bedrag":"? 2.930,26"},{"trede":"8","bedrag":"? 3.023,29"},{"trede":"9","bedrag":"? 3.118,51"},
+    {"trede":"10","bedrag":"? 3.216,05"}
   ]'::jsonb),
   ('schaal-5', 'Schaal 5', 20, '[
-    {"trede":"0","bedrag":"€ 2.454,54"},{"trede":"1","bedrag":"€ 2.520,27"},{"trede":"2","bedrag":"€ 2.600,30"},{"trede":"3","bedrag":"€ 2.684,12"},{"trede":"4","bedrag":"€ 2.769,51"},
-    {"trede":"5","bedrag":"€ 2.858,62"},{"trede":"6","bedrag":"€ 2.950,10"},{"trede":"7","bedrag":"€ 3.043,85"},{"trede":"8","bedrag":"€ 3.141,40"},{"trede":"9","bedrag":"€ 3.241,97"},
-    {"trede":"10","bedrag":"€ 3.345,66"},{"trede":"11","bedrag":"€ 3.453,06"}
+    {"trede":"0","bedrag":"? 2.454,54"},{"trede":"1","bedrag":"? 2.520,27"},{"trede":"2","bedrag":"? 2.600,30"},{"trede":"3","bedrag":"? 2.684,12"},{"trede":"4","bedrag":"? 2.769,51"},
+    {"trede":"5","bedrag":"? 2.858,62"},{"trede":"6","bedrag":"? 2.950,10"},{"trede":"7","bedrag":"? 3.043,85"},{"trede":"8","bedrag":"? 3.141,40"},{"trede":"9","bedrag":"? 3.241,97"},
+    {"trede":"10","bedrag":"? 3.345,66"},{"trede":"11","bedrag":"? 3.453,06"}
   ]'::jsonb),
   ('schaal-6', 'Schaal 6', 30, '[
-    {"trede":"0","bedrag":"€ 2.618,60"},{"trede":"1","bedrag":"€ 2.703,91"},{"trede":"2","bedrag":"€ 2.791,59"},{"trede":"3","bedrag":"€ 2.882,29"},{"trede":"4","bedrag":"€ 2.976,00"},
-    {"trede":"5","bedrag":"€ 3.072,76"},{"trede":"6","bedrag":"€ 3.172,64"},{"trede":"7","bedrag":"€ 3.275,51"},{"trede":"8","bedrag":"€ 3.382,21"},{"trede":"9","bedrag":"€ 3.491,92"},
-    {"trede":"10","bedrag":"€ 3.605,49"},{"trede":"11","bedrag":"€ 3.722,88"}
+    {"trede":"0","bedrag":"? 2.618,60"},{"trede":"1","bedrag":"? 2.703,91"},{"trede":"2","bedrag":"? 2.791,59"},{"trede":"3","bedrag":"? 2.882,29"},{"trede":"4","bedrag":"? 2.976,00"},
+    {"trede":"5","bedrag":"? 3.072,76"},{"trede":"6","bedrag":"? 3.172,64"},{"trede":"7","bedrag":"? 3.275,51"},{"trede":"8","bedrag":"? 3.382,21"},{"trede":"9","bedrag":"? 3.491,92"},
+    {"trede":"10","bedrag":"? 3.605,49"},{"trede":"11","bedrag":"? 3.722,88"}
   ]'::jsonb),
   ('schaal-7', 'Schaal 7', 40, '[
-    {"trede":"0","bedrag":"€ 2.818,26"},{"trede":"1","bedrag":"€ 2.911,23"},{"trede":"2","bedrag":"€ 3.007,25"},{"trede":"3","bedrag":"€ 3.106,34"},{"trede":"4","bedrag":"€ 3.209,22"},
-    {"trede":"5","bedrag":"€ 3.315,13"},{"trede":"6","bedrag":"€ 3.424,11"},{"trede":"7","bedrag":"€ 3.537,68"},{"trede":"8","bedrag":"€ 3.654,29"},{"trede":"9","bedrag":"€ 3.774,69"},
-    {"trede":"10","bedrag":"€ 3.898,93"},{"trede":"11","bedrag":"€ 4.027,70"}
+    {"trede":"0","bedrag":"? 2.818,26"},{"trede":"1","bedrag":"? 2.911,23"},{"trede":"2","bedrag":"? 3.007,25"},{"trede":"3","bedrag":"? 3.106,34"},{"trede":"4","bedrag":"? 3.209,22"},
+    {"trede":"5","bedrag":"? 3.315,13"},{"trede":"6","bedrag":"? 3.424,11"},{"trede":"7","bedrag":"? 3.537,68"},{"trede":"8","bedrag":"? 3.654,29"},{"trede":"9","bedrag":"? 3.774,69"},
+    {"trede":"10","bedrag":"? 3.898,93"},{"trede":"11","bedrag":"? 4.027,70"}
   ]'::jsonb),
   ('schaal-8', 'Schaal 8', 50, '[
-    {"trede":"0","bedrag":"€ 2.946,27"},{"trede":"1","bedrag":"€ 3.045,34"},{"trede":"2","bedrag":"€ 3.146,69"},{"trede":"3","bedrag":"€ 3.252,63"},{"trede":"4","bedrag":"€ 3.361,64"},
-    {"trede":"5","bedrag":"€ 3.473,65"},{"trede":"6","bedrag":"€ 3.590,26"},{"trede":"7","bedrag":"€ 3.710,67"},{"trede":"8","bedrag":"€ 3.834,90"},{"trede":"9","bedrag":"€ 3.963,67"},
-    {"trede":"10","bedrag":"€ 4.096,31"},{"trede":"11","bedrag":"€ 4.233,47"},{"trede":"12","bedrag":"€ 4.375,20"}
+    {"trede":"0","bedrag":"? 2.946,27"},{"trede":"1","bedrag":"? 3.045,34"},{"trede":"2","bedrag":"? 3.146,69"},{"trede":"3","bedrag":"? 3.252,63"},{"trede":"4","bedrag":"? 3.361,64"},
+    {"trede":"5","bedrag":"? 3.473,65"},{"trede":"6","bedrag":"? 3.590,26"},{"trede":"7","bedrag":"? 3.710,67"},{"trede":"8","bedrag":"? 3.834,90"},{"trede":"9","bedrag":"? 3.963,67"},
+    {"trede":"10","bedrag":"? 4.096,31"},{"trede":"11","bedrag":"? 4.233,47"},{"trede":"12","bedrag":"? 4.375,20"}
   ]'::jsonb),
   ('schaal-9', 'Schaal 9', 60, '[
-    {"trede":"0","bedrag":"€ 3.191,69"},{"trede":"1","bedrag":"€ 3.299,91"},{"trede":"2","bedrag":"€ 3.412,73"},{"trede":"3","bedrag":"€ 3.528,53"},{"trede":"4","bedrag":"€ 3.648,19"},
-    {"trede":"5","bedrag":"€ 3.772,40"},{"trede":"6","bedrag":"€ 3.900,42"},{"trede":"7","bedrag":"€ 4.033,05"},{"trede":"8","bedrag":"€ 4.170,21"},{"trede":"9","bedrag":"€ 4.311,95"},
-    {"trede":"10","bedrag":"€ 4.459,04"},{"trede":"11","bedrag":"€ 4.610,72"},{"trede":"12","bedrag":"€ 4.766,96"}
+    {"trede":"0","bedrag":"? 3.191,69"},{"trede":"1","bedrag":"? 3.299,91"},{"trede":"2","bedrag":"? 3.412,73"},{"trede":"3","bedrag":"? 3.528,53"},{"trede":"4","bedrag":"? 3.648,19"},
+    {"trede":"5","bedrag":"? 3.772,40"},{"trede":"6","bedrag":"? 3.900,42"},{"trede":"7","bedrag":"? 4.033,05"},{"trede":"8","bedrag":"? 4.170,21"},{"trede":"9","bedrag":"? 4.311,95"},
+    {"trede":"10","bedrag":"? 4.459,04"},{"trede":"11","bedrag":"? 4.610,72"},{"trede":"12","bedrag":"? 4.766,96"}
   ]'::jsonb),
   ('schaal-10', 'Schaal 10', 70, '[
-    {"trede":"0","bedrag":"€ 3.472,90"},{"trede":"1","bedrag":"€ 3.592,54"},{"trede":"2","bedrag":"€ 3.716,79"},{"trede":"3","bedrag":"€ 3.844,80"},{"trede":"4","bedrag":"€ 3.977,44"},
-    {"trede":"5","bedrag":"€ 4.114,59"},{"trede":"6","bedrag":"€ 4.256,32"},{"trede":"7","bedrag":"€ 4.403,42"},{"trede":"8","bedrag":"€ 4.555,85"},{"trede":"9","bedrag":"€ 4.712,83"},
-    {"trede":"10","bedrag":"€ 4.875,16"},{"trede":"11","bedrag":"€ 5.043,59"},{"trede":"12","bedrag":"€ 5.217,35"}
+    {"trede":"0","bedrag":"? 3.472,90"},{"trede":"1","bedrag":"? 3.592,54"},{"trede":"2","bedrag":"? 3.716,79"},{"trede":"3","bedrag":"? 3.844,80"},{"trede":"4","bedrag":"? 3.977,44"},
+    {"trede":"5","bedrag":"? 4.114,59"},{"trede":"6","bedrag":"? 4.256,32"},{"trede":"7","bedrag":"? 4.403,42"},{"trede":"8","bedrag":"? 4.555,85"},{"trede":"9","bedrag":"? 4.712,83"},
+    {"trede":"10","bedrag":"? 4.875,16"},{"trede":"11","bedrag":"? 5.043,59"},{"trede":"12","bedrag":"? 5.217,35"}
   ]'::jsonb),
   ('schaal-11', 'Schaal 11', 80, '[
-    {"trede":"0","bedrag":"€ 3.972,06"},{"trede":"1","bedrag":"€ 4.111,55"},{"trede":"2","bedrag":"€ 4.255,60"},{"trede":"3","bedrag":"€ 4.404,19"},{"trede":"4","bedrag":"€ 4.558,15"},
-    {"trede":"5","bedrag":"€ 4.718,16"},{"trede":"6","bedrag":"€ 4.882,77"},{"trede":"7","bedrag":"€ 5.053,50"},{"trede":"8","bedrag":"€ 5.231,05"},{"trede":"9","bedrag":"€ 5.413,97"},
-    {"trede":"10","bedrag":"€ 5.602,97"},{"trede":"11","bedrag":"€ 5.598,06"},{"trede":"12","bedrag":"€ 6.002,30"}
+    {"trede":"0","bedrag":"? 3.972,06"},{"trede":"1","bedrag":"? 4.111,55"},{"trede":"2","bedrag":"? 4.255,60"},{"trede":"3","bedrag":"? 4.404,19"},{"trede":"4","bedrag":"? 4.558,15"},
+    {"trede":"5","bedrag":"? 4.718,16"},{"trede":"6","bedrag":"? 4.882,77"},{"trede":"7","bedrag":"? 5.053,50"},{"trede":"8","bedrag":"? 5.231,05"},{"trede":"9","bedrag":"? 5.413,97"},
+    {"trede":"10","bedrag":"? 5.602,97"},{"trede":"11","bedrag":"? 5.598,06"},{"trede":"12","bedrag":"? 6.002,30"}
   ]'::jsonb),
   ('schaal-12', 'Schaal 12', 90, '[
-    {"trede":"0","bedrag":"€ 4.375,20"},{"trede":"1","bedrag":"€ 4.530,68"},{"trede":"2","bedrag":"€ 4.691,50"},{"trede":"3","bedrag":"€ 4.857,61"},{"trede":"4","bedrag":"€ 5.030,63"},
-    {"trede":"5","bedrag":"€ 5.208,98"},{"trede":"6","bedrag":"€ 5.394,16"},{"trede":"7","bedrag":"€ 5.585,48"},{"trede":"8","bedrag":"€ 5.783,60"},{"trede":"9","bedrag":"€ 5.988,60"},
-    {"trede":"10","bedrag":"€ 6.201,23"},{"trede":"11","bedrag":"€ 6.421,44"},{"trede":"12","bedrag":"€ 6.649,31"},{"trede":"13","bedrag":"€ 6.885,58"},
-    {"trede":"Omvangperiodiek 1","bedrag":"€ 7.130,22"},{"trede":"Omvangperiodiek 2","bedrag":"€ 7.383,22"}
+    {"trede":"0","bedrag":"? 4.375,20"},{"trede":"1","bedrag":"? 4.530,68"},{"trede":"2","bedrag":"? 4.691,50"},{"trede":"3","bedrag":"? 4.857,61"},{"trede":"4","bedrag":"? 5.030,63"},
+    {"trede":"5","bedrag":"? 5.208,98"},{"trede":"6","bedrag":"? 5.394,16"},{"trede":"7","bedrag":"? 5.585,48"},{"trede":"8","bedrag":"? 5.783,60"},{"trede":"9","bedrag":"? 5.988,60"},
+    {"trede":"10","bedrag":"? 6.201,23"},{"trede":"11","bedrag":"? 6.421,44"},{"trede":"12","bedrag":"? 6.649,31"},{"trede":"13","bedrag":"? 6.885,58"},
+    {"trede":"Omvangperiodiek 1","bedrag":"? 7.130,22"},{"trede":"Omvangperiodiek 2","bedrag":"? 7.383,22"}
   ]'::jsonb),
-  ('stagevergoeding', 'stagevergoeding', 100, '[{"trede":"Stagevergoeding","bedrag":"€ 450,00"}]'::jsonb),
+  ('stagevergoeding', 'stagevergoeding', 100, '[{"trede":"Stagevergoeding","bedrag":"? 450,00"}]'::jsonb),
   ('schaal-13', 'Schaal 13', 110, '[
-    {"trede":"0","bedrag":"€ 4.987,95"},{"trede":"1","bedrag":"€ 5.167,82"},{"trede":"2","bedrag":"€ 5.353,78"},{"trede":"3","bedrag":"€ 5.546,58"},{"trede":"4","bedrag":"€ 5.746,23"},
-    {"trede":"5","bedrag":"€ 5.952,77"},{"trede":"6","bedrag":"€ 6.166,91"},{"trede":"7","bedrag":"€ 6.389,46"},{"trede":"8","bedrag":"€ 6.618,85"},{"trede":"9","bedrag":"€ 6.857,39"},
-    {"trede":"10","bedrag":"€ 7.104,33"},{"trede":"11","bedrag":"€ 7.360,37"},{"trede":"12","bedrag":"€ 7.624,85"}
+    {"trede":"0","bedrag":"? 4.987,95"},{"trede":"1","bedrag":"? 5.167,82"},{"trede":"2","bedrag":"? 5.353,78"},{"trede":"3","bedrag":"? 5.546,58"},{"trede":"4","bedrag":"? 5.746,23"},
+    {"trede":"5","bedrag":"? 5.952,77"},{"trede":"6","bedrag":"? 6.166,91"},{"trede":"7","bedrag":"? 6.389,46"},{"trede":"8","bedrag":"? 6.618,85"},{"trede":"9","bedrag":"? 6.857,39"},
+    {"trede":"10","bedrag":"? 7.104,33"},{"trede":"11","bedrag":"? 7.360,37"},{"trede":"12","bedrag":"? 7.624,85"}
   ]'::jsonb),
   ('schaal-14', 'Schaal 14', 120, '[
-    {"trede":"0","bedrag":"€ 6.250,00"},{"trede":"1","bedrag":"€ 6.477,84"},{"trede":"2","bedrag":"€ 6.714,89"},{"trede":"3","bedrag":"€ 6.959,49"},{"trede":"4","bedrag":"€ 7.214,04"}
+    {"trede":"0","bedrag":"? 6.250,00"},{"trede":"1","bedrag":"? 6.477,84"},{"trede":"2","bedrag":"? 6.714,89"},{"trede":"3","bedrag":"? 6.959,49"},{"trede":"4","bedrag":"? 7.214,04"}
   ]'::jsonb)
 on conflict (id) do nothing;
 
 -- ============================================================================
--- salarishuis_wijzigingen (Salarishuis — audit log)
+-- salarishuis_wijzigingen (Salarishuis ? audit log)
 -- ============================================================================
 create table if not exists public.salarishuis_wijzigingen (
   id uuid primary key default gen_random_uuid(),
@@ -2494,7 +2494,7 @@ create policy "anon kan salarishuis_wijzigingen verwijderen"
   on public.salarishuis_wijzigingen for delete to anon using (true);
 
 -- ============================================================================
--- saladmin_export_history (Salarisadministratie — export log)
+-- saladmin_export_history (Salarisadministratie ? export log)
 -- ============================================================================
 create table if not exists public.saladmin_export_history (
   id text primary key,
@@ -2531,13 +2531,13 @@ create policy "anon kan saladmin_export_history verwijderen"
 
 insert into public.saladmin_export_history (id, created_at, period, employees, by_name, csv)
 values
-  ('seed_1', '2026-03-11T10:10:00Z'::timestamptz, 'Maart 2026',    31, 'Vennie Küster', null),
-  ('seed_2', '2026-03-18T10:10:00Z'::timestamptz, 'Februari 2026', 31, 'Vennie Küster', null),
+  ('seed_1', '2026-03-11T10:10:00Z'::timestamptz, 'Maart 2026',    31, 'Vennie K�ster', null),
+  ('seed_2', '2026-03-18T10:10:00Z'::timestamptz, 'Februari 2026', 31, 'Vennie K�ster', null),
   ('seed_3', '2026-02-15T10:10:00Z'::timestamptz, 'Januari 2026',  33, 'Artem Fetchoj', null)
 on conflict (id) do nothing;
 
 -- ============================================================================
--- saladmin_ort (Salarisadministratie — ORT-regels per jaar)
+-- saladmin_ort (Salarisadministratie ? ORT-regels per jaar)
 -- ============================================================================
 create table if not exists public.saladmin_ort (
   jaar integer primary key,
@@ -2568,7 +2568,7 @@ create policy "anon kan saladmin_ort verwijderen"
 
 
 -- ============================================================================
--- comp_saldi (Compensatie module � saldi per medewerker)
+-- comp_saldi (Compensatie module ? saldi per medewerker)
 -- ============================================================================
 create table if not exists public.comp_saldi (
   id text primary key,
@@ -2591,21 +2591,21 @@ create trigger trg_comp_saldi_set_modified
 
 alter table public.comp_saldi enable row level security;
 
-drop policy if exists `"anon kan comp_saldi lezen`" on public.comp_saldi;
-create policy `"anon kan comp_saldi lezen`"
+drop policy if exists "anon kan comp_saldi lezen" on public.comp_saldi;
+create policy "anon kan comp_saldi lezen"
   on public.comp_saldi for select to anon using (true);
-drop policy if exists `"anon kan comp_saldi toevoegen`" on public.comp_saldi;
-create policy `"anon kan comp_saldi toevoegen`"
+drop policy if exists "anon kan comp_saldi toevoegen" on public.comp_saldi;
+create policy "anon kan comp_saldi toevoegen"
   on public.comp_saldi for insert to anon with check (true);
-drop policy if exists `"anon kan comp_saldi bewerken`" on public.comp_saldi;
-create policy `"anon kan comp_saldi bewerken`"
+drop policy if exists "anon kan comp_saldi bewerken" on public.comp_saldi;
+create policy "anon kan comp_saldi bewerken"
   on public.comp_saldi for update to anon using (true) with check (true);
-drop policy if exists `"anon kan comp_saldi verwijderen`" on public.comp_saldi;
-create policy `"anon kan comp_saldi verwijderen`"
+drop policy if exists "anon kan comp_saldi verwijderen" on public.comp_saldi;
+create policy "anon kan comp_saldi verwijderen"
   on public.comp_saldi for delete to anon using (true);
 
 -- ============================================================================
--- comp_berekeningen (Compensatie module � berekenings-records per dag)
+-- comp_berekeningen (Compensatie module ? berekenings-records per dag)
 -- ============================================================================
 create table if not exists public.comp_berekeningen (
   id text primary key,
@@ -2628,17 +2628,17 @@ create trigger trg_comp_berekeningen_set_modified
 
 alter table public.comp_berekeningen enable row level security;
 
-drop policy if exists `"anon kan comp_berekeningen lezen`" on public.comp_berekeningen;
-create policy `"anon kan comp_berekeningen lezen`"
+drop policy if exists "anon kan comp_berekeningen lezen" on public.comp_berekeningen;
+create policy "anon kan comp_berekeningen lezen"
   on public.comp_berekeningen for select to anon using (true);
-drop policy if exists `"anon kan comp_berekeningen toevoegen`" on public.comp_berekeningen;
-create policy `"anon kan comp_berekeningen toevoegen`"
+drop policy if exists "anon kan comp_berekeningen toevoegen" on public.comp_berekeningen;
+create policy "anon kan comp_berekeningen toevoegen"
   on public.comp_berekeningen for insert to anon with check (true);
-drop policy if exists `"anon kan comp_berekeningen bewerken`" on public.comp_berekeningen;
-create policy `"anon kan comp_berekeningen bewerken`"
+drop policy if exists "anon kan comp_berekeningen bewerken" on public.comp_berekeningen;
+create policy "anon kan comp_berekeningen bewerken"
   on public.comp_berekeningen for update to anon using (true) with check (true);
-drop policy if exists `"anon kan comp_berekeningen verwijderen`" on public.comp_berekeningen;
-create policy `"anon kan comp_berekeningen verwijderen`"
+drop policy if exists "anon kan comp_berekeningen verwijderen" on public.comp_berekeningen;
+create policy "anon kan comp_berekeningen verwijderen"
   on public.comp_berekeningen for delete to anon using (true);
 
 -- 81 demo-records voor comp_saldi (gegenereerd uit hash01)
@@ -2785,7 +2785,7 @@ values
 on conflict (id) do nothing;
 
 -- ============================================================================
--- urendeclaraties (Cli�nten module � gedebiteerde/ingediende uren per maand)
+-- urendeclaraties (Cli?nten module ? gedebiteerde/ingediende uren per maand)
 -- ============================================================================
 create table if not exists public.urendeclaraties (
   id text primary key,
@@ -2815,17 +2815,17 @@ create trigger trg_urendeclaraties_set_modified
 
 alter table public.urendeclaraties enable row level security;
 
-drop policy if exists `"anon kan urendeclaraties lezen`" on public.urendeclaraties;
-create policy `"anon kan urendeclaraties lezen`"
+drop policy if exists "anon kan urendeclaraties lezen" on public.urendeclaraties;
+create policy "anon kan urendeclaraties lezen"
   on public.urendeclaraties for select to anon using (true);
-drop policy if exists `"anon kan urendeclaraties toevoegen`" on public.urendeclaraties;
-create policy `"anon kan urendeclaraties toevoegen`"
+drop policy if exists "anon kan urendeclaraties toevoegen" on public.urendeclaraties;
+create policy "anon kan urendeclaraties toevoegen"
   on public.urendeclaraties for insert to anon with check (true);
-drop policy if exists `"anon kan urendeclaraties bewerken`" on public.urendeclaraties;
-create policy `"anon kan urendeclaraties bewerken`"
+drop policy if exists "anon kan urendeclaraties bewerken" on public.urendeclaraties;
+create policy "anon kan urendeclaraties bewerken"
   on public.urendeclaraties for update to anon using (true) with check (true);
-drop policy if exists `"anon kan urendeclaraties verwijderen`" on public.urendeclaraties;
-create policy `"anon kan urendeclaraties verwijderen`"
+drop policy if exists "anon kan urendeclaraties verwijderen" on public.urendeclaraties;
+create policy "anon kan urendeclaraties verwijderen"
   on public.urendeclaraties for delete to anon using (true);
 
 -- 7 seed-records (uit oude statische HTML van urendeclaraties.html)
