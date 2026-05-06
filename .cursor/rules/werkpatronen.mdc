@@ -210,9 +210,17 @@ Voor "1-op-1 sub-data per parent" (zoals verlof-overgedragen): gebruik een UNIQU
 
 Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: gebruik alleen `add()` en laat het optimistic-insert-patroon van `beschikking-audit-data.js` overnemen — UI ververst direct met tijdelijke id, daarna replacement met echte UUID na Supabase-respons. Audit-failures worden in `console.error` gelogd, **niet** als rode modal — anders krijg je pop-ups bij elke page-view.
 
-### 6c. Geen grote payloads in `jsonb`
+### 6c. Geen grote payloads in `jsonb` of `text` — gebruik Supabase Storage
 
-Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. Maak een dedicated tabel + data-laag, zoals `client_documents` + `client-documents-data.js`.
+Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel én ook **niet** in een gewone `text`-kolom van een dedicated tabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. De juiste oplossing is **Supabase Storage**:
+
+1. SQL: bucket aanmaken via `insert into storage.buckets` + anon CRUD-policies op `storage.objects` (zie `client_documents`-bucket in `supabase/schema.sql`).
+2. Tabel houdt alleen metadata + een `storage_path text` kolom (pad-conventie: `<parent_id>/<doc_id>-<safe_file_name>`).
+3. Data-laag: `add()` decodeert data-URL → upload via `supabase.storage.from(BUCKET).upload(path, blob)` → INSERT row met `storage_path`. `rowToObj` zet de UI-`fileData` op de **publieke URL** via `getPublicUrl()` zodat de UI niet hoeft te weten of het Storage of base64 is.
+4. `remove()` verwijdert eerst het bestand uit Storage, daarna de row.
+5. Voor bestaande base64-rijen: best-effort migratie in `migrateRowToStorageIfNeeded()` zodra `list()` ze tegenkomt.
+
+Het `client-documents-data.js`-pattern is de canonical referentie. Voor signed URLs (private bestanden) i.p.v. publieke bucket: pas dit later aan; voor HR-documenten was tot nu toe géén toegangscontrole überhaupt.
 
 ### 6d. Verboden patronen (eerder fout gegaan, nooit meer doen)
 

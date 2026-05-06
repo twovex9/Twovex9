@@ -853,12 +853,16 @@ create table if not exists public.client_documents (
   archived boolean not null default false,
   file_name text default '',
   file_mime text default '',
-  file_data text default ''
+  file_data text default '',          -- legacy base64-veld; blijft 1× voor migratie
+  storage_path text                   -- nieuwe: pad in storage-bucket "client-documents"
 );
 
 create index if not exists client_documents_client_id_idx on public.client_documents (client_id);
 create index if not exists client_documents_archived_idx on public.client_documents (archived);
 create index if not exists client_documents_type_idx on public.client_documents (lower(type));
+create index if not exists client_documents_storage_path_idx
+  on public.client_documents (storage_path)
+  where storage_path is not null;
 
 drop trigger if exists trg_client_documents_set_modified on public.client_documents;
 create trigger trg_client_documents_set_modified
@@ -3267,3 +3271,38 @@ create policy "anon kan medewerker_verzuim_perioden bewerken"
 drop policy if exists "anon kan medewerker_verzuim_perioden verwijderen" on public.medewerker_verzuim_perioden;
 create policy "anon kan medewerker_verzuim_perioden verwijderen"
   on public.medewerker_verzuim_perioden for delete to anon using (true);
+
+-- ============================================================================
+-- Storage: bucket "client-documents" voor cliënt-bijlagen
+-- ============================================================================
+--
+-- Cliëntdocumenten worden vanaf Stage 4d-pre als bestand in Supabase Storage
+-- opgeslagen i.p.v. base64 in de tabel-kolom file_data. Pad-conventie:
+--   <client_id>/<doc_id>-<safe_file_name>
+-- De bucket is publiek (= directe URL voor downloads, geen signed URLs nodig).
+-- Voor strengere security kan dit later via signed URLs worden vervangen.
+
+insert into storage.buckets (id, name, public)
+values ('client-documents', 'client-documents', true)
+on conflict (id) do nothing;
+
+drop policy if exists "anon kan client-documents lezen" on storage.objects;
+create policy "anon kan client-documents lezen"
+  on storage.objects for select to anon
+  using (bucket_id = 'client-documents');
+
+drop policy if exists "anon kan client-documents uploaden" on storage.objects;
+create policy "anon kan client-documents uploaden"
+  on storage.objects for insert to anon
+  with check (bucket_id = 'client-documents');
+
+drop policy if exists "anon kan client-documents bewerken" on storage.objects;
+create policy "anon kan client-documents bewerken"
+  on storage.objects for update to anon
+  using (bucket_id = 'client-documents')
+  with check (bucket_id = 'client-documents');
+
+drop policy if exists "anon kan client-documents verwijderen" on storage.objects;
+create policy "anon kan client-documents verwijderen"
+  on storage.objects for delete to anon
+  using (bucket_id = 'client-documents');
