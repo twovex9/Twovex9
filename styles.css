@@ -12537,7 +12537,8 @@ button.planning-erm-new {
   overflow: hidden;
 }
 
-#app-save-feedback-modal .cl-add-dialog {
+#app-save-feedback-modal .cl-add-dialog,
+#emp-doc-download-confirm-modal .cl-add-dialog {
   display: flex;
   flex-direction: column;
   /* Semi-transparante kaart + doorkijken, glas-effect (fallback = --surface is wit) */
@@ -12557,6 +12558,19 @@ button.planning-erm-new {
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
   border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
   overflow: auto;
+}
+
+#emp-doc-download-confirm-modal .cl-add-dialog {
+  max-height: min(60vh, 460px);
+}
+
+#emp-doc-download-confirm-modal .modal-footer {
+  background: transparent;
+  border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+}
+
+#emp-doc-download-confirm-modal .modal-header {
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
 }
 
 .cl-add-grid {

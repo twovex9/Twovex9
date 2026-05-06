@@ -3163,16 +3163,95 @@ function initDocumentenSection() {
   if (downloadAllBtn) {
     downloadAllBtn.addEventListener("click", function () {
       var docs = getDocumentenState().filter(function (d) { return d.fileData && !d.archived; });
-      if (!docs.length) { alert("Geen bestanden beschikbaar om te downloaden."); return; }
-      docs.forEach(function (d) {
-        var a = document.createElement("a");
-        a.href = d.fileData;
-        a.download = d.fileName || d.naam || "document";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
+      if (!docs.length) {
+        if (typeof window.showSaveModal === "function") {
+          window.showSaveModal("Er zijn geen bestanden beschikbaar om te downloaden.", "Geen documenten");
+        }
+        return;
+      }
+      showDownloadAllConfirm(docs);
     });
+  }
+
+  function performDownloadAll(docs) {
+    docs.forEach(function (d) {
+      var a = document.createElement("a");
+      a.href = d.fileData;
+      a.download = d.fileName || d.naam || "document";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+    if (typeof window.showSaveModal === "function") {
+      var msg = docs.length === 1
+        ? "1 document is gedownload."
+        : docs.length + " documenten zijn gedownload.";
+      window.showSaveModal(msg, "Gedownload");
+    }
+  }
+
+  function ensureDownloadConfirmModal() {
+    var existing = document.getElementById("emp-doc-download-confirm-modal");
+    if (existing) return existing;
+    var wrap = document.createElement("div");
+    wrap.id = "emp-doc-download-confirm-modal";
+    wrap.className = "modal-overlay";
+    wrap.setAttribute("hidden", "");
+    wrap.setAttribute("aria-hidden", "true");
+    wrap.innerHTML =
+      '<div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="emp-doc-download-confirm-title" tabindex="-1">' +
+        '<div class="modal-header">' +
+          '<h2 class="modal-title" id="emp-doc-download-confirm-title">Alles downloaden</h2>' +
+          '<button type="button" class="modal-close" id="emp-doc-download-confirm-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<p class="app-save-feedback-text" id="emp-doc-download-confirm-msg" role="status"></p>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button type="button" class="btn-outline" id="emp-doc-download-confirm-cancel">Annuleren</button>' +
+          '<button type="button" class="btn-primary" id="emp-doc-download-confirm-ok">Downloaden</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+
+  function showDownloadAllConfirm(docs) {
+    var modal = ensureDownloadConfirmModal();
+    var msg = document.getElementById("emp-doc-download-confirm-msg");
+    var closeBtn = document.getElementById("emp-doc-download-confirm-close");
+    var cancelBtn = document.getElementById("emp-doc-download-confirm-cancel");
+    var okBtn = document.getElementById("emp-doc-download-confirm-ok");
+    if (msg) {
+      msg.textContent = docs.length === 1
+        ? "Wil je 1 document downloaden?"
+        : "Wil je " + docs.length + " documenten downloaden?";
+    }
+
+    function close() {
+      modal.setAttribute("hidden", "");
+      modal.setAttribute("aria-hidden", "true");
+      if (closeBtn) closeBtn.removeEventListener("click", close);
+      if (cancelBtn) cancelBtn.removeEventListener("click", close);
+      if (okBtn) okBtn.removeEventListener("click", confirm);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+    }
+    function confirm() {
+      close();
+      performDownloadAll(docs);
+    }
+    function onBackdrop(e) { if (e.target === modal) close(); }
+    function onKey(e) { if (e.key === "Escape") close(); }
+
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    if (cancelBtn) cancelBtn.addEventListener("click", close);
+    if (okBtn) okBtn.addEventListener("click", confirm);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+
+    modal.removeAttribute("hidden");
+    modal.setAttribute("aria-hidden", "false");
   }
 
   render();
