@@ -92,8 +92,9 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function showError(msg) {
-    var err = $("fi-error");
+  function showError(msg, which) {
+    var id = which === 2 ? "fi-error-2" : "fi-error";
+    var err = $(id);
     if (!err) return;
     if (!msg) { err.hidden = true; err.textContent = ""; }
     else { err.hidden = false; err.textContent = msg; }
@@ -363,10 +364,15 @@
     return job;
   }
 
-  function persistFactSupplement(finalName, jobId) {
-    var supp = readJSONList(LS_FACT_SUPP);
+  function buildFactSuppRow(finalName, jobId) {
     var nowIso = new Date().toISOString();
-    var newRow = {
+    var importMeta = {
+      name: finalName,
+      ext: state.fileExt,
+      size: state.fileSize,
+      importedAt: nowIso,
+    };
+    return {
       id: "fs" + Date.now() + "x" + Math.random().toString(36).slice(2, 10),
       fromSupp: true,
       fromImport: true,
@@ -379,22 +385,37 @@
       beta: "-",
       st: "Open",
       bedr: "€ 0,00",
-      importFile: {
-        name: finalName,
-        ext: state.fileExt,
-        size: state.fileSize,
-        importedAt: nowIso,
+      bedragNum: 0,
+      archived: false,
+      importFile: importMeta,
+      _data: {
+        fromSupp: true,
+        fromImport: true,
+        importJobId: jobId,
+        importFile: importMeta,
       },
     };
+  }
+
+  function persistFactSupplementLocal(newRow) {
+    var supp = readJSONList(LS_FACT_SUPP);
     supp.unshift(newRow);
     writeJSONList(LS_FACT_SUPP, supp);
-    if (window.facturenDB && typeof window.facturenDB.add === "function") {
-      try { window.facturenDB.add(newRow).catch(function () { /* */ }); } catch (e) { /* */ }
+  }
+
+  function persistFactSupplementSupabase(newRow) {
+    if (!window.facturenDB || typeof window.facturenDB.add !== "function") {
+      return Promise.reject(new Error(
+        "Supabase-laag (facturenDB) is niet geladen — kan niet opslaan in database."
+      ));
     }
+    return window.facturenDB.add(newRow);
+  }
+
+  function dispatchFacturenUpdated() {
     try {
       window.dispatchEvent(new CustomEvent("besa:facturen-updated", { detail: { source: "facturen-importeren" } }));
     } catch (e) { /* */ }
-    return newRow;
   }
 
   function renderHistory() {
@@ -553,20 +574,43 @@
     if (next2) next2.addEventListener("click", function () {
       if (!state.file) return;
       next2.disabled = true;
+      showError("", 2);
+
       var finalName = buildFinalFileName();
       var job = persistImportJob(finalName);
-      persistFactSupplement(finalName, job.id);
+      var newRow = buildFactSuppRow(finalName, job.id);
 
-      setFile(null);
-      var input = $("fi-file-input");
-      if (input) input.value = "";
-      setStep(1);
-      renderHistory();
+      persistFactSupplementLocal(newRow);
 
-      next2.disabled = false;
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("imported", "Factuur");
-      }
+      persistFactSupplementSupabase(newRow)
+        .then(function () {
+          dispatchFacturenUpdated();
+
+          setFile(null);
+          var input = $("fi-file-input");
+          if (input) input.value = "";
+          setStep(1);
+          renderHistory();
+
+          if (typeof window.showActionFeedback === "function") {
+            window.showActionFeedback("imported", "Factuur");
+          }
+        })
+        .catch(function (err) {
+          var jobs = readJSONList(STORAGE_KEY).filter(function (j) { return j.id !== job.id; });
+          writeJSONList(STORAGE_KEY, jobs);
+          var supp = readJSONList(LS_FACT_SUPP).filter(function (r) { return !(r && r.id === newRow.id); });
+          writeJSONList(LS_FACT_SUPP, supp);
+
+          var msg = (err && err.message)
+            ? "Opslaan in database mislukt: " + err.message
+            : "Opslaan in database mislukt. Probeer opnieuw.";
+          showError(msg, 2);
+          try { console.error("[facturen-importeren] Supabase save failed:", err); } catch (e) { /* */ }
+        })
+        .then(function () {
+          next2.disabled = false;
+        });
     });
   }
 
