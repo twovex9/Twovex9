@@ -7603,6 +7603,276 @@ th.emp-doc-col-delete {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, .15);
 }
 
+/* ===========================================================
+   Facturen importeren — wizard (Cliënten module)
+   Hergebruikt .emp-doc-dropzone uit medewerker-documenten.
+   =========================================================== */
+
+.content--fi {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fi-stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.fi-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 10px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+}
+
+.fi-step + .fi-step::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: var(--line);
+  margin-right: 4px;
+}
+
+.fi-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fi-step.is-active {
+  border-color: #339dc1;
+  color: #0f172a;
+  background: #f0faff;
+}
+
+.fi-step.is-active .fi-step-num {
+  background: #339dc1;
+  color: #fff;
+}
+
+.fi-step.is-done {
+  color: #15803d;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.fi-step.is-done .fi-step-num {
+  background: #15803d;
+  color: #fff;
+}
+
+.fi-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.fi-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fi-card-sub {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+}
+
+.fi-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: var(--font-base);
+}
+
+.fi-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.fi-actions .btn-primary,
+.fi-actions .btn-outline {
+  min-width: 120px;
+  text-align: center;
+}
+
+.fi-actions .btn-primary[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fi-meta {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  background: #fafbfc;
+}
+
+.fi-meta-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  font-size: var(--font-base);
+}
+
+.fi-meta-row dt {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.fi-meta-row dd {
+  margin: 0;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.fi-preview {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.fi-preview-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fi-preview-pre {
+  margin: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  background: #fafbfc;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  white-space: pre;
+  overflow: auto;
+  max-height: 260px;
+}
+
+.fi-preview-table-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 260px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+}
+
+.fi-preview-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.fi-preview-table th,
+.fi-preview-table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.fi-preview-table thead th {
+  background: #fafbfc;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fi-success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fi-success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fi-history-title {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fi-history-card {
+  margin: 0;
+}
+
+.fi-th-acties,
+.fi-td-acties {
+  width: 64px;
+  text-align: center;
+}
+
+.fi-empty-row td.fi-empty-cell {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px 12px;
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .fi-meta-row {
+    grid-template-columns: 1fr;
+  }
+  .fi-actions {
+    flex-direction: column;
+  }
+  .fi-actions .btn-primary,
+  .fi-actions .btn-outline,
+  .fi-actions .fi-go-facturen {
+    width: 100%;
+  }
+}
+
 select.emp-doc-modal-input {
   -webkit-appearance: auto;
   appearance: auto;

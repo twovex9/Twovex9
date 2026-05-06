@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gemeenten — HR</title>
+  <title>Facturen importeren — Cliënten</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -111,10 +111,10 @@
           </div>
         </div>
         <a href="organisatie.html" class="side-link">Organisatie</a>
-        <a href="gemeenten.html" class="side-link is-active" aria-current="page">Gemeenten</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
         <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
         <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
-        <a href="facturen-importeren.html" class="side-link">Facturen importeren</a>
+        <a href="facturen-importeren.html" class="side-link is-active" aria-current="page">Facturen importeren</a>
         <div class="side-group" data-side-group="cl-incidenten">
           <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="false" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, open submenu">
             <span class="side-group__label">Incidenten</span>
@@ -134,161 +134,119 @@
       </div>
     </aside>
 
-    <main class="content content--hr-list content--cl-organisatie">
+    <main class="content content--hr-list content--fi">
       <div class="content-header">
-        <h1>Gemeenten</h1>
-        <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" id="gem-columns-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="gem-columns-panel" role="menu" aria-labelledby="gem-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="gem-columns-list" role="none"></ul>
-            </div>
-          </div>
-          <button class="btn-primary" type="button" id="gem-add-btn">+ Gemeente toevoegen</button>
+        <div>
+          <h1>Facturen importeren</h1>
         </div>
       </div>
 
-      <div class="toolbar toolbar--clienten">
-        <input class="search" type="search" id="gem-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoek gemeenten" />
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="gem-archived-toggle" name="gem-arch" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Gearchiveerd</span>
-        </label>
-      </div>
+      <ol class="fi-stepper" aria-label="Stappen">
+        <li class="fi-step is-active" data-fi-step="1">
+          <span class="fi-step-num">1</span>
+          <span class="fi-step-label">Bestand kiezen</span>
+        </li>
+        <li class="fi-step" data-fi-step="2">
+          <span class="fi-step-num">2</span>
+          <span class="fi-step-label">Controleren</span>
+        </li>
+        <li class="fi-step" data-fi-step="3">
+          <span class="fi-step-num">3</span>
+          <span class="fi-step-label">Bevestigen</span>
+        </li>
+      </ol>
 
-      <section class="table-card table-card--clienten">
-        <div class="table-wrapper">
-          <table class="employees-table clienten-table" id="gem-table" data-page-size="15">
-            <thead>
-              <tr>
-                <th class="th-check" data-col="select">
-                  <input type="checkbox" class="table-checkbox" id="gem-check-all" aria-label="Selecteer alles" />
-                </th>
-                <th data-col="naam" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Naam</span>
-                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op naam">
-                      <span class="th-sort-arrows" aria-hidden="true"></span>
-                    </button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th class="cl-actions-th" data-col="acties" aria-label="Acties"></th>
-              </tr>
-            </thead>
-            <tbody id="gem-tbody"></tbody>
-          </table>
+      <section class="fi-card" id="fi-step-1" data-fi-panel="1">
+        <div class="emp-doc-dropzone" id="fi-dropzone">
+          <input type="file" id="fi-file-input" accept=".svg,.png,.xlsx,.xls,.csv,.jpg,.jpeg,.pdf,.docx,.doc" hidden>
+          <div class="emp-doc-dropzone-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#339dc1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p class="emp-doc-dropzone-text"><strong>Klik om te uploaden</strong> of sleep en zet neer</p>
+          <p class="emp-doc-dropzone-hint">SVG, PNG, Excel, CSV, JPG, PDF of .docx (max. 20MB)</p>
+          <p class="emp-doc-dropzone-filename" id="fi-dropzone-filename"></p>
         </div>
-        <div class="table-footer table-footer--pagebar cl-table-footer">
-          <div class="footer-left">
-            <span id="gem-pager-range" class="pager-range">0 van 0</span>
+        <p class="fi-error" id="fi-error" role="alert" hidden></p>
+        <div class="fi-actions">
+          <button type="button" class="btn-primary fi-next" id="fi-next-1" disabled>Volgende</button>
+        </div>
+      </section>
+
+      <section class="fi-card" id="fi-step-2" data-fi-panel="2" hidden>
+        <h2 class="fi-card-title">Controleer het bestand</h2>
+        <p class="fi-card-sub">Controleer de gegevens hieronder voordat je het importeert.</p>
+
+        <dl class="fi-meta">
+          <div class="fi-meta-row">
+            <dt>Bestandsnaam</dt>
+            <dd id="fi-meta-name">—</dd>
           </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="gem-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="gem-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="10">10</option>
-                <option value="15" selected>15</option>
-                <option value="30">30</option>
-                <option value="50">50</option>
-              </select>
-            </label>
-            <span id="gem-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="gem-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
-            </span>
+          <div class="fi-meta-row">
+            <dt>Type</dt>
+            <dd id="fi-meta-type">—</dd>
           </div>
+          <div class="fi-meta-row">
+            <dt>Grootte</dt>
+            <dd id="fi-meta-size">—</dd>
+          </div>
+          <div class="fi-meta-row">
+            <dt>Geüpload op</dt>
+            <dd id="fi-meta-uploaded">—</dd>
+          </div>
+        </dl>
+
+        <div class="fi-preview" id="fi-preview" hidden>
+          <h3 class="fi-preview-title">Voorbeeld</h3>
+          <div class="fi-preview-body" id="fi-preview-body"></div>
+        </div>
+
+        <div class="fi-actions">
+          <button type="button" class="btn-outline fi-back" id="fi-back-2">Vorige</button>
+          <button type="button" class="btn-primary fi-next" id="fi-next-2">Importeren</button>
+        </div>
+      </section>
+
+      <section class="fi-card" id="fi-step-3" data-fi-panel="3" hidden>
+        <div class="fi-success">
+          <div class="fi-success-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="fi-card-title">Bestand geïmporteerd</h2>
+          <p class="fi-card-sub" id="fi-success-sub">Het bestand is succesvol toegevoegd aan de importjobs.</p>
+        </div>
+
+        <h3 class="fi-history-title">Eerder geïmporteerd</h3>
+        <section class="table-card table-card--clienten fi-history-card">
+          <div class="table-wrapper">
+            <table class="employees-table fi-history-table" aria-label="Eerder geïmporteerde bestanden">
+              <thead>
+                <tr>
+                  <th scope="col">Bestandsnaam</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Grootte</th>
+                  <th scope="col">Geïmporteerd op</th>
+                  <th scope="col" class="fi-th-acties">Acties</th>
+                </tr>
+              </thead>
+              <tbody id="fi-history-tbody">
+                <tr class="fi-empty-row">
+                  <td colspan="5" class="fi-empty-cell">Nog geen bestanden geïmporteerd.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="fi-actions">
+          <button type="button" class="btn-outline fi-restart" id="fi-restart">Nieuw bestand importeren</button>
+          <a class="btn-primary fi-go-facturen" href="facturen.html">Naar facturen</a>
         </div>
       </section>
     </main>
   </div>
 
-  <div class="app-toast app-toast--clienten" id="gem-toast" role="status" aria-live="polite" hidden></div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="gem-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-ar-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="gem-ar-title" class="modal-title">Gemeente archiveren</h2>
-        <button type="button" class="modal-close" id="gem-ar-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">De gemeente wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan in de toolbar om gearchiveerde gemeenten te zien.</p>
-        <p class="employee-delete-preview" id="gem-ar-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="gem-ar-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="gem-ar-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="gem-ar-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="gem-ar-confirm" disabled>Archiveren</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="gem-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="gem-purge-title" class="modal-title">Gemeente definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="gem-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Deze gemeente wordt <strong>permanent</strong> uit de stamtabel gehaald.</p>
-        <p class="employee-delete-preview" id="gem-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="gem-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="gem-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="gem-purge-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="gem-purge-confirm" disabled>Verwijderen</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="gem-add-modal" hidden aria-hidden="true">
-    <div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-add-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="gem-add-title">Gemeente toevoegen</h2>
-        <button type="button" class="modal-close" id="gem-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <form class="modal-form" id="gem-add-form" novalidate>
-        <div class="modal-body">
-          <div class="modal-field">
-            <label class="modal-label" for="gem-add-naam">Naam</label>
-            <input class="modal-input" type="text" id="gem-add-naam" name="naam" required autocomplete="off" />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="gem-add-cancel">Annuleren</button>
-          <button type="submit" class="btn-primary" id="gem-add-submit">Toevoegen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script src="top-nav-overflow.js"></script>
   <script src="sidebar-nav.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js"></script>
-  <script src="gemeenten-data.js"></script>
-  <script src="gemeenten.js"></script>
+  <script src="facturen-importeren.js" defer></script>
 </body>
 </html>
