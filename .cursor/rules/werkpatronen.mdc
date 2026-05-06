@@ -50,7 +50,7 @@ In **elke** lijst met archiveren: bij actief = enkel prullenbak, bij gearchiveer
 
 `.hr-row-actions` stapelt vertikaal met `flex-direction: column` op smalle cellen. De Herstel-pill staat **altijd** boven, prullenbak eronder. Niet ergens anders, niet midden in de iconen-strook.
 
-## 3. Archiveren = slider-bevestiging — Herstellen = direct
+## 3. Archiveren / verwijderen = slider-bevestiging — Herstellen = direct
 
 ```js
 // Archiveren: altijd via slider
@@ -59,12 +59,76 @@ if (!ok) return;
 await archive(item.id);
 window.showActionFeedback("archived", "Item");
 
+// Verwijderen: ook altijd via slider (zelfde modal, andere teksten)
+const ok = await window.showSliderConfirmModal({
+  title: "Bent u zeker dat dit verwijderd wordt?",
+  preview: item.naam,
+  okLabel: "Verwijderen",
+  cancelLabel: "Annuleren",
+});
+if (!ok) return;
+await remove(item.id);
+window.showActionFeedback("deleted", "Item");
+
 // Herstellen: NOOIT via bevestiging — direct uitvoeren
 await restore(item.id);
 window.showActionFeedback("restored", "Item");
 ```
 
-Restore moet **altijd vrij** zijn (geen modal, geen confirm). Archiveren **altijd** via `showArchiveConfirm`.
+Restore moet **altijd vrij** zijn (geen modal, geen confirm). Archiveren én verwijderen **altijd** via de slider-modal. Param-namen: `okLabel` / `cancelLabel` (niet `confirmLabel`, niet `tone`).
+
+### 3a. Slider-stijl is heilig — vol blauw bij volledig naar rechts
+
+De slider in `showSliderConfirmModal` / `showArchiveConfirm` MOET er overal exact zo uitzien:
+
+- Trackhoogte **12px**, pill-vorm (`border-radius: var(--r-pill)`).
+- Bij volledig naar rechts geschoven: track **volledig gevuld met `var(--blue)` (#2563eb)** — onze huiskleur. Geen zwart, geen grijs, geen ander accent.
+- Witte thumb (28×28px, `var(--surface)`) met `2px solid var(--blue)` rand en zachte schaduw.
+- Slider-percentage wordt door JS bijgehouden via CSS-variabele `--employee-slider-pct` (of `--news-slider-pct`); de gradient op het input-element gebruikt die direct.
+
+Canonieke CSS staat in `styles.css` rond `.employee-delete-slider`. **Niet aanpassen** zonder reden:
+
+```css
+.employee-delete-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(to right,
+    var(--blue) 0%,
+    var(--blue) var(--employee-slider-pct, 0%),
+    var(--line) var(--employee-slider-pct, 0%),
+    var(--line) 100%);
+  cursor: pointer;
+}
+.employee-delete-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--blue);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.employee-delete-slider::-moz-range-track {
+  height: 12px; border-radius: var(--r-pill);
+  background: var(--line); border: none;
+}
+.employee-delete-slider::-moz-range-progress {
+  height: 12px; border-radius: var(--r-pill);
+  background: var(--blue);
+}
+.employee-delete-slider::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--blue);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+```
+
+**Verboden valkuilen** (eerder vertoond, nooit meer doen):
+
+- ❌ `::-webkit-slider-runnable-track { background: transparent; }` — overschrijft de gradient en maakt de slider zwart in Chrome.
+- ❌ `::-moz-range-track { background: var(--line); }` zónder `::-moz-range-progress { background: var(--blue); }` — laat de slider in Firefox altijd grijs.
+- ❌ De gradient gebruiken op `--news-slider-pct` voor de employee-slider — JS zet `--employee-slider-pct`.
+- ❌ Een eigen kleinere/dunnere/donkerdere variant maken voor "danger" — er is geen apart danger-thema, blauw is voor álles.
 
 ## 4. Feedback — gebruik de helpers, geen `alert`/`confirm`
 
@@ -102,7 +166,9 @@ Na elke logisch afgeronde wijziging: `git add -A` → `git commit -F` (HEREDOC o
 ## Checklist vóór je een edit afsluit
 
 - [ ] Nieuwe tabel zit in een wrapper met `overflow-x: auto` en de tabel heeft `width: max-content; min-width: 100%`.
-- [ ] Archiveren gaat via `showArchiveConfirm`; herstellen gebeurt direct zonder bevestiging.
+- [ ] Archiveren én verwijderen gaan via de slider-modal (`showArchiveConfirm` / `showSliderConfirmModal`); herstellen gebeurt direct zonder bevestiging.
+- [ ] Slider-stijl ongewijzigd: 12px hoogte, vol blauw (`var(--blue)`) bij 100%, witte thumb met blauwe rand. Geen `::-webkit-slider-runnable-track` override toevoegen.
+- [ ] Modal-helpers worden aangeroepen met `okLabel` / `cancelLabel` (niet `confirmLabel`, niet `tone`).
 - [ ] In gearchiveerde state staat `Herstel` als `.btn-outline.hr-restore-btn` **boven** de prullenbak in `.hr-row-actions`.
 - [ ] Geen `alert`, `confirm` of `prompt` in nieuwe code — alleen de feedback-helpers.
 - [ ] Grote payloads zitten in een eigen Supabase-tabel met data-laag, niet in een `jsonb`-veld van een hoofdtabel.
