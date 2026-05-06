@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Incident melden — HR</title>
-  <link rel="stylesheet" href="styles.css?v=9e" />
+  <link rel="stylesheet" href="styles.css?v=9f" />
 </head>
 <body>
   <script src="save-feedback.js" defer></script>
@@ -122,26 +122,25 @@
       <form id="im-form" class="im-form" novalidate>
         <input type="hidden" id="im-id" />
 
-        <!-- Sectie: Betrokken partijen -->
+        <!-- Sectie: Cliënten -->
         <section class="im-card">
           <header class="im-card-head">
             <span class="im-card-ico" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </span>
-            <h2 class="im-card-title">Betrokken partijen</h2>
+            <h2 class="im-card-title">Cliënten <span class="im-req">*</span></h2>
           </header>
           <div class="im-card-body">
             <div class="im-field">
-              <label class="im-label" for="im-client">Cliënt <span class="im-req">*</span></label>
-              <p class="im-help">Persoon die aanwezig is/was bij het incident</p>
+              <label class="im-label" for="im-client">Mensen die aanwezig zijn/waren</label>
               <select class="im-select" id="im-client" required>
-                <option value="">Selecteer cliënt</option>
+                <option value="">Selecteer Cliënt</option>
               </select>
             </div>
 
             <div class="im-field">
               <label class="im-label">Betrokken partijen</label>
-              <p class="im-help">Andere personen die betrokken waren (optioneel — kan meerdere)</p>
+              <p class="im-help">Externe personen die betrokken waren</p>
 
               <div class="im-betrokken-add">
                 <div class="im-betrokken-add-title">Betrokken partij toevoegen</div>
@@ -187,32 +186,24 @@
             <h2 class="im-card-title">Tijd en plaats</h2>
           </header>
           <div class="im-card-body">
-            <div class="im-grid-2">
-              <div class="im-field">
-                <label class="im-label" for="im-datum">Incident datum <span class="im-req">*</span></label>
-                <input class="im-input" type="date" id="im-datum" required />
-              </div>
-              <div class="im-field">
-                <label class="im-label" for="im-tijdstip">Tijdstip van de dag <span class="im-req">*</span></label>
-                <select class="im-select" id="im-tijdstip" required>
-                  <option value="">Selecteer tijdstip van de dag</option>
-                </select>
-              </div>
-              <div class="im-field">
-                <label class="im-label" for="im-locatie">Locatie</label>
-                <select class="im-select" id="im-locatie">
-                  <option value="">Selecteer locatie (optioneel)</option>
-                </select>
-              </div>
-              <div class="im-field im-field--checkbox">
-                <label class="im-checkbox-label">
-                  <input type="checkbox" id="im-buiten" />
-                  <span class="im-checkbox-text">
-                    <strong>Buiten</strong>
-                    <span class="im-help">Controleer of het incident buiten heeft plaatsgevonden</span>
-                  </span>
-                </label>
-              </div>
+            <div class="im-field">
+              <label class="im-label" for="im-datum">Incident datum <span class="im-req">*</span></label>
+              <input class="im-input" type="date" id="im-datum" required />
+            </div>
+            <div class="im-field">
+              <label class="im-label" for="im-tijdstip">Tijdstip van de dag <span class="im-req">*</span></label>
+              <select class="im-select" id="im-tijdstip" required>
+                <option value="">Selecteer tijdstip van de dag</option>
+              </select>
+            </div>
+            <div class="im-field im-field--checkbox">
+              <label class="im-checkbox-label">
+                <input type="checkbox" id="im-buiten" />
+                <span class="im-checkbox-text">
+                  <strong>Buiten</strong>
+                  <span class="im-help">Controleer of het incident buiten heeft plaatsgevonden</span>
+                </span>
+              </label>
             </div>
           </div>
         </section>
@@ -252,7 +243,7 @@
             <div class="im-field">
               <label class="im-label" for="im-omschrijving">Beschrijving <span class="im-req">*</span></label>
               <p class="im-info">
-                Beschrijf het incident volgens GGR-WTZ richtlijnen: inclusief <em>waarom, wat, waar, wanneer, wie, hoe</em> (omstandigheden) en <em>hoe ver</em> (gevolgen en schade).
+                <strong>Hier komt een uitleg:</strong> Beschrijf het incident volgens: inclusief <em>waarom, wat, waar, wanneer, wie, hoe</em> (omstandigheden) en <em>hoe ver</em> (gevolgen en schade).
               </p>
               <textarea class="im-textarea" id="im-omschrijving" rows="5" placeholder="Beschrijf het incident volgens GGR-WTZ richtlijnen: wat is er gebeurd? waar, wanneer, wie was betrokken..." required></textarea>
             </div>
@@ -261,27 +252,130 @@
               <label class="im-label" for="im-maatregelen">Hoe wordt de veiligheid gewaarborgd?</label>
               <textarea class="im-textarea" id="im-maatregelen" rows="4" placeholder="Beschrijf welke maatregelen zijn genomen om de veiligheid te waarborgen..."></textarea>
             </div>
+          </div>
+        </section>
 
-            <div class="im-grid-2">
-              <div class="im-field">
-                <label class="im-label" for="im-status">Status</label>
-                <select class="im-select" id="im-status">
-                  <option value="in_afwachting">In afwachting</option>
-                  <option value="in_behandeling">In behandeling</option>
-                  <option value="opgelost">Opgelost</option>
-                </select>
+        <!-- Sectie: Bijlagen -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </span>
+            <h2 class="im-card-title">Bijlagen</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label">Foto's en documenten</label>
+              <p class="im-help">Toegestane bestandstypen: foto's of documenten</p>
+
+              <label class="im-upload" id="im-upload-label" for="im-upload-input">
+                <span class="im-upload-ico" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </span>
+                <span class="im-upload-text">
+                  <span class="im-upload-link">Klik om te uploaden</span> of sleep en zet hier
+                  <span class="im-upload-hint">PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, MSG, JPG, PNG</span>
+                </span>
+                <input
+                  type="file"
+                  id="im-upload-input"
+                  class="im-upload-input"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.msg,.jpg,.jpeg,.png,.gif,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain,application/vnd.ms-outlook,image/jpeg,image/png,image/gif,image/webp"
+                />
+              </label>
+
+              <div class="im-bijlagen-list" id="im-bijlagen-list" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Ouders/vertegenwoordigers -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </span>
+            <h2 class="im-card-title">Ouders/vertegenwoordigers</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label">Zijn ouders/vertegenwoordigers geïnformeerd? <span class="im-req">*</span></label>
+              <div class="im-stack-radio" role="radiogroup" aria-label="Ouders geïnformeerd">
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-ouders" value="ja" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Ja, ouders/vertegenwoordigers zijn geïnformeerd</span>
+                </label>
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-ouders" value="nee" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Nee, ze zijn nog niet geïnformeerd</span>
+                </label>
               </div>
-              <div class="im-field">
-                <label class="im-label" for="im-melder">Melder</label>
-                <select class="im-select" id="im-melder">
-                  <option value="">Selecteer melder</option>
-                </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Feedback -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            </span>
+            <h2 class="im-card-title">Feedback</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field im-field--checkbox">
+              <label class="im-checkbox-label">
+                <input type="checkbox" id="im-wil-gebeld" />
+                <span class="im-checkbox-text">
+                  <strong>Ik wil gebeld worden</strong>
+                  <span class="im-help">De gedragswetenschapper zal telefonisch contact met u opnemen.</span>
+                </span>
+              </label>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-impact">Welke impact had dit op u als zorgverlener?</label>
+              <textarea class="im-textarea" id="im-impact" rows="4" placeholder="Beschrijf hoe dit incident u persoonlijk heeft beïnvloed..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Notificaties -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </span>
+            <h2 class="im-card-title">Notificaties</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label">Wie moet worden geïnformeerd?</label>
+              <div class="im-notif-grid">
+                <button type="button" class="im-notif-card" id="im-notif-team" aria-pressed="false">
+                  <span class="im-notif-card-title">Mijn team informeren</span>
+                  <span class="im-notif-card-desc">Stuur een notificatie over dit incident naar mijn team.</span>
+                </button>
+                <button type="button" class="im-notif-card" id="im-notif-spec" aria-pressed="false">
+                  <span class="im-notif-card-title">Specifieke medewerkers informeren</span>
+                  <span class="im-notif-card-desc">Kies één of meer medewerkers om dit incident te informeren.</span>
+                </button>
               </div>
-              <div class="im-field">
-                <label class="im-label" for="im-beoordelaar">Beoordelaar (optioneel)</label>
-                <select class="im-select" id="im-beoordelaar">
-                  <option value="">Selecteer beoordelaar</option>
-                </select>
+
+              <div class="im-notif-medewerkers" id="im-notif-medewerkers" hidden>
+                <span class="im-mini-label">Selecteer medewerkers</span>
+                <div class="im-betrokken-input-row">
+                  <select class="im-select" id="im-notif-medewerker-select">
+                    <option value="">Selecteer medewerker</option>
+                  </select>
+                  <button type="button" class="im-add-btn" id="im-notif-medewerker-add" aria-label="Toevoegen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+                <div class="im-betrokken-list" id="im-notif-medewerkers-list" aria-live="polite"></div>
               </div>
             </div>
           </div>
@@ -293,7 +387,10 @@
           <button type="button" class="btn-outline btn-danger-outline im-archive-btn" id="im-archive-btn" hidden>Archiveren</button>
           <div class="im-actions-spacer"></div>
           <a href="incidenten.html" class="btn-outline">Annuleren</a>
-          <button type="submit" class="btn-primary" id="im-submit">Indienen</button>
+          <button type="submit" class="btn-primary im-submit-wide" id="im-submit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nieuwe incident melding
+          </button>
         </div>
       </form>
     </main>
@@ -335,7 +432,8 @@
   <script src="clienten-data.js" defer></script>
   <script src="medewerkers-data.js" defer></script>
   <script src="locaties-data.js" defer></script>
-  <script src="incidenten-data.js?v=9e" defer></script>
-  <script src="incident-melden.js?v=9e" defer></script>
+  <script src="incidenten-data.js?v=9f" defer></script>
+  <script src="incident-documenten-data.js?v=9f" defer></script>
+  <script src="incident-melden.js?v=9f" defer></script>
 </body>
 </html>

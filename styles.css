@@ -17185,3 +17185,235 @@ button.besc-dtl-tab:hover {
   background: rgba(192, 57, 43, 0.08);
   border-color: #c0392b;
 }
+
+/* === Incident melden — uitgebreid (Bijlagen / Ouders / Feedback / Notificaties) === */
+
+/* Bijlagen — drop-zone */
+.im-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  background: rgba(37, 99, 235, 0.02);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: center;
+}
+.im-upload:hover,
+.im-upload.is-drag {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.05);
+}
+.im-upload-input {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+}
+.im-upload-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  color: var(--blue);
+  background: rgba(37, 99, 235, 0.08);
+}
+.im-upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.im-upload-link {
+  color: var(--blue);
+  font-weight: 600;
+}
+.im-upload-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Bijlagen — lijst van geüploade / pending bestanden */
+.im-bijlagen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.im-bijlage-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: 13px;
+}
+.im-bijlage-row--pending {
+  border-style: dashed;
+  background: rgba(37, 99, 235, 0.02);
+}
+.im-bijlage-ico {
+  display: inline-flex;
+  width: 26px; height: 26px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  background: rgba(0, 0, 0, 0.04);
+}
+.im-bijlage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.im-bijlage-name {
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
+.im-bijlage-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.im-bijlage-x {
+  display: inline-flex;
+  width: 24px; height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.im-bijlage-x:hover {
+  background: rgba(192, 57, 43, 0.08);
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.2);
+}
+
+/* Stacked radio (Ouders/vertegenwoordigers) */
+.im-stack-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.im-stack-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.im-stack-radio-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.im-stack-radio-item:hover { border-color: var(--blue); background: rgba(37, 99, 235, 0.03); }
+.im-stack-radio-item:has(input:checked) {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+}
+.im-stack-radio-dot {
+  display: inline-flex;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  flex-shrink: 0;
+  position: relative;
+}
+.im-stack-radio-item:has(input:checked) .im-stack-radio-dot {
+  border-color: var(--blue);
+}
+.im-stack-radio-item:has(input:checked) .im-stack-radio-dot::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.im-stack-radio-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Notificaties — twee kaartjes naast elkaar */
+.im-notif-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .im-notif-grid { grid-template-columns: 1fr; }
+}
+.im-notif-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  font-size: 13px;
+}
+.im-notif-card:hover {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.03);
+}
+.im-notif-card.is-active {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+  box-shadow: 0 0 0 1px var(--blue) inset;
+}
+.im-notif-card-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.im-notif-card-desc {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.im-notif-medewerkers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+/* Wider submit button (matched de "+ Nieuwe incident melding" styling) */
+.im-submit-wide {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

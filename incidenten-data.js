@@ -49,6 +49,24 @@
       .map(function (b) { return { type: b.type, id: String(b.id) }; });
   }
 
+  function sanitizeUuidArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    var out = [];
+    for (var i = 0; i < arr.length; i += 1) {
+      var v = arr[i];
+      if (v == null) continue;
+      var s = String(v).trim();
+      if (s) out.push(s);
+    }
+    return out;
+  }
+
+  function sanitizeNullableBool(v) {
+    if (v === true || v === "true" || v === 1 || v === "ja" || v === "yes") return true;
+    if (v === false || v === "false" || v === 0 || v === "nee" || v === "no") return false;
+    return null;
+  }
+
   function reportSilent(action, err) {
     try { console.error("[incidentenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
     if (global.besaReportSyncFailure) global.besaReportSyncFailure("Incidenten — " + action, err);
@@ -93,6 +111,11 @@
       isBuiten: !!row.is_buiten,
       actorType: row.actor_type || null,
       betrokkenPartijen: sanitizeBetrokken(row.betrokken_partijen),
+      oudersGeinformeerd: sanitizeNullableBool(row.ouders_geinformeerd),
+      wilGebeldWorden: !!row.wil_gebeld_worden,
+      impactOpZorgverlener: row.impact_op_zorgverlener || "",
+      notificeerTeam: !!row.notificeer_team,
+      notificeerMedewerkerIds: sanitizeUuidArray(row.notificeer_medewerker_ids),
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
       archived: !!row.archived,
@@ -118,6 +141,11 @@
       is_buiten: !!safe.isBuiten,
       actor_type: actor,
       betrokken_partijen: sanitizeBetrokken(safe.betrokkenPartijen),
+      ouders_geinformeerd: sanitizeNullableBool(safe.oudersGeinformeerd),
+      wil_gebeld_worden: !!safe.wilGebeldWorden,
+      impact_op_zorgverlener: String(safe.impactOpZorgverlener || ""),
+      notificeer_team: !!safe.notificeerTeam,
+      notificeer_medewerker_ids: sanitizeUuidArray(safe.notificeerMedewerkerIds),
       archived: !!safe.archived,
     };
     if (safe.incidentDatum) payload.incident_datum = safe.incidentDatum;
