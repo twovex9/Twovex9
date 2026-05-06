@@ -421,6 +421,9 @@
     if (!deleteTargetId || (delConfirmBtn && delConfirmBtn.disabled)) return;
     deleteRowById(deleteTargetId);
     closeCfDeleteModal();
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("deleted", "Feestdag");
+    }
   }
 
   if (delSlider) {
@@ -478,7 +481,8 @@
         return;
       }
 
-      if (modalMode === "edit" && editingId) {
+      var wasEdit = modalMode === "edit" && editingId;
+      if (wasEdit) {
         var idx = -1;
         var ei;
         for (ei = 0; ei < allRows.length; ei++) {
@@ -508,6 +512,9 @@
       }
       closeAddModal();
       render();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback(wasEdit ? "saved" : "added", "Feestdag “" + naam + "”");
+      }
     });
   }
 

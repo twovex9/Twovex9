@@ -541,6 +541,9 @@
     if (!deleteTargetId || (delConfirmBtn && delConfirmBtn.disabled)) return;
     deleteRowById(deleteTargetId);
     closeVzDeleteModal();
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("deleted", "Verzuimregel");
+    }
   }
 
   if (delSlider) {
@@ -746,6 +749,9 @@
       setActiveRows(list);
       closeVzEditModal();
       render();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("saved", "Verzuimregel");
+      }
     });
   }
 

@@ -156,6 +156,102 @@
     showSaveModal(text, title);
   }
 
+  /**
+   * Slider-bevestigingsmodal voor destructieve acties (in plaats van window.confirm).
+   * Gebruikt dezelfde huisstijl als employee-delete-dialog: gebruiker moet de
+   * slider helemaal naar rechts schuiven om de actie-knop te activeren.
+   * @param {{title?: string, message?: string, preview?: string,
+   *          okLabel?: string, cancelLabel?: string}} [opts]
+   * @returns {Promise<boolean>} resolves true als bevestigd, false bij annuleren/sluit.
+   */
+  function showSliderConfirmModal(opts) {
+    var o = opts || {};
+    var title = o.title || "Bevestigen";
+    var message = o.message || "Weet je zeker dat je dit wilt doen?";
+    var preview = o.preview == null ? "" : String(o.preview);
+    var okLabel = o.okLabel || "Verwijderen";
+    var cancelLabel = o.cancelLabel || "Annuleren";
+
+    return new Promise(function (resolve) {
+      var overlay = w.document.createElement("div");
+      overlay.className = "modal-overlay modal-overlay--confirm";
+      overlay.setAttribute("aria-hidden", "false");
+      overlay.innerHTML =
+        '<div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" tabindex="-1">' +
+          '<div class="modal-header">' +
+            '<h2 class="modal-title"></h2>' +
+            '<button type="button" class="modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>' +
+          '</div>' +
+          '<div class="modal-body">' +
+            '<p class="employee-delete-msg"></p>' +
+            '<p class="employee-delete-preview" aria-live="polite"></p>' +
+            '<div class="employee-delete-slider-block">' +
+              '<label class="employee-delete-slider-label">Schuif helemaal naar rechts om te bevestigen</label>' +
+              '<div class="employee-delete-slider-wrap">' +
+                '<input type="range" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Bevestig actie" />' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+            '<button type="button" class="btn-outline"></button>' +
+            '<button type="button" class="btn-primary" disabled></button>' +
+          '</div>' +
+        '</div>';
+
+      var titleEl = overlay.querySelector(".modal-title");
+      var msgEl = overlay.querySelector(".employee-delete-msg");
+      var previewEl = overlay.querySelector(".employee-delete-preview");
+      var slider = overlay.querySelector(".employee-delete-slider");
+      var closeBtn = overlay.querySelector(".modal-close");
+      var cancelBtn = overlay.querySelector(".btn-outline");
+      var okBtn = overlay.querySelector(".btn-primary");
+
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+      if (previewEl) previewEl.textContent = preview;
+      if (cancelBtn) cancelBtn.textContent = cancelLabel;
+      if (okBtn) okBtn.textContent = okLabel;
+
+      function syncSlider() {
+        if (!slider) return;
+        var v = Math.min(100, Math.max(0, parseInt(slider.value, 10) || 0));
+        slider.value = String(v);
+        slider.style.setProperty("--employee-slider-pct", v + "%");
+        slider.setAttribute("aria-valuenow", String(v));
+        if (okBtn) okBtn.disabled = v < 100;
+      }
+      function settle(result) {
+        w.document.removeEventListener("keydown", onKey);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        resolve(result);
+      }
+      function onCancel() { settle(false); }
+      function onConfirm() {
+        if (okBtn && okBtn.disabled) return;
+        settle(true);
+      }
+      function onBackdrop(e) { if (e.target === overlay) settle(false); }
+      function onKey(e) { if (e.key === "Escape") settle(false); }
+
+      if (slider) {
+        slider.addEventListener("input", syncSlider);
+        slider.addEventListener("change", syncSlider);
+      }
+      if (closeBtn) closeBtn.addEventListener("click", onCancel);
+      if (cancelBtn) cancelBtn.addEventListener("click", onCancel);
+      if (okBtn) okBtn.addEventListener("click", onConfirm);
+      overlay.addEventListener("click", onBackdrop);
+      w.document.addEventListener("keydown", onKey);
+
+      w.document.body.appendChild(overlay);
+      syncSlider();
+      if (slider) {
+        try { slider.focus(); } catch (e) { /* noop */ }
+      }
+    });
+  }
+
   w.showSaveModal = showSaveModal;
   w.showActionFeedback = showActionFeedback;
+  w.showSliderConfirmModal = showSliderConfirmModal;
 })(window);

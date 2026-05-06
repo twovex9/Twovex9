@@ -1114,13 +1114,31 @@ function buildShiftCardEl(it, gi, overlapIds) {
         return;
       }
       if (act === "del") {
-        if (window.confirm("Deze planningsregel verwijderen?")) {
+        ev.stopPropagation();
+        var planSummary = "";
+        try {
+          var st = it.start ? new Date(it.start) : null;
+          var dateStr = st && !isNaN(st) ? st.toLocaleDateString("nl-NL") : "";
+          planSummary = [it.teamlid, it.client, dateStr].filter(Boolean).join(" — ");
+        } catch (_e) { /* noop */ }
+        var confirmFn = (typeof window.showSliderConfirmModal === "function")
+          ? window.showSliderConfirmModal({
+              title: "Planningsregel verwijderen",
+              message: "Weet je zeker dat je deze planningsregel wilt verwijderen?",
+              preview: planSummary,
+              okLabel: "Verwijderen",
+            })
+          : Promise.resolve(window.confirm("Deze planningsregel verwijderen?"));
+        confirmFn.then(function (ok) {
+          if (!ok) return;
           const arr = readJsonArray(PLANNING_STORAGE_KEY).filter((x) => x.id !== it.id);
           writePlanningItems(arr);
           ui.selectedId = null;
           renderAllViews();
-        }
-        ev.stopPropagation();
+          if (typeof window.showActionFeedback === "function") {
+            window.showActionFeedback("deleted", "Planningsregel");
+          }
+        });
         return;
       }
     }
@@ -2486,12 +2504,23 @@ function initNav() {
   });
   document.getElementById("planning-export-btn")?.addEventListener("click", exportPlanningCsv);
   document.getElementById("planning-clear-all-btn")?.addEventListener("click", () => {
-    const ok = window.confirm(
-      "Weet u zeker dat u alle geplande diensten uit het rooster wilt verwijderen?\n\n" +
-        "Dit wist alle huidige planning (alle medewerkers/diensten). Niet ongedaan te maken. Demodata wordt daarna ook niet opnieuw ingeladen."
-    );
-    if (!ok) return;
-    clearAllPlannedDiensten();
+    var clearConfirm = (typeof window.showSliderConfirmModal === "function")
+      ? window.showSliderConfirmModal({
+          title: "Hele planning leegmaken",
+          message: "Dit wist alle geplande diensten van alle medewerkers. Dit kan niet ongedaan worden gemaakt en demodata wordt niet opnieuw geladen.",
+          preview: "",
+          okLabel: "Alles verwijderen",
+        })
+      : Promise.resolve(window.confirm(
+          "Weet u zeker dat u alle geplande diensten uit het rooster wilt verwijderen?"
+        ));
+    clearConfirm.then(function (ok) {
+      if (!ok) return;
+      clearAllPlannedDiensten();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("deleted", "Alle geplande diensten");
+      }
+    });
   });
   document.querySelectorAll('input[name="planning-row-axis"]').forEach((r) => {
     r.addEventListener("change", () => {

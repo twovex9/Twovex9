@@ -592,7 +592,11 @@ function initEmployeeDeleteModal(tbody) {
     rowToDelete = null;
     closeDeleteModal();
     refreshEmployeesPagination();
-    showAppToast(`Medewerker${deletedName ? ` "${deletedName}"` : ""} is gearchiveerd`);
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("archived", deletedName ? `Medewerker “${deletedName}”` : "Medewerker");
+    } else {
+      showAppToast(`Medewerker${deletedName ? ` "${deletedName}"` : ""} is gearchiveerd`);
+    }
   }
 
   tbody.addEventListener("click", (event) => {
@@ -684,7 +688,11 @@ function initEmployeePurgeModal(tbody) {
     rowToPurge = null;
     closePurgeModal();
     refreshEmployeesPagination();
-    showAppToast(`Medewerker${deletedName ? ` "${deletedName}"` : ""} definitief verwijderd`);
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("deleted", deletedName ? `Medewerker “${deletedName}”` : "Medewerker", "Definitief verwijderd.");
+    } else {
+      showAppToast(`Medewerker${deletedName ? ` "${deletedName}"` : ""} definitief verwijderd`);
+    }
   }
 
   tbody.addEventListener("click", (event) => {
@@ -738,7 +746,11 @@ function initEmployeeRestore(tbody) {
     ensureEmployeesActionsColumn();
     applyTableFilters();
     refreshEmployeesPagination();
-    showAppToast("Medewerker hersteld");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("restored", "Medewerker");
+    } else {
+      showAppToast("Medewerker hersteld");
+    }
   });
 }
 
@@ -851,7 +863,11 @@ function initEmployeeAddModal(tbody) {
         item = await window.medewerkersDB.add(draft);
       } catch (err) {
         console.error("Medewerker toevoegen mislukt:", err);
-        showAppToast("Toevoegen niet gelukt — probeer opnieuw");
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Toevoegen mislukt", err && err.message ? err.message : "Probeer het opnieuw.");
+        } else {
+          showAppToast("Toevoegen niet gelukt — probeer opnieuw");
+        }
         return;
       }
     } else {
@@ -865,7 +881,11 @@ function initEmployeeAddModal(tbody) {
     persistEmployeesFromTable(tbody);
     refreshEmployeesPagination();
     closeModal();
-    showAppToast(`Medewerker "${voornaam} ${achternaam}" toegevoegd`);
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("added", `Medewerker “${voornaam} ${achternaam}”`);
+    } else {
+      showAppToast(`Medewerker "${voornaam} ${achternaam}" toegevoegd`);
+    }
   });
 }
 

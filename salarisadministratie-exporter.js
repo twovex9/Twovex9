@@ -539,8 +539,26 @@
         btnDel.innerHTML = ICO_DEL;
         btnDel.addEventListener("click", function (e) {
           e.preventDefault();
-          if (!window.confirm("Deze ORT-regel verwijderen?")) return;
-          ortDeleteRule(r.id);
+          var ortPreview = "";
+          try {
+            ortPreview = [r.diensttype, r.dag, r.vanaf || r.tot ? (r.vanaf || "") + (r.tot ? "–" + r.tot : "") : ""]
+              .filter(Boolean).join(" — ");
+          } catch (_e) { /* noop */ }
+          var ortConfirm = (typeof window.showSliderConfirmModal === "function")
+            ? window.showSliderConfirmModal({
+                title: "ORT-regel verwijderen",
+                message: "Weet je zeker dat je deze ORT-regel wilt verwijderen?",
+                preview: ortPreview,
+                okLabel: "Verwijderen",
+              })
+            : Promise.resolve(window.confirm("Deze ORT-regel verwijderen?"));
+          ortConfirm.then(function (ok) {
+            if (!ok) return;
+            ortDeleteRule(r.id);
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("deleted", "ORT-regel");
+            }
+          });
         });
 
         wrap.appendChild(btnEd);

@@ -1426,14 +1426,41 @@
         var del2 = e.target.closest("button.bdtl-note-del");
         if (del2) {
           var delId = del2.getAttribute("data-del-id");
-          if (!window.confirm("Deze notitie verwijderen?")) return;
-          var a3 = loadNoteSupp().filter(function (x) { return x && x.id !== delId; });
-          saveNoteSupp(a3);
-          if (bdtlNoteEditingId === delId) clearBdtlNoteEditor();
-          renderBdtlNotesList();
-          updateBdtlSideNotesSummary();
-          if (typeof showSaveModal === "function") showSaveModal("Notitie is verwijderd.", "Verwijderd");
-          else showToast("Notitie verwijderd.");
+          var notePreview = "";
+          try {
+            var noteRow = loadNoteSupp().find(function (x) { return x && x.id === delId; });
+            if (noteRow) {
+              var rawText = String(noteRow.tekst || noteRow.text || noteRow.html || "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+              if (rawText.length > 80) rawText = rawText.slice(0, 80) + "…";
+              notePreview = rawText;
+            }
+          } catch (_e) { /* noop */ }
+          var noteConfirm = (typeof window.showSliderConfirmModal === "function")
+            ? window.showSliderConfirmModal({
+                title: "Notitie verwijderen",
+                message: "Weet je zeker dat je deze notitie wilt verwijderen?",
+                preview: notePreview,
+                okLabel: "Verwijderen",
+              })
+            : Promise.resolve(window.confirm("Deze notitie verwijderen?"));
+          noteConfirm.then(function (ok) {
+            if (!ok) return;
+            var a3 = loadNoteSupp().filter(function (x) { return x && x.id !== delId; });
+            saveNoteSupp(a3);
+            if (bdtlNoteEditingId === delId) clearBdtlNoteEditor();
+            renderBdtlNotesList();
+            updateBdtlSideNotesSummary();
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("deleted", "Notitie");
+            } else if (typeof showSaveModal === "function") {
+              showSaveModal("Notitie is verwijderd.", "Verwijderd");
+            } else {
+              showToast("Notitie verwijderd.");
+            }
+          });
         }
       });
     }

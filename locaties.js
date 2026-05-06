@@ -385,8 +385,14 @@
     closeLocPurgeModal();
     try {
       await window.locatiesDB.delete(idToPurge);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("deleted", "Locatie", "Definitief verwijderd.");
+      }
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Verwijderen mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
     }
     render();
   }
@@ -433,8 +439,14 @@
     closeLocDeleteModal();
     try {
       await window.locatiesDB.archive(idToArchive);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("archived", "Locatie");
+      }
     } catch (err) {
       console.error("Archiveren mislukt:", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Archiveren mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
     }
     render();
   }
@@ -481,8 +493,14 @@
       var rida = resL.getAttribute("data-loc-id");
       try {
         await window.locatiesDB.restore(rida);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("restored", "Locatie");
+        }
       } catch (err) {
         console.error("Herstellen mislukt:", err);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Herstellen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
       }
       render();
       return;
@@ -537,11 +555,17 @@
         await window.locatiesDB.add(input);
       } catch (err) {
         console.error("Locatie toevoegen mislukt:", err);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Toevoegen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
         return;
       }
       closeAddModal();
       currentPage = 0;
       render();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("added", "Locatie “" + naam + "”");
+      }
     });
   }
 

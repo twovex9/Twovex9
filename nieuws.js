@@ -762,6 +762,9 @@ function initNewsAddModal() {
       closeModal();
       applyNewsSearch();
       refreshNewsPagination();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("added", `Nieuwsbericht “${titel}”`);
+      }
     }
 
     if (file && file.type.startsWith("image/")) {
@@ -923,6 +926,10 @@ function initNewsEditPanel() {
       applyNewsSearch();
       refreshNewsPagination();
       closeNewsEdit();
+      if (typeof window.showActionFeedback === "function") {
+        const titel = updatedItem && updatedItem.titel ? `Nieuwsbericht “${updatedItem.titel}”` : "Nieuwsbericht";
+        window.showActionFeedback("saved", titel);
+      }
     }
 
     if (!remaining) { finishSave(); return; }

@@ -351,8 +351,14 @@
     closeBurPurgeModal();
     try {
       await window.bureausDB.delete(idToPurge);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("deleted", "Bureau", "Definitief verwijderd.");
+      }
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Verwijderen mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
     }
     render();
   }
@@ -399,8 +405,14 @@
     closeBurDeleteModal();
     try {
       await window.bureausDB.archive(idToArchive);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("archived", "Bureau");
+      }
     } catch (err) {
       console.error("Archiveren mislukt:", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Archiveren mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
     }
     render();
   }
@@ -447,8 +459,14 @@
       var rid = resEl.getAttribute("data-bur-id");
       try {
         await window.bureausDB.restore(rid);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("restored", "Bureau");
+        }
       } catch (err) {
         console.error("Herstellen mislukt:", err);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Herstellen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
       }
       render();
       return;
@@ -489,11 +507,17 @@
         await window.bureausDB.add({ naam: naam });
       } catch (err) {
         console.error("Bureau toevoegen mislukt:", err);
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Toevoegen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
         return;
       }
       closeAddModal();
       currentPage = 0;
       render();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("added", "Bureau “" + naam + "”");
+      }
     });
   }
 
