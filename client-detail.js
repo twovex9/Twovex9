@@ -1146,28 +1146,15 @@
             openEditModal(doc.id);
           });
 
-          var thirdBtn;
-          if (doc.archived) {
-            thirdBtn = document.createElement("button");
-            thirdBtn.type = "button";
-            thirdBtn.className = "btn-outline hr-restore-btn cd-doc-restore-btn";
-            thirdBtn.textContent = "Herstel";
-            thirdBtn.setAttribute("data-cd-doc-id", doc.id);
-            thirdBtn.addEventListener("click", function (e) {
-              e.stopPropagation();
-              window.clientDocsDB.restore(doc.id).then(function () {
-                if (typeof window.showActionFeedback === "function") {
-                  window.showActionFeedback("restored", "Document");
-                }
-              }).catch(function (err) { reportError(err, "Herstellen"); });
-            });
-          } else {
-            thirdBtn = document.createElement("button");
-            thirdBtn.type = "button";
-            thirdBtn.className = "emp-doc-action-btn";
-            thirdBtn.title = "Archiveren";
-            thirdBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
-            thirdBtn.addEventListener("click", function (e) {
+          actWrap.appendChild(viewBtn);
+          actWrap.appendChild(editBtn);
+          if (!doc.archived) {
+            var archiveBtn = document.createElement("button");
+            archiveBtn.type = "button";
+            archiveBtn.className = "emp-doc-action-btn";
+            archiveBtn.title = "Archiveren";
+            archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
+            archiveBtn.addEventListener("click", function (e) {
               e.stopPropagation();
               var ask = (typeof window.showArchiveConfirm === "function")
                 ? window.showArchiveConfirm({ preview: doc.naam || "" })
@@ -1181,11 +1168,8 @@
                 }).catch(function (err) { reportError(err, "Archiveren"); });
               });
             });
+            actWrap.appendChild(archiveBtn);
           }
-
-          actWrap.appendChild(viewBtn);
-          actWrap.appendChild(editBtn);
-          actWrap.appendChild(thirdBtn);
           tdAct.appendChild(actWrap);
           tr.appendChild(tdAct);
 
@@ -1214,13 +1198,35 @@
           var delBtn = document.createElement("button");
           delBtn.type = "button";
           delBtn.className = "employee-delete-btn";
-          delBtn.title = "Verwijderen";
+          delBtn.title = doc.archived ? "Definitief verwijderen" : "Verwijderen";
+          delBtn.setAttribute("aria-label", doc.archived ? "Definitief verwijderen" : "Verwijderen");
           delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
           delBtn.addEventListener("click", function (e) {
             e.stopPropagation();
             openDocDeleteModal(doc);
           });
-          tdDel.appendChild(delBtn);
+          if (doc.archived) {
+            var delWrap = document.createElement("div");
+            delWrap.className = "hr-row-actions";
+            var restoreBtn = document.createElement("button");
+            restoreBtn.type = "button";
+            restoreBtn.className = "btn-outline hr-restore-btn cd-doc-restore-btn";
+            restoreBtn.textContent = "Herstel";
+            restoreBtn.setAttribute("data-cd-doc-id", doc.id);
+            restoreBtn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              window.clientDocsDB.restore(doc.id).then(function () {
+                if (typeof window.showActionFeedback === "function") {
+                  window.showActionFeedback("restored", "Document");
+                }
+              }).catch(function (err) { reportError(err, "Herstellen"); });
+            });
+            delWrap.appendChild(restoreBtn);
+            delWrap.appendChild(delBtn);
+            tdDel.appendChild(delWrap);
+          } else {
+            tdDel.appendChild(delBtn);
+          }
           tr.appendChild(tdDel);
 
           tbody.appendChild(tr);

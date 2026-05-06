@@ -7534,6 +7534,31 @@ th.emp-doc-col-delete {
   cursor: default !important;
 }
 
+.emp-doc-col-delete:has(.hr-row-actions) {
+  width: auto;
+  min-width: 104px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.emp-doc-col-delete .hr-row-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.emp-doc-col-delete .hr-row-actions .hr-restore-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.emp-doc-col-delete .hr-row-actions .employee-delete-btn {
+  align-self: center;
+}
+
 .emp-doc-table thead th {
   cursor: pointer;
   user-select: none;
