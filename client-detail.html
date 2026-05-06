@@ -549,9 +549,131 @@
               <textarea class="client-detail-nottext client-detail-nottext--wide" id="cd-tabnot" rows="6" placeholder="Notities voor in dit tabblad…" name="tabNotities"></textarea>
             </section>
             <section class="client-detail-pan" id="cd-pan-j" role="tabpanel" aria-hidden="true" hidden>
-              <h3 class="client-detail-pan-h">Documenten</h3>
-              <p class="client-detail-placeholder">Hier kunnen straks <strong>documenten</strong> (PDF, brieven) beheerd of geïmporteerd worden. Upload koppelt hier aan.</p>
-              <p class="client-detail-empty-list">Nog geen bestanden: voeg lokaal toe wanneer beschikbaar is.</p>
+
+              <div class="emp-doc-pills" id="cd-doc-pills"></div>
+
+              <div class="emp-doc-block">
+                <div class="emp-doc-block-head">
+                  <h3>Documenten</h3>
+                  <div class="emp-doc-head-actions">
+                    <div class="emp-doc-col-wrap">
+                      <button type="button" class="emp-verzuim-col-btn emp-doc-col-btn" id="cd-doc-col-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg> Kolommen</button>
+                      <div class="emp-doc-col-dropdown" id="cd-doc-col-dropdown" style="display:none">
+                        <p class="emp-verzuim-col-title">Kolommen weergeven</p>
+                        <label><input type="checkbox" data-cddoccol="naam" checked> Naam</label>
+                        <label><input type="checkbox" data-cddoccol="type" checked> Type</label>
+                        <label><input type="checkbox" data-cddoccol="vervaldatum" checked> Vervaldatum</label>
+                        <label><input type="checkbox" data-cddoccol="uploaddatum" checked> Uploaddatum</label>
+                        <label><input type="checkbox" data-cddoccol="laatstGewijzigd" checked> Laatst gewijzigd</label>
+                      </div>
+                    </div>
+                    <button type="button" class="emp-doc-download-all-btn" id="cd-doc-download-all-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Alles downloaden</button>
+                    <button type="button" class="emp-doc-upload-btn" id="cd-doc-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Document uploaden</button>
+                  </div>
+                </div>
+                <div class="emp-doc-toolbar-row">
+                  <input type="text" class="emp-verzuim-search emp-doc-search" id="cd-doc-search" placeholder="Zoeken...">
+                  <div class="emp-doc-toolbar-right">
+                    <label class="emp-doc-archive-toggle"><input type="checkbox" id="cd-doc-archived-toggle"> Gearchiveerd</label>
+                    <button type="button" class="emp-doc-reset-btn" id="cd-doc-reset-btn">Reset <span aria-hidden="true">&times;</span></button>
+                  </div>
+                </div>
+                <div class="emp-verzuim-table-wrap emp-doc-table-wrap">
+                  <table class="emp-verzuim-table emp-doc-table" id="cd-doc-table">
+                    <thead>
+                      <tr>
+                        <th class="emp-doc-col-check"><input type="checkbox" id="cd-doc-select-all"></th>
+                        <th class="emp-doc-col-acties">Acties</th>
+                        <th data-cddoccol="naam" data-cdsort="naam">Naam <span class="emp-sort-icon">&#8693;</span></th>
+                        <th data-cddoccol="type" data-cdsort="type">Type <span class="emp-sort-icon">&#8693;</span></th>
+                        <th data-cddoccol="vervaldatum" data-cdsort="vervaldatum">Vervaldatum <span class="emp-sort-icon">&#8693;</span></th>
+                        <th data-cddoccol="uploaddatum" data-cdsort="uploaddatum">Uploaddatum <span class="emp-sort-icon">&#8693;</span></th>
+                        <th data-cddoccol="laatstGewijzigd" data-cdsort="laatstGewijzigd">Laatst gewijzigd <span class="emp-sort-icon">&#8693;</span></th>
+                        <th class="emp-doc-col-delete"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-doc-tbody"></tbody>
+                  </table>
+                  <p class="emp-verzuim-empty emp-doc-empty" id="cd-doc-empty">Geen documenten gevonden</p>
+                </div>
+                <div class="emp-verzuim-pagination emp-doc-pagination">
+                  <span class="emp-doc-page-info" id="cd-doc-page-info"></span>
+                  <div class="emp-verzuim-page-size emp-doc-page-size">Rows per page <select id="cd-doc-page-size"><option value="50">50</option><option value="25">25</option><option value="10">10</option></select></div>
+                  <div class="emp-verzuim-page-nav emp-doc-page-nav">
+                    <span class="emp-doc-page-label" id="cd-doc-page-label"></span>
+                    <button data-cddocpage="first">&laquo;</button>
+                    <button data-cddocpage="prev">&lsaquo;</button>
+                    <button data-cddocpage="next">&rsaquo;</button>
+                    <button data-cddocpage="last">&raquo;</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emp-verzuim-modal-overlay emp-doc-modal-overlay" id="cd-doc-modal" style="display:none">
+                <div class="emp-verzuim-modal emp-doc-modal">
+                  <div class="emp-verzuim-modal-head">
+                    <h3 id="cd-doc-modal-title">Document uploaden</h3>
+                    <button type="button" class="emp-verzuim-modal-close" id="cd-doc-modal-close">&times;</button>
+                  </div>
+                  <div class="emp-verzuim-modal-body">
+                    <div class="emp-doc-dropzone" id="cd-doc-dropzone">
+                      <input type="file" id="cd-doc-modal-file" accept=".svg,.png,.xlsx,.xls,.csv,.jpg,.jpeg,.pdf,.docx,.doc" hidden>
+                      <div class="emp-doc-dropzone-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#339dc1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      </div>
+                      <p class="emp-doc-dropzone-text"><strong>Klik om te uploaden</strong> of sleep en zet neer</p>
+                      <p class="emp-doc-dropzone-hint">SVG, PNG, Excel, CSV, JPG, PDF of .docx (max. 20MB)</p>
+                      <p class="emp-doc-dropzone-filename" id="cd-doc-dropzone-filename"></p>
+                    </div>
+                    <label class="emp-verzuim-modal-field"><span>Naam</span><input type="text" id="cd-doc-modal-naam" class="emp-doc-modal-input"></label>
+                    <div class="emp-doc-modal-row">
+                      <label class="emp-verzuim-modal-field emp-doc-modal-half"><span>Type</span>
+                        <select id="cd-doc-modal-type" class="emp-doc-modal-input">
+                          <option value=""></option>
+                          <option value="Beschikking">Beschikking</option>
+                          <option value="Zorgplan">Zorgplan</option>
+                          <option value="Indicatie">Indicatie</option>
+                          <option value="Rapportage">Rapportage</option>
+                          <option value="Identiteit">Identiteit</option>
+                          <option value="Correspondentie">Correspondentie</option>
+                          <option value="Overig">Overig</option>
+                        </select>
+                      </label>
+                      <label class="emp-verzuim-modal-field emp-doc-modal-half"><span>Verloopdatum</span><input type="date" id="cd-doc-modal-verval"></label>
+                    </div>
+                  </div>
+                  <div class="emp-verzuim-modal-footer">
+                    <button type="button" class="emp-verzuim-modal-cancel" id="cd-doc-modal-cancel">Annuleren</button>
+                    <button type="button" class="emp-verzuim-modal-submit" id="cd-doc-modal-save">Toevoegen</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-overlay modal-overlay--confirm" id="cd-doc-delete-modal" hidden aria-hidden="true">
+                <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="cd-doc-delete-title" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 id="cd-doc-delete-title" class="modal-title">Document verwijderen</h2>
+                    <button type="button" class="modal-close" id="cd-doc-delete-close" aria-label="Sluiten">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="employee-delete-msg">Ben je zeker dat je dit document wilt verwijderen?</p>
+                    <p class="employee-delete-preview" id="cd-doc-delete-preview" aria-live="polite"></p>
+                    <div class="employee-delete-slider-block">
+                      <label class="employee-delete-slider-label" for="cd-doc-delete-slider">Schuif helemaal naar rechts om te bevestigen</label>
+                      <div class="employee-delete-slider-wrap">
+                        <input type="range" id="cd-doc-delete-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Bevestig verwijderen" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-doc-delete-cancel">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-doc-delete-confirm" disabled>Verwijderen</button>
+                  </div>
+                </div>
+              </div>
+
             </section>
             <section class="client-detail-pan" id="cd-pan-r" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Rapportages</h3>

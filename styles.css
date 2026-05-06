@@ -7285,6 +7285,12 @@ select.modal-select.modal-select--chevron-right {
 .emp-doc-pill--ID { background: #3d4f1e; }
 .emp-doc-pill--Certificaat { background: #6b8e23; }
 .emp-doc-pill--Overig { background: #6b7280; }
+.emp-doc-pill--Beschikking { background: #4b5e2f; }
+.emp-doc-pill--Zorgplan { background: #6b8e23; }
+.emp-doc-pill--Indicatie { background: #556b2f; }
+.emp-doc-pill--Rapportage { background: #6b8e23; }
+.emp-doc-pill--Identiteit { background: #3d4f1e; }
+.emp-doc-pill--Correspondentie { background: #5b6b3d; }
 
 .emp-doc-block {
   margin-bottom: 32px;

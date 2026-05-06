@@ -918,4 +918,685 @@
     bescSyncSortTh();
     updateBescFilterUi();
   })();
+
+  initClientDocumentenSection();
+
+  function initClientDocumentenSection() {
+    var tbody = document.getElementById("cd-doc-tbody");
+    if (!tbody) return;
+
+    if (!Array.isArray(c.documenten)) c.documenten = [];
+
+    var pillsContainer = document.getElementById("cd-doc-pills");
+    var emptyEl = document.getElementById("cd-doc-empty");
+    var searchInput = document.getElementById("cd-doc-search");
+    var archivedToggle = document.getElementById("cd-doc-archived-toggle");
+    var resetBtn = document.getElementById("cd-doc-reset-btn");
+    var selectAllCb = document.getElementById("cd-doc-select-all");
+    var colBtn = document.getElementById("cd-doc-col-btn");
+    var colDropdown = document.getElementById("cd-doc-col-dropdown");
+    var uploadBtn = document.getElementById("cd-doc-upload-btn");
+    var pageInfoEl = document.getElementById("cd-doc-page-info");
+    var pageLabelEl = document.getElementById("cd-doc-page-label");
+    var pageSizeSelect = document.getElementById("cd-doc-page-size");
+
+    var modal = document.getElementById("cd-doc-modal");
+    var modalClose = document.getElementById("cd-doc-modal-close");
+    var modalCancel = document.getElementById("cd-doc-modal-cancel");
+    var modalSave = document.getElementById("cd-doc-modal-save");
+    var modalTitle = document.getElementById("cd-doc-modal-title");
+    var modalNaam = document.getElementById("cd-doc-modal-naam");
+    var modalType = document.getElementById("cd-doc-modal-type");
+    var modalVerval = document.getElementById("cd-doc-modal-verval");
+    var modalFile = document.getElementById("cd-doc-modal-file");
+
+    var sortKey = "";
+    var sortDir = "asc";
+    var currentPage = 0;
+    var activePillType = null;
+    var editingIndex = -1;
+
+    function getDocs() {
+      if (!Array.isArray(c.documenten)) c.documenten = [];
+      return c.documenten;
+    }
+
+    function persistDocs() {
+      try {
+        if (typeof upsertClienten === "function") {
+          upsertClienten(c);
+        }
+      } catch (err) {
+        console.warn("client-documenten: opslaan mislukt", err);
+      }
+    }
+
+    function getPageSize() {
+      return parseInt((pageSizeSelect && pageSizeSelect.value) || "50", 10);
+    }
+
+    function getVisibleCols() {
+      var cols = {};
+      if (!colDropdown) return cols;
+      colDropdown.querySelectorAll("input[data-cddoccol]").forEach(function (cb) {
+        cols[cb.dataset.cddoccol] = cb.checked;
+      });
+      return cols;
+    }
+
+    function applyColumnVisibility() {
+      var cols = getVisibleCols();
+      var pan = document.getElementById("cd-pan-j");
+      if (!pan) return;
+      pan.querySelectorAll("[data-cddoccol]").forEach(function (el) {
+        if (el.closest && el.closest("#cd-doc-col-dropdown")) return;
+        var col = el.getAttribute("data-cddoccol");
+        if (col && col in cols) el.style.display = cols[col] ? "" : "none";
+      });
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return "-";
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      var dd = String(d.getDate()).padStart(2, "0");
+      var mm = String(d.getMonth() + 1).padStart(2, "0");
+      var yyyy = d.getFullYear();
+      var hh = String(d.getHours()).padStart(2, "0");
+      var min = String(d.getMinutes()).padStart(2, "0");
+      return dd + "-" + mm + "-" + yyyy + " " + hh + ":" + min;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "-";
+      var parts = String(iso).split("T")[0].split("-");
+      if (parts.length !== 3) return String(iso);
+      return parts[2] + "-" + parts[1] + "-" + parts[0];
+    }
+
+    function buildPills() {
+      if (!pillsContainer) return;
+      var docs = getDocs();
+      var counts = {};
+      docs.forEach(function (d) {
+        if (d.archived) return;
+        var t = d.type || "Overig";
+        counts[t] = (counts[t] || 0) + 1;
+      });
+      pillsContainer.innerHTML = "";
+      Object.keys(counts).sort().forEach(function (type) {
+        var pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = "emp-doc-pill emp-doc-pill--" + type;
+        if (activePillType === type) pill.classList.add("is-active");
+        pill.textContent = type + " (" + counts[type] + ")";
+        pill.addEventListener("click", function () {
+          activePillType = activePillType === type ? null : type;
+          currentPage = 0;
+          render();
+        });
+        pillsContainer.appendChild(pill);
+      });
+    }
+
+    function getFilteredItems() {
+      var docs = getDocs();
+      var showArchived = archivedToggle ? archivedToggle.checked : false;
+      var items = docs.filter(function (d) {
+        if (!showArchived && d.archived) return false;
+        if (showArchived && !d.archived) return false;
+        return true;
+      });
+      if (activePillType) {
+        items = items.filter(function (d) { return (d.type || "Overig") === activePillType; });
+      }
+      var q = ((searchInput && searchInput.value) || "").trim().toLowerCase();
+      if (q) {
+        items = items.filter(function (d) {
+          return [d.naam, d.type, d.vervaldatum, d.uploaddatum, d.laatstGewijzigd]
+            .map(function (v) { return v == null ? "" : String(v); })
+            .join(" ").toLowerCase().indexOf(q) !== -1;
+        });
+      }
+      if (sortKey) {
+        items.sort(function (a, b) {
+          var va = String(a[sortKey] || "").toLowerCase();
+          var vb = String(b[sortKey] || "").toLowerCase();
+          return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+      }
+      return items;
+    }
+
+    function openDocFile(doc) {
+      if (!doc || !doc.fileData) {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
+        } else if (typeof window.showSaveModal === "function") {
+          window.showSaveModal("Er is geen bestand beschikbaar voor dit document.", "Geen bestand");
+        }
+        return;
+      }
+      var w = window.open("");
+      if (!w) return;
+      var name = doc.fileName || doc.naam || "document";
+      if (doc.fileMime && String(doc.fileMime).indexOf("image/") === 0) {
+        w.document.write('<html><head><title>' + name + '</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5"><img src="' + doc.fileData + '" style="max-width:100%;max-height:100vh" /></body></html>');
+      } else if (doc.fileMime === "application/pdf") {
+        w.document.write('<html><head><title>' + name + '</title></head><body style="margin:0"><iframe src="' + doc.fileData + '" style="width:100%;height:100vh;border:none"></iframe></body></html>');
+      } else {
+        var a = w.document.createElement("a");
+        a.href = doc.fileData;
+        a.download = name;
+        a.click();
+        w.close();
+      }
+    }
+
+    function render() {
+      buildPills();
+      var items = getFilteredItems();
+      var total = items.length;
+      var pageSize = getPageSize();
+      var totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage >= totalPages) currentPage = totalPages - 1;
+      if (currentPage < 0) currentPage = 0;
+      var start = currentPage * pageSize;
+      var pageItems = items.slice(start, start + pageSize);
+
+      tbody.innerHTML = "";
+      if (selectAllCb) selectAllCb.checked = false;
+
+      if (!pageItems.length) {
+        if (emptyEl) emptyEl.style.display = "";
+      } else {
+        if (emptyEl) emptyEl.style.display = "none";
+        pageItems.forEach(function (doc, idx) {
+          var tr = document.createElement("tr");
+
+          var tdCheck = document.createElement("td");
+          tdCheck.className = "emp-doc-row-check";
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.dataset.cdDocIdx = String(start + idx);
+          tdCheck.appendChild(cb);
+          tr.appendChild(tdCheck);
+
+          var tdAct = document.createElement("td");
+          tdAct.className = "emp-doc-col-acties";
+          var actWrap = document.createElement("div");
+          actWrap.className = "emp-doc-actions-cell";
+
+          var viewBtn = document.createElement("button");
+          viewBtn.type = "button";
+          viewBtn.className = "emp-doc-action-btn";
+          viewBtn.title = "Bekijken";
+          viewBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+          viewBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            openDocFile(doc);
+          });
+
+          var editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "emp-doc-action-btn";
+          editBtn.title = "Bewerken";
+          editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+          editBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var realIdx = getDocs().indexOf(doc);
+            openEditModal(realIdx);
+          });
+
+          var archiveBtn = document.createElement("button");
+          archiveBtn.type = "button";
+          archiveBtn.className = "emp-doc-action-btn";
+          archiveBtn.title = doc.archived ? "Dearchiveren" : "Archiveren";
+          archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
+          archiveBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var docs = getDocs();
+            var realIdx = docs.indexOf(doc);
+            if (realIdx > -1) {
+              var willArchive = !docs[realIdx].archived;
+              docs[realIdx].archived = willArchive;
+              docs[realIdx].laatstGewijzigd = nowIsoLocal();
+              persistDocs();
+              render();
+              if (typeof window.showActionFeedback === "function") {
+                window.showActionFeedback(willArchive ? "archived" : "restored", "Document");
+              }
+            }
+          });
+
+          actWrap.appendChild(viewBtn);
+          actWrap.appendChild(editBtn);
+          actWrap.appendChild(archiveBtn);
+          tdAct.appendChild(actWrap);
+          tr.appendChild(tdAct);
+
+          var colDefs = [
+            { key: "naam", format: function (v) { return v || ""; } },
+            { key: "type", format: function (v) { return v || ""; } },
+            { key: "vervaldatum", format: function (v) { return formatDate(v); } },
+            { key: "uploaddatum", format: function (v) { return formatDateTime(v); } },
+            { key: "laatstGewijzigd", format: function (v) { return formatDateTime(v); } },
+          ];
+
+          colDefs.forEach(function (col) {
+            var td = document.createElement("td");
+            td.setAttribute("data-cddoccol", col.key);
+            td.textContent = col.format(doc[col.key]);
+            if (col.key === "naam" && doc.fileData) {
+              td.classList.add("cd-doc-name-clickable");
+              td.style.cursor = "pointer";
+              td.addEventListener("click", function () { openDocFile(doc); });
+            }
+            tr.appendChild(td);
+          });
+
+          var tdDel = document.createElement("td");
+          tdDel.className = "emp-doc-col-delete";
+          var delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "employee-delete-btn";
+          delBtn.title = "Verwijderen";
+          delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+          delBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            openDocDeleteModal(doc);
+          });
+          tdDel.appendChild(delBtn);
+          tr.appendChild(tdDel);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      if (pageInfoEl) pageInfoEl.textContent = pageSize + " of " + total + " total.";
+      if (pageLabelEl) pageLabelEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+
+      applyColumnVisibility();
+    }
+
+    function nowIsoLocal() {
+      var n = new Date();
+      return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0") + "T" + String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0");
+    }
+
+    document.querySelectorAll('#cd-doc-table th[data-cdsort]').forEach(function (th) {
+      th.addEventListener("click", function () {
+        var key = th.getAttribute("data-cdsort");
+        if (sortKey === key) {
+          sortDir = sortDir === "asc" ? "desc" : "asc";
+        } else {
+          sortKey = key;
+          sortDir = "asc";
+        }
+        render();
+      });
+    });
+
+    if (searchInput) searchInput.addEventListener("input", function () { currentPage = 0; render(); });
+    if (archivedToggle) archivedToggle.addEventListener("change", function () { currentPage = 0; render(); });
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        if (searchInput) searchInput.value = "";
+        if (archivedToggle) archivedToggle.checked = false;
+        activePillType = null;
+        sortKey = "";
+        sortDir = "asc";
+        currentPage = 0;
+        if (colDropdown) {
+          colDropdown.querySelectorAll("input[data-cddoccol]").forEach(function (cb) { cb.checked = true; });
+        }
+        render();
+      });
+    }
+
+    if (selectAllCb) {
+      selectAllCb.addEventListener("change", function () {
+        tbody.querySelectorAll("input[type='checkbox']").forEach(function (cb) {
+          cb.checked = selectAllCb.checked;
+        });
+      });
+    }
+
+    if (pageSizeSelect) pageSizeSelect.addEventListener("change", function () { currentPage = 0; render(); });
+
+    document.querySelectorAll('.emp-doc-page-nav button[data-cddocpage]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var items = getFilteredItems();
+        var totalPages = Math.max(1, Math.ceil(items.length / getPageSize()));
+        var action = btn.getAttribute("data-cddocpage");
+        if (action === "first") currentPage = 0;
+        else if (action === "prev") currentPage = Math.max(0, currentPage - 1);
+        else if (action === "next") currentPage = Math.min(totalPages - 1, currentPage + 1);
+        else if (action === "last") currentPage = totalPages - 1;
+        render();
+      });
+    });
+
+    if (colBtn) {
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (!colDropdown) return;
+        var open = colDropdown.style.display !== "none";
+        colDropdown.style.display = open ? "none" : "";
+      });
+    }
+    if (colDropdown) {
+      colDropdown.addEventListener("click", function (e) { e.stopPropagation(); });
+      colDropdown.querySelectorAll("input[data-cddoccol]").forEach(function (cb) {
+        cb.addEventListener("change", function () { applyColumnVisibility(); });
+      });
+    }
+    document.addEventListener("click", function () {
+      if (colDropdown) colDropdown.style.display = "none";
+    });
+
+    var dropzone = document.getElementById("cd-doc-dropzone");
+    var dropzoneFilename = document.getElementById("cd-doc-dropzone-filename");
+
+    function clearDropzone() {
+      if (modalFile) modalFile.value = "";
+      if (dropzoneFilename) dropzoneFilename.textContent = "";
+      if (dropzone) dropzone.classList.remove("is-dragover");
+    }
+
+    function showSelectedFile(file) {
+      if (file && dropzoneFilename) dropzoneFilename.textContent = file.name;
+    }
+
+    if (dropzone && modalFile) {
+      dropzone.addEventListener("click", function () { modalFile.click(); });
+      modalFile.addEventListener("change", function () {
+        if (modalFile.files && modalFile.files[0]) showSelectedFile(modalFile.files[0]);
+      });
+      dropzone.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        dropzone.classList.add("is-dragover");
+      });
+      dropzone.addEventListener("dragleave", function () {
+        dropzone.classList.remove("is-dragover");
+      });
+      dropzone.addEventListener("drop", function (e) {
+        e.preventDefault();
+        dropzone.classList.remove("is-dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          modalFile.files = e.dataTransfer.files;
+          showSelectedFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    function closeModal() {
+      if (modal) modal.style.display = "none";
+      editingIndex = -1;
+      clearDropzone();
+    }
+
+    if (uploadBtn) {
+      uploadBtn.addEventListener("click", function () {
+        editingIndex = -1;
+        if (modalTitle) modalTitle.textContent = "Document uploaden";
+        if (modalNaam) modalNaam.value = "";
+        if (modalType) modalType.value = "";
+        if (modalVerval) modalVerval.value = "";
+        clearDropzone();
+        if (dropzone) dropzone.style.display = "";
+        if (modalSave) modalSave.textContent = "Toevoegen";
+        if (modal) modal.style.display = "";
+      });
+    }
+
+    function openEditModal(idx) {
+      var doc = getDocs()[idx];
+      if (!doc) return;
+      editingIndex = idx;
+      if (modalTitle) modalTitle.textContent = "Document bewerken";
+      if (modalNaam) modalNaam.value = doc.naam || "";
+      if (modalType) modalType.value = doc.type || "";
+      if (modalVerval) modalVerval.value = doc.vervaldatum ? String(doc.vervaldatum).split("T")[0] : "";
+      clearDropzone();
+      if (dropzone) dropzone.style.display = "none";
+      if (modalSave) modalSave.textContent = "Opslaan";
+      if (modal) modal.style.display = "";
+    }
+
+    if (modalClose) modalClose.addEventListener("click", closeModal);
+    if (modalCancel) modalCancel.addEventListener("click", closeModal);
+    if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
+
+    function commitDocSave(fileData, fileName, fileMime) {
+      var naam = ((modalNaam && modalNaam.value) || "").trim();
+      var type = (modalType && modalType.value) || "";
+      var verval = (modalVerval && modalVerval.value) || "";
+      if (!naam) {
+        if (modalNaam) modalNaam.focus();
+        return;
+      }
+      var isoNow = nowIsoLocal();
+      var docs = getDocs();
+      var isEdit = editingIndex >= 0;
+
+      if (isEdit) {
+        var doc = docs[editingIndex];
+        if (doc) {
+          doc.naam = naam;
+          doc.type = type;
+          doc.vervaldatum = verval;
+          doc.laatstGewijzigd = isoNow;
+          if (fileData) {
+            doc.fileData = fileData;
+            doc.fileName = fileName;
+            doc.fileMime = fileMime;
+          }
+        }
+      } else {
+        docs.unshift({
+          naam: naam,
+          type: type,
+          vervaldatum: verval,
+          uploaddatum: isoNow,
+          laatstGewijzigd: isoNow,
+          archived: false,
+          fileData: fileData || "",
+          fileName: fileName || "",
+          fileMime: fileMime || "",
+        });
+      }
+
+      persistDocs();
+      closeModal();
+      render();
+
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback(isEdit ? "saved" : "added", "Document");
+      }
+    }
+
+    if (modalSave) {
+      modalSave.addEventListener("click", function () {
+        var file = modalFile && modalFile.files && modalFile.files[0];
+        if (file) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            commitDocSave(reader.result, file.name, file.type);
+          };
+          reader.onerror = function () {
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("error", "Bestand inlezen", "Het bestand kon niet worden ingelezen.");
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          commitDocSave("", "", "");
+        }
+      });
+    }
+
+    var delModal = document.getElementById("cd-doc-delete-modal");
+    var delSlider = document.getElementById("cd-doc-delete-slider");
+    var delConfirmBtn = document.getElementById("cd-doc-delete-confirm");
+    var delCancelBtn = document.getElementById("cd-doc-delete-cancel");
+    var delCloseBtn = document.getElementById("cd-doc-delete-close");
+    var delPreview = document.getElementById("cd-doc-delete-preview");
+    var docToDelete = null;
+
+    function syncDelSlider() {
+      if (!delSlider) return;
+      var v = Math.min(100, Math.max(0, parseInt(delSlider.value, 10) || 0));
+      delSlider.value = String(v);
+      delSlider.style.setProperty("--employee-slider-pct", v + "%");
+      delSlider.setAttribute("aria-valuenow", String(v));
+      if (delConfirmBtn) delConfirmBtn.disabled = v < 100;
+    }
+
+    function resetDelSlider() {
+      if (delSlider) {
+        delSlider.value = "0";
+        syncDelSlider();
+      }
+    }
+
+    function openDocDeleteModal(doc) {
+      docToDelete = doc;
+      if (delPreview) delPreview.textContent = doc.naam || "";
+      resetDelSlider();
+      if (delModal) {
+        delModal.removeAttribute("hidden");
+        delModal.setAttribute("aria-hidden", "false");
+      }
+    }
+
+    function closeDocDeleteModal() {
+      if (delModal) {
+        delModal.setAttribute("hidden", "");
+        delModal.setAttribute("aria-hidden", "true");
+      }
+      docToDelete = null;
+      resetDelSlider();
+      if (delPreview) delPreview.textContent = "";
+    }
+
+    function confirmDocDelete() {
+      if (!docToDelete || (delConfirmBtn && delConfirmBtn.disabled)) return;
+      var docs = getDocs();
+      var realIdx = docs.indexOf(docToDelete);
+      if (realIdx > -1) {
+        docs.splice(realIdx, 1);
+        persistDocs();
+      }
+      closeDocDeleteModal();
+      render();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("deleted", "Document");
+      }
+    }
+
+    if (delSlider) delSlider.addEventListener("input", syncDelSlider);
+    if (delConfirmBtn) delConfirmBtn.addEventListener("click", confirmDocDelete);
+    if (delCancelBtn) delCancelBtn.addEventListener("click", closeDocDeleteModal);
+    if (delCloseBtn) delCloseBtn.addEventListener("click", closeDocDeleteModal);
+    if (delModal) delModal.addEventListener("click", function (e) { if (e.target === delModal) closeDocDeleteModal(); });
+
+    var downloadAllBtn = document.getElementById("cd-doc-download-all-btn");
+    if (downloadAllBtn) {
+      downloadAllBtn.addEventListener("click", function () {
+        var docs = getDocs().filter(function (d) { return d.fileData && !d.archived; });
+        if (!docs.length) {
+          if (typeof window.showSaveModal === "function") {
+            window.showSaveModal("Er zijn geen bestanden beschikbaar om te downloaden.", "Geen documenten");
+          }
+          return;
+        }
+        showDownloadAllConfirm(docs);
+      });
+    }
+
+    function performDownloadAll(docs) {
+      docs.forEach(function (d) {
+        var a = document.createElement("a");
+        a.href = d.fileData;
+        a.download = d.fileName || d.naam || "document";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+      if (typeof window.showSaveModal === "function") {
+        var msg = docs.length === 1
+          ? "1 document is gedownload."
+          : docs.length + " documenten zijn gedownload.";
+        window.showSaveModal(msg, "Gedownload");
+      }
+    }
+
+    function ensureDownloadConfirmModal() {
+      var existing = document.getElementById("cd-doc-download-confirm-modal");
+      if (existing) return existing;
+      var wrap = document.createElement("div");
+      wrap.id = "cd-doc-download-confirm-modal";
+      wrap.className = "modal-overlay";
+      wrap.setAttribute("hidden", "");
+      wrap.setAttribute("aria-hidden", "true");
+      wrap.innerHTML =
+        '<div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="cd-doc-download-confirm-title" tabindex="-1">' +
+          '<div class="modal-header">' +
+            '<h2 class="modal-title" id="cd-doc-download-confirm-title">Alles downloaden</h2>' +
+            '<button type="button" class="modal-close" id="cd-doc-download-confirm-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>' +
+          '</div>' +
+          '<div class="modal-body">' +
+            '<p class="app-save-feedback-text" id="cd-doc-download-confirm-msg" role="status"></p>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+            '<button type="button" class="btn-outline" id="cd-doc-download-confirm-cancel">Annuleren</button>' +
+            '<button type="button" class="btn-primary" id="cd-doc-download-confirm-ok">Downloaden</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(wrap);
+      return wrap;
+    }
+
+    function showDownloadAllConfirm(docs) {
+      var dlModal = ensureDownloadConfirmModal();
+      var msg = document.getElementById("cd-doc-download-confirm-msg");
+      var closeBtn = document.getElementById("cd-doc-download-confirm-close");
+      var cancelBtn = document.getElementById("cd-doc-download-confirm-cancel");
+      var okBtn = document.getElementById("cd-doc-download-confirm-ok");
+      if (msg) {
+        msg.textContent = docs.length === 1
+          ? "Wil je 1 document downloaden?"
+          : "Wil je " + docs.length + " documenten downloaden?";
+      }
+
+      function close() {
+        dlModal.setAttribute("hidden", "");
+        dlModal.setAttribute("aria-hidden", "true");
+        if (closeBtn) closeBtn.removeEventListener("click", close);
+        if (cancelBtn) cancelBtn.removeEventListener("click", close);
+        if (okBtn) okBtn.removeEventListener("click", confirm);
+        dlModal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKey);
+      }
+      function confirm() {
+        close();
+        performDownloadAll(docs);
+      }
+      function onBackdrop(e) { if (e.target === dlModal) close(); }
+      function onKey(e) { if (e.key === "Escape") close(); }
+
+      if (closeBtn) closeBtn.addEventListener("click", close);
+      if (cancelBtn) cancelBtn.addEventListener("click", close);
+      if (okBtn) okBtn.addEventListener("click", confirm);
+      dlModal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKey);
+
+      dlModal.removeAttribute("hidden");
+      dlModal.setAttribute("aria-hidden", "false");
+    }
+
+    render();
+  }
 })();
