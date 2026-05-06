@@ -7569,6 +7569,17 @@ th.emp-doc-col-delete {
   cursor: default;
 }
 
+.emp-doc-table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.emp-doc-table {
+  min-width: 1080px;
+}
+
 .emp-doc-modal-input {
   height: 44px;
   border: 1px solid #d0d5dd;
