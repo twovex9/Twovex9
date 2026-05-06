@@ -5,19 +5,23 @@
  *  - Initialiseert de Supabase JS client met project URL + anon key.
  *  - Exposeert window.besaSupabase (de client zelf) en window.besaAuth (helpers).
  *
- * Auth-status:
- *  - Login staat momenteel UIT (AUTH_ENABLED = false).
- *  - De helpers in window.besaAuth zijn al beschikbaar zodat data-modules
- *    ze kunnen aanroepen zonder later hun signatuur aan te passen.
+ * Auth-status (Stage 8a):
+ *  - Login staat AAN (AUTH_ENABLED = true).
+ *  - persistSession = true zodat de gebruiker ingelogd blijft tussen tabs/refresh.
+ *  - auth-guard.js doet de daadwerkelijke session-check + redirect bij elke pagina.
+ *  - login.html biedt de inlog-UI via besaAuth.signIn(...) onder de motorkap.
  *
- * Login activeren in de toekomst (drie stappen):
- *  1. Zet AUTH_ENABLED hieronder op `true`.
- *  2. Draai het auth-policy-blok onderaan supabase/schema.sql in de
- *     Supabase SQL editor (drop anon-policies, maak authenticated-policies).
- *  3. Voeg login-UI toe aan de app (bv. login.html + besaAuth.signIn helpers).
+ * Vereisten per HTML-page (in deze volgorde):
+ *  1. <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ *  2. <script src="supabase-client.js"></script>
+ *  3. <script src="besa-sync-reporter.js"></script>
+ *  4. <script src="auth-guard.js"></script>   ← skip op login.html
+ *  5. ...alle data-layers en page-script(s)
  *
- * Belangrijk: vóór dit bestand moet @supabase/supabase-js geladen zijn,
- * via de jsDelivr CDN-tag in elke HTML-pagina die data nodig heeft.
+ * Toekomst (Stage 8b/8c):
+ *  - profiles-tabel met rollen
+ *  - RLS policies op alle tabellen: anon-policies vervangen door
+ *    authenticated-policies (zie supabase/schema.sql).
  */
 (function () {
   "use strict";
@@ -28,7 +32,7 @@
     "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvc2N3dm9qY2dna2JkeGhsZnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NzAyOTMsImV4cCI6MjA5MzU0NjI5M30." +
     "xsQ8ijVmUGOEyDyA26zKbR2-0jfeWVG6xGBZIKY6lnI";
 
-  var AUTH_ENABLED = false;
+  var AUTH_ENABLED = true;
 
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     console.error(
@@ -39,6 +43,7 @@
     window.besaAuth = {
       isEnabled: function () { return false; },
       getCurrentUser: function () { return Promise.resolve(null); },
+      signIn: function () { return Promise.reject(new Error("Supabase niet geladen")); },
       signOut: function () { return Promise.resolve(); },
     };
     return;
@@ -49,6 +54,9 @@
       persistSession: AUTH_ENABLED,
       autoRefreshToken: AUTH_ENABLED,
       detectSessionInUrl: AUTH_ENABLED,
+      // Standaard storageKey is "supabase.auth.token". Hou expliciet zodat
+      // we 'm bij logout doelgericht kunnen wissen.
+      storageKey: "sb-besa-auth",
     },
   });
 
@@ -64,6 +72,21 @@
       } catch (e) {
         return null;
       }
+    },
+    getSession: async function () {
+      if (!AUTH_ENABLED) return null;
+      try {
+        var res = await client.auth.getSession();
+        return res && res.data ? res.data.session : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    signIn: async function (email, password) {
+      if (!AUTH_ENABLED) throw new Error("Auth staat uit.");
+      var res = await client.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) throw res.error;
+      return res.data;
     },
     signOut: async function () {
       if (!AUTH_ENABLED) return;

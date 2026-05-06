@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inloggen — Besa Suite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f5f7fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .login-card {
+      width: min(420px, 92vw);
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(20, 38, 80, 0.10), 0 2px 6px rgba(20, 38, 80, 0.05);
+      padding: 36px 32px 28px;
+    }
+    .login-logo {
+      display: block;
+      margin: 0 auto 18px;
+      max-width: 160px;
+      height: auto;
+    }
+    .login-title {
+      margin: 0 0 4px;
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a2540;
+      text-align: center;
+    }
+    .login-sub {
+      margin: 0 0 22px;
+      font-size: 14px;
+      color: #6b7798;
+      text-align: center;
+    }
+    .login-form { display: flex; flex-direction: column; gap: 14px; }
+    .login-field { display: flex; flex-direction: column; gap: 6px; }
+    .login-field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a2540;
+    }
+    .login-field input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 13px;
+      border: 1px solid #d4dae8;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-field input:focus {
+      border-color: #2962ff;
+      box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.15);
+    }
+    .login-error {
+      margin: 0;
+      padding: 10px 12px;
+      background: #fdecec;
+      border: 1px solid #f5c2c2;
+      color: #a3302a;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .login-btn {
+      margin-top: 6px;
+      width: 100%;
+      padding: 12px 16px;
+      background: #2962ff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .login-btn:hover:not(:disabled) { background: #1f54e0; }
+    .login-btn:disabled { background: #9bb4f3; cursor: not-allowed; }
+    .login-foot {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #6b7798;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="login-card">
+    <img class="login-logo" src="assets/etf-logo.png" alt="Embrace the Future">
+    <h1 class="login-title">Inloggen</h1>
+    <p class="login-sub">Besa Suite — toegang voor medewerkers van ETF</p>
+
+    <p class="login-error" id="login-error" role="alert" hidden></p>
+
+    <form class="login-form" id="login-form" autocomplete="on" novalidate>
+      <div class="login-field">
+        <label for="login-email">E-mailadres</label>
+        <input type="email" id="login-email" name="email" required autocomplete="username" placeholder="naam@etfalkmaar.nl">
+      </div>
+      <div class="login-field">
+        <label for="login-password">Wachtwoord</label>
+        <input type="password" id="login-password" name="password" required autocomplete="current-password" minlength="6">
+      </div>
+      <button type="submit" class="login-btn" id="login-submit">Inloggen</button>
+    </form>
+
+    <p class="login-foot">Geen account? Vraag een beheerder van ETF om je toegang te geven.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var form = document.getElementById("login-form");
+      var emailEl = document.getElementById("login-email");
+      var pwdEl = document.getElementById("login-password");
+      var btn = document.getElementById("login-submit");
+      var errEl = document.getElementById("login-error");
+
+      function showError(msg) {
+        errEl.textContent = msg || "Onbekende fout";
+        errEl.hidden = false;
+      }
+      function clearError() {
+        errEl.textContent = "";
+        errEl.hidden = true;
+      }
+
+      // Wachtt tot besaSupabase beschikbaar is. Als de gebruiker al een sessie
+      // heeft (bv. via "Onthoud mij") direct doorsturen.
+      (async function checkExistingSession() {
+        if (!window.besaSupabase) return;
+        try {
+          var res = await window.besaSupabase.auth.getSession();
+          if (res && res.data && res.data.session) {
+            window.location.replace("home.html");
+          }
+        } catch (e) { /* blijf op login */ }
+      })();
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        clearError();
+
+        var email = String(emailEl.value || "").trim();
+        var password = String(pwdEl.value || "");
+        if (!email || !password) {
+          showError("Vul je e-mailadres en wachtwoord in.");
+          return;
+        }
+        if (!window.besaSupabase) {
+          showError("Verbinding met de server kon niet worden opgezet. Vernieuw de pagina.");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Bezig met inloggen…";
+
+        try {
+          var res = await window.besaSupabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+          });
+          if (res.error) {
+            var msg = res.error.message || "Inloggen mislukt.";
+            // Vertaal Supabase-standaardfouten naar leesbaar Nederlands.
+            if (/invalid login credentials/i.test(msg)) {
+              msg = "Onjuist e-mailadres of wachtwoord.";
+            } else if (/email not confirmed/i.test(msg)) {
+              msg = "Dit account is nog niet bevestigd. Vraag een beheerder om hulp.";
+            }
+            showError(msg);
+            btn.disabled = false;
+            btn.textContent = "Inloggen";
+            return;
+          }
+
+          // Lukt → bepaal redirect-doel. Was er een ?next=… meegegeven door
+          // de auth-guard? Zo ja, daarheen. Anders home.
+          var params = new URLSearchParams(window.location.search);
+          var next = params.get("next");
+          var safeNext = (next && /^[a-zA-Z0-9_\-./?=&]+$/.test(next)) ? next : "home.html";
+          window.location.replace(safeNext);
+        } catch (err) {
+          showError(err && err.message ? err.message : "Er ging iets mis bij het inloggen.");
+          btn.disabled = false;
+          btn.textContent = "Inloggen";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

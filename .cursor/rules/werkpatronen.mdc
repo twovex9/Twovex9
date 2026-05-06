@@ -213,6 +213,26 @@ Voor "1-op-1 sub-data per parent" (zoals verlof-overgedragen): gebruik een UNIQU
 
 Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: gebruik alleen `add()` en laat het optimistic-insert-patroon van `beschikking-audit-data.js` overnemen — UI ververst direct met tijdelijke id, daarna replacement met echte UUID na Supabase-respons. Audit-failures worden in `console.error` gelogd, **niet** als rode modal — anders krijg je pop-ups bij elke page-view.
 
+### 6d. Authenticatie — verplicht op elke pagina (Stage 8a+)
+
+Login staat AAN sinds Stage 8a. Elke pagina (behalve `login.html` zelf) moet `auth-guard.js` laden direct na `besa-sync-reporter.js`. De script-volgorde in elke HTML-page is dus:
+
+1. `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2` (CDN)
+2. `supabase-client.js` (initialiseert client + `besaAuth` helpers, AUTH_ENABLED=true)
+3. `besa-sync-reporter.js` (centrale fout-feedback)
+4. `auth-guard.js` (sessie-check + redirect + logout-knop in topbar)
+5. Alle data-layer modules
+6. Page-script(s)
+
+`auth-guard.js`:
+- Doet `getSession()` bij init. Geen sessie → redirect naar `login.html?next=<huidige-url>` zodat de gebruiker na login terugkomt op dezelfde plek.
+- Wel sessie → injecteert rechtsboven in `.topbar` een blok met `<email> · Uitloggen`. Klik op Uitloggen wist de Supabase-sessie EN alle localStorage caches (om data-lekken naar volgende gebruiker te voorkomen) en stuurt naar `login.html`.
+- Luistert op `auth.onAuthStateChange` om automatisch te redirecten als een sessie elders verloopt.
+
+Nieuwe pagina toevoegen? Vergeet `auth-guard.js` niet anders is de pagina onbeveiligd. Het PowerShell-commando dat alle 35 pagina's tegelijk patcht zit in de Stage 8a commit-history.
+
+Wil je later auth tijdelijk uitzetten (bv. voor lokaal debugging)? Zet `AUTH_ENABLED = false` in `supabase-client.js` — `auth-guard.js` no-opt dan automatisch.
+
 ### 6c-ter. Migraties moeten hun legacy localStorage-key opruimen
 
 Elke `maybeMigrateLocalToSupabase()` of vergelijkbare eenmalige migratie MOET na een succesvolle insert/upload `localStorage.removeItem(LEGACY_KEY)` aanroepen. Anders blijven oude blobs (soms MB's) onnodig in de browser staan en kan een second pass per ongeluk dubbel migreren.
