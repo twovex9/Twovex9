@@ -1,8 +1,3 @@
----
-description: Verplichte interactie- en datapatronen voor Besa Suite (tabellen, archiveren, feedback, opslag, git). Geldt altijd, ook als de gebruiker er niet expliciet om vraagt.
-alwaysApply: true
----
-
 # Werkpatronen — altijd toepassen
 
 Pas deze patronen **standaard** toe op elke nieuwe of gewijzigde functionaliteit in deze app. Wijk er alléén van af als de gebruiker het expliciet zo vraagt.

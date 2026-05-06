@@ -2,7 +2,7 @@
 /**
  * Incidenten — Supabase data-laag met localStorage als read-cache.
  *
- * Architectuur volgens werkpatronen.mdc § 6:
+ * Architectuur volgens werkpatronen.md § 6:
  *  - Source of truth: Supabase tabel `public.incidenten`.
  *  - Bij bootstrap fetcht deze module alle incidenten en cachet ze onder
  *    "incidenten_v1" zodat een tweede page-load instant data heeft.

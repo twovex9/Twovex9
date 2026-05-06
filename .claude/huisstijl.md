@@ -1,8 +1,3 @@
----
-description: Verplichte huisstijl en lay-out voor de hele Besa Suite. Geldt altijd, ook als de gebruiker er niet expliciet om vraagt.
-alwaysApply: true
----
-
 # Huisstijl & lay-out — altijd toepassen
 
 Pas deze regel **standaard altijd** toe op alles wat je toevoegt of wijzigt in deze app. Wijk er alléén van af als de gebruiker dit expliciet zo vraagt.

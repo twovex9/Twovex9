@@ -3,8 +3,7 @@ Thumbs.db
 .DS_Store
 Desktop.ini
 
-# Editor / IDE (behoud .cursor/rules voor team)
-.cursor/settings.json
+# Editor / IDE
 *.swp
 *.swo
 *~
