@@ -1,0 +1,37 @@
+Stage 5: foutfeedback op fire-and-forget Supabase syncs
+
+Veel page-scripts schreven eerst naar localStorage en pushten daarna
+asynchroon naar de Supabase data-laag (planningDB.pushFullCache,
+verzuimDB.pushType, compFeestdagenDB.pushAll, etc.). De data-layers
+slikten Supabase-fouten in een try/catch met alleen console.error,
+waardoor de gebruiker bij netwerk-issues nooit een melding kreeg —
+silent data-divergentie tussen apparaten.
+
+Nieuwe centrale helper `besa-sync-reporter.js`:
+- besaReportSyncFailure(domain, err) — toont gethrottlede toast
+  (max 1 per domain per 5 sec) via showActionFeedback / showSaveModal,
+  fallback console.warn.
+- besaFireAndForget(promise, domain) — wrapper voor expliciete
+  fire-and-forget paden die wel een Promise teruggeven.
+
+In elke data-layer met een stille push-functie is een `reportSilent()`
+helper toegevoegd die zowel console.error logt als de centrale reporter
+aanroept. Aangepast:
+- medewerkers-data.js (syncFromLocalUpsert)
+- verzuim-data.js (pushType)
+- comp-feestdagen-data.js, comp-diensttypes-data.js (pushAll)
+- comp-berekeningen-data.js, comp-saldi-data.js (pushAll)
+- urendeclaraties-data.js (pushAll)
+- planning-data.js (pushFullCache)
+- uren-budget-data.js (setCell)
+- saladmin-data.js (pushHistory, pushOrt)
+- salarishuis-data.js (pushAllScalesAsync, insertHistoryAsync)
+
+besa-sync-reporter.js geregistreerd in alle 35 HTML-pages direct na
+supabase-client.js. werkpatronen.mdc sectie 6c-bis legt het patroon
+vast als verplicht voor toekomstige data-layers.
+
+Resultaat: bij elke gefaalde Supabase-sync krijgt de gebruiker nu een
+duidelijke "<Domein> — niet opgeslagen" toast met instructie om
+internet te checken. Multi-device data-divergentie is daarmee niet
+meer mogelijk zonder dat de gebruiker het weet.

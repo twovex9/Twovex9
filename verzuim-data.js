@@ -117,6 +117,11 @@
     return readyPromise;
   }
 
+  function reportSilent(action, err) {
+    console.error("[verzuimDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim — " + action, err);
+  }
+
   /** Bulk full-overwrite voor één type (lang of kort): upsert + delete. */
   async function pushType(type, items) {
     if (!global.besaSupabase) return;
@@ -124,10 +129,7 @@
     if (type !== "lang" && type !== "kort") return;
     try {
       var existingHead = await global.besaSupabase.from(TABLE).select("id").eq("type", type);
-      if (existingHead.error) {
-        console.error("[verzuimDB] pushType select mislukt:", existingHead.error);
-        return;
-      }
+      if (existingHead.error) { reportSilent("pushType select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
       var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
@@ -135,14 +137,14 @@
       if (items.length) {
         var payload = items.map(function (o) { return objToInsertPayload(o, type); });
         var ups = await global.besaSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
-        if (ups.error) console.error("[verzuimDB] upsert mislukt:", ups.error);
+        if (ups.error) reportSilent("upsert", ups.error);
       }
       if (toDelete.length) {
         var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
-        if (del.error) console.error("[verzuimDB] delete mislukt:", del.error);
+        if (del.error) reportSilent("delete", del.error);
       }
     } catch (err) {
-      console.error("[verzuimDB] pushType error:", err);
+      reportSilent("pushType", err);
     }
   }
 

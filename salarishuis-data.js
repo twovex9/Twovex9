@@ -203,6 +203,11 @@
     return readyPromise;
   }
 
+  function reportSilent(action, err) {
+    console.error("[salarishuisDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Salarishuis — " + action, err);
+  }
+
   async function pushAllScalesAsync(list) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(list)) return;
@@ -216,7 +221,7 @@
         };
       });
       var ups = await global.besaSupabase.from(TABLE_SCHALEN).upsert(payload, { onConflict: "id" });
-      if (ups.error) console.error("[salarishuisDB] upsert schalen mislukt:", ups.error);
+      if (ups.error) reportSilent("upsert schalen", ups.error);
 
       var existingHead = await global.besaSupabase.from(TABLE_SCHALEN).select("id");
       if (!existingHead.error) {
@@ -225,11 +230,11 @@
         var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
         if (toDelete.length) {
           var del = await global.besaSupabase.from(TABLE_SCHALEN).delete().in("id", toDelete);
-          if (del.error) console.error("[salarishuisDB] delete schalen mislukt:", del.error);
+          if (del.error) reportSilent("delete schalen", del.error);
         }
       }
     } catch (err) {
-      console.error("[salarishuisDB] pushAllScalesAsync error:", err);
+      reportSilent("pushAllScalesAsync", err);
     }
   }
 
@@ -241,9 +246,9 @@
         actie: String(actie || ""),
         detail: detail != null ? String(detail) : "",
       });
-      if (ins.error) console.error("[salarishuisDB] insert history mislukt:", ins.error);
+      if (ins.error) reportSilent("insert history", ins.error);
     } catch (err) {
-      console.error("[salarishuisDB] insertHistoryAsync error:", err);
+      reportSilent("insertHistoryAsync", err);
     }
   }
 

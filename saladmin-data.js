@@ -135,16 +135,18 @@
     return readyPromise;
   }
 
+  function reportSilent(action, err) {
+    console.error("[saladminDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Salarisadministratie — " + action, err);
+  }
+
   /** Bulk full-overwrite van historie (upsert + delete missende ID's). */
   async function pushHistory(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
     try {
       var existingHead = await global.besaSupabase.from(TABLE_HISTORY).select("id");
-      if (existingHead.error) {
-        console.error("[saladminDB] pushHistory select mislukt:", existingHead.error);
-        return;
-      }
+      if (existingHead.error) { reportSilent("pushHistory select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
       var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
@@ -152,14 +154,14 @@
       if (items.length) {
         var payload = items.map(historyObjToPayload);
         var ups = await global.besaSupabase.from(TABLE_HISTORY).upsert(payload, { onConflict: "id" });
-        if (ups.error) console.error("[saladminDB] upsert history mislukt:", ups.error);
+        if (ups.error) reportSilent("upsert history", ups.error);
       }
       if (toDelete.length) {
         var del = await global.besaSupabase.from(TABLE_HISTORY).delete().in("id", toDelete);
-        if (del.error) console.error("[saladminDB] delete history mislukt:", del.error);
+        if (del.error) reportSilent("delete history", del.error);
       }
     } catch (err) {
-      console.error("[saladminDB] pushHistory error:", err);
+      reportSilent("pushHistory", err);
     }
   }
 
@@ -172,9 +174,9 @@
       var ups = await global.besaSupabase
         .from(TABLE_ORT)
         .upsert({ jaar: yr, data: data }, { onConflict: "jaar" });
-      if (ups.error) console.error("[saladminDB] upsert ort mislukt:", ups.error);
+      if (ups.error) reportSilent("upsert ort", ups.error);
     } catch (err) {
-      console.error("[saladminDB] pushOrt error:", err);
+      reportSilent("pushOrt", err);
     }
   }
 

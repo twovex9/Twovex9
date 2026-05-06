@@ -89,29 +89,31 @@
     return readyPromise;
   }
 
+  function reportSilent(action, err) {
+    console.error("[urendeclaratiesDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Urendeclaraties — " + action, err);
+  }
+
   async function pushAll(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
     try {
       var existingHead = await global.besaSupabase.from(TABLE).select("id");
-      if (existingHead.error) {
-        console.error("[urendeclaratiesDB] pushAll select mislukt:", existingHead.error);
-        return;
-      }
+      if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
       var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
 
       if (items.length) {
         var ups = await global.besaSupabase.from(TABLE).upsert(items.map(objToInsertPayload), { onConflict: "id" });
-        if (ups.error) console.error("[urendeclaratiesDB] upsert mislukt:", ups.error);
+        if (ups.error) reportSilent("upsert", ups.error);
       }
       if (toDelete.length) {
         var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
-        if (del.error) console.error("[urendeclaratiesDB] delete mislukt:", del.error);
+        if (del.error) reportSilent("delete", del.error);
       }
     } catch (err) {
-      console.error("[urendeclaratiesDB] pushAll error:", err);
+      reportSilent("pushAll", err);
     }
   }
 

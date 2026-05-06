@@ -122,6 +122,11 @@
     return readyPromise;
   }
 
+  function reportSilent(action, err) {
+    console.error("[urenBudgetDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Uren-budget — " + action, err);
+  }
+
   /** Async cell-level upsert (of delete als uren=0). */
   async function setCell(clientId, jaar, week, uren) {
     if (!clientId) return;
@@ -137,15 +142,15 @@
           .eq("client_id", clientId)
           .eq("jaar", jr)
           .eq("week", wk);
-        if (del.error) console.error("[urenBudgetDB] delete mislukt:", del.error);
+        if (del.error) reportSilent("delete", del.error);
         return;
       }
       var ups = await global.besaSupabase
         .from(TABLE)
         .upsert({ client_id: clientId, jaar: jr, week: wk, uren: u }, { onConflict: "client_id,jaar,week" });
-      if (ups.error) console.error("[urenBudgetDB] upsert mislukt:", ups.error);
+      if (ups.error) reportSilent("upsert", ups.error);
     } catch (err) {
-      console.error("[urenBudgetDB] setCell error:", err);
+      reportSilent("setCell", err);
     }
   }
 

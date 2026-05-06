@@ -293,6 +293,9 @@
     if (!id) return;
     update(id, emp).catch(function (err) {
       console.error("[medewerkersDB] sync upsert mislukt:", err);
+      if (typeof window.besaReportSyncFailure === "function") {
+        window.besaReportSyncFailure("Medewerker opslaan", err);
+      }
     });
   }
 

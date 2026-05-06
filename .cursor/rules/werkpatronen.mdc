@@ -212,6 +212,24 @@ Voor "1-op-1 sub-data per parent" (zoals verlof-overgedragen): gebruik een UNIQU
 
 Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: gebruik alleen `add()` en laat het optimistic-insert-patroon van `beschikking-audit-data.js` overnemen — UI ververst direct met tijdelijke id, daarna replacement met echte UUID na Supabase-respons. Audit-failures worden in `console.error` gelogd, **niet** als rode modal — anders krijg je pop-ups bij elke page-view.
 
+### 6c-bis. Stille fire-and-forget syncs zijn verboden
+
+Elke push-functie in een data-laag (`pushAll`, `pushType`, `pushHistory`, `pushOrt`, `pushFullCache`, `setCell`, `syncFromLocalUpsert`, ...) die een fout in een `try/catch + console.error` slikt zonder de gebruiker te informeren is een **bug**, geen optimalisatie. De gebruiker denkt dat zijn wijziging is opgeslagen terwijl die alleen in localStorage staat — bij andere devices ontbreekt-ie.
+
+Verplichte oplossing:
+
+1. Definieer bovenin de data-laag een lokale helper:
+   ```js
+   function reportSilent(action, err) {
+     console.error("[xxxDB] " + action + " mislukt:", err);
+     if (global.besaReportSyncFailure) global.besaReportSyncFailure("Domein — " + action, err);
+   }
+   ```
+2. Vervang elke `console.error("[xxxDB] yyy mislukt:", err)` door `reportSilent("yyy", err)`.
+3. `besa-sync-reporter.js` MOET in de HTML worden geladen direct na `supabase-client.js`. De helper toont een gethrottlede toast (`showActionFeedback`) of fallback-modal aan de gebruiker en re-toont dezelfde domain-fout maximaal 1× per 5 sec.
+
+Page-scripts hoeven hierna niets meer te wrappen — alle bestaande aanroepen naar push-functies krijgen automatisch foutfeedback. Voor expliciete await-handling in `add()/update()/remove()` blijft de Promise-rejection het normale pad (page-script vangt `.catch()` zelf op met `showError`).
+
 ### 6c. Geen grote payloads in `jsonb` of `text` — gebruik Supabase Storage
 
 Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel én ook **niet** in een gewone `text`-kolom van een dedicated tabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. De juiste oplossing is **Supabase Storage**:
