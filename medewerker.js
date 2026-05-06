@@ -1,8 +1,36 @@
+/**
+ * Stage 6 — bron-van-waarheid voor medewerker-form-data.
+ *
+ * Vroeger: sessionStorage["selectedEmployee"] + localStorage["employeeEditsById"]
+ * werden samengevoegd om de actieve medewerker te bouwen. Dat was lokaal-only
+ * en gaf data-divergentie tussen apparaten.
+ *
+ * Nu: medewerkers-data.js (Supabase tabel `medewerkers`, `data` jsonb voor de
+ * niet-top-level velden) is de bron-van-waarheid. localStorage["employeeEditsById"]
+ * is alleen nog een fallback voor:
+ *   1) data die nog niet gemigreerd is naar Supabase (eenmalige boot-migratie),
+ *   2) korte momenten dat de DB-cache nog niet binnen is.
+ *
+ * Schrijven gaat onverkort via writeEmployeeEdits() + medewerkersDB.syncFromLocalUpsert(),
+ * zodat de form-flow niet hoeft te veranderen.
+ */
 function getSelectedEmployee() {
   try {
     const raw = window.sessionStorage.getItem("selectedEmployee");
     if (!raw) return null;
     const selected = JSON.parse(raw);
+
+    // Voorkeur 1: Supabase medewerkersDB als bron (incl. data jsonb).
+    if (selected?.empId && window.medewerkersDB && typeof window.medewerkersDB.getByIdSync === "function") {
+      const fromDb = window.medewerkersDB.getByIdSync(selected.empId);
+      if (fromDb) {
+        // Top-level session-data behouden als fallback (bijv. __match), DB wint
+        // voor alle echte data-velden.
+        return Object.assign({}, selected, fromDb);
+      }
+    }
+
+    // Voorkeur 2: legacy localStorage edits (fallback voor pre-migratie state).
     const editsById = readEmployeeEdits();
     if (selected?.empId && editsById[selected.empId]) {
       return Object.assign({}, selected, editsById[selected.empId]);
@@ -31,8 +59,28 @@ function getSelectedEmployee() {
 const EMPLOYEE_EDITS_STORAGE_KEY = "employeeEditsById";
 const EMPLOYEE_ITEMS_STORAGE_KEY = "employeeItems";
 const EMPLOYEE_ACTIVE_TAB_STORAGE_KEY = "employeeActiveTab";
+const EMPLOYEE_EDITS_MIGRATION_FLAG = "employeeEditsByIdMigratedToSupabase.v1";
 
 function readEmployeeEdits() {
+  // Voorkeur: bouw editsById vanuit medewerkersDB. Dat geeft een consistente
+  // multi-device view zonder dat callers iets hoeven te wijzigen aan hun
+  // shape-aannames.
+  if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+    try {
+      const list = window.medewerkersDB.getAllSync() || [];
+      if (list.length) {
+        const byId = {};
+        for (let i = 0; i < list.length; i += 1) {
+          const emp = list[i];
+          if (!emp) continue;
+          const key = emp.empId || emp.id;
+          if (!key) continue;
+          byId[key] = emp;
+        }
+        if (Object.keys(byId).length) return byId;
+      }
+    } catch (e) { /* fall back to localStorage */ }
+  }
   try {
     const raw = window.localStorage.getItem(EMPLOYEE_EDITS_STORAGE_KEY);
     if (!raw) return {};
@@ -44,12 +92,110 @@ function readEmployeeEdits() {
 }
 
 function writeEmployeeEdits(edits) {
+  // Schrijven naar localStorage blijft als korte-termijn cache + offline
+  // fallback. De daadwerkelijke persistentie gebeurt via
+  // medewerkersDB.syncFromLocalUpsert() in upsertEmployeeItem().
   try {
     window.localStorage.setItem(EMPLOYEE_EDITS_STORAGE_KEY, JSON.stringify(edits || {}));
   } catch {
     // Ignore storage errors in demo mode.
   }
 }
+
+/**
+ * Eenmalige migratie van localStorage["employeeEditsById"] → Supabase
+ * `medewerkers.data` jsonb. Roep aan zodra medewerkersDB beschikbaar is en
+ * de cache van Supabase ten minste één keer is gevuld. Doet niets als de
+ * vlag al gezet is of als er geen lokale edits zijn.
+ */
+async function migrateEmployeeEditsByIdToSupabase() {
+  try {
+    if (window.localStorage.getItem(EMPLOYEE_EDITS_MIGRATION_FLAG) === "1") return 0;
+  } catch (e) { return 0; }
+  if (!window.medewerkersDB || typeof window.medewerkersDB.update !== "function") return 0;
+
+  let raw;
+  try { raw = window.localStorage.getItem(EMPLOYEE_EDITS_STORAGE_KEY); }
+  catch (e) { return 0; }
+  if (!raw) {
+    try { window.localStorage.setItem(EMPLOYEE_EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+    return 0;
+  }
+
+  let editsById;
+  try { editsById = JSON.parse(raw); }
+  catch (e) {
+    try { window.localStorage.setItem(EMPLOYEE_EDITS_MIGRATION_FLAG, "1"); } catch (e2) { /* */ }
+    return 0;
+  }
+  if (!editsById || typeof editsById !== "object") {
+    try { window.localStorage.setItem(EMPLOYEE_EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+    return 0;
+  }
+
+  const keys = Object.keys(editsById);
+  if (!keys.length) {
+    try { window.localStorage.setItem(EMPLOYEE_EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+    return 0;
+  }
+
+  // Lookup: welke medewerkers staan al in de DB?
+  let dbList = [];
+  try {
+    if (typeof window.medewerkersDB.getAllSync === "function") {
+      dbList = window.medewerkersDB.getAllSync() || [];
+    }
+  } catch (e) { /* */ }
+  const dbById = new Map();
+  for (let i = 0; i < dbList.length; i += 1) {
+    const emp = dbList[i];
+    if (emp && (emp.id || emp.empId)) dbById.set(String(emp.id || emp.empId), emp);
+  }
+
+  let migrated = 0;
+  let failed = 0;
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    const edit = editsById[key];
+    if (!edit || typeof edit !== "object") continue;
+    if (!key || key.indexOf("legacy:") === 0) continue;
+    if (!dbById.has(String(key))) continue;
+
+    try {
+      // Strip metadata-velden die niet naar de DB horen.
+      const patch = Object.assign({}, edit);
+      delete patch.__match;
+      delete patch.__origin;
+      // eslint-disable-next-line no-await-in-loop
+      await window.medewerkersDB.update(key, patch);
+      migrated += 1;
+    } catch (err) {
+      failed += 1;
+      console.warn("[employeeEditsById migratie] update mislukt voor " + key + ":", err);
+    }
+  }
+
+  // Vlag alleen zetten als alles goed ging — anders bij volgende boot opnieuw
+  // proberen voor de gefaalde medewerkers.
+  if (failed === 0) {
+    try { window.localStorage.setItem(EMPLOYEE_EDITS_MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+  }
+  if (migrated > 0) {
+    console.info("[employeeEditsById migratie] " + migrated + " medewerker(s) gesynchroniseerd naar Supabase.");
+  }
+  if (failed > 0) {
+    console.warn("[employeeEditsById migratie] " + failed + " medewerker(s) niet gesynced — wordt bij volgende boot opnieuw geprobeerd.");
+  }
+  return migrated;
+}
+
+// Trigger de migratie zodra medewerkersDB klaar is (bootstrap event).
+window.addEventListener("besa:medewerkers-updated", function onceForMigrate() {
+  window.removeEventListener("besa:medewerkers-updated", onceForMigrate);
+  migrateEmployeeEditsByIdToSupabase().catch(function (err) {
+    console.error("[employeeEditsById migratie] onverwachte fout:", err);
+  });
+});
 
 function upsertEmployeeItem(updated) {
   if (!updated) return;

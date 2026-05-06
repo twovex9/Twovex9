@@ -133,18 +133,38 @@
   }
 
   function getHrEmployeeRows() {
-    var list = readLsArray(HR_EMP_KEY);
-    if (!list.length) list = readLsArray(HR_EMP_LEGACY_KEY);
-    var edits = readLsObject(HR_EMP_EDITS_KEY);
+    // Stage 6: bron-van-waarheid is medewerkersDB (Supabase). Edits zitten al
+    // in de DB-rows (data jsonb), dus geen aparte localStorage merge meer.
+    var dbList = null;
+    if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      try {
+        var fromDb = window.medewerkersDB.getAllSync();
+        if (Array.isArray(fromDb) && fromDb.length) dbList = fromDb;
+      } catch (e) { /* fall back below */ }
+    }
+
     var out = [];
-    (list || []).forEach(function (raw) {
-      if (!raw) return;
-      var eid = raw.empId != null && String(raw.empId) !== "" ? String(raw.empId) : raw.id != null && String(raw.id) !== "" ? String(raw.id) : "";
-      if (!eid) return;
-      var m = Object.assign({}, raw, edits[eid] && typeof edits[eid] === "object" ? edits[eid] : {});
-      if (m.archived) return;
-      out.push({ id: eid, name: hrDisplayName(m) });
-    });
+    if (dbList) {
+      dbList.forEach(function (emp) {
+        if (!emp || emp.archived) return;
+        var eid = emp.empId != null && String(emp.empId) !== "" ? String(emp.empId) : emp.id != null && String(emp.id) !== "" ? String(emp.id) : "";
+        if (!eid) return;
+        out.push({ id: eid, name: hrDisplayName(emp) });
+      });
+    } else {
+      var list = readLsArray(HR_EMP_KEY);
+      if (!list.length) list = readLsArray(HR_EMP_LEGACY_KEY);
+      var edits = readLsObject(HR_EMP_EDITS_KEY);
+      (list || []).forEach(function (raw) {
+        if (!raw) return;
+        var eid = raw.empId != null && String(raw.empId) !== "" ? String(raw.empId) : raw.id != null && String(raw.id) !== "" ? String(raw.id) : "";
+        if (!eid) return;
+        var m = Object.assign({}, raw, edits[eid] && typeof edits[eid] === "object" ? edits[eid] : {});
+        if (m.archived) return;
+        out.push({ id: eid, name: hrDisplayName(m) });
+      });
+    }
+
     out.sort(function (a, b) {
       return a.name.toLowerCase().localeCompare(b.name.toLowerCase(), "nl", { sensitivity: "base" });
     });

@@ -135,6 +135,25 @@ function mergeBesuBulkEmployeesOnce() {
 }
 
 function readEmployeeEdits() {
+  // Stage 6: Supabase (medewerkersDB) is bron-van-waarheid voor medewerker-
+  // velden. localStorage["employeeEditsById"] is alleen nog fallback voor
+  // pre-migratie state of korte momenten dat de DB-cache niet leeg is.
+  if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+    try {
+      const list = window.medewerkersDB.getAllSync() || [];
+      if (list.length) {
+        const byId = {};
+        for (let i = 0; i < list.length; i += 1) {
+          const emp = list[i];
+          if (!emp) continue;
+          const key = emp.empId || emp.id;
+          if (!key) continue;
+          byId[key] = emp;
+        }
+        if (Object.keys(byId).length) return byId;
+      }
+    } catch (e) { /* fall back to localStorage */ }
+  }
   try {
     const raw = window.localStorage.getItem(EMPLOYEE_EDITS_STORAGE_KEY);
     if (!raw) return {};

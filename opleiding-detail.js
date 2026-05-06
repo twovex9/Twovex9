@@ -44,6 +44,15 @@
   }
 
   function mergedEmployees() {
+    // Stage 6: bron-van-waarheid is medewerkersDB (Supabase). Daar zitten
+    // edits al in de row.data jsonb. Lokale items+edits-merge is alleen
+    // nog een fallback voor pre-migratie clients.
+    if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      try {
+        var fromDb = window.medewerkersDB.getAllSync();
+        if (Array.isArray(fromDb) && fromDb.length) return fromDb;
+      } catch (e) { /* fall back to localStorage */ }
+    }
     var items = readJson(ITEMS_KEY, []);
     if (!Array.isArray(items)) items = [];
     var edits = readJson(EDITS_KEY, {});
