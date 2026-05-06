@@ -824,6 +824,67 @@ where not exists (
 
 
 -- ============================================================================
+-- client_documents (Cli?ntdossier ? Documenten-tab)
+-- ============================================================================
+--
+-- Eigen tabel zodat:
+--  1) bestanden niet als jsonb-blob in de cli?nt-rij meereizen (PostgREST heeft
+--     een ~1MB request-body limiet die bij grote PDFs/foto's onzichtbaar
+--     mislukt en het bestand stilletjes laat verdwijnen na refresh).
+--  2) een mislukte upload nooit andere cli?nt-edits overschrijft.
+--  3) per-document delete/update een goedkope rij-operatie is.
+--
+-- file_data houdt het bestand als base64 data-URL ("data:<mime>;base64,...").
+-- Voor bestanden > ~1MB kan later gemigreerd worden naar Supabase Storage; de
+-- frontend werkt al via een data-laag, dus dat is dan alleen een
+-- implementatiewissel.
+--
+-- client_id is text en heeft geen harde FK naar clienten(id) zodat legacy
+-- test-IDs blijven werken (zelfde patroon als beschikkingen).
+
+create table if not exists public.client_documents (
+  id text primary key,
+  client_id text not null,
+  naam text not null default '',
+  type text default '',
+  vervaldatum text default '',
+  uploaddatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  archived boolean not null default false,
+  file_name text default '',
+  file_mime text default '',
+  file_data text default ''
+);
+
+create index if not exists client_documents_client_id_idx on public.client_documents (client_id);
+create index if not exists client_documents_archived_idx on public.client_documents (archived);
+create index if not exists client_documents_type_idx on public.client_documents (lower(type));
+
+drop trigger if exists trg_client_documents_set_modified on public.client_documents;
+create trigger trg_client_documents_set_modified
+  before update on public.client_documents
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.client_documents enable row level security;
+
+drop policy if exists "anon kan client_documents lezen" on public.client_documents;
+create policy "anon kan client_documents lezen"
+  on public.client_documents for select to anon using (true);
+
+drop policy if exists "anon kan client_documents toevoegen" on public.client_documents;
+create policy "anon kan client_documents toevoegen"
+  on public.client_documents for insert to anon with check (true);
+
+drop policy if exists "anon kan client_documents bewerken" on public.client_documents;
+create policy "anon kan client_documents bewerken"
+  on public.client_documents for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan client_documents verwijderen" on public.client_documents;
+create policy "anon kan client_documents verwijderen"
+  on public.client_documents for delete to anon using (true);
+
+
+-- ============================================================================
 -- beschikkingen (Cli?nten module ? master entity)
 -- ============================================================================
 --

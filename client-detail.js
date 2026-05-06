@@ -924,8 +924,10 @@
   function initClientDocumentenSection() {
     var tbody = document.getElementById("cd-doc-tbody");
     if (!tbody) return;
-
-    if (!Array.isArray(c.documenten)) c.documenten = [];
+    if (!window.clientDocsDB) {
+      console.warn("client-documenten: clientDocsDB niet beschikbaar — laden de UI niet.");
+      return;
+    }
 
     var pillsContainer = document.getElementById("cd-doc-pills");
     var emptyEl = document.getElementById("cd-doc-empty");
@@ -954,20 +956,17 @@
     var sortDir = "asc";
     var currentPage = 0;
     var activePillType = null;
-    var editingIndex = -1;
+    var editingDocId = null;
 
     function getDocs() {
-      if (!Array.isArray(c.documenten)) c.documenten = [];
-      return c.documenten;
+      return window.clientDocsDB.listSync(c.id);
     }
 
-    function persistDocs() {
-      try {
-        if (typeof upsertClienten === "function") {
-          upsertClienten(c);
-        }
-      } catch (err) {
-        console.warn("client-documenten: opslaan mislukt", err);
+    function reportError(err, fallback) {
+      console.error("[client-documenten]", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", fallback || "Documenten",
+          (err && err.message) ? String(err.message) : "Er ging iets mis bij opslaan in de database.");
       }
     }
 
@@ -1144,8 +1143,7 @@
           editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
           editBtn.addEventListener("click", function (e) {
             e.stopPropagation();
-            var realIdx = getDocs().indexOf(doc);
-            openEditModal(realIdx);
+            openEditModal(doc.id);
           });
 
           var archiveBtn = document.createElement("button");
@@ -1155,18 +1153,15 @@
           archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
           archiveBtn.addEventListener("click", function (e) {
             e.stopPropagation();
-            var docs = getDocs();
-            var realIdx = docs.indexOf(doc);
-            if (realIdx > -1) {
-              var willArchive = !docs[realIdx].archived;
-              docs[realIdx].archived = willArchive;
-              docs[realIdx].laatstGewijzigd = nowIsoLocal();
-              persistDocs();
-              render();
+            var willArchive = !doc.archived;
+            var p = willArchive ? window.clientDocsDB.archive(doc.id) : window.clientDocsDB.restore(doc.id);
+            p.then(function () {
               if (typeof window.showActionFeedback === "function") {
                 window.showActionFeedback(willArchive ? "archived" : "restored", "Document");
               }
-            }
+            }).catch(function (err) {
+              reportError(err, willArchive ? "Archiveren" : "Herstellen");
+            });
           });
 
           actWrap.appendChild(viewBtn);
@@ -1217,11 +1212,6 @@
       if (pageLabelEl) pageLabelEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
 
       applyColumnVisibility();
-    }
-
-    function nowIsoLocal() {
-      var n = new Date();
-      return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0") + "T" + String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0");
     }
 
     document.querySelectorAll('#cd-doc-table th[data-cdsort]').forEach(function (th) {
@@ -1333,13 +1323,13 @@
 
     function closeModal() {
       if (modal) modal.style.display = "none";
-      editingIndex = -1;
+      editingDocId = null;
       clearDropzone();
     }
 
     if (uploadBtn) {
       uploadBtn.addEventListener("click", function () {
-        editingIndex = -1;
+        editingDocId = null;
         if (modalTitle) modalTitle.textContent = "Document uploaden";
         if (modalNaam) modalNaam.value = "";
         if (modalType) modalType.value = "";
@@ -1351,10 +1341,10 @@
       });
     }
 
-    function openEditModal(idx) {
-      var doc = getDocs()[idx];
+    function openEditModal(docId) {
+      var doc = getDocs().find(function (d) { return d && d.id === docId; });
       if (!doc) return;
-      editingIndex = idx;
+      editingDocId = docId;
       if (modalTitle) modalTitle.textContent = "Document bewerken";
       if (modalNaam) modalNaam.value = doc.naam || "";
       if (modalType) modalType.value = doc.type || "";
@@ -1369,6 +1359,12 @@
     if (modalCancel) modalCancel.addEventListener("click", closeModal);
     if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
 
+    function setSavingState(busy) {
+      if (!modalSave) return;
+      modalSave.disabled = !!busy;
+      modalSave.dataset.busy = busy ? "1" : "";
+    }
+
     function commitDocSave(fileData, fileName, fileMime) {
       var naam = ((modalNaam && modalNaam.value) || "").trim();
       var type = (modalType && modalType.value) || "";
@@ -1377,30 +1373,24 @@
         if (modalNaam) modalNaam.focus();
         return;
       }
-      var isoNow = nowIsoLocal();
-      var docs = getDocs();
-      var isEdit = editingIndex >= 0;
+      var isEdit = editingDocId != null;
+      setSavingState(true);
 
+      var p;
       if (isEdit) {
-        var doc = docs[editingIndex];
-        if (doc) {
-          doc.naam = naam;
-          doc.type = type;
-          doc.vervaldatum = verval;
-          doc.laatstGewijzigd = isoNow;
-          if (fileData) {
-            doc.fileData = fileData;
-            doc.fileName = fileName;
-            doc.fileMime = fileMime;
-          }
+        var partial = { naam: naam, type: type, vervaldatum: verval };
+        if (fileData) {
+          partial.fileData = fileData;
+          partial.fileName = fileName;
+          partial.fileMime = fileMime;
         }
+        p = window.clientDocsDB.update(editingDocId, partial);
       } else {
-        docs.unshift({
+        p = window.clientDocsDB.add({
+          clientId: c.id,
           naam: naam,
           type: type,
           vervaldatum: verval,
-          uploaddatum: isoNow,
-          laatstGewijzigd: isoNow,
           archived: false,
           fileData: fileData || "",
           fileName: fileName || "",
@@ -1408,13 +1398,16 @@
         });
       }
 
-      persistDocs();
-      closeModal();
-      render();
-
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback(isEdit ? "saved" : "added", "Document");
-      }
+      p.then(function () {
+        closeModal();
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback(isEdit ? "saved" : "added", "Document");
+        }
+      }).catch(function (err) {
+        reportError(err, isEdit ? "Bewerken" : "Uploaden");
+      }).then(function () {
+        setSavingState(false);
+      });
     }
 
     if (modalSave) {
@@ -1483,17 +1476,15 @@
 
     function confirmDocDelete() {
       if (!docToDelete || (delConfirmBtn && delConfirmBtn.disabled)) return;
-      var docs = getDocs();
-      var realIdx = docs.indexOf(docToDelete);
-      if (realIdx > -1) {
-        docs.splice(realIdx, 1);
-        persistDocs();
-      }
+      var idToDelete = docToDelete.id;
       closeDocDeleteModal();
-      render();
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("deleted", "Document");
-      }
+      window.clientDocsDB.remove(idToDelete).then(function () {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("deleted", "Document");
+        }
+      }).catch(function (err) {
+        reportError(err, "Verwijderen");
+      });
     }
 
     if (delSlider) delSlider.addEventListener("input", syncDelSlider);
@@ -1597,6 +1588,40 @@
       dlModal.setAttribute("aria-hidden", "false");
     }
 
+    function refreshFromDb() {
+      if (!window.clientDocsDB || !window.clientDocsDB.list) return Promise.resolve();
+      return window.clientDocsDB.list(c.id).catch(function (err) {
+        console.warn("[client-documenten] kon niet ophalen:", err && err.message);
+      });
+    }
+
+    window.addEventListener("besa:client-documents-updated", function (ev) {
+      var detail = ev && ev.detail;
+      if (!detail || String(detail.clientId) === String(c.id)) {
+        render();
+      }
+    });
+
     render();
+
+    Promise.resolve()
+      .then(function () {
+        if (window.clientDocsDB && window.clientDocsDB.maybeMigrateFromClient) {
+          return window.clientDocsDB.maybeMigrateFromClient(c).then(function (n) {
+            if (n > 0 && Array.isArray(c.documenten) && c.documenten.length) {
+              c.documenten = [];
+              try {
+                if (typeof upsertClienten === "function") upsertClienten(c);
+              } catch (err) {
+                console.warn("[client-documenten] cleanup van legacy c.documenten mislukt:", err);
+              }
+            }
+            return n;
+          });
+        }
+        return 0;
+      })
+      .then(refreshFromDb)
+      .then(render);
   }
 })();
