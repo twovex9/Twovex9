@@ -213,6 +213,18 @@ Voor "1-op-1 sub-data per parent" (zoals verlof-overgedragen): gebruik een UNIQU
 
 Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: gebruik alleen `add()` en laat het optimistic-insert-patroon van `beschikking-audit-data.js` overnemen — UI ververst direct met tijdelijke id, daarna replacement met echte UUID na Supabase-respons. Audit-failures worden in `console.error` gelogd, **niet** als rode modal — anders krijg je pop-ups bij elke page-view.
 
+### 6c-ter. Migraties moeten hun legacy localStorage-key opruimen
+
+Elke `maybeMigrateLocalToSupabase()` of vergelijkbare eenmalige migratie MOET na een succesvolle insert/upload `localStorage.removeItem(LEGACY_KEY)` aanroepen. Anders blijven oude blobs (soms MB's) onnodig in de browser staan en kan een second pass per ongeluk dubbel migreren.
+
+Patroon:
+```js
+try { localStorage.setItem(MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+try { localStorage.removeItem(LEGACY_KEY); } catch (e) { /* */ }
+```
+
+Uitzondering: `LEGACY_KEY = "employeeEditsById"` mag alleen door Stage 6 zelf worden opgeruimd, want notities/verzuim/verlof/documenten-migraties (Stage 4a-d) lezen er ook uit. Voor de medewerker-form-velden geldt dat de key behouden blijft als offline-cache (zie sectie 6b ✅ Stage 6).
+
 ### 6c-bis. Stille fire-and-forget syncs zijn verboden
 
 Elke push-functie in een data-laag (`pushAll`, `pushType`, `pushHistory`, `pushOrt`, `pushFullCache`, `setCell`, `syncFromLocalUpsert`, ...) die een fout in een `try/catch + console.error` slikt zonder de gebruiker te informeren is een **bug**, geen optimalisatie. De gebruiker denkt dat zijn wijziging is opgeslagen terwijl die alleen in localStorage staat — bij andere devices ontbreekt-ie.

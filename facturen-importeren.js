@@ -2,7 +2,6 @@
   "use strict";
 
   var STORAGE_KEY = "besa.facturenImportJobs";
-  var LS_FACT_SUPP = "facturen_supplement_v1";
   var MAX_BYTES = 20 * 1024 * 1024;
   var ALLOWED_EXT = ["svg", "png", "xlsx", "xls", "csv", "jpg", "jpeg", "pdf", "docx", "doc"];
   var ALLOWED_HUMAN = "SVG, PNG, Excel, CSV, JPG, PDF of .docx";
@@ -397,12 +396,6 @@
     };
   }
 
-  function persistFactSupplementLocal(newRow) {
-    var supp = readJSONList(LS_FACT_SUPP);
-    supp.unshift(newRow);
-    writeJSONList(LS_FACT_SUPP, supp);
-  }
-
   function persistFactSupplementSupabase(newRow) {
     if (!window.facturenDB || typeof window.facturenDB.add !== "function") {
       return Promise.reject(new Error(
@@ -463,17 +456,32 @@
         : Promise.resolve(true);
       ask.then(function (ok) {
         if (!ok) return;
-        var jobs = readJSONList(STORAGE_KEY).filter(function (j) { return j.id !== id; });
-        writeJSONList(STORAGE_KEY, jobs);
-        var supp = readJSONList(LS_FACT_SUPP).filter(function (r) { return !(r && r.importJobId === id); });
-        writeJSONList(LS_FACT_SUPP, supp);
-        try {
-          window.dispatchEvent(new CustomEvent("besa:facturen-updated", { detail: { source: "facturen-importeren" } }));
-        } catch (e2) { /* */ }
-        renderHistory();
-        if (typeof window.showActionFeedback === "function") {
-          window.showActionFeedback("deleted", "Importjob");
-        }
+        // Verwijder de bijbehorende facturen ook in Supabase, anders blijven
+        // ze bij volgende refresh terugkomen via FACTUREN_BULK.
+        var supabaseCleanup = (window.facturenDB && typeof window.facturenDB.removeByImportJobId === "function")
+          ? window.facturenDB.removeByImportJobId(id)
+          : Promise.resolve(true);
+
+        supabaseCleanup
+          .then(function () {
+            var jobs = readJSONList(STORAGE_KEY).filter(function (j) { return j.id !== id; });
+            writeJSONList(STORAGE_KEY, jobs);
+            try {
+              window.dispatchEvent(new CustomEvent("besa:facturen-updated", { detail: { source: "facturen-importeren" } }));
+            } catch (e2) { /* */ }
+            renderHistory();
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("deleted", "Importjob");
+            }
+          })
+          .catch(function (err) {
+            console.error("[facturen-importeren] removeByImportJobId mislukt:", err);
+            if (window.besaReportSyncFailure) {
+              window.besaReportSyncFailure("Importjob verwijderen", err);
+            } else if (typeof window.showSaveModal === "function") {
+              window.showSaveModal("Verwijderen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+            }
+          });
       });
     });
   }
@@ -580,8 +588,6 @@
       var job = persistImportJob(finalName);
       var newRow = buildFactSuppRow(finalName, job.id);
 
-      persistFactSupplementLocal(newRow);
-
       persistFactSupplementSupabase(newRow)
         .then(function () {
           dispatchFacturenUpdated();
@@ -597,10 +603,10 @@
           }
         })
         .catch(function (err) {
+          // Rollback: enkel de import-job (de Supabase-rij is door .add() niet
+          // aangemaakt; LS_FACT_SUPP wordt niet meer geschreven sinds Stage 7).
           var jobs = readJSONList(STORAGE_KEY).filter(function (j) { return j.id !== job.id; });
           writeJSONList(STORAGE_KEY, jobs);
-          var supp = readJSONList(LS_FACT_SUPP).filter(function (r) { return !(r && r.id === newRow.id); });
-          writeJSONList(LS_FACT_SUPP, supp);
 
           var msg = (err && err.message)
             ? "Opslaan in database mislukt: " + err.message

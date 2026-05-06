@@ -187,6 +187,8 @@
         return false;
       }
       try { global.localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
+      // Stage 7: opruimen van legacy localStorage-key na succesvolle migratie.
+      try { global.localStorage.removeItem("facturen_supplement_v1"); } catch (e) { /* */ }
       console.info("[facturenDB] Migratie geslaagd: " + (ins.data || []).length + " supplement-facturen geüpload.");
       return true;
     } catch (err) {
@@ -292,6 +294,30 @@
     return true;
   }
 
+  /** Verwijder alle facturen die geïmporteerd zijn via een specifieke
+   *  importJob (uit `data.importJobId` jsonb-veld). Wordt aangeroepen door
+   *  facturen-importeren.js wanneer een import-job uit de history-lijst
+   *  wordt verwijderd, zodat de bijbehorende facturen ook in Supabase weg
+   *  zijn (anders bleven ze bij volgende refresh terugkomen). */
+  async function removeByImportJobId(jobId) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!jobId) return 0;
+    // Filter via JSONB-pad — Supabase ondersteunt eq op data->>importJobId.
+    var res = await global.besaSupabase
+      .from(TABLE)
+      .delete()
+      .filter("data->>importJobId", "eq", String(jobId));
+    if (res.error) throw res.error;
+    var cache = readCache().filter(function (r) {
+      var d = r && r._data;
+      return !d || String(d.importJobId || "") !== String(jobId);
+    });
+    writeCache(cache);
+    pushToGlobalBulk(cache);
+    dispatchUpdated();
+    return true;
+  }
+
   // ---------------------------------------------------------------------------
   // Synchrone helpers
   // ---------------------------------------------------------------------------
@@ -315,6 +341,7 @@
     archive: archive,
     restore: restore,
     delete: remove,
+    removeByImportJobId: removeByImportJobId,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     formatBedragNL: formatBedragNL,

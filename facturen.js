@@ -33,28 +33,14 @@
 
   if (!tbody || !table) return;
 
-  var LS_FACT_SUPP = "facturen_supplement_v1";
   var LS_FACT_ARCHIVED = "facturen_archived_v1";
   var LS_FACT_PURGED = "facturen_purged_v1";
   var LS_FACT_HIDDEN = "facturen_hidden_v1";
   var baseFactBulk = typeof FACTUREN_BULK !== "undefined" && Array.isArray(FACTUREN_BULK) ? FACTUREN_BULK : [];
   var raw = baseFactBulk.slice();
-  try {
-    var supL = localStorage.getItem(LS_FACT_SUPP);
-    if (supL) {
-      var supA = JSON.parse(supL);
-      if (Array.isArray(supA)) {
-        for (var sx = 0; sx < supA.length; sx += 1) {
-          if (supA[sx] && typeof supA[sx] === "object") {
-            var sup1 = supA[sx];
-            sup1.fromSupp = true;
-            if (!sup1.id) sup1.id = "fslg-" + sx + "-" + String(sup1.fn == null ? "" : sup1.fn) + "x" + (sup1.client == null ? "" : sup1.client);
-            raw.push(sup1);
-          }
-        }
-      }
-    }
-  } catch (eSup) { /* */ }
+  // Stage 7: facturen_supplement_v1 is gemigreerd naar Supabase. De data komt
+  // nu binnen via FACTUREN_BULK / besa:facturen-updated. Geen lokale parallel-
+  // state meer.
 
   function loadStrArrLS(lsKey) {
     try {
@@ -75,26 +61,6 @@
   function rebuildFromBulk() {
     var bb = (typeof FACTUREN_BULK !== "undefined" && Array.isArray(FACTUREN_BULK)) ? FACTUREN_BULK : [];
     raw = bb.slice();
-    try {
-      var supL2 = localStorage.getItem(LS_FACT_SUPP);
-      if (supL2) {
-        var supA2 = JSON.parse(supL2);
-        if (Array.isArray(supA2)) {
-          for (var sx2 = 0; sx2 < supA2.length; sx2 += 1) {
-            var s2 = supA2[sx2];
-            if (s2 && typeof s2 === "object") {
-              s2.fromSupp = true;
-              if (!s2.id) s2.id = "fslg-" + sx2 + "-" + (s2.fn || "") + "x" + (s2.client || "");
-              var dupExists = false;
-              for (var dx = 0; dx < raw.length; dx += 1) {
-                if (raw[dx] && raw[dx].id === s2.id) { dupExists = true; break; }
-              }
-              if (!dupExists) raw.push(s2);
-            }
-          }
-        }
-      }
-    } catch (eRb) { /* */ }
     // Sync factArchived uit r.archived (Supabase is bron-van-waarheid).
     factArchived = raw.filter(function (r) { return r && r.archived; }).map(factRowKey);
   }
@@ -126,13 +92,6 @@
     return "k:" + [r.fn, r.nr, r.client, r.besch, r.per, r.bedr].map(function (x) {
       return x == null ? "" : String(x);
     }).join("\u00a6");
-  }
-
-  function saveFactSuppList() {
-    try {
-      var a = raw.filter(function (r) { return r && r.fromSupp; });
-      localStorage.setItem(LS_FACT_SUPP, JSON.stringify(a));
-    } catch (e) { /* */ }
   }
 
   var currentPage = 0;
@@ -1298,8 +1257,7 @@
       newRow.bescId = window.__FVIEW_BESC.id;
     }
     raw.push(newRow);
-    saveFactSuppList();
-    // Schrijf de nieuwe factuur ook door naar Supabase. Fire-and-forget;
+    // Schrijf de nieuwe factuur door naar Supabase. Fire-and-forget;
     // bij succes wordt het record vervangen via "besa:facturen-updated".
     if (window.facturenDB && typeof window.facturenDB.add === "function") {
       window.facturenDB.add(newRow).catch(function (err) {
@@ -1398,7 +1356,6 @@
     }
     saveFactArchived();
     saveFactPurged();
-    saveFactSuppList();
     return keyList.length;
   }
 

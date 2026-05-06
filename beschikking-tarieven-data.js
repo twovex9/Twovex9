@@ -146,6 +146,8 @@
         return false;
       }
       try { localStorage.setItem(MIGRATION_FLAG, "1"); } catch (e) { /* */ }
+      // Stage 7: opruimen van legacy localStorage-key na succesvolle migratie.
+      try { localStorage.removeItem(LEGACY_KEY); } catch (e) { /* */ }
       console.info("[beschikkingTarievenDB] Migratie geslaagd: " + (ins.data || []).length + " items naar Supabase.");
       return true;
     } catch (err) {
