@@ -404,9 +404,69 @@
   panel.addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", closePanel);
 
+  // ---------------------------------------------------------------------------
+  // Top-dropdown viewport clamp
+  // ---------------------------------------------------------------------------
+  // De .top-dropdown elementen openen standaard `left: 0` t.o.v. hun parent.
+  // Bij smalle viewports kunnen ze rechts over de viewport-rand vallen — vooral
+  // de HR/Cliënten dropdowns met ~300-380px breedte. Bij hover/focus meten we
+  // de bounding-box en schuiven we de dropdown naar links als hij overflowt.
+  // visibility:hidden in de CSS-resting-state houdt het element in de layout,
+  // dus getBoundingClientRect levert al een correcte rect.
+  function clampDropdownToViewport(dd) {
+    if (!dd) return;
+    // Reset eerdere shifts vóór meten zodat we elke hover opnieuw vanaf 0 rekenen.
+    dd.style.left = "";
+    dd.style.right = "";
+    const rect = dd.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const margin = 8;
+    if (rect.right > vw - margin) {
+      const overflow = rect.right - (vw - margin);
+      dd.style.left = "-" + Math.ceil(overflow) + "px";
+    }
+    // Hercheck na shift: als nu links overflowt (dropdown wijder dan viewport),
+    // klem aan de linker viewport-rand i.p.v. te overschuiven.
+    const recheck = dd.getBoundingClientRect();
+    if (recheck.left < margin) {
+      const parentRect = dd.parentElement.getBoundingClientRect();
+      dd.style.left = (margin - parentRect.left) + "px";
+    }
+  }
+
+  function setupTopDropdownClamping() {
+    const items = nav.querySelectorAll(".top-nav-item--dropdown");
+    items.forEach((item) => {
+      const dd = item.querySelector(".top-dropdown");
+      if (!dd) return;
+      const onShow = () => clampDropdownToViewport(dd);
+      const onHide = () => { dd.style.left = ""; dd.style.right = ""; };
+      item.addEventListener("mouseenter", onShow);
+      item.addEventListener("focusin", onShow);
+      item.addEventListener("mouseleave", onHide);
+      item.addEventListener("focusout", (e) => {
+        if (!item.contains(e.relatedTarget)) onHide();
+      });
+    });
+
+    // Bij window-resize: reset alle inline shifts (worden bij volgende hover
+    // opnieuw berekend met de nieuwe viewport-breedte).
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        items.forEach((item) => {
+          const d = item.querySelector(".top-dropdown");
+          if (d) { d.style.left = ""; d.style.right = ""; }
+        });
+      }, 150);
+    });
+  }
+
   wireTopDropdownDirectRoutes();
   wireFailsafeNavigation();
   syncTopNavActiveState();
+  setupTopDropdownClamping();
   ro.observe(nav);
   update();
 })();
