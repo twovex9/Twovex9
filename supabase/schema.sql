@@ -3063,3 +3063,58 @@ create policy "anon kan beschikking_notities bewerken"
 drop policy if exists "anon kan beschikking_notities verwijderen" on public.beschikking_notities;
 create policy "anon kan beschikking_notities verwijderen"
   on public.beschikking_notities for delete to anon using (true);
+
+-- ============================================================================
+-- beschikking_audit_log (compliance: wie heeft wanneer wat met de beschikking
+-- gedaan?)
+-- ============================================================================
+--
+-- Append-only log met aanmaken / bekijken / bewerken events. Eén regel per
+-- actie. beschikking_id is een soft-FK naar beschikkingen.id (text).
+-- Bewerken / verwijderen van een audit-rij hoort eigenlijk niet — voor
+-- demonstratie laten we update/delete via anon nog wel toe (consistent met
+-- ander beleid).
+
+create table if not exists public.beschikking_audit_log (
+  id uuid primary key default gen_random_uuid(),
+  beschikking_id text not null,
+  t timestamptz not null default now(),
+  act text not null check (act in ('aanmaken', 'bekijken', 'bewerken')),
+  gebruiker text not null default 'Onbekend',
+  details text,
+  resource text not null default 'Beschikking',
+  ip text,
+  user_agent text,
+  status text not null default 'succes',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists beschikking_audit_log_besc_t_idx
+  on public.beschikking_audit_log (beschikking_id, t desc);
+
+create index if not exists beschikking_audit_log_act_idx
+  on public.beschikking_audit_log (act);
+
+drop trigger if exists trg_beschikking_audit_log_set_modified on public.beschikking_audit_log;
+create trigger trg_beschikking_audit_log_set_modified
+  before update on public.beschikking_audit_log
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.beschikking_audit_log enable row level security;
+
+drop policy if exists "anon kan beschikking_audit_log lezen" on public.beschikking_audit_log;
+create policy "anon kan beschikking_audit_log lezen"
+  on public.beschikking_audit_log for select to anon using (true);
+
+drop policy if exists "anon kan beschikking_audit_log toevoegen" on public.beschikking_audit_log;
+create policy "anon kan beschikking_audit_log toevoegen"
+  on public.beschikking_audit_log for insert to anon with check (true);
+
+drop policy if exists "anon kan beschikking_audit_log bewerken" on public.beschikking_audit_log;
+create policy "anon kan beschikking_audit_log bewerken"
+  on public.beschikking_audit_log for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan beschikking_audit_log verwijderen" on public.beschikking_audit_log;
+create policy "anon kan beschikking_audit_log verwijderen"
+  on public.beschikking_audit_log for delete to anon using (true);

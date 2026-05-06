@@ -744,7 +744,11 @@
     }
   }
 
-  var LS_BESC_AUDIT = "besa_besc_audit_v1";
+  // Audit-rijen worden in Supabase opgeslagen via window.beschikkingAuditDB
+  // (zie beschikking-audit-data.js). De legacy localStorage-key
+  // "besa_besc_audit_v1" wordt automatisch eenmalig gemigreerd bij eerste
+  // boot. LS_BESC_AUDIT_COLS blijft in localStorage want dat is UI-state
+  // (kolomvoorkeur per gebruiker, niet inhoudelijke data).
   var LS_BESC_AUDIT_COLS = "besa_besc_audit_cols_v1";
   var bdtlAudPage = 1;
   var BDTL_AUD_COLS = [
@@ -781,50 +785,39 @@
     }
   }
 
-  function loadBescAudStore() {
-    try {
-      var o = JSON.parse(localStorage.getItem(LS_BESC_AUDIT) || "{}");
-      return o && typeof o === "object" ? o : {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function saveBescAudStore(obj) {
-    try {
-      localStorage.setItem(LS_BESC_AUDIT, JSON.stringify(obj));
-    } catch (e) { /* */ }
+  function reportBescAuditError(label, err) {
+    try { console.error("[beschikking-detail audit]", label, err); } catch (e) { /* */ }
+    // Audit-failures niet als modal tonen — anders krijg je een rode pop-up
+    // bij elke page-view. Console-log + silent doorgaan is hier juist.
   }
 
   function getBescAuditList(bid) {
     if (!bid) return [];
-    var o = loadBescAudStore();
-    var k = String(bid);
-    if (!o[k] || !Array.isArray(o[k])) o[k] = [];
-    return o[k];
-  }
-
-  function pushBescAudSortNewestFirst(bid, row) {
-    if (!bid) return;
-    var o = loadBescAudStore();
-    var k = String(bid);
-    if (!o[k] || !Array.isArray(o[k])) o[k] = [];
-    row.id = row.id || ("a" + Date.now() + Math.random().toString(36).slice(2, 9));
-    if (!row.t) row.t = new Date().toISOString();
-    o[k].unshift(row);
-    saveBescAudStore(o);
+    if (window.beschikkingAuditDB && typeof window.beschikkingAuditDB.getForBescSync === "function") {
+      return window.beschikkingAuditDB.getForBescSync(bid);
+    }
+    return [];
   }
 
   function appendBescAudit(bid, act, details, res) {
     act = String(act || "").toLowerCase();
     if (act !== "bekijken" && act !== "aanmaken" && act !== "bewerken") return;
+    if (!bid) return;
+    if (!window.beschikkingAuditDB || typeof window.beschikkingAuditDB.add !== "function") {
+      reportBescAuditError("data-laag niet beschikbaar", new Error("beschikkingAuditDB ontbreekt"));
+      return;
+    }
     var ua;
     try {
       ua = typeof navigator !== "undefined" && navigator.userAgent ? String(navigator.userAgent) : "";
     } catch (e2) {
       ua = "";
     }
-    pushBescAudSortNewestFirst(bid, {
+    // Fire-and-forget: UI ververst zichzelf via besa:beschikking-audit-updated
+    // event zodra Supabase de definitieve rij heeft teruggegeven (de cache
+    // krijgt eerst een optimistic insert, daarna replacement).
+    window.beschikkingAuditDB.add({
+      bescId: bid,
       act: act,
       user: bdtlGetCurrentUser(),
       details: details || "—",
@@ -832,23 +825,13 @@
       ip: bdtlSimIp(),
       ua: ua,
       st: "succes",
-    });
+    }).catch(function (err) { reportBescAuditError("toevoegen mislukt", err); });
   }
 
-  function seedBescAuditIfEmpty(bid) {
-    if (!bid) return;
-    var list = getBescAuditList(bid);
-    if (list.length > 0) return;
-    var o = loadBescAudStore();
-    var k = String(bid);
-    var now = Date.now();
-    o[k] = [
-      { id: "s1", t: new Date(now - 86400000 * 2).toISOString(), act: "aanmaken", user: "Systeem", details: "Beschikking aangemaakt in het overzicht.", res: "Beschikking", ip: bdtlSimIp(), ua: "Systeem (geen user agent)", st: "succes" },
-      { id: "s2", t: new Date(now - 3600000 * 20).toISOString(), act: "bekijken", user: "Pauline van Schoonhoven", details: "Beschikking bekeken.", res: "Beschikking", ip: bdtlSimIp(), ua: "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0.0.0", st: "succes" },
-      { id: "s3", t: new Date(now - 3600000 * 8).toISOString(), act: "bewerken", user: "Jason Sonck", details: "Wijzigingen in gegevens opgeslagen.", res: "Beschikking", ip: bdtlSimIp(), ua: "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Edg/120.0.0.0", st: "succes" },
-      { id: "s4", t: new Date(now - 3600000 * 2).toISOString(), act: "bekijken", user: "Jason Sonck", details: "Beschikking bekeken (detail).", res: "Beschikking", ip: bdtlSimIp(), ua: "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/147.0.0.0", st: "succes" },
-    ];
-    saveBescAudStore(o);
+  function seedBescAuditIfEmpty(_bid) {
+    // No-op sinds Stage 3: audit-data komt nu uit Supabase, geen demo-rijen
+    // meer lokaal seeden. Lege beschikkingen krijgen pas een eerste rij
+    // wanneer de gebruiker hem opent (via maybeLogBescAuditView).
   }
 
   function maybeLogBescAuditView(bid) {
@@ -1562,6 +1545,9 @@
         renderBdtlNotesList();
         updateBdtlSideNotesSummary();
       } catch (e) { /* */ }
+    });
+    window.addEventListener("besa:beschikking-audit-updated", function () {
+      try { if (loadedBesc && loadedBesc.id) renderBdtlAuditTable(); } catch (e) { /* */ }
     });
   }
 
