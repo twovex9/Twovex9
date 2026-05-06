@@ -7691,6 +7691,10 @@ th.emp-doc-col-delete {
   max-width: 820px;
 }
 
+.fi-card[hidden] {
+  display: none;
+}
+
 .fi-card-title {
   margin: 0;
   font-size: 18px;
