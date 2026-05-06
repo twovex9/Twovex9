@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incident melden — HR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="save-feedback.js" defer></script>
+  <script src="floating-panels.js" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkruimte.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkruimte.html#urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
+      <nav class="side-nav" aria-label="Cliënten module">
+        <a href="clienten.html" class="side-link">Cliënten</a>
+        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
+        <div class="side-group" data-side-group="cl-beschikkingen">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
+            <span class="side-group__label">Beschikkingen</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
+            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="beschikkingen.html" class="side-link side-link--nested">Overzicht</a>
+            <a href="facturen.html" class="side-link side-link--nested">Facturen</a>
+          </div>
+        </div>
+        <a href="organisatie.html" class="side-link">Organisatie</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
+        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
+        <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
+        <a href="facturen-importeren.html" class="side-link">Facturen importeren</a>
+        <div class="side-group" data-side-group="cl-incidenten">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="true" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, sluit submenu">
+            <span class="side-group__label">Incidenten</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten">
+            <a href="incidenten.html" class="side-link side-link--nested is-active" aria-current="page">Incidenten overzicht</a>
+            <a href="incidenten-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Categorieën</span>
+            <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Verbeteringsmaatregelen</span>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+      </div>
+    </aside>
+
+    <main class="content content--inc-melden">
+      <a class="im-back" href="incidenten.html" id="im-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Terug
+      </a>
+
+      <div class="im-header">
+        <h1 id="im-title">Nieuwe incident melding</h1>
+        <p class="im-subtitle" id="im-subtitle">Vul de onderstaande gegevens in om een nieuw incident te melden. Alle velden gemarkeerd met <span class="im-req">*</span> zijn verplicht.</p>
+      </div>
+
+      <form id="im-form" class="im-form" novalidate>
+        <input type="hidden" id="im-id" />
+
+        <!-- Sectie: Betrokken partijen -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <h2 class="im-card-title">Betrokken partijen</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label" for="im-client">Cliënt <span class="im-req">*</span></label>
+              <p class="im-help">Persoon die aanwezig is/was bij het incident</p>
+              <select class="im-select" id="im-client" required>
+                <option value="">Selecteer cliënt</option>
+              </select>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label">Betrokken partijen</label>
+              <p class="im-help">Andere personen die betrokken waren (optioneel — kan meerdere)</p>
+
+              <div class="im-betrokken-add">
+                <div class="im-betrokken-add-title">Betrokken partij toevoegen</div>
+                <div class="im-betrokken-row">
+                  <div class="im-betrokken-cell">
+                    <span class="im-mini-label">Type partij</span>
+                    <div class="im-radio-inline">
+                      <label class="im-radio-pill">
+                        <input type="radio" name="im-betrokken-type" value="client" checked />
+                        <span>Cliënt</span>
+                      </label>
+                      <label class="im-radio-pill">
+                        <input type="radio" name="im-betrokken-type" value="medewerker" />
+                        <span>Medewerker</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="im-betrokken-cell im-betrokken-cell--grow">
+                    <span class="im-mini-label">Selecteer persoon</span>
+                    <div class="im-betrokken-input-row">
+                      <select class="im-select" id="im-betrokken-person">
+                        <option value="">Selecteer cliënt</option>
+                      </select>
+                      <button type="button" class="im-add-btn" id="im-betrokken-add" aria-label="Toevoegen">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="im-betrokken-list" id="im-betrokken-list" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Tijd en plaats -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+            <h2 class="im-card-title">Tijd en plaats</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-grid-2">
+              <div class="im-field">
+                <label class="im-label" for="im-datum">Incident datum <span class="im-req">*</span></label>
+                <input class="im-input" type="date" id="im-datum" required />
+              </div>
+              <div class="im-field">
+                <label class="im-label" for="im-tijdstip">Tijdstip van de dag <span class="im-req">*</span></label>
+                <select class="im-select" id="im-tijdstip" required>
+                  <option value="">Selecteer tijdstip van de dag</option>
+                </select>
+              </div>
+              <div class="im-field">
+                <label class="im-label" for="im-locatie">Locatie</label>
+                <select class="im-select" id="im-locatie">
+                  <option value="">Selecteer locatie (optioneel)</option>
+                </select>
+              </div>
+              <div class="im-field im-field--checkbox">
+                <label class="im-checkbox-label">
+                  <input type="checkbox" id="im-buiten" />
+                  <span class="im-checkbox-text">
+                    <strong>Buiten</strong>
+                    <span class="im-help">Controleer of het incident buiten heeft plaatsgevonden</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Actoren -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <h2 class="im-card-title">Actoren</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label">Selecteer actor type <span class="im-req">*</span></label>
+              <div class="im-radio-list" id="im-actor-list" role="radiogroup" aria-label="Actor type"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Incident details -->
+        <section class="im-card">
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </span>
+            <h2 class="im-card-title">Incident details</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label" for="im-categorie">Type incident <span class="im-req">*</span></label>
+              <select class="im-select" id="im-categorie" required>
+                <option value="">Selecteer een incident categorie</option>
+              </select>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-omschrijving">Beschrijving <span class="im-req">*</span></label>
+              <p class="im-info">
+                Beschrijf het incident volgens GGR-WTZ richtlijnen: inclusief <em>waarom, wat, waar, wanneer, wie, hoe</em> (omstandigheden) en <em>hoe ver</em> (gevolgen en schade).
+              </p>
+              <textarea class="im-textarea" id="im-omschrijving" rows="5" placeholder="Beschrijf het incident volgens GGR-WTZ richtlijnen: wat is er gebeurd? waar, wanneer, wie was betrokken..." required></textarea>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-maatregelen">Hoe wordt de veiligheid gewaarborgd?</label>
+              <textarea class="im-textarea" id="im-maatregelen" rows="4" placeholder="Beschrijf welke maatregelen zijn genomen om de veiligheid te waarborgen..."></textarea>
+            </div>
+
+            <div class="im-grid-2">
+              <div class="im-field">
+                <label class="im-label" for="im-status">Status</label>
+                <select class="im-select" id="im-status">
+                  <option value="in_afwachting">In afwachting</option>
+                  <option value="in_behandeling">In behandeling</option>
+                  <option value="opgelost">Opgelost</option>
+                </select>
+              </div>
+              <div class="im-field">
+                <label class="im-label" for="im-melder">Melder</label>
+                <select class="im-select" id="im-melder">
+                  <option value="">Selecteer melder</option>
+                </select>
+              </div>
+              <div class="im-field">
+                <label class="im-label" for="im-beoordelaar">Beoordelaar (optioneel)</label>
+                <select class="im-select" id="im-beoordelaar">
+                  <option value="">Selecteer beoordelaar</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <p class="im-error" id="im-error" role="alert" hidden></p>
+
+        <div class="im-actions">
+          <button type="button" class="btn-outline btn-danger-outline im-archive-btn" id="im-archive-btn" hidden>Archiveren</button>
+          <div class="im-actions-spacer"></div>
+          <a href="incidenten.html" class="btn-outline">Annuleren</a>
+          <button type="submit" class="btn-primary" id="im-submit">Indienen</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <!-- Archive confirm modal -->
+  <div class="modal-overlay modal-overlay--confirm" id="im-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="im-ar-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="im-ar-title" class="modal-title">Incident archiveren</h2>
+        <button type="button" class="modal-close" id="im-ar-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Het incident wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan in het overzicht om gearchiveerde incidenten te zien.</p>
+        <p class="employee-delete-preview" id="im-ar-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="im-ar-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="im-ar-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="im-ar-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="im-ar-confirm" disabled>Archiveren</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-toast" id="im-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="top-nav-overflow.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="profiles-data.js"></script>
+  <script src="clienten-data.js" defer></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="locaties-data.js" defer></script>
+  <script src="incidenten-data.js" defer></script>
+  <script src="incident-melden.js" defer></script>
+</body>
+</html>

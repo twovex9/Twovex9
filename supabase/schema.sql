@@ -3638,3 +3638,43 @@ create policy "auth kan incidenten bewerken"
 drop policy if exists "auth kan incidenten verwijderen" on public.incidenten;
 create policy "auth kan incidenten verwijderen"
   on public.incidenten for delete to authenticated using (true);
+
+-- =============================================================================
+-- Stage 9e: incidenten — uitbreiding voor uitgebreide melding (incident-melden.html)
+-- =============================================================================
+-- Voegt 4 nieuwe kolommen toe aan public.incidenten zodat het uitgebreide
+-- meldingsformulier alle data kan opslaan:
+--   - tijdstip_van_dag : grof tijdvak (vroege ochtend, ochtend, ...)
+--   - is_buiten        : vond het incident buiten plaats (boolean)
+--   - actor_type       : relatie tussen betrokkenen
+--                        (alleen_client / client_naar_client /
+--                         client_naar_medewerker / medewerker_naar_client /
+--                         client_naar_overige)
+--   - betrokken_partijen : jsonb-array van extra cliënten of medewerkers die
+--                          betrokken waren bij het incident, structuur:
+--                          [{"type":"client","id":"<uuid>"},
+--                           {"type":"medewerker","id":"<uuid>"}, ...]
+-- =============================================================================
+alter table public.incidenten
+  add column if not exists tijdstip_van_dag text,
+  add column if not exists is_buiten boolean not null default false,
+  add column if not exists actor_type text,
+  add column if not exists betrokken_partijen jsonb not null default '[]'::jsonb;
+
+alter table public.incidenten drop constraint if exists incidenten_tijdstip_van_dag_check;
+alter table public.incidenten add constraint incidenten_tijdstip_van_dag_check
+  check (tijdstip_van_dag is null or tijdstip_van_dag in (
+    'vroege_ochtend', 'ochtend', 'middag', 'late_middag', 'avond', 'nacht'
+  ));
+
+alter table public.incidenten drop constraint if exists incidenten_actor_type_check;
+alter table public.incidenten add constraint incidenten_actor_type_check
+  check (actor_type is null or actor_type in (
+    'alleen_client', 'client_naar_client', 'client_naar_medewerker',
+    'medewerker_naar_client', 'client_naar_overige'
+  ));
+
+create index if not exists incidenten_actor_type_idx
+  on public.incidenten (actor_type) where actor_type is not null;
+create index if not exists incidenten_tijdstip_van_dag_idx
+  on public.incidenten (tijdstip_van_dag) where tijdstip_van_dag is not null;

@@ -137,20 +137,6 @@
     return formatNlDate(value);
   }
 
-  function isoToLocalInput(value) {
-    if (!value) return "";
-    var t = Date.parse(value);
-    if (!isFinite(t)) return "";
-    var d = new Date(t);
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate())
-      + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
-  function localInputToIso(value) {
-    if (!value) return null;
-    var d = new Date(value);
-    return isFinite(d.getTime()) ? d.toISOString() : null;
-  }
-
   function escHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -377,11 +363,11 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Dropdown options
+  // Dropdown options (alleen filter-balk; het formulier zit nu op een eigen
+  // pagina: incident-melden.html)
   // ---------------------------------------------------------------------------
   function populateDropdowns() {
     populateFilterDropdowns();
-    populateFormDropdowns();
   }
 
   function populateFilterDropdowns() {
@@ -400,30 +386,6 @@
     });
   }
 
-  function populateFormDropdowns() {
-    populateSelect($("inc-form-client"), getAllClienten().filter(function (c) { return c && !c.archived; }), {
-      keepFirst: true, idKey: "id", labelFn: clientLabel,
-    });
-    populateSelect($("inc-form-locatie"), getAllLocaties().filter(function (l) { return l && !l.archived; }), {
-      keepFirst: true, idKey: "id", labelFn: locatieLabel,
-    });
-    populateSelect($("inc-form-melder"), getAllMedewerkers().filter(function (m) { return m && !m.archived; }), {
-      keepFirst: true, idKey: "id", labelFn: medewerkerLabel,
-    });
-    populateSelect($("inc-form-beoordelaar"), getAllMedewerkers().filter(function (m) { return m && !m.archived; }), {
-      keepFirst: true, idKey: "id", labelFn: medewerkerLabel,
-    });
-    var cats = (window.incidentenDB && window.incidentenDB.CATEGORIES) || [];
-    var catSel = $("inc-form-categorie");
-    if (catSel && catSel.options.length === 0) {
-      cats.forEach(function (c) {
-        var o = document.createElement("option");
-        o.value = c; o.textContent = c;
-        catSel.appendChild(o);
-      });
-    }
-  }
-
   function populateSelect(sel, items, opts) {
     if (!sel) return;
     var first = opts.keepFirst && sel.options.length ? sel.options[0].cloneNode(true) : null;
@@ -439,118 +401,15 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Add / Edit modal
+  // Add / Edit: redirect naar de uitgebreide pagina (incident-melden.html)
   // ---------------------------------------------------------------------------
-  var editingId = null;
-
   function openAddModal() {
-    editingId = null;
-    $("inc-form-title").textContent = "Incident melden";
-    $("inc-form-submit").textContent = "Indienen";
-    $("inc-form-id").value = "";
-    $("inc-form-archive").hidden = true;
-    populateFormDropdowns();
-
-    var nowIso = new Date().toISOString();
-    $("inc-form-datum").value = isoToLocalInput(nowIso);
-    $("inc-form-status").value = "in_afwachting";
-    $("inc-form-categorie").value = "Overig";
-    $("inc-form-client").value = "";
-    $("inc-form-locatie").value = "";
-    $("inc-form-omschrijving").value = "";
-    $("inc-form-maatregelen").value = "";
-
-    var profile = window.profilesDB ? window.profilesDB.getCurrentSync() : null;
-    if (profile && profile.medewerkerId) {
-      $("inc-form-melder").value = String(profile.medewerkerId);
-    } else {
-      $("inc-form-melder").value = "";
-    }
-    $("inc-form-beoordelaar").value = "";
-
-    $("inc-form-error").hidden = true;
-    showModal("inc-form-modal");
+    window.location.href = "incident-melden.html";
   }
 
   function openEditModal(id) {
-    var rec = window.incidentenDB.getByIdSync(id);
-    if (!rec) return;
-    editingId = id;
-    $("inc-form-title").textContent = "Incident bewerken";
-    $("inc-form-submit").textContent = "Opslaan";
-    $("inc-form-id").value = id;
-    populateFormDropdowns();
-
-    $("inc-form-client").value = rec.clientId || "";
-    $("inc-form-categorie").value = rec.categorie || "Overig";
-    $("inc-form-status").value = rec.status || "in_afwachting";
-    $("inc-form-datum").value = isoToLocalInput(rec.incidentDatum);
-    $("inc-form-locatie").value = rec.locatieId || "";
-    $("inc-form-melder").value = rec.melderId || "";
-    $("inc-form-beoordelaar").value = rec.beoordelaarId || "";
-    $("inc-form-omschrijving").value = rec.omschrijving || "";
-    $("inc-form-maatregelen").value = rec.genomenMaatregelen || "";
-    $("inc-form-error").hidden = true;
-    // Archiveer-knop alleen tonen als incident niet al gearchiveerd is.
-    $("inc-form-archive").hidden = !!rec.archived;
-    showModal("inc-form-modal");
-  }
-
-  function closeFormModal() { hideModal("inc-form-modal"); }
-
-  async function submitForm(ev) {
-    ev.preventDefault();
-    var clientId = $("inc-form-client").value;
-    if (!clientId) { showFormError("Kies een cliënt."); return; }
-
-    var datumLocal = $("inc-form-datum").value;
-    if (!datumLocal) { showFormError("Vul een datum in."); return; }
-
-    var payload = {
-      clientId: clientId,
-      categorie: $("inc-form-categorie").value || "Overig",
-      status: $("inc-form-status").value || "in_afwachting",
-      incidentDatum: localInputToIso(datumLocal),
-      locatieId: $("inc-form-locatie").value || null,
-      melderId: $("inc-form-melder").value || null,
-      beoordelaarId: $("inc-form-beoordelaar").value || null,
-      omschrijving: $("inc-form-omschrijving").value || "",
-      genomenMaatregelen: $("inc-form-maatregelen").value || "",
-    };
-
-    var btn = $("inc-form-submit");
-    btn.disabled = true;
-    var origLabel = btn.textContent;
-    btn.textContent = "Bezig…";
-    try {
-      if (editingId) {
-        await window.incidentenDB.update(editingId, payload);
-        toast("saved", "Incident bijgewerkt");
-      } else {
-        await window.incidentenDB.add(payload);
-        toast("saved", "Incident toegevoegd");
-      }
-      closeFormModal();
-    } catch (err) {
-      showFormError("Opslaan mislukt: " + (err && err.message ? err.message : String(err)));
-    } finally {
-      btn.disabled = false;
-      btn.textContent = origLabel;
-    }
-  }
-
-  function showFormError(msg) {
-    var el = $("inc-form-error");
-    if (!el) return;
-    el.textContent = msg;
-    el.hidden = false;
-  }
-
-  // Klik op "Archiveren"-knop in de form-footer → open de slider-confirm.
-  function onFormArchiveClick() {
-    if (!editingId) return;
-    closeFormModal();
-    openArchiveModal(editingId);
+    if (!id) return;
+    window.location.href = "incident-melden.html?id=" + encodeURIComponent(id);
   }
 
   // ---------------------------------------------------------------------------
@@ -688,10 +547,6 @@
   // ---------------------------------------------------------------------------
   function wireUp() {
     $("inc-add-open-btn").addEventListener("click", openAddModal);
-    $("inc-form-cancel").addEventListener("click", closeFormModal);
-    $("inc-form-close").addEventListener("click", closeFormModal);
-    $("inc-form").addEventListener("submit", submitForm);
-    $("inc-form-archive").addEventListener("click", onFormArchiveClick);
 
     archiveSlider = setupSliderModal(
       "inc-archive-modal", "inc-ar-slider", "inc-ar-confirm",
