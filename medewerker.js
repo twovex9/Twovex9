@@ -2843,35 +2843,52 @@ function initDocumentenSection() {
           openEditModal(realIdx);
         });
 
-        var archiveBtn = document.createElement("button");
-        archiveBtn.type = "button";
-        archiveBtn.className = "emp-doc-action-btn";
-        archiveBtn.title = doc.archived ? "Dearchiveren" : "Archiveren";
-        archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
-        archiveBtn.addEventListener("click", function () {
-          var realIdx = getDocumentenState().indexOf(doc);
-          if (realIdx < 0) return;
-          var willArchive = !getDocumentenState()[realIdx].archived;
-          function applyArchive() {
-            getDocumentenState()[realIdx].archived = willArchive;
+        var thirdBtn;
+        if (doc.archived) {
+          thirdBtn = document.createElement("button");
+          thirdBtn.type = "button";
+          thirdBtn.className = "btn-outline hr-restore-btn emp-doc-restore-btn";
+          thirdBtn.textContent = "Herstel";
+          thirdBtn.addEventListener("click", function () {
+            var realIdx = getDocumentenState().indexOf(doc);
+            if (realIdx < 0) return;
+            getDocumentenState()[realIdx].archived = false;
             saveDocumentenState();
             render();
             if (typeof window.showActionFeedback === "function") {
-              window.showActionFeedback(willArchive ? "archived" : "restored", "Document");
+              window.showActionFeedback("restored", "Document");
             }
-          }
-          if (willArchive && typeof window.showArchiveConfirm === "function") {
-            window.showArchiveConfirm({ preview: doc.naam || "" }).then(function (ok) {
-              if (ok) applyArchive();
-            });
-          } else {
-            applyArchive();
-          }
-        });
+          });
+        } else {
+          thirdBtn = document.createElement("button");
+          thirdBtn.type = "button";
+          thirdBtn.className = "emp-doc-action-btn";
+          thirdBtn.title = "Archiveren";
+          thirdBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
+          thirdBtn.addEventListener("click", function () {
+            var realIdx = getDocumentenState().indexOf(doc);
+            if (realIdx < 0) return;
+            function applyArchive() {
+              getDocumentenState()[realIdx].archived = true;
+              saveDocumentenState();
+              render();
+              if (typeof window.showActionFeedback === "function") {
+                window.showActionFeedback("archived", "Document");
+              }
+            }
+            if (typeof window.showArchiveConfirm === "function") {
+              window.showArchiveConfirm({ preview: doc.naam || "" }).then(function (ok) {
+                if (ok) applyArchive();
+              });
+            } else {
+              applyArchive();
+            }
+          });
+        }
 
         actWrap.appendChild(viewBtn);
         actWrap.appendChild(editBtn);
-        actWrap.appendChild(archiveBtn);
+        actWrap.appendChild(thirdBtn);
         tdAct.appendChild(actWrap);
         tr.appendChild(tdAct);
 
