@@ -34,38 +34,6 @@
     "Val": 1, "Medicatie": 1, "Agressie": 1, "Vermissing": 1,
     "Materiele schade": 1, "Privacy/AVG": 1, "Overig": 1,
   };
-  var ALLOWED_TIJDSTIP = {
-    vroege_ochtend: 1, ochtend: 1, middag: 1, late_middag: 1, avond: 1, nacht: 1,
-  };
-  var ALLOWED_ACTOR = {
-    alleen_client: 1, client_naar_client: 1, client_naar_medewerker: 1,
-    medewerker_naar_client: 1, client_naar_overige: 1,
-  };
-
-  function sanitizeBetrokken(arr) {
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .filter(function (b) { return b && (b.type === "client" || b.type === "medewerker") && b.id; })
-      .map(function (b) { return { type: b.type, id: String(b.id) }; });
-  }
-
-  function sanitizeUuidArray(arr) {
-    if (!Array.isArray(arr)) return [];
-    var out = [];
-    for (var i = 0; i < arr.length; i += 1) {
-      var v = arr[i];
-      if (v == null) continue;
-      var s = String(v).trim();
-      if (s) out.push(s);
-    }
-    return out;
-  }
-
-  function sanitizeNullableBool(v) {
-    if (v === true || v === "true" || v === 1 || v === "ja" || v === "yes") return true;
-    if (v === false || v === "false" || v === 0 || v === "nee" || v === "no") return false;
-    return null;
-  }
 
   function reportSilent(action, err) {
     try { console.error("[incidentenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
@@ -107,15 +75,6 @@
       incidentDatum: row.incident_datum || null,
       omschrijving: row.omschrijving || "",
       genomenMaatregelen: row.genomen_maatregelen || "",
-      tijdstipVanDag: row.tijdstip_van_dag || null,
-      isBuiten: !!row.is_buiten,
-      actorType: row.actor_type || null,
-      betrokkenPartijen: sanitizeBetrokken(row.betrokken_partijen),
-      oudersGeinformeerd: sanitizeNullableBool(row.ouders_geinformeerd),
-      wilGebeldWorden: !!row.wil_gebeld_worden,
-      impactOpZorgverlener: row.impact_op_zorgverlener || "",
-      notificeerTeam: !!row.notificeer_team,
-      notificeerMedewerkerIds: sanitizeUuidArray(row.notificeer_medewerker_ids),
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
       archived: !!row.archived,
@@ -126,8 +85,6 @@
     var safe = o || {};
     var categorie = ALLOWED_CATEGORIE[safe.categorie] ? safe.categorie : "Overig";
     var status = ALLOWED_STATUS[safe.status] ? safe.status : "in_afwachting";
-    var tijdstip = ALLOWED_TIJDSTIP[safe.tijdstipVanDag] ? safe.tijdstipVanDag : null;
-    var actor = ALLOWED_ACTOR[safe.actorType] ? safe.actorType : null;
     var payload = {
       client_id: safe.clientId || null,
       categorie: categorie,
@@ -137,15 +94,6 @@
       locatie_id: safe.locatieId || null,
       omschrijving: String(safe.omschrijving || ""),
       genomen_maatregelen: String(safe.genomenMaatregelen || ""),
-      tijdstip_van_dag: tijdstip,
-      is_buiten: !!safe.isBuiten,
-      actor_type: actor,
-      betrokken_partijen: sanitizeBetrokken(safe.betrokkenPartijen),
-      ouders_geinformeerd: sanitizeNullableBool(safe.oudersGeinformeerd),
-      wil_gebeld_worden: !!safe.wilGebeldWorden,
-      impact_op_zorgverlener: String(safe.impactOpZorgverlener || ""),
-      notificeer_team: !!safe.notificeerTeam,
-      notificeer_medewerker_ids: sanitizeUuidArray(safe.notificeerMedewerkerIds),
       archived: !!safe.archived,
     };
     if (safe.incidentDatum) payload.incident_datum = safe.incidentDatum;
@@ -275,21 +223,6 @@
       { value: "in_afwachting", label: "In afwachting", className: "incident-status--afwachting" },
       { value: "in_behandeling", label: "In behandeling", className: "incident-status--behandeling" },
       { value: "opgelost", label: "Opgelost", className: "incident-status--opgelost" },
-    ],
-    TIJDSTIPPEN: [
-      { value: "vroege_ochtend", label: "Vroege ochtend (06:00 - 09:00)" },
-      { value: "ochtend", label: "Ochtend (09:00 - 12:00)" },
-      { value: "middag", label: "Middag (12:00 - 15:00)" },
-      { value: "late_middag", label: "Late middag (15:00 - 18:00)" },
-      { value: "avond", label: "Avond (18:00 - 22:00)" },
-      { value: "nacht", label: "Nacht (22:00 - 06:00)" },
-    ],
-    ACTOR_TYPES: [
-      { value: "alleen_client", label: "Alleen cliënt", desc: "Het incident betreft één cliënt zonder betrokken anderen" },
-      { value: "client_naar_client", label: "Cliënt naar cliënt", desc: "Tussen twee of meer cliënten onderling" },
-      { value: "client_naar_medewerker", label: "Cliënt naar medewerker", desc: "Een cliënt richting een medewerker" },
-      { value: "medewerker_naar_client", label: "Medewerker naar cliënt", desc: "Een medewerker richting een cliënt" },
-      { value: "client_naar_overige", label: "Cliënt naar overige betrokkene", desc: "Een cliënt richting een externe betrokkene" },
     ],
   };
 
