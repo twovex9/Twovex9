@@ -197,6 +197,10 @@
         </select>
         <input class="incident-filter incident-filter--date" type="date" id="inc-filter-datum-van" aria-label="Datum vanaf" />
         <input class="incident-filter incident-filter--date" type="date" id="inc-filter-datum-tot" aria-label="Datum tot" />
+        <button type="button" class="incident-reset-btn" id="inc-filter-reset" aria-label="Filters resetten">
+          <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reset
+        </button>
         <label class="switch switch--yellow incident-archive-toggle">
           <input type="checkbox" id="inc-archived-toggle" />
           <span class="switch-slider"></span>
@@ -210,13 +214,13 @@
             <thead>
               <tr>
                 <th class="th-check"><input type="checkbox" id="inc-check-all" class="table-checkbox" aria-label="Selecteer alles" /></th>
-                <th>Cliënt</th>
-                <th>Categorie</th>
-                <th>Status</th>
-                <th>Beoordelaar</th>
-                <th>Laatst bijgewerkt</th>
-                <th>Datum</th>
-                <th class="cl-actions-th" aria-label="Acties"></th>
+                <th class="incident-th-sort" data-sort="client">Cliënt <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-th-sort" data-sort="categorie">Categorie <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-th-sort" data-sort="status">Status <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-th-sort" data-sort="melder">Gemeld door <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-th-sort" data-sort="bijgewerkt">Laatst bijgewerkt <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-th-sort" data-sort="datum">Datum <span class="incident-sort-ico" aria-hidden="true"></span></th>
+                <th class="incident-action-th" aria-label="Actie">Actie</th>
               </tr>
             </thead>
             <tbody id="inc-tbody"></tbody>
@@ -311,7 +315,9 @@
           </div>
           <p class="fi-error" id="inc-form-error" role="alert" hidden></p>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer modal-footer--incident">
+          <button type="button" class="btn-outline btn-danger-outline incident-archive-action" id="inc-form-archive" hidden>Archiveren</button>
+          <div class="modal-footer-spacer"></div>
           <button type="button" class="btn-outline" id="inc-form-cancel">Annuleren</button>
           <button type="submit" class="btn-primary" id="inc-form-submit">Indienen</button>
         </div>

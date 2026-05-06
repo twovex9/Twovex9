@@ -16177,33 +16177,29 @@ button.besc-dtl-tab:hover {
   .incident-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* Tabs (Mijn cliënten / Alle incidenten) */
+/* Tabs (Mijn cliënten / Alle incidenten) — pill-style */
 .incident-tabs {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--line);
+  gap: 8px;
   margin: 18px 0 0;
 }
 .incident-tab {
   background: transparent;
-  border: none;
-  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  padding: 8px 18px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
-  position: relative;
-  transition: color 160ms ease;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
 }
-.incident-tab:hover { color: var(--text); }
-.incident-tab.is-active { color: var(--blue); font-weight: 600; }
-.incident-tab.is-active::after {
-  content: '';
-  position: absolute;
-  left: 12px; right: 12px; bottom: -1px;
-  height: 2px;
-  background: var(--blue);
-  border-radius: 2px;
+.incident-tab:hover { color: var(--text); background: var(--fill-hover); }
+.incident-tab.is-active {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line-strong);
+  font-weight: 600;
 }
 
 .incident-section-title {
@@ -16285,6 +16281,91 @@ button.besc-dtl-tab:hover {
 /* Tabel: rij hover/click */
 .incidenten-table tbody tr { cursor: pointer; }
 .incidenten-table tbody tr:hover { background: var(--fill-hover); }
+
+/* Sorteerbare kolomheaders */
+.incidenten-table th.incident-th-sort {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: color 120ms ease;
+}
+.incidenten-table th.incident-th-sort:hover { color: var(--blue); }
+.incidenten-table th.incident-th-sort .incident-sort-ico {
+  display: inline-block;
+  width: 10px;
+  height: 12px;
+  margin-left: 6px;
+  vertical-align: -2px;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(-45deg, transparent 50%, currentColor 50%);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  background-position: 0 3px, 5px 3px; /* down-arrow shape */
+}
+.incidenten-table th.incident-th-sort.is-sorted-asc .incident-sort-ico,
+.incidenten-table th.incident-th-sort.is-sorted-desc .incident-sort-ico {
+  opacity: 1;
+  color: var(--blue);
+}
+.incidenten-table th.incident-th-sort.is-sorted-asc .incident-sort-ico {
+  background-image:
+    linear-gradient(-135deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, transparent 50%, currentColor 50%);
+  background-size: 5px 5px, 5px 5px;
+  background-position: 0 5px, 5px 5px;
+}
+
+/* "Afhandelen"-link in actie-cel */
+.incident-action-th {
+  width: 110px;
+  text-align: left;
+}
+.incident-action-cell {
+  white-space: nowrap;
+}
+.incident-action-link {
+  color: var(--blue);
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.incident-action-link:hover { color: var(--blue-strong, var(--blue)); text-decoration: underline; }
+
+/* Reset-filter-knop */
+.incident-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+.incident-reset-btn:hover { color: var(--text); background: var(--fill-hover); }
+.incident-reset-btn .btn-ico { stroke-linecap: round; }
+
+/* Modal-footer voor incident-form: archiveer-knop linksonder */
+.modal-footer--incident {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-footer--incident .modal-footer-spacer { flex: 1; }
+.modal-footer--incident .incident-archive-action {
+  color: var(--red, #c0392b);
+  border-color: var(--red, #c0392b);
+}
+.modal-footer--incident .incident-archive-action:hover {
+  background: rgba(192, 57, 43, 0.08);
+}
 
 /* Lege state */
 .incident-empty {
