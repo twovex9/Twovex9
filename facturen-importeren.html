@@ -150,10 +150,6 @@
           <span class="fi-step-num">2</span>
           <span class="fi-step-label">Controleren</span>
         </li>
-        <li class="fi-step" data-fi-step="3">
-          <span class="fi-step-num">3</span>
-          <span class="fi-step-label">Bevestigen</span>
-        </li>
       </ol>
 
       <section class="fi-card" id="fi-step-1" data-fi-panel="1">
@@ -233,16 +229,11 @@
         </div>
       </section>
 
-      <section class="fi-card" id="fi-step-3" data-fi-panel="3" hidden>
-        <div class="fi-success">
-          <div class="fi-success-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <h2 class="fi-card-title">Bestand geïmporteerd</h2>
-          <p class="fi-card-sub" id="fi-success-sub">Het bestand is succesvol toegevoegd aan de importjobs.</p>
+      <section class="fi-history-section" id="fi-history-section">
+        <div class="fi-history-head">
+          <h2 class="fi-history-title">Bestand geïmporteerd</h2>
+          <a class="btn-outline fi-go-facturen" href="facturen.html">Naar facturen</a>
         </div>
-
-        <h3 class="fi-history-title">Eerder geïmporteerd</h3>
         <section class="table-card table-card--clienten fi-history-card">
           <div class="table-wrapper">
             <table class="employees-table fi-history-table" aria-label="Eerder geïmporteerde bestanden">
@@ -263,11 +254,6 @@
             </table>
           </div>
         </section>
-
-        <div class="fi-actions">
-          <button type="button" class="btn-outline fi-restart" id="fi-restart">Nieuw bestand importeren</button>
-          <a class="btn-primary fi-go-facturen" href="facturen.html">Naar facturen</a>
-        </div>
       </section>
     </main>
   </div>

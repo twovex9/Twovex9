@@ -80,7 +80,7 @@
   function newId() { return "fi_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
 
   function setStep(step) {
-    [1, 2, 3].forEach(function (n) {
+    [1, 2].forEach(function (n) {
       var li = document.querySelector('.fi-step[data-fi-step="' + n + '"]');
       var panel = document.querySelector('[data-fi-panel="' + n + '"]');
       if (li) {
@@ -89,7 +89,6 @@
       }
       if (panel) panel.hidden = n !== step;
     });
-    if (step === 3) renderHistory();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -539,7 +538,6 @@
     var next1 = $("fi-next-1");
     var back2 = $("fi-back-2");
     var next2 = $("fi-next-2");
-    var restart = $("fi-restart");
 
     if (next1) next1.addEventListener("click", function () {
       if (!state.file) return;
@@ -558,20 +556,17 @@
       var finalName = buildFinalFileName();
       var job = persistImportJob(finalName);
       persistFactSupplement(finalName, job.id);
-      var sub = $("fi-success-sub");
-      if (sub) sub.textContent = "\u201c" + finalName + "\u201d (" + formatBytes(state.fileSize) + ") is toegevoegd aan de facturen.";
-      setStep(3);
-      next2.disabled = false;
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("imported", "Factuur");
-      }
-    });
 
-    if (restart) restart.addEventListener("click", function () {
       setFile(null);
       var input = $("fi-file-input");
       if (input) input.value = "";
       setStep(1);
+      renderHistory();
+
+      next2.disabled = false;
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("imported", "Factuur");
+      }
     });
   }
 
@@ -579,6 +574,7 @@
     bindDropzone();
     bindZoomModal();
     bindButtons();
-    if (readJSONList(STORAGE_KEY).length > 0) renderHistory();
+    bindHistoryActions();
+    renderHistory();
   });
 })();
