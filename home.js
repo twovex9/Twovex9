@@ -1,6 +1,17 @@
-const NEWS_ITEMS_STORAGE_KEY = "newsItems";
+/* global window, document */
+
+const NEWS_ITEMS_STORAGE_KEY = "newsItems"; // legacy fallback (vóór Stage 1 nieuws-migratie)
 
 function readNewsItems() {
+  // Stage 9b: Supabase nieuwsDB is de bron van waarheid. Fallback naar legacy
+  // localStorage voor onwaarschijnlijke gevallen waarin nieuwsDB nog niet
+  // ge-bootstrapt is.
+  if (window.nieuwsDB && typeof window.nieuwsDB.getAllSync === "function") {
+    try {
+      const items = window.nieuwsDB.getAllSync();
+      if (Array.isArray(items)) return items;
+    } catch (e) { /* fall back to legacy */ }
+  }
   try {
     const raw = window.localStorage.getItem(NEWS_ITEMS_STORAGE_KEY);
     if (!raw) return [];
@@ -18,6 +29,18 @@ function stripHtmlToText(html) {
 }
 
 function getCurrentUserName() {
+  // Stage 9b: profielen uit Stage 8b zijn de primaire bron.
+  if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
+    try {
+      const profile = window.profilesDB.getCurrentSync();
+      if (profile) {
+        const first = String(profile.voornaam || "").trim();
+        if (first) return first;
+        const display = window.profilesDB.displayName(profile);
+        if (display) return display;
+      }
+    } catch (e) { /* fall through */ }
+  }
   try {
     const explicitName = (window.localStorage.getItem("currentUserName") || "").trim();
     if (explicitName) return explicitName;
@@ -34,20 +57,41 @@ function getCurrentUserName() {
   } catch {
     // Ignore storage parse errors.
   }
-  return "Jason";
+  return "";
 }
 
-function parseNlDateTime(str) {
-  if (!str) return 0;
-  const m = /^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/.exec(String(str).trim());
-  if (!m) return 0;
-  return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
+// Accepteert zowel "dd-mm-yyyy hh:mm" (legacy) als ISO 8601 (Supabase) en
+// retourneert een sortable timestamp (ms sinds epoch). 0 bij parse-falen.
+function toTimestamp(value) {
+  if (!value) return 0;
+  const str = String(value).trim();
+  const nl = /^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/.exec(str);
+  if (nl) {
+    return new Date(
+      Number(nl[3]), Number(nl[2]) - 1, Number(nl[1]),
+      Number(nl[4]), Number(nl[5])
+    ).getTime();
+  }
+  const t = Date.parse(str);
+  return isFinite(t) ? t : 0;
+}
+
+// Formatteert ISO of legacy datum naar "dd-mm-yyyy hh:mm" voor weergave.
+function formatNlDateTime(value) {
+  if (!value) return "";
+  const str = String(value).trim();
+  if (/^\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}$/.test(str)) return str;
+  const t = Date.parse(str);
+  if (!isFinite(t)) return "";
+  const d = new Date(t);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function getVisibleNewsItems() {
   return readNewsItems()
     .filter((item) => item && item.archived !== true && item.status !== "Draft")
-    .sort((a, b) => parseNlDateTime(b.aanmaakdatum) - parseNlDateTime(a.aanmaakdatum));
+    .sort((a, b) => toTimestamp(b.aanmaakdatum) - toTimestamp(a.aanmaakdatum));
 }
 
 function createCard(item, onOpen) {
@@ -81,9 +125,10 @@ function createCard(item, onOpen) {
   preview.className = "home-news-card-preview";
   preview.textContent = stripHtmlToText(item.inhoud).slice(0, 120) || "Klik om het volledige bericht te openen.";
 
+  const dateLabel = formatNlDateTime(item.aanmaakdatum);
   const meta = document.createElement("div");
   meta.className = "home-news-card-meta";
-  meta.textContent = `${item.auteur || "HR team"}${item.aanmaakdatum ? ` • ${item.aanmaakdatum}` : ""}`;
+  meta.textContent = `${item.auteur || "HR team"}${dateLabel ? ` • ${dateLabel}` : ""}`;
 
   body.append(title, preview, meta);
   card.appendChild(body);
@@ -112,7 +157,7 @@ function initNewsModal() {
   function open(item) {
     title.textContent = item.titel || "Nieuwsbericht";
     author.textContent = item.auteur || "HR team";
-    date.textContent = item.aanmaakdatum || "";
+    date.textContent = formatNlDateTime(item.aanmaakdatum);
     content.innerHTML = item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>";
     if (item.image) {
       image.src = item.image;
@@ -152,7 +197,8 @@ function renderHomeNews() {
   if (!grid) return;
 
   if (greeting) {
-    greeting.textContent = `Welkom, ${getCurrentUserName()}`;
+    const name = getCurrentUserName();
+    greeting.textContent = name ? `Welkom, ${name}` : "Welkom";
   }
 
   const modal = initNewsModal();
@@ -173,3 +219,8 @@ function renderHomeNews() {
 }
 
 renderHomeNews();
+
+// Stage 9b: re-render zodra Supabase nieuws of profiel-data binnenkomt
+// (bootstrap-call uit nieuws-data.js / profiles-data.js).
+window.addEventListener("besa:nieuws-updated", renderHomeNews);
+window.addEventListener("besa:profile-updated", renderHomeNews);
