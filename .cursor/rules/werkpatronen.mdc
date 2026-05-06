@@ -194,6 +194,8 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 | Medewerker-notities | `medewerkerNotitiesDB` | `medewerker_notities` | `medewerker-notities-data.js` |
 | Medewerker-verlof-overgedragen | `medewerkerVerlofOvergedragenDB` | `medewerker_verlof_overgedragen` (1-op-1, UNIQUE op medewerker_id) | `medewerker-verlof-overgedragen-data.js` |
 | Medewerker-verzuim-perioden | `medewerkerVerzuimDB` | `medewerker_verzuim_perioden` (1-op-veel, type='kort'\|'lang') | `medewerker-verzuim-data.js` |
+| Medewerker-documenten | `medewerkerDocsDB` | `medewerker_documenten` + bucket `medewerker-documenten` | `medewerker-documenten-data.js` |
+| Cliënt-documenten | `clientDocsDB` | `client_documents` + bucket `client-documents` | `client-documents-data.js` |
 | Facturen | `facturenDB` | `facturen` | `facturen-data.js` |
 | Nieuws | `nieuwsDB` | `nieuws` | `nieuws-data.js` |
 
@@ -204,7 +206,7 @@ Voor sub-data per parent (zoals tarieven/notities/audit per beschikking, of noti
 - ✅ Stage 4a — `notities` → `medewerkerNotitiesDB`. Gebruik nooit meer `emp.notities` of `allEdits[id].notities` in nieuwe code.
 - ✅ Stage 4b — `verlofOvergedragen` → `medewerkerVerlofOvergedragenDB`. Gebruik nooit meer `emp.verlofOvergedragen` of `allEdits[id].verlofOvergedragen`.
 - ✅ Stage 4c — `verzuim` (kort + lang ziekteperioden) → `medewerkerVerzuimDB`. Gebruik nooit meer `emp.verzuim`, `window.__empVerzuim` of `allEdits[id].verzuim`. `getForMedewerkerSync(empId, "kort")` of `..., "lang")` voor filter per type.
-- ⏳ Stage 4d — `documenten` (incl. base64 file-blobs!). Tot dan: localStorage-only, data-verlies + quota-risico.
+- ✅ Stage 4d — `documenten` (incl. base64 file-blobs) → `medewerkerDocsDB` + Storage bucket `medewerker-documenten`. Gebruik nooit meer `emp.documenten`, `window.__empDocumenten` of `allEdits[id].documenten`. `listSync(empId)` voor render, `add({medewerkerId, fileData, ...})` voor upload (data-URL wordt automatisch naar Storage geüpload).
 
 Voor "1-op-1 sub-data per parent" (zoals verlof-overgedragen): gebruik een UNIQUE-constraint op de parent-id-kolom in Supabase, dan kan de data-laag een `save(parentId, state)`-helper aanbieden die intern `.upsert(payload, { onConflict: "<parent>_id" })` doet. Cleaner dan eerst-checken-dan-insert/update.
 

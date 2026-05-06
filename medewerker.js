@@ -2727,41 +2727,70 @@ function initBedrijfsvoorzieningenNotes() {
 
 /* ── Documenten Section ─────────────── */
 
-function getDocumentenState() {
-  if (!Array.isArray(window.__empDocumenten)) window.__empDocumenten = [];
-  return window.__empDocumenten;
+function getCurrentEmployeeIdForDocs() {
+  var emp = getSelectedEmployee();
+  if (!emp) return null;
+  return emp.empId || emp.id || emp.naam || null;
 }
 
-function saveDocumentenState() {
-  var emp = getSelectedEmployee();
-  if (!emp) return;
-  emp.documenten = getDocumentenState().map(function (d) {
-    return { naam: d.naam, type: d.type, vervaldatum: d.vervaldatum, uploaddatum: d.uploaddatum, laatstGewijzigd: d.laatstGewijzigd, archived: d.archived || false, fileData: d.fileData || "", fileName: d.fileName || "", fileMime: d.fileMime || "" };
-  });
-  var allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-  var id = emp.empId || emp.id || emp.naam;
-  if (!allEdits[id]) allEdits[id] = {};
-  allEdits[id].documenten = emp.documenten;
-  try {
-    localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
-  } catch (e) {
-    console.warn("localStorage vol — bestand te groot om op te slaan als base64.");
+function reportDocumentError(err, prefix) {
+  var msg = (err && err.message) ? err.message : String(err);
+  var titel = prefix ? prefix + " mislukt" : "Opslaan mislukt";
+  if (typeof window.showActionFeedback === "function") {
+    window.showActionFeedback("error", titel, msg);
+  } else if (typeof window.showSaveModal === "function") {
+    window.showSaveModal(msg, titel);
+  } else {
+    alert(titel + ": " + msg);
   }
+  console.error("[medewerker-documenten] " + (prefix || ""), err);
 }
 
 function initDocumentenSection() {
-  const emp = getSelectedEmployee();
-  if (emp && Array.isArray(emp.documenten) && emp.documenten.length) {
-    window.__empDocumenten = emp.documenten.slice();
-  } else {
-    window.__empDocumenten = [
-      { naam: "Afspraken eigenaarschap applicatie", type: "Addendum", vervaldatum: "", uploaddatum: "2026-03-19T11:18", laatstGewijzigd: "2026-03-19T11:18", archived: false },
-      { naam: "Arbeidsovereenkomst bepaalde tijd", type: "Contract", vervaldatum: "2027-03-11", uploaddatum: "2026-03-12T17:38", laatstGewijzigd: "2026-03-12T17:38", archived: false },
-      { naam: "Diploma Jason Sonck", type: "Opleiding", vervaldatum: "", uploaddatum: "2026-03-11T13:16", laatstGewijzigd: "2026-03-11T13:16", archived: false },
-      { naam: "Achterkant ID Jason Sonck", type: "ID", vervaldatum: "2034-01-23", uploaddatum: "2026-03-08T19:40", laatstGewijzigd: "2026-03-08T19:40", archived: false },
-      { naam: "Voorkant ID Jason Sonck", type: "ID", vervaldatum: "2034-01-23", uploaddatum: "2026-03-08T19:39", laatstGewijzigd: "2026-03-08T19:39", archived: false },
-      { naam: "Belgisch VOG Jason Sonck", type: "VOG", vervaldatum: "2026-09-08", uploaddatum: "2026-03-08T19:38", laatstGewijzigd: "2026-03-10T12:36", archived: false },
-    ];
+  if (!window.medewerkerDocsDB) {
+    console.warn("medewerker-documenten: medewerkerDocsDB niet beschikbaar — laden de UI niet.");
+    return;
+  }
+
+  var emp = getSelectedEmployee();
+  var empId = getCurrentEmployeeIdForDocs();
+  if (!empId) {
+    console.warn("medewerker-documenten: geen geselecteerde medewerker.");
+    return;
+  }
+
+  // Eenmalige migratie van legacy emp.documenten / employeeEditsById[id].documenten
+  // naar Supabase + Storage. Daarna verse data ophalen.
+  Promise.resolve()
+    .then(function () { return window.medewerkerDocsDB.maybeMigrateFromEmployee(emp); })
+    .then(function (migrated) {
+      if (migrated > 0) {
+        console.info("[medewerker-documenten] " + migrated + " legacy document(en) gemigreerd voor " + empId);
+        // Wis de oude lokale kopie zodat hij niet bij volgende sessie weer
+        // probeert te migreren.
+        if (emp && Array.isArray(emp.documenten) && emp.documenten.length) {
+          emp.documenten = [];
+          try {
+            var allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
+            if (allEdits[empId] && Array.isArray(allEdits[empId].documenten)) {
+              allEdits[empId].documenten = [];
+              localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+            }
+          } catch (e) {
+            console.warn("[medewerker-documenten] cleanup van legacy documenten mislukt:", e);
+          }
+        }
+      }
+      return window.medewerkerDocsDB.list(empId);
+    })
+    .catch(function (err) {
+      console.error("[medewerker-documenten] initiële sync mislukt:", err);
+    });
+
+  function getDocumentenState() {
+    var id = getCurrentEmployeeIdForDocs();
+    if (!id || !window.medewerkerDocsDB) return [];
+    return window.medewerkerDocsDB.listSync(id);
   }
 
   var pillsContainer = document.getElementById("emp-doc-pills");
@@ -2794,7 +2823,7 @@ function initDocumentenSection() {
   var sortDir = "asc";
   var currentPage = 0;
   var activePillType = null;
-  var editingIndex = -1;
+  var editingDocId = null;
 
   function getPageSize() {
     return parseInt(pageSizeSelect?.value || "50", 10);
@@ -2965,8 +2994,7 @@ function initDocumentenSection() {
         editBtn.title = "Bewerken";
         editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
         editBtn.addEventListener("click", function () {
-          var realIdx = getDocumentenState().indexOf(doc);
-          openEditModal(realIdx);
+          openEditModal(doc.id);
         });
 
         actWrap.appendChild(viewBtn);
@@ -2978,15 +3006,14 @@ function initDocumentenSection() {
           archiveBtn.title = "Archiveren";
           archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
           archiveBtn.addEventListener("click", function () {
-            var realIdx = getDocumentenState().indexOf(doc);
-            if (realIdx < 0) return;
             function applyArchive() {
-              getDocumentenState()[realIdx].archived = true;
-              saveDocumentenState();
-              render();
-              if (typeof window.showActionFeedback === "function") {
-                window.showActionFeedback("archived", "Document");
-              }
+              window.medewerkerDocsDB.archive(doc.id).then(function () {
+                if (typeof window.showActionFeedback === "function") {
+                  window.showActionFeedback("archived", "Document");
+                }
+              }).catch(function (err) {
+                reportDocumentError(err, "Archiveren");
+              });
             }
             if (typeof window.showArchiveConfirm === "function") {
               window.showArchiveConfirm({ preview: doc.naam || "" }).then(function (ok) {
@@ -3035,14 +3062,13 @@ function initDocumentenSection() {
           restoreBtn.className = "btn-outline hr-restore-btn emp-doc-restore-btn";
           restoreBtn.textContent = "Herstel";
           restoreBtn.addEventListener("click", function () {
-            var realIdx = getDocumentenState().indexOf(doc);
-            if (realIdx < 0) return;
-            getDocumentenState()[realIdx].archived = false;
-            saveDocumentenState();
-            render();
-            if (typeof window.showActionFeedback === "function") {
-              window.showActionFeedback("restored", "Document");
-            }
+            window.medewerkerDocsDB.restore(doc.id).then(function () {
+              if (typeof window.showActionFeedback === "function") {
+                window.showActionFeedback("restored", "Document");
+              }
+            }).catch(function (err) {
+              reportDocumentError(err, "Herstellen");
+            });
           });
           delWrap.appendChild(restoreBtn);
           delWrap.appendChild(delBtn);
@@ -3181,13 +3207,13 @@ function initDocumentenSection() {
   // Modal open/close
   function closeModal() {
     if (modal) modal.style.display = "none";
-    editingIndex = -1;
+    editingDocId = null;
     clearDropzone();
   }
 
   if (uploadBtn) {
     uploadBtn.addEventListener("click", function () {
-      editingIndex = -1;
+      editingDocId = null;
       if (modalTitle) modalTitle.textContent = "Document uploaden";
       if (modalNaam) modalNaam.value = "";
       if (modalType) modalType.value = "";
@@ -3199,10 +3225,10 @@ function initDocumentenSection() {
     });
   }
 
-  function openEditModal(idx) {
-    var doc = getDocumentenState()[idx];
+  function openEditModal(docId) {
+    var doc = getDocumentenState().find(function (d) { return d && String(d.id) === String(docId); });
     if (!doc) return;
-    editingIndex = idx;
+    editingDocId = docId;
     if (modalTitle) modalTitle.textContent = "Document bewerken";
     if (modalNaam) modalNaam.value = doc.naam || "";
     if (modalType) modalType.value = doc.type || "";
@@ -3217,31 +3243,42 @@ function initDocumentenSection() {
   if (modalCancel) modalCancel.addEventListener("click", closeModal);
   if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
 
+  function setSavingState(busy) {
+    if (!modalSave) return;
+    modalSave.disabled = !!busy;
+    modalSave.dataset.busy = busy ? "1" : "";
+  }
+
   function commitDocSave(fileData, fileName, fileMime) {
     var naam = (modalNaam?.value || "").trim();
     var type = modalType?.value || "";
     var verval = modalVerval?.value || "";
     if (!naam) { modalNaam?.focus(); return; }
 
-    var now = new Date();
-    var isoNow = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0") + "T" + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    var empId = getCurrentEmployeeIdForDocs();
+    if (!empId) {
+      reportDocumentError(new Error("Geen geselecteerde medewerker"), "Opslaan");
+      return;
+    }
 
-    if (editingIndex >= 0) {
-      var doc = getDocumentenState()[editingIndex];
-      if (doc) {
-        doc.naam = naam;
-        doc.type = type;
-        doc.vervaldatum = verval;
-        doc.laatstGewijzigd = isoNow;
-        if (fileData) { doc.fileData = fileData; doc.fileName = fileName; doc.fileMime = fileMime; }
+    var isEdit = !!editingDocId;
+    setSavingState(true);
+
+    var p;
+    if (isEdit) {
+      var partial = { naam: naam, type: type, vervaldatum: verval };
+      if (fileData) {
+        partial.fileData = fileData;
+        partial.fileName = fileName;
+        partial.fileMime = fileMime;
       }
+      p = window.medewerkerDocsDB.update(editingDocId, partial);
     } else {
-      getDocumentenState().unshift({
+      p = window.medewerkerDocsDB.add({
+        medewerkerId: empId,
         naam: naam,
         type: type,
         vervaldatum: verval,
-        uploaddatum: isoNow,
-        laatstGewijzigd: isoNow,
         archived: false,
         fileData: fileData || "",
         fileName: fileName || "",
@@ -3249,9 +3286,16 @@ function initDocumentenSection() {
       });
     }
 
-    saveDocumentenState();
-    closeModal();
-    render();
+    p.then(function () {
+      closeModal();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback(isEdit ? "saved" : "added", "Document");
+      }
+    }).catch(function (err) {
+      reportDocumentError(err, isEdit ? "Bewerken" : "Uploaden");
+    }).then(function () {
+      setSavingState(false);
+    });
   }
 
   if (modalSave) {
@@ -3261,6 +3305,9 @@ function initDocumentenSection() {
         var reader = new FileReader();
         reader.onload = function () {
           commitDocSave(reader.result, file.name, file.type);
+        };
+        reader.onerror = function () {
+          reportDocumentError(new Error("Het bestand kon niet worden ingelezen."), "Bestand inlezen");
         };
         reader.readAsDataURL(file);
       } else {
@@ -3306,13 +3353,15 @@ function initDocumentenSection() {
 
   function confirmDocDelete() {
     if (!docToDelete || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    var realIdx = getDocumentenState().indexOf(docToDelete);
-    if (realIdx > -1) {
-      getDocumentenState().splice(realIdx, 1);
-      saveDocumentenState();
-    }
+    var idToDelete = docToDelete.id;
     closeDocDeleteModal();
-    render();
+    window.medewerkerDocsDB.remove(idToDelete).then(function () {
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("deleted", "Document");
+      }
+    }).catch(function (err) {
+      reportDocumentError(err, "Verwijderen");
+    });
   }
 
   if (delSlider) delSlider.addEventListener("input", syncDelSlider);
@@ -3416,6 +3465,16 @@ function initDocumentenSection() {
     modal.removeAttribute("hidden");
     modal.setAttribute("aria-hidden", "false");
   }
+
+  // Re-render bij elke wijziging in de Supabase-cache (eigen page-acties +
+  // achtergrond-migraties). Filter optioneel op huidige medewerker zodat
+  // updates voor andere medewerkers de UI niet onnodig hertekenen.
+  window.addEventListener("besa:medewerker-documenten-updated", function (e) {
+    var detail = e && e.detail || {};
+    var current = getCurrentEmployeeIdForDocs();
+    if (detail.medewerkerId && current && String(detail.medewerkerId) !== String(current)) return;
+    render();
+  });
 
   render();
 }

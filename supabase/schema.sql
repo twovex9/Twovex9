@@ -3306,3 +3306,87 @@ drop policy if exists "anon kan client-documents verwijderen" on storage.objects
 create policy "anon kan client-documents verwijderen"
   on storage.objects for delete to anon
   using (bucket_id = 'client-documents');
+
+-- ============================================================================
+-- Stage 4d: medewerker_documenten — tabel + Storage bucket
+-- ============================================================================
+--
+-- Spiegelt het client_documents-patroon (Stage 4d-pre). Bestanden komen in
+-- bucket "medewerker-documenten" onder pad:
+--   <medewerker_id>/<doc_id>-<safe_file_name>
+-- De tabel houdt alleen metadata + storage_path. file_data blijft als
+-- legacy-veld voor migratie van bestaande base64-data uit
+-- localStorage["employeeEditsById"][<id>].documenten.
+
+create table if not exists public.medewerker_documenten (
+  id text primary key,
+  medewerker_id text not null,
+  naam text not null default '',
+  type text default '',
+  vervaldatum text default '',
+  uploaddatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  archived boolean not null default false,
+  file_name text default '',
+  file_mime text default '',
+  file_data text default '',          -- legacy base64-veld, alleen voor migratie
+  storage_path text                   -- pad in bucket "medewerker-documenten"
+);
+
+create index if not exists medewerker_documenten_medewerker_id_idx
+  on public.medewerker_documenten (medewerker_id);
+create index if not exists medewerker_documenten_archived_idx
+  on public.medewerker_documenten (archived);
+create index if not exists medewerker_documenten_type_idx
+  on public.medewerker_documenten (lower(type));
+create index if not exists medewerker_documenten_storage_path_idx
+  on public.medewerker_documenten (storage_path)
+  where storage_path is not null;
+
+drop trigger if exists set_medewerker_documenten_laatst_gewijzigd on public.medewerker_documenten;
+create trigger set_medewerker_documenten_laatst_gewijzigd
+  before update on public.medewerker_documenten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.medewerker_documenten enable row level security;
+
+drop policy if exists "anon kan medewerker_documenten lezen" on public.medewerker_documenten;
+create policy "anon kan medewerker_documenten lezen"
+  on public.medewerker_documenten for select to anon using (true);
+
+drop policy if exists "anon kan medewerker_documenten toevoegen" on public.medewerker_documenten;
+create policy "anon kan medewerker_documenten toevoegen"
+  on public.medewerker_documenten for insert to anon with check (true);
+
+drop policy if exists "anon kan medewerker_documenten bijwerken" on public.medewerker_documenten;
+create policy "anon kan medewerker_documenten bijwerken"
+  on public.medewerker_documenten for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan medewerker_documenten verwijderen" on public.medewerker_documenten;
+create policy "anon kan medewerker_documenten verwijderen"
+  on public.medewerker_documenten for delete to anon using (true);
+
+insert into storage.buckets (id, name, public)
+values ('medewerker-documenten', 'medewerker-documenten', true)
+on conflict (id) do nothing;
+
+drop policy if exists "anon kan medewerker-documenten lezen" on storage.objects;
+create policy "anon kan medewerker-documenten lezen"
+  on storage.objects for select to anon
+  using (bucket_id = 'medewerker-documenten');
+
+drop policy if exists "anon kan medewerker-documenten uploaden" on storage.objects;
+create policy "anon kan medewerker-documenten uploaden"
+  on storage.objects for insert to anon
+  with check (bucket_id = 'medewerker-documenten');
+
+drop policy if exists "anon kan medewerker-documenten bewerken" on storage.objects;
+create policy "anon kan medewerker-documenten bewerken"
+  on storage.objects for update to anon
+  using (bucket_id = 'medewerker-documenten')
+  with check (bucket_id = 'medewerker-documenten');
+
+drop policy if exists "anon kan medewerker-documenten verwijderen" on storage.objects;
+create policy "anon kan medewerker-documenten verwijderen"
+  on storage.objects for delete to anon
+  using (bucket_id = 'medewerker-documenten');
