@@ -965,12 +965,16 @@ h1 {
 }
 
 .columns-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 50;
+  /* Position wordt door floating-panels.js gezet (top/left via JS).
+     position: fixed zodat het paneel nooit door ancestor-overflow wordt
+     afgesneden of onbedoeld door een smalle flex-wrapper verschoven. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  z-index: 1000;
   width: 252px;
-  max-height: min(72vh, 440px);
+  max-height: min(70vh, 480px);
   overflow-y: auto;
   background: var(--surface);
   border: 2px solid var(--line-strong);
@@ -12806,20 +12810,6 @@ button.planning-erm-new {
   border-radius: var(--r-md);
   background: var(--surface);
   overflow: hidden;
-}
-
-/* Kolommen-paneel cliënt-detail: positie wordt door JS gezet op basis
-   van de knop-rect, zodat het paneel altijd zichtbaar onder de knop landt
-   (niet afgesneden door ancestor-overflow of de smalle flex-wrapper). */
-#cdb-columns-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: auto;
-  width: 252px;
-  max-height: min(70vh, 480px);
-  overflow-y: auto;
-  z-index: 1000;
 }
 
 .client-detail-besc-table .th-check {
