@@ -53,6 +53,20 @@
     catch (e) { window.location.href = buildLoginUrl(); }
   }
 
+  function getDisplayLabel(user) {
+    // Voorkeur: profiel-naam (Stage 8b). Fallback: email.
+    if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
+      try {
+        var p = window.profilesDB.getCurrentSync();
+        if (p) {
+          var nm = window.profilesDB.displayName(p);
+          if (nm) return nm;
+        }
+      } catch (e) { /* fall back to email */ }
+    }
+    return (user && user.email) || "";
+  }
+
   function injectUserBadge(user) {
     if (!user || !user.email) return;
     if (document.getElementById("besa-auth-badge")) return;
@@ -74,9 +88,17 @@
       "white-space:nowrap",
     ].join(";");
 
-    var email = document.createElement("span");
-    email.textContent = user.email;
-    email.style.cssText = "color:#6b7798;max-width:220px;overflow:hidden;text-overflow:ellipsis;";
+    var label = document.createElement("span");
+    label.id = "besa-auth-badge-label";
+    label.textContent = getDisplayLabel(user);
+    label.title = user.email; // hover toont altijd email
+    label.style.cssText = "color:#6b7798;max-width:220px;overflow:hidden;text-overflow:ellipsis;";
+
+    // Wanneer profielen later binnenkomen (Stage 8b bootstrap), update het label.
+    window.addEventListener("besa:profile-updated", function () {
+      var newLabel = getDisplayLabel(user);
+      if (newLabel) label.textContent = newLabel;
+    });
 
     var sep = document.createElement("span");
     sep.setAttribute("aria-hidden", "true");
@@ -120,7 +142,7 @@
       window.location.replace("login.html");
     });
 
-    wrap.appendChild(email);
+    wrap.appendChild(label);
     wrap.appendChild(sep);
     wrap.appendChild(btn);
 

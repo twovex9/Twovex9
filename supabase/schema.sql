@@ -3390,3 +3390,131 @@ drop policy if exists "anon kan medewerker-documenten verwijderen" on storage.ob
 create policy "anon kan medewerker-documenten verwijderen"
   on storage.objects for delete to anon
   using (bucket_id = 'medewerker-documenten');
+
+
+-- =============================================================================
+-- Stage 8b: profiles-tabel + rollen + auto-create trigger
+-- =============================================================================
+-- Maakt voor elke auth.user automatisch een rij in public.profiles aan met:
+--   - rol ('admin' | 'medewerker' | 'viewer')
+--   - voornaam/achternaam (voor display in topbar i.p.v. email)
+--   - optionele link naar public.medewerkers (matcht op email)
+--
+-- Bestaande gebruikers worden gebackfilled met rol 'admin' (eerste admin).
+-- Toekomstige nieuwe users via Dashboard krijgen default 'medewerker'.
+-- =============================================================================
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null default '',
+  voornaam text not null default '',
+  achternaam text not null default '',
+  rol text not null default 'medewerker' check (rol in ('admin', 'medewerker', 'viewer')),
+  medewerker_id uuid references public.medewerkers(id) on delete set null,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists profiles_rol_idx on public.profiles (rol);
+create index if not exists profiles_medewerker_id_idx on public.profiles (medewerker_id);
+create index if not exists profiles_email_idx on public.profiles (lower(email));
+
+drop trigger if exists trg_profiles_set_modified on public.profiles;
+create trigger trg_profiles_set_modified
+  before update on public.profiles
+  for each row execute function public.set_laatst_gewijzigd();
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, voornaam, achternaam, rol, medewerker_id)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data->>'voornaam', ''),
+    coalesce(new.raw_user_meta_data->>'achternaam', ''),
+    'medewerker',
+    (select m.id from public.medewerkers m
+       where lower(coalesce(m.email, '')) = lower(coalesce(new.email, ''))
+         and not coalesce(m.archived, false)
+       limit 1)
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_handle_new_auth_user on auth.users;
+create trigger trg_handle_new_auth_user
+  after insert on auth.users
+  for each row execute function public.handle_new_auth_user();
+
+insert into public.profiles (id, email, voornaam, achternaam, rol, medewerker_id)
+select
+  u.id,
+  coalesce(u.email, ''),
+  coalesce(u.raw_user_meta_data->>'voornaam', ''),
+  coalesce(u.raw_user_meta_data->>'achternaam', ''),
+  'admin',
+  (select m.id from public.medewerkers m
+     where lower(coalesce(m.email, '')) = lower(coalesce(u.email, ''))
+       and not coalesce(m.archived, false)
+     limit 1)
+from auth.users u
+on conflict (id) do nothing;
+
+create or replace function public.is_admin(user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists(
+    select 1 from public.profiles
+    where id = user_id and rol = 'admin'
+  );
+$$;
+
+create or replace function public.current_user_rol()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select rol from public.profiles where id = auth.uid();
+$$;
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "profiles_select_authenticated" on public.profiles;
+drop policy if exists "profiles_update_self" on public.profiles;
+drop policy if exists "profiles_update_admin" on public.profiles;
+drop policy if exists "profiles_delete_admin" on public.profiles;
+
+create policy "profiles_select_authenticated"
+  on public.profiles for select
+  to authenticated
+  using (true);
+
+create policy "profiles_update_self"
+  on public.profiles for update
+  to authenticated
+  using (id = auth.uid())
+  with check (id = auth.uid() and rol = (select rol from public.profiles where id = auth.uid()));
+
+create policy "profiles_update_admin"
+  on public.profiles for update
+  to authenticated
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+create policy "profiles_delete_admin"
+  on public.profiles for delete
+  to authenticated
+  using (public.is_admin(auth.uid()));

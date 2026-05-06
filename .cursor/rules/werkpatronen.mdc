@@ -221,17 +221,33 @@ Login staat AAN sinds Stage 8a. Elke pagina (behalve `login.html` zelf) moet `au
 2. `supabase-client.js` (initialiseert client + `besaAuth` helpers, AUTH_ENABLED=true)
 3. `besa-sync-reporter.js` (centrale fout-feedback)
 4. `auth-guard.js` (sessie-check + redirect + logout-knop in topbar)
-5. Alle data-layer modules
-6. Page-script(s)
+5. `profiles-data.js` (Stage 8b — laadt profiel + rol van huidige user)
+6. Alle overige data-layer modules
+7. Page-script(s)
 
 `auth-guard.js`:
 - Doet `getSession()` bij init. Geen sessie → redirect naar `login.html?next=<huidige-url>` zodat de gebruiker na login terugkomt op dezelfde plek.
-- Wel sessie → injecteert rechtsboven in `.topbar` een blok met `<email> · Uitloggen`. Klik op Uitloggen wist de Supabase-sessie EN alle localStorage caches (om data-lekken naar volgende gebruiker te voorkomen) en stuurt naar `login.html`.
+- Wel sessie → injecteert rechtsboven in `.topbar` een blok met `<voornaam achternaam> · Uitloggen` (valt terug op email als profiel nog leeg is). Klik op Uitloggen wist de Supabase-sessie EN alle localStorage caches (om data-lekken naar volgende gebruiker te voorkomen) en stuurt naar `login.html`.
 - Luistert op `auth.onAuthStateChange` om automatisch te redirecten als een sessie elders verloopt.
+- Update het topbar-label automatisch zodra `besa:profile-updated` event vuurt (na profiel-bootstrap of -wijziging).
 
-Nieuwe pagina toevoegen? Vergeet `auth-guard.js` niet anders is de pagina onbeveiligd. Het PowerShell-commando dat alle 35 pagina's tegelijk patcht zit in de Stage 8a commit-history.
+Nieuwe pagina toevoegen? Vergeet `auth-guard.js` + `profiles-data.js` niet, anders is de pagina onbeveiligd of mist de UI de rol-check. Het PowerShell-commando dat alle 35 pagina's tegelijk patcht zit in de Stage 8a/8b commit-history.
 
 Wil je later auth tijdelijk uitzetten (bv. voor lokaal debugging)? Zet `AUTH_ENABLED = false` in `supabase-client.js` — `auth-guard.js` no-opt dan automatisch.
+
+#### 6d-bis. Profiles + rollen (Stage 8b)
+
+Elke `auth.users` heeft 1-op-1 een rij in `public.profiles` (auto-create trigger zorgt dat het altijd consistent is). Velden: `voornaam`, `achternaam`, `email`, `rol` (`admin` | `medewerker` | `viewer`), optionele FK `medewerker_id` naar `public.medewerkers` (auto-link bij email-match).
+
+Toegang vanuit JS:
+- `window.profilesDB.getCurrentSync()` — huidige user's profiel.
+- `window.profilesDB.isAdmin()` — boolean shortcut.
+- `window.profilesDB.getAllSync()` — alle profielen (voor user-pickers).
+- `window.profilesDB.update(id, patch)` — wijzigt naam/email; rol-wijziging vereist admin (RLS).
+- `window.besaCurrentProfile` — direct beschikbaar object (gevuld vanuit cache).
+- Event `besa:profile-updated` op `window` na elke mutatie of bootstrap.
+
+Default-rol voor nieuwe users via Dashboard: `medewerker`. Eerste user (backfill) krijgt `admin`. Toekomstige rol-wijziging gaat via SQL of (later) een admin-pagina. SQL-helpers `public.is_admin(uuid)` en `public.current_user_rol()` gebruiken we vanaf Stage 8c in alle RLS-policies om read/write per rol te beperken.
 
 ### 6c-ter. Migraties moeten hun legacy localStorage-key opruimen
 
