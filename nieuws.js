@@ -34,29 +34,34 @@ let applyNewsPaginationOnly = () => {};
 let syncNewsSelectAllHeader = () => {};
 const columnsBtn = document.getElementById("columns-menu-btn");
 const columnsPanel = document.getElementById("columns-panel");
-const NEWS_ITEMS_STORAGE_KEY = "newsItems";
 
-function makeNewsId() {
-  return `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+// --- Supabase data-laag wrappers --------------------------------------------
+// nieuwsDB komt uit nieuws-data.js. Source of truth: tabel public.nieuws.
+// Lokale "newsItems"-key wordt eenmalig gemigreerd door de data-laag.
+
+function getNieuwsDB() {
+  return (typeof window !== "undefined" && window.nieuwsDB) || null;
 }
 
 function readNewsItems() {
-  try {
-    const raw = window.localStorage.getItem(NEWS_ITEMS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+  const db = getNieuwsDB();
+  if (!db) return [];
+  try { return db.getAllSync() || []; } catch { return []; }
+}
+
+function reportNewsError(action, err) {
+  const msg = err && err.message ? err.message : String(err || "onbekende fout");
+  console.error(`[nieuws] ${action} mislukt:`, err);
+  if (typeof window.showSaveModal === "function") {
+    window.showSaveModal({ title: `Opslaan in database mislukt`, message: msg });
+  } else {
+    showNewsToast(`Opslaan mislukt: ${msg}`);
   }
 }
 
-function writeNewsItems(items) {
-  try {
-    window.localStorage.setItem(NEWS_ITEMS_STORAGE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-  } catch {
-    // Ignore storage errors in demo mode.
-  }
+function makeTempNewsId() {
+  // Tijdelijke client-side id voor optimistic UI tot Supabase een UUID retourneert.
+  return `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function getNewsTableBody() {
@@ -65,7 +70,7 @@ function getNewsTableBody() {
 
 function rowToNewsItem(tr) {
   if (!tr) return null;
-  if (!tr.dataset.newsId) tr.dataset.newsId = makeNewsId();
+  if (!tr.dataset.newsId) tr.dataset.newsId = makeTempNewsId();
   const titel = tr.querySelector('td[data-col="titel"]')?.textContent?.trim() || "";
   if (!titel) return null;
   const status = tr.querySelector('td[data-col="status"] .status-pill')?.textContent?.trim() || "Published";
@@ -88,7 +93,7 @@ function rowToNewsItem(tr) {
 
 function createNewsRow(item, isArchivedView = false) {
   const tr = document.createElement("tr");
-  tr.dataset.newsId = item.id || makeNewsId();
+  tr.dataset.newsId = item.id || makeTempNewsId();
   if (item.inhoud) tr.setAttribute("data-news-inhoud", item.inhoud);
   if (item.auteur) tr.dataset.newsAuthor = item.auteur;
   if (item.image) tr.dataset.newsImage = item.image;
@@ -113,7 +118,7 @@ function createNewsRow(item, isArchivedView = false) {
 
   const tdDatum = document.createElement("td");
   tdDatum.setAttribute("data-col", "aanmaakdatum");
-  tdDatum.textContent = item.aanmaakdatum || formatNlDateTimeNow();
+  tdDatum.textContent = formatNlDateTimeFromAny(item.aanmaakdatum);
 
   tr.append(tdSel, tdTitel, tdStatus, tdDatum, createNewsActiesCell(!!isArchivedView));
   return tr;
@@ -147,41 +152,56 @@ function createNewsActiesCell(isArchivedView) {
   return td;
 }
 
-function persistTableToNewsStorage() {
-  const tableBody = getNewsTableBody();
-  if (!tableBody) return;
-  const fromTable = Array.from(tableBody.querySelectorAll("tr"))
-    .map(rowToNewsItem)
-    .filter(Boolean);
-  const byId = new Map(readNewsItems().map((x) => [x.id, { ...x }]));
-  fromTable.forEach((item) => {
-    const prev = byId.get(item.id) || {};
-    byId.set(item.id, { ...prev, ...item });
-  });
-  writeNewsItems(Array.from(byId.values()));
+// persistTableToNewsStorage is een no-op geworden: de DOM is geen source of truth
+// meer. Toegevoegde / gewijzigde items gaan direct via nieuwsDB naar Supabase
+// en de tabel wordt herbouwd uit de cache na elk besa:nieuws-updated event.
+function persistTableToNewsStorage() { /* no-op - data zit in Supabase via nieuwsDB */ }
+
+// Voegt een nieuw item toe (als het nog geen serverside-id heeft) of werkt een
+// bestaand item bij. Retourneert de bewaarde rij (met definitieve uuid).
+async function upsertNewsItem(item) {
+  if (!item) return null;
+  const db = getNieuwsDB();
+  if (!db) {
+    reportNewsError("opslaan", new Error("Supabase data-laag (nieuwsDB) niet geladen."));
+    return null;
+  }
+  const isExistingServerRow = item.id && !String(item.id).startsWith("tmp-") && !String(item.id).startsWith("news-");
+  try {
+    if (isExistingServerRow) {
+      return await db.update(item.id, item);
+    }
+    // Nieuwe rij: client-id (tmp/legacy) wegfilteren zodat Supabase een uuid kiest.
+    const { id: _drop, ...rest } = item;
+    return await db.add(rest);
+  } catch (err) {
+    reportNewsError("opslaan", err);
+    return null;
+  }
 }
 
-function upsertNewsItem(item) {
-  if (!item || !item.id) return;
-  const items = readNewsItems();
-  const idx = items.findIndex((x) => x.id === item.id);
-  if (idx >= 0) items[idx] = { ...items[idx], ...item };
-  else items.unshift({ ...item, archived: item.archived === true });
-  writeNewsItems(items);
-}
-
-function archiveNewsItem(id) {
+async function archiveNewsItem(id) {
   if (!id) return;
-  const items = readNewsItems().map((x) =>
-    x.id === id ? { ...x, archived: true } : x
-  );
-  writeNewsItems(items);
+  const db = getNieuwsDB();
+  if (!db) { reportNewsError("archiveren", new Error("nieuwsDB niet geladen.")); return; }
+  try { await db.archive(id); }
+  catch (err) { reportNewsError("archiveren", err); }
 }
 
-function deleteNewsItem(id) {
+async function deleteNewsItem(id) {
   if (!id) return;
-  const items = readNewsItems().filter((x) => x.id !== id);
-  writeNewsItems(items);
+  const db = getNieuwsDB();
+  if (!db) { reportNewsError("verwijderen", new Error("nieuwsDB niet geladen.")); return; }
+  try { await db.delete(id); }
+  catch (err) { reportNewsError("verwijderen", err); }
+}
+
+async function restoreNewsItem(id) {
+  if (!id) return;
+  const db = getNieuwsDB();
+  if (!db) { reportNewsError("herstellen", new Error("nieuwsDB niet geladen.")); return; }
+  try { await db.restore(id); }
+  catch (err) { reportNewsError("herstellen", err); }
 }
 
 let newsAppToastTimer = null;
@@ -209,36 +229,14 @@ function loadNewsTableFromStorage() {
   if (!tableBody) return;
   const archivedToggle = document.getElementById("news-archived-toggle");
   const showArchived = archivedToggle ? archivedToggle.checked : false;
-  let stored = readNewsItems();
-  let migrated = false;
-  stored = stored.map((x) => {
-    let next = x;
-    if (x.archived !== true && x.archived !== false) {
-      migrated = true;
-      next = { ...next, archived: false };
-    }
-    if (!next.auteur || !String(next.auteur).trim()) {
-      migrated = true;
-      next = { ...next, auteur: "HR team" };
-    }
-    return next;
-  });
-  if (migrated) writeNewsItems(stored);
+  const stored = readNewsItems();
 
-  if (stored.length > 0) {
-    tableBody.innerHTML = "";
-    stored
-      .filter((item) => (showArchived ? item.archived === true : !item.archived))
-      .forEach((item) => {
-        tableBody.appendChild(createNewsRow(item, showArchived));
-      });
-    return;
-  }
-
-  // First run migration: seed storage with existing static rows.
-  if (tableBody.querySelector("tr")) {
-    persistTableToNewsStorage();
-  }
+  tableBody.innerHTML = "";
+  stored
+    .filter((item) => (showArchived ? item.archived === true : !item.archived))
+    .forEach((item) => {
+      tableBody.appendChild(createNewsRow(item, showArchived));
+    });
 }
 
 function setColumnVisible(colId, visible) {
@@ -592,6 +590,19 @@ function formatNlDateTimeNow() {
   return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// Formatteert een ISO-string of legacy "dd-mm-yyyy hh:mm" naar "dd-mm-yyyy hh:mm".
+// Lege/ongeldige input → huidige tijd.
+function formatNlDateTimeFromAny(value) {
+  if (!value) return formatNlDateTimeNow();
+  if (typeof value === "string" && /^\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}$/.test(value.trim())) {
+    return value.trim();
+  }
+  const d = new Date(value);
+  if (!isFinite(d.getTime())) return formatNlDateTimeNow();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function getPreferredUserName() {
   try {
     const explicitName = (window.localStorage.getItem("currentUserName") || "").trim();
@@ -745,23 +756,20 @@ function initNewsAddModal() {
     const auteur = auteurInput?.value?.trim() || getPreferredUserName();
     const file = imageInput?.files?.[0];
 
-    function finishAdd(imgBase64) {
+    async function finishAdd(imgBase64) {
       const item = {
-        id: makeNewsId(),
         titel,
         status: "Published",
-        aanmaakdatum: formatNlDateTimeNow(),
+        aanmaakdatum: new Date().toISOString(),
         auteur,
         inhoud: bodyHtml,
         archived: false,
       };
       if (imgBase64) item.image = imgBase64;
-      const tr = createNewsRow(item);
-      tableBody.insertBefore(tr, tableBody.firstChild);
-      upsertNewsItem(item);
       closeModal();
-      applyNewsSearch();
-      refreshNewsPagination();
+      const saved = await upsertNewsItem(item);
+      if (!saved) return; // fout is al gemeld door upsertNewsItem
+      // Tabel re-rendert automatisch via besa:nieuws-updated event.
       if (typeof window.showActionFeedback === "function") {
         window.showActionFeedback("added", `Nieuwsbericht “${titel}”`);
       }
@@ -920,14 +928,15 @@ function initNewsEditPanel() {
 
     let remaining = filesToRead.length;
 
-    function finishSave() {
+    async function finishSave() {
       const updatedItem = rowToNewsItem(currentRow);
-      if (updatedItem) upsertNewsItem(updatedItem);
-      applyNewsSearch();
-      refreshNewsPagination();
       closeNewsEdit();
+      if (!updatedItem) return;
+      const saved = await upsertNewsItem(updatedItem);
+      if (!saved) return; // fout al gemeld
+      // Tabel re-rendert automatisch via besa:nieuws-updated event.
       if (typeof window.showActionFeedback === "function") {
-        const titel = updatedItem && updatedItem.titel ? `Nieuwsbericht “${updatedItem.titel}”` : "Nieuwsbericht";
+        const titel = updatedItem.titel ? `Nieuwsbericht “${updatedItem.titel}”` : "Nieuwsbericht";
         window.showActionFeedback("saved", titel);
       }
     }
@@ -1109,13 +1118,12 @@ function initNewsPurgeModal() {
     if (!rowToPurge || confirmBtn.disabled) return;
     const deletedTitle = rowToPurge.querySelector('td[data-col="titel"]')?.textContent?.trim() || "";
     const deletedId = rowToPurge.dataset.newsId || "";
-    rowToPurge.remove();
-    if (deletedId) deleteNewsItem(deletedId);
-    else persistTableToNewsStorage();
     rowToPurge = null;
     closePurgeModal();
-    applyNewsSearch();
-    refreshNewsPagination();
+    if (deletedId) {
+      deleteNewsItem(deletedId);
+      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+    }
     showNewsToast(`Nieuws${deletedTitle ? ` "${deletedTitle}"` : ""} definitief verwijderd`);
   }
 
@@ -1158,12 +1166,8 @@ function initNewsRestore() {
     const tr = btn.closest("tr");
     const id = tr?.dataset?.newsId;
     if (!id) return;
-    const items = readNewsItems().map((x) => (x.id === id ? { ...x, archived: false } : x));
-    writeNewsItems(items);
-    loadNewsTableFromStorage();
-    syncColumnVisibilityFromMenu();
-    applyNewsSearch();
-    refreshNewsPagination();
+    restoreNewsItem(id);
+    // Tabel re-rendert automatisch via besa:nieuws-updated event.
     showNewsToast("Nieuwsbericht hersteld");
   });
 }
@@ -1220,13 +1224,12 @@ function initNewsDeleteModal() {
     if (!rowToDelete || confirmBtn.disabled) return;
     const deletedTitle = rowToDelete.querySelector('td[data-col="titel"]')?.textContent?.trim() || "";
     const deletedId = rowToDelete.dataset.newsId || "";
-    rowToDelete.remove();
-    if (deletedId) archiveNewsItem(deletedId);
-    else persistTableToNewsStorage();
     rowToDelete = null;
     closeDeleteModal();
-    applyNewsSearch();
-    refreshNewsPagination();
+    if (deletedId) {
+      archiveNewsItem(deletedId);
+      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+    }
     showNewsToast(`Nieuws${deletedTitle ? ` "${deletedTitle}"` : ""} is gearchiveerd`);
   }
 
@@ -1268,3 +1271,13 @@ initNewsDeleteModal();
 initNewsPurgeModal();
 initNewsRestore();
 initNewsEditPanel();
+
+// Re-render de tabel telkens als de Supabase data-laag een wijziging meldt
+// (na bootstrap-fetch, na add/update/archive/restore/delete door deze of een
+// andere tab/sessie).
+window.addEventListener("besa:nieuws-updated", () => {
+  loadNewsTableFromStorage();
+  syncColumnVisibilityFromMenu();
+  applyNewsSearch();
+  refreshNewsPagination();
+});

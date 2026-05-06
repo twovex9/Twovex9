@@ -2906,3 +2906,66 @@ values
   ('ud_6', 'Finn Verlinden',  'September 2024', 'Ambulant',        'Ambulant',    2024, 8, 70.00,   0.00, 36, 0),
   ('ud_7', 'Greet Van Dam',   'Juni 2026',      'WIZ 6 u p week',  'WIZ',         2026, 5, 72.00,   0.00, 24, 0)
 on conflict (id) do nothing;
+
+-- ============================================================================
+-- nieuws (HR / nieuwsoverzicht module)
+-- ============================================================================
+--
+-- Vervangt de oude localStorage-only opslag onder key "newsItems". Bestaande
+-- items worden eenmalig gemigreerd door nieuws-data.js bij eerste bezoek na
+-- deploy.
+
+create table if not exists public.nieuws (
+  id uuid primary key default gen_random_uuid(),
+  titel text not null,
+  status text not null default 'Published',
+  auteur text not null default 'HR team',
+  inhoud text not null default '',
+  image text,
+  image2 text,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists nieuws_archived_idx
+  on public.nieuws (archived);
+
+create index if not exists nieuws_aanmaakdatum_idx
+  on public.nieuws (aanmaakdatum desc);
+
+drop trigger if exists trg_nieuws_set_modified on public.nieuws;
+create trigger trg_nieuws_set_modified
+  before update on public.nieuws
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.nieuws enable row level security;
+
+drop policy if exists "anon kan nieuws lezen" on public.nieuws;
+create policy "anon kan nieuws lezen"
+  on public.nieuws
+  for select
+  to anon
+  using (true);
+
+drop policy if exists "anon kan nieuws toevoegen" on public.nieuws;
+create policy "anon kan nieuws toevoegen"
+  on public.nieuws
+  for insert
+  to anon
+  with check (true);
+
+drop policy if exists "anon kan nieuws bewerken" on public.nieuws;
+create policy "anon kan nieuws bewerken"
+  on public.nieuws
+  for update
+  to anon
+  using (true)
+  with check (true);
+
+drop policy if exists "anon kan nieuws verwijderen" on public.nieuws;
+create policy "anon kan nieuws verwijderen"
+  on public.nieuws
+  for delete
+  to anon
+  using (true);
