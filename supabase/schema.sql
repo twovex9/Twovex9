@@ -3118,3 +3118,48 @@ create policy "anon kan beschikking_audit_log bewerken"
 drop policy if exists "anon kan beschikking_audit_log verwijderen" on public.beschikking_audit_log;
 create policy "anon kan beschikking_audit_log verwijderen"
   on public.beschikking_audit_log for delete to anon using (true);
+
+-- ============================================================================
+-- medewerker_notities (vrije HTML-notities per medewerker, HR-only)
+-- ============================================================================
+--
+-- 1-op-veel: één medewerker kan meerdere notities hebben. medewerker_id is
+-- soft-FK naar medewerkers.id (text, want we accepteren ook legacy text-ids).
+-- Body is HTML uit de inline RTE op de medewerker-detail-pagina.
+
+create table if not exists public.medewerker_notities (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id text not null,
+  body_html text not null default '',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists medewerker_notities_emp_idx
+  on public.medewerker_notities (medewerker_id);
+
+create index if not exists medewerker_notities_aanmaak_idx
+  on public.medewerker_notities (aanmaakdatum desc);
+
+drop trigger if exists trg_medewerker_notities_set_modified on public.medewerker_notities;
+create trigger trg_medewerker_notities_set_modified
+  before update on public.medewerker_notities
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.medewerker_notities enable row level security;
+
+drop policy if exists "anon kan medewerker_notities lezen" on public.medewerker_notities;
+create policy "anon kan medewerker_notities lezen"
+  on public.medewerker_notities for select to anon using (true);
+
+drop policy if exists "anon kan medewerker_notities toevoegen" on public.medewerker_notities;
+create policy "anon kan medewerker_notities toevoegen"
+  on public.medewerker_notities for insert to anon with check (true);
+
+drop policy if exists "anon kan medewerker_notities bewerken" on public.medewerker_notities;
+create policy "anon kan medewerker_notities bewerken"
+  on public.medewerker_notities for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan medewerker_notities verwijderen" on public.medewerker_notities;
+create policy "anon kan medewerker_notities verwijderen"
+  on public.medewerker_notities for delete to anon using (true);

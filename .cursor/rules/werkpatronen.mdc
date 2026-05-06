@@ -191,10 +191,13 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 | Beschikking-tarieven | `beschikkingTarievenDB` | `beschikking_tarieven` | `beschikking-tarieven-data.js` |
 | Beschikking-notities | `beschikkingNotitiesDB` | `beschikking_notities` | `beschikking-notities-data.js` |
 | Beschikking-audit-log | `beschikkingAuditDB` | `beschikking_audit_log` | `beschikking-audit-data.js` |
+| Medewerker-notities | `medewerkerNotitiesDB` | `medewerker_notities` | `medewerker-notities-data.js` |
 | Facturen | `facturenDB` | `facturen` | `facturen-data.js` |
 | Nieuws | `nieuwsDB` | `nieuws` | `nieuws-data.js` |
 
-Voor sub-data per parent (zoals tarieven/notities/audit per beschikking) hebben de modules een extra synchrone helper `getForBescSync(bescId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `besa:<naam>-updated` event.
+Voor sub-data per parent (zoals tarieven/notities/audit per beschikking, of notities per medewerker) hebben de modules een extra synchrone helper `getForBescSync(bescId)` of `getForMedewerkerSync(empId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `besa:<naam>-updated` event.
+
+**Pas op met `employeeEditsById` (legacy):** dit object in localStorage bevat tot stage 4 nog `verzuim`, `verlofOvergedragen`, `notities` en `documenten` per medewerker. Notities zijn vanaf Stage 4a in Supabase (`medewerkerNotitiesDB`) — gebruik nooit meer `emp.notities` of `allEdits[id].notities` in nieuwe code. De andere drie velden volgen in Stage 4b/4c/4d; tot dan zijn ze nog localStorage-only en data-verlies-gevoelig.
 
 Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: gebruik alleen `add()` en laat het optimistic-insert-patroon van `beschikking-audit-data.js` overnemen — UI ververst direct met tijdelijke id, daarna replacement met echte UUID na Supabase-respons. Audit-failures worden in `console.error` gelogd, **niet** als rode modal — anders krijg je pop-ups bij elke page-view.
 

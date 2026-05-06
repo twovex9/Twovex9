@@ -1906,11 +1906,34 @@ function initVerlofTables() {
   });
 }
 
-function getNotitiesState() {
-  if (!window.__empNotities || !Array.isArray(window.__empNotities)) {
-    window.__empNotities = [];
-  }
-  return window.__empNotities;
+// Notities worden in Supabase opgeslagen via window.medewerkerNotitiesDB
+// (zie medewerker-notities-data.js). De legacy localStorage employeeEditsById
+// per-medewerker `.notities` array wordt automatisch eenmalig gemigreerd
+// bij eerste boot. window.__empNotities bestaat niet meer als state-store —
+// de data komt direct uit getForMedewerkerSync.
+
+function reportNotitieError(label, err) {
+  try { console.error("[medewerker notities]", label, err); } catch (e) { /* */ }
+  var msg = "Notitie opslaan mislukt. Controleer je verbinding en probeer opnieuw.";
+  if (err && err.message) msg = "Notitie opslaan mislukt: " + err.message;
+  if (typeof showSaveModal === "function") showSaveModal(msg, "Fout");
+  else if (typeof showToast === "function") showToast(msg);
+}
+
+function getCurrentEmployeeIdForNotes() {
+  const emp = getSelectedEmployee();
+  if (!emp) return "";
+  return String(emp.empId || emp.id || emp.naam || "");
+}
+
+// Format dd-mm-yyyy hh:mm voor consistente UI-weergave (zelfde als legacy).
+function formatNoteDate(iso) {
+  try {
+    const d = iso ? new Date(iso) : new Date();
+    if (isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch (e) { return ""; }
 }
 
 function initNotitiesSection() {
@@ -1936,8 +1959,17 @@ function initNotitiesSection() {
     });
   });
 
+  function getNotesForCurrentEmployee() {
+    const empId = getCurrentEmployeeIdForNotes();
+    if (!empId) return [];
+    if (window.medewerkerNotitiesDB && typeof window.medewerkerNotitiesDB.getForMedewerkerSync === "function") {
+      return window.medewerkerNotitiesDB.getForMedewerkerSync(empId);
+    }
+    return [];
+  }
+
   function renderNotes() {
-    const notes = getNotitiesState();
+    const notes = getNotesForCurrentEmployee();
     if (!notes.length) {
       if (emptyEl) emptyEl.style.display = "";
       itemsEl.innerHTML = "";
@@ -1945,7 +1977,7 @@ function initNotitiesSection() {
     }
     if (emptyEl) emptyEl.style.display = "none";
     itemsEl.innerHTML = "";
-    notes.forEach((note, idx) => {
+    notes.forEach((note) => {
       const item = document.createElement("div");
       item.className = "emp-notitie-item";
 
@@ -1954,57 +1986,74 @@ function initNotitiesSection() {
 
       const dateSpan = document.createElement("span");
       dateSpan.className = "emp-notitie-item-date";
-      dateSpan.textContent = note.date || "";
+      dateSpan.textContent = formatNoteDate(note.createdAt);
 
       const delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "emp-notitie-item-delete";
       delBtn.textContent = "Verwijderen";
-      delBtn.addEventListener("click", () => {
-        notes.splice(idx, 1);
-        renderNotes();
-        saveNotities();
+      delBtn.dataset.noteId = note.id;
+      delBtn.addEventListener("click", async () => {
+        if (!window.medewerkerNotitiesDB || typeof window.medewerkerNotitiesDB.remove !== "function") {
+          reportNotitieError("data-laag niet beschikbaar", new Error("medewerkerNotitiesDB ontbreekt"));
+          return;
+        }
+        delBtn.setAttribute("disabled", "");
+        try {
+          await window.medewerkerNotitiesDB.remove(note.id);
+          // UI ververst zichzelf via besa:medewerker-notities-updated event.
+        } catch (err) {
+          reportNotitieError("verwijderen mislukt", err);
+        } finally {
+          delBtn.removeAttribute("disabled");
+        }
       });
 
       head.append(dateSpan, delBtn);
 
       const content = document.createElement("div");
       content.className = "emp-notitie-item-content";
-      content.innerHTML = note.html || "";
+      content.innerHTML = note.bodyHtml || "";
 
       item.append(head, content);
       itemsEl.appendChild(item);
     });
   }
 
-  function saveNotities() {
-    const emp = getSelectedEmployee();
-    if (!emp) return;
-    emp.notities = getNotitiesState().map((n) => ({ html: n.html, date: n.date }));
-    const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-    const id = emp.id || emp.naam;
-    if (!allEdits[id]) allEdits[id] = {};
-    allEdits[id].notities = emp.notities;
-    localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
-  }
-
-  sendBtn.addEventListener("click", () => {
+  sendBtn.addEventListener("click", async () => {
     const html = body.innerHTML.trim();
     if (!html || html === "<br>") return;
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const dateStr = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const notes = getNotitiesState();
-    notes.unshift({ html, date: dateStr });
-    body.innerHTML = "";
-    renderNotes();
-    saveNotities();
+    if (!window.medewerkerNotitiesDB || typeof window.medewerkerNotitiesDB.add !== "function") {
+      reportNotitieError("data-laag niet beschikbaar", new Error("medewerkerNotitiesDB ontbreekt"));
+      return;
+    }
+    const empId = getCurrentEmployeeIdForNotes();
+    if (!empId) {
+      reportNotitieError("geen medewerker geselecteerd", new Error("getSelectedEmployee leeg"));
+      return;
+    }
+    sendBtn.setAttribute("disabled", "");
+    try {
+      await window.medewerkerNotitiesDB.add({
+        medewerkerId: empId,
+        bodyHtml: html,
+        createdAt: new Date().toISOString(),
+      });
+      body.innerHTML = "";
+      // UI ververst zichzelf via besa:medewerker-notities-updated event.
+    } catch (err) {
+      reportNotitieError("toevoegen mislukt", err);
+    } finally {
+      sendBtn.removeAttribute("disabled");
+    }
   });
 
-  const emp = getSelectedEmployee();
-  if (emp && Array.isArray(emp.notities)) {
-    window.__empNotities = emp.notities.map((n) => ({ html: n.html || "", date: n.date || "" }));
-  }
+  // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
+  // andere tab, externe sync).
+  window.addEventListener("besa:medewerker-notities-updated", function () {
+    try { renderNotes(); } catch (e) { /* */ }
+  });
+
   renderNotes();
 }
 
