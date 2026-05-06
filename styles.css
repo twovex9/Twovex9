@@ -16115,3 +16115,192 @@ button.besc-dtl-tab:hover {
   justify-content: flex-end;
 }
 
+
+
+/* =============================================================================
+   Incidenten — Stage 9c (incidenten.html)
+   ============================================================================= */
+
+.content-header--incidenten {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.content-header--incidenten .content-subtitle {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.content-header--incidenten .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Stat-cards (4 kolommen) */
+.incident-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0 22px;
+}
+.incident-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--page-shell-shadow);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+.incident-stat-card:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }
+.incident-stat-value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+.incident-stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.incident-stat-card--afwachting .incident-stat-value { color: var(--yellow); }
+.incident-stat-card--behandeling .incident-stat-value { color: var(--blue); }
+.incident-stat-card--opgelost .incident-stat-value { color: var(--green); }
+
+@media (max-width: 900px) {
+  .incident-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Tabs (Mijn cliënten / Alle incidenten) */
+.incident-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin: 18px 0 0;
+}
+.incident-tab {
+  background: transparent;
+  border: none;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color 160ms ease;
+}
+.incident-tab:hover { color: var(--text); }
+.incident-tab.is-active { color: var(--blue); font-weight: 600; }
+.incident-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px; bottom: -1px;
+  height: 2px;
+  background: var(--blue);
+  border-radius: 2px;
+}
+
+.incident-section-title {
+  margin: 18px 0 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Filter-bar */
+.incident-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 18px;
+}
+.incident-search {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 320px;
+}
+.incident-filter {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 160ms ease, background 160ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 14px,
+    calc(100% - 11px) 14px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+.incident-filter:hover { border-color: var(--blue); color: var(--text); }
+.incident-filter:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+.incident-filter--date {
+  background-image: none;
+  padding-right: 14px;
+}
+.incident-archive-toggle { margin-left: auto; }
+
+/* Status-pills in de tabel */
+.incident-status-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.incident-status--afwachting {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+.incident-status--behandeling {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.incident-status--opgelost {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.incident-status--default {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+
+/* Tabel: rij hover/click */
+.incidenten-table tbody tr { cursor: pointer; }
+.incidenten-table tbody tr:hover { background: var(--fill-hover); }
+
+/* Lege state */
+.incident-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Form modal: brede textareas onder de grid */
+.cl-add-fullrow {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+.cl-add-fullrow textarea {
+  min-height: 70px;
+  resize: vertical;
+  font-family: inherit;
+}

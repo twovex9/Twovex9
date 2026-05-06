@@ -3584,3 +3584,56 @@ begin
     );
   end loop;
 end $$;
+
+-- =============================================================================
+-- Stage 9c: incidenten — meldingen rond cliënten
+-- =============================================================================
+create table if not exists public.incidenten (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid references public.clienten(id) on delete set null,
+  categorie text not null default 'Overig'
+    check (categorie in ('Val', 'Medicatie', 'Agressie', 'Vermissing',
+                         'Materiele schade', 'Privacy/AVG', 'Overig')),
+  status text not null default 'in_afwachting'
+    check (status in ('in_afwachting', 'in_behandeling', 'opgelost')),
+  beoordelaar_id uuid references public.medewerkers(id) on delete set null,
+  melder_id uuid references public.medewerkers(id) on delete set null,
+  locatie_id uuid references public.locaties(id) on delete set null,
+  incident_datum timestamptz not null default now(),
+  omschrijving text not null default '',
+  genomen_maatregelen text not null default '',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  archived boolean not null default false
+);
+
+create index if not exists incidenten_client_id_idx on public.incidenten (client_id);
+create index if not exists incidenten_status_idx on public.incidenten (status) where archived = false;
+create index if not exists incidenten_beoordelaar_idx on public.incidenten (beoordelaar_id);
+create index if not exists incidenten_melder_idx on public.incidenten (melder_id);
+create index if not exists incidenten_locatie_idx on public.incidenten (locatie_id);
+create index if not exists incidenten_archived_idx on public.incidenten (archived);
+create index if not exists incidenten_incident_datum_idx on public.incidenten (incident_datum desc);
+
+drop trigger if exists trg_incidenten_set_modified on public.incidenten;
+create trigger trg_incidenten_set_modified
+  before update on public.incidenten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.incidenten enable row level security;
+
+drop policy if exists "auth kan incidenten lezen" on public.incidenten;
+create policy "auth kan incidenten lezen"
+  on public.incidenten for select to authenticated using (true);
+
+drop policy if exists "auth kan incidenten toevoegen" on public.incidenten;
+create policy "auth kan incidenten toevoegen"
+  on public.incidenten for insert to authenticated with check (true);
+
+drop policy if exists "auth kan incidenten bewerken" on public.incidenten;
+create policy "auth kan incidenten bewerken"
+  on public.incidenten for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan incidenten verwijderen" on public.incidenten;
+create policy "auth kan incidenten verwijderen"
+  on public.incidenten for delete to authenticated using (true);

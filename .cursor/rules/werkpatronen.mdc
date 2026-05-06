@@ -234,6 +234,8 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 | Cliënt-documenten | `clientDocsDB` | `client_documents` + bucket `client-documents` | `client-documents-data.js` |
 | Facturen | `facturenDB` | `facturen` | `facturen-data.js` |
 | Nieuws | `nieuwsDB` | `nieuws` | `nieuws-data.js` |
+| Incidenten | `incidentenDB` | `incidenten` | `incidenten-data.js` |
+| Profielen + rollen | `profilesDB` | `profiles` (1-op-1 met `auth.users`) | `profiles-data.js` |
 
 Voor sub-data per parent (zoals tarieven/notities/audit per beschikking, of notities per medewerker) hebben de modules een extra synchrone helper `getForBescSync(bescId)` of `getForMedewerkerSync(empId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `besa:<naam>-updated` event.
 

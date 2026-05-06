@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gemeenten — HR</title>
+  <title>Incidenten overzicht — HR</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -111,17 +111,17 @@
           </div>
         </div>
         <a href="organisatie.html" class="side-link">Organisatie</a>
-        <a href="gemeenten.html" class="side-link is-active" aria-current="page">Gemeenten</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
         <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
         <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
         <a href="facturen-importeren.html" class="side-link">Facturen importeren</a>
         <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="false" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, open submenu">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="true" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, sluit submenu">
             <span class="side-group__label">Incidenten</span>
             <span class="side-chev" aria-hidden="true"></span>
           </button>
-          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
-            <a href="incidenten.html" class="side-link side-link--nested">Incidenten overzicht</a>
+          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten">
+            <a href="incidenten.html" class="side-link side-link--nested is-active" aria-current="page">Incidenten overzicht</a>
             <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Dashboard</span>
             <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Categorieën</span>
             <span class="side-link side-link--nested side-link--unavailable" title="Nog niet beschikbaar">Verbeteringsmaatregelen</span>
@@ -134,80 +134,114 @@
       </div>
     </aside>
 
-    <main class="content content--hr-list content--cl-organisatie">
-      <div class="content-header">
-        <h1>Gemeenten</h1>
+    <main class="content">
+      <div class="content-header content-header--incidenten">
+        <div>
+          <h1>Incidenten overzicht</h1>
+          <p class="content-subtitle">Beheer en reageer op alle gemelde incidenten</p>
+        </div>
         <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" id="gem-columns-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="gem-columns-panel" role="menu" aria-labelledby="gem-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="gem-columns-list" role="none"></ul>
-            </div>
-          </div>
-          <button class="btn-primary" type="button" id="gem-add-btn">+ Gemeente toevoegen</button>
+          <button class="btn-outline" type="button" id="inc-columns-btn" aria-label="Kolommen">
+            <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Kolommen
+          </button>
+          <button class="btn-primary" type="button" id="inc-add-open-btn">+ Incident melden</button>
         </div>
       </div>
 
-      <div class="toolbar toolbar--clienten">
-        <input class="search" type="search" id="gem-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoek gemeenten" />
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="gem-archived-toggle" name="gem-arch" />
+      <section class="incident-stats" aria-label="Statistieken incidenten">
+        <div class="incident-stat-card incident-stat-card--total">
+          <div class="incident-stat-value" id="inc-stat-total">0</div>
+          <div class="incident-stat-label">Totaal incidenten</div>
+        </div>
+        <div class="incident-stat-card incident-stat-card--afwachting">
+          <div class="incident-stat-value" id="inc-stat-afwachting">0</div>
+          <div class="incident-stat-label">In afwachting</div>
+        </div>
+        <div class="incident-stat-card incident-stat-card--behandeling">
+          <div class="incident-stat-value" id="inc-stat-behandeling">0</div>
+          <div class="incident-stat-label">In behandeling</div>
+        </div>
+        <div class="incident-stat-card incident-stat-card--opgelost">
+          <div class="incident-stat-value" id="inc-stat-opgelost">0</div>
+          <div class="incident-stat-label">Opgelost</div>
+        </div>
+      </section>
+
+      <div class="incident-tabs" role="tablist" aria-label="Filter incidenten">
+        <button type="button" class="incident-tab" id="inc-tab-mijn" role="tab" aria-selected="false" data-tab="mijn">Mijn cliënten</button>
+        <button type="button" class="incident-tab is-active" id="inc-tab-alle" role="tab" aria-selected="true" data-tab="alle">Alle incidenten</button>
+      </div>
+
+      <h2 class="incident-section-title" id="inc-section-title">Alle incidenten</h2>
+
+      <div class="incident-toolbar">
+        <input class="search incident-search" type="search" id="inc-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoek incidenten" />
+        <select class="incident-filter" id="inc-filter-status" aria-label="Filter op status">
+          <option value="">Status</option>
+          <option value="in_afwachting">In afwachting</option>
+          <option value="in_behandeling">In behandeling</option>
+          <option value="opgelost">Opgelost</option>
+        </select>
+        <select class="incident-filter" id="inc-filter-locatie" aria-label="Filter op locatie">
+          <option value="">Locatie</option>
+        </select>
+        <select class="incident-filter" id="inc-filter-medewerker" aria-label="Filter op medewerker">
+          <option value="">Medewerker</option>
+        </select>
+        <select class="incident-filter" id="inc-filter-categorie" aria-label="Filter op categorie">
+          <option value="">Categorie</option>
+        </select>
+        <select class="incident-filter" id="inc-filter-client" aria-label="Filter op cliënt">
+          <option value="">Cliënt</option>
+        </select>
+        <input class="incident-filter incident-filter--date" type="date" id="inc-filter-datum-van" aria-label="Datum vanaf" />
+        <input class="incident-filter incident-filter--date" type="date" id="inc-filter-datum-tot" aria-label="Datum tot" />
+        <label class="switch switch--yellow incident-archive-toggle">
+          <input type="checkbox" id="inc-archived-toggle" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
       </div>
 
-      <section class="table-card table-card--clienten">
+      <section class="table-card table-card--incidenten">
         <div class="table-wrapper">
-          <table class="employees-table clienten-table" id="gem-table" data-page-size="15">
+          <table class="employees-table incidenten-table" id="inc-table" data-page-size="50">
             <thead>
               <tr>
-                <th class="th-check" data-col="select">
-                  <input type="checkbox" class="table-checkbox" id="gem-check-all" aria-label="Selecteer alles" />
-                </th>
-                <th data-col="naam" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Naam</span>
-                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op naam">
-                      <span class="th-sort-arrows" aria-hidden="true"></span>
-                    </button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th class="cl-actions-th" data-col="acties" aria-label="Acties"></th>
+                <th class="th-check"><input type="checkbox" id="inc-check-all" class="table-checkbox" aria-label="Selecteer alles" /></th>
+                <th>Cliënt</th>
+                <th>Categorie</th>
+                <th>Status</th>
+                <th>Beoordelaar</th>
+                <th>Laatst bijgewerkt</th>
+                <th>Datum</th>
+                <th class="cl-actions-th" aria-label="Acties"></th>
               </tr>
             </thead>
-            <tbody id="gem-tbody"></tbody>
+            <tbody id="inc-tbody"></tbody>
           </table>
         </div>
-        <div class="table-footer table-footer--pagebar cl-table-footer">
+        <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="gem-pager-range" class="pager-range">0 van 0</span>
+            <span id="inc-pager-range" class="pager-range">0 van 0</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="gem-rows-per-page">
+            <label class="footer-rows-wrap" for="inc-rows-per-page">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="gem-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+              <select id="inc-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="10">10</option>
-                <option value="15" selected>15</option>
-                <option value="30">30</option>
-                <option value="50">50</option>
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
               </select>
             </label>
-            <span id="gem-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="inc-pager-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="gem-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="gem-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+              <button type="button" class="pager-btn" id="inc-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+              <button type="button" class="pager-btn" id="inc-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="inc-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="inc-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
             </span>
           </div>
         </div>
@@ -215,74 +249,125 @@
     </main>
   </div>
 
-  <div class="app-toast app-toast--clienten" id="gem-toast" role="status" aria-live="polite" hidden></div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="gem-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-ar-title" tabindex="-1">
+  <!-- Add/Edit modal -->
+  <div class="modal-overlay" id="inc-form-modal" hidden aria-hidden="true">
+    <div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="inc-form-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="gem-ar-title" class="modal-title">Gemeente archiveren</h2>
-        <button type="button" class="modal-close" id="gem-ar-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 class="modal-title" id="inc-form-title">Incident melden</h2>
+        <button type="button" class="modal-close" id="inc-form-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">De gemeente wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan in de toolbar om gearchiveerde gemeenten te zien.</p>
-        <p class="employee-delete-preview" id="gem-ar-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="gem-ar-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="gem-ar-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="gem-ar-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="gem-ar-confirm" disabled>Archiveren</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="gem-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="gem-purge-title" class="modal-title">Gemeente definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="gem-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Deze gemeente wordt <strong>permanent</strong> uit de stamtabel gehaald.</p>
-        <p class="employee-delete-preview" id="gem-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="gem-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="gem-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="gem-purge-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="gem-purge-confirm" disabled>Verwijderen</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="gem-add-modal" hidden aria-hidden="true">
-    <div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="gem-add-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="gem-add-title">Gemeente toevoegen</h2>
-        <button type="button" class="modal-close" id="gem-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <form class="modal-form" id="gem-add-form" novalidate>
+      <form id="inc-form" class="cl-add-form" novalidate>
+        <input type="hidden" id="inc-form-id" />
         <div class="modal-body">
-          <div class="modal-field">
-            <label class="modal-label" for="gem-add-naam">Naam</label>
-            <input class="modal-input" type="text" id="gem-add-naam" name="naam" required autocomplete="off" />
+          <div class="cl-add-grid">
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-client">Cliënt</label>
+              <select class="modal-input modal-select" id="inc-form-client" required>
+                <option value="">— Kies cliënt —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-categorie">Categorie</label>
+              <select class="modal-input modal-select" id="inc-form-categorie" required></select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-status">Status</label>
+              <select class="modal-input modal-select" id="inc-form-status" required>
+                <option value="in_afwachting">In afwachting</option>
+                <option value="in_behandeling">In behandeling</option>
+                <option value="opgelost">Opgelost</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-datum">Datum incident</label>
+              <input class="modal-input" type="datetime-local" id="inc-form-datum" required />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-locatie">Locatie</label>
+              <select class="modal-input modal-select" id="inc-form-locatie">
+                <option value="">— Geen —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-melder">Melder (medewerker)</label>
+              <select class="modal-input modal-select" id="inc-form-melder">
+                <option value="">— Onbekend —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="inc-form-beoordelaar">Beoordelaar (medewerker)</label>
+              <select class="modal-input modal-select" id="inc-form-beoordelaar">
+                <option value="">— Niet toegewezen —</option>
+              </select>
+            </div>
           </div>
+          <div class="modal-field cl-add-fullrow">
+            <label class="modal-label" for="inc-form-omschrijving">Omschrijving</label>
+            <textarea class="modal-input" id="inc-form-omschrijving" rows="3" placeholder="Korte beschrijving van wat er gebeurd is…"></textarea>
+          </div>
+          <div class="modal-field cl-add-fullrow">
+            <label class="modal-label" for="inc-form-maatregelen">Genomen maatregelen</label>
+            <textarea class="modal-input" id="inc-form-maatregelen" rows="3" placeholder="Welke acties zijn er genomen of gepland?"></textarea>
+          </div>
+          <p class="fi-error" id="inc-form-error" role="alert" hidden></p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn-outline" id="gem-add-cancel">Annuleren</button>
-          <button type="submit" class="btn-primary" id="gem-add-submit">Toevoegen</button>
+          <button type="button" class="btn-outline" id="inc-form-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="inc-form-submit">Indienen</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- Archive confirm -->
+  <div class="modal-overlay modal-overlay--confirm" id="inc-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="inc-ar-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="inc-ar-title" class="modal-title">Incident archiveren</h2>
+        <button type="button" class="modal-close" id="inc-ar-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Het incident wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan om gearchiveerde incidenten te zien.</p>
+        <p class="employee-delete-preview" id="inc-ar-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="inc-ar-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="inc-ar-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="inc-ar-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="inc-ar-confirm" disabled>Archiveren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permanent delete confirm -->
+  <div class="modal-overlay modal-overlay--confirm" id="inc-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="inc-purge-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="inc-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="inc-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Dit incident wordt <strong>permanent</strong> verwijderd.</p>
+        <p class="employee-delete-preview" id="inc-purge-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="inc-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="inc-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="inc-purge-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="inc-purge-confirm" disabled>Verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-toast" id="inc-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="top-nav-overflow.js"></script>
   <script src="sidebar-nav.js"></script>
@@ -291,7 +376,10 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="gemeenten-data.js"></script>
-  <script src="gemeenten.js"></script>
+  <script src="clienten-data.js" defer></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="locaties-data.js" defer></script>
+  <script src="incidenten-data.js" defer></script>
+  <script src="incidenten.js" defer></script>
 </body>
 </html>
