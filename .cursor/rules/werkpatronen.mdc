@@ -235,6 +235,38 @@ Nieuwe pagina toevoegen? Vergeet `auth-guard.js` + `profiles-data.js` niet, ande
 
 Wil je later auth tijdelijk uitzetten (bv. voor lokaal debugging)? Zet `AUTH_ENABLED = false` in `supabase-client.js` — `auth-guard.js` no-opt dan automatisch.
 
+#### 6d-ter. RLS authenticated-only sinds Stage 8c
+
+Sinds Stage 8c is **élke** policy in `public.*` en `storage.objects` op `to authenticated` gezet (geen `to anon` meer). Dat betekent:
+
+- Nieuwe tabel toevoegen? Schrijf de policies direct als `to authenticated`. **Niet** meer `to anon` gebruiken — dat zou een security regressie zijn.
+- Naamconventie vanaf 8c: `"auth kan <tabel> <verb>"` (de migratie-DO-block zet bestaande `"anon kan ..."` automatisch om naar `"auth kan ..."`). Voor consistente schema.sql: bij nieuwe tabellen direct deze nieuwe naam gebruiken.
+- Standaard-pattern voor een nieuwe tabel:
+  ```sql
+  alter table public.mijn_tabel enable row level security;
+
+  drop policy if exists "auth kan mijn_tabel lezen" on public.mijn_tabel;
+  create policy "auth kan mijn_tabel lezen"
+    on public.mijn_tabel for select to authenticated using (true);
+
+  drop policy if exists "auth kan mijn_tabel toevoegen" on public.mijn_tabel;
+  create policy "auth kan mijn_tabel toevoegen"
+    on public.mijn_tabel for insert to authenticated with check (true);
+
+  drop policy if exists "auth kan mijn_tabel bewerken" on public.mijn_tabel;
+  create policy "auth kan mijn_tabel bewerken"
+    on public.mijn_tabel for update to authenticated using (true) with check (true);
+
+  drop policy if exists "auth kan mijn_tabel verwijderen" on public.mijn_tabel;
+  create policy "auth kan mijn_tabel verwijderen"
+    on public.mijn_tabel for delete to authenticated using (true);
+  ```
+- Storage-buckets idem: alle policies op `storage.objects` voor onze buckets (`client-documents`, `medewerker-documenten`) staan op `to authenticated`. Public URLs werken alleen voor ingelogde users.
+- De Stage 8c migratie-DO-block staat onderaan `schema.sql` en wordt elke keer her-uitgevoerd: zelfs als je per ongeluk hierboven nog `to anon` zou schrijven, wordt die direct omgezet bij het uitrollen van de hele schema.sql. Maar reken daar niet op — schrijf direct correct.
+- Code-side: niets te doen. Supabase JS-client stuurt JWT automatisch zodra een sessie actief is (`persistSession: true` uit Stage 8a).
+
+Komt later (toekomstige stage): rol-based fine-grained policies (bijv. medewerker mag alleen eigen `medewerker_id`-rijen, admin alles). Daarvoor zijn de helpers `public.is_admin(uuid)` en `public.current_user_rol()` uit Stage 8b al klaar.
+
 #### 6d-bis. Profiles + rollen (Stage 8b)
 
 Elke `auth.users` heeft 1-op-1 een rij in `public.profiles` (auto-create trigger zorgt dat het altijd consistent is). Velden: `voornaam`, `achternaam`, `email`, `rol` (`admin` | `medewerker` | `viewer`), optionele FK `medewerker_id` naar `public.medewerkers` (auto-link bij email-match).

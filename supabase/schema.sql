@@ -3518,3 +3518,69 @@ create policy "profiles_delete_admin"
   on public.profiles for delete
   to authenticated
   using (public.is_admin(auth.uid()));
+
+-- =============================================================================
+-- Stage 8c: zet alle 'anon'-policies om naar 'authenticated'
+-- =============================================================================
+-- Dit blok is idempotent en pakt dynamisch elke policy in public.* en
+-- storage.objects op waar 'anon' in de roles-lijst staat. Voor elke match:
+--   1. drop de oude (anon) policy
+--   2. drop eventuele eerder gemaakte 'auth'-tweeling (idempotent)
+--   3. recreate met identieke USING/WITH CHECK, maar TO authenticated
+--
+-- Daardoor blijft schema.sql canonical: zelfs als hierboven nog 'to anon'
+-- policies staan voor backwards-compatibility, worden ze door dit slot-blok
+-- direct omgezet zodra de hele schema.sql wordt uitgerold.
+-- =============================================================================
+
+do $$
+declare
+  pol record;
+  new_name text;
+  using_clause text;
+  check_clause text;
+begin
+  for pol in
+    select
+      schemaname,
+      tablename,
+      policyname,
+      cmd,
+      qual,
+      with_check
+    from pg_policies
+    where schemaname in ('public', 'storage')
+      and 'anon' = any(roles)
+  loop
+    execute format(
+      'drop policy if exists %I on %I.%I',
+      pol.policyname, pol.schemaname, pol.tablename
+    );
+
+    new_name := regexp_replace(pol.policyname, '^anon\b', 'auth');
+    if new_name = pol.policyname then
+      new_name := 'auth: ' || pol.policyname;
+    end if;
+
+    execute format(
+      'drop policy if exists %I on %I.%I',
+      new_name, pol.schemaname, pol.tablename
+    );
+
+    using_clause := case
+      when pol.qual is not null then ' using (' || pol.qual || ')'
+      else ''
+    end;
+
+    check_clause := case
+      when pol.with_check is not null then ' with check (' || pol.with_check || ')'
+      else ''
+    end;
+
+    execute format(
+      'create policy %I on %I.%I for %s to authenticated%s%s',
+      new_name, pol.schemaname, pol.tablename,
+      pol.cmd, using_clause, check_clause
+    );
+  end loop;
+end $$;
