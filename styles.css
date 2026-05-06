@@ -4195,12 +4195,16 @@ select.modal-select.modal-select--chevron-right {
 .emp-verzuim-table-wrap {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
   background: #fff;
 }
 
 .emp-verzuim-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -4421,12 +4425,16 @@ select.modal-select.modal-select--chevron-right {
 .emp-verlof-saldi-table-wrap {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
   background: #fff;
 }
 
 .emp-verlof-saldi-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
