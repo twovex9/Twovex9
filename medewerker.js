@@ -1421,36 +1421,36 @@ function initLoondienstPeriodiekeMaandDropdown() {
 
 /* ── Verzuim ──────────────────────────── */
 
-function getVerzuimState() {
-  if (!window.__empVerzuim || typeof window.__empVerzuim !== "object") {
-    window.__empVerzuim = { kort: [], lang: [] };
-  }
-  if (!Array.isArray(window.__empVerzuim.kort)) window.__empVerzuim.kort = [];
-  if (!Array.isArray(window.__empVerzuim.lang)) window.__empVerzuim.lang = [];
-  return window.__empVerzuim;
+// Verzuim-perioden worden in Supabase opgeslagen via window.medewerkerVerzuimDB.
+// De legacy localStorage employeeEditsById per-medewerker `.verzuim.kort[]`
+// en `.verzuim.lang[]` worden automatisch eenmalig gemigreerd bij eerste boot.
+
+function reportVerzuimError(label, err) {
+  try { console.error("[medewerker verzuim]", label, err); } catch (e) { /* */ }
+  var msg = "Verzuim opslaan mislukt. Controleer je verbinding en probeer opnieuw.";
+  if (err && err.message) msg = "Verzuim opslaan mislukt: " + err.message;
+  if (typeof showSaveModal === "function") showSaveModal(msg, "Fout");
+  else if (typeof showToast === "function") showToast(msg);
 }
 
-function saveVerzuimState() {
+function getCurrentEmployeeIdForVerzuim() {
   const emp = getSelectedEmployee();
-  if (!emp) return;
-  emp.verzuim = getVerzuimState();
-  const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-  const id = emp.id || emp.naam;
-  if (!allEdits[id]) allEdits[id] = {};
-  allEdits[id].verzuim = emp.verzuim;
-  localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+  if (!emp) return "";
+  return String(emp.empId || emp.id || emp.naam || "");
+}
+
+function readVerzuimRowsForCurrent(type) {
+  const empId = getCurrentEmployeeIdForVerzuim();
+  if (!empId) return [];
+  if (window.medewerkerVerzuimDB && typeof window.medewerkerVerzuimDB.getForMedewerkerSync === "function") {
+    return window.medewerkerVerzuimDB.getForMedewerkerSync(empId, type);
+  }
+  return [];
 }
 
 function initVerzuimSection() {
-  const emp = getSelectedEmployee();
-  if (emp && emp.verzuim && typeof emp.verzuim === "object") {
-    window.__empVerzuim = {
-      kort: Array.isArray(emp.verzuim.kort) ? emp.verzuim.kort : [],
-      lang: Array.isArray(emp.verzuim.lang) ? emp.verzuim.lang : [],
-    };
-  }
-
   let activeModalType = "kort";
+  const renderers = {};
 
   document.querySelectorAll(".emp-verzuim-block[data-verzuim-type]").forEach((block) => {
     const type = block.dataset.verzuimType;
@@ -1496,8 +1496,7 @@ function initVerzuimSection() {
     }
 
     function render() {
-      const state = getVerzuimState();
-      let items = (state[type] || []).slice();
+      let items = readVerzuimRowsForCurrent(type);
       const q = (searchInput?.value || "").trim().toLowerCase();
       if (q) {
         items = items.filter((it) =>
@@ -1527,6 +1526,7 @@ function initVerzuimSection() {
         emptyEl.style.display = "none";
         pageItems.forEach((item) => {
           const tr = document.createElement("tr");
+          tr.dataset.verzuimId = item.id;
           const cols = ["eerstZiektedag", "verwachteTerug", "werkelijkeTerug", "beschrijving", "status"];
           cols.forEach((col) => {
             const td = document.createElement("td");
@@ -1550,11 +1550,21 @@ function initVerzuimSection() {
           delBtn.className = "emp-verzuim-delete-btn";
           delBtn.title = "Verwijderen";
           delBtn.innerHTML = "&#10005;";
-          delBtn.addEventListener("click", () => {
-            const idx = state[type].indexOf(item);
-            if (idx > -1) state[type].splice(idx, 1);
-            saveVerzuimState();
-            render();
+          delBtn.dataset.verzuimId = item.id;
+          delBtn.addEventListener("click", async () => {
+            if (!window.medewerkerVerzuimDB || typeof window.medewerkerVerzuimDB.remove !== "function") {
+              reportVerzuimError("data-laag niet beschikbaar", new Error("medewerkerVerzuimDB ontbreekt"));
+              return;
+            }
+            delBtn.setAttribute("disabled", "");
+            try {
+              await window.medewerkerVerzuimDB.remove(item.id);
+              // UI ververst zichzelf via besa:medewerker-verzuim-updated event.
+            } catch (err) {
+              reportVerzuimError("verwijderen mislukt", err);
+            } finally {
+              delBtn.removeAttribute("disabled");
+            }
           });
           tdAct.appendChild(delBtn);
           tr.appendChild(tdAct);
@@ -1586,7 +1596,7 @@ function initVerzuimSection() {
 
     block.querySelectorAll(".emp-verzuim-page-nav button").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const total = (getVerzuimState()[type] || []).length;
+        const total = readVerzuimRowsForCurrent(type).length;
         const totalPages = Math.max(1, Math.ceil(total / getPageSize()));
         const action = btn.dataset.page;
         if (action === "first") currentPage = 0;
@@ -1623,8 +1633,16 @@ function initVerzuimSection() {
       });
     }
 
-    window["__renderVerzuim_" + type] = render;
+    renderers[type] = render;
     render();
+  });
+
+  // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
+  // andere tab, externe sync). Beide blokken (kort + lang) opnieuw renderen.
+  window.addEventListener("besa:medewerker-verzuim-updated", function () {
+    Object.keys(renderers).forEach(function (t) {
+      try { renderers[t](); } catch (e) { /* */ }
+    });
   });
 
   document.addEventListener("click", () => {
@@ -1657,25 +1675,40 @@ function initVerzuimSection() {
   if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
   if (submitBtn) {
-    submitBtn.addEventListener("click", () => {
+    submitBtn.addEventListener("click", async () => {
       const datum = document.getElementById("emp-verzuim-datum")?.value || "";
       const beschrijving = (document.getElementById("emp-verzuim-editor")?.innerHTML || "").trim();
       if (!datum) {
         document.getElementById("emp-verzuim-datum")?.focus();
         return;
       }
-      const state = getVerzuimState();
-      state[activeModalType].push({
-        eerstZiektedag: datum,
-        verwachteTerug: "",
-        werkelijkeTerug: "",
-        beschrijving,
-        status: "Actief",
-      });
-      saveVerzuimState();
-      closeModal();
-      const renderFn = window["__renderVerzuim_" + activeModalType];
-      if (typeof renderFn === "function") renderFn();
+      if (!window.medewerkerVerzuimDB || typeof window.medewerkerVerzuimDB.add !== "function") {
+        reportVerzuimError("data-laag niet beschikbaar", new Error("medewerkerVerzuimDB ontbreekt"));
+        return;
+      }
+      const empId = getCurrentEmployeeIdForVerzuim();
+      if (!empId) {
+        reportVerzuimError("geen medewerker geselecteerd", new Error("getSelectedEmployee leeg"));
+        return;
+      }
+      submitBtn.setAttribute("disabled", "");
+      try {
+        await window.medewerkerVerzuimDB.add({
+          medewerkerId: empId,
+          type: activeModalType,
+          eerstZiektedag: datum,
+          verwachteTerug: "",
+          werkelijkeTerug: "",
+          beschrijving: beschrijving,
+          status: "Actief",
+        });
+        closeModal();
+        // UI ververst zichzelf via besa:medewerker-verzuim-updated event.
+      } catch (err) {
+        reportVerzuimError("toevoegen mislukt", err);
+      } finally {
+        submitBtn.removeAttribute("disabled");
+      }
     });
   }
 }

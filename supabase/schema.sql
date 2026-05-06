@@ -3212,3 +3212,58 @@ create policy "anon kan medewerker_verlof_overgedragen bewerken"
 drop policy if exists "anon kan medewerker_verlof_overgedragen verwijderen" on public.medewerker_verlof_overgedragen;
 create policy "anon kan medewerker_verlof_overgedragen verwijderen"
   on public.medewerker_verlof_overgedragen for delete to anon using (true);
+
+-- ============================================================================
+-- medewerker_verzuim_perioden (kort + lang ziekteperioden per medewerker)
+-- ============================================================================
+--
+-- 1-op-veel: één medewerker kan meerdere verzuim-perioden hebben.
+-- type='kort' of 'lang' bepaalt in welke tabel hij op de UI verschijnt
+-- (tabblad "Kort verzuim" vs "Lang verzuim" op de medewerker-detail-pagina).
+-- medewerker_id is soft-FK naar medewerkers.id (text). Beschrijving is HTML
+-- uit de inline RTE.
+
+create table if not exists public.medewerker_verzuim_perioden (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id text not null,
+  type text not null check (type in ('kort', 'lang')),
+  eerst_ziektedag date not null,
+  verwachte_terug date,
+  werkelijke_terug date,
+  beschrijving text,
+  status text not null default 'Actief' check (status in ('Actief', 'Hersteld')),
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists medewerker_verzuim_perioden_emp_idx
+  on public.medewerker_verzuim_perioden (medewerker_id);
+
+create index if not exists medewerker_verzuim_perioden_emp_type_idx
+  on public.medewerker_verzuim_perioden (medewerker_id, type);
+
+create index if not exists medewerker_verzuim_perioden_eerst_ziektedag_idx
+  on public.medewerker_verzuim_perioden (eerst_ziektedag desc);
+
+drop trigger if exists trg_medewerker_verzuim_perioden_set_modified on public.medewerker_verzuim_perioden;
+create trigger trg_medewerker_verzuim_perioden_set_modified
+  before update on public.medewerker_verzuim_perioden
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.medewerker_verzuim_perioden enable row level security;
+
+drop policy if exists "anon kan medewerker_verzuim_perioden lezen" on public.medewerker_verzuim_perioden;
+create policy "anon kan medewerker_verzuim_perioden lezen"
+  on public.medewerker_verzuim_perioden for select to anon using (true);
+
+drop policy if exists "anon kan medewerker_verzuim_perioden toevoegen" on public.medewerker_verzuim_perioden;
+create policy "anon kan medewerker_verzuim_perioden toevoegen"
+  on public.medewerker_verzuim_perioden for insert to anon with check (true);
+
+drop policy if exists "anon kan medewerker_verzuim_perioden bewerken" on public.medewerker_verzuim_perioden;
+create policy "anon kan medewerker_verzuim_perioden bewerken"
+  on public.medewerker_verzuim_perioden for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan medewerker_verzuim_perioden verwijderen" on public.medewerker_verzuim_perioden;
+create policy "anon kan medewerker_verzuim_perioden verwijderen"
+  on public.medewerker_verzuim_perioden for delete to anon using (true);
