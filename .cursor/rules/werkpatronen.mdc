@@ -7,6 +7,42 @@ alwaysApply: true
 
 Pas deze patronen **standaard** toe op elke nieuwe of gewijzigde functionaliteit in deze app. Wijk er alléén van af als de gebruiker het expliciet zo vraagt.
 
+## ⚡ HARDE REGEL #0 — Supabase is de bron van waarheid. Altijd.
+
+**Voor élke feature, pagina, modal, formulier, import, knop of actie waar door de gebruiker ingevoerde of bewerkte data binnenkomt, geldt zonder uitzondering:**
+
+1. **De data MOET direct naar Supabase worden geschreven** via een dedicated `<naam>-data.js` data-laag (zie `6b` voor de bestaande modules).
+2. **`localStorage` mag nooit de bron-van-waarheid zijn.** Het mag alleen als read-cache (offline fallback / snelle eerste render) of voor pure UI-state (kolomvoorkeuren, filter-toggles, sortering).
+3. **Voor bestand-uploads (afbeeldingen, PDF's, documenten) gebruik je Supabase Storage** met `storage_path` in de tabel — nooit base64 in een `text`/`jsonb`-kolom (zie sectie `6c`).
+4. **Bij elke schrijfactie wacht je het Supabase-resultaat af** met `await`. Bij failure → toon een rode `showError` of laat `besa-sync-reporter.js` zijn werk doen. **Nooit silent catch.**
+5. **Bestaat er nog geen tabel of data-laag voor wat de gebruiker vraagt?** Maak ze dan eerst aan (SQL in `supabase/schema.sql` + nieuwe `<naam>-data.js`-module volgens het stappenplan in `6a`) **voordat** je page-code schrijft die de data zou opslaan. Het uitstellen "doe ik later wel" is verboden.
+6. **Elke nieuwe HTML-pagina** laadt verplicht in deze volgorde: Supabase CDN → `supabase-client.js` → `besa-sync-reporter.js` → `auth-guard.js` → `profiles-data.js` → alle relevante `<naam>-data.js` → page-script(s). Mis er één en je krijgt silent failures.
+7. **Toekomstige AI-sessies en mensen die deze codebase aanraken**: deze regel staat boven al je andere prioriteiten qua dataopslag. De gebruiker hoeft hier nooit meer expliciet om te vragen — het is de default.
+
+Concreet: als de gebruiker zegt "voeg een veld X toe" of "maak een formulier voor Y", dan is de impliciete eis altijd "...en sla het automatisch op in Supabase, zodat het op alle apparaten en sessies beschikbaar is." Niet vragen, gewoon doen.
+
+Verboden patroon (komt nooit meer voor):
+
+```js
+// ❌ FOUT — alleen localStorage, nooit naar Supabase
+localStorage.setItem("mijn_data_v1", JSON.stringify(items));
+
+// ❌ FOUT — silent skip wanneer data-laag niet geladen is
+if (window.xxxDB && typeof window.xxxDB.add === "function") {
+  window.xxxDB.add(row).catch(function () { /* */ });
+}
+
+// ✅ GOED — Supabase first, fout zichtbaar maken
+try {
+  await window.xxxDB.add(row);
+  showActionFeedback("saved", "X");
+} catch (err) {
+  showError("Opslaan in database mislukt: " + err.message);
+}
+```
+
+Detail-regels (welke tabellen er zijn, hoe RLS, hoe Storage, hoe migraties van legacy localStorage) staan in sectie 6. Maar de **harde basisregel** staat hier en is non-negotiable.
+
 ## 1. Tabellen — horizontale scrollbalk verplicht
 
 Elke `<table>` zit in een wrapper waar **horizontaal scrollen automatisch werkt** zodra de kolommen niet meer passen. Gebruik bij voorkeur `<div class="table-wrapper">` of een eigen wrapper-class met:
