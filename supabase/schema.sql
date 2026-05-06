@@ -3163,3 +3163,52 @@ create policy "anon kan medewerker_notities bewerken"
 drop policy if exists "anon kan medewerker_notities verwijderen" on public.medewerker_notities;
 create policy "anon kan medewerker_notities verwijderen"
   on public.medewerker_notities for delete to anon using (true);
+
+-- ============================================================================
+-- medewerker_verlof_overgedragen (verlof-saldi van vorige jaargang)
+-- ============================================================================
+--
+-- 1-op-1 met medewerker (UNIQUE constraint). Bevat overgedragen wettelijke
+-- en bovenwettelijke verlofuren + een vrije reden-tekst. Wordt vanuit het
+-- "Verlof overgedragen"-modal op de medewerker-detail-pagina opgeslagen.
+-- medewerker_id is soft-FK naar medewerkers.id (text).
+
+create table if not exists public.medewerker_verlof_overgedragen (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id text not null unique,
+  wet_totaal numeric(8, 2) not null default 0,
+  wet_gebruikt numeric(8, 2) not null default 0,
+  wet_beschikbaar numeric(8, 2) not null default 0,
+  bovenwet_totaal numeric(8, 2) not null default 0,
+  bovenwet_gebruikt numeric(8, 2) not null default 0,
+  bovenwet_beschikbaar numeric(8, 2) not null default 0,
+  reden text,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists medewerker_verlof_overgedragen_emp_idx
+  on public.medewerker_verlof_overgedragen (medewerker_id);
+
+drop trigger if exists trg_medewerker_verlof_overgedragen_set_modified on public.medewerker_verlof_overgedragen;
+create trigger trg_medewerker_verlof_overgedragen_set_modified
+  before update on public.medewerker_verlof_overgedragen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.medewerker_verlof_overgedragen enable row level security;
+
+drop policy if exists "anon kan medewerker_verlof_overgedragen lezen" on public.medewerker_verlof_overgedragen;
+create policy "anon kan medewerker_verlof_overgedragen lezen"
+  on public.medewerker_verlof_overgedragen for select to anon using (true);
+
+drop policy if exists "anon kan medewerker_verlof_overgedragen toevoegen" on public.medewerker_verlof_overgedragen;
+create policy "anon kan medewerker_verlof_overgedragen toevoegen"
+  on public.medewerker_verlof_overgedragen for insert to anon with check (true);
+
+drop policy if exists "anon kan medewerker_verlof_overgedragen bewerken" on public.medewerker_verlof_overgedragen;
+create policy "anon kan medewerker_verlof_overgedragen bewerken"
+  on public.medewerker_verlof_overgedragen for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan medewerker_verlof_overgedragen verwijderen" on public.medewerker_verlof_overgedragen;
+create policy "anon kan medewerker_verlof_overgedragen verwijderen"
+  on public.medewerker_verlof_overgedragen for delete to anon using (true);

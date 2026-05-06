@@ -1682,6 +1682,41 @@ function initVerzuimSection() {
 
 /* ── Verlof tables ────────────────────── */
 
+// Verlof-overgedragen wordt in Supabase opgeslagen via
+// window.medewerkerVerlofOvergedragenDB. De legacy localStorage
+// employeeEditsById per-medewerker `.verlofOvergedragen` object wordt
+// automatisch eenmalig gemigreerd bij eerste boot.
+
+function reportVerlofError(label, err) {
+  try { console.error("[medewerker verlof-overgedragen]", label, err); } catch (e) { /* */ }
+  var msg = "Overgedragen uren opslaan mislukt. Controleer je verbinding en probeer opnieuw.";
+  if (err && err.message) msg = "Overgedragen uren opslaan mislukt: " + err.message;
+  if (typeof showSaveModal === "function") showSaveModal(msg, "Fout");
+  else if (typeof showToast === "function") showToast(msg);
+}
+
+const VERLOF_OVERD_DEFAULT = {
+  wetTotaal: 0, wetGebruikt: 0, wetBeschikbaar: 0,
+  bovenwetTotaal: 0, bovenwetGebruikt: 0, bovenwetBeschikbaar: 0,
+  reden: "",
+};
+
+function getCurrentEmployeeIdForVerlof() {
+  const emp = getSelectedEmployee();
+  if (!emp) return "";
+  return String(emp.empId || emp.id || emp.naam || "");
+}
+
+function readVerlofOvergedragenForCurrent() {
+  const empId = getCurrentEmployeeIdForVerlof();
+  if (!empId) return Object.assign({}, VERLOF_OVERD_DEFAULT);
+  if (window.medewerkerVerlofOvergedragenDB && typeof window.medewerkerVerlofOvergedragenDB.getForMedewerkerSync === "function") {
+    const stored = window.medewerkerVerlofOvergedragenDB.getForMedewerkerSync(empId);
+    if (stored) return Object.assign({}, VERLOF_OVERD_DEFAULT, stored);
+  }
+  return Object.assign({}, VERLOF_OVERD_DEFAULT);
+}
+
 function initVerlofOverdragenModal() {
   const editBtn = document.querySelector(".emp-verlof-edit-btn");
   const modal = document.getElementById("emp-verlof-overd-modal");
@@ -1689,14 +1724,6 @@ function initVerlofOverdragenModal() {
   const cancelBtn = document.getElementById("emp-verlof-overd-cancel");
   const saveBtn = document.getElementById("emp-verlof-overd-save");
   if (!editBtn || !modal) return;
-
-  function getState() {
-    const emp = getSelectedEmployee();
-    return (emp && emp.verlofOvergedragen) || {
-      wetTotaal: 0, wetGebruikt: 0, wetBeschikbaar: 0,
-      bovenwetTotaal: 0, bovenwetGebruikt: 0, bovenwetBeschikbaar: 0,
-    };
-  }
 
   function updateCards(st) {
     const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v + "u"; };
@@ -1707,13 +1734,15 @@ function initVerlofOverdragenModal() {
   }
 
   function openModal() {
-    const st = getState();
+    const st = readVerlofOvergedragenForCurrent();
     document.getElementById("verlof-overd-wet-totaal").value = st.wetTotaal;
     document.getElementById("verlof-overd-wet-gebruikt-input").value = st.wetGebruikt;
     document.getElementById("verlof-overd-wet-beschikbaar").value = st.wetBeschikbaar;
     document.getElementById("verlof-overd-bovenwet-totaal").value = st.bovenwetTotaal;
     document.getElementById("verlof-overd-bovenwet-gebruikt-input").value = st.bovenwetGebruikt;
     document.getElementById("verlof-overd-bovenwet-beschikbaar").value = st.bovenwetBeschikbaar;
+    // Reden is altijd leeg bij openen — het modal vraagt naar de reden
+    // van DEZE wijziging, niet de geschiedenis.
     document.getElementById("verlof-overd-reden").value = "";
     modal.style.display = "";
   }
@@ -1725,7 +1754,16 @@ function initVerlofOverdragenModal() {
   cancelBtn.addEventListener("click", closeModal);
   modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-  saveBtn.addEventListener("click", () => {
+  saveBtn.addEventListener("click", async () => {
+    const empId = getCurrentEmployeeIdForVerlof();
+    if (!empId) {
+      reportVerlofError("geen medewerker geselecteerd", new Error("getSelectedEmployee leeg"));
+      return;
+    }
+    if (!window.medewerkerVerlofOvergedragenDB || typeof window.medewerkerVerlofOvergedragenDB.save !== "function") {
+      reportVerlofError("data-laag niet beschikbaar", new Error("medewerkerVerlofOvergedragenDB ontbreekt"));
+      return;
+    }
     const st = {
       wetTotaal: Number(document.getElementById("verlof-overd-wet-totaal").value) || 0,
       wetGebruikt: Number(document.getElementById("verlof-overd-wet-gebruikt-input").value) || 0,
@@ -1735,21 +1773,27 @@ function initVerlofOverdragenModal() {
       bovenwetBeschikbaar: Number(document.getElementById("verlof-overd-bovenwet-beschikbaar").value) || 0,
       reden: document.getElementById("verlof-overd-reden").value || "",
     };
-    const emp = getSelectedEmployee();
-    if (emp) {
-      emp.verlofOvergedragen = st;
-      const allEdits = JSON.parse(localStorage.getItem("employeeEditsById") || "{}");
-      const id = emp.id || emp.naam;
-      if (!allEdits[id]) allEdits[id] = {};
-      allEdits[id].verlofOvergedragen = st;
-      localStorage.setItem("employeeEditsById", JSON.stringify(allEdits));
+    saveBtn.setAttribute("disabled", "");
+    try {
+      await window.medewerkerVerlofOvergedragenDB.save(empId, st);
+      // UI ververst zichzelf via besa:medewerker-verlof-overgedragen-updated
+      // event (zie listener onderaan deze functie).
+      closeModal();
+      if (typeof showToast === "function") showToast("Overgedragen uren opgeslagen");
+    } catch (err) {
+      reportVerlofError("opslaan mislukt", err);
+    } finally {
+      saveBtn.removeAttribute("disabled");
     }
-    updateCards(st);
-    closeModal();
-    if (typeof showToast === "function") showToast("Overgedragen uren opgeslagen");
   });
 
-  updateCards(getState());
+  // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
+  // andere tab, externe sync).
+  window.addEventListener("besa:medewerker-verlof-overgedragen-updated", function () {
+    try { updateCards(readVerlofOvergedragenForCurrent()); } catch (e) { /* */ }
+  });
+
+  updateCards(readVerlofOvergedragenForCurrent());
 }
 
 function initVerlofTables() {
