@@ -235,6 +235,23 @@ Nieuwe pagina toevoegen? Vergeet `auth-guard.js` + `profiles-data.js` niet, ande
 
 Wil je later auth tijdelijk uitzetten (bv. voor lokaal debugging)? Zet `AUTH_ENABLED = false` in `supabase-client.js` — `auth-guard.js` no-opt dan automatisch.
 
+#### 6d-quater. Sessie-verlopen afhandeling (Stage 8d)
+
+Sinds Stage 8d wordt een verlopen JWT (PostgREST `PGRST301`/`PGRST302`, HTTP `401`/`403`, of message `JWT expired` / `Invalid Refresh Token` / `Auth session missing`) niet meer als rode "sync mislukt"-toast getoond. In plaats daarvan:
+
+1. `besa-sync-reporter.js` herkent de fout via `besaIsAuthError(err)` en delegeert naar `window.besaHandleAuthFailure(err)`.
+2. `auth-guard.js` levert die handler en doet één nette `signOut()` + `clearLocalCaches()` + `window.location.replace("login.html?next=<huidige-url>")`. Idempotent via `redirectInFlight`-flag.
+3. Een korte info-toast `"Sessie verlopen — log opnieuw in om door te gaan."` wordt nog getoond vóór de redirect (mits `showActionFeedback` beschikbaar is).
+4. `auth-guard.js` checkt ook proactief de sessie bij `visibilitychange` en `focus` events. Dat voorkomt dat een tab die lang in de achtergrond stond eerst een rij data-calls fail't voordat de gebruiker het door heeft.
+
+Wat dit betekent voor data-lagen en page-scripts:
+- Niets doen. Bestaande `try/catch` met `reportSilent()` of `showError()` werkt door — auth-fouten worden door `besa-sync-reporter.js` onderschept vóór de toast.
+- Wil je in een eigen `await`-flow checken of een fout een auth-fout is? Gebruik `window.besaIsAuthError(err)` en handel zelf af, of laat 'm gewoon doorvallen naar de `catch` waar `besaReportSyncFailure` wordt aangeroepen.
+
+Verboden in Stage 8d+:
+- ❌ Een eigen redirect naar login schrijven in een page-script. Gebruik altijd `window.besaHandleAuthFailure(err)` zodat je de centrale logout-flow + cache-wis krijgt.
+- ❌ Catch-en op een data-call en alleen `console.error` doen — dan mist auth-detectie (zie sectie 6c-bis: gebruik `reportSilent`).
+
 #### 6d-ter. RLS authenticated-only sinds Stage 8c
 
 Sinds Stage 8c is **élke** policy in `public.*` en `storage.objects` op `to authenticated` gezet (geen `to anon` meer). Dat betekent:

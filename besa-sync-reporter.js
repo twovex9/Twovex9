@@ -18,20 +18,18 @@
  *     - Throttled per "domain": dezelfde domain laat maximaal 1 toast per
  *       5 seconden zien zodat een herhaald-falende sync de UI niet
  *       overspoelt.
- *     - Re-throwt de fout zodat optionele extra .catch() blijft werken.
  *
  *   window.besaReportSyncFailure(domain, err)
- *     - Lege variant zonder Promise: voor handmatige meldingen.
+ *     - Variant zonder Promise: voor handmatige meldingen.
  *
- * Gebruik in page-scripts:
- *   var p = window.someDB.pushAll(rows);
- *   window.besaFireAndForget(p, "Compensatie-feestdagen");
- *
- * Gebruik in data-layers:
- *   - Push-functies (pushAll, pushType, pushHistory, syncFromLocalUpsert,
- *     setCell, ...) MOETEN een Promise returnen die rejected bij Supabase-
- *     fout, niet zelf swallowen. Page-scripts wrappen die Promise in
- *     besaFireAndForget().
+ * Sinds Stage 8d:
+ *   - Auth-fouten (PGRST301 / 401 / 403 / "JWT expired" etc.) worden
+ *     gedetecteerd en NIET als rode "sync mislukt" toast getoond.
+ *     In plaats daarvan wordt window.besaHandleAuthFailure(err) aangeroepen
+ *     (door auth-guard.js geleverd) die netjes uitlogt + naar login.html
+ *     redirect met ?next=<huidige-url>.
+ *   - Een minimale fallback-handler staat hier voor het geval auth-guard
+ *     niet geladen is (bv. tijdens lokaal testen met AUTH_ENABLED=false).
  */
 (function (global) {
   "use strict";
@@ -46,7 +44,61 @@
     try { return JSON.stringify(err); } catch (e) { return String(err); }
   }
 
+  // ---------------------------------------------------------------------------
+  // Stage 8d: auth-error detectie
+  // ---------------------------------------------------------------------------
+  // PostgREST geeft bij verlopen of ontbrekend JWT typisch:
+  //   - code "PGRST301"  (jwt expired)
+  //   - code "PGRST302"  (jwt invalid)
+  //   - status 401 / 403
+  //   - message bevat "JWT", "expired", "permission denied", "Invalid Refresh Token"
+  // Supabase Storage geeft een vergelijkbare statusCode 401/403.
+  function isAuthError(err) {
+    if (!err) return false;
+    var code = String(err.code || err.statusCode || "").toUpperCase();
+    if (code === "PGRST301" || code === "PGRST302") return true;
+    var status = Number(err.status || err.statusCode || 0);
+    if (status === 401 || status === 403) return true;
+    var msg = String(err.message || err.msg || err.error || "").toLowerCase();
+    if (!msg) return false;
+    if (msg.indexOf("jwt") !== -1 && (msg.indexOf("expir") !== -1 || msg.indexOf("invalid") !== -1)) return true;
+    if (msg.indexOf("invalid refresh token") !== -1) return true;
+    if (msg.indexOf("not authenticated") !== -1) return true;
+    if (msg.indexOf("auth session missing") !== -1) return true;
+    return false;
+  }
+
+  // Idempotent fallback wanneer auth-guard.js niet geladen is. Pakt sowieso
+  // de meest cruciale stap: weg uit deze pagina, naar login.
+  var fallbackTriggered = false;
+  function fallbackAuthFailure() {
+    if (fallbackTriggered) return;
+    fallbackTriggered = true;
+    try {
+      var here = global.location.pathname + global.location.search + global.location.hash;
+      var url = "login.html?next=" + encodeURIComponent(here);
+      global.location.replace(url);
+    } catch (e) { /* */ }
+  }
+
+  function dispatchAuthFailure(err) {
+    try { console.warn("[besa:sync] auth-fout gedetecteerd, redirect naar login:", err); }
+    catch (e) { /* */ }
+    if (typeof global.besaHandleAuthFailure === "function") {
+      try { global.besaHandleAuthFailure(err); return; }
+      catch (e) { /* val terug op de fallback */ }
+    }
+    fallbackAuthFailure();
+  }
+
   function showFailureToast(domain, err) {
+    // Stage 8d: auth-fouten gaan niet als generieke sync-toast — die zijn
+    // verwarrend. Ze triggeren een nette redirect naar login.
+    if (isAuthError(err)) {
+      dispatchAuthFailure(err);
+      return;
+    }
+
     var key = String(domain || "default");
     var now = Date.now();
     if (lastShown[key] && now - lastShown[key] < THROTTLE_MS) return;
@@ -63,7 +115,6 @@
     if (typeof global.showSaveModal === "function") {
       try { global.showSaveModal(body, titel); return; } catch (e) { /* fall through */ }
     }
-    // Laatste redmiddel — minder fraai, maar voorkomt stille fouten.
     try { console.warn("[besa:sync] " + titel + ": " + body); } catch (e) { /* */ }
   }
 
@@ -73,8 +124,6 @@
       try { console.error("[besa:sync] " + (domain || "?") + " mislukt:", err); }
       catch (e) { /* */ }
       showFailureToast(domain || "Synchronisatie", err);
-      // Niet re-throwen: page-scripts behandelen dit nu als opgevangen.
-      // Wie expliciet wil weten of het lukte gebruikt rechtstreeks await.
       return null;
     });
   }
@@ -85,4 +134,5 @@
     catch (e) { /* */ }
     showFailureToast(domain || "Synchronisatie", err);
   };
+  global.besaIsAuthError = isAuthError;
 })(typeof window !== "undefined" ? window : this);

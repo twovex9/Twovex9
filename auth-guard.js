@@ -1,21 +1,28 @@
 /* global window, document */
 /**
- * auth-guard.js — Stage 8a authentication-bewaker.
+ * auth-guard.js — Stage 8a/8d authentication-bewaker.
  *
  * Verantwoordelijkheden:
  *   1. Bij elke pagina-load: check of er een actieve Supabase-sessie is.
  *      Geen sessie → redirect naar login.html (met ?next=<huidige-url> zodat
  *      de gebruiker na login op dezelfde plek terugkomt).
  *   2. Wel sessie → injecteert rechtsboven in de top-bar een blok met
- *      "<email> · Uitloggen". De uitlog-knop call'd Supabase signOut() en
- *      stuurt de gebruiker terug naar login.
+ *      "<naam | email> · Uitloggen". De uitlog-knop call'd Supabase signOut()
+ *      en stuurt de gebruiker terug naar login.
  *   3. Luistert op auth-state changes: als een sessie elders wordt
  *      ingetrokken (bv. password reset, andere tab uitlogt), wordt deze
  *      tab automatisch naar login gestuurd.
+ *   4. (Stage 8d) Levert window.besaHandleAuthFailure(err): wordt door
+ *      besa-sync-reporter.js aangeroepen zodra een data-call met een
+ *      auth-fout (PGRST301, 401, JWT expired, ...) terugkomt. Doet één
+ *      nette logout + redirect en is idempotent.
+ *   5. (Stage 8d) Pollt actief de sessie wanneer de tab opnieuw zichtbaar
+ *      wordt of focus krijgt — voorkomt dat een gebruiker eerst data-calls
+ *      ziet falen voordat hij doorheeft dat zijn sessie verlopen is.
  *
  * Vereisten:
- *   - Wordt geladen NA supabase-client.js maar VÓÓR alle data-layers, zodat
- *     de redirect kan plaatsvinden voordat de app data probeert te tonen.
+ *   - Wordt geladen NA supabase-client.js + besa-sync-reporter.js maar VÓÓR
+ *     alle data-layers en page-scripts.
  *   - Mag NIET op login.html worden geladen (zou een redirect-loop geven).
  *   - Werkt alleen als window.besaAuth.isEnabled() === true.
  */
@@ -23,11 +30,9 @@
   "use strict";
 
   if (!window.besaAuth || typeof window.besaAuth.isEnabled !== "function") {
-    // supabase-client.js is niet (correct) geladen — niets te bewaken.
     return;
   }
   if (!window.besaAuth.isEnabled()) {
-    // Auth staat uit (development/legacy). Geen guard activeren.
     return;
   }
   if (!window.besaSupabase || !window.besaSupabase.auth) {
@@ -40,7 +45,6 @@
     return idx >= 0 ? p.slice(idx + 1).toLowerCase() : p.toLowerCase();
   }
 
-  // Op login.html niets doen. Voor de zekerheid ook expliciet check'en.
   if (currentPathFile() === "login.html") return;
 
   function buildLoginUrl() {
@@ -48,13 +52,72 @@
     return "login.html?next=" + encodeURIComponent(here);
   }
 
-  function redirectToLogin() {
-    try { window.location.replace(buildLoginUrl()); }
-    catch (e) { window.location.href = buildLoginUrl(); }
+  // ---------------------------------------------------------------------------
+  // Centrale logout + redirect helper (gedeeld door uitlog-knop, expired-flow
+  // en proactieve session check). Idempotent via redirectInFlight-flag.
+  // ---------------------------------------------------------------------------
+  var redirectInFlight = false;
+
+  function clearLocalCaches() {
+    try {
+      var keysToKeep = { theme: 1, locale: 1 };
+      var toRemove = [];
+      for (var i = 0; i < window.localStorage.length; i += 1) {
+        var k = window.localStorage.key(i);
+        if (!k) continue;
+        if (keysToKeep[k]) continue;
+        toRemove.push(k);
+      }
+      toRemove.forEach(function (k) { try { window.localStorage.removeItem(k); } catch (e) { /* */ } });
+    } catch (e) { /* */ }
   }
 
+  function performLogoutAndRedirect(opts) {
+    if (redirectInFlight) return;
+    redirectInFlight = true;
+    var options = opts || {};
+    var loginUrl = options.preserveNext === false
+      ? "login.html"
+      : buildLoginUrl();
+
+    if (options.reason === "expired" && typeof window.showActionFeedback === "function") {
+      try {
+        window.showActionFeedback(
+          "info",
+          "Sessie verlopen",
+          "Log opnieuw in om door te gaan."
+        );
+      } catch (e) { /* */ }
+    }
+
+    // signOut() kan netwerk doen; we wachten max 1500ms en gaan dan sowieso.
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      clearLocalCaches();
+      try { window.location.replace(loginUrl); }
+      catch (e) { window.location.href = loginUrl; }
+    }
+    try {
+      var p = window.besaSupabase.auth.signOut();
+      if (p && typeof p.then === "function") {
+        p.then(go).catch(go);
+        setTimeout(go, options.reason === "expired" ? 1500 : 1500);
+        return;
+      }
+    } catch (e) { /* */ }
+    go();
+  }
+
+  // Stage 8d: globaal beschikbaar voor besa-sync-reporter en eventueel
+  // andere modules die een verlopen sessie willen melden.
+  window.besaHandleAuthFailure = function (err) {
+    try { console.warn("[auth-guard] auth-fout, ga uitloggen:", err); } catch (e) { /* */ }
+    performLogoutAndRedirect({ reason: "expired" });
+  };
+
   function getDisplayLabel(user) {
-    // Voorkeur: profiel-naam (Stage 8b). Fallback: email.
     if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
       try {
         var p = window.profilesDB.getCurrentSync();
@@ -74,7 +137,6 @@
     var topbar = document.querySelector(".topbar");
     if (!topbar) return;
 
-    // Container rechts in de top-bar.
     var wrap = document.createElement("div");
     wrap.id = "besa-auth-badge";
     wrap.style.cssText = [
@@ -91,10 +153,9 @@
     var label = document.createElement("span");
     label.id = "besa-auth-badge-label";
     label.textContent = getDisplayLabel(user);
-    label.title = user.email; // hover toont altijd email
+    label.title = user.email;
     label.style.cssText = "color:#6b7798;max-width:220px;overflow:hidden;text-overflow:ellipsis;";
 
-    // Wanneer profielen later binnenkomen (Stage 8b bootstrap), update het label.
     window.addEventListener("besa:profile-updated", function () {
       var newLabel = getDisplayLabel(user);
       if (newLabel) label.textContent = newLabel;
@@ -120,26 +181,11 @@
     btn.addEventListener("mouseover", function () { btn.style.background = "rgba(41,98,255,0.08)"; });
     btn.addEventListener("mouseout", function () { btn.style.background = "transparent"; });
 
-    btn.addEventListener("click", async function () {
+    btn.addEventListener("click", function () {
       btn.disabled = true;
       btn.textContent = "Uitloggen…";
-      try {
-        await window.besaSupabase.auth.signOut();
-      } catch (e) { /* */ }
-      // Wis de lokale caches om data-lekken naar volgende gebruiker te voorkomen.
-      try {
-        var keysToKeep = { theme: 1, locale: 1 };
-        var toRemove = [];
-        for (var i = 0; i < window.localStorage.length; i += 1) {
-          var k = window.localStorage.key(i);
-          if (!k) continue;
-          if (keysToKeep[k]) continue;
-          // Alle besa-*, employee*, facturen*, beschikkingen*, etc.
-          toRemove.push(k);
-        }
-        toRemove.forEach(function (k) { try { window.localStorage.removeItem(k); } catch (e) { /* */ } });
-      } catch (e) { /* */ }
-      window.location.replace("login.html");
+      // Bewuste handmatige uitlog: geen ?next=, ga gewoon naar login.
+      performLogoutAndRedirect({ reason: "manual", preserveNext: false });
     });
 
     wrap.appendChild(label);
@@ -153,14 +199,42 @@
     try {
       window.besaSupabase.auth.onAuthStateChange(function (event, session) {
         if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
-          redirectToLogin();
+          performLogoutAndRedirect({ reason: "expired" });
         }
       });
     } catch (e) { /* */ }
   }
 
-  // Initiële session-check. getSession() is synchroon-snel (uit localStorage),
-  // dus we blokkeren de pagina maar even.
+  // Stage 8d: actief checken bij visibility/focus changes. Voorkomt dat
+  // een tab die uren in de achtergrond stond eerst een paar permission-
+  // denied calls produceert voordat de gebruiker doorheeft dat hij is
+  // uitgelogd.
+  function attachVisibilityChecks() {
+    var checking = false;
+    async function recheck() {
+      if (checking || redirectInFlight) return;
+      checking = true;
+      try {
+        var res = await window.besaSupabase.auth.getSession();
+        var session = res && res.data ? res.data.session : null;
+        if (!session || !session.user) {
+          performLogoutAndRedirect({ reason: "expired" });
+        }
+      } catch (e) {
+        if (window.besaIsAuthError && window.besaIsAuthError(e)) {
+          performLogoutAndRedirect({ reason: "expired" });
+        }
+      } finally {
+        checking = false;
+      }
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") recheck();
+    });
+    window.addEventListener("focus", recheck);
+  }
+
   (async function init() {
     var session = null;
     try {
@@ -169,16 +243,19 @@
     } catch (e) { /* */ }
 
     if (!session || !session.user) {
-      redirectToLogin();
+      // Geen logout-call (er is geen sessie); ga direct naar login.
+      redirectInFlight = true;
+      try { window.location.replace(buildLoginUrl()); }
+      catch (e) { window.location.href = buildLoginUrl(); }
       return;
     }
 
-    // Sessie OK → wacht tot DOM klaar is en injecteer badge.
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", function () { injectUserBadge(session.user); });
     } else {
       injectUserBadge(session.user);
     }
     listenForAuthChange();
+    attachVisibilityChecks();
   })();
 })();
