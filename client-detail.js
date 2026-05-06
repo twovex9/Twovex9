@@ -1154,14 +1154,25 @@
           archiveBtn.addEventListener("click", function (e) {
             e.stopPropagation();
             var willArchive = !doc.archived;
-            var p = willArchive ? window.clientDocsDB.archive(doc.id) : window.clientDocsDB.restore(doc.id);
-            p.then(function () {
-              if (typeof window.showActionFeedback === "function") {
-                window.showActionFeedback(willArchive ? "archived" : "restored", "Document");
-              }
-            }).catch(function (err) {
-              reportError(err, willArchive ? "Archiveren" : "Herstellen");
-            });
+            if (willArchive) {
+              var ask = (typeof window.showArchiveConfirm === "function")
+                ? window.showArchiveConfirm({ preview: doc.naam || "" })
+                : Promise.resolve(true);
+              ask.then(function (ok) {
+                if (!ok) return;
+                window.clientDocsDB.archive(doc.id).then(function () {
+                  if (typeof window.showActionFeedback === "function") {
+                    window.showActionFeedback("archived", "Document");
+                  }
+                }).catch(function (err) { reportError(err, "Archiveren"); });
+              });
+            } else {
+              window.clientDocsDB.restore(doc.id).then(function () {
+                if (typeof window.showActionFeedback === "function") {
+                  window.showActionFeedback("restored", "Document");
+                }
+              }).catch(function (err) { reportError(err, "Herstellen"); });
+            }
           });
 
           actWrap.appendChild(viewBtn);

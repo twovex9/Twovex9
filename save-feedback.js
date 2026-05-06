@@ -251,7 +251,36 @@
     });
   }
 
+  /**
+   * Shorthand om bij archiveren altijd dezelfde slider-bevestiging te tonen
+   * als bij verwijderen. Geeft een Promise<boolean> terug (true = bevestigd).
+   *
+   * Gebruik:
+   *   var ok = await window.showArchiveConfirm({ preview: "Naam document" });
+   *   if (!ok) return;
+   *
+   * Optionele opts:
+   *   - title         (default: "Bent u zeker dat dit gearchiveerd wordt?")
+   *   - message       (default: "Het item verdwijnt uit de actieve lijst en is
+   *                    altijd terug te vinden via de Gearchiveerd-toggle.")
+   *   - preview       (string die boven de slider verschijnt, bv. de naam)
+   *   - okLabel       (default: "Archiveren")
+   *   - cancelLabel   (default: "Annuleren")
+   */
+  function showArchiveConfirm(opts) {
+    var o = opts || {};
+    return showSliderConfirmModal({
+      title: o.title || "Bent u zeker dat dit gearchiveerd wordt?",
+      message: o.message ||
+        "Het item verdwijnt uit de actieve lijst en is altijd terug te vinden via de Gearchiveerd-toggle.",
+      preview: o.preview,
+      okLabel: o.okLabel || "Archiveren",
+      cancelLabel: o.cancelLabel || "Annuleren",
+    });
+  }
+
   w.showSaveModal = showSaveModal;
   w.showActionFeedback = showActionFeedback;
   w.showSliderConfirmModal = showSliderConfirmModal;
+  w.showArchiveConfirm = showArchiveConfirm;
 })(window);

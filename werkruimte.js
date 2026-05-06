@@ -593,14 +593,29 @@ function initWerkruimte() {
   document.getElementById("workspace-bulk-archive-btn")?.addEventListener("click", () => {
     const selected = new Set(uiState.selectedIds);
     if (!selected.size) return;
-    const items = readModuleItems(currentModule).map((item) => {
-      if (!selected.has(item.id)) return item;
-      return { ...item, archived: true, updatedAt: formatNow(), updatedBy: getCurrentUserName() };
+    const count = selected.size;
+    const askPromise = (typeof window.showArchiveConfirm === "function")
+      ? window.showArchiveConfirm({
+          title: "Bent u zeker dat dit gearchiveerd wordt?",
+          preview: count === 1 ? "1 item" : `${count} items`,
+          okLabel: "Archiveren",
+        })
+      : Promise.resolve(true);
+    askPromise.then((ok) => {
+      if (!ok) return;
+      const items = readModuleItems(currentModule).map((item) => {
+        if (!selected.has(item.id)) return item;
+        return { ...item, archived: true, updatedAt: formatNow(), updatedBy: getCurrentUserName() };
+      });
+      writeModuleItems(currentModule, items);
+      uiState.selectedIds.clear();
+      rerender();
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("archived", count === 1 ? "1 item" : `${count} items`);
+      } else {
+        showAppToast("Selectie gearchiveerd");
+      }
     });
-    writeModuleItems(currentModule, items);
-    uiState.selectedIds.clear();
-    rerender();
-    showAppToast("Selectie gearchiveerd");
   });
   document.getElementById("workspace-bulk-restore-btn")?.addEventListener("click", () => {
     const selected = new Set(uiState.selectedIds);

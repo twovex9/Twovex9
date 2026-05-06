@@ -2850,10 +2850,22 @@ function initDocumentenSection() {
         archiveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
         archiveBtn.addEventListener("click", function () {
           var realIdx = getDocumentenState().indexOf(doc);
-          if (realIdx > -1) {
-            getDocumentenState()[realIdx].archived = !getDocumentenState()[realIdx].archived;
+          if (realIdx < 0) return;
+          var willArchive = !getDocumentenState()[realIdx].archived;
+          function applyArchive() {
+            getDocumentenState()[realIdx].archived = willArchive;
             saveDocumentenState();
             render();
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback(willArchive ? "archived" : "restored", "Document");
+            }
+          }
+          if (willArchive && typeof window.showArchiveConfirm === "function") {
+            window.showArchiveConfirm({ preview: doc.naam || "" }).then(function (ok) {
+              if (ok) applyArchive();
+            });
+          } else {
+            applyArchive();
           }
         });
 
