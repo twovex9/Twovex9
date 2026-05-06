@@ -151,13 +151,61 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 <script src="floating-panels.js" defer></script>
 ```
 
-## 6. Data-opslag — geen grote payloads in `jsonb`
+## 6. Data-opslag — Supabase is altijd de source of truth
 
-Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. Maak een dedicated tabel + data-laag, zoals `client_documents` + `client-documents-data.js`. Patroon:
+**Regel #1, geen uitzonderingen:** elke nieuwe pagina, modal of feature die door de gebruiker ingevoerde data accepteert (importeren, formulier, edit, archief, label, notitie, ...) moet die data **direct naar Supabase** schrijven. localStorage mag alleen als **read-cache** of voor pure UI-state (kolomvoorkeuren, filter-toggles).
 
-- Eigen tabel in `supabase/schema.sql` met RLS + index op parent-id + `archived`.
-- JS-data-laag met `list/listSync/add/update/archive/restore/remove`, lokale cache in `localStorage`, en een custom event `besa:<naam>-updated` voor live re-renders.
-- Migreer bestaande legacy-data één keer via `maybeMigrateFrom…()` bij init.
+### 6a. Stappen bij elke nieuwe data-feature
+
+1. **Tabel in `supabase/schema.sql`** — met RLS, index op parent-id + `archived`, trigger voor `laatst_gewijzigd`. Idempotent (gebruik `create table if not exists`, `drop policy if exists`).
+2. **JS-data-laag `<naam>-data.js`** met minimaal:
+
+   ```js
+   window.<naam>DB = {
+     get ready() { return readyPromise || bootstrap(); },
+     refresh, fetchAll,
+     add, update, archive, restore, delete: remove,
+     getAllSync, getByIdSync,
+   };
+   ```
+
+   Patroon: cache in `localStorage` als snelle read-laag, schrijfacties zijn `async` Supabase-calls, daarna cache + `pushToGlobalBulk` updaten en `besa:<naam>-updated` event firen voor live re-render.
+3. **HTML-page laadt verplicht deze 3 scripts**, in deze volgorde, vóór de page-script:
+
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script src="supabase-client.js"></script>
+   <script src="<naam>-data.js" defer></script>
+   ```
+
+   Vergeet er één en je krijgt een silent failure (zoals bij `facturen-importeren.html` op 6 mei 2026). Dit is niet onderhandelbaar.
+4. **Page-script roept de data-laag aan en wacht erop** — `await window.<naam>DB.add(payload)`. Bij falen toon een rode foutmelding (`showError`), géén silent catch. Pas op succes het formulier resetten / success-feedback tonen.
+5. **Bestaande legacy-data** (oude losse localStorage-keys van vóór de Supabase-tabel) eenmalig migreren via `maybeMigrateLocalToSupabase()` in `bootstrap()`.
+
+### 6b. Geen grote payloads in `jsonb`
+
+Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. Maak een dedicated tabel + data-laag, zoals `client_documents` + `client-documents-data.js`.
+
+### 6c. Verboden patronen (eerder fout gegaan, nooit meer doen)
+
+```js
+// ❌ FOUT — silent skip wanneer data-laag niet geladen is
+if (window.facturenDB && typeof window.facturenDB.add === "function") {
+  window.facturenDB.add(row).catch(function () { /* */ });
+}
+
+// ❌ FOUT — alleen localStorage, nooit naar Supabase
+localStorage.setItem("mijn_data_v1", JSON.stringify(items));
+
+// ✅ GOED — wachten op DB-call, fout zichtbaar maken
+try {
+  await window.mijnDB.add(row);
+  showActionFeedback("imported", "X");
+} catch (err) {
+  showError("Opslaan in database mislukt: " + err.message);
+  console.error(err);
+}
+```
 
 ## 7. Git — altijd direct pushen na een edit
 
@@ -171,5 +219,8 @@ Na elke logisch afgeronde wijziging: `git add -A` → `git commit -F` (HEREDOC o
 - [ ] Modal-helpers worden aangeroepen met `okLabel` / `cancelLabel` (niet `confirmLabel`, niet `tone`).
 - [ ] In gearchiveerde state staat `Herstel` als `.btn-outline.hr-restore-btn` **boven** de prullenbak in `.hr-row-actions`.
 - [ ] Geen `alert`, `confirm` of `prompt` in nieuwe code — alleen de feedback-helpers.
+- [ ] Nieuwe data-features schrijven naar Supabase via een `<naam>-data.js`-laag, niet alleen localStorage. Gebruiker-feedback bij succes én bij failure.
+- [ ] HTML-pagina's met data-features laden in deze volgorde: Supabase CDN → `supabase-client.js` → `<naam>-data.js` (defer) → page-script (defer). Vergeet geen enkele, anders krijg je een silent failure.
+- [ ] Geen `if (window.xxxDB) { ... }`-guards die de save stilzwijgend overslaan. Crash duidelijk of toon `showError` bij ontbrekende data-laag.
 - [ ] Grote payloads zitten in een eigen Supabase-tabel met data-laag, niet in een `jsonb`-veld van een hoofdtabel.
 - [ ] Wijziging gecommit en gepusht naar `main`.
