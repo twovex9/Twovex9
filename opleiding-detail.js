@@ -213,7 +213,9 @@
         else showToast("Opleiding opgeslagen");
       } catch (err) {
         console.error("Opslaan mislukt:", err);
-        alert("Opslaan mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Opslaan mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
       } finally {
         saveBtn.disabled = false;
       }

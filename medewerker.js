@@ -2827,7 +2827,9 @@ function initDocumentenSection() {
               }
             }
           } else {
-            alert("Geen bestand beschikbaar voor dit document.");
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
+            }
           }
         });
 

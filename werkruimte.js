@@ -540,7 +540,11 @@ function initWerkruimte() {
   function exportVisibleToCsv() {
     const { visible } = getFilteredItems(currentModule, document.getElementById("workspace-search")?.value || "");
     if (!visible.length) {
-      showAppToast("Geen records om te exporteren");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Geen gegevens", "Er zijn geen records om te exporteren.");
+      } else {
+        showAppToast("Geen records om te exporteren");
+      }
       return;
     }
     const header = ["Naam", "Status", "Laatst bijgewerkt", "Door"];
@@ -549,14 +553,19 @@ function initWerkruimte() {
     const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
+    const filename = `${currentModule}-${new Date().toISOString().slice(0, 10)}.csv`;
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${currentModule}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    showAppToast("CSV export gestart");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", filename);
+    } else {
+      showAppToast("CSV export gestart");
+    }
   }
 
   function rerender() {

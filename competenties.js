@@ -345,7 +345,9 @@ function countMedewerkers(compNaam) {
         // render() wordt aangeroepen via het besa:competenties-updated event
       } catch (err) {
         console.error("Toevoegen mislukt:", err);
-        alert("Toevoegen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Toevoegen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -432,7 +434,9 @@ function countMedewerkers(compNaam) {
       closeCompPurgeModal();
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
-      alert("Verwijderen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Verwijderen mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
       if (cpConfirmBtn) cpConfirmBtn.disabled = false;
     }
   }
@@ -446,7 +450,9 @@ function countMedewerkers(compNaam) {
       closeDeleteModal();
     } catch (err) {
       console.error("Archiveren mislukt:", err);
-      alert("Archiveren mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Archiveren mislukt", err && err.message ? err.message : "Onbekende fout.");
+      }
       if (delConfirmBtn) delConfirmBtn.disabled = false;
     }
   }
@@ -460,7 +466,9 @@ function countMedewerkers(compNaam) {
       try { await window.competentiesDB.restore(ridc); }
       catch (err) {
         console.error("Herstel mislukt:", err);
-        alert("Herstellen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Herstellen mislukt", err && err.message ? err.message : "Onbekende fout.");
+        }
       }
       return;
     }

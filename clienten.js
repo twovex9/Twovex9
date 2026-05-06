@@ -390,12 +390,17 @@
         .join(";");
     });
     var blob = new Blob([headers.join(";") + "\n" + rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    var filename = "clienten-" + new Date().toISOString().slice(0, 10) + ".csv";
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "clienten-" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast("Export gestart");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", filename);
+    } else {
+      showToast("Export gestart");
+    }
   }
 
   function refreshClOrgDatalist() {

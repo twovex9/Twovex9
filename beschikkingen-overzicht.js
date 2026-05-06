@@ -333,14 +333,24 @@
     if (typeof runTableExport === "function") {
       var res = runTableExport({ baseName: "beschikkingen-export", headers: labels, rows: dataRows, format: format });
       if (res && res.ok) {
-        showToast("Export klaar");
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("exported", "beschikkingen-export." + format);
+        } else {
+          showToast("Export klaar");
+        }
         if (exportModalEl) {
           exportModalEl.setAttribute("hidden", "");
           exportModalEl.setAttribute("aria-hidden", "true");
         }
         return;
       }
-      if (res && res.error) showToast(res.error);
+      if (res && res.error) {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Export mislukt", res.error);
+        } else {
+          showToast(res.error);
+        }
+      }
     }
     var lines = [labels.map(csvEsc).join(";")];
     for (var r2 = 0; r2 < rowsB.length; r2 += 1) {
@@ -359,7 +369,11 @@
     a.download = "beschikkingen-export.csv";
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast("Export klaar");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", "beschikkingen-export.csv");
+    } else {
+      showToast("Export klaar");
+    }
     if (exportModalEl) {
       exportModalEl.setAttribute("hidden", "");
       exportModalEl.setAttribute("aria-hidden", "true");

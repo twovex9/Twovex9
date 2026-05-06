@@ -294,11 +294,11 @@
         e.preventDefault();
         e.stopPropagation();
         var csv = x.csv || buildCsvForPeriod(x.period || "");
-        downloadText(
-          "salarisadministratie_export_" + (x.period || "periode").replace(/\s+/g, "_") + ".csv",
-          csv,
-          "text/csv;charset=utf-8"
-        );
+        var fname = "salarisadministratie_export_" + (x.period || "periode").replace(/\s+/g, "_") + ".csv";
+        downloadText(fname, csv, "text/csv;charset=utf-8");
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("downloaded", fname);
+        }
       });
       tdDl.appendChild(btn);
       tr.appendChild(tdDl);
@@ -322,10 +322,19 @@
     hist.unshift(entry);
     writeHistory(hist.slice(0, 50));
     renderHistory();
-    if (typeof showSaveModal === "function") showSaveModal("Export is opgeslagen.");
-    else showToast("Export opgeslagen");
-    if (nowDl && nowDl.checked) {
-      downloadText("salarisadministratie_export_" + period.replace(/\s+/g, "_") + ".csv", csv, "text/csv;charset=utf-8");
+    var willDownloadNow = !!(nowDl && nowDl.checked);
+    if (willDownloadNow) {
+      var genFname = "salarisadministratie_export_" + period.replace(/\s+/g, "_") + ".csv";
+      downloadText(genFname, csv, "text/csv;charset=utf-8");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Export klaar", "“" + period + "” is opgeslagen en " + genFname + " is gedownload.");
+      } else if (typeof showSaveModal === "function") {
+        showSaveModal("Export is opgeslagen en gedownload.");
+      }
+    } else if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("saved", "Export “" + period + "”");
+    } else if (typeof showSaveModal === "function") {
+      showSaveModal("Export is opgeslagen.");
     }
   }
 

@@ -2204,21 +2204,29 @@ function initDienstPanel() {
     const ed = document.getElementById("dienst-einddate")?.value;
     const et = document.getElementById("dienst-eindtime")?.value;
     if (!diensttype || !locHr || !teamlid || !client || !sd || !st || !ed || !et) {
-      window.alert(
-        !diensttype
-          ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
-          : "Vul alle verplichte velden in (met *)."
-      );
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback(
+          "info",
+          "Verplichte velden",
+          !diensttype
+            ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
+            : "Vul alle verplichte velden in (met *)."
+        );
+      }
       return;
     }
     const startIso = combineDateTimeToLocalIso(sd, st);
     const endIso = combineDateTimeToLocalIso(ed, et);
     if (!startIso || !endIso) {
-      window.alert("Ongeldige start- of eindtijd.");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Ongeldige tijd", "Vul een geldige start- en eindtijd in.");
+      }
       return;
     }
     if (parseStartDate(endIso) <= parseStartDate(startIso)) {
-      window.alert("Eindtijd moet na starttijd liggen.");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Ongeldige tijd", "Eindtijd moet na starttijd liggen.");
+      }
       return;
     }
     const pauze = Math.max(0, parseFloat(document.getElementById("dienst-pauze")?.value) || 0);
@@ -2344,7 +2352,9 @@ function initDienstPanel() {
 function exportPlanningCsv() {
   const items = getItemsForView();
   if (items.length === 0) {
-    window.alert("Geen gegevens om te exporteren.");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("info", "Geen gegevens", "Er zijn geen planning-regels om te exporteren.");
+    }
     return;
   }
   const cols = [
@@ -2363,11 +2373,15 @@ function exportPlanningCsv() {
     .map((r) => cols.map((c) => `"${String(r[c] ?? "").replace(/"/g, '""')}"`).join(";"))
     .join("\n");
   const blob = new Blob([head + "\n" + body], { type: "text/csv;charset=utf-8" });
+  const filename = `planning-${new Date().toISOString().slice(0, 10)}.csv`;
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `planning-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 500);
+  if (typeof window.showActionFeedback === "function") {
+    window.showActionFeedback("exported", filename);
+  }
 }
 
 function initAddModal() {
@@ -2388,7 +2402,13 @@ function initAddModal() {
     event.preventDefault();
     const f = readForm();
     if (!f.afdeling || !f.teamlid || !f.client || !f.start || !f.einde) {
-      window.alert("Vul de verplichte velden in (afdeling, teamlid, cliënt, start, einde).");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback(
+          "info",
+          "Verplichte velden",
+          "Vul afdeling, teamlid, cliënt, start en einde in."
+        );
+      }
       return;
     }
     if (ui.editingId) {
@@ -2515,21 +2535,33 @@ function initNav() {
   document.getElementById("planning-presets-new-btn")?.addEventListener("click", () => {
     const naam = window.prompt("Geef een naam voor deze voorinstelling (placeholder):");
     if (!naam) return;
-    window.alert(
-      `Voorinstelling “${naam}” opgeslagen (lokaal). Voorinstellingen-beheer komt in een vervolgrelease.`
-    );
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback(
+        "info",
+        "Voorinstelling opgeslagen",
+        `“${naam}” is lokaal opgeslagen. Volledig beheer van voorinstellingen volgt in een vervolgrelease.`
+      );
+    }
   });
 
   /* Toolbar: Genereren + Optimaliseren (placeholders, bevestigen + log) */
   document.getElementById("planning-gen-btn")?.addEventListener("click", () => {
-    window.alert(
-      "Genereren: dit pakt straks vrije diensten en wijst automatisch ZZP/medewerkers toe op basis van competenties en beschikbaarheid. (Nog niet actief)"
-    );
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback(
+        "info",
+        "Genereren",
+        "Pakt straks vrije diensten en wijst automatisch ZZP/medewerkers toe op basis van competenties en beschikbaarheid. (Nog niet actief)"
+      );
+    }
   });
   document.getElementById("planning-opt-btn")?.addEventListener("click", () => {
-    window.alert(
-      "Optimaliseren: schuift bestaande planning zodat overlap, kosten en uren beter verdeeld worden. (Nog niet actief)"
-    );
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback(
+        "info",
+        "Optimaliseren",
+        "Schuift bestaande planning zodat overlap, kosten en uren beter verdeeld worden. (Nog niet actief)"
+      );
+    }
   });
 
   document.getElementById("planning-clear-filters")?.addEventListener("click", () => {

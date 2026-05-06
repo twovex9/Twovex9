@@ -558,15 +558,15 @@
       var lab = diensttypeLabel(row.diensttype);
       var namen = planningNamenVoorDiensttypeValue(row.diensttype);
       if (namen.length) {
-        window.alert(
-          "Dit diensttype is nog in gebruik in de planning. Verwijderen is niet mogelijk totdat dat is opgelost.\n\n" +
-            "Geplande medewerker(s) met type \"" +
-            lab +
-            '":\n' +
-            namen.join(", ") +
-            "\n\n" +
-            "Wijzig of verwijder de betreffende diensten in de planning, of wijs een ander diensttype toe."
-        );
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback(
+            "info",
+            "Diensttype in gebruik",
+            "Dit diensttype is nog gekoppeld aan geplande dienst(en) met type \"" + lab + "\": " +
+              namen.join(", ") +
+              ". Wijzig of verwijder die diensten eerst, of wijs een ander diensttype toe."
+          );
+        }
         return;
       }
     }

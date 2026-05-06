@@ -94,5 +94,68 @@
     }
   }
 
+  /**
+   * Hogere-orde helper boven showSaveModal: kiest titel en tekst op basis van actie.
+   * @param {string} action — "saved" | "added" | "updated" | "deleted" | "archived"
+   *                          | "restored" | "exported" | "downloaded" | "info" | "error"
+   * @param {string} target — onderwerp van de actie ("Medewerker gegevens", "facturen.csv", ...)
+   *                          of bij "info"/"error": de titel van de popup.
+   * @param {string} [extra] — optionele extra tekst (gebruikt voor info/error details).
+   */
+  function showActionFeedback(action, target, extra) {
+    var t = String(action || "").toLowerCase();
+    var s = String(target == null ? "" : target);
+    var e = extra == null ? "" : String(extra);
+    var title = "";
+    var text = "";
+    switch (t) {
+      case "saved":
+        title = "Opgeslagen";
+        text = (s ? s + " " : "") + "opgeslagen.";
+        break;
+      case "added":
+        title = "Toegevoegd";
+        text = (s ? s + " " : "") + "toegevoegd.";
+        break;
+      case "updated":
+        title = "Bijgewerkt";
+        text = (s ? s + " " : "") + "bijgewerkt.";
+        break;
+      case "deleted":
+        title = "Verwijderd";
+        text = (s ? s + " " : "") + "verwijderd.";
+        break;
+      case "archived":
+        title = "Gearchiveerd";
+        text = (s ? s + " " : "") + "gearchiveerd.";
+        break;
+      case "restored":
+        title = "Hersteld";
+        text = (s ? s + " " : "") + "hersteld.";
+        break;
+      case "exported":
+        title = "Geëxporteerd";
+        text = (s ? s + " " : "") + "is geëxporteerd.";
+        break;
+      case "downloaded":
+        title = "Gedownload";
+        text = (s ? s + " " : "") + "is gedownload.";
+        break;
+      case "info":
+        title = s || "Let op";
+        text = e || "";
+        break;
+      case "error":
+        title = s || "Er ging iets mis";
+        text = e || "Onbekende fout.";
+        break;
+      default:
+        title = s || "";
+        text = e || "";
+    }
+    showSaveModal(text, title);
+  }
+
   w.showSaveModal = showSaveModal;
+  w.showActionFeedback = showActionFeedback;
 })(window);

@@ -624,16 +624,27 @@
     var fmtEl = document.getElementById(__F("fact-export-format"));
     var format = fmtEl && fmtEl.value ? fmtEl.value : "xlsx";
     if (typeof runTableExport === "function") {
-      var res = runTableExport({ baseName: __FP ? "facturen-beschikking" : "facturen", headers: labels, rows: dataRows, format: format });
+      var baseName = __FP ? "facturen-beschikking" : "facturen";
+      var res = runTableExport({ baseName: baseName, headers: labels, rows: dataRows, format: format });
       if (res && res.ok) {
-        showToast("Export klaar.");
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("exported", baseName + "." + format);
+        } else {
+          showToast("Export klaar.");
+        }
         if (factExportModalEl) {
           factExportModalEl.setAttribute("hidden", "");
           factExportModalEl.setAttribute("aria-hidden", "true");
         }
         return;
       }
-      if (res && res.error) showToast(res.error);
+      if (res && res.error) {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Export mislukt", res.error);
+        } else {
+          showToast(res.error);
+        }
+      }
     }
     var lines = [labels.map(factCsvEsc).join(";")];
     for (var r2 = 0; r2 < items.length; r2 += 1) {
@@ -653,7 +664,11 @@
     a.download = "facturen.csv";
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast("Export klaar.");
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", "facturen.csv");
+    } else {
+      showToast("Export klaar.");
+    }
     if (factExportModalEl) {
       factExportModalEl.setAttribute("hidden", "");
       factExportModalEl.setAttribute("aria-hidden", "true");
