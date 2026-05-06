@@ -3063,14 +3063,6 @@ select.modal-select.modal-select--chevron-right {
   background: linear-gradient(to right, var(--blue) 0%, var(--blue) var(--employee-slider-pct, 0%), var(--line) var(--employee-slider-pct, 0%), var(--line) 100%);
 }
 
-.news-delete-slider::-webkit-slider-runnable-track,
-.employee-delete-slider::-webkit-slider-runnable-track {
-  height: 12px;
-  border-radius: var(--r-pill);
-  background: transparent;
-  border: none;
-}
-
 .news-delete-slider::-webkit-slider-thumb,
 .employee-delete-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -3082,7 +3074,6 @@ select.modal-select.modal-select--chevron-right {
   border: 2px solid var(--blue);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   cursor: grab;
-  margin-top: -8px;
 }
 
 .news-delete-slider::-webkit-slider-thumb:active,
