@@ -2969,3 +2969,97 @@ create policy "anon kan nieuws verwijderen"
   for delete
   to anon
   using (true);
+
+-- ============================================================================
+-- beschikking_tarieven (sub-data per beschikking)
+-- ============================================================================
+--
+-- Eén beschikking kan meerdere tarief-historie-rijen hebben. Elke rij heeft
+-- een geldigheidsdatum, een weektarief en optioneel een reden (bv.
+-- "Indexatie 2026"). beschikking_id is een soft-FK naar beschikkingen.id
+-- (text), conform bestaand patroon — geen harde constraint zodat legacy-IDs
+-- blijven werken.
+
+create table if not exists public.beschikking_tarieven (
+  id uuid primary key default gen_random_uuid(),
+  beschikking_id text not null,
+  geldig_van date not null,
+  weektarief numeric(12, 2) not null default 0,
+  reden text,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists beschikking_tarieven_besc_idx
+  on public.beschikking_tarieven (beschikking_id);
+
+create index if not exists beschikking_tarieven_geldig_idx
+  on public.beschikking_tarieven (geldig_van desc);
+
+drop trigger if exists trg_beschikking_tarieven_set_modified on public.beschikking_tarieven;
+create trigger trg_beschikking_tarieven_set_modified
+  before update on public.beschikking_tarieven
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.beschikking_tarieven enable row level security;
+
+drop policy if exists "anon kan beschikking_tarieven lezen" on public.beschikking_tarieven;
+create policy "anon kan beschikking_tarieven lezen"
+  on public.beschikking_tarieven for select to anon using (true);
+
+drop policy if exists "anon kan beschikking_tarieven toevoegen" on public.beschikking_tarieven;
+create policy "anon kan beschikking_tarieven toevoegen"
+  on public.beschikking_tarieven for insert to anon with check (true);
+
+drop policy if exists "anon kan beschikking_tarieven bewerken" on public.beschikking_tarieven;
+create policy "anon kan beschikking_tarieven bewerken"
+  on public.beschikking_tarieven for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan beschikking_tarieven verwijderen" on public.beschikking_tarieven;
+create policy "anon kan beschikking_tarieven verwijderen"
+  on public.beschikking_tarieven for delete to anon using (true);
+
+-- ============================================================================
+-- beschikking_notities (sub-data per beschikking)
+-- ============================================================================
+--
+-- Vrije HTML-notities die HR-medewerkers per beschikking kunnen toevoegen.
+-- Body is HTML uit de inline RTE. beschikking_id is soft-FK naar
+-- beschikkingen.id (text).
+
+create table if not exists public.beschikking_notities (
+  id uuid primary key default gen_random_uuid(),
+  beschikking_id text not null,
+  body_html text not null default '',
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists beschikking_notities_besc_idx
+  on public.beschikking_notities (beschikking_id);
+
+create index if not exists beschikking_notities_aanmaak_idx
+  on public.beschikking_notities (aanmaakdatum desc);
+
+drop trigger if exists trg_beschikking_notities_set_modified on public.beschikking_notities;
+create trigger trg_beschikking_notities_set_modified
+  before update on public.beschikking_notities
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.beschikking_notities enable row level security;
+
+drop policy if exists "anon kan beschikking_notities lezen" on public.beschikking_notities;
+create policy "anon kan beschikking_notities lezen"
+  on public.beschikking_notities for select to anon using (true);
+
+drop policy if exists "anon kan beschikking_notities toevoegen" on public.beschikking_notities;
+create policy "anon kan beschikking_notities toevoegen"
+  on public.beschikking_notities for insert to anon with check (true);
+
+drop policy if exists "anon kan beschikking_notities bewerken" on public.beschikking_notities;
+create policy "anon kan beschikking_notities bewerken"
+  on public.beschikking_notities for update to anon using (true) with check (true);
+
+drop policy if exists "anon kan beschikking_notities verwijderen" on public.beschikking_notities;
+create policy "anon kan beschikking_notities verwijderen"
+  on public.beschikking_notities for delete to anon using (true);

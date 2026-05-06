@@ -90,30 +90,27 @@
     return p[2] + "/" + p[1] + "/" + p[0];
   }
 
-  var LS_TAR_SUPP = "beschikking_tarieven_supp_v1";
-
-  function loadTarSupp() {
-    try {
-      var r = localStorage.getItem(LS_TAR_SUPP);
-      if (!r) return [];
-      var a = JSON.parse(r);
-      return Array.isArray(a) ? a : [];
-    } catch (e) {
-      return [];
+  // Tarieven worden in Supabase opgeslagen via window.beschikkingTarievenDB
+  // (zie beschikking-tarieven-data.js). De legacy localStorage-key
+  // "beschikking_tarieven_supp_v1" wordt automatisch eenmalig gemigreerd
+  // bij eerste boot.
+  function reportTarievenError(label, err) {
+    try { console.error("[beschikking-detail tarieven]", label, err); } catch (e) { /* */ }
+    var msg = "Tarief opslaan mislukt. Controleer je verbinding en probeer opnieuw.";
+    if (err && err.message) msg = "Tarief opslaan mislukt: " + err.message;
+    if (typeof showSaveModal === "function") {
+      showSaveModal(msg, "Fout");
+    } else if (typeof showToast === "function") {
+      showToast(msg);
     }
-  }
-
-  function saveTarSupp(arr) {
-    try {
-      localStorage.setItem(LS_TAR_SUPP, JSON.stringify(arr));
-    } catch (e) { /* */ }
   }
 
   function getTarievenForBesc(bescId) {
     if (!bescId) return [];
-    return loadTarSupp().filter(function (x) {
-      return x && String(x.bescId) === String(bescId);
-    });
+    if (window.beschikkingTarievenDB && typeof window.beschikkingTarievenDB.getForBescSync === "function") {
+      return window.beschikkingTarievenDB.getForBescSync(bescId);
+    }
+    return [];
   }
 
   function openTarAddModal() {
@@ -208,10 +205,14 @@
     }
   }
 
-  function onTarAddSubmit(e) {
+  async function onTarAddSubmit(e) {
     e.preventDefault();
     if (!loadedBesc || !loadedBesc.id) {
       showToast("Geen beschikking.");
+      return;
+    }
+    if (!window.beschikkingTarievenDB || typeof window.beschikkingTarievenDB.add !== "function") {
+      reportTarievenError("data-laag niet beschikbaar", new Error("beschikkingTarievenDB ontbreekt"));
       return;
     }
     var gEl = document.getElementById("bdtl-tar-add-geldig");
@@ -233,49 +234,50 @@
       return;
     }
     var reden = (rEl && rEl.value) ? String(rEl.value).trim() : "";
-    var id = "tar-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-    var row = {
-      id: id,
-      bescId: loadedBesc.id,
-      geldigVan: geldig,
-      weektarief: wn,
-      reden: reden,
-      aangemaakt: new Date().toISOString(),
-    };
-    var arr = loadTarSupp();
-    arr.push(row);
-    saveTarSupp(arr);
-    closeTarAddModal();
-    renderBdtlTarievenTable();
-    if (typeof showSaveModal === "function") showSaveModal("Tarief is toegevoegd.");
-    else showToast("Tarief toegevoegd.");
-  }
-
-  var LS_NOTE_SUPP = "beschikking_notities_v1";
-  var bdtlNoteEditingId = null;
-
-  function loadNoteSupp() {
+    var submitBtn = document.getElementById("bdtl-tar-add-submit");
+    if (submitBtn) submitBtn.setAttribute("disabled", "");
     try {
-      var r = localStorage.getItem(LS_NOTE_SUPP);
-      if (!r) return [];
-      var a = JSON.parse(r);
-      return Array.isArray(a) ? a : [];
-    } catch (e) {
-      return [];
+      await window.beschikkingTarievenDB.add({
+        bescId: loadedBesc.id,
+        geldigVan: geldig,
+        weektarief: wn,
+        reden: reden,
+        aangemaakt: new Date().toISOString(),
+      });
+      closeTarAddModal();
+      // UI ververst zichzelf via besa:beschikking-tarieven-updated event.
+      if (typeof showSaveModal === "function") showSaveModal("Tarief is toegevoegd.");
+      else showToast("Tarief toegevoegd.");
+    } catch (err) {
+      reportTarievenError("toevoegen mislukt", err);
+    } finally {
+      if (submitBtn) submitBtn.removeAttribute("disabled");
     }
   }
 
-  function saveNoteSupp(arr) {
-    try {
-      localStorage.setItem(LS_NOTE_SUPP, JSON.stringify(arr));
-    } catch (e) { /* */ }
+  // Notities worden in Supabase opgeslagen via window.beschikkingNotitiesDB
+  // (zie beschikking-notities-data.js). De legacy localStorage-key
+  // "beschikking_notities_v1" wordt automatisch eenmalig gemigreerd
+  // bij eerste boot.
+  var bdtlNoteEditingId = null;
+
+  function reportNotitiesError(label, err) {
+    try { console.error("[beschikking-detail notities]", label, err); } catch (e) { /* */ }
+    var msg = "Notitie opslaan mislukt. Controleer je verbinding en probeer opnieuw.";
+    if (err && err.message) msg = "Notitie opslaan mislukt: " + err.message;
+    if (typeof showSaveModal === "function") {
+      showSaveModal(msg, "Fout");
+    } else if (typeof showToast === "function") {
+      showToast(msg);
+    }
   }
 
   function getNotesForBesc(bescId) {
     if (!bescId) return [];
-    return loadNoteSupp().filter(function (x) {
-      return x && String(x.bescId) === String(bescId);
-    });
+    if (window.beschikkingNotitiesDB && typeof window.beschikkingNotitiesDB.getForBescSync === "function") {
+      return window.beschikkingNotitiesDB.getForBescSync(bescId);
+    }
+    return [];
   }
 
   function notePlainPreview(html) {
@@ -393,9 +395,13 @@
     } catch (e) { /* */ }
   }
 
-  function onBdtlNoteVerzenden() {
+  async function onBdtlNoteVerzenden() {
     if (!loadedBesc || !loadedBesc.id) {
       showToast("Geen beschikking.");
+      return;
+    }
+    if (!window.beschikkingNotitiesDB || typeof window.beschikkingNotitiesDB.add !== "function") {
+      reportNotitiesError("data-laag niet beschikbaar", new Error("beschikkingNotitiesDB ontbreekt"));
       return;
     }
     var ed = document.getElementById("bdtl-note-editor");
@@ -404,33 +410,32 @@
       showToast("Vul de notitie in.");
       return;
     }
-    var arr = loadNoteSupp();
-    if (bdtlNoteEditingId) {
-      for (var i = 0; i < arr.length; i += 1) {
-        if (arr[i] && arr[i].id === bdtlNoteEditingId && String(arr[i].bescId) === String(loadedBesc.id)) {
-          arr[i].bodyHtml = bodyHtml;
-          arr[i].updatedAt = new Date().toISOString();
-        }
+    var verzendBtn = document.getElementById("bdtl-note-verzend");
+    if (verzendBtn) verzendBtn.setAttribute("disabled", "");
+    try {
+      if (bdtlNoteEditingId) {
+        await window.beschikkingNotitiesDB.update(bdtlNoteEditingId, {
+          bescId: loadedBesc.id,
+          bodyHtml: bodyHtml,
+        });
+        if (typeof showSaveModal === "function") showSaveModal("Notitie is opgeslagen.");
+        else showToast("Notitie opgeslagen.");
+      } else {
+        await window.beschikkingNotitiesDB.add({
+          bescId: loadedBesc.id,
+          bodyHtml: bodyHtml,
+          createdAt: new Date().toISOString(),
+        });
+        if (typeof showSaveModal === "function") showSaveModal("Notitie is toegevoegd.");
+        else showToast("Notitie toegevoegd.");
       }
-      saveNoteSupp(arr);
-      if (typeof showSaveModal === "function") showSaveModal("Notitie is opgeslagen.");
-      else showToast("Notitie opgeslagen.");
-    } else {
-      var id = "note-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-      arr.push({
-        id: id,
-        bescId: loadedBesc.id,
-        bodyHtml: bodyHtml,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-      saveNoteSupp(arr);
-      if (typeof showSaveModal === "function") showSaveModal("Notitie is toegevoegd.");
-      else showToast("Notitie toegevoegd.");
+      clearBdtlNoteEditor();
+      // UI ververst zichzelf via besa:beschikking-notities-updated event.
+    } catch (err) {
+      reportNotitiesError("opslaan mislukt", err);
+    } finally {
+      if (verzendBtn) verzendBtn.removeAttribute("disabled");
     }
-    clearBdtlNoteEditor();
-    renderBdtlNotesList();
-    updateBdtlSideNotesSummary();
   }
 
   function parseQueryId() {
@@ -1428,9 +1433,11 @@
           var delId = del2.getAttribute("data-del-id");
           var notePreview = "";
           try {
-            var noteRow = loadNoteSupp().find(function (x) { return x && x.id === delId; });
+            var noteRow = (window.beschikkingNotitiesDB && typeof window.beschikkingNotitiesDB.getByIdSync === "function")
+              ? window.beschikkingNotitiesDB.getByIdSync(delId)
+              : null;
             if (noteRow) {
-              var rawText = String(noteRow.tekst || noteRow.text || noteRow.html || "")
+              var rawText = String(noteRow.bodyHtml || "")
                 .replace(/<[^>]+>/g, " ")
                 .replace(/\s+/g, " ")
                 .trim();
@@ -1446,19 +1453,25 @@
                 okLabel: "Verwijderen",
               })
             : Promise.resolve(window.confirm("Deze notitie verwijderen?"));
-          noteConfirm.then(function (ok) {
+          noteConfirm.then(async function (ok) {
             if (!ok) return;
-            var a3 = loadNoteSupp().filter(function (x) { return x && x.id !== delId; });
-            saveNoteSupp(a3);
-            if (bdtlNoteEditingId === delId) clearBdtlNoteEditor();
-            renderBdtlNotesList();
-            updateBdtlSideNotesSummary();
-            if (typeof window.showActionFeedback === "function") {
-              window.showActionFeedback("deleted", "Notitie");
-            } else if (typeof showSaveModal === "function") {
-              showSaveModal("Notitie is verwijderd.", "Verwijderd");
-            } else {
-              showToast("Notitie verwijderd.");
+            if (!window.beschikkingNotitiesDB || typeof window.beschikkingNotitiesDB.remove !== "function") {
+              reportNotitiesError("verwijderen mislukt", new Error("beschikkingNotitiesDB ontbreekt"));
+              return;
+            }
+            try {
+              await window.beschikkingNotitiesDB.remove(delId);
+              if (bdtlNoteEditingId === delId) clearBdtlNoteEditor();
+              // UI ververst zichzelf via besa:beschikking-notities-updated event.
+              if (typeof window.showActionFeedback === "function") {
+                window.showActionFeedback("deleted", "Notitie");
+              } else if (typeof showSaveModal === "function") {
+                showSaveModal("Notitie is verwijderd.", "Verwijderd");
+              } else {
+                showToast("Notitie verwijderd.");
+              }
+            } catch (err) {
+              reportNotitiesError("verwijderen mislukt", err);
             }
           });
         }
@@ -1536,6 +1549,20 @@
       tcb.setAttribute("aria-expanded", "false");
     });
     wireBdtlAudit();
+
+    // Live re-render bij elke wijziging in de Supabase-data-lagen (incl.
+    // bootstrap, andere tab, externe sync). De handlers zijn no-op als
+    // er nog geen beschikking geladen is.
+    window.addEventListener("besa:beschikking-tarieven-updated", function () {
+      try { if (loadedBesc && loadedBesc.id) renderBdtlTarievenTable(); } catch (e) { /* */ }
+    });
+    window.addEventListener("besa:beschikking-notities-updated", function () {
+      try {
+        if (!loadedBesc || !loadedBesc.id) return;
+        renderBdtlNotesList();
+        updateBdtlSideNotesSummary();
+      } catch (e) { /* */ }
+    });
   }
 
   if (document.readyState === "loading") {

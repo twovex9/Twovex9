@@ -182,11 +182,24 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 4. **Page-script roept de data-laag aan en wacht erop** — `await window.<naam>DB.add(payload)`. Bij falen toon een rode foutmelding (`showError`), géén silent catch. Pas op succes het formulier resetten / success-feedback tonen.
 5. **Bestaande legacy-data** (oude losse localStorage-keys van vóór de Supabase-tabel) eenmalig migreren via `maybeMigrateLocalToSupabase()` in `bootstrap()`.
 
-### 6b. Geen grote payloads in `jsonb`
+### 6b. Bestaande data-lagen — gebruik deze, schrijf geen nieuwe localStorage-only
+
+| Domein | Data-laag (`window.*DB`) | Tabel(len) | Module |
+|---|---|---|---|
+| Cliënten | `clientenDB` | `clienten` | `clienten-data.js` |
+| Beschikkingen (master) | `beschikkingenDB` | `beschikkingen` | `beschikkingen-data.js` |
+| Beschikking-tarieven | `beschikkingTarievenDB` | `beschikking_tarieven` | `beschikking-tarieven-data.js` |
+| Beschikking-notities | `beschikkingNotitiesDB` | `beschikking_notities` | `beschikking-notities-data.js` |
+| Facturen | `facturenDB` | `facturen` | `facturen-data.js` |
+| Nieuws | `nieuwsDB` | `nieuws` | `nieuws-data.js` |
+
+Voor sub-data per parent (zoals tarieven/notities per beschikking) hebben de modules een extra synchrone helper `getForBescSync(bescId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `besa:<naam>-updated` event.
+
+### 6c. Geen grote payloads in `jsonb`
 
 Bestandsinhoud (base64), grote arrays of media gaan **nooit** in een `jsonb`-kolom van een hoofdtabel — Supabase PostgREST faalt stilzwijgend boven ~1 MB. Maak een dedicated tabel + data-laag, zoals `client_documents` + `client-documents-data.js`.
 
-### 6c. Verboden patronen (eerder fout gegaan, nooit meer doen)
+### 6d. Verboden patronen (eerder fout gegaan, nooit meer doen)
 
 ```js
 // ❌ FOUT — silent skip wanneer data-laag niet geladen is
