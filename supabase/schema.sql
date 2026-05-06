@@ -3590,7 +3590,8 @@ end $$;
 -- =============================================================================
 create table if not exists public.incidenten (
   id uuid primary key default gen_random_uuid(),
-  client_id uuid references public.clienten(id) on delete set null,
+  -- public.clienten.id is text (legacy), niet uuid — daarom hier ook text.
+  client_id text references public.clienten(id) on delete set null,
   categorie text not null default 'Overig'
     check (categorie in ('Val', 'Medicatie', 'Agressie', 'Vermissing',
                          'Materiele schade', 'Privacy/AVG', 'Overig')),

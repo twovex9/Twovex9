@@ -191,6 +191,59 @@ Kolomkiezers, filter-dropdowns en andere zwevende panelen krijgen class `.column
 
 **Regel #1, geen uitzonderingen:** elke nieuwe pagina, modal of feature die door de gebruiker ingevoerde data accepteert (importeren, formulier, edit, archief, label, notitie, ...) moet die data **direct naar Supabase** schrijven. localStorage mag alleen als **read-cache** of voor pure UI-state (kolomvoorkeuren, filter-toggles).
 
+### 6a-bis. PK/FK type-mismatches: check ALTIJD het type van de target
+
+Sommige hoofdtabellen hebben historisch een `id text primary key` in plaats van `uuid` (komt uit een vroege legacy-fase, te kostbaar om te migreren zonder app-brede impact). Concreet zijn deze **`id text`**:
+
+| Tabel | PK type |
+|---|---|
+| `public.clienten` | `text` |
+| `public.client_documents` | `text` |
+| `public.beschikkingen` | `text` |
+| `public.facturen` | `text` |
+| `public.organisaties` | `text` |
+| `public.planning` | `text` |
+| `public.comp_diensttypes` | `text` |
+| `public.comp_feestdagen` | `text` |
+| `public.verzuim` | `text` |
+| `public.salarisschalen` | `text` |
+| `public.saladmin_history` / `saladmin_ort` | `text` |
+| `public.comp_saldi` | `text` |
+| `public.uren_budget` | `text` |
+| `public.urendeclaraties` | `text` |
+| `public.medewerker_documenten` | `text` |
+
+En deze zijn **`id uuid`**:
+
+| Tabel | PK type |
+|---|---|
+| `public.competenties` | `uuid` |
+| `public.opleidingen` | `uuid` |
+| `public.zorgsoorten` | `uuid` |
+| `public.bureaus` | `uuid` |
+| `public.locaties` | `uuid` |
+| `public.gemeenten` | `uuid` |
+| `public.medewerkers` | `uuid` |
+| `public.nieuws` | `uuid` |
+| `public.incidenten` | `uuid` |
+| `public.profiles` | `uuid` (FK naar auth.users) |
+| `public.beschikking_*`, `public.medewerker_notities`, `public.medewerker_verlof_overgedragen`, `public.medewerker_verzuim_perioden` | `uuid` |
+| `public.salarishuis_wijzigingen` | `uuid` |
+
+**Regel**: bij elke nieuwe FK kolom moet het type **exact** matchen met het PK-type van de target-tabel. PostgreSQL accepteert `uuid → text` of `text → uuid` niet en error't met `42804: foreign key constraint "..." cannot be implemented`. Concreet:
+
+```sql
+-- ❌ FOUT: clienten.id is text, niet uuid
+client_id uuid references public.clienten(id) on delete set null,
+
+-- ✅ GOED
+client_id text references public.clienten(id) on delete set null,
+```
+
+In JS maakt het niet uit — beide types zijn gewoon strings. Dus je hoeft niet alle data-lagen aan te passen, alleen de SQL.
+
+Bij twijfel: zoek `create table if not exists public.<naam>` in `schema.sql` en kijk welk type de `id`-kolom heeft. Of run in Supabase: `select column_name, data_type from information_schema.columns where table_name = '<naam>' and column_name = 'id';`.
+
 ### 6a. Stappen bij elke nieuwe data-feature
 
 1. **Tabel in `supabase/schema.sql`** — met RLS, index op parent-id + `archived`, trigger voor `laatst_gewijzigd`. Idempotent (gebruik `create table if not exists`, `drop policy if exists`).
