@@ -72,7 +72,7 @@ Restore moet **altijd vrij** zijn (geen modal, geen confirm). Archiveren **altij
 |---|---|
 | `alert("Opgeslagen")` | `window.showSaveModal({ title: "Opgeslagen" })` |
 | `alert("Geëxporteerd")` | `window.showActionFeedback("exported", "X")` |
-| `confirm("Weet je het zeker?")` | `window.showSliderConfirmModal({ title, confirmLabel })` |
+| `confirm("Weet je het zeker?")` | `window.showSliderConfirmModal({ title, preview, okLabel, cancelLabel })` |
 | `confirm("Archiveren?")` | `window.showArchiveConfirm({ preview })` |
 | `prompt(...)` | eigen modal met `.modal-overlay` + `.modal-card` |
 

@@ -436,8 +436,8 @@
         ? window.showSliderConfirmModal({
             title: "Bent u zeker dat dit verwijderd wordt?",
             preview: tr.children[0] ? tr.children[0].textContent : "",
-            confirmLabel: "Verwijderen",
-            tone: "danger",
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren",
           })
         : Promise.resolve(true);
       ask.then(function (ok) {
