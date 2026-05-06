@@ -101,16 +101,20 @@
       currentFile === "clienten.html" ||
       currentFile === "client-detail.html" ||
       currentFile === "zorgsoorten.html" ||
+      currentFile === "zorgsoort-detail.html" ||
       currentFile === "beschikkingen.html" ||
       currentFile === "beschikkingen-dashboard.html" ||
       currentFile === "beschikking-detail.html" ||
       currentFile === "facturen.html" ||
+      currentFile === "facturen-importeren.html" ||
       currentFile === "organisatie.html" ||
       currentFile === "organisatie-detail.html" ||
       currentFile === "gemeenten.html" ||
       currentFile === "gemeente-detail.html" ||
       currentFile === "urendeclaraties.html" ||
-      currentFile === "uren-budgettering.html"
+      currentFile === "uren-budgettering.html" ||
+      currentFile === "incidenten.html" ||
+      currentFile === "incidenten-dashboard.html"
     )) {
       activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
     }
