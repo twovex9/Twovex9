@@ -347,6 +347,10 @@ body.page-medewerker-detail .content--emp-detail {
   top: calc(100% + 6px);
   left: 0;
   min-width: 180px;
+  /* Veiligheidsvangnet: dropdown kan nooit breder worden dan de viewport
+     minus 16px marge — zo overflowt hij nooit, zelfs als de JS-clamp om
+     wat voor reden dan ook niet (op tijd) firet. */
+  max-width: calc(100vw - 16px);
   padding: 8px;
   border-radius: var(--r-sm);
   background: var(--surface);

@@ -405,61 +405,104 @@
   document.addEventListener("click", closePanel);
 
   // ---------------------------------------------------------------------------
-  // Top-dropdown viewport clamp
+  // Top-dropdown viewport clamp (drielaagse aanpak)
   // ---------------------------------------------------------------------------
   // De .top-dropdown elementen openen standaard `left: 0` t.o.v. hun parent.
   // Bij smalle viewports kunnen ze rechts over de viewport-rand vallen — vooral
-  // de HR/Cliënten dropdowns met ~300-380px breedte. Bij hover/focus meten we
-  // de bounding-box en schuiven we de dropdown naar links als hij overflowt.
-  // visibility:hidden in de CSS-resting-state houdt het element in de layout,
-  // dus getBoundingClientRect levert al een correcte rect.
-  function clampDropdownToViewport(dd) {
+  // de HR/Cliënten dropdowns die ~300-380px breed zijn. Drie veiligheidslagen:
+  //   1) Anker-flip op init en resize: we meten elk dropdown-item en als de
+  //      dropdown rechts zou overflowen, ankeren we op `right:0` zodat hij
+  //      naar links groeit i.p.v. naar rechts.
+  //   2) Live klem op mouseenter/focusin: re-meten en zo nodig finetune
+  //      met inline left/right pixels.
+  //   3) CSS max-width: 100vw - 16px (in styles.css) als laatste vangnet.
+  // ---------------------------------------------------------------------------
+
+  function getDropdownLayoutWidth(dd) {
+    // Met visibility:hidden wordt offsetWidth wél correct berekend.
+    // Forceer een sync layout met void offsetWidth, dan lees terug.
+    void dd.offsetWidth;
+    const w = dd.offsetWidth;
+    if (w > 0) return w;
+    // Fallback: lees min-width uit computed style (CSS-defined).
+    const cs = window.getComputedStyle(dd);
+    const min = parseFloat(cs.minWidth) || 0;
+    return min || 300;
+  }
+
+  function applyAnchorFlip(item) {
+    const dd = item.querySelector(".top-dropdown");
     if (!dd) return;
-    // Reset eerdere shifts vóór meten zodat we elke hover opnieuw vanaf 0 rekenen.
+    // Reset eerst zodat we de natuurlijke breedte meten.
     dd.style.left = "";
     dd.style.right = "";
+    const itemRect = item.getBoundingClientRect();
+    const ddWidth = getDropdownLayoutWidth(dd);
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const margin = 8;
+    // Zou de dropdown rechts overflowen als hij left:0 blijft?
+    if (itemRect.left + ddWidth > vw - margin) {
+      // Anker rechts: dropdown groeit naar links vanaf rechter parent-rand.
+      dd.style.left = "auto";
+      dd.style.right = "0";
+      // Als hij dan links zou overflowen (dropdown wijder dan parent_right tot 0),
+      // schuif rechts iets in zodat hij niet links over de viewport valt.
+      const newLeft = itemRect.right - ddWidth;
+      if (newLeft < margin) {
+        const shift = margin - newLeft;
+        dd.style.right = "-" + Math.ceil(shift) + "px";
+      }
+    }
+  }
+
+  function clampDropdownToViewport(dd) {
+    if (!dd) return;
+    // Forceer layout vóór meten.
+    void dd.offsetWidth;
     const rect = dd.getBoundingClientRect();
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const margin = 8;
     if (rect.right > vw - margin) {
+      // Dropdown overflowt rechts ondanks anker-flip → schuif extra naar links.
       const overflow = rect.right - (vw - margin);
-      dd.style.left = "-" + Math.ceil(overflow) + "px";
+      const currentLeft = parseFloat(dd.style.left) || 0;
+      dd.style.left = (currentLeft - Math.ceil(overflow)) + "px";
+      dd.style.right = "auto";
     }
-    // Hercheck na shift: als nu links overflowt (dropdown wijder dan viewport),
-    // klem aan de linker viewport-rand i.p.v. te overschuiven.
-    const recheck = dd.getBoundingClientRect();
-    if (recheck.left < margin) {
+    if (rect.left < margin) {
+      // Dropdown overflowt links → klem aan linker viewport-rand.
       const parentRect = dd.parentElement.getBoundingClientRect();
       dd.style.left = (margin - parentRect.left) + "px";
+      dd.style.right = "auto";
     }
   }
 
   function setupTopDropdownClamping() {
-    const items = nav.querySelectorAll(".top-nav-item--dropdown");
+    const items = Array.from(nav.querySelectorAll(".top-nav-item--dropdown"));
+    if (items.length === 0) return;
+
+    function applyAllAnchors() {
+      items.forEach(applyAnchorFlip);
+    }
+
     items.forEach((item) => {
       const dd = item.querySelector(".top-dropdown");
       if (!dd) return;
-      const onShow = () => clampDropdownToViewport(dd);
-      const onHide = () => { dd.style.left = ""; dd.style.right = ""; };
+      const onShow = () => {
+        // Eerst anker-flippen voor het geval viewport is gewijzigd, dan finetune.
+        applyAnchorFlip(item);
+        clampDropdownToViewport(dd);
+      };
       item.addEventListener("mouseenter", onShow);
       item.addEventListener("focusin", onShow);
-      item.addEventListener("mouseleave", onHide);
-      item.addEventListener("focusout", (e) => {
-        if (!item.contains(e.relatedTarget)) onHide();
-      });
     });
 
-    // Bij window-resize: reset alle inline shifts (worden bij volgende hover
-    // opnieuw berekend met de nieuwe viewport-breedte).
+    // Initieel + bij resize: anker-flip toepassen.
+    applyAllAnchors();
     let resizeTimer = null;
     window.addEventListener("resize", () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        items.forEach((item) => {
-          const d = item.querySelector(".top-dropdown");
-          if (d) { d.style.left = ""; d.style.right = ""; }
-        });
-      }, 150);
+      resizeTimer = setTimeout(applyAllAnchors, 100);
     });
   }
 
