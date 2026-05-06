@@ -667,15 +667,41 @@
       }
     });
 
+    function positionCdbColPanel() {
+      if (!cdbColBtn || !cdbColPanel) return;
+      if (cdbColPanel.hasAttribute("hidden")) return;
+      var rect = cdbColBtn.getBoundingClientRect();
+      var panelWidth = cdbColPanel.offsetWidth || 252;
+      var alignRight = rect.left > window.innerWidth / 2;
+      var preferredLeft = alignRight ? rect.right - panelWidth : rect.left;
+      var minLeft = 8;
+      var maxLeft = window.innerWidth - panelWidth - 8;
+      var left = Math.max(minLeft, Math.min(maxLeft, preferredLeft));
+      var top = rect.bottom + 8;
+      var minTop = 8;
+      var maxTop = window.innerHeight - 80;
+      cdbColPanel.style.top = Math.max(minTop, Math.min(maxTop, top)) + "px";
+      cdbColPanel.style.left = left + "px";
+      cdbColPanel.style.right = "auto";
+    }
+    function closeCdbColPanel() {
+      if (!cdbColPanel) return;
+      cdbColPanel.setAttribute("hidden", "");
+      if (cdbColBtn) cdbColBtn.setAttribute("aria-expanded", "false");
+      window.removeEventListener("resize", positionCdbColPanel);
+      window.removeEventListener("scroll", positionCdbColPanel, true);
+    }
     if (cdbColBtn && cdbColPanel) {
       cdbColBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         if (cdbColPanel.hasAttribute("hidden")) {
           cdbColPanel.removeAttribute("hidden");
           cdbColBtn.setAttribute("aria-expanded", "true");
+          positionCdbColPanel();
+          window.addEventListener("resize", positionCdbColPanel);
+          window.addEventListener("scroll", positionCdbColPanel, true);
         } else {
-          cdbColPanel.setAttribute("hidden", "");
-          cdbColBtn.setAttribute("aria-expanded", "false");
+          closeCdbColPanel();
         }
       });
       cdbColPanel.addEventListener("click", function (e) {
@@ -691,10 +717,7 @@
       });
     }
     document.addEventListener("click", function () {
-      if (cdbColPanel) {
-        cdbColPanel.setAttribute("hidden", "");
-        if (cdbColBtn) cdbColBtn.setAttribute("aria-expanded", "false");
-      }
+      closeCdbColPanel();
     });
 
     var cdbExportModal = document.getElementById("cdb-export-modal");

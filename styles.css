@@ -12808,6 +12808,20 @@ button.planning-erm-new {
   overflow: hidden;
 }
 
+/* Kolommen-paneel cliënt-detail: positie wordt door JS gezet op basis
+   van de knop-rect, zodat het paneel altijd zichtbaar onder de knop landt
+   (niet afgesneden door ancestor-overflow of de smalle flex-wrapper). */
+#cdb-columns-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  width: 252px;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  z-index: 1000;
+}
+
 .client-detail-besc-table .th-check {
   width: 40px;
 }
