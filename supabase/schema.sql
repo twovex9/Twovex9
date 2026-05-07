@@ -3819,3 +3819,49 @@ create policy "auth kan incident_categorieen verwijderen"
 -- Drop de hardcoded CHECK op incidenten.categorie zodat nieuwe categorieën
 -- kunnen worden toegevoegd zonder schema-migratie.
 alter table public.incidenten drop constraint if exists incidenten_categorie_check;
+
+-- =============================================================================
+-- Stage 9h: verbeteringsmaatregelen — beheerbare verbeteringsmaatregelen onder Incidenten
+-- =============================================================================
+-- Vrijstaande lijst van verbeteringsmaatregelen die intern te beheren zijn vanaf
+-- de incidenten-sectie. Geen FK naar incidenten — kan later toegevoegd worden
+-- als koppeling per incident gewenst is.
+
+create table if not exists public.verbeteringsmaatregelen (
+  id text primary key,
+  titel text not null,
+  beschrijving text not null default '',
+  vervaldatum date,
+  afgerond boolean not null default false,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists verbeteringsmaatregelen_archived_idx
+  on public.verbeteringsmaatregelen (archived);
+create index if not exists verbeteringsmaatregelen_afgerond_idx
+  on public.verbeteringsmaatregelen (afgerond);
+
+drop trigger if exists trg_verbeteringsmaatregelen_set_modified on public.verbeteringsmaatregelen;
+create trigger trg_verbeteringsmaatregelen_set_modified
+  before update on public.verbeteringsmaatregelen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.verbeteringsmaatregelen enable row level security;
+
+drop policy if exists "auth kan verbeteringsmaatregelen lezen" on public.verbeteringsmaatregelen;
+create policy "auth kan verbeteringsmaatregelen lezen"
+  on public.verbeteringsmaatregelen for select to authenticated using (true);
+
+drop policy if exists "auth kan verbeteringsmaatregelen toevoegen" on public.verbeteringsmaatregelen;
+create policy "auth kan verbeteringsmaatregelen toevoegen"
+  on public.verbeteringsmaatregelen for insert to authenticated with check (true);
+
+drop policy if exists "auth kan verbeteringsmaatregelen bewerken" on public.verbeteringsmaatregelen;
+create policy "auth kan verbeteringsmaatregelen bewerken"
+  on public.verbeteringsmaatregelen for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan verbeteringsmaatregelen verwijderen" on public.verbeteringsmaatregelen;
+create policy "auth kan verbeteringsmaatregelen verwijderen"
+  on public.verbeteringsmaatregelen for delete to authenticated using (true);

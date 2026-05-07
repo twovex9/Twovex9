@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Incident-categorieën — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9" />
+  <title>Verbeteringsmaatregelen — HR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols8" />
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="floating-panels.js?v=fpv9" defer></script>
+  <script src="floating-panels.js?v=fpv8" defer></script>
 
   <div class="app-shell">
     <header class="topbar">
@@ -97,8 +97,8 @@
           <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten">
             <a href="incidenten.html" class="side-link side-link--nested">Incidenten overzicht</a>
             <a href="incidenten-dashboard.html" class="side-link side-link--nested">Dashboard</a>
-            <a href="incidenten-categorieen.html" class="side-link side-link--nested is-active" aria-current="page">Categorieën</a>
-            <a href="verbeteringsmaatregelen.html" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
+            <a href="incidenten-categorieen.html" class="side-link side-link--nested">Categorieën</a>
+            <a href="verbeteringsmaatregelen.html" class="side-link side-link--nested is-active" aria-current="page">Verbeteringsmaatregelen</a>
           </div>
         </div>
       </nav>
@@ -111,55 +111,47 @@
     <main class="content content--inc-cat">
       <div class="content-header">
         <div>
-          <h1>Incident-categorieën</h1>
-          <p class="content-subtitle">Beheer de categorieën die beschikbaar zijn bij het melden van incidenten</p>
+          <h1>Verbeteringsmaatregelen</h1>
         </div>
         <div class="header-actions">
           <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="ic-columns-menu-btn" aria-label="Kolommen">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="vm-columns-menu-btn" aria-label="Kolommen">
               <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
               Kolommen
             </button>
-            <div class="columns-panel" id="ic-columns-panel" role="menu" aria-labelledby="ic-columns-menu-btn" hidden>
+            <div class="columns-panel" id="vm-columns-panel" role="menu" aria-labelledby="vm-columns-menu-btn" hidden>
               <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="ic-columns-list" role="none"></ul>
+              <ul class="columns-list" id="vm-columns-list" role="none"></ul>
             </div>
           </div>
-          <button class="btn-primary" type="button" id="ic-add-open-btn">+ Incident-categorie toevoegen</button>
+          <button class="btn-primary" type="button" id="vm-add-open-btn">+ Toevoegen</button>
         </div>
       </div>
 
       <div class="toolbar ic-toolbar">
-        <input class="search" type="search" id="ic-search" placeholder="Zoeken…" autocomplete="off" aria-label="Zoeken in categorieën" />
+        <input class="search" type="search" id="vm-search" placeholder="Zoeken…" autocomplete="off" aria-label="Zoeken in verbeteringsmaatregelen" />
         <label class="switch switch--yellow ic-toolbar-archived">
-          <input type="checkbox" id="ic-show-archived" />
+          <input type="checkbox" id="vm-show-archived" />
           <span class="switch-slider"></span>
-          <span class="switch-label">Gedeactiveerd tonen</span>
+          <span class="switch-label">Gearchiveerd</span>
+        </label>
+        <label class="switch switch--yellow ic-toolbar-archived">
+          <input type="checkbox" id="vm-show-afgerond" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Afgerond</span>
         </label>
       </div>
 
       <section class="table-card table-card--inc-cat">
         <div class="table-wrapper">
-          <table class="employees-table inc-cat-table" id="ic-table">
+          <table class="employees-table inc-cat-table" id="vm-table">
             <thead>
               <tr>
-                <th data-col="status" class="th-sort">
+                <th class="th-check" data-col="select"><input type="checkbox" id="vm-check-all" class="table-checkbox" aria-label="Selecteer alles" /></th>
+                <th data-col="titel" class="th-sort">
                   <div class="th-sort-inner">
-                    <span class="th-label">Status</span>
-                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op status">
-                      <span class="th-sort-arrows" aria-hidden="true"></span>
-                    </button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th data-col="naam" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Categorie naam</span>
-                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op categorie naam">
+                    <span class="th-label">Titel</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op titel">
                       <span class="th-sort-arrows" aria-hidden="true"></span>
                     </button>
                   </div>
@@ -181,10 +173,23 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th data-col="bijgewerkt" class="th-sort">
+                <th data-col="status" class="th-sort">
                   <div class="th-sort-inner">
-                    <span class="th-label">Laatst bijgewerkt</span>
-                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op laatst bijgewerkt">
+                    <span class="th-label">Status</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op status">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="aangemaakt" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Aangemaakt op</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op aangemaakt op">
                       <span class="th-sort-arrows" aria-hidden="true"></span>
                     </button>
                   </div>
@@ -197,25 +202,25 @@
                 <th class="incident-action-th" data-col="acties" aria-label="Acties">Acties</th>
               </tr>
             </thead>
-            <tbody id="ic-tbody"></tbody>
+            <tbody id="vm-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer">
-          <span class="footer-range" id="ic-pager-range">0 van 0</span>
+          <span class="footer-range" id="vm-pager-range">0 van 0</span>
           <div class="footer-pager">
             <span>Rijen per pagina</span>
-            <select class="footer-page-size" id="ic-page-size" aria-label="Rijen per pagina">
+            <select class="footer-page-size" id="vm-page-size" aria-label="Rijen per pagina">
               <option value="15" selected>15</option>
               <option value="30">30</option>
               <option value="50">50</option>
               <option value="100">100</option>
             </select>
-            <span class="footer-page" id="ic-pager-page">Pagina 1 van 1</span>
+            <span class="footer-page" id="vm-pager-page">Pagina 1 van 1</span>
             <div class="footer-pager-btns">
-              <button type="button" class="footer-pager-btn" id="ic-pager-first" aria-label="Eerste pagina">«</button>
-              <button type="button" class="footer-pager-btn" id="ic-pager-prev" aria-label="Vorige pagina">‹</button>
-              <button type="button" class="footer-pager-btn" id="ic-pager-next" aria-label="Volgende pagina">›</button>
-              <button type="button" class="footer-pager-btn" id="ic-pager-last" aria-label="Laatste pagina">»</button>
+              <button type="button" class="footer-pager-btn" id="vm-pager-first" aria-label="Eerste pagina">«</button>
+              <button type="button" class="footer-pager-btn" id="vm-pager-prev" aria-label="Vorige pagina">‹</button>
+              <button type="button" class="footer-pager-btn" id="vm-pager-next" aria-label="Volgende pagina">›</button>
+              <button type="button" class="footer-pager-btn" id="vm-pager-last" aria-label="Laatste pagina">»</button>
             </div>
           </div>
         </div>
@@ -224,90 +229,136 @@
   </div>
 
   <!-- Add modal -->
-  <div class="modal-overlay" id="ic-add-modal" hidden aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ic-add-title" tabindex="-1">
+  <div class="modal-overlay" id="vm-add-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="vm-add-title" tabindex="-1">
       <div class="modal-header">
-        <h2 class="modal-title" id="ic-add-title">Nieuwe incident-categorie toevoegen</h2>
-        <button type="button" class="modal-close" id="ic-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 class="modal-title" id="vm-add-title">Verbeteringsmaatregel aanmaken</h2>
+        <button type="button" class="modal-close" id="vm-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <form id="ic-add-form" class="modal-body" novalidate>
+      <form id="vm-add-form" class="modal-body" novalidate>
         <div class="modal-field">
-          <label class="modal-label" for="ic-add-naam">Categorie naam <span class="im-req">*</span></label>
-          <input class="modal-input" type="text" id="ic-add-naam" placeholder="Naam van de categorie..." required />
+          <label class="modal-label" for="vm-add-titel">Titel <span class="im-req">*</span></label>
+          <input class="modal-input" type="text" id="vm-add-titel" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="ic-add-beschr">Beschrijving</label>
-          <textarea class="modal-input" id="ic-add-beschr" rows="4" placeholder="Korte omschrijving van wanneer deze categorie van toepassing is..."></textarea>
+          <label class="modal-label" for="vm-add-beschr">Beschrijving</label>
+          <textarea class="modal-input" id="vm-add-beschr" rows="4"></textarea>
         </div>
-        <p class="im-error" id="ic-add-error" role="alert" hidden></p>
+        <div class="modal-field">
+          <label class="modal-label" for="vm-add-vervaldatum">Vervaldatum</label>
+          <input class="modal-input" type="date" id="vm-add-vervaldatum" placeholder="dd-mm-jjjj" />
+        </div>
+        <div class="modal-field modal-field--inline">
+          <label class="modal-label" for="vm-add-afgerond">Afgerond</label>
+          <label class="switch switch--yellow vm-add-afgerond-switch">
+            <input type="checkbox" id="vm-add-afgerond" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="im-error" id="vm-add-error" role="alert" hidden></p>
       </form>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="ic-add-cancel">Annuleren</button>
-        <button type="submit" form="ic-add-form" class="btn-primary" id="ic-add-submit">Toevoegen</button>
+        <button type="button" class="btn-outline" id="vm-add-cancel">Annuleren</button>
+        <button type="submit" form="vm-add-form" class="btn-primary" id="vm-add-submit">Toevoegen</button>
       </div>
     </div>
   </div>
 
   <!-- Edit modal -->
-  <div class="modal-overlay" id="ic-edit-modal" hidden aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ic-edit-title" tabindex="-1">
+  <div class="modal-overlay" id="vm-edit-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="vm-edit-title" tabindex="-1">
       <div class="modal-header">
-        <h2 class="modal-title" id="ic-edit-title">Incident-categorie bewerken</h2>
-        <button type="button" class="modal-close" id="ic-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 class="modal-title" id="vm-edit-title">Verbeteringsmaatregel bewerken</h2>
+        <button type="button" class="modal-close" id="vm-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <form id="ic-edit-form" class="modal-body" novalidate>
-        <input type="hidden" id="ic-edit-id" />
+      <form id="vm-edit-form" class="modal-body" novalidate>
+        <input type="hidden" id="vm-edit-id" />
         <div class="modal-field">
-          <label class="modal-label" for="ic-edit-naam">Categorie naam <span class="im-req">*</span></label>
-          <input class="modal-input" type="text" id="ic-edit-naam" required />
+          <label class="modal-label" for="vm-edit-titel">Titel <span class="im-req">*</span></label>
+          <input class="modal-input" type="text" id="vm-edit-titel" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="ic-edit-beschr">Beschrijving</label>
-          <textarea class="modal-input" id="ic-edit-beschr" rows="4"></textarea>
+          <label class="modal-label" for="vm-edit-beschr">Beschrijving</label>
+          <textarea class="modal-input" id="vm-edit-beschr" rows="4"></textarea>
         </div>
-        <p class="im-error" id="ic-edit-error" role="alert" hidden></p>
+        <div class="modal-field">
+          <label class="modal-label" for="vm-edit-vervaldatum">Vervaldatum</label>
+          <input class="modal-input" type="date" id="vm-edit-vervaldatum" placeholder="dd-mm-jjjj" />
+        </div>
+        <div class="modal-field modal-field--inline">
+          <label class="modal-label" for="vm-edit-afgerond">Afgerond</label>
+          <label class="switch switch--yellow vm-add-afgerond-switch">
+            <input type="checkbox" id="vm-edit-afgerond" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="im-error" id="vm-edit-error" role="alert" hidden></p>
       </form>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="ic-edit-cancel">Annuleren</button>
-        <button type="submit" form="ic-edit-form" class="btn-primary" id="ic-edit-submit">Bijwerken</button>
+        <button type="button" class="btn-outline" id="vm-edit-cancel">Annuleren</button>
+        <button type="submit" form="vm-edit-form" class="btn-primary" id="vm-edit-submit">Bijwerken</button>
       </div>
     </div>
   </div>
 
-  <!-- Deactivate confirm modal (slider) -->
-  <div class="modal-overlay modal-overlay--confirm" id="ic-deact-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="ic-deact-title" tabindex="-1">
+  <!-- Archive confirm (slider) -->
+  <div class="modal-overlay modal-overlay--confirm" id="vm-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="vm-archive-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="ic-deact-title" class="modal-title">Categorie deactiveren</h2>
-        <button type="button" class="modal-close" id="ic-deact-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="vm-archive-title" class="modal-title">Verbeteringsmaatregel archiveren</h2>
+        <button type="button" class="modal-close" id="vm-archive-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">De categorie wordt gedeactiveerd. Bestaande incidenten met deze categorie blijven werken; nieuwe incidenten kunnen 'm niet meer kiezen.</p>
-        <p class="employee-delete-preview" id="ic-deact-preview" aria-live="polite"></p>
+        <p class="employee-delete-msg">De verbeteringsmaatregel wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan om gearchiveerde maatregelen te zien.</p>
+        <p class="employee-delete-preview" id="vm-archive-preview" aria-live="polite"></p>
         <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="ic-deact-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <label class="employee-delete-slider-label" for="vm-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
           <div class="employee-delete-slider-wrap">
-            <input type="range" id="ic-deact-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig deactiveren" />
+            <input type="range" id="vm-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="ic-deact-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="ic-deact-confirm" disabled>Deactiveren</button>
+        <button type="button" class="btn-outline" id="vm-archive-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="vm-archive-confirm" disabled>Archiveren</button>
       </div>
     </div>
   </div>
 
-  <div class="app-toast" id="ic-toast" role="status" aria-live="polite" hidden></div>
+  <!-- Permanent delete confirm (slider) -->
+  <div class="modal-overlay modal-overlay--confirm" id="vm-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="vm-purge-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="vm-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="vm-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Deze verbeteringsmaatregel wordt <strong>permanent</strong> verwijderd.</p>
+        <p class="employee-delete-preview" id="vm-purge-preview" aria-live="polite"></p>
+        <div class="employee-delete-slider-block">
+          <label class="employee-delete-slider-label" for="vm-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <div class="employee-delete-slider-wrap">
+            <input type="range" id="vm-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="vm-purge-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="vm-purge-confirm" disabled>Verwijderen</button>
+      </div>
+    </div>
+  </div>
 
-  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <div class="app-toast" id="vm-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="top-nav-overflow.js?v=imcols8"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="incident-categorieen-data.js?v=imcols9" defer></script>
-  <script src="incidenten-categorieen.js?v=imcols9" defer></script>
+  <script src="verbeteringsmaatregelen-data.js?v=vm1" defer></script>
+  <script src="verbeteringsmaatregelen.js?v=vm1" defer></script>
 </body>
 </html>
