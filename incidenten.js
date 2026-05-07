@@ -264,6 +264,54 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Kolom-zichtbaarheid (Kolommen-knop in header)
+  // ---------------------------------------------------------------------------
+  var COLUMN_CONFIG = [
+    { id: "select", label: "Selectie", defaultOn: true, skipToggle: true },
+    { id: "client", label: "Cliënt", defaultOn: true },
+    { id: "categorie", label: "Categorie", defaultOn: true },
+    { id: "status", label: "Status", defaultOn: true },
+    { id: "melder", label: "Gemeld door", defaultOn: true },
+    { id: "bijgewerkt", label: "Laatst bijgewerkt", defaultOn: true },
+    { id: "datum", label: "Datum", defaultOn: true },
+    { id: "acties", label: "Acties", defaultOn: true, skipToggle: true },
+  ];
+
+  function setColumnVisible(colId, visible) {
+    document.querySelectorAll('#inc-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+
+  function applyColumnVisibility() {
+    document.querySelectorAll("#inc-columns-list .column-toggle").forEach(function (btn) {
+      var colId = btn.getAttribute("data-col");
+      var isOn = btn.getAttribute("aria-checked") === "true";
+      setColumnVisible(colId, isOn);
+    });
+  }
+
+  function buildColumnsPanel() {
+    var list = $("inc-columns-list");
+    if (!list) return;
+    list.innerHTML = "";
+    COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "column-toggle" + (c.defaultOn ? " is-checked" : "");
+      b.setAttribute("data-col", c.id);
+      b.setAttribute("role", "menuitemcheckbox");
+      b.setAttribute("aria-checked", c.defaultOn ? "true" : "false");
+      b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+
   function renderTable() {
     var tbody = $("inc-tbody");
     if (!tbody) return;
@@ -282,6 +330,9 @@
     } else {
       tbody.innerHTML = pageRows.map(renderRowHtml).join("");
     }
+
+    // Pas zichtbaarheid van kolommen toe op de net-gerenderde rijen.
+    applyColumnVisibility();
 
     $("inc-pager-range").textContent = total + " van " + total;
     $("inc-pager-page").textContent = "Pagina " + state.page + " van " + maxPage;
@@ -338,14 +389,14 @@
     }
 
     return '<tr data-id="' + escAttr(i.id) + '">'
-      + '<td class="th-check"><input type="checkbox" class="table-checkbox" aria-label="Selecteer rij" /></td>'
-      + '<td>' + escHtml(clientLabel(cli)) + '</td>'
-      + '<td>' + escHtml(i.categorie || "Overig") + '</td>'
-      + '<td><span class="incident-status-pill ' + stat.className + '">' + escHtml(stat.label) + '</span></td>'
-      + '<td>' + escHtml(medewerkerLabel(melder)) + '</td>'
-      + '<td title="' + escAttr(formatNlDateTime(i.laatstGewijzigd)) + '">' + escHtml(formatRelativeTime(i.laatstGewijzigd)) + '</td>'
-      + '<td>' + escHtml(formatNlDate(i.incidentDatum)) + '</td>'
-      + '<td class="incident-action-cell">' + actionHtml + '</td>'
+      + '<td class="th-check" data-col="select"><input type="checkbox" class="table-checkbox" aria-label="Selecteer rij" /></td>'
+      + '<td data-col="client">' + escHtml(clientLabel(cli)) + '</td>'
+      + '<td data-col="categorie">' + escHtml(i.categorie || "Overig") + '</td>'
+      + '<td data-col="status"><span class="incident-status-pill ' + stat.className + '">' + escHtml(stat.label) + '</span></td>'
+      + '<td data-col="melder">' + escHtml(medewerkerLabel(melder)) + '</td>'
+      + '<td data-col="bijgewerkt" title="' + escAttr(formatNlDateTime(i.laatstGewijzigd)) + '">' + escHtml(formatRelativeTime(i.laatstGewijzigd)) + '</td>'
+      + '<td data-col="datum">' + escHtml(formatNlDate(i.incidentDatum)) + '</td>'
+      + '<td class="incident-action-cell" data-col="acties">' + actionHtml + '</td>'
       + '</tr>';
   }
 
@@ -620,6 +671,41 @@
       th.addEventListener("click", onHeaderClick);
     });
 
+    // Kolommen-knop: panel toggelen, items klikken, buiten klikken sluit.
+    var colBtn = $("inc-columns-menu-btn");
+    var colPanel = $("inc-columns-panel");
+    var colList = $("inc-columns-list");
+    if (colBtn && colPanel) {
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var hidden = colPanel.hasAttribute("hidden");
+        if (hidden) {
+          colPanel.removeAttribute("hidden");
+          colBtn.setAttribute("aria-expanded", "true");
+        } else {
+          colPanel.setAttribute("hidden", "");
+          colBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+      colPanel.addEventListener("click", function (e) { e.stopPropagation(); });
+    }
+    if (colList) {
+      colList.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest && e.target.closest(".column-toggle");
+        if (!t) return;
+        t.classList.toggle("is-checked");
+        var on = t.classList.contains("is-checked");
+        t.setAttribute("aria-checked", on ? "true" : "false");
+        applyColumnVisibility();
+      });
+    }
+    document.addEventListener("click", function () {
+      if (colPanel) {
+        colPanel.setAttribute("hidden", "");
+        if (colBtn) colBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+
     ["besa:incidenten-updated", "besa:clienten-updated", "besa:medewerkers-updated",
      "besa:locaties-updated", "besa:profile-updated"].forEach(function (evt) {
       window.addEventListener(evt, renderAll);
@@ -627,6 +713,7 @@
   }
 
   function init() {
+    buildColumnsPanel();
     wireUp();
     renderAll();
   }
