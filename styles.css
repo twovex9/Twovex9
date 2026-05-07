@@ -17440,3 +17440,61 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   align-items: center;
   gap: 8px;
 }
+
+/* === Incident-categorieën pagina === */
+
+.ic-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.ic-toolbar .search { flex: 1; min-width: 240px; max-width: 480px; }
+.ic-toolbar-archived { margin-left: auto; }
+
+.inc-cat-table .ic-cell-beschr {
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.ic-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.ic-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+.ic-status-pill--actief {
+  color: var(--green);
+  background: var(--green-soft);
+}
+.ic-status-pill--inactief {
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+.ic-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ic-action-btn svg { display: inline-block; }

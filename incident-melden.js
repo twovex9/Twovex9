@@ -744,7 +744,7 @@
     $("im-notif-medewerker-add").addEventListener("click", addNotifMedewerker);
 
     ["besa:clienten-updated", "besa:medewerkers-updated", "besa:locaties-updated",
-     "besa:profile-updated"].forEach(function (evt) {
+     "besa:profile-updated", "besa:incident-categorieen-updated"].forEach(function (evt) {
       window.addEventListener(evt, function () {
         populateDropdowns();
         renderBetrokkenList();

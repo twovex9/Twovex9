@@ -3771,3 +3771,51 @@ drop policy if exists "auth kan incident-documenten verwijderen" on storage.obje
 create policy "auth kan incident-documenten verwijderen"
   on storage.objects for delete to authenticated
   using (bucket_id = 'incident-documenten');
+-- =============================================================================
+-- Stage 9g: incident_categorieen — beheerbare incident-categorieën
+-- =============================================================================
+-- Vervangt de hardcoded CHECK constraint op incidenten.categorie door een
+-- aparte tabel die via /incidenten-categorieen.html beheerd wordt.
+-- Bestaande incidenten met legacy categorieën blijven werken; nieuwe
+-- incidenten kunnen elke categorie kiezen die in deze tabel staat.
+
+create table if not exists public.incident_categorieen (
+  id text primary key,
+  naam text not null,
+  beschrijving text not null default '',
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists incident_categorieen_archived_idx
+  on public.incident_categorieen (archived);
+create index if not exists incident_categorieen_naam_idx
+  on public.incident_categorieen (lower(naam));
+
+drop trigger if exists trg_incident_categorieen_set_modified on public.incident_categorieen;
+create trigger trg_incident_categorieen_set_modified
+  before update on public.incident_categorieen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.incident_categorieen enable row level security;
+
+drop policy if exists "auth kan incident_categorieen lezen" on public.incident_categorieen;
+create policy "auth kan incident_categorieen lezen"
+  on public.incident_categorieen for select to authenticated using (true);
+
+drop policy if exists "auth kan incident_categorieen toevoegen" on public.incident_categorieen;
+create policy "auth kan incident_categorieen toevoegen"
+  on public.incident_categorieen for insert to authenticated with check (true);
+
+drop policy if exists "auth kan incident_categorieen bewerken" on public.incident_categorieen;
+create policy "auth kan incident_categorieen bewerken"
+  on public.incident_categorieen for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan incident_categorieen verwijderen" on public.incident_categorieen;
+create policy "auth kan incident_categorieen verwijderen"
+  on public.incident_categorieen for delete to authenticated using (true);
+
+-- Drop de hardcoded CHECK op incidenten.categorie zodat nieuwe categorieën
+-- kunnen worden toegevoegd zonder schema-migratie.
+alter table public.incidenten drop constraint if exists incidenten_categorie_check;

@@ -30,10 +30,17 @@
   var CACHE_KEY = "incidenten_v1";
 
   var ALLOWED_STATUS = { in_afwachting: 1, in_behandeling: 1, opgelost: 1 };
-  var ALLOWED_CATEGORIE = {
-    "Val": 1, "Medicatie": 1, "Agressie": 1, "Vermissing": 1,
-    "Materiele schade": 1, "Privacy/AVG": 1, "Overig": 1,
-  };
+  // Categorieën zijn nu beheerbaar via public.incident_categorieen (Stage 9g).
+  // De hardcoded set is vervangen door een runtime-check tegen de actieve
+  // categorieën uit incidentCategorieenDB. De DB-CHECK constraint is gedropt.
+  function isAllowedCategorie(naam) {
+    if (!naam) return false;
+    if (global.incidentCategorieenDB && typeof global.incidentCategorieenDB.getByNaamSync === "function") {
+      return !!global.incidentCategorieenDB.getByNaamSync(naam);
+    }
+    // Geen data-laag geladen: alles toestaan en op de DB vertrouwen.
+    return true;
+  }
   var ALLOWED_TIJDSTIP = {
     vroege_ochtend: 1, ochtend: 1, middag: 1, late_middag: 1, avond: 1, nacht: 1,
   };
@@ -124,7 +131,7 @@
 
   function objToInsertPayload(o) {
     var safe = o || {};
-    var categorie = ALLOWED_CATEGORIE[safe.categorie] ? safe.categorie : "Overig";
+    var categorie = isAllowedCategorie(safe.categorie) ? safe.categorie : (safe.categorie || "Overig");
     var status = ALLOWED_STATUS[safe.status] ? safe.status : "in_afwachting";
     var tijdstip = ALLOWED_TIJDSTIP[safe.tijdstipVanDag] ? safe.tijdstipVanDag : null;
     var actor = ALLOWED_ACTOR[safe.actorType] ? safe.actorType : null;
@@ -258,6 +265,19 @@
 
   function getAllSync() { return readCache(); }
 
+  // Dynamic CATEGORIES: leest uit incidentCategorieenDB als die geladen is
+  // (Stage 9g — beheerbare categorieën). Fallback op een lege array zodat
+  // pagina's nooit crashen als de andere data-laag (nog) niet bootstrapped is.
+  // De legacy hardcoded lijst is vervangen door deze dynamische getter; oude
+  // hardcoded waarden zijn als seed naar public.incident_categorieen gemigreerd.
+  function getDynamicCategories() {
+    if (global.incidentCategorieenDB && typeof global.incidentCategorieenDB.getActiveSync === "function") {
+      var cats = global.incidentCategorieenDB.getActiveSync() || [];
+      return cats.map(function (c) { return c && c.naam ? c.naam : ""; }).filter(Boolean);
+    }
+    return [];
+  }
+
   global.incidentenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -270,7 +290,7 @@
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     // Constants voor UI dropdowns:
-    CATEGORIES: ["Val", "Medicatie", "Agressie", "Vermissing", "Materiele schade", "Privacy/AVG", "Overig"],
+    get CATEGORIES() { return getDynamicCategories(); },
     STATUSES: [
       { value: "in_afwachting", label: "In afwachting", className: "incident-status--afwachting" },
       { value: "in_behandeling", label: "In behandeling", className: "incident-status--behandeling" },

@@ -707,7 +707,8 @@
     });
 
     ["besa:incidenten-updated", "besa:clienten-updated", "besa:medewerkers-updated",
-     "besa:locaties-updated", "besa:profile-updated"].forEach(function (evt) {
+     "besa:locaties-updated", "besa:profile-updated",
+     "besa:incident-categorieen-updated"].forEach(function (evt) {
       window.addEventListener(evt, renderAll);
     });
   }
