@@ -506,12 +506,57 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Top-dropdown anker-decider (left:0 vs right:0)
+  // ---------------------------------------------------------------------------
+  // CSS-default is `left: 0`. Voor elk dropdown-item meten we of hij met
+  // left:0 binnen de viewport past. Zo niet, flippen we naar `right: 0`
+  // (dropdown groeit dan naar links vanaf parent's rechterrand).
+  //
+  // Resultaat:
+  //   - Planning (links in nav): left:0 → groeit naar rechts, past prima.
+  //   - HR / Cliënten / Kilometers (rechts in nav): right:0 → groeit naar
+  //     links, valt nooit rechts uit de viewport.
+  //
+  // Wordt herberekend bij window-resize zodat het ook bij grootte-wijzigingen
+  // klopt.
+  function decideDropdownAnchor(item) {
+    const dd = item.querySelector(".top-dropdown");
+    if (!dd) return;
+    // Reset eerst zodat we de natuurlijke breedte meten.
+    dd.style.left = "";
+    dd.style.right = "";
+    // Forceer layout (visibility:hidden behoudt layout, dus offsetWidth klopt).
+    void dd.offsetWidth;
+    const itemRect = item.getBoundingClientRect();
+    const ddWidth = dd.offsetWidth || 240;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const margin = 8;
+    if (itemRect.left + ddWidth > vw - margin) {
+      // Overflowt rechts met left:0 → flip naar right:0
+      dd.style.left = "auto";
+      dd.style.right = "0";
+    } else {
+      // Past met left:0 — gebruik default
+      dd.style.left = "0";
+      dd.style.right = "auto";
+    }
+  }
+
+  function decideAllDropdownAnchors() {
+    nav.querySelectorAll(".top-nav-item--dropdown").forEach(decideDropdownAnchor);
+  }
+
+  decideAllDropdownAnchors();
+  let dropdownResizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(dropdownResizeTimer);
+    dropdownResizeTimer = setTimeout(decideAllDropdownAnchors, 100);
+  });
+
   wireTopDropdownDirectRoutes();
   wireFailsafeNavigation();
   syncTopNavActiveState();
-  // JS-clamping uitgeschakeld — pure CSS-aanpak (right:0 anker + max-width)
-  // doet het werk nu. setupTopDropdownClamping() blijft als functie bestaan
-  // voor het geval we 'm later weer willen activeren, maar wordt niet aangeroepen.
   ro.observe(nav);
   update();
 })();

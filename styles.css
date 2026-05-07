@@ -345,12 +345,12 @@ body.page-medewerker-detail .content--emp-detail {
 .top-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  /* Anker rechts t.o.v. parent, dropdown groeit naar links. Met deze
-     positionering kan een dropdown nooit rechts uit de viewport vallen,
-     zolang de parent zelf binnen de viewport staat (wat sowieso het geval
-     is in de top-nav). Geen JS-clamp meer nodig — pure CSS, gegarandeerd. */
-  right: 0;
-  left: auto;
+  /* Default: anker links t.o.v. parent. JS in top-nav-overflow.js flipt
+     individuele dropdowns naar `right: 0` als hij anders rechts uit de
+     viewport zou vallen. Zo overflowen left-side items (Planning) niet
+     naar links én right-side items (HR/Cliënten) niet naar rechts. */
+  left: 0;
+  right: auto;
   min-width: 200px;
   /* Hard plafond op breedte: nooit breder dan viewport-32px, en hoogstens
      380px zodat hij ook op brede schermen niet overdreven groot wordt. */
