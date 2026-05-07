@@ -984,13 +984,21 @@ h1 {
 .columns-panel {
   /* Position wordt door floating-panels.js gezet (top/left via JS).
      position: fixed zodat het paneel nooit door ancestor-overflow wordt
-     afgesneden of onbedoeld door een smalle flex-wrapper verschoven. */
+     afgesneden of onbedoeld door een smalle flex-wrapper verschoven.
+     Default: rechts-geankerd op 8px van de viewport-rand zodat hij ook
+     volledig zichtbaar is als de JS-positionering om wat voor reden dan
+     ook nog niet heeft gedraaid (timing, cache, etc.). */
   position: fixed;
-  top: 0;
-  left: 0;
-  right: auto;
+  top: 60px;
+  right: 8px;
+  left: auto;
   z-index: 1000;
   width: 252px;
+  /* Hard plafond op breedte: paneel kan absoluut nooit breder zijn dan
+     de viewport - 16px (8px aan elke kant). Dit beschermt tegen elke
+     edge-case met te brede content. */
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
   max-height: min(70vh, 480px);
   overflow-y: auto;
   background: var(--surface);
