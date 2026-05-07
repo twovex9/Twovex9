@@ -345,12 +345,16 @@ body.page-medewerker-detail .content--emp-detail {
 .top-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
-  min-width: 180px;
-  /* Veiligheidsvangnet: dropdown kan nooit breder worden dan de viewport
-     minus 16px marge — zo overflowt hij nooit, zelfs als de JS-clamp om
-     wat voor reden dan ook niet (op tijd) firet. */
-  max-width: calc(100vw - 16px);
+  /* Anker rechts t.o.v. parent, dropdown groeit naar links. Met deze
+     positionering kan een dropdown nooit rechts uit de viewport vallen,
+     zolang de parent zelf binnen de viewport staat (wat sowieso het geval
+     is in de top-nav). Geen JS-clamp meer nodig — pure CSS, gegarandeerd. */
+  right: 0;
+  left: auto;
+  min-width: 200px;
+  /* Hard plafond op breedte: nooit breder dan viewport-32px, en hoogstens
+     380px zodat hij ook op brede schermen niet overdreven groot wordt. */
+  max-width: min(380px, calc(100vw - 32px));
   padding: 8px;
   border-radius: var(--r-sm);
   background: var(--surface);
@@ -414,7 +418,7 @@ body.page-medewerker-detail .content--emp-detail {
 }
 
 .top-dropdown--hr {
-  min-width: 300px;
+  min-width: 240px;
   gap: 0;
   padding: 6px;
 }

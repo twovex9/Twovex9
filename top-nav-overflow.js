@@ -509,7 +509,9 @@
   wireTopDropdownDirectRoutes();
   wireFailsafeNavigation();
   syncTopNavActiveState();
-  setupTopDropdownClamping();
+  // JS-clamping uitgeschakeld — pure CSS-aanpak (right:0 anker + max-width)
+  // doet het werk nu. setupTopDropdownClamping() blijft als functie bestaan
+  // voor het geval we 'm later weer willen activeren, maar wordt niet aangeroepen.
   ro.observe(nav);
   update();
 })();
