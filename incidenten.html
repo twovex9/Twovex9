@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Incidenten overzicht — HR</title>
-  <link rel="stylesheet" href="styles.css?v=ddflip3" />
+  <link rel="stylesheet" href="styles.css?v=im9g" />
 </head>
 <body>
   <script src="save-feedback.js" defer></script>
@@ -253,78 +253,6 @@
     </main>
   </div>
 
-  <!-- Add/Edit modal -->
-  <div class="modal-overlay" id="inc-form-modal" hidden aria-hidden="true">
-    <div class="modal-dialog cl-add-dialog" role="dialog" aria-modal="true" aria-labelledby="inc-form-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="inc-form-title">Incident melden</h2>
-        <button type="button" class="modal-close" id="inc-form-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <form id="inc-form" class="cl-add-form" novalidate>
-        <input type="hidden" id="inc-form-id" />
-        <div class="modal-body">
-          <div class="cl-add-grid">
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-client">Cliënt</label>
-              <select class="modal-input modal-select" id="inc-form-client" required>
-                <option value="">— Kies cliënt —</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-categorie">Categorie</label>
-              <select class="modal-input modal-select" id="inc-form-categorie" required></select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-status">Status</label>
-              <select class="modal-input modal-select" id="inc-form-status" required>
-                <option value="in_afwachting">In afwachting</option>
-                <option value="in_behandeling">In behandeling</option>
-                <option value="opgelost">Opgelost</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-datum">Datum incident</label>
-              <input class="modal-input" type="datetime-local" id="inc-form-datum" required />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-locatie">Locatie</label>
-              <select class="modal-input modal-select" id="inc-form-locatie">
-                <option value="">— Geen —</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-melder">Melder (medewerker)</label>
-              <select class="modal-input modal-select" id="inc-form-melder">
-                <option value="">— Onbekend —</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="inc-form-beoordelaar">Beoordelaar (medewerker)</label>
-              <select class="modal-input modal-select" id="inc-form-beoordelaar">
-                <option value="">— Niet toegewezen —</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-field cl-add-fullrow">
-            <label class="modal-label" for="inc-form-omschrijving">Omschrijving</label>
-            <textarea class="modal-input" id="inc-form-omschrijving" rows="3" placeholder="Korte beschrijving van wat er gebeurd is…"></textarea>
-          </div>
-          <div class="modal-field cl-add-fullrow">
-            <label class="modal-label" for="inc-form-maatregelen">Genomen maatregelen</label>
-            <textarea class="modal-input" id="inc-form-maatregelen" rows="3" placeholder="Welke acties zijn er genomen of gepland?"></textarea>
-          </div>
-          <p class="fi-error" id="inc-form-error" role="alert" hidden></p>
-        </div>
-        <div class="modal-footer modal-footer--incident">
-          <button type="button" class="btn-outline btn-danger-outline incident-archive-action" id="inc-form-archive" hidden>Archiveren</button>
-          <div class="modal-footer-spacer"></div>
-          <button type="button" class="btn-outline" id="inc-form-cancel">Annuleren</button>
-          <button type="submit" class="btn-primary" id="inc-form-submit">Indienen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Archive confirm -->
   <div class="modal-overlay modal-overlay--confirm" id="inc-archive-modal" hidden aria-hidden="true">
     <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="inc-ar-title" tabindex="-1">
@@ -375,7 +303,7 @@
 
   <div class="app-toast" id="inc-toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="top-nav-overflow.js?v=ddflip3"></script>
+  <script src="top-nav-overflow.js?v=im9g"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>

@@ -16812,3 +16812,614 @@ button.besc-dtl-tab:hover {
   padding: 20px 12px;
 }
 .id-empty--hm { padding-top: 6px; }
+.im-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 120ms ease;
+}
+.im-back:hover { color: var(--blue); }
+
+.im-header { margin-bottom: 24px; }
+.im-header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.im-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.im-req { color: #c0392b; font-weight: 700; margin-left: 1px; }
+
+.im-form { display: flex; flex-direction: column; gap: 18px; }
+
+.im-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card, 12px);
+  overflow: hidden;
+}
+.im-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.6), transparent);
+}
+.im-card-ico {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.im-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.im-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.im-field { display: flex; flex-direction: column; gap: 4px; }
+.im-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.im-help {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.im-mini-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.im-input,
+.im-select,
+.im-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  box-sizing: border-box;
+}
+.im-input:focus,
+.im-select:focus,
+.im-textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft, rgba(37, 99, 235, 0.15));
+}
+.im-textarea { resize: vertical; line-height: 1.5; }
+.im-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+.im-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+@media (max-width: 700px) {
+  .im-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Info-banner boven beschrijving */
+.im-info {
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.im-info em { color: var(--text); font-style: normal; font-weight: 600; }
+
+/* Checkbox veld (Buiten) */
+.im-field--checkbox { justify-content: flex-end; }
+.im-checkbox-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.im-checkbox-label:hover { border-color: var(--blue); background: rgba(37, 99, 235, 0.03); }
+.im-checkbox-label input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px; height: 16px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.im-checkbox-text { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.im-checkbox-text strong { color: var(--text); font-weight: 600; }
+.im-checkbox-text .im-help { margin: 0; }
+
+/* Betrokken partijen — sub-block */
+.im-betrokken-add {
+  background: rgba(15, 23, 42, 0.025);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 6px;
+}
+.im-betrokken-add-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.im-betrokken-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 2fr);
+  gap: 16px;
+  align-items: end;
+}
+@media (max-width: 700px) {
+  .im-betrokken-row { grid-template-columns: 1fr; }
+}
+.im-betrokken-cell { display: flex; flex-direction: column; }
+.im-betrokken-cell--grow { flex: 1; }
+
+.im-radio-inline { display: flex; gap: 8px; flex-wrap: wrap; }
+.im-radio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--surface);
+  transition: all 120ms ease;
+}
+.im-radio-pill input[type="radio"] {
+  width: 14px; height: 14px;
+  accent-color: var(--blue);
+  cursor: pointer;
+  margin: 0;
+}
+.im-radio-pill:hover { border-color: var(--blue); }
+.im-radio-pill:has(input:checked) {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.im-betrokken-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.im-betrokken-input-row .im-select { flex: 1; }
+.im-add-btn {
+  width: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 120ms ease;
+}
+.im-add-btn:hover {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.im-betrokken-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.im-betrokken-empty {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.im-betrokken-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  padding: 6px 10px 6px 12px;
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color 120ms ease;
+}
+.im-betrokken-chip:hover { border-color: var(--blue); }
+.im-betrokken-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.im-betrokken-dot--cli { background: #2563eb; }
+.im-betrokken-dot--med { background: #16a34a; }
+.im-betrokken-chip-type { color: var(--text-muted); font-size: 11px; font-weight: 600; }
+.im-betrokken-chip-name { font-weight: 500; }
+.im-betrokken-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 2px;
+  transition: background 120ms ease, color 120ms ease;
+}
+.im-betrokken-chip-x:hover { background: rgba(192, 57, 43, 0.12); color: #c0392b; }
+
+/* Actor type radio cards */
+.im-radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.im-actor-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  background: var(--surface);
+}
+.im-actor-card:hover { border-color: var(--blue); background: rgba(37, 99, 235, 0.03); }
+.im-actor-card.is-selected,
+.im-actor-card:has(input:checked) {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+}
+.im-actor-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.im-actor-radio {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  flex-shrink: 0;
+  margin-top: 2px;
+  position: relative;
+  transition: border-color 120ms ease;
+}
+.im-actor-card:has(input:checked) .im-actor-radio,
+.im-actor-card.is-selected .im-actor-radio {
+  border-color: var(--blue);
+}
+.im-actor-card:has(input:checked) .im-actor-radio::after,
+.im-actor-card.is-selected .im-actor-radio::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.im-actor-body { display: flex; flex-direction: column; gap: 2px; }
+.im-actor-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.im-actor-desc { font-size: 12px; color: var(--text-muted); }
+
+/* Foutmelding */
+.im-error {
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid rgba(192, 57, 43, 0.30);
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Acties (footer) */
+.im-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 4px;
+}
+.im-actions-spacer { flex: 1; }
+.im-archive-btn {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.3);
+}
+.im-archive-btn:hover {
+  background: rgba(192, 57, 43, 0.08);
+  border-color: #c0392b;
+}
+
+/* === Incident melden — uitgebreid (Bijlagen / Ouders / Feedback / Notificaties) === */
+
+/* Bijlagen — drop-zone */
+.im-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  background: rgba(37, 99, 235, 0.02);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: center;
+}
+.im-upload:hover,
+.im-upload.is-drag {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.05);
+}
+.im-upload-input {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+}
+.im-upload-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  color: var(--blue);
+  background: rgba(37, 99, 235, 0.08);
+}
+.im-upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.im-upload-link {
+  color: var(--blue);
+  font-weight: 600;
+}
+.im-upload-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Bijlagen — lijst van geüploade / pending bestanden */
+.im-bijlagen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.im-bijlage-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: 13px;
+}
+.im-bijlage-row--pending {
+  border-style: dashed;
+  background: rgba(37, 99, 235, 0.02);
+}
+.im-bijlage-ico {
+  display: inline-flex;
+  width: 26px; height: 26px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  background: rgba(0, 0, 0, 0.04);
+}
+.im-bijlage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.im-bijlage-name {
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
+.im-bijlage-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.im-bijlage-x {
+  display: inline-flex;
+  width: 24px; height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.im-bijlage-x:hover {
+  background: rgba(192, 57, 43, 0.08);
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.2);
+}
+
+/* Stacked radio (Ouders/vertegenwoordigers) */
+.im-stack-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.im-stack-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.im-stack-radio-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.im-stack-radio-item:hover { border-color: var(--blue); background: rgba(37, 99, 235, 0.03); }
+.im-stack-radio-item:has(input:checked) {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+}
+.im-stack-radio-dot {
+  display: inline-flex;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  flex-shrink: 0;
+  position: relative;
+}
+.im-stack-radio-item:has(input:checked) .im-stack-radio-dot {
+  border-color: var(--blue);
+}
+.im-stack-radio-item:has(input:checked) .im-stack-radio-dot::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.im-stack-radio-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Notificaties — twee kaartjes naast elkaar */
+.im-notif-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .im-notif-grid { grid-template-columns: 1fr; }
+}
+.im-notif-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  font-size: 13px;
+}
+.im-notif-card:hover {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.03);
+}
+.im-notif-card.is-active {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+  box-shadow: 0 0 0 1px var(--blue) inset;
+}
+.im-notif-card-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.im-notif-card-desc {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.im-notif-medewerkers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+/* Wider submit button (matched de "+ Nieuwe incident melding" styling) */
+.im-submit-wide {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
