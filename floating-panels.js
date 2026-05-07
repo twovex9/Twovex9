@@ -56,28 +56,40 @@
     var btnRect = btn.getBoundingClientRect();
     var vw = w.innerWidth || document.documentElement.clientWidth;
     var vh = w.innerHeight || document.documentElement.clientHeight;
-    // Reset eerst inline left/right zodat we de natuurlijke breedte van het
-    // paneel kunnen meten op basis van CSS (width: 252px, max-width: 100vw-16px).
+    // Bepaal welke kant van de knop het paneel moet uitlijnen op basis van
+    // de positie van de knop in de viewport.
+    var btnCenter = btnRect.left + btnRect.width / 2;
+    var alignRight = btnCenter > vw / 2;
+
+    // Reset alle inline positie-properties zodat we vanaf nul rekenen.
     panel.style.left = "";
     panel.style.right = "";
-    // Forceer sync layout en lees de echte rendered breedte met
-    // getBoundingClientRect — betrouwbaarder dan offsetWidth tijdens transitions.
-    void panel.offsetWidth;
-    var panelRect = panel.getBoundingClientRect();
-    var panelWidth = panelRect.width || panel.offsetWidth || 252;
-    var panelHeight = panelRect.height || panel.offsetHeight || 300;
-    // Hard cap: paneel mag nooit breder zijn dan viewport - 16px.
-    var capWidth = Math.max(160, vw - 2 * EDGE_MARGIN);
-    if (panelWidth > capWidth) {
-      panelWidth = capWidth;
-      panel.style.width = panelWidth + "px";
+    panel.style.bottom = "";
+
+    if (alignRight) {
+      // Knop staat in rechterhelft → anker paneel met rechter rand op
+      // dezelfde plek als rechter rand van de knop. Met `right: <X>px` (waar X
+      // = afstand van knop-rechterrand tot viewport-rechterrand) groeit het
+      // paneel naar links toe — onafhankelijk van panelWidth-meting!
+      // Dit kan dus nooit rechts overflowen.
+      var rightOffset = vw - btnRect.right;
+      // Klem zodat er minimaal EDGE_MARGIN tussen viewport-rand en paneel
+      // zit (in geval de knop zelf ergens overflowt).
+      if (rightOffset < EDGE_MARGIN) rightOffset = EDGE_MARGIN;
+      panel.style.right = rightOffset + "px";
+      panel.style.left = "auto";
+    } else {
+      // Knop in linkerhelft → anker paneel-linkerrand op knop-linkerrand.
+      var leftOffset = btnRect.left;
+      if (leftOffset < EDGE_MARGIN) leftOffset = EDGE_MARGIN;
+      panel.style.left = leftOffset + "px";
+      panel.style.right = "auto";
     }
-    var alignRight = btnRect.left + (btnRect.width / 2) > vw / 2;
-    var preferredLeft = alignRight ? btnRect.right - panelWidth : btnRect.left;
-    var minLeft = EDGE_MARGIN;
-    var maxLeft = vw - panelWidth - EDGE_MARGIN;
-    if (maxLeft < minLeft) maxLeft = minLeft;
-    var left = Math.max(minLeft, Math.min(maxLeft, preferredLeft));
+
+    // Verticale positie: net onder de knop, of boven als er beneden geen
+    // ruimte meer is.
+    void panel.offsetWidth;
+    var panelHeight = panel.getBoundingClientRect().height || panel.offsetHeight || 300;
     var top = btnRect.bottom + TOP_GAP;
     var maxTop = vh - panelHeight - EDGE_MARGIN;
     if (top > maxTop) {
@@ -89,19 +101,17 @@
       }
     }
     panel.style.top = top + "px";
-    panel.style.left = left + "px";
-    panel.style.right = "auto";
     panel.style.bottom = "auto";
-    // Final defensieve check: lees de positie terug en als hij ondanks alles
-    // toch over de rechter rand zou vallen, klem 'm hard.
+
+    // Final defensieve check: na CSS-toepassing, lees rect terug.
+    // Als het paneel op een onverwachte manier (bv. te brede content) toch
+    // links overflowt, schuif het in. Rechts kan met `right: ...` niet meer
+    // overflowen want we ankeren aan de rechter rand.
     var finalRect = panel.getBoundingClientRect();
-    if (finalRect.right > vw - EDGE_MARGIN) {
-      var correctedLeft = vw - panelWidth - EDGE_MARGIN;
-      if (correctedLeft < EDGE_MARGIN) correctedLeft = EDGE_MARGIN;
-      panel.style.left = correctedLeft + "px";
-    }
     if (finalRect.left < EDGE_MARGIN) {
+      // Switch naar left-anchor met EDGE_MARGIN.
       panel.style.left = EDGE_MARGIN + "px";
+      panel.style.right = "auto";
     }
   }
 
