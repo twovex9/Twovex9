@@ -156,7 +156,7 @@
     if (!t) return;
     t.textContent = msg;
     t.hidden = false;
-    setTimeout(function () { t.hidden = true; }, 3500);
+    setTimeout(function () { t.hidden = true; }, 500);
   }
 
   // ---------------------------------------------------------------------------

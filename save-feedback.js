@@ -3,7 +3,10 @@
   "use strict";
 
   var BOUND = false;
-  var AUTO_MS = 2000;
+  // Hoe lang de bevestigings-popup zichtbaar is (in ms). Geldt voor alle
+  // showSaveModal- en showActionFeedback-aanroepen overal in de app — zo
+  // zijn alle korte bevestigingen op één centrale plek consistent.
+  var AUTO_MS = 500;
   var _autoCloseId = null;
 
   function clearAutoClose() {
