@@ -272,19 +272,21 @@
     list.forEach(function (x) {
       var tr = document.createElement("tr");
 
-      function td(text) {
+      function td(text, col) {
         var t = document.createElement("td");
         t.textContent = text;
+        if (col) t.setAttribute("data-col", col);
         return t;
       }
 
-      tr.appendChild(td(fmtDateTime(x.createdAt)));
-      tr.appendChild(td(x.period || ""));
-      tr.appendChild(td(String(x.employees || 0)));
-      tr.appendChild(td(x.by || "—"));
+      tr.appendChild(td(fmtDateTime(x.createdAt), "datum"));
+      tr.appendChild(td(x.period || "", "periode"));
+      tr.appendChild(td(String(x.employees || 0), "medewerkers"));
+      tr.appendChild(td(x.by || "—", "exporteur"));
 
       var tdDl = document.createElement("td");
       tdDl.className = "sa-td-dl";
+      tdDl.setAttribute("data-col", "download");
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "sa-dl-btn";
@@ -304,7 +306,85 @@
       tr.appendChild(tdDl);
       historyBody.appendChild(tr);
     });
+    applySaColumnVisibility();
   }
+
+  // ----- Kolommen-knop (Exportgeschiedenis tabel) -----
+  var SA_COLUMN_CONFIG = [
+    { id: "datum", label: "Datum", defaultOn: true },
+    { id: "periode", label: "Periode", defaultOn: true },
+    { id: "medewerkers", label: "Medewerkers", defaultOn: true },
+    { id: "exporteur", label: "Geëxporteerd door", defaultOn: true },
+    { id: "download", label: "Downloaden", defaultOn: true, skipToggle: true },
+  ];
+  function setSaColumnVisible(colId, visible) {
+    document.querySelectorAll('#sa-history-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applySaColumnVisibility() {
+    document.querySelectorAll("#sa-columns-list .column-toggle").forEach(function (btn) {
+      var colId = btn.getAttribute("data-col");
+      var isOn = btn.getAttribute("aria-checked") === "true";
+      setSaColumnVisible(colId, isOn);
+    });
+  }
+  function buildSaColumnsPanel() {
+    var list = document.getElementById("sa-columns-list");
+    if (!list) return;
+    list.innerHTML = "";
+    SA_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "column-toggle" + (c.defaultOn ? " is-checked" : "");
+      b.setAttribute("data-col", c.id);
+      b.setAttribute("role", "menuitemcheckbox");
+      b.setAttribute("aria-checked", c.defaultOn ? "true" : "false");
+      b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+  function wireSaColumnsPanel() {
+    var colBtn = document.getElementById("sa-columns-menu-btn");
+    var colPanel = document.getElementById("sa-columns-panel");
+    var colList = document.getElementById("sa-columns-list");
+    if (colBtn && colPanel) {
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var hidden = colPanel.hasAttribute("hidden");
+        if (hidden) {
+          colPanel.removeAttribute("hidden");
+          colBtn.setAttribute("aria-expanded", "true");
+        } else {
+          colPanel.setAttribute("hidden", "");
+          colBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+      colPanel.addEventListener("click", function (e) { e.stopPropagation(); });
+    }
+    if (colList) {
+      colList.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest && e.target.closest(".column-toggle");
+        if (!t) return;
+        t.classList.toggle("is-checked");
+        var on = t.classList.contains("is-checked");
+        t.setAttribute("aria-checked", on ? "true" : "false");
+        applySaColumnVisibility();
+      });
+    }
+    document.addEventListener("click", function () {
+      if (colPanel) {
+        colPanel.setAttribute("hidden", "");
+        if (colBtn) colBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+  buildSaColumnsPanel();
+  wireSaColumnsPanel();
 
   function generateExport() {
     var period = fmtPeriod(monthSel ? monthSel.value : "", yearSel ? yearSel.value : "");

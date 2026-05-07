@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planning — ERM</title>
-  <link rel="stylesheet" href="styles.css?v=imcols2">
+  <link rel="stylesheet" href="styles.css?v=imcols3">
 </head>
 <body class="page--planning-erm">
   <script src="save-feedback.js" defer></script>
@@ -228,6 +228,16 @@
             </div>
             <button type="button" class="btn-outline planning-erm-clear-plan" id="planning-clear-all-btn" title="Alle diensten uit het rooster verwijderen">Gepland rooster leegmaken</button>
             <button type="button" class="btn-outline" id="planning-export-btn">Planning export</button>
+            <div class="columns-dropdown">
+              <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="plan-columns-menu-btn" aria-label="Kolommen">
+                <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Kolommen
+              </button>
+              <div class="columns-panel" id="plan-columns-panel" role="menu" aria-labelledby="plan-columns-menu-btn" hidden>
+                <div class="columns-panel-title">Kolommen weergeven</div>
+                <ul class="columns-list" id="plan-columns-list" role="none"></ul>
+              </div>
+            </div>
           </div>
 
           <div class="planning-view-panel" id="planning-view-calendar-panel">
@@ -242,20 +252,20 @@
               <table class="employees-table planning-table">
                 <thead>
                   <tr>
-                    <th>Afdeling</th>
-                    <th>Diensttype</th>
-                    <th>Functie (rol)</th>
-                    <th>Teamlead</th>
-                    <th>Teamlid</th>
-                    <th>Cliënt</th>
-                    <th>Vestiging</th>
-                    <th>Locatie</th>
-                    <th>Start</th>
-                    <th>Einde</th>
-                    <th>Uren</th>
-                    <th>Leer</th>
-                    <th>Sterren</th>
-                    <th>Risico</th>
+                    <th data-col="afdeling">Afdeling</th>
+                    <th data-col="diensttype">Diensttype</th>
+                    <th data-col="functie">Functie (rol)</th>
+                    <th data-col="teamlead">Teamlead</th>
+                    <th data-col="teamlid">Teamlid</th>
+                    <th data-col="client">Cliënt</th>
+                    <th data-col="vestiging">Vestiging</th>
+                    <th data-col="locatie">Locatie</th>
+                    <th data-col="start">Start</th>
+                    <th data-col="einde">Einde</th>
+                    <th data-col="uren">Uren</th>
+                    <th data-col="leer">Leer</th>
+                    <th data-col="sterren">Sterren</th>
+                    <th data-col="risico">Risico</th>
                   </tr>
                 </thead>
                 <tbody id="planning-table-body"></tbody>
@@ -462,7 +472,7 @@
     </div>
   </div>
 
-  <script src="top-nav-overflow.js?v=imcols2"></script>
+  <script src="top-nav-overflow.js?v=imcols3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="besa-sync-reporter.js"></script>

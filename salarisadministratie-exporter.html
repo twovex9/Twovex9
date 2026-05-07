@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Salarisadministratie — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols2">
+  <link rel="stylesheet" href="styles.css?v=imcols3">
 </head>
 <body>
   <script src="save-feedback.js" defer></script>
@@ -200,17 +200,29 @@
           </div>
         </section>
 
-        <h2 class="sa-history-heading" id="sa-history-heading">Exportgeschiedenis</h2>
+        <div class="sa-history-head">
+          <h2 class="sa-history-heading" id="sa-history-heading">Exportgeschiedenis</h2>
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="sa-columns-menu-btn" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="sa-columns-panel" role="menu" aria-labelledby="sa-columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" id="sa-columns-list" role="none"></ul>
+            </div>
+          </div>
+        </div>
         <section class="table-card" aria-labelledby="sa-history-heading">
           <div class="table-wrapper">
             <table class="employees-table sa-table" id="sa-history-table">
               <thead>
                 <tr>
-                  <th>Datum</th>
-                  <th>Periode</th>
-                  <th>Medewerkers</th>
-                  <th>Geëxporteerd door</th>
-                  <th class="th-dl">Downloaden</th>
+                  <th data-col="datum">Datum</th>
+                  <th data-col="periode">Periode</th>
+                  <th data-col="medewerkers">Medewerkers</th>
+                  <th data-col="exporteur">Geëxporteerd door</th>
+                  <th class="th-dl" data-col="download">Downloaden</th>
                 </tr>
               </thead>
               <tbody id="sa-history-tbody"></tbody>
@@ -304,7 +316,7 @@
     </div>
   </div>
 
-  <script src="top-nav-overflow.js?v=imcols2"></script>
+  <script src="top-nav-overflow.js?v=imcols3"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>

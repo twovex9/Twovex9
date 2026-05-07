@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werkruimte</title>
-  <link rel="stylesheet" href="styles.css?v=imcols2">
+  <link rel="stylesheet" href="styles.css?v=imcols3">
 </head>
 <body>
   <script src="save-feedback.js" defer></script>
@@ -125,6 +125,16 @@
           <div class="workspace-card-head">
             <h2>Items</h2>
             <div class="workspace-actions">
+              <div class="columns-dropdown">
+                <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="ws-columns-menu-btn" aria-label="Kolommen">
+                  <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  Kolommen
+                </button>
+                <div class="columns-panel" id="ws-columns-panel" role="menu" aria-labelledby="ws-columns-menu-btn" hidden>
+                  <div class="columns-panel-title">Kolommen weergeven</div>
+                  <ul class="columns-list" id="ws-columns-list" role="none"></ul>
+                </div>
+              </div>
               <button type="button" class="btn-outline" id="workspace-export-btn">Export CSV</button>
               <button type="button" class="btn-primary" id="workspace-add-btn">+ Item toevoegen</button>
             </div>
@@ -134,14 +144,14 @@
             <table class="employees-table workspace-table">
               <thead>
                 <tr>
-                  <th class="workspace-th-check">
+                  <th class="workspace-th-check" data-col="select">
                     <input type="checkbox" id="workspace-select-all" class="table-checkbox" aria-label="Selecteer alles" />
                   </th>
-                  <th>Naam</th>
-                  <th>Status</th>
-                  <th>Laatst bijgewerkt</th>
-                  <th>Door</th>
-                  <th class="workspace-th-trash" aria-label="Archiveren"></th>
+                  <th data-col="naam">Naam</th>
+                  <th data-col="status">Status</th>
+                  <th data-col="bijgewerkt">Laatst bijgewerkt</th>
+                  <th data-col="door">Door</th>
+                  <th class="workspace-th-trash" data-col="acties" aria-label="Archiveren"></th>
                 </tr>
               </thead>
               <tbody id="workspace-table-body"></tbody>
@@ -261,7 +271,7 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="top-nav-overflow.js?v=imcols2"></script>
+  <script src="top-nav-overflow.js?v=imcols3"></script>
   <script src="werkruimte.js"></script>
 </body>
 </html>

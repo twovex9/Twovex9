@@ -1941,10 +1941,19 @@ h1 {
 }
 
 .sa-page .sa-history-heading {
-  margin: var(--page-table-card-gap) 0 14px;
+  margin: 0;
   font-size: 22px;
   font-weight: 700;
   color: #1f2937;
+}
+
+.sa-page .sa-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: var(--page-table-card-gap) 0 14px;
 }
 
 .sa-export-head {

@@ -1435,6 +1435,97 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
+// =============================================================================
+// Kolommen-knop (column visibility toggle voor de planning-lijstweergave)
+// =============================================================================
+const PLANNING_COLUMN_CONFIG = [
+  { id: "afdeling", label: "Afdeling", defaultOn: true },
+  { id: "diensttype", label: "Diensttype", defaultOn: true },
+  { id: "functie", label: "Functie (rol)", defaultOn: true },
+  { id: "teamlead", label: "Teamlead", defaultOn: true },
+  { id: "teamlid", label: "Teamlid", defaultOn: true },
+  { id: "client", label: "Cliënt", defaultOn: true },
+  { id: "vestiging", label: "Vestiging", defaultOn: true },
+  { id: "locatie", label: "Locatie", defaultOn: true },
+  { id: "start", label: "Start", defaultOn: true },
+  { id: "einde", label: "Einde", defaultOn: true },
+  { id: "uren", label: "Uren", defaultOn: true },
+  { id: "leer", label: "Leer", defaultOn: true },
+  { id: "sterren", label: "Sterren", defaultOn: true },
+  { id: "risico", label: "Risico", defaultOn: true },
+];
+
+function setPlanningColumnVisible(colId, visible) {
+  document
+    .querySelectorAll('.planning-table [data-col="' + colId + '"]')
+    .forEach((cell) => {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+}
+
+function applyPlanningColumnVisibility() {
+  document.querySelectorAll("#plan-columns-list .column-toggle").forEach((btn) => {
+    const colId = btn.getAttribute("data-col");
+    const isOn = btn.getAttribute("aria-checked") === "true";
+    setPlanningColumnVisible(colId, isOn);
+  });
+}
+
+function buildPlanningColumnsPanel() {
+  const list = document.getElementById("plan-columns-list");
+  if (!list) return;
+  list.innerHTML = "";
+  PLANNING_COLUMN_CONFIG.forEach((c) => {
+    const li = document.createElement("li");
+    li.setAttribute("role", "none");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "column-toggle" + (c.defaultOn ? " is-checked" : "");
+    b.setAttribute("data-col", c.id);
+    b.setAttribute("role", "menuitemcheckbox");
+    b.setAttribute("aria-checked", c.defaultOn ? "true" : "false");
+    b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+}
+
+function wirePlanningColumnsPanel() {
+  const colBtn = document.getElementById("plan-columns-menu-btn");
+  const colPanel = document.getElementById("plan-columns-panel");
+  const colList = document.getElementById("plan-columns-list");
+  if (colBtn && colPanel) {
+    colBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const hidden = colPanel.hasAttribute("hidden");
+      if (hidden) {
+        colPanel.removeAttribute("hidden");
+        colBtn.setAttribute("aria-expanded", "true");
+      } else {
+        colPanel.setAttribute("hidden", "");
+        colBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+    colPanel.addEventListener("click", (e) => e.stopPropagation());
+  }
+  if (colList) {
+    colList.addEventListener("click", (e) => {
+      const t = e.target && e.target.closest && e.target.closest(".column-toggle");
+      if (!t) return;
+      t.classList.toggle("is-checked");
+      const on = t.classList.contains("is-checked");
+      t.setAttribute("aria-checked", on ? "true" : "false");
+      applyPlanningColumnVisibility();
+    });
+  }
+  document.addEventListener("click", () => {
+    if (colPanel) {
+      colPanel.setAttribute("hidden", "");
+      if (colBtn) colBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 function renderListTable() {
   const body = document.getElementById("planning-table-body");
   const empty = document.getElementById("planning-empty");
@@ -1451,23 +1542,24 @@ function renderListTable() {
     else if (item.conflict) risk = "Aandacht";
     else if (autoO) risk = "Overlap (auto)";
     tr.innerHTML = `
-      <td>${escapeHtml(item.afdeling || "—")}</td>
-      <td>${escapeHtml(item.diensttype || "—")}</td>
-      <td>${escapeHtml(item.functie || "—")}</td>
-      <td>${escapeHtml(item.teamlead || "—")}</td>
-      <td>${escapeHtml(item.teamlid || "—")}</td>
-      <td>${escapeHtml(item.client || "—")}</td>
-      <td>${escapeHtml(String(item.vestiging || "")) || "—"}</td>
-      <td>${escapeHtml(String(item.locatie || "")) || "—"}</td>
-      <td>${formatDateTime(item.start)}</td>
-      <td>${formatDateTime(item.einde)}</td>
-      <td>${h > 0 ? h.toFixed(1).replace(".", ",") : "—"}</td>
-      <td>${item.leer}</td>
-      <td>${item.sterren}</td>
-      <td>${escapeHtml(risk)}</td>
+      <td data-col="afdeling">${escapeHtml(item.afdeling || "—")}</td>
+      <td data-col="diensttype">${escapeHtml(item.diensttype || "—")}</td>
+      <td data-col="functie">${escapeHtml(item.functie || "—")}</td>
+      <td data-col="teamlead">${escapeHtml(item.teamlead || "—")}</td>
+      <td data-col="teamlid">${escapeHtml(item.teamlid || "—")}</td>
+      <td data-col="client">${escapeHtml(item.client || "—")}</td>
+      <td data-col="vestiging">${escapeHtml(String(item.vestiging || "")) || "—"}</td>
+      <td data-col="locatie">${escapeHtml(String(item.locatie || "")) || "—"}</td>
+      <td data-col="start">${formatDateTime(item.start)}</td>
+      <td data-col="einde">${formatDateTime(item.einde)}</td>
+      <td data-col="uren">${h > 0 ? h.toFixed(1).replace(".", ",") : "—"}</td>
+      <td data-col="leer">${item.leer}</td>
+      <td data-col="sterren">${item.sterren}</td>
+      <td data-col="risico">${escapeHtml(risk)}</td>
     `;
     body.appendChild(tr);
   });
+  applyPlanningColumnVisibility();
   if (empty) empty.hidden = items.length > 0;
 }
 
@@ -2701,6 +2793,8 @@ function initPlanningPage() {
   ui.weekStart = getMonday(new Date());
   setCalMode("week");
   setListMode(false);
+  buildPlanningColumnsPanel();
+  wirePlanningColumnsPanel();
   const ax = document.querySelector('input[name="planning-row-axis"]:checked');
   if (ax) ui.rowAxis = ax.value;
   renderAllViews();

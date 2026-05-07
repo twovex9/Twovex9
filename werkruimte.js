@@ -273,6 +273,88 @@ function getFilteredItems(moduleKey, search = "") {
   return { allItems, visible };
 }
 
+// =============================================================================
+// Kolommen-knop (column visibility toggle voor de werkruimte-tabel)
+// =============================================================================
+const WORKSPACE_COLUMN_CONFIG = [
+  { id: "select", label: "Selectie", defaultOn: true, skipToggle: true },
+  { id: "naam", label: "Naam", defaultOn: true },
+  { id: "status", label: "Status", defaultOn: true },
+  { id: "bijgewerkt", label: "Laatst bijgewerkt", defaultOn: true },
+  { id: "door", label: "Door", defaultOn: true },
+  { id: "acties", label: "Acties", defaultOn: true, skipToggle: true },
+];
+
+function setWorkspaceColumnVisible(colId, visible) {
+  document
+    .querySelectorAll('.workspace-table [data-col="' + colId + '"]')
+    .forEach((cell) => cell.classList.toggle("col-hidden", !visible));
+}
+
+function applyWorkspaceColumnVisibility() {
+  document.querySelectorAll("#ws-columns-list .column-toggle").forEach((btn) => {
+    const colId = btn.getAttribute("data-col");
+    const isOn = btn.getAttribute("aria-checked") === "true";
+    setWorkspaceColumnVisible(colId, isOn);
+  });
+}
+
+function buildWorkspaceColumnsPanel() {
+  const list = document.getElementById("ws-columns-list");
+  if (!list) return;
+  list.innerHTML = "";
+  WORKSPACE_COLUMN_CONFIG.forEach((c) => {
+    if (c.skipToggle) return;
+    const li = document.createElement("li");
+    li.setAttribute("role", "none");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "column-toggle" + (c.defaultOn ? " is-checked" : "");
+    b.setAttribute("data-col", c.id);
+    b.setAttribute("role", "menuitemcheckbox");
+    b.setAttribute("aria-checked", c.defaultOn ? "true" : "false");
+    b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+}
+
+function wireWorkspaceColumnsPanel() {
+  const colBtn = document.getElementById("ws-columns-menu-btn");
+  const colPanel = document.getElementById("ws-columns-panel");
+  const colList = document.getElementById("ws-columns-list");
+  if (colBtn && colPanel) {
+    colBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const hidden = colPanel.hasAttribute("hidden");
+      if (hidden) {
+        colPanel.removeAttribute("hidden");
+        colBtn.setAttribute("aria-expanded", "true");
+      } else {
+        colPanel.setAttribute("hidden", "");
+        colBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+    colPanel.addEventListener("click", (e) => e.stopPropagation());
+  }
+  if (colList) {
+    colList.addEventListener("click", (e) => {
+      const t = e.target && e.target.closest && e.target.closest(".column-toggle");
+      if (!t) return;
+      t.classList.toggle("is-checked");
+      const on = t.classList.contains("is-checked");
+      t.setAttribute("aria-checked", on ? "true" : "false");
+      applyWorkspaceColumnVisibility();
+    });
+  }
+  document.addEventListener("click", () => {
+    if (colPanel) {
+      colPanel.setAttribute("hidden", "");
+      if (colBtn) colBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 function renderWorkspace(moduleKey, search = "") {
   const cfg = MODULE_CONFIG[moduleKey];
   if (!cfg) return;
@@ -334,25 +416,26 @@ function renderWorkspace(moduleKey, search = "") {
   visible.forEach((item) => {
     const tr = document.createElement("tr");
     const actionCell = archivedView
-      ? `<td class="workspace-trash-cell">
+      ? `<td class="workspace-trash-cell" data-col="acties">
           <div class="hr-row-actions">
             <button type="button" class="btn-outline hr-restore-btn" data-id="${item.id}">Herstel</button>
             <button type="button" class="employee-delete-btn workspace-purge-btn" data-id="${item.id}" aria-label="Definitief verwijderen">${trashIcon}</button>
           </div>
         </td>`
-      : `<td class="workspace-trash-cell">
+      : `<td class="workspace-trash-cell" data-col="acties">
           <button type="button" class="employee-delete-btn" data-id="${item.id}" aria-label="Item archiveren">${trashIcon}</button>
         </td>`;
     tr.innerHTML = `
-      <td><input type="checkbox" class="table-checkbox workspace-row-check" data-id="${item.id}" ${uiState.selectedIds.has(item.id) ? "checked" : ""} aria-label="Selecteer rij" /></td>
-      <td>${item.naam || "—"}</td>
-      <td><span class="${statusClass(item.status)}">${item.status || "—"}</span></td>
-      <td>${item.updatedAt || "—"}</td>
-      <td>${item.updatedBy || "—"}</td>
+      <td data-col="select"><input type="checkbox" class="table-checkbox workspace-row-check" data-id="${item.id}" ${uiState.selectedIds.has(item.id) ? "checked" : ""} aria-label="Selecteer rij" /></td>
+      <td data-col="naam">${item.naam || "—"}</td>
+      <td data-col="status"><span class="${statusClass(item.status)}">${item.status || "—"}</span></td>
+      <td data-col="bijgewerkt">${item.updatedAt || "—"}</td>
+      <td data-col="door">${item.updatedBy || "—"}</td>
       ${actionCell}
     `;
     tbody.appendChild(tr);
   });
+  applyWorkspaceColumnVisibility();
   empty.textContent = `Geen items gevonden voor ${cfg.title}.`;
   empty.hidden = visible.length > 0;
 }
@@ -409,6 +492,8 @@ function initModal(getModuleKey, onChanged) {
 
 function initWerkruimte() {
   let currentModule = getModuleKeyFromHash();
+  buildWorkspaceColumnsPanel();
+  wireWorkspaceColumnsPanel();
 
   function closeArchiveModal() {
     const modal = document.getElementById("workspace-archive-modal");

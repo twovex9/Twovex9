@@ -147,6 +147,7 @@
 
       var td0 = document.createElement("td");
       td0.className = "th-check ub-td-chk";
+      td0.setAttribute("data-col", "select");
       if (!bulkOpen) {
         td0.setAttribute("hidden", "");
       } else {
@@ -392,6 +393,89 @@
     });
   }
 
+  // ----- Kolommen-knop -----
+  var UB_COLUMN_CONFIG = [
+    { id: "select", label: "Selectie", defaultOn: true, skipToggle: true },
+    { id: "week", label: "Weken", defaultOn: true },
+    { id: "uren", label: "Standaard uren", defaultOn: true },
+  ];
+  function setUbColumnVisible(colId, visible) {
+    document.querySelectorAll('.ub-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applyUbColumnVisibility() {
+    document.querySelectorAll("#ub-columns-list .column-toggle").forEach(function (btn) {
+      var colId = btn.getAttribute("data-col");
+      var isOn = btn.getAttribute("aria-checked") === "true";
+      setUbColumnVisible(colId, isOn);
+    });
+  }
+  function buildUbColumnsPanel() {
+    var list = document.getElementById("ub-columns-list");
+    if (!list) return;
+    list.innerHTML = "";
+    UB_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "column-toggle" + (c.defaultOn ? " is-checked" : "");
+      b.setAttribute("data-col", c.id);
+      b.setAttribute("role", "menuitemcheckbox");
+      b.setAttribute("aria-checked", c.defaultOn ? "true" : "false");
+      b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+  function wireUbColumnsPanel() {
+    var colBtn = document.getElementById("ub-columns-menu-btn");
+    var colPanel = document.getElementById("ub-columns-panel");
+    var colList = document.getElementById("ub-columns-list");
+    if (colBtn && colPanel) {
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var hidden = colPanel.hasAttribute("hidden");
+        if (hidden) {
+          colPanel.removeAttribute("hidden");
+          colBtn.setAttribute("aria-expanded", "true");
+        } else {
+          colPanel.setAttribute("hidden", "");
+          colBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+      colPanel.addEventListener("click", function (e) { e.stopPropagation(); });
+    }
+    if (colList) {
+      colList.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest && e.target.closest(".column-toggle");
+        if (!t) return;
+        t.classList.toggle("is-checked");
+        var on = t.classList.contains("is-checked");
+        t.setAttribute("aria-checked", on ? "true" : "false");
+        applyUbColumnVisibility();
+      });
+    }
+    document.addEventListener("click", function () {
+      if (colPanel) {
+        colPanel.setAttribute("hidden", "");
+        if (colBtn) colBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  // Wrap bestaande renderTbody zodat na elk render de kolom-zichtbaarheid
+  // opnieuw wordt toegepast (anders verdwijnen verborgen kolommen na re-render).
+  var _ubOriginalRenderTbody = renderTbody;
+  renderTbody = function () {
+    _ubOriginalRenderTbody.apply(this, arguments);
+    applyUbColumnVisibility();
+  };
+
+  buildUbColumnsPanel();
+  wireUbColumnsPanel();
   fillClientSelect();
   renderTbody();
   setSortButtonStates();

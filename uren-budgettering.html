@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Uren budgettering — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols2" />
+  <link rel="stylesheet" href="styles.css?v=imcols3" />
 </head>
 <body>
   <script src="save-feedback.js" defer></script>
@@ -143,6 +143,16 @@
           </p>
         </div>
         <div class="header-actions">
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="ub-columns-menu-btn" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="ub-columns-panel" role="menu" aria-labelledby="ub-columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" id="ub-columns-list" role="none"></ul>
+            </div>
+          </div>
           <button
             type="button"
             class="btn-primary ub-bulk-exit is-hidden"
@@ -196,11 +206,11 @@
           <table class="employees-table ub-table" id="ub-table" aria-label="Wekelijkse uren en budgetten">
             <thead>
               <tr>
-                <th class="th-check ub-th-chk" id="ub-th-chk" scope="col" hidden> </th>
-                <th class="ub-th-wk" data-sort="week" scope="col">
+                <th class="th-check ub-th-chk" data-col="select" id="ub-th-chk" scope="col" hidden> </th>
+                <th class="ub-th-wk" data-sort="week" data-col="week" scope="col">
                   <button type="button" class="ub-sort ub-sort--on" data-ub-sort="week" id="ub-sort-wk" aria-pressed="true" aria-label="Gesorteerd op week, oplopend">Weken</button>
                 </th>
-                <th class="ub-th-uren" data-sort="hours" scope="col">
+                <th class="ub-th-uren" data-sort="hours" data-col="uren" scope="col">
                   <button type="button" class="ub-sort" data-ub-sort="hours" id="ub-sort-uren" aria-pressed="false" aria-label="Sorteer op standaard uren">Standaard uren</button>
                 </th>
               </tr>
@@ -212,7 +222,7 @@
     </main>
   </div>
 
-  <script src="top-nav-overflow.js?v=imcols2"></script>
+  <script src="top-nav-overflow.js?v=imcols3"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
