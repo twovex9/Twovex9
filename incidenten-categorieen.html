@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Incident-categorieën — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols8" />
+  <link rel="stylesheet" href="styles.css?v=imcols9" />
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="floating-panels.js?v=fpv8" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
 
   <div class="app-shell">
     <header class="topbar">
@@ -143,10 +143,57 @@
           <table class="employees-table inc-cat-table" id="ic-table">
             <thead>
               <tr>
-                <th data-col="status">Status</th>
-                <th data-col="naam">Categorie naam</th>
-                <th data-col="beschrijving">Beschrijving</th>
-                <th data-col="bijgewerkt">Laatst bijgewerkt</th>
+                <th data-col="status" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Status</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op status">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="naam" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Categorie naam</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op categorie naam">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                  </div>
+                </th>
+                <th data-col="beschrijving" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Beschrijving</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op beschrijving">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="bijgewerkt" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Laatst bijgewerkt</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op laatst bijgewerkt">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
                 <th class="incident-action-th" data-col="acties" aria-label="Acties">Acties</th>
               </tr>
             </thead>
@@ -253,14 +300,14 @@
 
   <div class="app-toast" id="ic-toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="top-nav-overflow.js?v=imcols8"></script>
+  <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="incident-categorieen-data.js?v=imcols8" defer></script>
-  <script src="incidenten-categorieen.js?v=imcols8" defer></script>
+  <script src="incident-categorieen-data.js?v=imcols9" defer></script>
+  <script src="incidenten-categorieen.js?v=imcols9" defer></script>
 </body>
 </html>

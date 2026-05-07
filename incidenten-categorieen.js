@@ -39,6 +39,8 @@
     pageSize: 15,
     editingId: null,
     deactivatingId: null,
+    sortKey: "naam",   // Default sort: alfabetisch op naam.
+    sortDir: "asc",    // "asc" of "desc"
   };
 
   // ---------------------------------------------------------------------------
@@ -74,6 +76,17 @@
     if (!window.incidentCategorieenDB) return [];
     try { return window.incidentCategorieenDB.getAllSync() || []; } catch (e) { return []; }
   }
+  function sortValue(cat, key) {
+    if (!cat) return "";
+    if (key === "status") return cat.archived ? 1 : 0; // Actief vóór Gedeactiveerd bij asc
+    if (key === "bijgewerkt") {
+      var t = Date.parse(cat.laatstGewijzigd || "");
+      return isFinite(t) ? t : 0;
+    }
+    if (key === "beschrijving") return (cat.beschrijving || "").toLowerCase();
+    return (cat.naam || "").toLowerCase();
+  }
+
   function getFiltered() {
     var items = getAll().slice();
     if (!state.showArchived) {
@@ -87,10 +100,36 @@
         return pack.indexOf(q) !== -1;
       });
     }
+    var key = state.sortKey || "naam";
+    var dir = state.sortDir === "desc" ? -1 : 1;
     items.sort(function (a, b) {
+      var av = sortValue(a, key);
+      var bv = sortValue(b, key);
+      if (typeof av === "number" && typeof bv === "number") {
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+      } else {
+        var as = String(av);
+        var bs = String(bv);
+        var cmp = as.localeCompare(bs, "nl", { sensitivity: "base" });
+        if (cmp !== 0) return cmp * dir;
+      }
+      // Tie-breaker: altijd op naam alfabetisch zodat de volgorde stabiel is.
       return (a.naam || "").localeCompare(b.naam || "", "nl", { sensitivity: "base" });
     });
     return items;
+  }
+
+  // Update de sorted-asc / sorted-desc class op de juiste header zodat de
+  // pijltjes zichtbaar in de juiste richting wijzen (CSS handelt 't visueel af).
+  function applySortIndicators() {
+    document.querySelectorAll("#ic-table thead th.th-sort").forEach(function (th) {
+      th.classList.remove("is-sorted-asc", "is-sorted-desc");
+      var col = th.getAttribute("data-col");
+      if (col === state.sortKey) {
+        th.classList.add(state.sortDir === "desc" ? "is-sorted-desc" : "is-sorted-asc");
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -154,6 +193,7 @@
     $("ic-pager-page").textContent = "Pagina " + state.page + " van " + maxPage;
 
     applyColumnVisibility();
+    applySortIndicators();
   }
 
   // ---------------------------------------------------------------------------
@@ -449,6 +489,67 @@
       if (action === "edit") openEditModal(id);
       else if (action === "deactivate") openDeactivateModal(id);
       else if (action === "restore") restoreCategorie(id);
+    });
+
+    // Sort-menu triggers (pijltjes naast elke kolom-titel)
+    document.querySelectorAll("#ic-table .th-sort-trigger").forEach(function (trigger) {
+      trigger.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var th = trigger.closest("th");
+        var menu = th ? th.querySelector(".th-sort-menu") : null;
+        if (!menu) return;
+        var wasHidden = menu.hasAttribute("hidden");
+        // Sluit eerst alle andere menu's (max 1 tegelijk open).
+        document.querySelectorAll("#ic-table .th-sort-menu").forEach(function (m) {
+          m.setAttribute("hidden", "");
+        });
+        document.querySelectorAll("#ic-table thead th.th-sort").forEach(function (h) {
+          h.classList.remove("th-sort-open");
+        });
+        if (wasHidden) {
+          menu.removeAttribute("hidden");
+          if (th) th.classList.add("th-sort-open");
+        }
+      });
+    });
+    // Sort-menu opties (Asc / Desc / Hide)
+    document.querySelectorAll("#ic-table .th-sort-opt").forEach(function (opt) {
+      opt.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var action = opt.getAttribute("data-action");
+        var th = opt.closest("th");
+        var colId = th ? th.getAttribute("data-col") : null;
+        if (!action || !colId) return;
+        if (action === "hide") {
+          // Reuse columns-knop logic: zet de toggle uit en verberg de kolom.
+          var toggle = document.querySelector('#ic-columns-list .column-toggle[data-col="' + colId + '"]');
+          if (toggle) {
+            toggle.classList.remove("is-checked");
+            toggle.setAttribute("aria-checked", "false");
+          }
+          setColumnVisible(colId, false);
+        } else if (action === "asc" || action === "desc") {
+          state.sortKey = colId;
+          state.sortDir = action;
+          state.page = 1;
+          renderTable();
+        }
+        document.querySelectorAll("#ic-table .th-sort-menu").forEach(function (m) {
+          m.setAttribute("hidden", "");
+        });
+        document.querySelectorAll("#ic-table thead th.th-sort").forEach(function (h) {
+          h.classList.remove("th-sort-open");
+        });
+      });
+    });
+    // Klik buiten sluit eventuele open sort-menu.
+    document.addEventListener("click", function () {
+      document.querySelectorAll("#ic-table .th-sort-menu").forEach(function (m) {
+        m.setAttribute("hidden", "");
+      });
+      document.querySelectorAll("#ic-table thead th.th-sort").forEach(function (h) {
+        h.classList.remove("th-sort-open");
+      });
     });
 
     // Live re-render bij data-changes
