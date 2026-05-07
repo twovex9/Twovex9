@@ -1212,7 +1212,7 @@
     return p(sIso) + " - " + p(eIso);
   }
 
-  function onFactAddSubmit(e) {
+  async function onFactAddSubmit(e) {
     e.preventDefault();
     var elFn = document.getElementById(__F("fact-add-fn"));
     var elB = document.getElementById(__F("fact-add-besch"));
@@ -1257,12 +1257,21 @@
       newRow.bescId = window.__FVIEW_BESC.id;
     }
     raw.push(newRow);
-    // Schrijf de nieuwe factuur door naar Supabase. Fire-and-forget;
-    // bij succes wordt het record vervangen via "besa:facturen-updated".
-    if (window.facturenDB && typeof window.facturenDB.add === "function") {
-      window.facturenDB.add(newRow).catch(function (err) {
-        console.error("[facturenDB] add (modal) sync mislukt:", err);
-      });
+    // Schrijf de nieuwe factuur door naar Supabase (Supabase = source of truth).
+    // Werkpatronen.md regel #0: await + foutmelding zichtbaar maken; geen silent skip / silent catch.
+    if (!window.facturenDB || typeof window.facturenDB.add !== "function") {
+      showToast("Database niet geladen — herlaad de pagina en probeer opnieuw.");
+      return;
+    }
+    try {
+      await window.facturenDB.add(newRow);
+    } catch (err) {
+      console.error("[facturenDB] add (modal) sync mislukt:", err);
+      var msg = (err && err.message) ? err.message : String(err);
+      if (typeof window.showError === "function") window.showError("Opslaan in database mislukt: " + msg);
+      else if (typeof showSaveModal === "function") showSaveModal("Opslaan in database mislukt: " + msg);
+      else showToast("Opslaan mislukt: " + msg);
+      return;
     }
     closeFactAddModal();
     if (typeof showSaveModal === "function") showSaveModal("Factuur is toegevoegd.");

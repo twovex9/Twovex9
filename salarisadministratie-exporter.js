@@ -624,14 +624,18 @@
             ortPreview = [r.diensttype, r.dag, r.vanaf || r.tot ? (r.vanaf || "") + (r.tot ? "–" + r.tot : "") : ""]
               .filter(Boolean).join(" — ");
           } catch (_e) { /* noop */ }
-          var ortConfirm = (typeof window.showSliderConfirmModal === "function")
-            ? window.showSliderConfirmModal({
-                title: "ORT-regel verwijderen",
-                message: "Weet je zeker dat je deze ORT-regel wilt verwijderen?",
-                preview: ortPreview,
-                okLabel: "Verwijderen",
-              })
-            : Promise.resolve(window.confirm("Deze ORT-regel verwijderen?"));
+          var ortConfirm;
+          if (typeof window.showSliderConfirmModal === "function") {
+            ortConfirm = window.showSliderConfirmModal({
+              title: "ORT-regel verwijderen",
+              message: "Weet je zeker dat je deze ORT-regel wilt verwijderen?",
+              preview: ortPreview,
+              okLabel: "Verwijderen",
+            });
+          } else {
+            console.warn("[salaris-export] showSliderConfirmModal niet beschikbaar — actie geannuleerd.");
+            ortConfirm = Promise.resolve(false);
+          }
           ortConfirm.then(function (ok) {
             if (!ok) return;
             ortDeleteRule(r.id);

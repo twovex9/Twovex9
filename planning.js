@@ -1121,14 +1121,19 @@ function buildShiftCardEl(it, gi, overlapIds) {
           var dateStr = st && !isNaN(st) ? st.toLocaleDateString("nl-NL") : "";
           planSummary = [it.teamlid, it.client, dateStr].filter(Boolean).join(" — ");
         } catch (_e) { /* noop */ }
-        var confirmFn = (typeof window.showSliderConfirmModal === "function")
-          ? window.showSliderConfirmModal({
-              title: "Planningsregel verwijderen",
-              message: "Weet je zeker dat je deze planningsregel wilt verwijderen?",
-              preview: planSummary,
-              okLabel: "Verwijderen",
-            })
-          : Promise.resolve(window.confirm("Deze planningsregel verwijderen?"));
+        var confirmFn;
+        if (typeof window.showSliderConfirmModal === "function") {
+          confirmFn = window.showSliderConfirmModal({
+            title: "Planningsregel verwijderen",
+            message: "Weet je zeker dat je deze planningsregel wilt verwijderen?",
+            preview: planSummary,
+            okLabel: "Verwijderen",
+          });
+        } else {
+          // Fallback zonder browser-popup: bevestigingsdialoog ontbreekt → cancel.
+          console.warn("[planning] showSliderConfirmModal niet beschikbaar — actie geannuleerd.");
+          confirmFn = Promise.resolve(false);
+        }
         confirmFn.then(function (ok) {
           if (!ok) return;
           const arr = readJsonArray(PLANNING_STORAGE_KEY).filter((x) => x.id !== it.id);
@@ -2596,16 +2601,18 @@ function initNav() {
   });
   document.getElementById("planning-export-btn")?.addEventListener("click", exportPlanningCsv);
   document.getElementById("planning-clear-all-btn")?.addEventListener("click", () => {
-    var clearConfirm = (typeof window.showSliderConfirmModal === "function")
-      ? window.showSliderConfirmModal({
-          title: "Hele planning leegmaken",
-          message: "Dit wist alle geplande diensten van alle medewerkers. Dit kan niet ongedaan worden gemaakt en demodata wordt niet opnieuw geladen.",
-          preview: "",
-          okLabel: "Alles verwijderen",
-        })
-      : Promise.resolve(window.confirm(
-          "Weet u zeker dat u alle geplande diensten uit het rooster wilt verwijderen?"
-        ));
+    var clearConfirm;
+    if (typeof window.showSliderConfirmModal === "function") {
+      clearConfirm = window.showSliderConfirmModal({
+        title: "Hele planning leegmaken",
+        message: "Dit wist alle geplande diensten van alle medewerkers. Dit kan niet ongedaan worden gemaakt en demodata wordt niet opnieuw geladen.",
+        preview: "",
+        okLabel: "Alles verwijderen",
+      });
+    } else {
+      console.warn("[planning] showSliderConfirmModal niet beschikbaar — actie geannuleerd.");
+      clearConfirm = Promise.resolve(false);
+    }
     clearConfirm.then(function (ok) {
       if (!ok) return;
       clearAllPlannedDiensten();
@@ -2653,8 +2660,15 @@ function initNav() {
   });
 
   /* Voorinstellingen (placeholder) */
-  document.getElementById("planning-presets-new-btn")?.addEventListener("click", () => {
-    const naam = window.prompt("Geef een naam voor deze voorinstelling (placeholder):");
+  document.getElementById("planning-presets-new-btn")?.addEventListener("click", async () => {
+    const naam = typeof window.showPromptModal === "function"
+      ? await window.showPromptModal({
+          title: "Nieuwe voorinstelling",
+          label: "Geef een naam voor deze voorinstelling",
+          placeholder: "Naam van de voorinstelling",
+          okLabel: "Opslaan",
+        })
+      : window.prompt("Geef een naam voor deze voorinstelling (placeholder):");
     if (!naam) return;
     if (typeof window.showActionFeedback === "function") {
       window.showActionFeedback(

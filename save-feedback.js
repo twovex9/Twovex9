@@ -282,8 +282,165 @@
     });
   }
 
+  /**
+   * Tekst-invoer modal — vervangt window.prompt().
+   * Toont een nette modal met label + input + Annuleren/OK knoppen.
+   * Resolves met de ingevoerde string, of null bij annuleren/sluiten.
+   *
+   * Optionele opts:
+   *   - title         (default: "Invoer")
+   *   - label         (default: "Waarde")
+   *   - placeholder   (default: "")
+   *   - defaultValue  (default: "")
+   *   - okLabel       (default: "OK")
+   *   - cancelLabel   (default: "Annuleren")
+   *   - inputType     (default: "text" — kan "url", "number", etc. zijn)
+   *   - validate      (optionele fn(value) → string|null; return non-null = foutmelding tonen)
+   *
+   * @returns {Promise<string|null>}
+   */
+  function showPromptModal(opts) {
+    var o = opts || {};
+    var title = o.title || "Invoer";
+    var label = o.label || "Waarde";
+    var placeholder = o.placeholder == null ? "" : String(o.placeholder);
+    var defaultValue = o.defaultValue == null ? "" : String(o.defaultValue);
+    var okLabel = o.okLabel || "OK";
+    var cancelLabel = o.cancelLabel || "Annuleren";
+    var inputType = o.inputType || "text";
+    var validate = typeof o.validate === "function" ? o.validate : null;
+
+    return new Promise(function (resolve) {
+      var overlay = w.document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.setAttribute("aria-hidden", "false");
+      overlay.innerHTML =
+        '<div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">' +
+          '<div class="modal-header">' +
+            '<h2 class="modal-title"></h2>' +
+            '<button type="button" class="modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>' +
+          '</div>' +
+          '<form class="modal-body" novalidate>' +
+            '<div class="modal-field">' +
+              '<label class="modal-label"></label>' +
+              '<input class="modal-input" autocomplete="off" />' +
+            '</div>' +
+            '<p class="im-error" role="alert" hidden></p>' +
+          '</form>' +
+          '<div class="modal-footer">' +
+            '<button type="button" class="btn-outline"></button>' +
+            '<button type="button" class="btn-primary"></button>' +
+          '</div>' +
+        '</div>';
+
+      var titleEl = overlay.querySelector(".modal-title");
+      var labelEl = overlay.querySelector(".modal-label");
+      var inputEl = overlay.querySelector(".modal-input");
+      var errEl = overlay.querySelector(".im-error");
+      var formEl = overlay.querySelector(".modal-body");
+      var closeBtn = overlay.querySelector(".modal-close");
+      var cancelBtn = overlay.querySelector(".btn-outline");
+      var okBtn = overlay.querySelector(".btn-primary");
+
+      if (titleEl) titleEl.textContent = title;
+      if (labelEl) labelEl.textContent = label;
+      if (cancelBtn) cancelBtn.textContent = cancelLabel;
+      if (okBtn) okBtn.textContent = okLabel;
+      if (inputEl) {
+        inputEl.type = inputType;
+        inputEl.placeholder = placeholder;
+        inputEl.value = defaultValue;
+      }
+
+      function settle(result) {
+        w.document.removeEventListener("keydown", onKey);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        resolve(result);
+      }
+      function onCancel() { settle(null); }
+      function onConfirm() {
+        var v = inputEl ? String(inputEl.value || "").trim() : "";
+        if (validate) {
+          var msg = validate(v);
+          if (msg) {
+            if (errEl) { errEl.hidden = false; errEl.textContent = msg; }
+            try { inputEl.focus(); } catch (e) { /* */ }
+            return;
+          }
+        }
+        settle(v);
+      }
+      function onBackdrop(e) { if (e.target === overlay) settle(null); }
+      function onKey(e) {
+        if (e.key === "Escape") settle(null);
+        else if (e.key === "Enter" && e.target === inputEl) {
+          e.preventDefault();
+          onConfirm();
+        }
+      }
+
+      if (closeBtn) closeBtn.addEventListener("click", onCancel);
+      if (cancelBtn) cancelBtn.addEventListener("click", onCancel);
+      if (okBtn) okBtn.addEventListener("click", onConfirm);
+      if (formEl) formEl.addEventListener("submit", function (e) { e.preventDefault(); onConfirm(); });
+      overlay.addEventListener("click", onBackdrop);
+      w.document.addEventListener("keydown", onKey);
+
+      w.document.body.appendChild(overlay);
+      try { inputEl.focus(); inputEl.select(); } catch (e) { /* */ }
+    });
+  }
+
+  /**
+   * Globale fout-modal — vervangt alert() voor foutmeldingen.
+   * Gebruikt showSaveModal met "Fout"-titel en geen auto-close.
+   */
+  function showError(message, title) {
+    var t = title || "Er ging iets mis";
+    var m = String(message == null ? "Onbekende fout" : message);
+    // Reuse de bestaande save-modal infrastructuur, maar toon hem zonder auto-close.
+    // showSaveModal doet auto-close na 500ms; voor errors willen we dat niet.
+    // Kortste pad: render een eigen overlay vergelijkbaar met showPromptModal.
+    var overlay = w.document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.setAttribute("aria-hidden", "false");
+    overlay.innerHTML =
+      '<div class="modal-card" role="alertdialog" aria-modal="true" tabindex="-1">' +
+        '<div class="modal-header">' +
+          '<h2 class="modal-title"></h2>' +
+          '<button type="button" class="modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<p class="employee-delete-msg"></p>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button type="button" class="btn-primary">OK</button>' +
+        '</div>' +
+      '</div>';
+    var titleEl = overlay.querySelector(".modal-title");
+    var msgEl = overlay.querySelector(".employee-delete-msg");
+    var closeBtn = overlay.querySelector(".modal-close");
+    var okBtn = overlay.querySelector(".btn-primary");
+    if (titleEl) titleEl.textContent = t;
+    if (msgEl) msgEl.textContent = m;
+
+    function close() {
+      w.document.removeEventListener("keydown", onKey);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+    function onKey(e) { if (e.key === "Escape" || e.key === "Enter") close(); }
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    if (okBtn) okBtn.addEventListener("click", close);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    w.document.addEventListener("keydown", onKey);
+    w.document.body.appendChild(overlay);
+    try { okBtn.focus(); } catch (e) { /* */ }
+  }
+
   w.showSaveModal = showSaveModal;
   w.showActionFeedback = showActionFeedback;
   w.showSliderConfirmModal = showSliderConfirmModal;
   w.showArchiveConfirm = showArchiveConfirm;
+  w.showPromptModal = showPromptModal;
+  w.showError = showError;
 })(window);

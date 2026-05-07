@@ -1428,14 +1428,18 @@
               notePreview = rawText;
             }
           } catch (_e) { /* noop */ }
-          var noteConfirm = (typeof window.showSliderConfirmModal === "function")
-            ? window.showSliderConfirmModal({
-                title: "Notitie verwijderen",
-                message: "Weet je zeker dat je deze notitie wilt verwijderen?",
-                preview: notePreview,
-                okLabel: "Verwijderen",
-              })
-            : Promise.resolve(window.confirm("Deze notitie verwijderen?"));
+          var noteConfirm;
+          if (typeof window.showSliderConfirmModal === "function") {
+            noteConfirm = window.showSliderConfirmModal({
+              title: "Notitie verwijderen",
+              message: "Weet je zeker dat je deze notitie wilt verwijderen?",
+              preview: notePreview,
+              okLabel: "Verwijderen",
+            });
+          } else {
+            console.warn("[beschikking-detail] showSliderConfirmModal niet beschikbaar — actie geannuleerd.");
+            noteConfirm = Promise.resolve(false);
+          }
           noteConfirm.then(async function (ok) {
             if (!ok) return;
             if (!window.beschikkingNotitiesDB || typeof window.beschikkingNotitiesDB.remove !== "function") {

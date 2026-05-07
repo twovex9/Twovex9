@@ -17498,3 +17498,20 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   white-space: nowrap;
 }
 .ic-action-btn svg { display: inline-block; }
+
+/* Opleidingen — SKJ-checkbox in toevoegen-modal (vervangt inline-styles) */
+.opl-skj-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: var(--font-base);
+  font-weight: 500;
+  cursor: pointer;
+}
+.opl-skj-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue);
+}
+

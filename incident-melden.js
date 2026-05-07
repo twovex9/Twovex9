@@ -547,7 +547,14 @@
 
     // Bijlagen voor edit-mode laden
     if (rec && rec.id && window.incidentDocsDB) {
-      window.incidentDocsDB.list(rec.id).then(renderBijlagen).catch(function () { /* */ });
+      window.incidentDocsDB.list(rec.id).then(renderBijlagen).catch(function (err) {
+        console.error("[incident-melden] bijlagen laden mislukt:", err);
+        // besa-sync-reporter handelt eventuele auth-fouten en globale toast af.
+        if (typeof window.besaReportSyncFailure === "function") {
+          window.besaReportSyncFailure("Incidenten — Bijlagen ophalen", err);
+        }
+        renderBijlagen();
+      });
     } else {
       renderBijlagen();
     }

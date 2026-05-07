@@ -893,20 +893,29 @@
     var editSc = e.target.closest(".sal-scale-edit");
     if (editSc) {
       var si = parseInt(editSc.getAttribute("data-si"), 10);
-      var data = getSalarisschalen();
-      var sc = data[si];
-      if (!sc) return;
-      var oldTitle = sc.title;
-      var n = window.prompt("Naam van de schaal", sc.title);
-      if (n != null && String(n).trim()) {
-        sc.title = String(n).trim();
-        saveSalarisschalen(data);
-        if (typeof logSalarishuisWijziging === "function") {
-          logSalarishuisWijziging("Schaal hernoemd", oldTitle + " → " + sc.title);
+      (async function () {
+        var data = getSalarisschalen();
+        var sc = data[si];
+        if (!sc) return;
+        var oldTitle = sc.title;
+        var n = typeof window.showPromptModal === "function"
+          ? await window.showPromptModal({
+              title: "Schaal hernoemen",
+              label: "Naam van de schaal",
+              defaultValue: sc.title,
+              okLabel: "Opslaan",
+            })
+          : window.prompt("Naam van de schaal", sc.title);
+        if (n != null && String(n).trim()) {
+          sc.title = String(n).trim();
+          saveSalarisschalen(data);
+          if (typeof logSalarishuisWijziging === "function") {
+            logSalarishuisWijziging("Schaal hernoemd", oldTitle + " → " + sc.title);
+          }
+          render();
+          showToast("Schaal bijgewerkt");
         }
-        render();
-        showToast("Schaal bijgewerkt");
-      }
+      })();
       return;
     }
 

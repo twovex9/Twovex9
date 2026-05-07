@@ -718,14 +718,39 @@ function initNewsAddModal() {
 
   modal.querySelectorAll(".rte-btn").forEach((btn) => {
     btn.addEventListener("mousedown", (e) => e.preventDefault());
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", async (e) => {
       e.preventDefault();
       editor.focus();
       const cmd = btn.dataset.cmd;
       if (!cmd) return;
       if (cmd === "createLink") {
-        const url = window.prompt("URL van de link:", "https://");
-        if (url) document.execCommand("createLink", false, url.trim());
+        // Bewaar de selectie vóór de modal opent (focus zou hem anders verliezen).
+        let savedRange = null;
+        try {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+        } catch (err) { /* */ }
+        const url = typeof window.showPromptModal === "function"
+          ? await window.showPromptModal({
+              title: "Link toevoegen",
+              label: "URL van de link",
+              placeholder: "https://",
+              defaultValue: "https://",
+              inputType: "url",
+              okLabel: "Toevoegen",
+            })
+          : window.prompt("URL van de link:", "https://");
+        if (!url) return;
+        // Selectie restoren + focus terug naar editor vóór execCommand.
+        try {
+          editor.focus();
+          if (savedRange) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+          }
+        } catch (err) { /* */ }
+        document.execCommand("createLink", false, String(url).trim());
         return;
       }
       document.execCommand(cmd, false, null);
@@ -956,14 +981,37 @@ function initNewsEditPanel() {
   function wireRteToolbar() {
     modal.querySelectorAll(".rte--news-edit .rte-btn").forEach((btn) => {
       btn.addEventListener("mousedown", (e) => e.preventDefault());
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         e.preventDefault();
         editor.focus();
         const cmd = btn.dataset.cmd;
         if (!cmd) return;
         if (cmd === "createLink") {
-          const url = window.prompt("URL van de link:", "https://");
-          if (url) document.execCommand("createLink", false, url.trim());
+          let savedRange = null;
+          try {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+          } catch (err) { /* */ }
+          const url = typeof window.showPromptModal === "function"
+            ? await window.showPromptModal({
+                title: "Link toevoegen",
+                label: "URL van de link",
+                placeholder: "https://",
+                defaultValue: "https://",
+                inputType: "url",
+                okLabel: "Toevoegen",
+              })
+            : window.prompt("URL van de link:", "https://");
+          if (!url) return;
+          try {
+            editor.focus();
+            if (savedRange) {
+              const sel = window.getSelection();
+              sel.removeAllRanges();
+              sel.addRange(savedRange);
+            }
+          } catch (err) { /* */ }
+          document.execCommand("createLink", false, String(url).trim());
           return;
         }
         if (cmd === "formatBlock") {

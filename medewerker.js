@@ -2167,13 +2167,35 @@ function initNotitiesSection() {
   if (!body || !sendBtn || !itemsEl) return;
 
   document.querySelectorAll(".emp-notitie-toolbar button").forEach((btn) => {
-    btn.addEventListener("mousedown", (e) => {
+    btn.addEventListener("mousedown", async (e) => {
       e.preventDefault();
       const cmd = btn.dataset.cmd;
       if (!cmd) return;
       if (cmd === "insertImage") {
-        const url = prompt("Afbeelding URL:");
-        if (url) document.execCommand("insertImage", false, url);
+        // Bewaar de selectie in het editor-veld vóór de modal opent.
+        let savedRange = null;
+        try {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+        } catch (err) { /* */ }
+        const url = typeof window.showPromptModal === "function"
+          ? await window.showPromptModal({
+              title: "Afbeelding invoegen",
+              label: "Afbeelding URL",
+              placeholder: "https://",
+              inputType: "url",
+              okLabel: "Invoegen",
+            })
+          : prompt("Afbeelding URL:");
+        if (!url) return;
+        try {
+          if (savedRange) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+          }
+        } catch (err) { /* */ }
+        document.execCommand("insertImage", false, String(url).trim());
       } else if (cmd === "formatBlock") {
         document.execCommand(cmd, false, btn.dataset.val || "P");
       } else {
@@ -2884,10 +2906,13 @@ function reportDocumentError(err, prefix) {
   var titel = prefix ? prefix + " mislukt" : "Opslaan mislukt";
   if (typeof window.showActionFeedback === "function") {
     window.showActionFeedback("error", titel, msg);
+  } else if (typeof window.showError === "function") {
+    window.showError(msg, titel);
   } else if (typeof window.showSaveModal === "function") {
     window.showSaveModal(msg, titel);
   } else {
-    alert(titel + ": " + msg);
+    // Geen helpers geladen — log naar console; geen alert (huisstijl).
+    console.error("[medewerker-documenten] " + titel + ": " + msg);
   }
   console.error("[medewerker-documenten] " + (prefix || ""), err);
 }
