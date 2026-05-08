@@ -224,10 +224,14 @@
       // Lege data → toon 'Niets te exporteren' melding zodra een format is gekozen
       // (volgt user-wens: modal eerst tonen, foutmelding pas na klik op format).
       if (!opts.data.length) {
-        if (typeof w.showActionFeedback === "function") {
-          w.showActionFeedback("info", "Niets te exporteren");
-        } else if (typeof w.showSaveModal === "function") {
+        // Direct showSaveModal aanroepen zodat de title 'Niets te exporteren' wordt
+        // en de body een duidelijke verklaring krijgt. showActionFeedback('info', X)
+        // mapt X als title en gebruikt body-fallback 'De wijzigingen zijn opgeslagen.' —
+        // niet wat we willen.
+        if (typeof w.showSaveModal === "function") {
           w.showSaveModal("Er zijn geen rijen om te exporteren.", "Niets te exporteren");
+        } else if (typeof w.showActionFeedback === "function") {
+          w.showActionFeedback("info", "Niets te exporteren", "Er zijn geen rijen om te exporteren.");
         }
         close();
         return;
