@@ -17515,3 +17515,338 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   accent-color: var(--blue);
 }
 
+/* =============================================================================
+   Kilometer declaraties — eigen pagina (kilometers.html)
+   ============================================================================= */
+
+.content--km { padding-top: 24px; }
+
+/* 3 stat-cards bovenaan */
+.km-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.km-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.km-stat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.km-stat-label {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.km-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.km-stat-icon--blue { background: var(--blue-soft); color: var(--blue); }
+.km-stat-icon--green { background: var(--green-soft); color: var(--green); }
+.km-stat-icon--purple { background: rgba(139, 92, 246, 0.12); color: rgb(139, 92, 246); }
+.km-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+.km-stat-sub {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+
+/* Toolbar + filter-chips */
+.km-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.km-filter-chips {
+  display: flex;
+  gap: 8px;
+}
+
+/* Status pills overzicht */
+.km-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-table-cell);
+  font-weight: 500;
+}
+.km-status-pill--ingediend {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.km-status-pill--nietingediend {
+  background: var(--line);
+  color: var(--text-secondary);
+}
+
+/* Clickable rij in overzicht */
+.km-overview-row { cursor: pointer; }
+.km-overview-row:hover { background: var(--blue-soft); }
+.km-overview-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+/* Numeriek-rechts kolommen */
+.td-num, .th-num { text-align: right; }
+.th-num .th-sort-inner { justify-content: flex-end; }
+
+/* Detail-view */
+.km-detail-period {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.km-detail-select {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: var(--font-base);
+  color: var(--text);
+  min-width: 180px;
+}
+
+.km-detail-header { align-items: flex-start; }
+.km-detail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-base);
+  font-weight: 500;
+}
+.km-detail-status--ingediend {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.km-detail-status--nietingediend {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+/* Type pills in detail-tabel */
+.km-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-table-head);
+  font-weight: 500;
+}
+.km-type-pill--handmatig {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.km-type-pill--kantoor {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+/* Detail acties cel */
+.km-detail-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.km-row-edit {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.km-row-edit:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+/* Totaalkaart onderaan detail-view */
+.km-totals-card {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.km-totals-left {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+.km-totals-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.km-totals-label {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.km-totals-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+.km-totals-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+.km-totals-hint {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  margin: 0;
+}
+.km-add-btn {
+  white-space: nowrap;
+}
+
+/* Pop-up: Kilometers toevoegen — keuze-modal */
+.km-choice-modal {
+  max-width: 520px;
+}
+.km-choice-subtitle {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+}
+.km-choice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.km-choice-card:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.km-choice-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.km-choice-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.km-choice-icon--blue { background: var(--blue-soft); color: var(--blue); }
+.km-choice-icon--green { background: var(--green-soft); color: var(--green); }
+.km-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.km-choice-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.km-choice-desc {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+}
+
+/* Responsive: stat-cards onder elkaar onder 800px */
+@media (max-width: 900px) {
+  .km-stats { grid-template-columns: 1fr; }
+  .km-totals-card { flex-direction: column; align-items: flex-start; }
+  .km-totals-right { align-items: flex-start; }
+}
+
+/* =============================================================================
+   Generieke export-keuzemodal (besa-export.js)
+   ============================================================================= */
+.besa-export-modal { max-width: 480px; }
+.besa-export-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+.besa-export-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.besa-export-option:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.besa-export-option:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.besa-export-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.besa-export-label {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+.besa-export-ext {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+@media (max-width: 600px) {
+  .besa-export-options { grid-template-columns: 1fr; }
+}
+

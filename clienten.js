@@ -370,6 +370,30 @@
       showToast("Niets te exporteren");
       return;
     }
+    // Generieke export-keuzemodal (CSV/TXT/Excel/PDF). Helper in besa-export.js.
+    if (typeof window.besaExport === "function") {
+      window.besaExport({
+        filename: "clienten",
+        title: "Cliënten",
+        columns: ["Voornaam", "Achternaam", "Cliëntnummer", "Locatie", "Fase", "Gemeente", "Organisatie", "Required forms", "Uit zorg datum", "Gearchiveerd"],
+        data: items.map(function (c) {
+          return {
+            "Voornaam": c.voornaam || "",
+            "Achternaam": c.achternaam || "",
+            "Cliëntnummer": c.clientnummer || "",
+            "Locatie": c.locatie || "",
+            "Fase": c.fase || "",
+            "Gemeente": c.gemeente || "",
+            "Organisatie": c.organisatie || "",
+            "Required forms": c.requiredForms || "",
+            "Uit zorg datum": c.uitZorgDatum || "",
+            "Gearchiveerd": c.archived ? "ja" : "nee",
+          };
+        }),
+      });
+      return;
+    }
+    // Fallback (oude CSV-only export) als besa-export.js niet geladen is.
     var headers = ["Voornaam", "Achternaam", "Cliëntnummer", "Locatie", "Fase", "Gemeente", "Organisatie", "Required forms", "Uit zorg datum", "Gearchiveerd"];
     var rows = items.map(function (c) {
       return [

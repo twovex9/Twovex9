@@ -1480,3 +1480,41 @@ function initHeaderActionsOverflow() {
 }
 
 initHeaderActionsOverflow();
+
+// ---------------------------------------------------------------------------
+// Medewerker export (CSV/TXT/Excel/PDF) via besa-export.js
+// ---------------------------------------------------------------------------
+function initEmployeeExport() {
+  const btn = document.getElementById("employee-export-btn");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (typeof window.besaExport !== "function") {
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Export-helper niet geladen");
+      }
+      return;
+    }
+    const all = window.medewerkersDB ? window.medewerkersDB.getAllSync() : [];
+    const data = all.filter((m) => m && !m.archived).map((m) => ({
+      "Voornaam": m.voornaam || "",
+      "Achternaam": m.achternaam || "",
+      "E-mailadres": m.email || "",
+      "Telefoon": m.telefoon || m.tel || "",
+      "Fase": m.fase || "",
+      "Dienstverband": m.dienstverband || "",
+      "Functie": m.functie || "",
+      "Opleiding": Array.isArray(m.opleidingen) ? m.opleidingen.join(", ") : (m.opleiding || ""),
+      "Contracttype": m.contracttype || "",
+      "Werktype": m.werktype || "",
+      "Startdatum": m.startdatum || "",
+      "Einde contract": m.einddatum || m.eindeContract || "",
+    }));
+    window.besaExport({
+      filename: "medewerkers",
+      title: "Medewerkers",
+      columns: ["Voornaam", "Achternaam", "E-mailadres", "Telefoon", "Fase", "Dienstverband", "Functie", "Opleiding", "Contracttype", "Werktype", "Startdatum", "Einde contract"],
+      data,
+    });
+  });
+}
+initEmployeeExport();
