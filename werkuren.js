@@ -168,7 +168,7 @@
     var monthLabel = MONTHS_NL[state.month - 1].charAt(0).toUpperCase() + MONTHS_NL[state.month - 1].slice(1);
     // Voor "Mij vergrendelen": gebruik huidige profiel medewerker_id
     var profile = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
-    var medId = profile && profile.medewerker_id ? profile.medewerker_id : null;
+    var medId = profile ? (profile.medewerkerId || profile.medewerker_id || null) : null;
     var isLocked = medId && window.werkurenVergrendeldDB
       ? window.werkurenVergrendeldDB.isLockedSync(medId, state.year, state.month) : false;
     if (isLocked) {
@@ -526,7 +526,7 @@
     // Lock/unlock
     $("wu-lock-btn").addEventListener("click", async function () {
       var profile = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
-      var medId = profile && profile.medewerker_id ? profile.medewerker_id : null;
+      var medId = profile ? (profile.medewerkerId || profile.medewerker_id || null) : null;
       if (!medId) { toast("error", "Geen gekoppelde medewerker bij dit profiel"); return; }
       var locked = window.werkurenVergrendeldDB.isLockedSync(medId, state.year, state.month);
       try {

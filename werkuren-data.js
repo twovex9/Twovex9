@@ -284,10 +284,11 @@
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
       if (!medewerkerId || !year || !month) throw new Error("medewerkerId + jaar + maand vereist");
       if (isLockedSync(medewerkerId, year, month)) return null;
-      var profile = global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null;
+      var profile = global.besaCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
+      var byId = profile ? (profile.id || null) : null;
       var payload = {
         id: generateId(), medewerker_id: medewerkerId, jaar: Number(year), maand: Number(month),
-        vergrendeld_door: profile && profile.id ? profile.id : null,
+        vergrendeld_door: byId,
       };
       var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
