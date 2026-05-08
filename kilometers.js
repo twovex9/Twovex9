@@ -100,7 +100,7 @@
   // State
   // ---------------------------------------------------------------------------
   var state = {
-    overview: { search: "", page: 1, pageSize: 50, sortKey: "periode", sortDir: "desc" },
+    overview: { search: "", page: 1, pageSize: 50, sortKey: "periode", sortDir: "desc", filterMaand: "", filterJaar: "" },
     detail: { sortKey: "datum", sortDir: "desc", page: 1, pageSize: 50, editingId: null, purgingId: null, med: null, jaar: null, maand: null },
   };
 
@@ -109,6 +109,15 @@
   // ---------------------------------------------------------------------------
   function renderOverview() {
     var aggs = window.kilometerDeclaratiesDB ? window.kilometerDeclaratiesDB.getMonthlyAggregatesSync() : [];
+    // Apply jaar/maand filter (chips)
+    if (state.overview.filterJaar) {
+      var fj = parseInt(state.overview.filterJaar, 10);
+      aggs = aggs.filter(function (a) { return a.year === fj; });
+    }
+    if (state.overview.filterMaand) {
+      var fm = parseInt(state.overview.filterMaand, 10);
+      aggs = aggs.filter(function (a) { return a.month === fm; });
+    }
     // Apply search
     var q = state.overview.search.trim().toLowerCase();
     if (q) {
@@ -383,8 +392,8 @@
       });
     }
     if (!jaarSel.options.length) {
-      var thisYear = new Date().getFullYear();
-      for (var y = thisYear + 1; y >= thisYear - 5; y -= 1) {
+      // Vaste range 2025-2030 — consistent met overview-filter chips.
+      for (var y = 2025; y <= 2030; y += 1) {
         var opt2 = document.createElement("option");
         opt2.value = String(y);
         opt2.textContent = String(y);
@@ -595,6 +604,44 @@
   function wireUp() {
     // Overview
     $("km-search").addEventListener("input", function () { state.overview.search = this.value || ""; state.overview.page = 1; renderOverview(); });
+
+    // Filter chips: maand + jaar — bij selectie filteren + chip stylen als 'gevuld'.
+    function syncFilterChipStyle(selectEl) {
+      var wrap = selectEl.closest(".filter-chip-select-wrap");
+      if (wrap) wrap.setAttribute("data-empty", selectEl.value ? "false" : "true");
+    }
+    function syncFilterResetVisibility() {
+      var hasFilter = !!(state.overview.filterMaand || state.overview.filterJaar);
+      var resetBtn = $("km-filter-reset");
+      if (resetBtn) resetBtn.hidden = !hasFilter;
+    }
+    var maandSelOv = $("km-filter-maand");
+    var jaarSelOv = $("km-filter-jaar");
+    if (maandSelOv) maandSelOv.addEventListener("change", function () {
+      state.overview.filterMaand = this.value || "";
+      state.overview.page = 1;
+      syncFilterChipStyle(this);
+      syncFilterResetVisibility();
+      renderOverview();
+    });
+    if (jaarSelOv) jaarSelOv.addEventListener("change", function () {
+      state.overview.filterJaar = this.value || "";
+      state.overview.page = 1;
+      syncFilterChipStyle(this);
+      syncFilterResetVisibility();
+      renderOverview();
+    });
+    var resetBtnOv = $("km-filter-reset");
+    if (resetBtnOv) resetBtnOv.addEventListener("click", function () {
+      state.overview.filterMaand = "";
+      state.overview.filterJaar = "";
+      if (maandSelOv) { maandSelOv.value = ""; syncFilterChipStyle(maandSelOv); }
+      if (jaarSelOv) { jaarSelOv.value = ""; syncFilterChipStyle(jaarSelOv); }
+      syncFilterResetVisibility();
+      state.overview.page = 1;
+      renderOverview();
+    });
+
     $("km-overview-page-size").addEventListener("change", function () { state.overview.pageSize = parseInt(this.value, 10) || 50; state.overview.page = 1; renderOverview(); });
     $("km-overview-pager-first").addEventListener("click", function () { state.overview.page = 1; renderOverview(); });
     $("km-overview-pager-prev").addEventListener("click", function () { if (state.overview.page > 1) { state.overview.page--; renderOverview(); } });

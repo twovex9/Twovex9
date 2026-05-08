@@ -17576,10 +17576,85 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   gap: 12px;
   align-items: center;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 .km-filter-chips {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Filter-chip via <select> — chip-styling, dropdown-functionaliteit van native select.
+   Wrap heeft data-empty="true" zolang er geen waarde gekozen is (toont '+ Maand' / '+ Jaar').
+   Bij gevulde state: chip is gevuld (dichte achtergrond) + heeft een blauwe stip-marker. */
+.filter-chip-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.filter-chip-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 8px 32px 8px 16px;
+  font-size: var(--font-base);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.filter-chip-select:hover {
+  border-color: var(--line-strong);
+  background: var(--blue-soft);
+}
+.filter-chip-select:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* Caret icon rechts in chip */
+.filter-chip-select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  pointer-events: none;
+}
+/* Wanneer de select gevuld is: vol blauwe achtergrond + witte tekst */
+.filter-chip-select-wrap[data-empty="false"] .filter-chip-select {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.filter-chip-select-wrap[data-empty="false"]::after {
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+}
+.filter-chip-reset {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+  font-size: var(--font-table-cell);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+.filter-chip-reset:hover {
+  border-color: var(--red);
+  color: var(--red);
 }
 
 /* Status pills overzicht */
