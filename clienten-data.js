@@ -253,7 +253,12 @@
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
-    cache.push(obj);
+    // Dedupe-bescherming: als het id al in de cache staat (bv. door een
+    // optimistic write elders) vervang het record i.p.v. push (anders 2x
+    // dezelfde rij). Smoke-test 2026-05-08 toonde dit gedrag bij +Cliënt
+    // toevoegen-modal: cache had na save 2x hetzelfde id.
+    var existingIdx = cache.findIndex(function (c) { return c && String(c.id) === String(obj.id); });
+    if (existingIdx >= 0) cache[existingIdx] = obj; else cache.push(obj);
     writeCache(cache);
     dispatchUpdated();
     return obj;
