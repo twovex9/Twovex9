@@ -9,6 +9,7 @@
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
   <script src="besa-export.js?v=ex1" defer></script>
+  <script src="besa-filter-chips.js?v=fc1" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
   <div class="app-shell">
@@ -207,12 +208,12 @@
           <span class="switch-label">Vereist actie</span>
         </label>
         <div class="filter-chips">
-          <button type="button" class="filter-chip">Locatie <span class="chip-chev"></span></button>
-          <button type="button" class="filter-chip">Bureau <span class="chip-chev"></span></button>
-          <button type="button" class="filter-chip">Contracttype <span class="chip-chev"></span></button>
-          <button type="button" class="filter-chip">Fase <span class="chip-chev"></span></button>
-          <button type="button" class="filter-chip">Dienstverband <span class="chip-chev"></span></button>
-          <button type="button" class="filter-chip">Competenties <span class="chip-chev"></span></button>
+          <button type="button" class="filter-chip" id="filter-chip-locatie">Locatie</button>
+          <button type="button" class="filter-chip" id="filter-chip-bureau">Bureau</button>
+          <button type="button" class="filter-chip" id="filter-chip-contracttype">Contracttype</button>
+          <button type="button" class="filter-chip" id="filter-chip-fase">Fase</button>
+          <button type="button" class="filter-chip" id="filter-chip-dienstverband">Dienstverband</button>
+          <button type="button" class="filter-chip" id="filter-chip-competenties">Competenties</button>
           <div class="filter-dropdown-wrap">
             <button type="button" class="filter-chip filter-chip--radio filter-chip-functie-btn" id="btn-functie-filter" aria-expanded="false" aria-haspopup="listbox">
               <span class="filter-chip-plus" aria-hidden="true">+</span> Functie
@@ -658,6 +659,8 @@
   <script src="profiles-data.js"></script>
   <script src="opleidingen-data.js"></script>
   <script src="competenties-data.js"></script>
+  <script src="locaties-data.js"></script>
+  <script src="bureaus-data.js"></script>
   <script src="medewerkers-data.js"></script>
   <script src="employees-bulk.js"></script>
   <script src="script.js"></script>

@@ -88,6 +88,14 @@ function populateSelectFromList(selectId, options, placeholder) {
 
 let filterFunctie = null;
 let filterOpleiding = null;
+// Werkende filter-chips voor Locatie/Bureau/Contracttype/Fase/Dienstverband/Competenties
+// (gebouwd via window.besaFilterChips.createSearchSelectChip — HR-stijl).
+let filterLocatie = null;
+let filterBureau = null;
+let filterContracttype = null;
+let filterFase = null;
+let filterDienstverband = null;
+let filterCompetentie = null;
 
 const OPLEIDING_OPTIONS_RAW =
   typeof window !== "undefined" && window.OPLEIDINGEN_DEFAULT_NAMEN && window.OPLEIDINGEN_DEFAULT_NAMEN.length
@@ -1251,14 +1259,127 @@ document.querySelectorAll("thead th.th-sort").forEach((th) => {
 
 function applyTableFilters() {
   document.querySelectorAll("table.employees-table:not(.nieuws-table) tbody tr").forEach((tr) => {
+    const empId = tr.dataset && tr.dataset.empId;
+    let emp = null;
+    if (empId && window.medewerkersDB && typeof window.medewerkersDB.getByIdSync === "function") {
+      try { emp = window.medewerkersDB.getByIdSync(empId); } catch (e) { /* */ }
+    }
+    if (!emp && empId) {
+      // Fallback: lokale items (oudere data-flow vóór Stage 6).
+      try { emp = readEmployeeItems().find((x) => x.id === empId) || null; } catch (e) { /* */ }
+    }
+
+    // DOM-based filters (kolommen bestaan in tabel) — Functie + Opleiding.
     const cellF = tr.querySelector('td[data-col="functie"]');
     const cellO = tr.querySelector('td[data-col="opleiding"]');
     const okF = !filterFunctie || (cellF && cellF.textContent.trim() === filterFunctie);
     const okO = !filterOpleiding || (cellO && cellO.textContent.trim() === filterOpleiding);
-    tr.classList.toggle("tr-filter-hidden", !(okF && okO));
+
+    // Data-based filters voor 6 nieuwe chips. Lege filter = match.
+    const data = emp || {};
+    const empCompetenties = Array.isArray(data.competenties) ? data.competenties : [];
+    const okLoc = !filterLocatie || data.locatie === filterLocatie;
+    const okBur = !filterBureau || data.bureau === filterBureau;
+    const okCT = !filterContracttype || data.contracttype === filterContracttype;
+    const okFs = !filterFase || (data.fase || "").trim() === filterFase;
+    const okDV = !filterDienstverband || data.dienstverband === filterDienstverband;
+    const okCp = !filterCompetentie || empCompetenties.indexOf(filterCompetentie) !== -1;
+
+    tr.classList.toggle("tr-filter-hidden", !(okF && okO && okLoc && okBur && okCT && okFs && okDV && okCp));
   });
   refreshEmployeesPagination();
 }
+
+/**
+ * Initialiseer de 6 simpele filter-chips (Locatie, Bureau, Contracttype, Fase,
+ * Dienstverband, Competenties) via window.besaFilterChips.createSearchSelectChip.
+ * Opties komen uit:
+ *   - locatiesDB / bureausDB / competentiesDB (live Supabase-data)
+ *   - unieke waarden uit medewerkersDB voor Contracttype/Fase/Dienstverband
+ *
+ * Wordt aangeroepen na medewerker- en lookup-data-bootstrap, en re-runt
+ * automatisch bij relevante updates zodat verse data direct in de chips zit.
+ */
+function initEmployeeChips() {
+  if (!window.besaFilterChips || typeof window.besaFilterChips.createSearchSelectChip !== "function") return;
+
+  const dedupSorted = (arr) => [...new Set(arr.filter(Boolean).map((s) => String(s).trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));
+
+  const allEmps = (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function")
+    ? window.medewerkersDB.getAllSync() || []
+    : [];
+
+  const optsFromDB = (db, key) => {
+    const items = (db && typeof db.getAllSync === "function") ? db.getAllSync() || [] : [];
+    return dedupSorted(items.filter((i) => i && !i.archived).map((i) => i[key] || "")).map((v) => ({ value: v, label: v }));
+  };
+  const optsFromEmp = (key) => dedupSorted(allEmps.map((e) => e && e[key])).map((v) => ({ value: v, label: v }));
+
+  const wireOne = (btnId, label, options, setter, clearLabel) => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return null;
+    // Voorkom dubbele init bij re-run: detecteer aanwezige wrap.
+    if (btn.dataset.chipInited === "1") return null;
+    btn.dataset.chipInited = "1";
+    return window.besaFilterChips.createSearchSelectChip({
+      button: btn,
+      label: label,
+      options: options,
+      clearLabel: clearLabel,
+      onChange: (v) => { setter(v || null); applyTableFilters(); },
+    });
+  };
+
+  wireOne("filter-chip-locatie", "Locatie",
+    optsFromDB(window.locatiesDB, "naam"),
+    (v) => { filterLocatie = v; }, "Alle locaties tonen");
+  wireOne("filter-chip-bureau", "Bureau",
+    optsFromDB(window.bureausDB, "naam"),
+    (v) => { filterBureau = v; }, "Alle bureaus tonen");
+  wireOne("filter-chip-contracttype", "Contracttype",
+    optsFromEmp("contracttype"),
+    (v) => { filterContracttype = v; }, "Alle contracttypes tonen");
+  wireOne("filter-chip-fase", "Fase",
+    optsFromEmp("fase"),
+    (v) => { filterFase = v; }, "Alle fases tonen");
+  wireOne("filter-chip-dienstverband", "Dienstverband",
+    optsFromEmp("dienstverband"),
+    (v) => { filterDienstverband = v; }, "Alle dienstverbanden tonen");
+  wireOne("filter-chip-competenties", "Competenties",
+    optsFromDB(window.competentiesDB, "naam"),
+    (v) => { filterCompetentie = v; }, "Alle competenties tonen");
+}
+
+// Init zodra alle data-lagen bootstrappped zijn. We luisteren op de relevante
+// 'besa:*-updated' events zodat nieuwe locaties/bureaus/competenties direct in
+// de chips komen zonder pagina-refresh. Eerste init: zodra de eerste relevante
+// update binnenkomt OF na DOMContentLoaded met een korte vertraging.
+function setupChipsInitialization() {
+  let inited = false;
+  const tryInit = () => {
+    if (inited) return;
+    if (typeof initEmployeeChips !== "function") return;
+    initEmployeeChips();
+    // Markeer als geslaagd zodra alle 6 chips een wrap hebben gekregen.
+    const allWrapped = ["locatie", "bureau", "contracttype", "fase", "dienstverband", "competenties"]
+      .every((k) => {
+        const b = document.getElementById("filter-chip-" + k);
+        return b && b.parentNode && b.parentNode.classList.contains("filter-dropdown-wrap");
+      });
+    if (allWrapped) inited = true;
+  };
+  ["besa:locaties-updated", "besa:bureaus-updated", "besa:competenties-updated", "besa:medewerkers-updated"].forEach((ev) => {
+    window.addEventListener(ev, tryInit);
+  });
+  // Initiële poging na DOMContentLoaded + kleine vertraging zodat data-lagen klaar zijn.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(tryInit, 200));
+  } else {
+    setTimeout(tryInit, 200);
+  }
+}
+setupChipsInitialization();
 
 function applyFunctieFilter(selectedLabel) {
   filterFunctie = selectedLabel;
