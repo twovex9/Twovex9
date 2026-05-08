@@ -17652,6 +17652,7 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   gap: 4px;
   font-family: inherit;
 }
+.filter-chip-reset[hidden] { display: none; }
 .filter-chip-reset:hover {
   border-color: var(--red);
   color: var(--red);
