@@ -137,7 +137,7 @@
   const TOP_ROUTE_BY_LABEL = {
       Home: "home.html",
       Planning: "planning.html",
-      Urenregistratie: "werkruimte.html#urenregistratie",
+      Urenregistratie: "werkuren.html",
       HR: "index.html",
       Cliënten: "clienten.html",
       Kilometers: "werkruimte.html#kilometers",
@@ -152,8 +152,8 @@
   const DROPDOWN_ROUTE_BY_TITLE = {
       "Overzicht planning": "planning.html",
       "Beheer planningbeheer": "planning.html",
-      "Geregistreerde uren": "werkruimte.html#urenregistratie",
-      "Labels": "werkruimte.html#urenregistratie",
+      "Geregistreerde uren": "werkuren.html",
+      "Labels": "werkuren.html#labels",
       "Medewerkers": "index.html",
       Cliënten: "clienten.html",
       Zorgsoorten: "zorgsoorten.html",

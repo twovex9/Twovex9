@@ -18104,3 +18104,303 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   .besa-export-options { grid-template-columns: 1fr; }
 }
 
+/* ==========================================================================
+   Werkuren — Geregistreerde uren-pagina
+   ========================================================================== */
+
+/* Sidebar layout (kalender + lock + filters) */
+.wu-sidebar {
+  padding: 16px 14px 14px;
+  gap: 14px;
+}
+
+/* Kalender */
+.wu-cal {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 10px 12px;
+  background: var(--surface);
+}
+.wu-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 6px;
+}
+.wu-cal-label {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+.wu-cal-nav {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wu-cal-nav:hover { background: var(--blue-soft); color: var(--blue); }
+.wu-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.wu-cal-dowh {
+  text-align: center;
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+.wu-cal-day {
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--font-table-cell);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wu-cal-day:hover {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.wu-cal-day--out {
+  color: var(--text-muted);
+  opacity: 0.45;
+  cursor: default;
+}
+.wu-cal-day--out:hover { background: transparent; color: var(--text-muted); }
+.wu-cal-day--sel {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  font-weight: 600;
+}
+.wu-cal-day--sel:hover { background: var(--blue); color: #fff; }
+
+/* Lock-knop */
+.wu-lock-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.wu-lock-btn--locked {
+  background: var(--yellow);
+  color: var(--text);
+  border-color: var(--yellow);
+}
+.wu-lock-btn--locked:hover { filter: brightness(0.97); }
+
+/* Filter-blocks (label boven chip) */
+.wu-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wu-filter-label {
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+}
+.wu-filter-chip {
+  width: 100%;
+  text-align: left;
+  justify-content: space-between;
+}
+
+/* Content header */
+.content--wu .content-header h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.wu-h1-ico { color: var(--blue); }
+
+.wu-period-title {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  margin: 4px 0 14px;
+  font-weight: 600;
+}
+
+/* Tabel */
+.wu-table-card {
+  margin-bottom: 14px;
+}
+.wu-table { width: 100%; }
+.wu-table th, .wu-table td {
+  font-size: var(--font-table-cell);
+  vertical-align: middle;
+}
+.wu-table th { font-size: var(--font-table-head); }
+
+/* Group-row (medewerker-header) */
+.wu-group-row {
+  background: var(--blue-soft);
+}
+.wu-group-row td {
+  padding: 10px 12px;
+  font-weight: 600;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.wu-group-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wu-group-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  width: 18px;
+  padding: 0;
+  line-height: 1;
+}
+.wu-group-toggle:hover { color: var(--blue); }
+.wu-group-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.wu-group-naam {
+  font-weight: 600;
+  color: var(--text);
+}
+.wu-group-count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.wu-group-actions {
+  text-align: right;
+}
+.wu-agenda-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-table-head);
+  padding: 6px 10px;
+}
+
+/* Entry-rows */
+.wu-entry-row td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.wu-entry-row:hover { background: var(--blue-soft); }
+.wu-entry-collapsed { display: none; }
+
+.wu-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.wu-row-edit {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.wu-row-edit:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+
+/* Totalen-balk */
+.wu-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.wu-total-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-base);
+  color: var(--text);
+}
+.wu-total-item strong {
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+.wu-total-ico { flex-shrink: 0; }
+.wu-total-ico--blue { color: var(--blue); }
+.wu-total-ico--green { color: var(--green); }
+.wu-total-ico--purple { color: #7c3aed; }
+
+/* Edit-modal */
+.wu-edit-card {
+  max-width: 560px;
+  width: 92vw;
+}
+.wu-edit-emp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--blue-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  margin-bottom: 14px;
+}
+.wu-emp-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.wu-emp-naam {
+  font-weight: 600;
+  color: var(--text);
+  font-size: var(--font-base);
+}
+.wu-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .wu-time-row { grid-template-columns: 1fr; }
+}
+

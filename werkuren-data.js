@@ -1,0 +1,319 @@
+/* global window, localStorage */
+/**
+ * Werkuren-data — Supabase data-laag voor:
+ *   - public.werkuren (geregistreerde werkuren per medewerker per dag)
+ *   - public.werkuren_vergrendeld (maand-vergrendeling per medewerker)
+ *   - public.werkuren_labels (label-keuzes voor de uren-modal)
+ *
+ * Public API:
+ *   werkurenDB
+ *     .ready / .refresh / .fetchAll
+ *     .getAllSync() / .getByIdSync(id)
+ *     .getForMonthSync(year, month)
+ *     .getForMedewerkerMonthSync(medewerkerId, year, month)
+ *     .add({medewerker_id, datum, starttijd, eindtijd, duur_minuten, client_id, client_label, dienst, label, beschrijving})
+ *     .update(id, partial)
+ *     .delete(id)
+ *
+ *   werkurenLabelsDB
+ *     .ready / .refresh / .getAllSync()
+ *     .add({naam}) / .delete(id)
+ *
+ *   werkurenVergrendeldDB
+ *     .ready / .refresh / .getAllSync()
+ *     .isLockedSync(medewerkerId, year, month)
+ *     .lock(medewerkerId, year, month)  → vergrendelt
+ *     .unlock(medewerkerId, year, month) → ontgrendelt
+ *
+ * Events: "besa:werkuren-updated" / "besa:werkuren-labels-updated" /
+ *         "besa:werkuren-vergrendeld-updated" op window.
+ */
+(function (global) {
+  "use strict";
+
+  function reportSilent(domain, action, err) {
+    try { console.error("[" + domain + "] " + action + " mislukt:", err); } catch (e) { /* */ }
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure(domain + " — " + action, err);
+  }
+  function readCache(key) {
+    try { var raw = localStorage.getItem(key); if (!raw) return []; var p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch (e) { return []; }
+  }
+  function writeCache(key, items) {
+    try { localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+  }
+  function dispatchEvt(name, source) {
+    try { global.dispatchEvent(new CustomEvent(name, { detail: { source: source || "werkuren-data" } })); } catch (e) { /* */ }
+  }
+
+  // ---------------------------------------------------------------------------
+  // werkurenDB
+  // ---------------------------------------------------------------------------
+  (function () {
+    var TABLE = "werkuren";
+    var CACHE_KEY = "werkuren_v1";
+
+    function generateId() { return "wu_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
+
+    function rowToObj(row) {
+      if (!row) return null;
+      return {
+        id: row.id,
+        medewerker_id: row.medewerker_id,
+        datum: row.datum,
+        starttijd: row.starttijd,
+        eindtijd: row.eindtijd,
+        duur_minuten: Number(row.duur_minuten || 0),
+        client_id: row.client_id,
+        client_label: row.client_label || "",
+        dienst: row.dienst || "",
+        label: row.label || "",
+        beschrijving: row.beschrijving || "",
+        vergrendeld: !!row.vergrendeld,
+        aanmaakdatum: row.aanmaakdatum,
+        laatstGewijzigd: row.laatst_gewijzigd,
+      };
+    }
+    function objToInsertPayload(o) {
+      var safe = o || {};
+      var p = {
+        medewerker_id: safe.medewerker_id || null,
+        datum: safe.datum,
+        starttijd: safe.starttijd || null,
+        eindtijd: safe.eindtijd || null,
+        duur_minuten: Number(safe.duur_minuten || 0),
+        client_id: safe.client_id || null,
+        client_label: String(safe.client_label || ""),
+        dienst: String(safe.dienst || ""),
+        label: String(safe.label || ""),
+        beschrijving: String(safe.beschrijving || ""),
+        vergrendeld: !!safe.vergrendeld,
+      };
+      p.id = safe.id || generateId();
+      return p;
+    }
+    function objToUpdatePayload(o) {
+      var safe = o || {};
+      var p = {};
+      ["medewerker_id", "datum", "starttijd", "eindtijd", "client_id"].forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(safe, k)) p[k] = safe[k] || null;
+      });
+      ["client_label", "dienst", "label", "beschrijving"].forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(safe, k)) p[k] = String(safe[k] || "");
+      });
+      if (Object.prototype.hasOwnProperty.call(safe, "duur_minuten")) p.duur_minuten = Number(safe.duur_minuten || 0);
+      if (Object.prototype.hasOwnProperty.call(safe, "vergrendeld")) p.vergrendeld = !!safe.vergrendeld;
+      return p;
+    }
+
+    async function fetchAll() {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false });
+      if (res.error) throw res.error;
+      return (res.data || []).map(rowToObj).filter(Boolean);
+    }
+    var readyPromise = null;
+    function bootstrap() {
+      if (readyPromise) return readyPromise;
+      var c = readCache(CACHE_KEY);
+      if (c.length) dispatchEvt("besa:werkuren-updated", "cache");
+      readyPromise = (async function () {
+        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "bootstrap"); }
+        catch (err) { reportSilent("werkurenDB", "Bootstrap", err); }
+      })();
+      return readyPromise;
+    }
+    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "refresh"); return items; }
+    function getAllSync() { return readCache(CACHE_KEY); }
+    function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
+    function getForMonthSync(year, month) {
+      return getAllSync().filter(function (r) {
+        if (!r || !r.datum) return false;
+        var d = new Date(r.datum);
+        if (isNaN(d.getTime())) return false;
+        return d.getFullYear() === Number(year) && (d.getMonth() + 1) === Number(month);
+      });
+    }
+    function getForMedewerkerMonthSync(medewerkerId, year, month) {
+      return getForMonthSync(year, month).filter(function (r) { return r && String(r.medewerker_id) === String(medewerkerId); });
+    }
+
+    async function add(rec) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var payload = objToInsertPayload(rec);
+      if (!payload.datum) throw new Error("Datum is verplicht");
+      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      if (res.error) throw res.error;
+      var obj = rowToObj(res.data);
+      var cache = readCache(CACHE_KEY);
+      var idx = cache.findIndex(function (r) { return r && String(r.id) === String(obj.id); });
+      if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-updated", "add");
+      return obj;
+    }
+    async function update(id, partial) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!id) throw new Error("Geen id");
+      var payload = objToUpdatePayload(partial || {});
+      var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+      if (res.error) throw res.error;
+      var obj = rowToObj(res.data);
+      var cache = readCache(CACHE_KEY);
+      var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
+      if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-updated", "update");
+      return obj;
+    }
+    async function remove(id) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!id) return false;
+      var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+      if (res.error) throw res.error;
+      var cache = readCache(CACHE_KEY).filter(function (r) { return r && String(r.id) !== String(id); });
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-updated", "remove");
+      return true;
+    }
+
+    global.werkurenDB = {
+      get ready() { return readyPromise || bootstrap(); },
+      refresh: refresh, fetchAll: fetchAll,
+      getAllSync: getAllSync, getByIdSync: getByIdSync,
+      getForMonthSync: getForMonthSync, getForMedewerkerMonthSync: getForMedewerkerMonthSync,
+      add: add, update: update, delete: remove,
+    };
+    bootstrap();
+  })();
+
+  // ---------------------------------------------------------------------------
+  // werkurenLabelsDB
+  // ---------------------------------------------------------------------------
+  (function () {
+    var TABLE = "werkuren_labels";
+    var CACHE_KEY = "werkuren_labels_v1";
+    function generateId() { return "lbl_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
+    function rowToObj(row) { return row ? { id: row.id, naam: row.naam || "", archived: !!row.archived } : null; }
+    async function fetchAll() {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.besaSupabase.from(TABLE).select("*").order("naam", { ascending: true });
+      if (res.error) throw res.error;
+      return (res.data || []).map(rowToObj).filter(Boolean);
+    }
+    var readyPromise = null;
+    function bootstrap() {
+      if (readyPromise) return readyPromise;
+      var c = readCache(CACHE_KEY);
+      if (c.length) dispatchEvt("besa:werkuren-labels-updated", "cache");
+      readyPromise = (async function () {
+        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "bootstrap"); }
+        catch (err) { reportSilent("werkurenLabelsDB", "Bootstrap", err); }
+      })();
+      return readyPromise;
+    }
+    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "refresh"); return items; }
+    function getAllSync() { return readCache(CACHE_KEY); }
+    async function add(rec) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!rec || !rec.naam) throw new Error("Naam vereist");
+      var payload = { id: rec.id || generateId(), naam: String(rec.naam).trim() };
+      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      if (res.error) throw res.error;
+      var obj = rowToObj(res.data);
+      var cache = readCache(CACHE_KEY); cache.push(obj);
+      cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-labels-updated", "add");
+      return obj;
+    }
+    async function remove(id) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+      if (res.error) throw res.error;
+      var cache = readCache(CACHE_KEY).filter(function (r) { return r && String(r.id) !== String(id); });
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-labels-updated", "remove");
+      return true;
+    }
+    global.werkurenLabelsDB = {
+      get ready() { return readyPromise || bootstrap(); },
+      refresh: refresh, getAllSync: getAllSync, add: add, delete: remove,
+    };
+    bootstrap();
+  })();
+
+  // ---------------------------------------------------------------------------
+  // werkurenVergrendeldDB
+  // ---------------------------------------------------------------------------
+  (function () {
+    var TABLE = "werkuren_vergrendeld";
+    var CACHE_KEY = "werkuren_vergrendeld_v1";
+    function generateId() { return "lk_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
+    function rowToObj(row) {
+      return row ? {
+        id: row.id, medewerker_id: row.medewerker_id, jaar: row.jaar, maand: row.maand,
+        vergrendeld_op: row.vergrendeld_op, vergrendeld_door: row.vergrendeld_door,
+      } : null;
+    }
+    async function fetchAll() {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.besaSupabase.from(TABLE).select("*");
+      if (res.error) throw res.error;
+      return (res.data || []).map(rowToObj).filter(Boolean);
+    }
+    var readyPromise = null;
+    function bootstrap() {
+      if (readyPromise) return readyPromise;
+      var c = readCache(CACHE_KEY);
+      if (c.length) dispatchEvt("besa:werkuren-vergrendeld-updated", "cache");
+      readyPromise = (async function () {
+        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "bootstrap"); }
+        catch (err) { reportSilent("werkurenVergrendeldDB", "Bootstrap", err); }
+      })();
+      return readyPromise;
+    }
+    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "refresh"); return items; }
+    function getAllSync() { return readCache(CACHE_KEY); }
+    function isLockedSync(medewerkerId, year, month) {
+      return readCache(CACHE_KEY).some(function (r) {
+        return r && String(r.medewerker_id) === String(medewerkerId)
+          && Number(r.jaar) === Number(year) && Number(r.maand) === Number(month);
+      });
+    }
+    async function lock(medewerkerId, year, month) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!medewerkerId || !year || !month) throw new Error("medewerkerId + jaar + maand vereist");
+      if (isLockedSync(medewerkerId, year, month)) return null;
+      var profile = global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null;
+      var payload = {
+        id: generateId(), medewerker_id: medewerkerId, jaar: Number(year), maand: Number(month),
+        vergrendeld_door: profile && profile.id ? profile.id : null,
+      };
+      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      if (res.error) throw res.error;
+      var cache = readCache(CACHE_KEY); cache.push(rowToObj(res.data));
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-vergrendeld-updated", "lock");
+      return rowToObj(res.data);
+    }
+    async function unlock(medewerkerId, year, month) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.besaSupabase.from(TABLE).delete()
+        .eq("medewerker_id", medewerkerId).eq("jaar", year).eq("maand", month);
+      if (res.error) throw res.error;
+      var cache = readCache(CACHE_KEY).filter(function (r) {
+        return !(r && String(r.medewerker_id) === String(medewerkerId)
+          && Number(r.jaar) === Number(year) && Number(r.maand) === Number(month));
+      });
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-vergrendeld-updated", "unlock");
+      return true;
+    }
+    global.werkurenVergrendeldDB = {
+      get ready() { return readyPromise || bootstrap(); },
+      refresh: refresh, getAllSync: getAllSync,
+      isLockedSync: isLockedSync, lock: lock, unlock: unlock,
+    };
+    bootstrap();
+  })();
+})(typeof window !== "undefined" ? window : this);
