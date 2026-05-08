@@ -1277,13 +1277,26 @@ function applyTableFilters() {
 
     // Data-based filters voor 6 nieuwe chips. Lege filter = match.
     const data = emp || {};
-    const empCompetenties = Array.isArray(data.competenties) ? data.competenties : [];
-    const okLoc = !filterLocatie || data.locatie === filterLocatie;
-    const okBur = !filterBureau || data.bureau === filterBureau;
+    // Competentie kan singular (string) OF plural (array) zijn afhankelijk
+    // van data-bron — accepteer beide.
+    const empCompList = Array.isArray(data.competenties) ? data.competenties
+      : (data.competentie ? [data.competentie] : []);
+    // Locatie/bureau: kan in jsonb 'data', oude '_data', of als losse velden zitten.
+    const dataExt = data.data || data._data || {};
+    const empLoc = data.locatie || dataExt.locatie || (Array.isArray(dataExt.locaties) && dataExt.locaties[0]) || "";
+    const empBur = data.bureau || dataExt.bureau || (Array.isArray(dataExt.bureaus) && dataExt.bureaus[0]) || "";
+    // Locaties/bureaus kan ook array zijn — accepteer ook array contains.
+    const locList = Array.isArray(dataExt.locaties) ? dataExt.locaties
+      : (Array.isArray(data.locaties) ? data.locaties : (empLoc ? [empLoc] : []));
+    const burList = Array.isArray(dataExt.bureaus) ? dataExt.bureaus
+      : (Array.isArray(data.bureaus) ? data.bureaus : (empBur ? [empBur] : []));
+
+    const okLoc = !filterLocatie || locList.indexOf(filterLocatie) !== -1;
+    const okBur = !filterBureau || burList.indexOf(filterBureau) !== -1;
     const okCT = !filterContracttype || data.contracttype === filterContracttype;
     const okFs = !filterFase || (data.fase || "").trim() === filterFase;
     const okDV = !filterDienstverband || data.dienstverband === filterDienstverband;
-    const okCp = !filterCompetentie || empCompetenties.indexOf(filterCompetentie) !== -1;
+    const okCp = !filterCompetentie || empCompList.indexOf(filterCompetentie) !== -1;
 
     tr.classList.toggle("tr-filter-hidden", !(okF && okO && okLoc && okBur && okCT && okFs && okDV && okCp));
   });
@@ -1303,8 +1316,14 @@ function applyTableFilters() {
 function initEmployeeChips() {
   if (!window.besaFilterChips || typeof window.besaFilterChips.createSearchSelectChip !== "function") return;
 
-  const dedupSorted = (arr) => [...new Set(arr.filter(Boolean).map((s) => String(s).trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));
+  // Filter ook lege placeholders ("—", "-", "n.v.t.") en orphan-achtige
+  // strings (bv. base64 / "[object" rommel) eruit, zodat de dropdown alleen
+  // bruikbare opties toont.
+  const isPlaceholder = (s) => !s || /^[—–\-]+$/.test(s) || s === "n.v.t." || s === "—" ||
+    /^\[(object|BLOCKED)/i.test(s) || /^[A-Za-z0-9+/=]{40,}$/.test(s);
+  const dedupSorted = (arr) => [...new Set(
+    arr.filter(Boolean).map((s) => String(s).trim()).filter((s) => s && !isPlaceholder(s))
+  )].sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));
 
   const allEmps = (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function")
     ? window.medewerkersDB.getAllSync() || []
