@@ -202,13 +202,13 @@ function oplFmtDate(iso) {
 
     if (rangeEl) {
       if (total === 0) {
-        rangeEl.textContent = "0 of 0 total.";
+        rangeEl.textContent = "0 van 0";
       } else {
         var endIdx = Math.min(start + pageSize, total);
-        rangeEl.textContent = start + 1 + "–" + endIdx + " of " + total + " total.";
+        rangeEl.textContent = (start + 1) + "–" + endIdx + " van " + total;
       }
     }
-    if (pageEl) pageEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
 
     var first = document.getElementById("opl-pager-first");
     var prev = document.getElementById("opl-pager-prev");
