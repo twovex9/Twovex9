@@ -167,14 +167,9 @@
       console.error("[besaExport] Geldige data + columns vereist");
       return;
     }
-    if (!opts.data.length) {
-      if (typeof w.showActionFeedback === "function") {
-        w.showActionFeedback("info", "Niets te exporteren");
-      } else {
-        console.warn("[besaExport] Geen data om te exporteren");
-      }
-      return;
-    }
+    // Note: modal opent ALTIJD — ook bij lege data. De 'Niets te exporteren'
+    // melding komt pas zodra een format gekozen wordt en blijkt dat er geen
+    // rijen zijn om te exporteren. Zie pick() onderaan.
     var filename = (opts.filename || "export") + "-" + new Date().toISOString().slice(0, 10);
     var title = opts.title || opts.filename || "Export";
 
@@ -226,6 +221,17 @@
     }
     function onKey(e) { if (e.key === "Escape") close(); }
     function pick(fmt) {
+      // Lege data → toon 'Niets te exporteren' melding zodra een format is gekozen
+      // (volgt user-wens: modal eerst tonen, foutmelding pas na klik op format).
+      if (!opts.data.length) {
+        if (typeof w.showActionFeedback === "function") {
+          w.showActionFeedback("info", "Niets te exporteren");
+        } else if (typeof w.showSaveModal === "function") {
+          w.showSaveModal("Er zijn geen rijen om te exporteren.", "Niets te exporteren");
+        }
+        close();
+        return;
+      }
       try {
         if (fmt === "csv") exportCsv({ filename: filename, data: opts.data, columns: opts.columns, title: title });
         else if (fmt === "txt") exportTxt({ filename: filename, data: opts.data, columns: opts.columns, title: title });
