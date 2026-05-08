@@ -180,8 +180,16 @@ function countMedewerkers(compNaam) {
 
     applyColumnVisibility();
 
-    if (rangeEl) rangeEl.textContent = `${pageSize} of ${total} total.`;
-    if (pageEl) pageEl.textContent = `Page ${currentPage + 1} of ${totalPages}`;
+    if (rangeEl) {
+      if (total === 0) {
+        rangeEl.textContent = "0 van 0";
+      } else {
+        const startIdx = currentPage * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, total);
+        rangeEl.textContent = `${startIdx + 1}–${endIdx} van ${total}`;
+      }
+    }
+    if (pageEl) pageEl.textContent = `Pagina ${currentPage + 1} van ${totalPages}`;
 
     const first = document.getElementById("comp-pager-first");
     const prev = document.getElementById("comp-pager-prev");

@@ -517,11 +517,11 @@ function initNewsPagination() {
     });
 
     if (total === 0) {
-      rangeEl.textContent = "0 of 0 total.";
+      rangeEl.textContent = "0 van 0";
     } else {
-      rangeEl.textContent = `${startIdx + 1}–${endIdx} of ${total} total.`;
+      rangeEl.textContent = `${startIdx + 1}–${endIdx} van ${total}`;
     }
-    pageLabel.textContent = `Page ${currentPage} of ${totalPages}`;
+    pageLabel.textContent = `Pagina ${currentPage} van ${totalPages}`;
 
     const atFirst = currentPage <= 1 || total === 0;
     const atLast = currentPage >= totalPages || total === 0;

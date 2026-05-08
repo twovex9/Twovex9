@@ -5,19 +5,15 @@
  *  - Initialiseert de Supabase JS client met project URL + anon key.
  *  - Exposeert window.besaSupabase (de client zelf) en window.besaAuth (helpers).
  *
- * Auth-status (TIJDELIJK UITGEZET — dev/test-modus, 2026-05-07):
- *  - Login staat UIT (AUTH_ENABLED = false). auth-guard.js no-opt automatisch
- *    (regel 35-37 in dat bestand). Dataquery's gaan via de anon key door RLS;
- *    daarom is RLS op alle public.*-tabellen óók tijdelijk uitgezet en zijn
- *    er anon-policies op de Storage-buckets toegevoegd.
- *  - Om weer aan te zetten:
- *      1) AUTH_ENABLED hieronder op true zetten;
- *      2) `supabase/schema.sql` opnieuw uitrollen — dat herstelt RLS en de
- *         to-authenticated policies via de Stage 8c migratie-DO-block onderaan
- *         schema.sql.
+ * Auth-status (AAN per 2026-05-08):
+ *  - Login staat AAN (AUTH_ENABLED = true). auth-guard.js redirect ongeauthenticeerde
+ *    bezoekers naar login.html?next=<huidige-url>.
+ *  - RLS staat aan op alle public-tabellen met `to authenticated`-policies.
+ *    Anon-key heeft géén toegang tot data — login is verplicht.
  *  - persistSession volgt AUTH_ENABLED.
- *  - auth-guard.js doet alleen redirects/uitlog-UI als AUTH_ENABLED true is.
  *  - login.html biedt de inlog-UI via besaAuth.signIn(...) onder de motorkap.
+ *  - Maak eerste user aan via Supabase Dashboard → Auth → Add user (zie
+ *    setup_supabase_mcp.md voor instructies).
  *
  * Vereisten per HTML-page (in deze volgorde):
  *  1. <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -40,7 +36,7 @@
     "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvc2N3dm9qY2dna2JkeGhsZnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NzAyOTMsImV4cCI6MjA5MzU0NjI5M30." +
     "xsQ8ijVmUGOEyDyA26zKbR2-0jfeWVG6xGBZIKY6lnI";
 
-  var AUTH_ENABLED = false;
+  var AUTH_ENABLED = true;
 
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     console.error(

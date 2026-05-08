@@ -149,12 +149,14 @@
 
     if (rangeEl) {
       if (total === 0) {
-        rangeEl.textContent = "0 of 0 total.";
+        rangeEl.textContent = "0 van 0";
       } else {
-        rangeEl.textContent = pageSize + " of " + total + " total.";
+        var startIdx = currentPage * pageSize;
+        var endIdx = Math.min(startIdx + pageSize, total);
+        rangeEl.textContent = (startIdx + 1) + "–" + endIdx + " van " + total;
       }
     }
-    if (pageEl) pageEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
 
     var first = document.getElementById("bur-pager-first");
     var prev = document.getElementById("bur-pager-prev");
