@@ -114,6 +114,26 @@ function getModuleKeyFromHash() {
   return "urenregistratie";
 }
 
+/**
+ * Update de `is-active` class op de top-nav zodat de juiste link gemarkeerd
+ * wordt voor de huidige hash-route. Werkruimte is een SPA-shell met meerdere
+ * modules onder dezelfde URL, dus de active state moet dynamisch zijn.
+ */
+function syncTopNavActive() {
+  const hash = (window.location.hash || "").replace(/^#/, "").toLowerCase().trim();
+  // Map elke hash naar de href waarmee de top-link begint. Voor #verlof bv.
+  // matcht de Verlof-link met href "werkruimte.html#verlof".
+  const targetHref = "werkruimte.html#" + (hash || "urenregistratie");
+  const allTopLinks = document.querySelectorAll(".top-nav .top-link");
+  allTopLinks.forEach((link) => link.classList.remove("is-active"));
+  // Zoek de link die begint met onze targetHref (kan top-link of top-link--dropdown zijn).
+  const match = Array.from(allTopLinks).find((link) => {
+    const href = link.getAttribute("href") || "";
+    return href === targetHref;
+  });
+  if (match) match.classList.add("is-active");
+}
+
 function formatNow() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, "0");
@@ -793,10 +813,12 @@ function initWerkruimte() {
 
   window.addEventListener("hashchange", () => {
     rerender();
+    syncTopNavActive();
   });
 
   initModal(() => currentModule, rerender);
   rerender();
+  syncTopNavActive();
 }
 
 initWerkruimte();

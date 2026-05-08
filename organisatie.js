@@ -215,7 +215,7 @@
       if (total === 0) {
         rangeEl.textContent = "0 van 0";
       } else {
-        rangeEl.textContent = start + 1 + "–" + end + " van " + total + " totaal";
+        rangeEl.textContent = (start + 1) + "–" + end + " van " + total;
       }
     }
     if (pageEl) {

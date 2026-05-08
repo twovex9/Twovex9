@@ -625,7 +625,13 @@
     if (currentPage < 0) currentPage = 0;
     var start = currentPage * ps;
     var end = Math.min(start + ps, items.length);
-    if (rangeEl) rangeEl.textContent = (items.length === 0 ? "0" : (start + 1)) + " – " + end + " van " + items.length + " in totaal";
+    if (rangeEl) {
+      if (items.length === 0) {
+        rangeEl.textContent = "0 van 0";
+      } else {
+        rangeEl.textContent = (start + 1) + "–" + end + " van " + items.length;
+      }
+    }
     if (pageLabel) pageLabel.textContent = "Pagina " + (currentPage + 1) + " van " + totalP;
 
     var f = document.getElementById("besc-pager-first");
