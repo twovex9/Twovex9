@@ -375,9 +375,9 @@
     var start = currentPage * pageSize;
     var onPage = total === 0 ? 0 : Math.min(pageSize, total - start);
     if (rangeEl) {
-      rangeEl.textContent = total === 0 ? "0 of 0 total." : onPage + " of " + total + " total.";
+      rangeEl.textContent = total === 0 ? "0 van 0" : onPage + " van " + total;
     }
-    if (pageEl) pageEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
     var first = document.getElementById("cd-pager-first");
     var prev = document.getElementById("cd-pager-prev");
     var next = document.getElementById("cd-pager-next");

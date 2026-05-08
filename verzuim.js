@@ -463,9 +463,9 @@
     applyColumnVisibility();
 
     if (rangeEl) {
-      rangeEl.textContent = total === 0 ? "0 of 0 total." : page.length + " of " + total + " total.";
+      rangeEl.textContent = total === 0 ? "0 van 0" : page.length + " van " + total;
     }
-    if (pageEl) pageEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
 
     var first = document.getElementById("vz-pager-first");
     var prev = document.getElementById("vz-pager-prev");

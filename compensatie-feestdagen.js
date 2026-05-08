@@ -270,12 +270,12 @@
 
     if (rangeEl) {
       if (total === 0) {
-        rangeEl.textContent = "0 of 0 total.";
+        rangeEl.textContent = "0 van 0";
       } else {
-        rangeEl.textContent = page.length + " of " + total + " total.";
+        rangeEl.textContent = page.length + " van " + total;
       }
     }
-    if (pageEl) pageEl.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
 
     var first = document.getElementById("cf-pager-first");
     var prev = document.getElementById("cf-pager-prev");
