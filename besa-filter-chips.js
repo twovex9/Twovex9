@@ -1,23 +1,18 @@
 /* global window, document */
 /**
- * besa-filter-chips.js — herbruikbare filter-chip-componenten.
+ * besa-filter-chips.js — herbruikbare filter-chip-componenten in HR-huisstijl.
  *
- * Twee componenten:
+ * Gebruikt EXACT dezelfde CSS classes als de officiële Functie/Opleiding-chips
+ * op HR > Medewerkers (.filter-chip--radio, .filter-chip-plus,
+ * .filter-functie-panel, .filter-functie-search, .filter-functie-input,
+ * .filter-functie-clear, .filter-functie-list, .filter-functie-option).
  *
- * 1. createSearchSelectChip({ button, label, options, onChange })
- *    - Een button-chip met "+ Label" text.
- *    - Bij klik: opent floating panel met search-input + lijst met opties.
- *    - User kiest één optie; chip wordt vol blauw met de gekozen waarde.
- *    - Klik nogmaals op chip toggles panel; klik op chip met waarde toont 'X' om te clearen.
+ * API:
+ *   createSearchSelectChip({ button, label, options, onChange, clearLabel })
+ *   createDateRangeChip({ button, label, onChange })
  *
- * 2. createDateRangeChip({ button, label, onChange })
- *    - Een button-chip met "+ Label" (bv. "+ Periode") tekst.
- *    - Bij klik: opent floating 2-month-calendar.
- *    - User klikt 1e datum (start), 2e datum (eind). Alle dagen tussenin krijgen
- *      blauwe highlight. Klik op chip met waarde toont 'X' om te clearen.
- *    - onChange krijgt {from: 'yyyy-mm-dd', to: 'yyyy-mm-dd'} of null bij clear.
- *
- * Beide componenten gebruiken huisstijl-tokens (--blue, --line, --r-pill).
+ * De button die je doorgeeft krijgt de HR-classes opgelegd en wordt in een
+ * .filter-dropdown-wrap geplaatst; het panel komt direct daaronder.
  */
 (function (w) {
   "use strict";
@@ -31,199 +26,209 @@
   function pad2(n) { return ("0" + n).slice(-2); }
   function fmtIso(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
   function parseIso(s) { if (!s) return null; var p = s.split("-"); if (p.length !== 3) return null; return new Date(parseInt(p[0],10), parseInt(p[1],10) - 1, parseInt(p[2],10)); }
+  function fmtNl(d) { return pad2(d.getDate()) + "-" + pad2(d.getMonth() + 1) + "-" + d.getFullYear(); }
+  function sameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 
-  function positionPanel(panel, anchor) {
-    var rect = anchor.getBoundingClientRect();
-    panel.style.position = "fixed";
-    panel.style.top = (rect.bottom + 6) + "px";
-    panel.style.left = rect.left + "px";
-    panel.style.zIndex = "9999";
-    // Houd binnen viewport
-    setTimeout(function () {
-      var pr = panel.getBoundingClientRect();
-      if (pr.right > w.innerWidth - 8) {
-        panel.style.left = Math.max(8, w.innerWidth - pr.width - 8) + "px";
-      }
-      if (pr.bottom > w.innerHeight - 8) {
-        panel.style.top = Math.max(8, rect.top - pr.height - 6) + "px";
-      }
-    }, 0);
+  /**
+   * Wrap een bestaande button in een .filter-dropdown-wrap en geef de button
+   * de officiële HR-classes. Returns de wrap-div.
+   */
+  function makeWrap(button) {
+    if (button.parentNode && button.parentNode.classList.contains("filter-dropdown-wrap")) {
+      return button.parentNode;
+    }
+    var wrap = document.createElement("div");
+    wrap.className = "filter-dropdown-wrap";
+    button.parentNode.insertBefore(wrap, button);
+    wrap.appendChild(button);
+    return wrap;
+  }
+
+  /**
+   * Render de label + optionele "+" plus-icon binnen de button.
+   * Bij actieve waarde: alleen label-tekst (geen +).
+   */
+  function renderButtonContent(button, label, valueText) {
+    if (valueText) {
+      button.innerHTML = '<span class="filter-chip-text">' + escHtml(valueText) + '</span>';
+      button.classList.add("is-active");
+    } else {
+      button.innerHTML = '<span class="filter-chip-plus" aria-hidden="true">+</span> ' + escHtml(label);
+      button.classList.remove("is-active");
+    }
   }
 
   // ---------------------------------------------------------------------------
-  // 1. Search-select chip
+  // 1. Search-select chip — HR-stijl (matcht Functie/Opleiding op index.html)
   // ---------------------------------------------------------------------------
   function createSearchSelectChip(opts) {
     var btn = opts.button;
     var label = opts.label || "Filter";
     var options = opts.options || []; // [{value, label}]
     var onChange = opts.onChange || function () {};
+    var clearLabel = opts.clearLabel || ("Alle " + label.toLowerCase().replace(/^[+\s]+/, "") + " tonen");
     var current = null;
-    var panel = null;
 
-    function renderBtnLabel() {
-      btn.classList.toggle("filter-chip--active", !!current);
-      if (current) {
-        var opt = options.find(function (o) { return o.value === current; });
-        btn.innerHTML =
-          '<span class="filter-chip-text">' + escHtml(opt ? opt.label : current) + '</span>' +
-          '<span class="filter-chip-clear" aria-label="Wissen">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
-      } else {
-        btn.innerHTML =
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' +
-          '<span class="filter-chip-text">' + escHtml(label) + '</span>';
-      }
+    // Setup button-stijl + wrap + panel
+    btn.classList.add("filter-chip", "filter-chip--radio", "filter-chip-functie-btn");
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    var wrap = makeWrap(btn);
+
+    var panel = document.createElement("div");
+    panel.className = "filter-functie-panel";
+    panel.setAttribute("role", "listbox");
+    panel.hidden = true;
+    panel.innerHTML =
+      '<div class="filter-functie-search">' +
+        '<svg class="filter-functie-search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
+        '<input type="search" class="filter-functie-input" placeholder="Zoeken..." autocomplete="off" />' +
+      '</div>' +
+      '<button type="button" class="filter-functie-clear">' + escHtml(clearLabel) + '</button>' +
+      '<ul class="filter-functie-list" role="listbox"></ul>';
+    wrap.appendChild(panel);
+
+    var input = panel.querySelector(".filter-functie-input");
+    var clearBtn = panel.querySelector(".filter-functie-clear");
+    var list = panel.querySelector(".filter-functie-list");
+
+    function getCurrentLabel() {
+      if (!current) return null;
+      var o = options.find(function (x) { return x.value === current; });
+      return o ? o.label : current;
     }
 
-    function closePanel() {
-      if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
-      panel = null;
-      document.removeEventListener("click", onDocClick, true);
-      document.removeEventListener("keydown", onKey);
-    }
-    function onDocClick(e) { if (panel && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closePanel(); }
-    function onKey(e) { if (e.key === "Escape") closePanel(); }
-
-    function renderOptionList(filter) {
-      var list = panel.querySelector(".bs-chip-list");
+    function renderList(filter) {
       var q = (filter || "").toLowerCase();
       var filtered = options.filter(function (o) { return o.label.toLowerCase().indexOf(q) !== -1; });
-      list.innerHTML = filtered.length === 0
-        ? '<li class="bs-chip-empty">Geen resultaten</li>'
-        : filtered.map(function (o) {
-          return '<li><button type="button" class="bs-chip-opt' + (current === o.value ? " is-selected" : "") + '" data-val="' + escHtml(o.value) + '">' + escHtml(o.label) + '</button></li>';
-        }).join("");
-      list.querySelectorAll(".bs-chip-opt").forEach(function (b) {
+      if (filtered.length === 0) {
+        list.innerHTML = '<li><div class="filter-functie-option" style="color:var(--text-muted);cursor:default">Geen resultaten</div></li>';
+        return;
+      }
+      list.innerHTML = filtered.map(function (o) {
+        return '<li><button type="button" class="filter-functie-option' + (current === o.value ? " is-selected" : "") + '" data-val="' + escHtml(o.value) + '">' + escHtml(o.label) + '</button></li>';
+      }).join("");
+      list.querySelectorAll(".filter-functie-option[data-val]").forEach(function (b) {
         b.addEventListener("click", function () {
           current = b.getAttribute("data-val");
           onChange(current);
-          renderBtnLabel();
+          renderButtonContent(btn, label, getCurrentLabel());
           closePanel();
         });
       });
     }
 
     function openPanel() {
-      if (panel) { closePanel(); return; }
-      panel = document.createElement("div");
-      panel.className = "bs-chip-panel bs-chip-panel--search";
-      panel.innerHTML =
-        '<div class="bs-chip-search-wrap">' +
-          '<svg class="bs-chip-search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-          '<input type="search" class="bs-chip-search" placeholder="Zoeken..." autocomplete="off" />' +
-        '</div>' +
-        '<ul class="bs-chip-list" role="listbox"></ul>';
-      document.body.appendChild(panel);
-      positionPanel(panel, btn);
-      var input = panel.querySelector(".bs-chip-search");
-      input.addEventListener("input", function () { renderOptionList(input.value); });
-      renderOptionList("");
+      panel.hidden = false;
+      btn.classList.add("is-panel-open");
+      btn.setAttribute("aria-expanded", "true");
+      input.value = "";
+      renderList("");
       setTimeout(function () { try { input.focus(); } catch (e) { /* */ } }, 0);
       setTimeout(function () {
         document.addEventListener("click", onDocClick, true);
         document.addEventListener("keydown", onKey);
       }, 50);
     }
+    function closePanel() {
+      panel.hidden = true;
+      btn.classList.remove("is-panel-open");
+      btn.setAttribute("aria-expanded", "false");
+      document.removeEventListener("click", onDocClick, true);
+      document.removeEventListener("keydown", onKey);
+    }
+    function onDocClick(e) {
+      if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closePanel();
+    }
+    function onKey(e) { if (e.key === "Escape") closePanel(); }
 
     btn.addEventListener("click", function (e) {
-      // Klik op clear-icoontje binnen chip → wist filter, opent geen panel.
-      if (current && e.target && e.target.closest && e.target.closest(".filter-chip-clear")) {
-        e.stopPropagation();
-        current = null;
-        onChange(null);
-        renderBtnLabel();
-        return;
-      }
-      openPanel();
+      e.stopPropagation();
+      if (panel.hidden) openPanel(); else closePanel();
+    });
+    input.addEventListener("input", function () { renderList(input.value); });
+    clearBtn.addEventListener("click", function () {
+      current = null;
+      onChange(null);
+      renderButtonContent(btn, label, null);
+      closePanel();
     });
 
-    renderBtnLabel();
+    renderButtonContent(btn, label, null);
     return {
       get value() { return current; },
-      set value(v) { current = v || null; renderBtnLabel(); },
-      clear: function () { current = null; renderBtnLabel(); },
+      set value(v) { current = v || null; renderButtonContent(btn, label, getCurrentLabel()); },
+      clear: function () { current = null; renderButtonContent(btn, label, null); },
     };
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Date-range chip
+  // 2. Date-range chip — zelfde button-stijl, panel met 2-maand kalender
   // ---------------------------------------------------------------------------
-  var DAY_NL = ["Z", "M", "D", "W", "D", "V", "Z"]; // Zo Ma Di Wo Do Vr Za
+  var DAY_NL = ["Z", "M", "D", "W", "D", "V", "Z"];
   var MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni",
     "juli", "augustus", "september", "oktober", "november", "december"];
-  function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-  function sameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
-  function dayKey(d) { return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
-  function fmtNl(d) { return pad2(d.getDate()) + "-" + pad2(d.getMonth() + 1) + "-" + d.getFullYear(); }
 
   function createDateRangeChip(opts) {
     var btn = opts.button;
     var label = opts.label || "Periode";
     var onChange = opts.onChange || function () {};
-    var range = { from: null, to: null }; // Date objects (start of day)
+    var range = { from: null, to: null };
     var hover = null;
-    var anchorMonth = new Date(); anchorMonth.setDate(1); // 1e van de maand
-    var panel = null;
+    var anchorMonth = new Date(); anchorMonth.setDate(1);
 
-    function renderBtnLabel() {
-      btn.classList.toggle("filter-chip--active", !!(range.from || range.to));
-      if (range.from && range.to) {
-        btn.innerHTML =
-          '<span class="filter-chip-text">' + fmtNl(range.from) + ' – ' + fmtNl(range.to) + '</span>' +
-          '<span class="filter-chip-clear" aria-label="Wissen">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
-      } else if (range.from) {
-        btn.innerHTML =
-          '<span class="filter-chip-text">Vanaf ' + fmtNl(range.from) + '</span>' +
-          '<span class="filter-chip-clear" aria-label="Wissen">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
-      } else {
-        btn.innerHTML =
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
-          '<span class="filter-chip-text">' + escHtml(label) + '</span>';
-      }
-    }
+    btn.classList.add("filter-chip", "filter-chip--radio", "filter-chip-functie-btn");
+    btn.setAttribute("aria-haspopup", "dialog");
+    btn.setAttribute("aria-expanded", "false");
+    var wrap = makeWrap(btn);
 
-    function closePanel() {
-      if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
-      panel = null;
-      document.removeEventListener("click", onDocClick, true);
-      document.removeEventListener("keydown", onKey);
+    var panel = document.createElement("div");
+    panel.className = "filter-functie-panel filter-functie-panel--cal";
+    panel.setAttribute("role", "dialog");
+    panel.hidden = true;
+    panel.innerHTML =
+      '<div class="bs-cal-head">' +
+        '<button type="button" class="bs-cal-nav bs-cal-prev" aria-label="Vorige maand">‹</button>' +
+        '<span class="bs-cal-head-spacer"></span>' +
+        '<button type="button" class="bs-cal-nav bs-cal-next" aria-label="Volgende maand">›</button>' +
+      '</div>' +
+      '<div class="bs-cal-months"></div>' +
+      '<div class="bs-cal-foot">' +
+        '<button type="button" class="filter-functie-clear bs-cal-clear">Periode wissen</button>' +
+      '</div>';
+    wrap.appendChild(panel);
+
+    function getValueText() {
+      if (range.from && range.to) return fmtNl(range.from) + " – " + fmtNl(range.to);
+      if (range.from) return "Vanaf " + fmtNl(range.from);
+      return null;
     }
-    function onDocClick(e) { if (panel && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closePanel(); }
-    function onKey(e) { if (e.key === "Escape") closePanel(); }
+    function syncBtn() { renderButtonContent(btn, label, getValueText()); }
 
     function renderMonth(year, month) {
       var first = new Date(year, month, 1);
-      var firstDow = first.getDay(); // 0 = zo
+      var firstDow = first.getDay();
       var daysInMonth = new Date(year, month + 1, 0).getDate();
       var daysInPrev = new Date(year, month, 0).getDate();
       var monthLabel = MONTHS_NL[month].charAt(0).toUpperCase() + MONTHS_NL[month].slice(1) + " " + year;
-
       var html = '<div class="bs-cal-month">' +
         '<div class="bs-cal-month-label">' + escHtml(monthLabel) + '</div>' +
         '<div class="bs-cal-grid">';
-      // Day-of-week header
       DAY_NL.forEach(function (d) { html += '<div class="bs-cal-dowh">' + d + '</div>'; });
-      // Leading days from previous month (greyed)
       for (var i = firstDow; i > 0; i -= 1) {
         var pd = daysInPrev - i + 1;
         html += '<button type="button" class="bs-cal-day bs-cal-day--out" data-y="' + (month === 0 ? year - 1 : year) + '" data-m="' + (month === 0 ? 11 : month - 1) + '" data-d="' + pd + '">' + pd + '</button>';
       }
-      // Days in this month
       for (var d2 = 1; d2 <= daysInMonth; d2 += 1) {
         var dt = new Date(year, month, d2);
         var classes = ["bs-cal-day"];
         if (range.from && sameDay(dt, range.from)) classes.push("bs-cal-day--start");
         if (range.to && sameDay(dt, range.to)) classes.push("bs-cal-day--end");
         if (range.from && range.to && dt > range.from && dt < range.to) classes.push("bs-cal-day--in");
-        // Hover-preview range
         if (range.from && !range.to && hover && dt > range.from && dt < hover) classes.push("bs-cal-day--in");
         if (range.from && !range.to && hover && sameDay(dt, hover)) classes.push("bs-cal-day--end");
         html += '<button type="button" class="' + classes.join(" ") + '" data-y="' + year + '" data-m="' + month + '" data-d="' + d2 + '">' + d2 + '</button>';
       }
-      // Trailing days from next month (greyed) — fill grid to multiple of 7
       var totalCells = firstDow + daysInMonth;
       var trail = (7 - (totalCells % 7)) % 7;
       for (var t = 1; t <= trail; t += 1) {
@@ -234,11 +239,9 @@
     }
 
     function renderPanel() {
-      if (!panel) return;
-      var ay = anchorMonth.getFullYear();
-      var am = anchorMonth.getMonth();
-      var ny = am === 11 ? ay + 1 : ay;
-      var nm = am === 11 ? 0 : am + 1;
+      if (panel.hidden) return;
+      var ay = anchorMonth.getFullYear(), am = anchorMonth.getMonth();
+      var ny = am === 11 ? ay + 1 : ay, nm = am === 11 ? 0 : am + 1;
       panel.querySelector(".bs-cal-months").innerHTML = renderMonth(ay, am) + renderMonth(ny, nm);
       panel.querySelectorAll(".bs-cal-day").forEach(function (db) {
         db.addEventListener("click", function () {
@@ -246,17 +249,10 @@
           if (!range.from || (range.from && range.to)) {
             range.from = d; range.to = null; hover = null;
           } else {
-            if (d < range.from) {
-              range.to = range.from;
-              range.from = d;
-            } else if (sameDay(d, range.from)) {
-              range.to = d;
-            } else {
-              range.to = d;
-            }
-            // Voltooid → notify + sluit panel
+            if (d < range.from) { range.to = range.from; range.from = d; }
+            else { range.to = d; }
             onChange({ from: fmtIso(range.from), to: fmtIso(range.to) });
-            renderBtnLabel();
+            syncBtn();
             closePanel();
             return;
           }
@@ -272,57 +268,56 @@
     }
 
     function openPanel() {
-      if (panel) { closePanel(); return; }
-      // Anchor op de maand van range.from of huidige maand
-      if (range.from) { anchorMonth = new Date(range.from.getFullYear(), range.from.getMonth(), 1); }
-      panel = document.createElement("div");
-      panel.className = "bs-chip-panel bs-chip-panel--cal";
-      panel.innerHTML =
-        '<div class="bs-cal-head">' +
-          '<button type="button" class="bs-cal-nav bs-cal-prev" aria-label="Vorige maand">‹</button>' +
-          '<button type="button" class="bs-cal-nav bs-cal-next" aria-label="Volgende maand">›</button>' +
-        '</div>' +
-        '<div class="bs-cal-months"></div>';
-      document.body.appendChild(panel);
-      positionPanel(panel, btn);
-      panel.querySelector(".bs-cal-prev").addEventListener("click", function () {
-        anchorMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() - 1, 1);
-        renderPanel();
-      });
-      panel.querySelector(".bs-cal-next").addEventListener("click", function () {
-        anchorMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + 1, 1);
-        renderPanel();
-      });
+      if (range.from) anchorMonth = new Date(range.from.getFullYear(), range.from.getMonth(), 1);
+      panel.hidden = false;
+      btn.classList.add("is-panel-open");
+      btn.setAttribute("aria-expanded", "true");
       renderPanel();
       setTimeout(function () {
         document.addEventListener("click", onDocClick, true);
         document.addEventListener("keydown", onKey);
       }, 50);
     }
+    function closePanel() {
+      panel.hidden = true;
+      btn.classList.remove("is-panel-open");
+      btn.setAttribute("aria-expanded", "false");
+      document.removeEventListener("click", onDocClick, true);
+      document.removeEventListener("keydown", onKey);
+    }
+    function onDocClick(e) { if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closePanel(); }
+    function onKey(e) { if (e.key === "Escape") closePanel(); }
 
     btn.addEventListener("click", function (e) {
-      if ((range.from || range.to) && e.target && e.target.closest && e.target.closest(".filter-chip-clear")) {
-        e.stopPropagation();
-        range.from = null; range.to = null;
-        onChange(null);
-        renderBtnLabel();
-        return;
-      }
-      openPanel();
+      e.stopPropagation();
+      if (panel.hidden) openPanel(); else closePanel();
+    });
+    panel.querySelector(".bs-cal-prev").addEventListener("click", function (e) {
+      e.stopPropagation();
+      anchorMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() - 1, 1);
+      renderPanel();
+    });
+    panel.querySelector(".bs-cal-next").addEventListener("click", function (e) {
+      e.stopPropagation();
+      anchorMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + 1, 1);
+      renderPanel();
+    });
+    panel.querySelector(".bs-cal-clear").addEventListener("click", function () {
+      range.from = null; range.to = null; hover = null;
+      onChange(null);
+      syncBtn();
+      closePanel();
     });
 
-    renderBtnLabel();
+    syncBtn();
     return {
       get value() { return range.from && range.to ? { from: fmtIso(range.from), to: fmtIso(range.to) } : null; },
       set value(v) {
         if (!v) { range.from = null; range.to = null; }
-        else {
-          range.from = parseIso(v.from);
-          range.to = parseIso(v.to);
-        }
-        renderBtnLabel();
+        else { range.from = parseIso(v.from); range.to = parseIso(v.to); }
+        syncBtn();
       },
-      clear: function () { range.from = null; range.to = null; renderBtnLabel(); },
+      clear: function () { range.from = null; range.to = null; syncBtn(); },
     };
   }
 

@@ -17659,101 +17659,17 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 }
 
 /* =============================================================================
-   besa-filter-chips.js — Status-zoekdropdown + Date-range-picker
+   besa-filter-chips.js — gebruikt EXACT de HR-stijl (.filter-chip-functie-btn
+   + .filter-functie-panel + .filter-functie-search/-input/-clear/-list/
+   -option). Hieronder enkel de aanvullende kalender-styling voor de
+   date-range-variant van het panel.
    ============================================================================= */
 
-/* De button-chips zelf — zelfde basis-stijl als andere filter-chips */
-.filter-chip-text { display: inline-block; line-height: 1.2; }
-.filter-chip.filter-chip--active {
-  background: var(--blue);
-  color: #fff;
-  border-color: var(--blue);
-}
-.filter-chip.filter-chip--active svg { color: #fff; }
-.filter-chip-clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-left: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-  cursor: pointer;
-}
-.filter-chip-clear:hover { background: rgba(255, 255, 255, 0.4); }
-
-/* Floating panel — basis */
-.bs-chip-panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+/* Variant van filter-functie-panel met date-range kalender */
+.filter-functie-panel--cal {
+  width: min(620px, 92vw) !important;
+  max-height: none;
   padding: 12px;
-  min-width: 240px;
-  max-width: 96vw;
-}
-
-/* Search-select panel */
-.bs-chip-panel--search { width: 280px; }
-.bs-chip-search-wrap {
-  position: relative;
-  margin-bottom: 8px;
-}
-.bs-chip-search-ico {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.bs-chip-search {
-  width: 100%;
-  padding: 8px 10px 8px 32px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  font-size: var(--font-base);
-  font-family: inherit;
-  background: var(--surface);
-  color: var(--text);
-}
-.bs-chip-search:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
-.bs-chip-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 280px;
-  overflow-y: auto;
-}
-.bs-chip-list li { margin: 0; padding: 0; }
-.bs-chip-opt {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: var(--r-md);
-  font-size: var(--font-base);
-  color: var(--text);
-  cursor: pointer;
-  font-family: inherit;
-}
-.bs-chip-opt:hover { background: var(--blue-soft); }
-.bs-chip-opt.is-selected { background: var(--blue); color: #fff; font-weight: 500; }
-.bs-chip-empty {
-  padding: 12px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: var(--font-base);
-}
-
-/* Date-range calendar panel */
-.bs-chip-panel--cal {
-  width: 620px;
-  padding: 16px;
 }
 .bs-cal-head {
   display: flex;
@@ -17761,70 +17677,69 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   align-items: center;
   margin-bottom: 8px;
 }
+.bs-cal-head-spacer { flex: 1; }
 .bs-cal-nav {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--surface);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-family: inherit;
+  line-height: 1;
 }
 .bs-cal-nav:hover { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
 .bs-cal-months {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 16px;
 }
-.bs-cal-month {
-  display: flex;
-  flex-direction: column;
-}
+.bs-cal-month { display: flex; flex-direction: column; }
 .bs-cal-month-label {
   text-align: center;
   font-size: var(--font-base);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .bs-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;
 }
 .bs-cal-dowh {
   text-align: center;
-  font-size: var(--font-table-head);
+  font-size: 11px;
   color: var(--text-muted);
-  padding: 6px 0;
-  font-weight: 500;
+  padding: 4px 0;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 .bs-cal-day {
   background: transparent;
   border: 0;
-  padding: 8px 0;
-  border-radius: var(--r-md);
-  font-size: var(--font-base);
+  padding: 6px 0;
+  border-radius: var(--r-sm);
+  font-size: 12px;
   color: var(--text);
   cursor: pointer;
   text-align: center;
   font-family: inherit;
-  position: relative;
+  font-weight: 500;
 }
-.bs-cal-day:hover { background: var(--blue-soft); }
-.bs-cal-day--out { color: var(--text-muted); }
+.bs-cal-day:hover { background: var(--blue-soft); color: var(--blue); }
+.bs-cal-day--out { color: var(--text-muted); opacity: 0.55; }
 .bs-cal-day--start, .bs-cal-day--end {
   background: var(--blue);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
 }
-.bs-cal-day--start:hover, .bs-cal-day--end:hover {
-  background: var(--blue);
-}
+.bs-cal-day--start:hover, .bs-cal-day--end:hover { background: var(--blue); color: #fff; }
 .bs-cal-day--in {
   background: var(--blue-soft);
   color: var(--blue);
@@ -17832,18 +17747,17 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 }
 .bs-cal-day--start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .bs-cal-day--end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-.bs-cal-day--start.bs-cal-day--end {
-  border-radius: var(--r-md);
+.bs-cal-day--start.bs-cal-day--end { border-radius: var(--r-sm); }
+.bs-cal-foot {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
+.bs-cal-clear { width: 100%; }
 
 @media (max-width: 700px) {
-  .bs-chip-panel--cal {
-    width: 320px;
-  }
-  .bs-cal-months {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
+  .filter-functie-panel--cal { width: min(320px, 92vw) !important; }
+  .bs-cal-months { grid-template-columns: 1fr; gap: 12px; }
 }
 
 /* =============================================================================
