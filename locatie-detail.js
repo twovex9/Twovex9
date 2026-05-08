@@ -1,4 +1,9 @@
-/* locatie-detail.js — detailpagina locatie (Supabase data-laag via window.locatiesDB) */
+/* locatie-detail.js — detailpagina locatie (Supabase data-laag via window.locatiesDB).
+ *
+ * De Medewerkers-tab wordt door de gedeelde module
+ * window.besaDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
+ * gefilterd op deze locatie).
+ */
 (function () {
   "use strict";
 
@@ -10,7 +15,6 @@
     return;
   }
 
-  /** Zelfde patroon als medewerker.js showToast: blur + gecentreerde kaart */
   function showToast(message) {
     var backdrop = document.getElementById("app-toast-backdrop");
     if (!backdrop) {
@@ -42,25 +46,6 @@
     }, 2200);
   }
 
-  function countMedewerkersOpLocatie(naam) {
-    if (!naam) return 0;
-    try {
-      var raw = localStorage.getItem("employees");
-      if (!raw) return 0;
-      var emps = JSON.parse(raw);
-      if (!Array.isArray(emps)) return 0;
-      var n = naam.trim().toLowerCase();
-      return emps.filter(function (e) {
-        var tags = (e.locatiesTags || e.locatiesSelected || "").toString().toLowerCase();
-        if (tags && tags.indexOf(n) !== -1) return true;
-        if (Array.isArray(e.locatiesSelected) && e.locatiesSelected.some(function (x) { return String(x).toLowerCase() === n; })) return true;
-        return false;
-      }).length;
-    } catch (e) {
-      return 0;
-    }
-  }
-
   function findLocatieCached() {
     var list = window.locatiesDB.getAllSync() || [];
     for (var i = 0; i < list.length; i++) {
@@ -78,6 +63,28 @@
   var straat = document.getElementById("loc-detail-straat");
   var plaats = document.getElementById("loc-detail-plaats");
 
+  var medewerkersTab = null;
+
+  function setCount(n) {
+    if (countEl) countEl.textContent = String(n);
+  }
+
+  function ensureMedewerkersTab(loc) {
+    if (medewerkersTab) return;
+    if (!window.besaDetailMedewerkersTab || typeof window.besaDetailMedewerkersTab.init !== "function") return;
+    var container = document.getElementById("loc-medewerkers-list");
+    if (!container) return;
+    medewerkersTab = window.besaDetailMedewerkersTab.init({
+      container: container,
+      entityType: "locatie",
+      entityId: locId,
+      getEntity: function () { return findLocatieCached() || loc; },
+      onCount: setCount,
+      exportFilename: "locatie-" + (loc.naam || "medewerkers").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      exportTitle: (loc.naam || "Locatie") + " — Medewerkers",
+    });
+  }
+
   function hydrate(loc) {
     if (!loc) return;
     if (naamEl) naamEl.textContent = loc.naam || "—";
@@ -88,7 +95,8 @@
     if (straat) straat.value = loc.straat || "";
     if (plaats) plaats.value = loc.plaats || "";
     document.title = (loc.naam || "Locatie") + " — HR";
-    if (countEl) countEl.textContent = String(countMedewerkersOpLocatie(loc.naam));
+    ensureMedewerkersTab(loc);
+    if (medewerkersTab && typeof medewerkersTab.refresh === "function") medewerkersTab.refresh();
   }
 
   var qrBtn = document.getElementById("loc-detail-qr-btn");
@@ -111,6 +119,9 @@
       Object.keys(panels).forEach(function (k) {
         if (panels[k]) panels[k].style.display = k === key ? "" : "none";
       });
+      if (key === "medewerkers" && medewerkersTab && typeof medewerkersTab.refresh === "function") {
+        medewerkersTab.refresh();
+      }
     });
   });
 

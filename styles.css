@@ -7297,6 +7297,84 @@ select.modal-select.modal-select--chevron-right {
   }
 }
 
+/* ── Detail-pagina Medewerkers-tab (competentie/opleiding/locatie) ── */
+
+.det-mt-section {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.det-mt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.det-mt-header h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.det-mt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.det-mt-cols {
+  position: relative;
+}
+
+.det-mt-toolbar {
+  margin-bottom: 14px;
+}
+
+.det-mt-chips {
+  flex: 1 1 auto;
+}
+
+.det-mt-table th {
+  cursor: default;
+}
+
+.det-mt-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.det-mt-row:hover {
+  background: var(--fill-hover, #f5f7fa);
+}
+
+.det-mt-row:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.det-mt-td {
+  padding: 12px 14px;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+
+.det-mt-td-email {
+  color: var(--text);
+}
+
+.det-mt-empty-row td.det-mt-empty {
+  padding: 24px 14px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: var(--font-table-cell);
+}
+
 /* ── Documenten tab ──────────────────── */
 
 .emp-doc-pills {

@@ -4,6 +4,10 @@
  * Reads en writes lopen via window.competentiesDB. Bij eerste laden
  * proberen we de cache te gebruiken; als die nog leeg is wachten we tot de
  * bootstrap (Supabase fetch) klaar is en proberen we het opnieuw.
+ *
+ * De Medewerkers-tab wordt door de gedeelde module
+ * window.besaDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
+ * gefilterd op deze competentie).
  */
 (function () {
   "use strict";
@@ -31,21 +35,37 @@
     return getCompetenciesCached().find((c) => c.id === compId);
   }
 
-  function countMedewerkers() {
-    try {
-      const emps = JSON.parse(localStorage.getItem("employees")) || [];
-      return emps.filter((e) =>
-        Array.isArray(e.competenties) && e.competenties.includes(compId)
-      ).length;
-    } catch { return 0; }
+  let medewerkersTab = null;
+  let cachedCount = 0;
+
+  function setCount(n) {
+    cachedCount = n;
+    const el = document.getElementById("comp-medewerkers-count");
+    if (el) el.textContent = String(n);
   }
 
   function renderHero(comp) {
     document.getElementById("comp-hero-name").textContent = comp.naam;
-    document.getElementById("comp-medewerkers-count").textContent = countMedewerkers();
     const naamInput = document.getElementById("comp-detail-naam");
     if (naamInput) naamInput.value = comp.naam;
     document.title = comp.naam + " — Competentie";
+    if (medewerkersTab && typeof medewerkersTab.refresh === "function") medewerkersTab.refresh();
+  }
+
+  function ensureMedewerkersTab(comp) {
+    if (medewerkersTab) return;
+    if (!window.besaDetailMedewerkersTab || typeof window.besaDetailMedewerkersTab.init !== "function") return;
+    const container = document.getElementById("comp-medewerkers-list");
+    if (!container) return;
+    medewerkersTab = window.besaDetailMedewerkersTab.init({
+      container: container,
+      entityType: "competentie",
+      entityId: compId,
+      getEntity: function () { return findComp() || comp; },
+      onCount: setCount,
+      exportFilename: "competentie-" + (comp.naam || "medewerkers").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      exportTitle: (comp.naam || "Competentie") + " — Medewerkers",
+    });
   }
 
   /* ── Tabs ── */
@@ -62,6 +82,9 @@
       Object.entries(panels).forEach(([k, p]) => {
         if (p) p.style.display = k === key ? "" : "none";
       });
+      if (key === "medewerkers" && medewerkersTab && typeof medewerkersTab.refresh === "function") {
+        medewerkersTab.refresh();
+      }
     });
   });
 
@@ -128,6 +151,7 @@
     const comp = findComp();
     if (comp) {
       renderHero(comp);
+      ensureMedewerkersTab(comp);
       return true;
     }
     return false;
@@ -142,6 +166,7 @@
         resolved = true;
         window.removeEventListener("besa:competenties-updated", onUpdate);
         renderHero(comp);
+        ensureMedewerkersTab(comp);
       }
     }
     window.addEventListener("besa:competenties-updated", onUpdate);
