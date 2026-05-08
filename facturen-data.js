@@ -74,6 +74,8 @@
       bedr: formatBedragNL(row.bedrag),
       bedragNum: Number(row.bedrag) || 0,
       archived: !!row.gearchiveerd,
+      aanmaakdatum: row.aanmaakdatum || null,
+      laatstGewijzigd: row.laatst_gewijzigd || null,
       _data: row.data || {},
     };
   }

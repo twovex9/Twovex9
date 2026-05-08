@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bureau's — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facturen te beoordelen — HR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9" />
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="besa-export.js?v=ex1" defer></script>
+  <script src="besa-filter-chips.js?v=fc1" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
   <div class="app-shell">
@@ -44,7 +46,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="clienten.html" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
                 <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
                 <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
@@ -60,12 +62,13 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
                 <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
                 <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
-            </div>            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
@@ -101,115 +104,143 @@
       </div>
     </header>
 
-    <aside class="sidebar">
-      <nav class="side-nav">
-        <a href="index.html" class="side-link">Medewerkers</a>
-        <a href="competenties.html" class="side-link">Competenties</a>
-        <a href="opleidingen.html" class="side-link">Opleidingen</a>
-        <a href="locaties.html" class="side-link">Locaties</a>
-        <div class="side-group" data-side-group="salarishuis">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
-            <span class="side-group__label">Salarishuis</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
-            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
-            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested" target="_blank" rel="noopener noreferrer">Wijzigingsgeschiedenis</a>
-          </div>
-        </div>
-        <a href="bureaus.html" class="side-link is-active">Bureau's</a>
-        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
-        <div class="side-group" data-side-group="compensatie">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
-            <span class="side-group__label">Compensatie</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-compensatie-sub" hidden>
-            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
-            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
-            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
-            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
-            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
-          </div>
-        </div>
-        <a href="nieuws.html" class="side-link">Nieuws</a>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
+      <nav class="side-nav" aria-label="Facturen module">
+        <a href="facturen-te-beoordelen.html" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Te beoordelen
+        </a>
+        <a href="facturen.html" class="side-link">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Alle facturen
+        </a>
       </nav>
-      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">FA</span>
+      </div>
     </aside>
 
-    <main class="content">
+    <main class="content content--fact-tb">
       <div class="content-header">
-        <h1>Bureau's</h1>
-        <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="columns-panel" role="menu" aria-labelledby="columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" role="none">
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Naam</button></li>
-              </ul>
-            </div>
-          </div>
-          <button class="btn-primary" type="button" id="bur-add-btn">+ Bureau toevoegen</button>
+        <div>
+          <h1>Facturen te beoordelen</h1>
+          <p class="content-subtitle">Beheer uw facturering, volg de status en behandel afwijzingen.</p>
         </div>
       </div>
 
-      <div class="toolbar">
-        <input class="search" type="search" id="bur-search" placeholder="Zoeken..." autocomplete="off" />
-        <label class="switch">
-          <input type="checkbox" id="bur-archived-toggle" />
+      <section class="fact-tb-stats" aria-label="Facturen statistieken">
+        <div class="fact-tb-stat-card fact-tb-stat-card--blue">
+          <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-todo">€ 0,00</div>
+          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-todo">0</span> Totaal te beoordelen</div>
+        </div>
+        <div class="fact-tb-stat-card fact-tb-stat-card--green">
+          <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-ok">€ 0,00</div>
+          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-ok">0</span> Totaal goedgekeurd</div>
+        </div>
+      </section>
+
+      <div class="fact-tb-controls">
+        <div class="columns-dropdown">
+          <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="fact-tb-columns-menu-btn" aria-label="Kolommen">
+            <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Kolommen
+          </button>
+          <div class="columns-panel" id="fact-tb-columns-panel" role="menu" aria-labelledby="fact-tb-columns-menu-btn" hidden>
+            <div class="columns-panel-title">Kolommen weergeven</div>
+            <ul class="columns-list" id="fact-tb-columns-list" role="none"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar fact-tb-toolbar">
+        <input class="search" type="search" id="fact-tb-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoeken in facturen" />
+        <label class="switch switch--yellow">
+          <input type="checkbox" id="fact-tb-archived" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
+        <button type="button" class="filter-chip" id="fact-tb-status-chip">+ Status</button>
+        <button type="button" class="filter-chip" id="fact-tb-period-chip">+ Periode</button>
       </div>
 
-      <section class="table-card table-card--bureaus">
+      <section class="table-card">
         <div class="table-wrapper">
-          <table class="employees-table" id="bur-table">
+          <table class="employees-table fact-tb-table" id="fact-tb-table">
             <thead>
               <tr>
-                <th class="th-check"><input type="checkbox" id="bur-check-all" /></th>
-                <th data-col="naam" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Naam</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Naam"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                <th class="th-check" data-col="select"><input type="checkbox" id="fact-tb-check-all" class="table-checkbox" aria-label="Selecteer alles" /></th>
+                <th data-col="maand" class="th-sort">
+                  <div class="th-sort-inner"><span class="th-label">Maand</span>
+                    <button type="button" class="th-sort-trigger" aria-haspopup="true" aria-label="Sorteren op maand"><span class="th-sort-arrows" aria-hidden="true"></span></button>
                   </div>
                   <div class="th-sort-menu" role="menu" hidden>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th class="th-acties"></th>
+                <th data-col="medewerker">Medewerker</th>
+                <th data-col="factuurnr" class="th-sort">
+                  <div class="th-sort-inner"><span class="th-label">Factuurnummer</span>
+                    <button type="button" class="th-sort-trigger" aria-haspopup="true" aria-label="Sorteren op factuurnummer"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                  </div>
+                </th>
+                <th data-col="status" class="th-sort">
+                  <div class="th-sort-inner"><span class="th-label">Status</span>
+                    <button type="button" class="th-sort-trigger" aria-haspopup="true" aria-label="Sorteren op status"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                  </div>
+                </th>
+                <th data-col="datum" class="th-sort">
+                  <div class="th-sort-inner"><span class="th-label">Aanmaakdatum</span>
+                    <button type="button" class="th-sort-trigger" aria-haspopup="true" aria-label="Sorteren op datum"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                  </div>
+                </th>
+                <th data-col="bedrag" class="th-sort th-num">
+                  <div class="th-sort-inner"><span class="th-label">Bedrag</span>
+                    <button type="button" class="th-sort-trigger" aria-haspopup="true" aria-label="Sorteren op bedrag"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                  </div>
+                </th>
               </tr>
             </thead>
-            <tbody id="bur-tbody"></tbody>
+            <tbody id="fact-tb-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="bur-pager-range" class="pager-range">0 of 0 total.</span>
+            <span id="fact-tb-range" class="pager-range">0 van 0</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="bur-rows-per-page">
+            <label class="footer-rows-wrap" for="fact-tb-page-size">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="bur-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="10">10</option>
+              <select id="fact-tb-page-size" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="15">15</option>
                 <option value="30">30</option>
-                <option value="40">40</option>
                 <option value="50" selected>50</option>
+                <option value="100">100</option>
               </select>
             </label>
-            <span id="bur-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="fact-tb-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="bur-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="bur-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="bur-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="bur-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+              <button type="button" class="pager-btn" id="fact-tb-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+              <button type="button" class="pager-btn" id="fact-tb-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="fact-tb-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="fact-tb-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
             </span>
           </div>
         </div>
@@ -217,72 +248,7 @@
     </main>
   </div>
 
-  <div class="emp-verzuim-modal-overlay" id="bur-add-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:480px">
-      <div class="emp-verzuim-modal-head">
-        <h3>Bureau toevoegen</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="bur-add-close-btn">&times;</button>
-      </div>
-      <form id="bur-add-form" novalidate>
-        <div class="emp-verzuim-modal-body">
-          <label class="emp-verzuim-modal-field">
-            <span>Naam</span>
-            <input type="text" id="bur-add-naam" class="comp-modal-input" required>
-          </label>
-        </div>
-        <div class="emp-verzuim-modal-footer">
-          <button type="button" class="emp-verzuim-modal-cancel" id="bur-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="emp-verzuim-modal-submit">Toevoegen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="bur-delete-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bur-delete-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="bur-delete-title" class="modal-title">Bureau archiveren</h2>
-        <button type="button" class="modal-close" id="bur-delete-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Het bureau wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
-        <p class="employee-delete-preview" id="bur-delete-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="bur-delete-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="bur-delete-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="bur-delete-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="bur-delete-confirm-btn" disabled>Archiveren</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="bur-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bur-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="bur-purge-title" class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="bur-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit bureau wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt en is niet meer terug te zetten.</p>
-        <p class="employee-delete-preview" id="bur-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="bur-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="bur-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="bur-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="bur-purge-confirm-btn" disabled>Definitief verwijderen</button>
-      </div>
-    </div>
-  </div>
+  <div class="app-toast" id="fact-tb-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
@@ -291,7 +257,8 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="bureaus-data.js"></script>
-  <script src="bureaus.js"></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="facturen-data.js" defer></script>
+  <script src="facturen-te-beoordelen.js?v=ftb1" defer></script>
 </body>
 </html>

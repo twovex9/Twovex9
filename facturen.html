@@ -60,7 +60,13 @@
                 <a href="kilometers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
               </div>
             </div>
-            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
+                <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
+              </div>
+            </div>            <a href="werkruimte.html#taken" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
@@ -96,42 +102,20 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
-      <nav class="side-nav" aria-label="Cliënten module">
-        <a href="clienten.html" class="side-link">Cliënten</a>
-        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
-        <div class="side-group is-open" data-side-group="cl-beschikkingen">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="true" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, submenu">
-            <span class="side-group__label">Beschikkingen</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen">
-            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
-            <a href="beschikkingen.html" class="side-link side-link--nested">Overzicht</a>
-            <a href="facturen.html" class="side-link side-link--nested is-active" aria-current="page">Facturen</a>
-          </div>
-        </div>
-        <a href="organisatie.html" class="side-link">Organisatie</a>
-        <a href="gemeenten.html" class="side-link">Gemeenten</a>
-        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
-        <a href="uren-budgettering.html" class="side-link">Uren budgettering</a>
-        <a href="facturen-importeren.html" class="side-link">Facturen importeren</a>
-        <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="false" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, open submenu">
-            <span class="side-group__label">Incidenten</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
-            <a href="incidenten.html" class="side-link side-link--nested">Incidenten overzicht</a>
-            <a href="incidenten-dashboard.html" class="side-link side-link--nested">Dashboard</a>
-            <a href="incidenten-categorieen.html" class="side-link side-link--nested">Categorieën</a>
-            <a href="verbeteringsmaatregelen.html" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
-          </div>
-        </div>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
+      <nav class="side-nav" aria-label="Facturen module">
+        <a href="facturen-te-beoordelen.html" class="side-link">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Te beoordelen
+        </a>
+        <a href="facturen.html" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Alle facturen
+        </a>
       </nav>
       <div class="sidebar-footer">
         <a class="side-nav-exit" href="index.html">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+        <span class="sidebar-hr-mark" aria-hidden="true">FA</span>
       </div>
     </aside>
 

@@ -17658,6 +17658,270 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   color: var(--red);
 }
 
+/* =============================================================================
+   besa-filter-chips.js — Status-zoekdropdown + Date-range-picker
+   ============================================================================= */
+
+/* De button-chips zelf — zelfde basis-stijl als andere filter-chips */
+.filter-chip-text { display: inline-block; line-height: 1.2; }
+.filter-chip.filter-chip--active {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.filter-chip.filter-chip--active svg { color: #fff; }
+.filter-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+}
+.filter-chip-clear:hover { background: rgba(255, 255, 255, 0.4); }
+
+/* Floating panel — basis */
+.bs-chip-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  min-width: 240px;
+  max-width: 96vw;
+}
+
+/* Search-select panel */
+.bs-chip-panel--search { width: 280px; }
+.bs-chip-search-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+.bs-chip-search-ico {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.bs-chip-search {
+  width: 100%;
+  padding: 8px 10px 8px 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-size: var(--font-base);
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+}
+.bs-chip-search:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.bs-chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.bs-chip-list li { margin: 0; padding: 0; }
+.bs-chip-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  font-size: var(--font-base);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.bs-chip-opt:hover { background: var(--blue-soft); }
+.bs-chip-opt.is-selected { background: var(--blue); color: #fff; font-weight: 500; }
+.bs-chip-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+/* Date-range calendar panel */
+.bs-chip-panel--cal {
+  width: 620px;
+  padding: 16px;
+}
+.bs-cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.bs-cal-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bs-cal-nav:hover { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+.bs-cal-months {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.bs-cal-month {
+  display: flex;
+  flex-direction: column;
+}
+.bs-cal-month-label {
+  text-align: center;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.bs-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.bs-cal-dowh {
+  text-align: center;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  padding: 6px 0;
+  font-weight: 500;
+}
+.bs-cal-day {
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  border-radius: var(--r-md);
+  font-size: var(--font-base);
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  position: relative;
+}
+.bs-cal-day:hover { background: var(--blue-soft); }
+.bs-cal-day--out { color: var(--text-muted); }
+.bs-cal-day--start, .bs-cal-day--end {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+.bs-cal-day--start:hover, .bs-cal-day--end:hover {
+  background: var(--blue);
+}
+.bs-cal-day--in {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-radius: 0;
+}
+.bs-cal-day--start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.bs-cal-day--end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.bs-cal-day--start.bs-cal-day--end {
+  border-radius: var(--r-md);
+}
+
+@media (max-width: 700px) {
+  .bs-chip-panel--cal {
+    width: 320px;
+  }
+  .bs-cal-months {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* =============================================================================
+   Facturen — Te beoordelen pagina (facturen-te-beoordelen.html)
+   ============================================================================= */
+
+.content--fact-tb { padding-top: 24px; }
+
+/* 2 stat-cards bovenaan */
+.fact-tb-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.fact-tb-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fact-tb-stat-amount {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+.fact-tb-stat-card--green .fact-tb-stat-amount { color: var(--green); }
+.fact-tb-stat-label {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.fact-tb-controls {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+.fact-tb-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* Status pills */
+.ftb-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-table-cell);
+  font-weight: 500;
+}
+.ftb-status-pill--ingediend { background: var(--blue); color: #fff; }
+.ftb-status-pill--beoordeling { background: var(--yellow-soft); color: var(--yellow); }
+.ftb-status-pill--goedgekeurd { background: var(--green-soft); color: var(--green); }
+.ftb-status-pill--afgewezen { background: var(--red-soft); color: var(--red); }
+.ftb-status-pill--betaald { background: var(--green); color: #fff; }
+.ftb-status-pill--verlopen { background: var(--red-soft); color: var(--red); }
+.ftb-status-pill--concept { background: var(--line); color: var(--text-secondary); }
+
+/* Sidebar link icoontjes */
+.side-link-ico {
+  margin-right: 8px;
+  vertical-align: -2px;
+  display: inline-block;
+}
+
+@media (max-width: 700px) {
+  .fact-tb-stats { grid-template-columns: 1fr; }
+}
+
 /* Status pills overzicht */
 .km-status-pill {
   display: inline-flex;
