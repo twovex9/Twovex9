@@ -1,10 +1,10 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Locaties — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labels — Urenregistratie</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9" />
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -23,11 +23,10 @@
               <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
                 <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
-                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="werkuren.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="werkuren.html" class="top-link top-link--dropdown is-active">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
                 <a href="werkuren.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
                 <a href="werkuren-labels.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
@@ -44,12 +43,11 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="clienten.html" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
                 <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
                 <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
                 <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
-                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
                 <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
               </div>
             </div>
@@ -65,7 +63,8 @@
                 <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
                 <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
-            </div>            <a href="werkruimte.html#taken" class="top-link">Taken</a>
+            </div>
+            <a href="werkruimte.html#taken" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="werkruimte.html#verlof" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
@@ -101,84 +100,64 @@
       </div>
     </header>
 
-    <aside class="sidebar">
-      <nav class="side-nav">
-        <a href="index.html" class="side-link">Medewerkers</a>
-        <a href="competenties.html" class="side-link">Competenties</a>
-        <a href="opleidingen.html" class="side-link">Opleidingen</a>
-        <a href="locaties.html" class="side-link is-active">Locaties</a>
-        <div class="side-group" data-side-group="salarishuis">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
-            <span class="side-group__label">Salarishuis</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
-            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
-            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested" target="_blank" rel="noopener noreferrer">Wijzigingsgeschiedenis</a>
-          </div>
-        </div>
-        <a href="bureaus.html" class="side-link">Bureau's</a>
-        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
-        <div class="side-group" data-side-group="compensatie">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
-            <span class="side-group__label">Compensatie</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-compensatie-sub" hidden>
-            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
-            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
-            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
-            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
-            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
-          </div>
-        </div>
-        <a href="nieuws.html" class="side-link">Nieuws</a>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Urenregistratie">
+      <nav class="side-nav" aria-label="Urenregistratie module">
+        <a href="werkuren.html" class="side-link">Geregistreerde uren</a>
+        <a href="werkuren-labels.html" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Labels
+        </a>
       </nav>
-      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+      <div class="sidebar-footer">
+        <span class="sidebar-hr-mark" aria-hidden="true">Urenregistratie</span>
+      </div>
     </aside>
 
     <main class="content">
       <div class="content-header">
-        <h1>Locaties</h1>
+        <h1>Labels</h1>
         <div class="header-actions">
           <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <button class="btn-outline columns-btn" type="button" id="wl-columns-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
               Kolommen
             </button>
-            <div class="columns-panel" id="columns-panel" role="menu" aria-labelledby="columns-menu-btn" hidden>
+            <div class="columns-panel" id="wl-columns-panel" role="menu" aria-labelledby="wl-columns-menu-btn" hidden>
               <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" role="none">
+              <ul class="columns-list" id="wl-columns-list" role="none">
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Naam</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="adres" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Adres</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="aanmaakdatum" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Aanmaakdatum</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="laatst-gewijzigd" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Laatst gewijzigd</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="beschrijving" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Beschrijving</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="status" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Status</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="aangemaakt" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Aangemaakt op</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="gewijzigd" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Laatst gewijzigd</button></li>
               </ul>
             </div>
           </div>
-          <button class="btn-primary" type="button" id="loc-add-btn">+ Locatie toevoegen</button>
+          <button class="btn-primary" type="button" id="wl-add-btn">+ Label toevoegen</button>
         </div>
       </div>
 
-      <div class="toolbar">
-        <input class="search" type="search" id="loc-search" placeholder="Zoeken..." autocomplete="off" />
-        <label class="switch">
-          <input type="checkbox" id="loc-archived-toggle" />
+      <div class="toolbar toolbar--clienten">
+        <input class="search" type="search" id="wl-search" placeholder="Zoeken..." autocomplete="off" aria-label="Zoek labels" />
+        <label class="switch switch--yellow">
+          <input type="checkbox" id="wl-archived-toggle" name="wl-arch" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
       </div>
 
-      <section class="table-card table-card--locaties">
+      <section class="table-card table-card--clienten">
         <div class="table-wrapper">
-          <table class="employees-table" id="loc-table">
+          <table class="employees-table clienten-table" id="wl-table" data-page-size="15">
             <thead>
               <tr>
-                <th class="th-check"><input type="checkbox" id="loc-check-all" /></th>
+                <th class="th-check" data-col="select">
+                  <input type="checkbox" class="table-checkbox" id="wl-check-all" aria-label="Selecteer alles" />
+                </th>
                 <th data-col="naam" class="th-sort">
                   <div class="th-sort-inner">
                     <span class="th-label">Naam</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Naam"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op naam"><span class="th-sort-arrows" aria-hidden="true"></span></button>
                   </div>
                   <div class="th-sort-menu" role="menu" hidden>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
@@ -186,10 +165,11 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th data-col="adres" class="th-sort">
+                <th data-col="beschrijving">Beschrijving</th>
+                <th data-col="status" class="th-sort">
                   <div class="th-sort-inner">
-                    <span class="th-label">Adres</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Adres"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                    <span class="th-label">Status</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op status"><span class="th-sort-arrows" aria-hidden="true"></span></button>
                   </div>
                   <div class="th-sort-menu" role="menu" hidden>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
@@ -197,10 +177,10 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th data-col="aanmaakdatum" class="th-sort">
+                <th data-col="aangemaakt" class="th-sort">
                   <div class="th-sort-inner">
-                    <span class="th-label">Aanmaakdatum</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Aanmaakdatum"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                    <span class="th-label">Aangemaakt op</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op aangemaakt"><span class="th-sort-arrows" aria-hidden="true"></span></button>
                   </div>
                   <div class="th-sort-menu" role="menu" hidden>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
@@ -208,10 +188,10 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th data-col="laatst-gewijzigd" class="th-sort">
+                <th data-col="gewijzigd" class="th-sort">
                   <div class="th-sort-inner">
                     <span class="th-label">Laatst gewijzigd</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Laatst gewijzigd"><span class="th-sort-arrows" aria-hidden="true"></span></button>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op gewijzigd"><span class="th-sort-arrows" aria-hidden="true"></span></button>
                   </div>
                   <div class="th-sort-menu" role="menu" hidden>
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
@@ -219,33 +199,32 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
-                <th></th>
+                <th class="cl-actions-th" data-col="acties" aria-label="Acties"></th>
               </tr>
             </thead>
-            <tbody id="loc-tbody"></tbody>
+            <tbody id="wl-tbody"></tbody>
           </table>
         </div>
-        <div class="table-footer table-footer--pagebar">
+        <div class="table-footer table-footer--pagebar cl-table-footer">
           <div class="footer-left">
-            <span id="loc-pager-range" class="pager-range">0 of 0 total.</span>
+            <span id="wl-pager-range" class="pager-range">0 van 0</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="loc-rows-per-page">
+            <label class="footer-rows-wrap" for="wl-rows-per-page">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="loc-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+              <select id="wl-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="10">10</option>
                 <option value="15" selected>15</option>
                 <option value="30">30</option>
-                <option value="40">40</option>
                 <option value="50">50</option>
               </select>
             </label>
-            <span id="loc-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="wl-pager-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="loc-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="loc-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="loc-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="loc-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
+              <button type="button" class="pager-btn" id="wl-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
+              <button type="button" class="pager-btn" id="wl-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
+              <button type="button" class="pager-btn" id="wl-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
+              <button type="button" class="pager-btn" id="wl-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
             </span>
           </div>
         </div>
@@ -253,89 +232,80 @@
     </main>
   </div>
 
-  <div class="emp-verzuim-modal-overlay" id="loc-add-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:480px">
-      <div class="emp-verzuim-modal-head">
-        <h3>Locatie toevoegen</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="loc-add-close-btn">&times;</button>
+  <div class="app-toast" id="wl-toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Add/Edit modal -->
+  <div class="modal-overlay" id="wl-add-modal" hidden aria-hidden="true">
+    <div class="modal-dialog zs-add-dialog" role="dialog" aria-modal="true" aria-labelledby="wl-add-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="wl-add-title">Label toevoegen</h2>
+        <button type="button" class="modal-close" id="wl-add-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <form id="loc-add-form" novalidate>
-        <div class="emp-verzuim-modal-body">
-          <label class="emp-verzuim-modal-field">
-            <span>Naam</span>
-            <input type="text" id="loc-add-naam" class="comp-modal-input" required>
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Postcode</span>
-            <input type="text" id="loc-add-postcode" class="comp-modal-input" autocomplete="postal-code">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Huisnummer</span>
-            <input type="text" id="loc-add-huisnummer" class="comp-modal-input">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Toevoeging</span>
-            <input type="text" id="loc-add-toevoeging" class="comp-modal-input">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Straat</span>
-            <input type="text" id="loc-add-straat" class="comp-modal-input" autocomplete="street-address">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Plaats</span>
-            <input type="text" id="loc-add-plaats" class="comp-modal-input" autocomplete="address-level2">
-          </label>
+      <form class="modal-form" id="wl-add-form" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="wl-edit-id" value="" />
+          <div class="modal-field">
+            <label class="modal-label" for="wl-add-naam">Naam</label>
+            <input class="modal-input" type="text" id="wl-add-naam" name="naam" placeholder="Bijv. Directe zorg" required autocomplete="off" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="wl-add-beschrijving">Beschrijving (Optioneel)</label>
+            <textarea class="modal-input" id="wl-add-beschrijving" name="beschrijving" rows="3" placeholder="Korte beschrijving van het label"></textarea>
+          </div>
+          <p class="im-error" id="wl-add-error" role="alert" hidden></p>
         </div>
-        <div class="emp-verzuim-modal-footer">
-          <button type="button" class="emp-verzuim-modal-cancel" id="loc-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="emp-verzuim-modal-submit">Toevoegen</button>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="wl-add-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="wl-add-submit">Aanmaken</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="loc-delete-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="loc-delete-title" tabindex="-1">
+  <!-- Archive confirm modal -->
+  <div class="modal-overlay modal-overlay--confirm" id="wl-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="wl-ar-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="loc-delete-title" class="modal-title">Locatie archiveren</h2>
-        <button type="button" class="modal-close" id="loc-delete-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="wl-ar-title" class="modal-title">Label archiveren</h2>
+        <button type="button" class="modal-close" id="wl-ar-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">De locatie wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
-        <p class="employee-delete-preview" id="loc-delete-preview" aria-live="polite"></p>
+        <p class="employee-delete-msg">Het label wordt gearchiveerd. Zet <strong>Gearchiveerd</strong> aan in de toolbar om gearchiveerde labels te zien.</p>
+        <p class="employee-delete-preview" id="wl-ar-preview" aria-live="polite"></p>
         <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="loc-delete-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <label class="employee-delete-slider-label" for="wl-ar-slider">Schuif helemaal naar rechts om te bevestigen</label>
           <div class="employee-delete-slider-wrap">
-            <input type="range" id="loc-delete-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+            <input type="range" id="wl-ar-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="loc-delete-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="loc-delete-confirm-btn" disabled>Archiveren</button>
+        <button type="button" class="btn-outline" id="wl-ar-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="wl-ar-confirm" disabled>Archiveren</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="loc-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="loc-purge-title" tabindex="-1">
+  <!-- Permanently delete confirm modal -->
+  <div class="modal-overlay modal-overlay--confirm" id="wl-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="wl-purge-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="loc-purge-title" class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="loc-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="wl-purge-title" class="modal-title">Label definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="wl-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">Deze locatie wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt en is niet meer terug te zetten.</p>
-        <p class="employee-delete-preview" id="loc-purge-preview" aria-live="polite"></p>
+        <p class="employee-delete-msg">Dit label wordt <strong>permanent</strong> uit de lijst gehaald.</p>
+        <p class="employee-delete-preview" id="wl-purge-preview" aria-live="polite"></p>
         <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="loc-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <label class="employee-delete-slider-label" for="wl-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
           <div class="employee-delete-slider-wrap">
-            <input type="range" id="loc-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
+            <input type="range" id="wl-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="loc-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="loc-purge-confirm-btn" disabled>Definitief verwijderen</button>
+        <button type="button" class="btn-outline" id="wl-purge-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="wl-purge-confirm" disabled>Verwijderen</button>
       </div>
     </div>
   </div>
@@ -347,7 +317,7 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="locaties-data.js"></script>
-  <script src="locaties.js"></script>
+  <script src="werkuren-data.js?v=wu2"></script>
+  <script src="werkuren-labels.js?v=wl1"></script>
 </body>
 </html>

@@ -193,7 +193,17 @@
     var TABLE = "werkuren_labels";
     var CACHE_KEY = "werkuren_labels_v1";
     function generateId() { return "lbl_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
-    function rowToObj(row) { return row ? { id: row.id, naam: row.naam || "", archived: !!row.archived } : null; }
+    function rowToObj(row) {
+      if (!row) return null;
+      return {
+        id: row.id,
+        naam: row.naam || "",
+        beschrijving: row.beschrijving || "",
+        archived: !!row.archived,
+        aanmaakdatum: row.aanmaakdatum,
+        laatstGewijzigd: row.laatst_gewijzigd,
+      };
+    }
     async function fetchAll() {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
       var res = await global.besaSupabase.from(TABLE).select("*").order("naam", { ascending: true });
@@ -213,10 +223,15 @@
     }
     async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "refresh"); return items; }
     function getAllSync() { return readCache(CACHE_KEY); }
+    function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
     async function add(rec) {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
       if (!rec || !rec.naam) throw new Error("Naam vereist");
-      var payload = { id: rec.id || generateId(), naam: String(rec.naam).trim() };
+      var payload = {
+        id: rec.id || generateId(),
+        naam: String(rec.naam).trim(),
+        beschrijving: String(rec.beschrijving || ""),
+      };
       var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
@@ -226,6 +241,26 @@
       dispatchEvt("besa:werkuren-labels-updated", "add");
       return obj;
     }
+    async function update(id, partial) {
+      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!id) throw new Error("Geen id");
+      var payload = {};
+      if (Object.prototype.hasOwnProperty.call(partial || {}, "naam")) payload.naam = String(partial.naam || "").trim();
+      if (Object.prototype.hasOwnProperty.call(partial || {}, "beschrijving")) payload.beschrijving = String(partial.beschrijving || "");
+      if (Object.prototype.hasOwnProperty.call(partial || {}, "archived")) payload.archived = !!partial.archived;
+      var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+      if (res.error) throw res.error;
+      var obj = rowToObj(res.data);
+      var cache = readCache(CACHE_KEY);
+      var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
+      if (idx >= 0) cache[idx] = obj; else cache.push(obj);
+      cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
+      writeCache(CACHE_KEY, cache);
+      dispatchEvt("besa:werkuren-labels-updated", "update");
+      return obj;
+    }
+    async function archive(id) { return update(id, { archived: true }); }
+    async function restore(id) { return update(id, { archived: false }); }
     async function remove(id) {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
       var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
@@ -237,7 +272,8 @@
     }
     global.werkurenLabelsDB = {
       get ready() { return readyPromise || bootstrap(); },
-      refresh: refresh, getAllSync: getAllSync, add: add, delete: remove,
+      refresh: refresh, getAllSync: getAllSync, getByIdSync: getByIdSync,
+      add: add, update: update, archive: archive, restore: restore, delete: remove,
     };
     bootstrap();
   })();

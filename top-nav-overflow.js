@@ -153,7 +153,7 @@
       "Overzicht planning": "planning.html",
       "Beheer planningbeheer": "planning.html",
       "Geregistreerde uren": "werkuren.html",
-      "Labels": "werkuren.html#labels",
+      "Labels": "werkuren-labels.html",
       "Medewerkers": "index.html",
       Cliënten: "clienten.html",
       Zorgsoorten: "zorgsoorten.html",

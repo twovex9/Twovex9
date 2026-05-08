@@ -18408,3 +18408,28 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   .wu-time-row { grid-template-columns: 1fr; }
 }
 
+/* Werkuren-labels — status-pill modifiers + row-action button */
+.status-pill--active { background: var(--green); color: #fff; }
+.status-pill--archived { background: var(--text-muted); color: #fff; }
+
+.wl-row-actions { gap: 4px; }
+.wl-row-edit {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.wl-row-edit:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+
+/* Sidebar icon naast Labels-link */
+.side-link-ico {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
