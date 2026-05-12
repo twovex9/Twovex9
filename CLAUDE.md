@@ -51,6 +51,7 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
    - User iets fysiek moet doen dat Claude niet kan (service_role key uit dashboard kopiëren, in Supabase Studio handmatig SQL plakken, JS-snippet in BS2 console runnen, etc.)
 3. **Doorgaan tot stap klaar is** — niet onderweg pauzeren voor "wil je dit?" tenzij echt destructief.
 4. **Bij vragen aan user**: alleen wanneer iets fundamenteel onduidelijk is óf user-actie vereist is. Niet als beleefdheidscheck.
+5. **🚨 ALLES "voor toekomst / niet-kritiek / later" → ALTIJD persistent opslaan** in `docs/phase4/04-open-items.md` + memory `project_besa_phase4.md`. Niet alleen in chat-tekst noemen (verdwijnt bij compactie). Geldt voor ELKE noemen van "later", "niet-kritiek", "voor toekomst", "v2", "open item", "minor". Plus: bij elke nieuwe sessie eerst `04-open-items.md` herlezen.
 
 ### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
 
