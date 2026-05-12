@@ -479,15 +479,21 @@ Claude's sandbox blokkeert direct push naar `main` (Git Push to Default Branch b
    Niet vragen "mag ik mergen?"; user heeft op 2026-05-12 expliciet gezegd dat dit het standaard-format moet zijn ("geef me gewoon zoals nu gemakkelijk die link en dan klik ik op merge"). Daarna direct door met volgende item.
 6. Vercel deployed automatisch na merge
 
-**🚨 Anti-conflict regel voor `docs/phase4/04-open-items.md`** (2026-05-12, structurele fix):
+**🚨 Anti-conflict regel voor open items** (geüpdatet 2026-05-12 v2, structurele fix v2):
 
-Het bestand kreeg bij élke PR een merge-conflict omdat ik items steeds aan BEGIN van dezelfde sectie stapelde (descending order). Twee parallelle PRs raken dan altijd dezelfde regels.
+**Eerdere poging (v1)**: append-at-end in `04-open-items.md`. Werkte niet — twee PR's op dezelfde anchor (vóór "Definitie van klaar"-sectie) gaven nog steeds conflict.
 
-**Vanaf nu**: NIEUWE items AAN EINDE van het bestand toevoegen (vóór `## Definitie van klaar`-sectie), in **oplopende** nummering (item 28, 29, 30, ...). Append-at-end → geen overlap → (bijna) geen conflict.
+**Definitieve fix (v2)**: aparte file per item in `docs/phase4/open-items/<NN>-<slug>.md`. Verschillende files = 0% conflict-kans.
 
-Bestaande items 1-27 in oude descending-stacking volgorde mogen blijven staan (geschiedenis, niet meer aanraken). Nieuwe items KOMEN NIET MEER TUSSEN bestaande in.
+**Hoe**:
+- Items 1-28: blijven in `04-open-items.md` (geschiedenis, niet migreren)
+- Items 29+: aparte `<NN>-<slug>.md` files in `docs/phase4/open-items/`
+- Voor elk nieuw item: schrijf eigen file + append 1 regel aan index-tabel in `docs/phase4/open-items/README.md`
+- Index-tabel kan minor conflict geven (zelfde regel-bewerking), maar trivial te resolven (gewoon beide rijen behouden in juiste volgorde)
 
-Voor v2 indien veel parallelle PRs: aparte file per item (`docs/phase4/open-items/<nn>-<slug>.md`) → zero-conflict.
+**Verboden**:
+- ❌ Items 29+ inline in `04-open-items.md` plaatsen
+- ❌ Twee items in dezelfde `.md` file plaatsen
 
 **Bij merge-conflict**:
 ```bash
