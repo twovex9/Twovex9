@@ -2686,14 +2686,12 @@ function initNav() {
 
   /* Voorinstellingen (placeholder) */
   document.getElementById("planning-presets-new-btn")?.addEventListener("click", async () => {
-    const naam = typeof window.showPromptModal === "function"
-      ? await window.showPromptModal({
-          title: "Nieuwe voorinstelling",
-          label: "Geef een naam voor deze voorinstelling",
-          placeholder: "Naam van de voorinstelling",
-          okLabel: "Opslaan",
-        })
-      : window.prompt("Geef een naam voor deze voorinstelling (placeholder):");
+    const naam = await window.showPromptModal({
+      title: "Nieuwe voorinstelling",
+      label: "Geef een naam voor deze voorinstelling",
+      placeholder: "Naam van de voorinstelling",
+      okLabel: "Opslaan",
+    });
     if (!naam) return;
     if (typeof window.showActionFeedback === "function") {
       window.showActionFeedback(

@@ -898,14 +898,12 @@
         var sc = data[si];
         if (!sc) return;
         var oldTitle = sc.title;
-        var n = typeof window.showPromptModal === "function"
-          ? await window.showPromptModal({
-              title: "Schaal hernoemen",
-              label: "Naam van de schaal",
-              defaultValue: sc.title,
-              okLabel: "Opslaan",
-            })
-          : window.prompt("Naam van de schaal", sc.title);
+        var n = await window.showPromptModal({
+          title: "Schaal hernoemen",
+          label: "Naam van de schaal",
+          defaultValue: sc.title,
+          okLabel: "Opslaan",
+        });
         if (n != null && String(n).trim()) {
           sc.title = String(n).trim();
           saveSalarisschalen(data);
