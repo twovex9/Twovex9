@@ -18923,3 +18923,136 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   }
 }
 
+/* Cliënt-detail Vragenlijsten-tab */
+.cd-vrl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.cd-vrl-table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cd-vrl-status {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cd-vrl-status--openstaand {
+  color: var(--yellow);
+  background: var(--yellow-soft, rgba(234, 179, 8, 0.12));
+}
+
+.cd-vrl-status--ingevuld {
+  color: var(--green);
+  background: var(--green-soft, rgba(34, 197, 94, 0.12));
+}
+
+.cd-vrl-actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cd-vrl-edit-btn {
+  padding: 4px 10px;
+  font-size: var(--font-table-cell);
+}
+
+/* Vragenlijst modal */
+.cd-vrl-modal-card {
+  max-width: 800px;
+}
+
+.cd-vrl-f-row {
+  display: flex;
+  gap: 12px;
+}
+
+.cd-vrl-f-half {
+  flex: 1;
+}
+
+.cd-vrl-qa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.cd-vrl-qa-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.cd-vrl-qa-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cd-vrl-qa-vraag {
+  flex: 1;
+  font-weight: 600;
+}
+
+.cd-vrl-qa-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cd-vrl-qa-remove:hover {
+  background: var(--red-soft, rgba(220, 38, 38, 0.08));
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.cd-vrl-qa-antwoord {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.cd-vrl-qa-add {
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .cd-vrl-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cd-vrl-f-row {
+    flex-direction: column;
+  }
+}
+
