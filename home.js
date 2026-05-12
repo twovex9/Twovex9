@@ -255,8 +255,39 @@ function renderHomeNews() {
   if (!grid) return;
 
   if (greeting) {
-    const name = getCurrentUserName();
-    greeting.textContent = name ? `Welkom, ${name}` : "Welkom";
+    // Alleen voornaam tonen voor "Welkom, ${naam}". Geen email-fallback
+    // (vroegere gedrag toonde "Welkom, sonck802@gmail.com" als profiel
+    // nog geen voornaam had — niet wenselijk).
+    let firstName = "";
+    if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
+      try {
+        const p = window.profilesDB.getCurrentSync();
+        if (p && p.voornaam) firstName = String(p.voornaam).trim();
+      } catch (e) { /* */ }
+    }
+    if (!firstName) {
+      // legacy fallback: sessionStorage selectedEmployee
+      try {
+        const raw = window.sessionStorage.getItem("selectedEmployee");
+        if (raw) {
+          const sel = JSON.parse(raw);
+          if (sel && sel.voornaam) firstName = String(sel.voornaam).trim();
+        }
+      } catch (e) { /* */ }
+    }
+    greeting.textContent = firstName ? `Welkom, ${firstName}` : "Welkom";
+
+    // Toon nudge naar Instellingen als voornaam ontbreekt
+    const subtitle = document.querySelector(".home-subtitle");
+    const oldNudge = document.getElementById("home-name-nudge");
+    if (oldNudge) oldNudge.remove();
+    if (!firstName && subtitle) {
+      const nudge = document.createElement("p");
+      nudge.id = "home-name-nudge";
+      nudge.className = "home-nudge";
+      nudge.innerHTML = '<a href="instellingen.html" class="home-nudge-link">Vul je voornaam in via Instellingen</a> voor een persoonlijke begroeting.';
+      subtitle.insertAdjacentElement("afterend", nudge);
+    }
   }
 
   const modal = initNewsModal();

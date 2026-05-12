@@ -9591,6 +9591,21 @@ select.cd-config-select {
   font-weight: 600;
 }
 
+/* Subtle CTA onder welkom-bericht als voornaam nog niet ingevuld is */
+.home-nudge {
+  margin: 6px 0 0;
+  font-size: var(--font-base);
+  color: var(--text-muted);
+}
+.home-nudge-link {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+.home-nudge-link:hover {
+  text-decoration: underline;
+}
+
 .home-news-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
