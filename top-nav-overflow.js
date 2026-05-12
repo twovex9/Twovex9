@@ -145,7 +145,7 @@
       Medewerkers: "index.html",
       Verlof: "werkruimte.html#verlof",
       Beleid: "beleid.html",
-      Audit: "werkruimte.html#audit",
+      Audit: "audit.html",
       Organisatie: "teams.html",
       Instellingen: "werkruimte.html#instellingen",
     };
