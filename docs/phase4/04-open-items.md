@@ -165,6 +165,21 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
 
+### 20. Browser cache invalidatie voltooid (2026-05-12)
+
+**Status**: ✅ geïmplementeerd via `scripts/bust-cache.mjs` + `vercel.json` headers.
+
+**Mechanisme**:
+- `vercel.json` heeft `buildCommand: "npm run build"` die `bust-cache.mjs` aanroept tijdens elke Vercel deploy.
+- Script gebruikt `VERCEL_GIT_COMMIT_SHA` (eerste 7 chars) als versie-stempel.
+- Loopt door alle 53 HTML files en vervangt `src="*.js"` / `href="*.css"` door `src="*.js?v=<sha>"` etc. Externe URLs (https://) blijven onaangetast.
+- HTML files krijgen `Cache-Control: no-cache, must-revalidate` → browser revalideert altijd.
+- JS/CSS files krijgen `Cache-Control: public, max-age=31536000, immutable` → cache 1 jaar (veilig want elke deploy = nieuwe `?v=<sha>` URL).
+
+**Effect**: na elke Vercel deploy worden nieuwe JS/CSS versies automatisch geladen door browsers. Geen `Ctrl+Shift+R` meer nodig.
+
+**Lokaal testen**: `npm run build:check` (dry-run, toont wat zou veranderen zonder schrijven).
+
 ### 19. Dedupe records onderzoek voltooid (2026-05-12)
 
 **Resultaat**: pagination-overlap in BS2 export. 6+6 dedupe records waren legitime duplicaten (zelfde ID in 2 paginas). Geen data-verlies.
