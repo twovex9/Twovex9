@@ -1,22 +1,13 @@
-<!doctype html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Audit Logs — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9">
-</head>
-<body>
-  <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="floating-panels.js?v=fpv9" defer></script>
+// topnav-consistency.mjs — vervang de bestaande top-nav-track block in de 6 nieuwe
+// BS1 pages met de canonical full-dropdown variant (gelijk aan competenties.html).
+// Per page wordt is-active op de juiste anchor gezet.
+//
+// Run vanuit besa-suite-etf/: `node scripts/topnav-consistency.mjs`
 
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="topbar-left">
-        <a href="home.html" class="brand-logo" aria-label="Home">
-          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
-        </a>
-        <div class="top-nav-track">
+import fs from "node:fs";
+import path from "node:path";
+
+const CANONICAL = `<div class="top-nav-track">
           <nav class="top-nav" aria-label="Hoofdnavigatie">
             <a href="home.html" class="top-link">Home</a>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -74,7 +65,7 @@
               </div>
             </div>
             <a href="beleid.html" class="top-link">Beleid</a>
-            <a href="audit.html" class="top-link is-active">Audit</a>
+            <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
@@ -88,108 +79,55 @@
             <span class="top-nav-overflow-chev" aria-hidden="true"></span>
             <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
           </button>
-        </div>
-      </div>
-      <div class="topbar-icons">
-        <button type="button" class="icon-btn" aria-label="Help">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-        </button>
-        <button type="button" class="icon-btn" aria-label="Meldingen">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </button>
-        <span class="top-avatar" title="Gebruiker">JS</span>
-      </div>
-    </header>
+        </div>`;
 
-    <main class="content">
-      <div class="content-header">
-        <h1>Audit Logs</h1>
-        <div class="header-actions">
-          <button class="btn-outline" type="button" id="audit-refresh-btn">
-            <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-            Vernieuwen
-          </button>
-        </div>
-      </div>
+// Per pagina: (filename, find-pattern-in-canonical, replace-met-is-active)
+const PAGES = [
+  ["audit.html",
+    '<a href="audit.html" class="top-link">Audit</a>',
+    '<a href="audit.html" class="top-link is-active">Audit</a>'],
+  ["instellingen.html",
+    '<a href="instellingen.html" class="top-link">Instellingen</a>',
+    '<a href="instellingen.html" class="top-link is-active">Instellingen</a>'],
+  ["beleid.html",
+    '<a href="beleid.html" class="top-link">Beleid</a>',
+    '<a href="beleid.html" class="top-link is-active">Beleid</a>'],
+  ["taken.html",
+    '<a href="taken.html" class="top-link">Taken</a>',
+    '<a href="taken.html" class="top-link is-active">Taken</a>'],
+  ["verlof.html",
+    '<a href="verlof.html" class="top-link top-link--dropdown">Verlof<span',
+    '<a href="verlof.html" class="top-link top-link--dropdown is-active">Verlof<span'],
+  ["teams.html",
+    '<a href="teams.html" class="top-link top-link--dropdown">Organisatie<span',
+    '<a href="teams.html" class="top-link top-link--dropdown is-active">Organisatie<span'],
+];
 
-      <div class="toolbar">
-        <input class="search" type="search" id="audit-search" placeholder="Zoeken in gebruiker / resource / details..." autocomplete="off" />
-        <select class="search" id="audit-filter-resource" style="max-width:200px">
-          <option value="">Alle resources</option>
-          <option value="Medewerker">Medewerker</option>
-          <option value="Cliënt">Cliënt</option>
-          <option value="Beschikking">Beschikking</option>
-          <option value="Factuur">Factuur</option>
-          <option value="Incident">Incident</option>
-          <option value="Taak">Taak</option>
-          <option value="Beleidsdocument">Beleidsdocument</option>
-          <option value="Verlofaanvraag">Verlofaanvraag</option>
-          <option value="Team">Team</option>
-          <option value="NotificatieType">NotificatieType</option>
-        </select>
-        <select class="search" id="audit-filter-actie" style="max-width:200px">
-          <option value="">Alle acties</option>
-          <option value="aanmaken">Aanmaken</option>
-          <option value="bekijken">Bekijken</option>
-          <option value="bewerken">Bewerken</option>
-          <option value="verwijderen">Verwijderen</option>
-          <option value="archiveren">Archiveren</option>
-          <option value="herstellen">Herstellen</option>
-          <option value="status_wijziging">Status wijziging</option>
-        </select>
-      </div>
+// Regex die het hele top-nav-track block matcht (start tot eind van de div)
+const blockRegex = /<div class="top-nav-track">[\s\S]*?<\/button>\s*<\/div>/;
 
-      <section class="table-card">
-        <div class="table-wrapper">
-          <table class="employees-table" id="audit-table">
-            <thead>
-              <tr>
-                <th><div class="th-sort-inner"><span class="th-label">Tijdstip</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Gebruiker</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Resource</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Resource ID</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Actie</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Details</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
-              </tr>
-            </thead>
-            <tbody id="audit-tbody"></tbody>
-          </table>
-        </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="audit-pager-range" class="pager-range">0 van 0</span>
-          </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="audit-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="audit-rows-per-page" class="footer-rows-select">
-                <option value="15">15</option>
-                <option value="30" selected>30</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </label>
-            <span id="audit-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="audit-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-last" disabled>&raquo;</button>
-            </span>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script src="top-nav-overflow.js?v=imcols9"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js"></script>
-  <script src="besa-sync-reporter.js"></script>
-  <script src="auth-guard.js"></script>
-  <script src="profiles-data.js"></script>
-  <script src="audit-data.js"></script>
-  <script src="audit.js"></script>
-</body>
-</html>
+let totalUpdates = 0;
+for (const [filename, findStr, replaceStr] of PAGES) {
+  const filepath = path.resolve(filename);
+  if (!fs.existsSync(filepath)) {
+    console.error(`SKIP: ${filename} bestaat niet`);
+    continue;
+  }
+  const content = fs.readFileSync(filepath, "utf8");
+  const match = content.match(blockRegex);
+  if (!match) {
+    console.error(`WARN: ${filename}: geen top-nav-track block gevonden`);
+    continue;
+  }
+  // Bouw nieuwe nav-block met is-active op de juiste anchor
+  const newNav = CANONICAL.replace(findStr, replaceStr);
+  if (newNav === CANONICAL) {
+    console.error(`WARN: ${filename}: find-string niet vervangen in canonical (typo?)`);
+    continue;
+  }
+  const newContent = content.replace(blockRegex, newNav);
+  fs.writeFileSync(filepath, newContent, "utf8");
+  totalUpdates++;
+  console.log(`✓ ${filename} bijgewerkt`);
+}
+console.log(`\n${totalUpdates}/${PAGES.length} bestanden bijgewerkt.`);
