@@ -116,6 +116,32 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Locatie**: te halen via `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api`.
 
+### 14. Cliënt-detail 4 placeholder-tabs (feature gap)
+
+**Status**: tijdens Phase 4 verificatie (2026-05-12) ontdekt dat 4 van 9 cliënt-detail tabs alleen placeholders zijn (geen functionele content):
+- **Betalingen**: "Hier kunnen straks betalingen of factuurstromen zichtbaar gemaakt worden. Import en koppeling volgen."
+- **Contacten**: "Contactpersonen, netwerk en verwijzers komen hier. Vul later aan of koppel met een agenda."
+- **Rapportages**: "Lopende en afgeronde rapporten per cliënt worden hier gegroepeerd. Export/print volgt zodra aangesloten."
+- **Vragenlijsten**: "Ingevulde of openstaande vragenlijsten per cliënt. Koppeling met toets- of e-forms volgt."
+
+**Status BS2**: BS2 heeft mogelijk wél functionele versies — verificatie nodig.
+
+**Actie voor v2**:
+- Betalingen: koppelen aan `public.facturen` filtered op `client_id`, plus payment-history
+- Contacten: nieuwe tabel `public.client_contacten` (M2M parent client + naam/relatie/tel/email)
+- Rapportages: nieuwe tabel `public.client_rapportages` met text/document-attachments
+- Vragenlijsten: nieuwe tabel `public.client_vragenlijsten` met JSON-schema
+
+**Effort**: 4-8 uur (4 tabellen + 4 data-lagen + 4 UI-implementaties)
+
+### 15. Verzuim-mystery onderzoek voltooid (2026-05-12)
+
+**Resultaat**: SELECT op `information_schema.triggers` voor medewerkers+verzuim toont alleen `audit_log` triggers (INSERT/UPDATE/DELETE → audit_log entry). Geen DELETE-cascade triggers gevonden.
+
+**Conclusie**: de 9 BS2-verzuim records die tussen Phase 3 en Phase 4 verdwenen zijn niet via een trigger verwijderd. Mogelijke oorzaken: transaction rollback in Supabase Studio, handmatige delete buiten Claude-sessie, of de oorspronkelijke insert was niet permanent (auto-rollback).
+
+**Monitor**: query in item 11 blijft staan voor toekomstige sessies.
+
 ## Toekomstige BS2 → BS1 refresh
 
 Wanneer nieuwe BS2 data komt (bv. nieuwe medewerkers, beschikkingen):
