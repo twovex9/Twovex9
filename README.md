@@ -102,6 +102,7 @@ Supabase config is hardcoded in `supabase-client.js` (anon key — public, RLS b
 | `docs/phase4/05-toolchain-recovery.md` | **Recovery doc** voor nieuwe sessie van nul |
 | `docs/phase4/06-professional-finish.md` | Roadmap voor v2 (22 items, 6 prioriteiten) |
 | `docs/phase4/07-backup-strategie.md` | Disaster recovery — wat backuppen, hoe restoren |
+| `docs/phase4/08-performance-benchmarks.md` | Baseline page-load timings (her-meten elke 6 mnd) |
 
 ## BS2 → BS1 data sync (toekomstig)
 

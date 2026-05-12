@@ -346,6 +346,27 @@ Stappen zijn herhaalbaar zonder data-verlies (alles idempotent + archive ipv del
 
 **Ook persisted in**: `feedback_besa_workflow.md` memory file + `CLAUDE.md` regel (overleeft sessie-compactie en nieuwe Claude-sessies).
 
+### 30. Performance benchmarks gemeten (2026-05-12)
+
+**Status**: ✅ baseline timings vastgelegd in `docs/phase4/08-performance-benchmarks.md`.
+
+**Resultaten** (productie, na PR #1 cache-busting actief):
+- 7 key pages gemeten via Chrome MCP `performance.getEntriesByType('navigation')[0]`
+- Server response (HTML): 186-290ms — consistent + snel
+- DOMInteractive < 1s voor 5 van 7 pages
+- Full LoadComplete < 1.5s voor alle 7 pages
+- Cache-Control headers werken correct (HTML transferSize: 2-6 KB per page)
+
+**Langzaamste pages**:
+- `index.html` (medewerkers): 1086ms DCL / 953ms DI — door 102 rijen direct rendered
+- `facturen.html`: 1312ms Load — mogelijk async fetches buiten `loadEvent`
+
+**Niet kritiek nu**, wel relevante bottleneck-analyse voor groei:
+- Bij > 1000 actieve records per hoofdtabel: virtualisatie of pagination overwegen
+- Preconnect `<link>` naar Supabase kan 50-100ms DNS+TLS besparen (optioneel)
+
+**Item 6.2 uit 06-professional-finish gesloten**. Herhaal benchmarks elke ~6 maanden of na grote feature-additions om regressies te detecteren.
+
 ## Definitie van klaar — wanneer Phase 5 nodig?
 
 Een Phase 5 is nodig als:
