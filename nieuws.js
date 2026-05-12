@@ -730,16 +730,14 @@ function initNewsAddModal() {
           const sel = window.getSelection();
           if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
         } catch (err) { /* */ }
-        const url = typeof window.showPromptModal === "function"
-          ? await window.showPromptModal({
-              title: "Link toevoegen",
-              label: "URL van de link",
-              placeholder: "https://",
-              defaultValue: "https://",
-              inputType: "url",
-              okLabel: "Toevoegen",
-            })
-          : window.prompt("URL van de link:", "https://");
+        const url = await window.showPromptModal({
+          title: "Link toevoegen",
+          label: "URL van de link",
+          placeholder: "https://",
+          defaultValue: "https://",
+          inputType: "url",
+          okLabel: "Toevoegen",
+        });
         if (!url) return;
         // Selectie restoren + focus terug naar editor vóór execCommand.
         try {
@@ -992,16 +990,14 @@ function initNewsEditPanel() {
             const sel = window.getSelection();
             if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
           } catch (err) { /* */ }
-          const url = typeof window.showPromptModal === "function"
-            ? await window.showPromptModal({
-                title: "Link toevoegen",
-                label: "URL van de link",
-                placeholder: "https://",
-                defaultValue: "https://",
-                inputType: "url",
-                okLabel: "Toevoegen",
-              })
-            : window.prompt("URL van de link:", "https://");
+          const url = await window.showPromptModal({
+            title: "Link toevoegen",
+            label: "URL van de link",
+            placeholder: "https://",
+            defaultValue: "https://",
+            inputType: "url",
+            okLabel: "Toevoegen",
+          });
           if (!url) return;
           try {
             editor.focus();

@@ -2178,15 +2178,13 @@ function initNotitiesSection() {
           const sel = window.getSelection();
           if (sel && sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
         } catch (err) { /* */ }
-        const url = typeof window.showPromptModal === "function"
-          ? await window.showPromptModal({
-              title: "Afbeelding invoegen",
-              label: "Afbeelding URL",
-              placeholder: "https://",
-              inputType: "url",
-              okLabel: "Invoegen",
-            })
-          : prompt("Afbeelding URL:");
+        const url = await window.showPromptModal({
+          title: "Afbeelding invoegen",
+          label: "Afbeelding URL",
+          placeholder: "https://",
+          inputType: "url",
+          okLabel: "Invoegen",
+        });
         if (!url) return;
         try {
           if (savedRange) {

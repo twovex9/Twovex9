@@ -101,6 +101,31 @@ jobs:
           fi
           echo "All HTML files have correct script load-order"
 
+      # --- Forbidden patterns: window.alert/confirm/prompt ---
+      - name: Forbidden browser-popup patterns
+        run: |
+          set -e
+          # Werkpatronen sectie 4: gebruik showSaveModal, showActionFeedback,
+          # showSliderConfirmModal, showArchiveConfirm, showPromptModal i.p.v. native popups.
+          # save-feedback.js mag deze referenties bevatten (eigenlijk vervangingen ervoor).
+          ERRORS=0
+          for pattern in "window\.alert(" "window\.confirm(" "window\.prompt(" "^[^a-zA-Z_.]alert(" "^[^a-zA-Z_.]confirm(" "^[^a-zA-Z_.]prompt("; do
+            FOUND=$(grep -lE "$pattern" *.js 2>/dev/null | grep -v "save-feedback.js" || true)
+            if [ -n "$FOUND" ]; then
+              echo "Forbidden pattern '$pattern' in:"
+              echo "$FOUND" | sed 's/^/  - /'
+              ERRORS=$((ERRORS+1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo ""
+            echo "Use save-feedback helpers: showSliderConfirmModal, showArchiveConfirm,"
+            echo "showPromptModal, showActionFeedback, showSaveModal."
+            echo "Zie .claude/werkpatronen.md sectie 4."
+            exit 1
+          fi
+          echo "No forbidden browser-popup calls found in production code"
+
       # --- Secrets-leak basic scan ---
       - name: Secrets-leak basic scan
         run: |
