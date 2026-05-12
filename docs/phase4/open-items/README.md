@@ -37,6 +37,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 33 | [Cliënt-detail Betalingen-tab geïmplementeerd](33-betalingen-tab-implementatie.md) | ✅ Voltooid (1 van 4 placeholders) | 2026-05-12 |
 | 34 | [Cliënt-detail Contacten-tab geïmplementeerd](34-contacten-tab-implementatie.md) | ✅ Voltooid (2 van 4 placeholders) | 2026-05-12 |
 | 35 | [Cliënt-detail Rapportages-tab geïmplementeerd](35-rapportages-tab-implementatie.md) | ✅ Voltooid (3 van 4 placeholders) | 2026-05-12 |
+| **36** | **[Final BS2 → BS1 data sync — GEPLAND](36-final-bs2-data-sync.md)** | ⏳ **Trigger: na Vragenlijsten-tab merge** | 2026-05-12 |
 
 ## Voor v3
 
