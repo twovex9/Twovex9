@@ -141,7 +141,7 @@
       HR: "index.html",
       Cliënten: "clienten.html",
       Kilometers: "werkruimte.html#kilometers",
-      Taken: "werkruimte.html#taken",
+      Taken: "taken.html",
       Medewerkers: "index.html",
       Verlof: "werkruimte.html#verlof",
       Beleid: "beleid.html",

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beleid — HR</title>
+  <title>Taken — HR</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
 </head>
 <body>
@@ -52,22 +52,12 @@
                 <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
               </div>
             </div>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="kilometers.html" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
-                <a href="kilometers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
-              </div>
-            </div>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
-                <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
-                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
-              </div>
-            </div>            <a href="taken.html" class="top-link">Taken</a>
+            <a href="kilometers.html" class="top-link">Kilometers</a>
+            <a href="facturen-te-beoordelen.html" class="top-link">Facturen</a>
+            <a href="taken.html" class="top-link is-active">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
             <a href="werkruimte.html#verlof" class="top-link">Verlof</a>
-            <a href="beleid.html" class="top-link is-active">Beleid</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
             <a href="werkruimte.html#audit" class="top-link">Audit</a>
             <a href="werkruimte.html#organisatie" class="top-link">Organisatie</a>
             <a href="werkruimte.html#instellingen" class="top-link">Instellingen</a>
@@ -91,58 +81,80 @@
 
     <main class="content">
       <div class="content-header">
-        <h1>Beleidsdocumenten</h1>
+        <h1>Taken</h1>
         <div class="header-actions">
-          <button class="btn-primary" type="button" id="beleid-add-btn">+ Beleidsdocument toevoegen</button>
+          <button class="btn-primary" type="button" id="taken-add-btn">+ Taak toevoegen</button>
         </div>
       </div>
 
       <div class="toolbar">
-        <input class="search" type="search" id="beleid-search" placeholder="Zoeken..." autocomplete="off" />
+        <div class="filter-chips" role="tablist" aria-label="Taken filter">
+          <button type="button" class="filter-chip" role="tab" id="taken-tab-mine" aria-selected="false">Mijn taken</button>
+          <button type="button" class="filter-chip filter-chip--active" role="tab" id="taken-tab-all" aria-selected="true">Alle taken</button>
+        </div>
+        <input class="search" type="search" id="taken-search" placeholder="Zoeken..." autocomplete="off" />
         <label class="switch switch--yellow">
-          <input type="checkbox" id="beleid-archived-toggle" />
+          <input type="checkbox" id="taken-archived-toggle" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
+        <label class="switch">
+          <input type="checkbox" id="taken-hide-done-toggle" checked />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Voltooide verbergen</span>
+        </label>
+        <select class="search" id="taken-filter-status" style="max-width:180px">
+          <option value="">Alle statussen</option>
+          <option value="open">Open</option>
+          <option value="in_progress">In behandeling</option>
+          <option value="voltooid">Voltooid</option>
+          <option value="geannuleerd">Geannuleerd</option>
+        </select>
+        <select class="search" id="taken-filter-prioriteit" style="max-width:180px">
+          <option value="">Alle prioriteiten</option>
+          <option value="hoog">Hoog</option>
+          <option value="midden">Midden</option>
+          <option value="laag">Laag</option>
+        </select>
       </div>
 
       <section class="table-card">
         <div class="table-wrapper">
-          <table class="employees-table" id="beleid-table">
+          <table class="employees-table" id="taken-table">
             <thead>
               <tr>
-                <th data-col="volgnummer"><div class="th-sort-inner"><span class="th-label">Nr.</span></div></th>
-                <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Naam</span></div></th>
-                <th data-col="type"><div class="th-sort-inner"><span class="th-label">Type</span></div></th>
-                <th data-col="uploaddatum"><div class="th-sort-inner"><span class="th-label">Uploaddatum</span></div></th>
-                <th data-col="laatst-gewijzigd"><div class="th-sort-inner"><span class="th-label">Laatst gewijzigd</span></div></th>
-                <th data-col="bestand"><div class="th-sort-inner"><span class="th-label">Bestand</span></div></th>
+                <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Taaknaam</span></div></th>
+                <th data-col="toegewezen"><div class="th-sort-inner"><span class="th-label">Toegewezen aan</span></div></th>
+                <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
+                <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
+                <th data-col="deadline"><div class="th-sort-inner"><span class="th-label">Deadline</span></div></th>
+                <th data-col="aanmaak"><div class="th-sort-inner"><span class="th-label">Aangemaakt</span></div></th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="beleid-tbody"></tbody>
+            <tbody id="taken-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="beleid-pager-range" class="pager-range">0 van 0</span>
+            <span id="taken-pager-range" class="pager-range">0 van 0</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="beleid-rows-per-page">
+            <label class="footer-rows-wrap" for="taken-rows-per-page">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="beleid-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+              <select id="taken-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="10">10</option>
                 <option value="15">15</option>
                 <option value="30" selected>30</option>
                 <option value="50">50</option>
               </select>
             </label>
-            <span id="beleid-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="taken-pager-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="beleid-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-last" disabled>&raquo;</button>
+              <button type="button" class="pager-btn" id="taken-pager-first" disabled>&laquo;</button>
+              <button type="button" class="pager-btn" id="taken-pager-prev" disabled>&lsaquo;</button>
+              <button type="button" class="pager-btn" id="taken-pager-next" disabled>&rsaquo;</button>
+              <button type="button" class="pager-btn" id="taken-pager-last" disabled>&raquo;</button>
             </span>
           </div>
         </div>
@@ -150,83 +162,103 @@
     </main>
   </div>
 
-  <div class="emp-verzuim-modal-overlay" id="beleid-add-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:520px">
+  <div class="emp-verzuim-modal-overlay" id="taken-add-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:560px">
       <div class="emp-verzuim-modal-head">
-        <h3 id="beleid-add-title">Beleidsdocument toevoegen</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="beleid-add-close-btn">&times;</button>
+        <h3 id="taken-add-title">Taak toevoegen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="taken-add-close-btn">&times;</button>
       </div>
-      <form id="beleid-add-form" novalidate>
-        <input type="hidden" id="beleid-edit-id" value="" />
+      <form id="taken-add-form" novalidate>
+        <input type="hidden" id="taken-edit-id" value="" />
         <div class="emp-verzuim-modal-body">
           <label class="emp-verzuim-modal-field">
-            <span>Volgnummer</span>
-            <input type="number" id="beleid-add-volgnummer" class="comp-modal-input" min="1" placeholder="bv. 24">
+            <span>Taaknaam</span>
+            <input type="text" id="taken-add-naam" class="comp-modal-input" required placeholder="bv. CAO controle Q2">
           </label>
           <label class="emp-verzuim-modal-field">
-            <span>Naam</span>
-            <input type="text" id="beleid-add-naam" class="comp-modal-input" required placeholder="bv. 24. Mijn beleidsdocument">
+            <span>Beschrijving</span>
+            <textarea id="taken-add-beschrijving" class="comp-modal-input" rows="3" placeholder="Toelichting / sub-stappen"></textarea>
           </label>
           <label class="emp-verzuim-modal-field">
-            <span>Type</span>
-            <input type="text" id="beleid-add-type" class="comp-modal-input" placeholder="bv. protocol, beleid, richtlijn">
+            <span>Toegewezen aan</span>
+            <select id="taken-add-toegewezen" class="comp-modal-input">
+              <option value="">— Niemand —</option>
+            </select>
           </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Bestand (PDF/Word — optioneel)</span>
-            <input type="file" id="beleid-add-file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-            <small id="beleid-existing-file-info" style="color:var(--text-muted);"></small>
-          </label>
+          <div style="display:flex;gap:12px;">
+            <label class="emp-verzuim-modal-field" style="flex:1">
+              <span>Status</span>
+              <select id="taken-add-status" class="comp-modal-input">
+                <option value="open">Open</option>
+                <option value="in_progress">In behandeling</option>
+                <option value="voltooid">Voltooid</option>
+                <option value="geannuleerd">Geannuleerd</option>
+              </select>
+            </label>
+            <label class="emp-verzuim-modal-field" style="flex:1">
+              <span>Prioriteit</span>
+              <select id="taken-add-prioriteit" class="comp-modal-input">
+                <option value="laag">Laag</option>
+                <option value="midden" selected>Midden</option>
+                <option value="hoog">Hoog</option>
+              </select>
+            </label>
+            <label class="emp-verzuim-modal-field" style="flex:1">
+              <span>Deadline</span>
+              <input type="date" id="taken-add-deadline" class="comp-modal-input">
+            </label>
+          </div>
         </div>
         <div class="emp-verzuim-modal-footer">
-          <button type="button" class="emp-verzuim-modal-cancel" id="beleid-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="emp-verzuim-modal-submit" id="beleid-add-submit-btn">Opslaan</button>
+          <button type="button" class="emp-verzuim-modal-cancel" id="taken-add-cancel-btn">Annuleren</button>
+          <button type="submit" class="emp-verzuim-modal-submit" id="taken-add-submit-btn">Opslaan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="beleid-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="beleid-archive-title" tabindex="-1">
+  <div class="modal-overlay modal-overlay--confirm" id="taken-archive-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="taken-archive-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="beleid-archive-title" class="modal-title">Beleidsdocument archiveren</h2>
-        <button type="button" class="modal-close" id="beleid-archive-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="taken-archive-title" class="modal-title">Taak archiveren</h2>
+        <button type="button" class="modal-close" id="taken-archive-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">Het document wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
-        <p class="employee-delete-preview" id="beleid-archive-preview" aria-live="polite"></p>
+        <p class="employee-delete-msg">De taak wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
+        <p class="employee-delete-preview" id="taken-archive-preview" aria-live="polite"></p>
         <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="beleid-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <label class="employee-delete-slider-label" for="taken-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
           <div class="employee-delete-slider-wrap">
-            <input type="range" id="beleid-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+            <input type="range" id="taken-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="beleid-archive-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="beleid-archive-confirm-btn" disabled>Archiveren</button>
+        <button type="button" class="btn-outline" id="taken-archive-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="taken-archive-confirm-btn" disabled>Archiveren</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="beleid-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="beleid-purge-title" tabindex="-1">
+  <div class="modal-overlay modal-overlay--confirm" id="taken-purge-modal" hidden aria-hidden="true">
+    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="taken-purge-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="beleid-purge-title" class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="beleid-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="taken-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <button type="button" class="modal-close" id="taken-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">Dit document wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
-        <p class="employee-delete-preview" id="beleid-purge-preview" aria-live="polite"></p>
+        <p class="employee-delete-msg">Deze taak wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+        <p class="employee-delete-preview" id="taken-purge-preview" aria-live="polite"></p>
         <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="beleid-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
+          <label class="employee-delete-slider-label" for="taken-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
           <div class="employee-delete-slider-wrap">
-            <input type="range" id="beleid-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
+            <input type="range" id="taken-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="beleid-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="beleid-purge-confirm-btn" disabled>Definitief verwijderen</button>
+        <button type="button" class="btn-outline" id="taken-purge-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="taken-purge-confirm-btn" disabled>Definitief verwijderen</button>
       </div>
     </div>
   </div>
@@ -237,7 +269,8 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="beleidsdocumenten-data.js"></script>
-  <script src="beleid.js"></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="taken-data.js"></script>
+  <script src="taken.js"></script>
 </body>
 </html>
