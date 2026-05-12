@@ -18720,3 +18720,87 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   }
 }
 
+/* Cliënt-detail Contacten-tab */
+.cd-cont-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.cd-cont-add-btn {
+  flex-shrink: 0;
+}
+
+.cd-cont-table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cd-cont-primair-th {
+  width: 80px;
+}
+
+.cd-cont-primair-cell {
+  text-align: center;
+}
+
+.cd-cont-primair-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--blue-soft, rgba(37, 99, 235, 0.08));
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cd-cont-actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cd-cont-edit-btn {
+  padding: 4px 10px;
+  font-size: var(--font-table-cell);
+}
+
+/* Contact modal */
+.cd-cont-f-row {
+  display: flex;
+  gap: 12px;
+}
+
+.cd-cont-f-half {
+  flex: 1;
+}
+
+.cd-cont-f-primair-wrap {
+  margin-top: 4px;
+}
+
+.cd-cont-f-primair-lab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--font-base);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .cd-cont-f-row {
+    flex-direction: column;
+  }
+  .cd-cont-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
