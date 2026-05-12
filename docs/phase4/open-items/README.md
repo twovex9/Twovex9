@@ -36,6 +36,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 32 | [Item 27 volledig gesloten + CI check actief](32-item-27-volledig-gesloten.md) | ✅ Voltooid | 2026-05-12 |
 | 33 | [Cliënt-detail Betalingen-tab geïmplementeerd](33-betalingen-tab-implementatie.md) | ✅ Voltooid (1 van 4 placeholders) | 2026-05-12 |
 | 34 | [Cliënt-detail Contacten-tab geïmplementeerd](34-contacten-tab-implementatie.md) | ✅ Voltooid (2 van 4 placeholders) | 2026-05-12 |
+| 35 | [Cliënt-detail Rapportages-tab geïmplementeerd](35-rapportages-tab-implementatie.md) | ✅ Voltooid (3 van 4 placeholders) | 2026-05-12 |
 
 ## Voor v3
 

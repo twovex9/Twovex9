@@ -18804,3 +18804,122 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   }
 }
 
+/* Cliënt-detail Rapportages-tab */
+.cd-rap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cd-rap-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cd-rap-filter {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-table-cell);
+}
+
+.cd-rap-table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cd-rap-bijlage-th {
+  width: 40px;
+}
+
+.cd-rap-bijlage-cell {
+  text-align: center;
+}
+
+.cd-rap-bijlage-link {
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.cd-rap-status {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cd-rap-status--concept {
+  color: var(--text-muted);
+  background: var(--line);
+}
+
+.cd-rap-status--lopend {
+  color: var(--yellow);
+  background: var(--yellow-soft, rgba(234, 179, 8, 0.12));
+}
+
+.cd-rap-status--afgerond {
+  color: var(--green);
+  background: var(--green-soft, rgba(34, 197, 94, 0.12));
+}
+
+.cd-rap-actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cd-rap-edit-btn {
+  padding: 4px 10px;
+  font-size: var(--font-table-cell);
+}
+
+/* Rapportage modal */
+.cd-rap-modal-card {
+  max-width: 720px;
+}
+
+.cd-rap-f-row {
+  display: flex;
+  gap: 12px;
+}
+
+.cd-rap-f-third {
+  flex: 1;
+}
+
+.cd-rap-f-inhoud {
+  font-family: inherit;
+  resize: vertical;
+}
+
+.cd-rap-f-file-info {
+  margin: 6px 0 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .cd-rap-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cd-rap-toolbar {
+    flex-direction: column;
+  }
+  .cd-rap-f-row {
+    flex-direction: column;
+  }
+}
+
