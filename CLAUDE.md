@@ -51,7 +51,21 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
    - User iets fysiek moet doen dat Claude niet kan (service_role key uit dashboard kopiëren, in Supabase Studio handmatig SQL plakken, JS-snippet in BS2 console runnen, etc.)
 3. **Doorgaan tot stap klaar is** — niet onderweg pauzeren voor "wil je dit?" tenzij echt destructief.
 4. **Bij vragen aan user**: alleen wanneer iets fundamenteel onduidelijk is óf user-actie vereist is. Niet als beleefdheidscheck.
-5. **🚨 ALLES "voor toekomst / niet-kritiek / later" → ALTIJD persistent opslaan** in `docs/phase4/04-open-items.md` + memory `project_besa_phase4.md`. Niet alleen in chat-tekst noemen (verdwijnt bij compactie). Geldt voor ELKE noemen van "later", "niet-kritiek", "voor toekomst", "v2", "open item", "minor". Plus: bij elke nieuwe sessie eerst `04-open-items.md` herlezen.
+5. **🚨 AUTOMATISCH persisten van uitgesteld werk** — voor ELKE chat-respons waarin ik een van deze trigger-woorden gebruik, MOET ik **vóór** ik het bericht naar user stuur het item toevoegen aan `docs/phase4/04-open-items.md`:
+
+   **Trigger-woorden (NL)**: "voor toekomst", "later", "niet-kritiek", "v2", "open item", "minor", "uitstellen", "doe ik later", "stelt zich uit", "moet nog gebeuren", "nog te doen", "nog niet kritiek", "kan later", "TODO", "voor een volgende sessie", "voor nu skip", "feature gap", "bekend issue".
+
+   **Trigger-woorden (EN)**: "for the future", "later", "not critical", "v2", "open item", "minor", "todo", "deferred", "to be done", "for a future session", "future iteration", "follow-up".
+
+   **Werkwijze** bij detectie van trigger-woord in mijn eigen tekst:
+   1. Pause vóór bericht-verzenden
+   2. Append nieuw genummerd item aan `docs/phase4/04-open-items.md` met: titel, status, oplossing, vereisten
+   3. Commit + push (kan in dezelfde commit als ander werk)
+   4. In het user-bericht een korte verwijzing: "(toegevoegd aan `04-open-items.md` item #N)"
+
+   **Geldt voor ELK bericht**, ook tussentijdse status-updates. Niet alleen voor eindrapporten.
+
+   **Bij elke nieuwe sessie**: eerst `04-open-items.md` herlezen — direct na CLAUDE.md.
 
 ### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
 
