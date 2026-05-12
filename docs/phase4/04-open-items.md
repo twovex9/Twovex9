@@ -89,6 +89,33 @@
 
 **Actie**: scan `clienten/medewerkers/beschikkingen/facturen/planning/incidenten` waar naam/title `LIKE '%test%'` is.
 
+### 11. Mysterie: verzuim BS2-records verdwenen tussen Phase 3 en Phase 4
+
+**Symptoom**: na succesvolle user-handmatige SQL run in Supabase Studio (total=14, bs2_count=9) waren bij Phase 4 verificatie 9 BS2-records weg.
+
+**Oorzaak**: onbekend. Niet onderzocht. Mogelijk een trigger op medewerkers.archive die cascade naar verzuim doet (maar verzuim heeft geen FK naar medewerkers, alleen string).
+
+**Recovery**: opnieuw INSERT via `scripts/bs2-exports/verzuim-manual-insert.sql` óf via Supabase MCP (idempotent).
+
+**Monitor in toekomst**: vóór elke major sessie:
+```sql
+SELECT COUNT(*) FILTER (WHERE id LIKE 'bs2-verzuim-%') AS bs2_count FROM verzuim;
+-- Verwacht: 9
+```
+Als < 9, opnieuw inserten met onze klaarliggende SQL.
+
+### 12. Bearer-token workflow voor BS2-data refresh
+
+**Status**: instructies vorderden door chat-geschiedenis. Nu gebundeld in `docs/phase4/05-toolchain-recovery.md`.
+
+**Actie**: bij elke toekomstige BS2-data refresh, volg sectie "BS2 → BS1 data refresh workflow" in 05-toolchain-recovery.md (8 stappen).
+
+### 13. Service_role key handling
+
+**Regel**: NOOIT in code, repo, of chat. Alleen via `$env:SUPABASE_SERVICE_KEY` env-var in PowerShell sessie. Wis na gebruik met `$env:SUPABASE_SERVICE_KEY = $null`.
+
+**Locatie**: te halen via `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api`.
+
 ## Toekomstige BS2 → BS1 refresh
 
 Wanneer nieuwe BS2 data komt (bv. nieuwe medewerkers, beschikkingen):
