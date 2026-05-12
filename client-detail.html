@@ -778,8 +778,90 @@
 
             </section>
             <section class="client-detail-pan" id="cd-pan-r" role="tabpanel" aria-hidden="true" hidden>
-              <h3 class="client-detail-pan-h">Rapportages</h3>
-              <p class="client-detail-placeholder">Lopende en afgeronde rapporten per cliënt worden hier gegroepeerd. Export/print volgt zodra aangesloten.</p>
+              <div class="cd-rap-head">
+                <h3 class="client-detail-pan-h">Rapportages</h3>
+                <div class="cd-rap-toolbar">
+                  <select id="cd-rap-filter-status" class="cd-rap-filter">
+                    <option value="">Alle statussen</option>
+                    <option value="concept">Concept</option>
+                    <option value="lopend">Lopend</option>
+                    <option value="afgerond">Afgerond</option>
+                  </select>
+                  <button type="button" class="btn-primary cd-rap-add-btn" id="cd-rap-add-btn">+ Rapportage toevoegen</button>
+                </div>
+              </div>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="datum">Datum</th>
+                        <th data-col="titel">Titel</th>
+                        <th data-col="type">Type</th>
+                        <th data-col="status">Status</th>
+                        <th data-col="bijlage" class="cd-rap-bijlage-th" aria-label="Bijlage"></th>
+                        <th data-col="acties" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-rap-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-rap-empty" hidden>Geen rapportages vastgelegd. Klik op "+ Rapportage toevoegen" om er één toe te voegen.</div>
+              </div>
+
+              <!-- Modal: nieuw / bewerk rapportage -->
+              <div class="modal-overlay" id="cd-rap-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-rap-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-rap-modal-title">Rapportage toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-rap-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-rap-form" novalidate>
+                    <input type="hidden" id="cd-rap-f-id" />
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-rap-f-titel">Titel *</label>
+                      <input class="modal-input" id="cd-rap-f-titel" type="text" required autocomplete="off" />
+                    </div>
+                    <div class="modal-field cd-rap-f-row">
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-rap-f-datum">Rapport-datum</label>
+                        <input class="modal-input" id="cd-rap-f-datum" type="date" />
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-rap-f-type">Type</label>
+                        <select class="modal-input" id="cd-rap-f-type">
+                          <option value="">—</option>
+                          <option value="voortgang">Voortgang</option>
+                          <option value="evaluatie">Evaluatie</option>
+                          <option value="overdracht">Overdracht</option>
+                          <option value="overig">Overig</option>
+                        </select>
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-rap-f-status">Status</label>
+                        <select class="modal-input" id="cd-rap-f-status">
+                          <option value="concept">Concept</option>
+                          <option value="lopend">Lopend</option>
+                          <option value="afgerond">Afgerond</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-rap-f-inhoud">Inhoud</label>
+                      <textarea class="modal-input cd-rap-f-inhoud" id="cd-rap-f-inhoud" rows="6" placeholder="Rapportage-tekst..."></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-rap-f-file">Bijlage (optioneel, PDF/DOC)</label>
+                      <input class="modal-input" id="cd-rap-f-file" type="file" accept=".pdf,.doc,.docx,.txt" />
+                      <p class="cd-rap-f-file-info" id="cd-rap-f-file-info" hidden></p>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-rap-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-rap-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-q" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Vragenlijsten</h3>
@@ -1087,6 +1169,7 @@
   <script src="beschikkingen-data.js" defer></script>
   <script src="facturen-data.js" defer></script>
   <script src="client-contacten-data.js" defer></script>
+  <script src="client-rapportages-data.js" defer></script>
   <script src="client-detail.js" defer></script>
 </body>
 </html>

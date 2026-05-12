@@ -484,6 +484,7 @@
     // Lazy load tab content when activated
     if (k === "p") renderBetalingen();
     if (k === "c") renderContacten();
+    if (k === "r") renderRapportages();
   }
 
   /**
@@ -763,6 +764,234 @@
   window.addEventListener("besa:client-contacten-updated", function () {
     var panC = document.getElementById("cd-pan-c");
     if (panC && !panC.hidden) renderContacten();
+  });
+
+  // ============================================================
+  // RAPPORTAGES-tab: render + CRUD via clientRapportagesDB
+  // ============================================================
+
+  var rapFilterEl = document.getElementById("cd-rap-filter-status");
+  var rapStatusFilter = "";
+
+  function statusBadgeRap(status) {
+    var s = String(status || "concept").toLowerCase();
+    var cls = "cd-rap-status";
+    var label = "Concept";
+    if (s === "lopend") { cls += " cd-rap-status--lopend"; label = "Lopend"; }
+    else if (s === "afgerond") { cls += " cd-rap-status--afgerond"; label = "Afgerond"; }
+    else { cls += " cd-rap-status--concept"; }
+    return '<span class="' + cls + '">' + escapeHtml(label) + '</span>';
+  }
+
+  function formatDateNL(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
+    if (isNaN(d.getTime())) return iso;
+    var dd = String(d.getDate()).padStart(2, "0");
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var yy = d.getFullYear();
+    return dd + "/" + mm + "/" + yy;
+  }
+
+  function renderRapportages() {
+    var tbody = document.getElementById("cd-rap-tbody");
+    var empty = document.getElementById("cd-rap-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var rows = (window.clientRapportagesDB && typeof window.clientRapportagesDB.getForClientSync === "function")
+      ? window.clientRapportagesDB.getForClientSync(cl.id).filter(function (r) { return r && !r.archived; })
+      : [];
+
+    if (rapStatusFilter) {
+      rows = rows.filter(function (r) { return String(r.status || "").toLowerCase() === rapStatusFilter; });
+    }
+
+    rows.sort(function (a, b) {
+      var da = a.rapportDatum || a.aanmaakdatum || "";
+      var db = b.rapportDatum || b.aanmaakdatum || "";
+      return da < db ? 1 : da > db ? -1 : 0;
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-id", r.id);
+      var bijlage = r.fileUrl
+        ? '<a href="' + escapeAttr(r.fileUrl) + '" target="_blank" rel="noopener" class="cd-rap-bijlage-link" title="Open bijlage">📎</a>'
+        : "—";
+      tr.innerHTML =
+        '<td data-col="datum">' + escapeHtml(formatDateNL(r.rapportDatum)) + '</td>' +
+        '<td data-col="titel">' + escapeHtml(r.titel || "—") + '</td>' +
+        '<td data-col="type">' + escapeHtml(r.type || "—") + '</td>' +
+        '<td data-col="status">' + statusBadgeRap(r.status) + '</td>' +
+        '<td data-col="bijlage" class="cd-rap-bijlage-cell">' + bijlage + '</td>' +
+        '<td data-col="acties" class="cd-rap-actions-cell">' +
+          '<button type="button" class="btn-outline cd-rap-edit-btn" data-id="' + r.id + '">Bewerken</button>' +
+          '<button type="button" class="employee-delete-btn cd-rap-archive-btn" data-id="' + r.id + '" aria-label="Archiveren">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+            '</svg>' +
+          '</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    empty.hidden = rows.length > 0;
+  }
+
+  // Modal controls
+  var rapModal = document.getElementById("cd-rap-modal");
+  var rapForm = document.getElementById("cd-rap-form");
+  var rapTitle = document.getElementById("cd-rap-modal-title");
+  var rapFId = document.getElementById("cd-rap-f-id");
+  var rapFTitel = document.getElementById("cd-rap-f-titel");
+  var rapFDatum = document.getElementById("cd-rap-f-datum");
+  var rapFType = document.getElementById("cd-rap-f-type");
+  var rapFStatus = document.getElementById("cd-rap-f-status");
+  var rapFInhoud = document.getElementById("cd-rap-f-inhoud");
+  var rapFFile = document.getElementById("cd-rap-f-file");
+  var rapFFileInfo = document.getElementById("cd-rap-f-file-info");
+  var rapPendingFile = null; // dataURL of pending File
+
+  function openRapModal(rec) {
+    if (!rapModal) return;
+    rapPendingFile = null;
+    if (rapFFile) rapFFile.value = "";
+    if (rapFFileInfo) { rapFFileInfo.hidden = true; rapFFileInfo.textContent = ""; }
+
+    if (rec && rec.id) {
+      if (rapTitle) rapTitle.textContent = "Rapportage bewerken";
+      rapFId.value = rec.id;
+      rapFTitel.value = rec.titel || "";
+      rapFDatum.value = rec.rapportDatum || "";
+      rapFType.value = rec.type || "";
+      rapFStatus.value = rec.status || "concept";
+      rapFInhoud.value = rec.inhoud || "";
+      if (rec.fileUrl && rapFFileInfo) {
+        rapFFileInfo.hidden = false;
+        rapFFileInfo.innerHTML = 'Huidige bijlage: <a href="' + escapeAttr(rec.fileUrl) + '" target="_blank" rel="noopener">openen</a> (upload nieuwe om te vervangen)';
+      }
+    } else {
+      if (rapTitle) rapTitle.textContent = "Rapportage toevoegen";
+      rapForm.reset();
+      rapFId.value = "";
+      rapFStatus.value = "concept";
+    }
+    rapModal.hidden = false;
+    rapModal.setAttribute("aria-hidden", "false");
+    try { rapFTitel.focus(); } catch (e) { /* */ }
+  }
+  function closeRapModal() {
+    if (!rapModal) return;
+    rapModal.hidden = true;
+    rapModal.setAttribute("aria-hidden", "true");
+    rapPendingFile = null;
+  }
+
+  async function readFileAsDataURL(file) {
+    return await new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function saveRapportageFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var titel = (rapFTitel.value || "").trim();
+    if (!titel) { try { rapFTitel.focus(); } catch (e) {} return; }
+
+    var rec = {
+      clientId: cl.id,
+      titel: titel,
+      inhoud: (rapFInhoud.value || "").trim(),
+      status: rapFStatus.value || "concept",
+      type: rapFType.value || "",
+      rapportDatum: rapFDatum.value || null,
+    };
+
+    if (rapFFile && rapFFile.files && rapFFile.files[0]) {
+      try {
+        rec.fileData = await readFileAsDataURL(rapFFile.files[0]);
+        rec.fileName = rapFFile.files[0].name;
+      } catch (err) {
+        if (window.showError) window.showError("Bestand inlezen mislukt: " + (err && err.message || err));
+        return;
+      }
+    }
+
+    try {
+      var id = rapFId.value;
+      if (id) {
+        await window.clientRapportagesDB.update(id, rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Rapportage");
+      } else {
+        await window.clientRapportagesDB.add(rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Rapportage toegevoegd");
+      }
+      closeRapModal();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // Event wiring
+  if (rapFilterEl) {
+    rapFilterEl.addEventListener("change", function () {
+      rapStatusFilter = rapFilterEl.value || "";
+      renderRapportages();
+    });
+  }
+  document.getElementById("cd-rap-add-btn")?.addEventListener("click", function () { openRapModal(null); });
+  document.getElementById("cd-rap-modal-close")?.addEventListener("click", closeRapModal);
+  document.getElementById("cd-rap-cancel-btn")?.addEventListener("click", closeRapModal);
+  document.getElementById("cd-rap-save-btn")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    saveRapportageFromForm();
+  });
+  if (rapForm) {
+    rapForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      saveRapportageFromForm();
+    });
+  }
+  if (rapModal) {
+    rapModal.addEventListener("click", function (e) {
+      if (e.target === rapModal) closeRapModal();
+    });
+  }
+
+  // Row-actions: edit + archive
+  document.getElementById("cd-rap-tbody")?.addEventListener("click", async function (e) {
+    var editBtn = e.target.closest(".cd-rap-edit-btn");
+    var arcBtn = e.target.closest(".cd-rap-archive-btn");
+    if (editBtn) {
+      var rec = window.clientRapportagesDB && window.clientRapportagesDB.getByIdSync(editBtn.getAttribute("data-id"));
+      if (rec) openRapModal(rec);
+      return;
+    }
+    if (arcBtn) {
+      var aid = arcBtn.getAttribute("data-id");
+      var rec2 = window.clientRapportagesDB && window.clientRapportagesDB.getByIdSync(aid);
+      if (!rec2) return;
+      try {
+        var ok = await window.showArchiveConfirm({ preview: rec2.titel || "Rapportage" });
+        if (!ok) return;
+        await window.clientRapportagesDB.archive(aid);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Rapportage");
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+
+  // Live-refresh
+  window.addEventListener("besa:client-rapportages-updated", function () {
+    var panR = document.getElementById("cd-pan-r");
+    if (panR && !panR.hidden) renderRapportages();
   });
 
   setTab("d");
