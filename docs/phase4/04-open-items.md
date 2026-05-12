@@ -165,6 +165,19 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
 
+### 24. Backup-strategie gedocumenteerd (2026-05-12)
+
+**Status**: ✅ volledig restore/recovery-protocol vastgelegd in `docs/phase4/07-backup-strategie.md`.
+
+**Dekking**: Supabase Postgres (auto + manueel pg_dump), Supabase Storage (Node script-template), Auth.users, schema/migrations, Vercel/GitHub. Plus 3 restore-scenarios + halfjaarlijkse test-restore protocol.
+
+**Direct te doen** (door admin, eenmalig 30 min):
+1. Verifieer Supabase backup-retention via dashboard
+2. Eerste manuele `pg_dump` als test
+3. DB-password in passwordmanager bewaren
+
+**Effort openblijvend**: scripts/backup-storage.mjs + scripts/export-supabase.mjs nog te schrijven indien gewenst (zie 07-backup-strategie.md sectie "Voor v2"). Item 4.4 uit 06-professional-finish gesloten.
+
 ### 23. Medewerker-detail tabs verificatie voltooid (2026-05-12)
 
 **Status**: ✅ alle 7 tabs op `medewerker.html?id=<uuid>` getest via Chrome MCP. Geen placeholders, alle tabs hebben functionele content.
@@ -229,6 +242,21 @@ UNION ALL SELECT 'organisaties', id::text, naam, archived FROM organisaties WHER
 UNION ALL SELECT 'incidenten', id::text, COALESCE(omschrijving,id::text), archived FROM incidenten WHERE omschrijving ILIKE '%test%'
 ORDER BY tabel, archived, preview;
 ```
+
+### 20. Browser cache invalidatie voltooid (2026-05-12)
+
+**Status**: ✅ geïmplementeerd via `scripts/bust-cache.mjs` + `vercel.json` headers.
+
+**Mechanisme**:
+- `vercel.json` heeft `buildCommand: "npm run build"` die `bust-cache.mjs` aanroept tijdens elke Vercel deploy.
+- Script gebruikt `VERCEL_GIT_COMMIT_SHA` (eerste 7 chars) als versie-stempel.
+- Loopt door alle 53 HTML files en vervangt `src="*.js"` / `href="*.css"` door `src="*.js?v=<sha>"` etc. Externe URLs (https://) blijven onaangetast.
+- HTML files krijgen `Cache-Control: no-cache, must-revalidate` → browser revalideert altijd.
+- JS/CSS files krijgen `Cache-Control: public, max-age=31536000, immutable` → cache 1 jaar (veilig want elke deploy = nieuwe `?v=<sha>` URL).
+
+**Effect**: na elke Vercel deploy worden nieuwe JS/CSS versies automatisch geladen door browsers. Geen `Ctrl+Shift+R` meer nodig.
+
+**Lokaal testen**: `npm run build:check` (dry-run, toont wat zou veranderen zonder schrijven).
 
 ### 19. Dedupe records onderzoek voltooid (2026-05-12)
 
