@@ -299,7 +299,16 @@
         else if (action === "archive") { await window.notificationTypesDB.archive(id); }
         else if (action === "restore") { await window.notificationTypesDB.restore(id); }
         else if (action === "purge") {
-          if (window.confirm("Definitief verwijderen?")) await window.notificationTypesDB.delete(id);
+          var ok = await window.showSliderConfirmModal({
+            title: "Bent u zeker dat dit verwijderd wordt?",
+            preview: item.naam || item.id,
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren",
+          });
+          if (ok) {
+            await window.notificationTypesDB.delete(id);
+            if (window.showActionFeedback) window.showActionFeedback("deleted", "Notificatie-type");
+          }
         }
       } catch (err) {
         if (window.showError) window.showError("Actie mislukt: " + (err && err.message || err));

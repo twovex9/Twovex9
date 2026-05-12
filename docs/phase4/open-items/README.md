@@ -32,6 +32,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 |---|---|---|---|
 | 29 | [Cliënt-detail tabs verificatie](29-client-detail-tabs-verification.md) | ✅ Voltooid | 2026-05-12 |
 | 30 | [Performance benchmarks baseline](30-performance-benchmarks.md) | ✅ Voltooid | 2026-05-12 |
+| 31 | [Preconnect optimization + item 27 partial cleanup](31-preconnect-and-confirm-fix.md) | ✅ Deels (2 van 8 confirm-fixes) | 2026-05-12 |
 
 ## Voor v3
 
