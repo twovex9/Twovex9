@@ -146,7 +146,7 @@
       Verlof: "werkruimte.html#verlof",
       Beleid: "beleid.html",
       Audit: "werkruimte.html#audit",
-      Organisatie: "werkruimte.html#organisatie",
+      Organisatie: "teams.html",
       Instellingen: "werkruimte.html#instellingen",
     };
   const DROPDOWN_ROUTE_BY_TITLE = {
