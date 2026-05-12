@@ -17,7 +17,13 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
 - **Auth (Stage 8a+):** `auth-guard.js` op elke pagina behalve `login.html`. RLS sinds 8c is `to authenticated`-only. Auth-fouten centraal afhandelen via `besa-sync-reporter.js` + `besaHandleAuthFailure`.
 - **PK/FK types:** check altijd of target-tabel `id` `text` of `uuid` is — match het FK-type exact (zie tabel in werkpatronen sectie 6a-bis).
 - **Storage:** bestand-uploads naar Supabase Storage met `storage_path text`-kolom, geen base64 in `text`/`jsonb`.
-- **Git (sectie 7):** **na elke logisch afgeronde wijziging direct committen + pushen naar `main`** — niet wachten tot de gebruiker erom vraagt (Vercel-deploy hangt eraan vast). Dit is pre-autorisatie voor `git push origin main` in dit project.
+- **Git (sectie 7):** **na elke logisch afgeronde wijziging direct committen + feature-branch + PR aanmaken**. Claude's sandbox blokkeert directe push naar `main` (hard-coded safety rule). Workflow:
+  1. `git switch -c feature/<naam> origin/main`
+  2. Commit + `git push -u origin feature/<naam>`
+  3. `gh pr create --base main --head feature/<naam>` met heldere summary + test plan
+  4. **Geef user de PR-URL** — user klikt "Merge pull request" op GitHub
+  5. Vercel deployed automatisch na merge
+  Bij merge-conflicten: `git merge origin/main` in feature-branch, los conflict op, push opnieuw. Géén force-push, géén direct-to-main.
 - **Pre-edit checklist** in beide regelbestanden doorlopen voordat een edit wordt afgesloten.
 
 Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevestiging vragen vóór ik afwijk.

@@ -447,9 +447,62 @@ try {
 }
 ```
 
-## 7. Git — altijd direct pushen na een edit
+## 7. Git — feature-branch + PR workflow
 
-Na elke logisch afgeronde wijziging: `git add -A` → `git commit -F` (HEREDOC of tijdelijk bestand i.v.m. PowerShell) → `git push origin main`. Niet wachten tot de gebruiker erom vraagt; deployment naar Vercel hangt eraan vast.
+Claude's sandbox blokkeert direct push naar `main` (Git Push to Default Branch block — hard-coded safety, kan niet uitgezet worden via permissions). Daarom werken we via feature-branches met PR's.
+
+**Standaard flow per logisch afgeronde wijziging**:
+
+1. **Branch maken vanaf laatste main**:
+   ```bash
+   git fetch origin
+   git switch -c feature/<duidelijke-naam> origin/main
+   ```
+2. **Werken + committen** (kan meerdere commits per branch):
+   ```bash
+   git add -A
+   git commit -m "<commit message>"
+   ```
+3. **Pushen**:
+   ```bash
+   git push -u origin feature/<duidelijke-naam>
+   ```
+4. **PR aanmaken** via `gh` CLI met heldere summary + test plan:
+   ```bash
+   gh pr create --base main --head feature/<duidelijke-naam> --title "..." --body "..."
+   ```
+5. **PR-URL aan user geven** — user klikt "Merge pull request" op GitHub
+6. Vercel deployed automatisch na merge
+
+**Bij merge-conflict**:
+```bash
+git switch feature/<naam>
+git merge origin/main
+# Resolve conflict in editor / via Edit tool
+git add <bestand>
+git commit --no-edit
+git push origin feature/<naam>
+```
+
+**Verboden**:
+- ❌ `git push --force` of `git push -f` (deny rule in settings.json)
+- ❌ Direct push naar `main` (sandbox-block + bypasst code review)
+- ❌ Mergen via command line — user doet dat zelf in GitHub UI
+
+**Snelle commit pattern voor PowerShell** (HEREDOC werkt niet in PS):
+```bash
+git commit -m "$(cat <<'EOF'
+First line summary
+
+Body paragraph 1.
+Body paragraph 2.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+Dit gaat door bash (niet PowerShell) — werkt fine in Claude's Bash-tool.
 
 ## Checklist vóór je een edit afsluit
 
