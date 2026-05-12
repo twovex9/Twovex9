@@ -316,7 +316,13 @@
           if (window.showActionFeedback) window.showActionFeedback("restored", "Aanvraag hersteld");
         }
         else if (action === "purge") {
-          if (window.confirm("Definitief verwijderen?")) {
+          var ok = await window.showSliderConfirmModal({
+            title: "Bent u zeker dat dit verwijderd wordt?",
+            preview: (item && (item.medewerker_naam || item.medewerkerNaam)) || "Verlofaanvraag",
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren",
+          });
+          if (ok) {
             await window.verlofDB.delete(id);
             if (window.showActionFeedback) window.showActionFeedback("deleted", "Aanvraag verwijderd");
           }
