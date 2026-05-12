@@ -24,7 +24,21 @@ Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevesti
 
 ## Actief project: BS2 → BS1 port
 
-We bouwen secties van **BESA-suite 2** (productie-demo, geen broncode, alleen UI via Chrome login) na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
+We bouwen secties van **BESA-suite 2** na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
+
+### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
+
+| Site | URL | Mag | Mag NIET |
+|---|---|---|---|
+| **BS2 (target, sandbox)** | `https://etf.acceptance.besasuite.nl/home` | Alles: klikken, toevoegen, wijzigen, **verwijderen** — bedoeld voor inspectie | — |
+| Supabase dashboard | `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys` | Lezen, navigeren | **Nooit** verwijderen via dashboard; gebruik Supabase MCP voor wijzigingen |
+| Vercel dashboard | `https://vercel.com/etfalkmaars-projects/besa-suite` | Lezen, deploys/logs bekijken | **Nooit** verwijderen (project, deploys, env, domains) |
+| GitHub repo | `https://github.com/ETFalkmaar/besa-suite-` | Lezen, push naar `main` (geautoriseerd in werkpatronen sec. 7) | Geen `--force` push, geen branch/release-deletes |
+| BS1 lokaal | `besa-suite-etf/` | Volledige write conform huisstijl + werkpatronen | — |
+
+User is op alle 4 externe sites al ingelogd in Chrome; per-domein Chrome-extensie permissie moet user éénmalig via popup goedkeuren.
+
+### Werkwijze
 
 - **Plan-file** (volledig stappenplan, Phase 0 pre-flight, risico's): `C:\Users\sonck\.claude\plans\ik-wil-een-beetje-temporal-scott.md`
 - **Cross-session memory** (overleeft context-compactie): `C:\Users\sonck\.claude\projects\C--Users-sonck-OneDrive-Desktop-ETF-besa-suite-git-clone\memory\MEMORY.md`
