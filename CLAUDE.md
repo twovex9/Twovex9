@@ -24,6 +24,16 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
   4. **Geef user de PR-URL** — user klikt "Merge pull request" op GitHub
   5. Vercel deployed automatisch na merge
   Bij merge-conflicten: `git merge origin/main` in feature-branch, los conflict op, push opnieuw. Géén force-push, géén direct-to-main.
+
+  **PR-output format**: na `gh pr create` ALTIJD een korte, duidelijke merge-link geven:
+  ```
+  ## Klik om te mergen
+  **https://github.com/ETFalkmaar/besa-suite-/pull/N** → groene "Merge pull request" knop
+  ```
+  Niet vragen "mag ik mergen?"; user wil dit gewoon als output-format. Daarna direct door met volgende item.
+
+- **🚨 04-open-items.md anti-conflict regel** (2026-05-12): NIEUWE items NIET aan begin van een sectie stapelen. Items 1-27 staan in oude descending-stacking volgorde — die mogen blijven. Vanaf item 28: AAN EINDE van `04-open-items.md` toevoegen, **vóór** de `## Definitie van klaar`-sectie, in oplopende volgorde (28, 29, 30, ...). Elke PR die items toevoegt op dezelfde plek = guaranteed conflict. Append-at-end = (bijna) geen conflict.
+
 - **Pre-edit checklist** in beide regelbestanden doorlopen voordat een edit wordt afgesloten.
 
 Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevestiging vragen vóór ik afwijk.

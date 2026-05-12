@@ -288,6 +288,27 @@ Wanneer nieuwe BS2 data komt (bv. nieuwe medewerkers, beschikkingen):
 
 Stappen zijn herhaalbaar zonder data-verlies (alles idempotent + archive ipv delete).
 
+---
+
+## Nieuwe items — append-only sectie (vanaf item 28)
+
+> **Anti-conflict regel**: items 1-27 hierboven staan in oude descending-stacking volgorde. Vanaf item 28 worden NIEUWE items hier in oplopende volgorde geappend om merge-conflicten tussen parallelle PR's te voorkomen. Zie `CLAUDE.md` regel.
+
+### 28. Anti-conflict refactor voor 04-open-items.md (2026-05-12)
+
+**Status**: ✅ append-at-end pattern geïntroduceerd in `CLAUDE.md` + `.claude/werkpatronen.md` sectie 7.
+
+**Probleem (gespotted door user)**: elke PR voegde items toe aan begin van `## Tooling/deploy — operations`-sectie van `04-open-items.md` (descending stacking pattern: 27, 26, 25, ...). Twee parallelle PR's = beide raken regels rond hetzelfde punt = merge-conflict bij elke combinatie.
+
+**Oplossing**:
+- Items 1-27 blijven onaangetast op originele plek (geschiedenis)
+- Vanaf item 28: append AAN EINDE van dit bestand, vóór `## Definitie van klaar`-sectie, oplopende volgorde
+- Parallelle PR's voegen dan op verschillende regels toe → conflicten zeldzaam
+
+**Voor v2 indien veel parallelle PRs**: aparte file per item (`docs/phase4/open-items/<nn>-<slug>.md`) → zero-conflict. Niet nu nodig — append-at-end is voldoende voor huidige tempo.
+
+**Ook persisted in**: `feedback_besa_workflow.md` memory file + `CLAUDE.md` regel (overleeft sessie-compactie en nieuwe Claude-sessies).
+
 ## Definitie van klaar — wanneer Phase 5 nodig?
 
 Een Phase 5 is nodig als:
