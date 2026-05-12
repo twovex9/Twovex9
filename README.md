@@ -54,9 +54,12 @@ besa-suite-etf/
 ```powershell
 git clone https://github.com/ETFalkmaar/besa-suite-.git
 cd besa-suite-/besa-suite-etf
+
+# Verifieer alle tools aanwezig (~10 sec)
+pwsh -ExecutionPolicy Bypass -File scripts\setup-machine.ps1
 ```
 
-Geen install nodig (vanilla — geen `npm install`). Open `index.html` lokaal of via Vercel-preview.
+Het setup-script checkt git/node/npm/gh, git config, GitHub auth en remote URL. Geen install nodig voor app zelf (vanilla — `npm install` is alleen relevant voor build-script tijdens Vercel deploy). Open `index.html` lokaal of via Vercel-preview.
 
 ### 2. Lokaal draaien
 

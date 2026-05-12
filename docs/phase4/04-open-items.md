@@ -165,6 +165,17 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
 
+### 25. Dev-experience: feature-branch workflow + setup-script (2026-05-12)
+
+**Status**: ✅ workflow voor toekomstige sessies geformaliseerd + nieuwe-machine bootstrap.
+
+**Wijzigingen**:
+- `CLAUDE.md` + `.claude/werkpatronen.md` sectie 7: directe push naar `main` vervangen door feature-branch + PR workflow. Sandbox-block (Git Push to Default Branch) is hard-coded en niet overrijdbaar via `bypassPermissions`. User merget via GitHub UI.
+- `scripts/setup-machine.ps1`: PowerShell-script dat een nieuwe Windows-machine checkt op vereiste tools (git/node/npm/gh + optioneel python/psql), git config, GitHub auth, repo-state, en build smoke test. Print user-action checklist (Supabase/Vercel/BS2 login URLs).
+- `README.md` Quickstart bijgewerkt om setup-script aan te roepen.
+
+**Effect**: nieuwe ontwikkelaar of Claude-sessie kan in <10 min van schone Windows naar productieve dev-omgeving. Item 4.2 uit 06-professional-finish gesloten.
+
 ### 24. Backup-strategie gedocumenteerd (2026-05-12)
 
 **Status**: ✅ volledig restore/recovery-protocol vastgelegd in `docs/phase4/07-backup-strategie.md`.
