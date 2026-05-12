@@ -22,9 +22,24 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
 
 Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevestiging vragen vóór ik afwijk.
 
-## Actief project: BS2 → BS1 port
+## Actief project: BS2 → BS1 port — Phase 4 LOPEND
 
 We bouwen secties van **BESA-suite 2** na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
+
+### Phase status
+
+- ✅ Phase 1: BS2 globale inventaris (`docs/bs2-inventaris.md`)
+- ✅ Phase 2: 6 modules + 4 follow-ups (commits `5fa3a51`..`2e158ed`, `71951c9`)
+- ✅ Phase 3: 5092 records data-port via service_role Node-script (commits `a6b0bdd`..`eb22f2b`)
+- 🔄 **Phase 4 ACTIEF**: volledige BS2-parity finalization. Plan in `docs/phase4/00-plan.md`. **VOLG STRIKT — niet afwijken van de 6 fases (4A→4F).**
+
+### Phase 4 essentials (kort)
+
+**6 fases in volgorde**: 4A inventaris/gap-analyse → 4B data cleanup/FK-resolves → 4C UI bugs fixen → 4D ontbrekende features bouwen → 4E E2E test + test-data cleanup (user-confirm) → 4F eindrapport.
+
+**Hard rule**: bij destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen. Bij safety-policy blokkade: STOP + concrete escalatie-instructie naar user.
+
+**Bij hervatting na compactie**: eerst `docs/phase4/00-plan.md` herlezen, daarna de laatste `docs/phase4/0N-*.md` doc om te zien waar gestopt.
 
 ### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
 
