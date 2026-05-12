@@ -324,70 +324,101 @@ const mappers = {
   beschikkingen: {
     endpoint: "/api/dispositions",
     table: "beschikkingen",
-    map: r => ({
-      id: String(r.id),
-      client_id: r.client_id ? String(r.client_id) : (r.client?.id ? String(r.client.id) : null),
-      naam: trimOrNull(r.name) || trimOrNull(r.label) || nameOf(r.care_type) || `Beschikking ${r.id}`,
-      // FIX: zorgsoort_key NOT NULL — fallback "Onbekend"
-      zorgsoort_key: nameOf(r.care_type) || trimOrNull(r.care_type_id) || "Onbekend",
-      fase: nameOf(r.phase) || trimOrNull(r.status),
-      locatie: nameOf(r.location),
-      start_iso: dateOrNull(r.start_date),
-      eind_iso: dateOrNull(r.end_date),
-      decl_meth: trimOrNull(r.declaration_method),
-      tarief_eur: numOrNull(r.tariff),
-      tarief_eenheid: trimOrNull(r.tariff_unit),
-      betalings_status: trimOrNull(r.payment_status),
-      gearchiveerd: !!r.deleted_at,
-      data: {
-        bs2_id: r.id,
-        bs2_full: r,
-      },
-    }),
+    map: r => {
+      // BS1 check constraints + NOT NULL fallbacks
+      const tarUnitMap = { hourly: "uur", daily: "dag", weekly: "week", uur: "uur", dag: "dag", week: "week" };
+      const tarUnit = tarUnitMap[String(r.tariff_unit || "").toLowerCase()] || "uur";
+      const paymentRaw = String(r.payment_status || "").toLowerCase();
+      const betStatus = ["paid", "betaald"].includes(paymentRaw) ? "betaald" : "outstanding";
+      const declRaw = trimOrNull(r.declaration_method);
+      const declMeth = declRaw ? declRaw.toUpperCase() : "ONS";
+      const faseRaw = nameOf(r.phase) || trimOrNull(r.status) || "actief";
+      return {
+        id: String(r.id),
+        client_id: r.client_id ? String(r.client_id) : (r.client?.id ? String(r.client.id) : null),
+        naam: trimOrNull(r.name) || trimOrNull(r.label) || nameOf(r.care_type) || `Beschikking ${r.id}`,
+        zorgsoort_key: nameOf(r.care_type) || trimOrNull(r.care_type_id) || "Onbekend",
+        fase: faseRaw,
+        locatie: nameOf(r.location),
+        start_iso: dateOrNull(r.start_date),
+        eind_iso: dateOrNull(r.end_date),
+        decl_meth: declMeth,
+        tarief_eur: numOrNull(r.tariff) ?? 0,
+        tarief_eenheid: tarUnit,
+        betalings_status: betStatus,
+        te_declareren_lm: numOrNull(r.declarable_this_month) ?? 0,
+        nog_niet_gedeclareerd: numOrNull(r.not_yet_declared) ?? 0,
+        gedecl_gemeente_in_behandeling: numOrNull(r.declared_pending) ?? 0,
+        betaald_cumulatief: numOrNull(r.paid_cumulative) ?? 0,
+        gearchiveerd: !!r.deleted_at,
+        data: { bs2_id: r.id, bs2_full: r },
+      };
+    },
   },
   incidenten: {
     endpoint: "/api/incidents",
     table: "incidenten",
-    map: r => ({
-      id: r.id,
-      client_id: r.client_id || (r.client?.id ? String(r.client.id) : null),
-      categorie: nameOf(r.category),
-      status: trimOrNull(r.status) || "open",
-      melder_id: null,
-      beoordelaar_id: null,
-      locatie_id: r.location?.id || null,
-      incident_datum: tsOrNull(r.incident_date),
-      omschrijving: trimOrNull(r.description) || "Geen omschrijving",
-      genomen_maatregelen: trimOrNull(r.safety_measures) || "Geen maatregelen vermeld",
-      archived: !!r.deleted_at,
-      tijdstip_van_dag: trimOrNull(r.time_of_day),
-      is_buiten: !!r.outside_location,
-      actor_type: trimOrNull(Array.isArray(r.incident_actors) ? r.incident_actors[0] : r.incident_actors) || "alleen_client",
-      betrokken_partijen: r.incident_actors || [],
-      ouders_geinformeerd: !!r.parents_informed,
-      wil_gebeld_worden: !!r.wants_callback,
-      // FIX: NOT NULL fallback
-      impact_op_zorgverlener: trimOrNull(r.personal_impact) || "Niet opgegeven",
-      notificeer_team: !!r.notify_team,
-      notificeer_medewerker_ids: r.notify_employee_ids || [],
-    }),
+    map: r => {
+      // BS1 check constraints
+      const statusMap = {
+        pending: "in_afwachting", in_progress: "in_behandeling", resolved: "opgelost",
+        in_afwachting: "in_afwachting", in_behandeling: "in_behandeling", opgelost: "opgelost",
+      };
+      const status = statusMap[String(r.status || "").toLowerCase()] || "in_afwachting";
+
+      const todMap = {
+        early_morning: "vroege_ochtend", morning: "ochtend", midday: "middag",
+        afternoon: "middag", late_afternoon: "late_middag", evening: "avond", night: "nacht",
+        vroege_ochtend: "vroege_ochtend", ochtend: "ochtend", middag: "middag",
+        late_middag: "late_middag", avond: "avond", nacht: "nacht",
+      };
+      const todRaw = trimOrNull(r.time_of_day);
+      const tijdstip = todRaw ? (todMap[todRaw.toLowerCase()] || null) : null;
+
+      // actor_type alleen als exact in BS1 enum, anders NULL
+      const validActors = new Set(["alleen_client", "client_naar_client", "client_naar_medewerker", "medewerker_naar_client", "client_naar_overige"]);
+      const actorRaw = trimOrNull(Array.isArray(r.incident_actors) ? r.incident_actors[0] : r.incident_actors);
+      const actor = actorRaw && validActors.has(actorRaw.toLowerCase()) ? actorRaw.toLowerCase() : null;
+
+      return {
+        id: r.id,
+        client_id: r.client_id || (r.client?.id ? String(r.client.id) : null),
+        categorie: nameOf(r.category) || "Overig",
+        status: status,
+        melder_id: null,
+        beoordelaar_id: null,
+        locatie_id: r.location?.id || null,
+        incident_datum: tsOrNull(r.incident_date) || new Date().toISOString(),
+        omschrijving: trimOrNull(r.description) || "",
+        genomen_maatregelen: trimOrNull(r.safety_measures) || "",
+        archived: !!r.deleted_at,
+        tijdstip_van_dag: tijdstip,
+        is_buiten: !!r.outside_location,
+        actor_type: actor,
+        betrokken_partijen: Array.isArray(r.incident_actors) ? r.incident_actors : [],
+        ouders_geinformeerd: !!r.parents_informed,
+        wil_gebeld_worden: !!r.wants_callback,
+        impact_op_zorgverlener: trimOrNull(r.personal_impact) || "",
+        notificeer_team: !!r.notify_team,
+        notificeer_medewerker_ids: Array.isArray(r.notify_employee_ids) ? r.notify_employee_ids : [],
+      };
+    },
   },
   facturen: {
     endpoint: "/api/invoices",
     table: "facturen",
     map: r => ({
       id: String(r.id),
-      factuurnummer: trimOrNull(r.number),
-      // FIX: NOT NULL fallback voor beschikking_label
+      // FIX: NOT NULL fallbacks voor alle string-velden
+      factuurnummer: trimOrNull(r.number) || `BS2-${r.id}`,
       beschikking_label: nameOf(r.disposition) || nameOf(r.decision) || trimOrNull(r.disposition_label) || `Factuur ${r.number || r.id}`,
-      // FIX: string-only (geen [object Object])
-      client_label: nameOf(r.client),
+      client_label: nameOf(r.client) || nameOf(r.organization) || "Onbekend",
       client_id: r.client?.id ? String(r.client.id) : null,
       clientnummer: r.client?.client_number != null ? String(r.client.client_number) : null,
-      periode: trimOrNull(r.period),
-      betaling_text: trimOrNull(r.payment_status),
-      status: trimOrNull(r.status),
-      bedrag: numOrNull(r.total),
+      periode: trimOrNull(r.period) || "",
+      betaling_text: trimOrNull(r.payment_status) || "",
+      status: trimOrNull(r.status) || "",
+      bedrag: numOrNull(r.total) ?? 0,
       gearchiveerd: !!r.deleted_at,
       data: {
         bs2_id: r.id,
