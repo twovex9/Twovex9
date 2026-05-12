@@ -1,7 +1,9 @@
-# Item 36 — Final BS2 → BS1 data sync (PLANNED, niet uitgevoerd)
+# Item 36 — Final BS2 → BS1 data sync (POGING 1 FAALDE — zie item 38)
 
-**Datum**: 2026-05-12
-**Status**: ⏳ **Gepland — uit te voeren NA item 14 voltooid (Vragenlijsten-tab)**
+**Datum**: 2026-05-12 (status update na poging)
+**Status**: ⚠️ **Eerste poging mislukt 2026-05-12** — Bearer-only fetch werkt niet, BS2 vereist session-cookies. **Zie [item 38](38-bs2-sync-eerste-poging-bevindingen.md) voor nieuwe aanpak (JS-snippet in BS2 console).**
+
+**Originele intentie**: gepland — uit te voeren NA item 14 voltooid (Vragenlijsten-tab). ✅ item 14 gesloten 2026-05-12 → sync poging meteen daarna → gefaald → defer naar v2.
 **Gerelateerd**: items 1 (BS2 dispositions/invoices client_id gap), 3 (UUID-mapping), 4 (dedupe-onderzoek), 12 (Bearer-token workflow), Phase 3 + 4 data-port
 
 ## Waarom dit gepland en niet nu

@@ -37,7 +37,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 33 | [Cliënt-detail Betalingen-tab geïmplementeerd](33-betalingen-tab-implementatie.md) | ✅ Voltooid (1 van 4 placeholders) | 2026-05-12 |
 | 34 | [Cliënt-detail Contacten-tab geïmplementeerd](34-contacten-tab-implementatie.md) | ✅ Voltooid (2 van 4 placeholders) | 2026-05-12 |
 | 35 | [Cliënt-detail Rapportages-tab geïmplementeerd](35-rapportages-tab-implementatie.md) | ✅ Voltooid (3 van 4 placeholders) | 2026-05-12 |
-| **36** | **[Final BS2 → BS1 data sync — GEPLAND](36-final-bs2-data-sync.md)** | ⏳ **Trigger: na Vragenlijsten-tab merge** | 2026-05-12 |
+| 36 | [Final BS2 → BS1 data sync — POGING 1 GEFAALD](36-final-bs2-data-sync.md) | ⚠️ Bearer-only werkt niet, zie item 38 voor nieuwe aanpak | 2026-05-12 |
+| **38** | **[BS2 sync eerste poging: bevindingen + v2 aanpak](38-bs2-sync-eerste-poging-bevindingen.md)** | ⏳ **Defer naar v2 — gebruik JS-snippet in BS2 console** | 2026-05-12 |
 | 37 | [Cliënt-detail Vragenlijsten-tab geïmplementeerd](37-vragenlijsten-tab-implementatie.md) | ✅ Voltooid — **item 14 volledig gesloten** | 2026-05-12 |
 
 ## Voor v3
