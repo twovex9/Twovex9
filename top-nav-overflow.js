@@ -143,7 +143,7 @@
       Kilometers: "werkruimte.html#kilometers",
       Taken: "taken.html",
       Medewerkers: "index.html",
-      Verlof: "werkruimte.html#verlof",
+      Verlof: "verlof.html",
       Beleid: "beleid.html",
       Audit: "audit.html",
       Organisatie: "teams.html",
