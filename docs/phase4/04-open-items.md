@@ -173,6 +173,19 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Conclusie**: open-items #4 gesloten.
 
+### 24. Backup-strategie gedocumenteerd (2026-05-12)
+
+**Status**: ✅ volledig restore/recovery-protocol vastgelegd in `docs/phase4/07-backup-strategie.md`.
+
+**Dekking**: Supabase Postgres (auto + manueel pg_dump), Supabase Storage (Node script-template), Auth.users, schema/migrations, Vercel/GitHub. Plus 3 restore-scenarios + halfjaarlijkse test-restore protocol.
+
+**Direct te doen** (door admin, eenmalig 30 min):
+1. Verifieer Supabase backup-retention via dashboard
+2. Eerste manuele `pg_dump` als test
+3. DB-password in passwordmanager bewaren
+
+**Effort openblijvend**: scripts/backup-storage.mjs + scripts/export-supabase.mjs nog te schrijven indien gewenst (zie 07-backup-strategie.md sectie "Voor v2"). Item 4.4 uit 06-professional-finish gesloten.
+
 ## Toekomstige BS2 → BS1 refresh
 
 Wanneer nieuwe BS2 data komt (bv. nieuwe medewerkers, beschikkingen):
