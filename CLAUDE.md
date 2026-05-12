@@ -22,24 +22,28 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
 
 Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevestiging vragen vóór ik afwijk.
 
-## Actief project: BS2 → BS1 port — Phase 4 LOPEND
+## Actief project: BS2 → BS1 port — VOLTOOID
 
 We bouwen secties van **BESA-suite 2** na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
 
 ### Phase status
 
 - ✅ Phase 1: BS2 globale inventaris (`docs/bs2-inventaris.md`)
-- ✅ Phase 2: 6 modules + 4 follow-ups (commits `5fa3a51`..`2e158ed`, `71951c9`)
-- ✅ Phase 3: 5092 records data-port via service_role Node-script (commits `a6b0bdd`..`eb22f2b`)
-- 🔄 **Phase 4 ACTIEF**: volledige BS2-parity finalization. Plan in `docs/phase4/00-plan.md`. **VOLG STRIKT — niet afwijken van de 6 fases (4A→4F).**
+- ✅ Phase 2: 6 modules + 4 follow-ups (notification-bell, audit-modal, home-polish, notification-prefs M2M)
+- ✅ Phase 3: 5092 records data-port via `scripts/bs2-full-import.mjs` met service_role
+- ✅ Phase 4: BS2-parity finalization (FK-resolves, status-normalisatie, dedup). Eindrapport: `docs/phase4/99-final-success.md`
 
-### Phase 4 essentials (kort)
+### Live eindstand
 
-**6 fases in volgorde**: 4A inventaris/gap-analyse → 4B data cleanup/FK-resolves → 4C UI bugs fixen → 4D ontbrekende features bouwen → 4E E2E test + test-data cleanup (user-confirm) → 4F eindrapport.
+medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, planning 4461, incidenten 144, verzuim 14, locaties 10 actief, organisaties 90, incident_categorieën 13 actief.
 
-**Hard rule**: bij destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen. Bij safety-policy blokkade: STOP + concrete escalatie-instructie naar user.
+### Bij vervolgsessies
 
-**Bij hervatting na compactie**: eerst `docs/phase4/00-plan.md` herlezen, daarna de laatste `docs/phase4/0N-*.md` doc om te zien waar gestopt.
+1. Lees `docs/phase4/00-plan.md` (canonical plan)
+2. Lees `docs/phase4/99-final-success.md` (eindstand)
+3. Voor toekomstige BS2-data refresh: nieuwe export via `scripts/bs2-exports/`, run `node scripts/bs2-full-import.mjs` (idempotent) + `node scripts/bs2-fk-resolve.mjs`
+
+**Hard rule blijft gelden**: destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen.
 
 ### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
 
