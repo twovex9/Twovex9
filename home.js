@@ -88,6 +88,45 @@ function formatNlDateTime(value) {
   return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// Korte NL datum-format ("mei 11, 2026") voor news-card meta — BS2 stijl.
+function formatNlShortDate(value) {
+  if (!value) return "";
+  const t = Date.parse(String(value).trim());
+  if (!isFinite(t)) {
+    // Probeer legacy "dd-mm-yyyy hh:mm"
+    const m = /^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/.exec(String(value).trim());
+    if (m) {
+      const d2 = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      return formatNlShortDate(d2.toISOString());
+    }
+    return "";
+  }
+  const d = new Date(t);
+  const months = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// Initialen uit naam: "Donovan Austin" → "DA", "Tanja" → "TA", "Lionel Austin" → "LA".
+function getInitials(name) {
+  const s = String(name || "").trim();
+  if (!s) return "?";
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Deterministische kleur per auteur (HSL hue from string hash).
+function colorForName(name) {
+  const s = String(name || "");
+  let hash = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  return `hsl(${hue}, 55%, 45%)`;
+}
+
 function getVisibleNewsItems() {
   return readNewsItems()
     .filter((item) => item && item.archived !== true && item.status !== "Draft")
@@ -125,10 +164,29 @@ function createCard(item, onOpen) {
   preview.className = "home-news-card-preview";
   preview.textContent = stripHtmlToText(item.inhoud).slice(0, 120) || "Klik om het volledige bericht te openen.";
 
-  const dateLabel = formatNlDateTime(item.aanmaakdatum);
+  const auteurNaam = item.auteur || "HR team";
+  const dateLabel = formatNlShortDate(item.aanmaakdatum);
   const meta = document.createElement("div");
   meta.className = "home-news-card-meta";
-  meta.textContent = `${item.auteur || "HR team"}${dateLabel ? ` • ${dateLabel}` : ""}`;
+
+  const avatar = document.createElement("span");
+  avatar.className = "home-news-card-avatar";
+  avatar.textContent = getInitials(auteurNaam);
+  avatar.style.background = colorForName(auteurNaam);
+  avatar.setAttribute("aria-hidden", "true");
+
+  const authorEl = document.createElement("span");
+  authorEl.className = "home-news-card-author";
+  authorEl.textContent = auteurNaam;
+
+  meta.appendChild(avatar);
+  meta.appendChild(authorEl);
+  if (dateLabel) {
+    const dateEl = document.createElement("span");
+    dateEl.className = "home-news-card-date";
+    dateEl.textContent = dateLabel;
+    meta.appendChild(dateEl);
+  }
 
   body.append(title, preview, meta);
   card.appendChild(body);
@@ -157,7 +215,7 @@ function initNewsModal() {
   function open(item) {
     title.textContent = item.titel || "Nieuwsbericht";
     author.textContent = item.auteur || "HR team";
-    date.textContent = formatNlDateTime(item.aanmaakdatum);
+    date.textContent = formatNlShortDate(item.aanmaakdatum);
     content.innerHTML = item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>";
     if (item.image) {
       image.src = item.image;
