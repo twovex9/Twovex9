@@ -79,7 +79,7 @@
   }
 
   function renderRow(a) {
-    return '<tr>' +
+    return '<tr class="audit-row" data-audit-id="' + escapeHtml(a.id) + '" tabindex="0" role="button" aria-label="Open audit-detail">' +
       '<td style="white-space:nowrap;">' + escapeHtml(fmtTime(a.tijdstip)) + '</td>' +
       '<td>' + escapeHtml(a.gebruiker) + '</td>' +
       '<td>' + escapeHtml(a.resourceType) + '</td>' +
@@ -88,6 +88,100 @@
       '<td style="color:var(--text-secondary);">' + escapeHtml(a.details) + '</td>' +
       '<td>' + statusBadge(a.status) + '</td>' +
     '</tr>';
+  }
+
+  // --------------------------------------------------------------------------
+  // Audit detail modal — toont volledige info voor één event
+  // --------------------------------------------------------------------------
+  function buildDetailRow(label, valueHtml) {
+    return '<div class="audit-detail-row">'
+      + '<dt class="audit-detail-label">' + escapeHtml(label) + '</dt>'
+      + '<dd class="audit-detail-value">' + valueHtml + '</dd>'
+      + '</div>';
+  }
+
+  function renderDetailBody(a) {
+    if (!a) return '<p style="color:var(--text-muted);">Geen data.</p>';
+    var rows = '';
+    rows += buildDetailRow("Tijdstip", escapeHtml(fmtTime(a.tijdstip)) + ' <span style="color:var(--text-muted);font-size:12px;">(' + escapeHtml(a.tijdstip || "") + ')</span>');
+    rows += buildDetailRow("Gebruiker", escapeHtml(a.gebruiker || "—"));
+    rows += buildDetailRow("Resource", escapeHtml(a.resourceType || "—"));
+    rows += buildDetailRow("Resource ID", '<span style="font-family:monospace;font-size:12px;">' + escapeHtml(a.resourceId || "—") + '</span>');
+    rows += buildDetailRow("Actie", actieBadge(a.actieType));
+    rows += buildDetailRow("Status", statusBadge(a.status));
+    rows += buildDetailRow("Bron", escapeHtml(a.bron === "beschikking" ? "beschikking_audit_log (legacy)" : "audit_log (generic)"));
+
+    var detailsRaw = a.details || "";
+    var detailsHtml;
+    try {
+      var parsed = JSON.parse(detailsRaw);
+      detailsHtml = '<pre class="audit-detail-pre">' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</pre>';
+    } catch (e) {
+      detailsHtml = detailsRaw
+        ? '<pre class="audit-detail-pre">' + escapeHtml(detailsRaw) + '</pre>'
+        : '<span style="color:var(--text-muted);">— geen details —</span>';
+    }
+    rows += buildDetailRow("Details", detailsHtml);
+
+    if (a.ipAdres) rows += buildDetailRow("IP-adres", '<span style="font-family:monospace;font-size:12px;">' + escapeHtml(a.ipAdres) + '</span>');
+    if (a.userAgent) rows += buildDetailRow("User-agent", '<span style="font-family:monospace;font-size:12px;word-break:break-all;">' + escapeHtml(a.userAgent) + '</span>');
+
+    return '<dl class="audit-detail-dl">' + rows + '</dl>';
+  }
+
+  function openDetailModal(auditId) {
+    var items = (window.auditDB && window.auditDB.getAllSync()) || [];
+    var entry = items.find(function (x) { return x && String(x.id) === String(auditId); });
+    var overlay = document.getElementById("audit-detail-overlay");
+    var body = document.getElementById("audit-detail-body");
+    var title = document.getElementById("audit-detail-title");
+    if (!overlay || !body) return;
+    if (entry && title) {
+      title.textContent = (entry.resourceType || "Audit-event") + (entry.actieType ? " — " + entry.actieType : "");
+    }
+    body.innerHTML = renderDetailBody(entry);
+    overlay.hidden = false;
+    overlay.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDetailModal() {
+    var overlay = document.getElementById("audit-detail-overlay");
+    if (!overlay) return;
+    overlay.hidden = true;
+    overlay.classList.remove("is-open");
+    document.body.style.overflow = "";
+  }
+
+  function wireDetailModal() {
+    var overlay = document.getElementById("audit-detail-overlay");
+    var closeBtn = document.getElementById("audit-detail-close");
+    if (closeBtn) closeBtn.addEventListener("click", closeDetailModal);
+    if (overlay) {
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeDetailModal();
+      });
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && overlay && !overlay.hidden) closeDetailModal();
+    });
+
+    var tbody = document.getElementById("audit-tbody");
+    if (!tbody) return;
+    tbody.addEventListener("click", function (e) {
+      var row = e.target.closest("tr.audit-row");
+      if (!row) return;
+      var id = row.getAttribute("data-audit-id");
+      if (id) openDetailModal(id);
+    });
+    tbody.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      var row = e.target.closest("tr.audit-row");
+      if (!row) return;
+      e.preventDefault();
+      var id = row.getAttribute("data-audit-id");
+      if (id) openDetailModal(id);
+    });
   }
 
   function render() {
@@ -137,6 +231,7 @@
   function init() {
     if (!window.auditDB) { console.error("[audit] auditDB niet geladen"); return; }
     wireEvents();
+    wireDetailModal();
     render();
     window.auditDB.ready.then(render);
   }

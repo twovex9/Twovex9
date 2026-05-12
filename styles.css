@@ -18541,3 +18541,71 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   margin-right: 4px;
 }
 
+/* ==========================================================================
+   Audit detail modal — Block 12 follow-up (Phase 2)
+   Rij in audit.html is klikbaar → modal toont volledige info per event
+   ========================================================================== */
+.audit-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.audit-row:hover {
+  background: var(--blue-soft, rgba(37, 99, 235, 0.06));
+}
+.audit-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.audit-detail-modal {
+  max-width: 720px;
+  width: 100%;
+}
+
+.audit-detail-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) 1fr;
+  gap: 12px 16px;
+  margin: 0;
+  padding: 0;
+}
+.audit-detail-row {
+  display: contents;
+}
+.audit-detail-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+  align-self: start;
+  margin: 0;
+}
+.audit-detail-value {
+  color: var(--text);
+  font-size: var(--font-base);
+  margin: 0;
+  word-break: break-word;
+}
+.audit-detail-pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--line);
+  border-radius: var(--r-sm);
+  font-family: ui-monospace, "Cascadia Mono", Menlo, monospace;
+  font-size: 12px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+  overflow: auto;
+}
+
+@media (max-width: 640px) {
+  .audit-detail-dl {
+    grid-template-columns: 1fr;
+    gap: 4px 0;
+  }
+  .audit-detail-label {
+    margin-top: 8px;
+  }
+}
+

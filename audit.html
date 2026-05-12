@@ -183,6 +183,19 @@
     </main>
   </div>
 
+  <!-- Audit detail modal: klik op een rij → volledige info -->
+  <div class="modal-overlay" id="audit-detail-overlay" hidden>
+    <div class="modal-card audit-detail-modal" role="dialog" aria-modal="true" aria-labelledby="audit-detail-title">
+      <div class="modal-header">
+        <h2 id="audit-detail-title">Audit-event</h2>
+        <button type="button" class="modal-close" id="audit-detail-close" aria-label="Sluiten">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="audit-detail-body"></div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
