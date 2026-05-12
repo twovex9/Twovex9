@@ -481,7 +481,109 @@
         btn.setAttribute("tabindex", "-1");
       }
     });
+    // Lazy load tab content when activated
+    if (k === "p") renderBetalingen();
   }
+
+  /**
+   * Render Betalingen-tab: lijst alle facturen die aan deze cliënt zijn gekoppeld
+   * (via facturen.client_id of cliënt-clientnummer match). Toont samenvatting +
+   * tabel. Reageert ook op `besa:facturen-updated` event voor live-refresh.
+   */
+  function renderBetalingen() {
+    var tbody = document.getElementById("cd-bet-tbody");
+    var empty = document.getElementById("cd-bet-empty");
+    var summary = document.getElementById("cd-bet-summary");
+    if (!tbody || !empty || !summary) return;
+
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var all = (window.facturenDB && typeof window.facturenDB.getAllSync === "function")
+      ? window.facturenDB.getAllSync()
+      : [];
+
+    // Filter: client_id match óf clientnummer match (BS2-records hebben soms alleen nummer)
+    var clNr = cl.clientnummer ? String(cl.clientnummer) : null;
+    var rows = all.filter(function (f) {
+      if (!f || f.archived) return false;
+      if (f.clientId && f.clientId === cl.id) return true;
+      if (clNr && f.nr && String(f.nr) === clNr) return true;
+      return false;
+    });
+
+    // Sorteer op periode descending (nieuwste eerst)
+    rows.sort(function (a, b) {
+      var pa = String(a.per || "");
+      var pb = String(b.per || "");
+      return pa < pb ? 1 : pa > pb ? -1 : 0;
+    });
+
+    // Tabel render
+    tbody.innerHTML = "";
+    rows.forEach(function (f) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td data-col="factuurnr">' + escapeHtml(f.fn || "—") + '</td>' +
+        '<td data-col="periode">' + escapeHtml(f.per || "—") + '</td>' +
+        '<td data-col="beschikking">' + escapeHtml(f.besch || "—") + '</td>' +
+        '<td data-col="bedrag">' + escapeHtml(f.bedr || "€ 0,00") + '</td>' +
+        '<td data-col="status">' + statusBadge(f.st) + '</td>';
+      tbody.appendChild(tr);
+    });
+
+    // Empty state
+    empty.hidden = rows.length > 0;
+    summary.hidden = rows.length === 0;
+
+    // Summary stats
+    var totalSum = 0;
+    var paidCount = 0;
+    var openCount = 0;
+    rows.forEach(function (f) {
+      totalSum += f.bedragNum || 0;
+      var stLow = String(f.st || "").toLowerCase();
+      if (stLow.indexOf("betaald") >= 0) paidCount++;
+      else openCount++;
+    });
+    var cnt = document.getElementById("cd-bet-sum-count");
+    var tot = document.getElementById("cd-bet-sum-total");
+    var pai = document.getElementById("cd-bet-sum-paid");
+    var opn = document.getElementById("cd-bet-sum-open");
+    if (cnt) cnt.textContent = String(rows.length);
+    if (tot) tot.textContent = formatBedragNL(totalSum);
+    if (pai) pai.textContent = String(paidCount);
+    if (opn) opn.textContent = String(openCount);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function statusBadge(st) {
+    var s = String(st || "").trim();
+    var low = s.toLowerCase();
+    var cls = "cd-besc-stat";
+    if (low.indexOf("betaald") >= 0) cls += " cd-besc-stat--betaald";
+    else if (low.indexOf("declar") >= 0 || low.indexOf("ingediend") >= 0) cls += " cd-besc-stat--gedeclareerd";
+    else if (low.indexOf("concept") >= 0 || low.indexOf("open") >= 0) cls += " cd-besc-stat--concept";
+    return '<span class="' + cls + '">' + escapeHtml(s || "—") + '</span>';
+  }
+
+  function formatBedragNL(n) {
+    var v = Number(n) || 0;
+    return "€ " + v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  // Live-refresh wanneer facturen-data verandert
+  window.addEventListener("besa:facturen-updated", function () {
+    // Alleen renderen als de Betalingen-tab actief is (vermijd onnodig werk)
+    var panP = document.getElementById("cd-pan-p");
+    if (panP && !panP.hidden) renderBetalingen();
+  });
+
   setTab("d");
   document.querySelectorAll(".client-detail-tab").forEach(function (btn) {
     btn.addEventListener("click", function () {

@@ -539,8 +539,41 @@
             </section>
             <section class="client-detail-pan" id="cd-pan-p" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Betalingen</h3>
-              <p class="client-detail-placeholder">Hier kunnen straks <strong>betalingen</strong> of factuurstromen zichtbaar gemaakt worden. Import en koppeling volgen.</p>
-              <div class="client-detail-empty-list">Geen betalingsgegevens vastgelegd.</div>
+              <div class="cd-bet-summary" id="cd-bet-summary" hidden>
+                <div class="cd-bet-sum-stat">
+                  <span class="cd-bet-sum-lab">Aantal facturen</span>
+                  <span class="cd-bet-sum-val" id="cd-bet-sum-count">0</span>
+                </div>
+                <div class="cd-bet-sum-stat">
+                  <span class="cd-bet-sum-lab">Totaal bedrag</span>
+                  <span class="cd-bet-sum-val" id="cd-bet-sum-total">€ 0,00</span>
+                </div>
+                <div class="cd-bet-sum-stat">
+                  <span class="cd-bet-sum-lab">Betaald</span>
+                  <span class="cd-bet-sum-val" id="cd-bet-sum-paid">0</span>
+                </div>
+                <div class="cd-bet-sum-stat">
+                  <span class="cd-bet-sum-lab">Openstaand</span>
+                  <span class="cd-bet-sum-val" id="cd-bet-sum-open">0</span>
+                </div>
+              </div>
+              <div class="table-card cd-bet-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="factuurnr">Factuurnummer</th>
+                        <th data-col="periode">Periode</th>
+                        <th data-col="beschikking">Beschikking</th>
+                        <th data-col="bedrag">Bedrag</th>
+                        <th data-col="status">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-bet-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-bet-empty" hidden>Geen facturen gekoppeld aan deze cliënt.</div>
+              </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-c" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Contacten</h3>
@@ -991,6 +1024,7 @@
   <script src="organisatie-data.js" defer></script>
   <script src="beschikkingen-besc-bulk.js" defer></script>
   <script src="beschikkingen-data.js" defer></script>
+  <script src="facturen-data.js" defer></script>
   <script src="client-detail.js" defer></script>
 </body>
 </html>

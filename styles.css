@@ -18677,3 +18677,46 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   }
 }
 
+/* Cliënt-detail Betalingen-tab — summary stats + tabel */
+.cd-bet-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cd-bet-sum-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.cd-bet-sum-lab {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cd-bet-sum-val {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cd-bet-table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .cd-bet-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
