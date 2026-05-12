@@ -471,8 +471,23 @@ Claude's sandbox blokkeert direct push naar `main` (Git Push to Default Branch b
    ```bash
    gh pr create --base main --head feature/<duidelijke-naam> --title "..." --body "..."
    ```
-5. **PR-URL aan user geven** — user klikt "Merge pull request" op GitHub
+5. **PR-URL aan user geven** in dit format (VERPLICHT):
+   ```
+   ## Klik om te mergen
+   **https://github.com/ETFalkmaar/besa-suite-/pull/N** → groene "Merge pull request" knop
+   ```
+   Niet vragen "mag ik mergen?"; user heeft op 2026-05-12 expliciet gezegd dat dit het standaard-format moet zijn ("geef me gewoon zoals nu gemakkelijk die link en dan klik ik op merge"). Daarna direct door met volgende item.
 6. Vercel deployed automatisch na merge
+
+**🚨 Anti-conflict regel voor `docs/phase4/04-open-items.md`** (2026-05-12, structurele fix):
+
+Het bestand kreeg bij élke PR een merge-conflict omdat ik items steeds aan BEGIN van dezelfde sectie stapelde (descending order). Twee parallelle PRs raken dan altijd dezelfde regels.
+
+**Vanaf nu**: NIEUWE items AAN EINDE van het bestand toevoegen (vóór `## Definitie van klaar`-sectie), in **oplopende** nummering (item 28, 29, 30, ...). Append-at-end → geen overlap → (bijna) geen conflict.
+
+Bestaande items 1-27 in oude descending-stacking volgorde mogen blijven staan (geschiedenis, niet meer aanraken). Nieuwe items KOMEN NIET MEER TUSSEN bestaande in.
+
+Voor v2 indien veel parallelle PRs: aparte file per item (`docs/phase4/open-items/<nn>-<slug>.md`) → zero-conflict.
 
 **Bij merge-conflict**:
 ```bash
