@@ -483,6 +483,7 @@
     });
     // Lazy load tab content when activated
     if (k === "p") renderBetalingen();
+    if (k === "c") renderContacten();
   }
 
   /**
@@ -582,6 +583,186 @@
     // Alleen renderen als de Betalingen-tab actief is (vermijd onnodig werk)
     var panP = document.getElementById("cd-pan-p");
     if (panP && !panP.hidden) renderBetalingen();
+  });
+
+  // ============================================================
+  // CONTACTEN-tab: render + CRUD via clientContactenDB
+  // ============================================================
+
+  function renderContacten() {
+    var tbody = document.getElementById("cd-cont-tbody");
+    var empty = document.getElementById("cd-cont-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var rows = (window.clientContactenDB && typeof window.clientContactenDB.getForClientSync === "function")
+      ? window.clientContactenDB.getForClientSync(cl.id).filter(function (r) { return r && !r.archived; })
+      : [];
+
+    // Sort: primair first, dan naam asc
+    rows.sort(function (a, b) {
+      if (!!a.isPrimair !== !!b.isPrimair) return a.isPrimair ? -1 : 1;
+      return String(a.naam || "").localeCompare(String(b.naam || ""), "nl");
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-id", r.id);
+      var tel = r.telefoon
+        ? '<a href="tel:' + escapeAttr(r.telefoon) + '">' + escapeHtml(r.telefoon) + '</a>'
+        : "—";
+      var em = r.email
+        ? '<a href="mailto:' + escapeAttr(r.email) + '">' + escapeHtml(r.email) + '</a>'
+        : "—";
+      var primairBadge = r.isPrimair
+        ? '<span class="cd-cont-primair-badge" title="Primair contact">Primair</span>'
+        : "";
+      tr.innerHTML =
+        '<td data-col="naam">' + escapeHtml(r.naam || "—") + '</td>' +
+        '<td data-col="relatie">' + escapeHtml(r.relatie || "—") + '</td>' +
+        '<td data-col="telefoon">' + tel + '</td>' +
+        '<td data-col="email">' + em + '</td>' +
+        '<td data-col="primair" class="cd-cont-primair-cell">' + primairBadge + '</td>' +
+        '<td data-col="acties" class="cd-cont-actions-cell">' +
+          '<button type="button" class="btn-outline cd-cont-edit-btn" data-id="' + r.id + '" aria-label="Bewerken">Bewerken</button>' +
+          '<button type="button" class="employee-delete-btn cd-cont-archive-btn" data-id="' + r.id + '" aria-label="Archiveren">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+            '</svg>' +
+          '</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    empty.hidden = rows.length > 0;
+  }
+
+  function escapeAttr(s) {
+    return String(s == null ? "" : s).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // Modal controls
+  var contModal = document.getElementById("cd-cont-modal");
+  var contForm = document.getElementById("cd-cont-form");
+  var contTitle = document.getElementById("cd-cont-modal-title");
+  var contFId = document.getElementById("cd-cont-f-id");
+  var contFNaam = document.getElementById("cd-cont-f-naam");
+  var contFRelatie = document.getElementById("cd-cont-f-relatie");
+  var contFTel = document.getElementById("cd-cont-f-tel");
+  var contFEmail = document.getElementById("cd-cont-f-email");
+  var contFNotitie = document.getElementById("cd-cont-f-notitie");
+  var contFPrimair = document.getElementById("cd-cont-f-primair");
+
+  function openContactModal(rec) {
+    if (!contModal) return;
+    if (rec && rec.id) {
+      if (contTitle) contTitle.textContent = "Contact bewerken";
+      contFId.value = rec.id;
+      contFNaam.value = rec.naam || "";
+      contFRelatie.value = rec.relatie || "";
+      contFTel.value = rec.telefoon || "";
+      contFEmail.value = rec.email || "";
+      contFNotitie.value = rec.notitie || "";
+      contFPrimair.checked = !!rec.isPrimair;
+    } else {
+      if (contTitle) contTitle.textContent = "Contact toevoegen";
+      contForm.reset();
+      contFId.value = "";
+    }
+    contModal.hidden = false;
+    contModal.setAttribute("aria-hidden", "false");
+    try { contFNaam.focus(); } catch (e) { /* */ }
+  }
+  function closeContactModal() {
+    if (!contModal) return;
+    contModal.hidden = true;
+    contModal.setAttribute("aria-hidden", "true");
+  }
+
+  async function saveContactFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var naam = (contFNaam.value || "").trim();
+    if (!naam) {
+      try { contFNaam.focus(); } catch (e) { /* */ }
+      return;
+    }
+    var rec = {
+      clientId: cl.id,
+      naam: naam,
+      relatie: (contFRelatie.value || "").trim(),
+      telefoon: (contFTel.value || "").trim(),
+      email: (contFEmail.value || "").trim(),
+      notitie: (contFNotitie.value || "").trim(),
+      isPrimair: !!contFPrimair.checked,
+    };
+    try {
+      var id = contFId.value;
+      if (id) {
+        await window.clientContactenDB.update(id, rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Contact");
+      } else {
+        await window.clientContactenDB.add(rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Contact toegevoegd");
+      }
+      closeContactModal();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // Event wiring
+  document.getElementById("cd-cont-add-btn")?.addEventListener("click", function () {
+    openContactModal(null);
+  });
+  document.getElementById("cd-cont-modal-close")?.addEventListener("click", closeContactModal);
+  document.getElementById("cd-cont-cancel-btn")?.addEventListener("click", closeContactModal);
+  document.getElementById("cd-cont-save-btn")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    saveContactFromForm();
+  });
+  if (contForm) {
+    contForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      saveContactFromForm();
+    });
+  }
+  if (contModal) {
+    contModal.addEventListener("click", function (e) {
+      if (e.target === contModal) closeContactModal();
+    });
+  }
+
+  // Row-actions (edit / archive) via event delegation op tbody
+  document.getElementById("cd-cont-tbody")?.addEventListener("click", async function (e) {
+    var editBtn = e.target.closest(".cd-cont-edit-btn");
+    var arcBtn = e.target.closest(".cd-cont-archive-btn");
+    if (editBtn) {
+      var id = editBtn.getAttribute("data-id");
+      var rec = window.clientContactenDB && window.clientContactenDB.getByIdSync(id);
+      if (rec) openContactModal(rec);
+      return;
+    }
+    if (arcBtn) {
+      var aid = arcBtn.getAttribute("data-id");
+      var rec2 = window.clientContactenDB && window.clientContactenDB.getByIdSync(aid);
+      if (!rec2) return;
+      try {
+        var ok = await window.showArchiveConfirm({ preview: rec2.naam || "Contact" });
+        if (!ok) return;
+        await window.clientContactenDB.archive(aid);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Contact");
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+
+  // Live-refresh wanneer contacten-data verandert
+  window.addEventListener("besa:client-contacten-updated", function () {
+    var panC = document.getElementById("cd-pan-c");
+    if (panC && !panC.hidden) renderContacten();
   });
 
   setTab("d");

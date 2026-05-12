@@ -576,12 +576,73 @@
               </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-c" role="tabpanel" aria-hidden="true" hidden>
-              <h3 class="client-detail-pan-h">Contacten</h3>
-              <p class="client-detail-placeholder">Contactpersonen, netwerk en verwijzers komen hier. Vul later aan of koppel met een agenda.</p>
-              <ul class="client-detail-ul">
-                <li>Primair: —</li>
-                <li>Overig: —</li>
-              </ul>
+              <div class="cd-cont-head">
+                <h3 class="client-detail-pan-h">Contacten</h3>
+                <button type="button" class="btn-primary cd-cont-add-btn" id="cd-cont-add-btn">+ Contact toevoegen</button>
+              </div>
+              <div class="table-card cd-cont-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="naam">Naam</th>
+                        <th data-col="relatie">Relatie</th>
+                        <th data-col="telefoon">Telefoon</th>
+                        <th data-col="email">E-mail</th>
+                        <th data-col="primair" class="cd-cont-primair-th" aria-label="Primair contact"></th>
+                        <th data-col="acties" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-cont-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-cont-empty" hidden>Geen contacten vastgelegd. Klik op "+ Contact toevoegen" om er één toe te voegen.</div>
+              </div>
+
+              <!-- Modal: nieuw / bewerk contact -->
+              <div class="modal-overlay" id="cd-cont-modal" aria-hidden="true" hidden>
+                <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-cont-modal-title">Contact toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-cont-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-cont-form" novalidate>
+                    <input type="hidden" id="cd-cont-f-id" />
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cont-f-naam">Naam *</label>
+                      <input class="modal-input" id="cd-cont-f-naam" type="text" required autocomplete="off" />
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cont-f-relatie">Relatie</label>
+                      <input class="modal-input" id="cd-cont-f-relatie" type="text" placeholder="Bijv. Ouder, Voogd, Verwijzer, Werkgever" autocomplete="off" />
+                    </div>
+                    <div class="modal-field cd-cont-f-row">
+                      <div class="modal-field cd-cont-f-half">
+                        <label class="modal-label" for="cd-cont-f-tel">Telefoon</label>
+                        <input class="modal-input" id="cd-cont-f-tel" type="tel" autocomplete="off" />
+                      </div>
+                      <div class="modal-field cd-cont-f-half">
+                        <label class="modal-label" for="cd-cont-f-email">E-mail</label>
+                        <input class="modal-input" id="cd-cont-f-email" type="email" autocomplete="off" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cont-f-notitie">Notitie</label>
+                      <textarea class="modal-input" id="cd-cont-f-notitie" rows="2"></textarea>
+                    </div>
+                    <div class="modal-field cd-cont-f-primair-wrap">
+                      <label class="cd-cont-f-primair-lab">
+                        <input type="checkbox" id="cd-cont-f-primair" />
+                        <span>Primair contact</span>
+                      </label>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-cont-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-cont-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-n" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Notities</h3>
@@ -1025,6 +1086,7 @@
   <script src="beschikkingen-besc-bulk.js" defer></script>
   <script src="beschikkingen-data.js" defer></script>
   <script src="facturen-data.js" defer></script>
+  <script src="client-contacten-data.js" defer></script>
   <script src="client-detail.js" defer></script>
 </body>
 </html>
