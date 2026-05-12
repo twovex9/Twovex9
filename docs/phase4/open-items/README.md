@@ -40,6 +40,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 36 | [Final BS2 → BS1 data sync — POGING 1 GEFAALD](36-final-bs2-data-sync.md) | ⚠️ Bearer-only werkt niet, zie item 38 voor nieuwe aanpak | 2026-05-12 |
 | **38** | **[BS2 sync eerste poging: bevindingen + v2 aanpak](38-bs2-sync-eerste-poging-bevindingen.md)** | ⏳ **Defer naar v2 — gebruik JS-snippet in BS2 console** | 2026-05-12 |
 | 39 | [RLS-policies security audit (rapport)](39-rls-audit.md) | ✅ Voltooid — audit rapport + v2 hardening aanbevelingen | 2026-05-12 |
+| 40 | [GDPR Art. 9 compliance verzuim](40-gdpr-art-9-verzuim.md) | ✅ Compliance rapport + v2 actieplan + quick-wins (DPA tekenen) | 2026-05-13 |
 | 37 | [Cliënt-detail Vragenlijsten-tab geïmplementeerd](37-vragenlijsten-tab-implementatie.md) | ✅ Voltooid — **item 14 volledig gesloten** | 2026-05-12 |
 
 ## Voor v3
