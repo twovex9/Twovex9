@@ -144,7 +144,7 @@
       Taken: "werkruimte.html#taken",
       Medewerkers: "index.html",
       Verlof: "werkruimte.html#verlof",
-      Beleid: "werkruimte.html#beleid",
+      Beleid: "beleid.html",
       Audit: "werkruimte.html#audit",
       Organisatie: "werkruimte.html#organisatie",
       Instellingen: "werkruimte.html#instellingen",
