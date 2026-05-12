@@ -109,6 +109,7 @@
       <div class="toolbar">
         <div class="filter-chips" role="tablist" aria-label="Instellingen tabs">
           <button type="button" class="filter-chip filter-chip--active" role="tab" id="inst-tab-profiel" aria-selected="true">Mijn profiel</button>
+          <button type="button" class="filter-chip" role="tab" id="inst-tab-mijn-notificaties" aria-selected="false">Mijn notificaties</button>
           <button type="button" class="filter-chip" role="tab" id="inst-tab-notificaties" aria-selected="false">Notificatietypes</button>
         </div>
       </div>
@@ -141,6 +142,17 @@
             <span id="inst-profiel-feedback" style="margin-left:12px;color:var(--green);font-size:14px;"></span>
           </div>
         </form>
+      </section>
+
+      <!-- Tab: Mijn notificaties (per-user opt-in/opt-out per type) -->
+      <section id="inst-panel-mijn-notificaties" class="table-card" style="display:none;padding:24px;">
+        <h2 style="margin-top:0;">Mijn notificaties</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">
+          Zet hier per notificatie-type aan of uit of je een melding wilt ontvangen.
+          De default-stand komt van het systeem; jouw keuze overschrijft die default.
+        </p>
+        <div id="inst-mn-list" class="inst-mn-list"></div>
+        <p id="inst-mn-empty" style="display:none;color:var(--text-muted);">Er zijn nog geen notificatietypes gedefinieerd.</p>
       </section>
 
       <!-- Tab: Notificatietypes -->
@@ -229,6 +241,7 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="notification-types-data.js"></script>
+  <script src="profile-notification-prefs-data.js"></script>
   <script src="instellingen.js"></script>
 </body>
 </html>

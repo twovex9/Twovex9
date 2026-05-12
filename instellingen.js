@@ -29,13 +29,22 @@
 
   function setTab(name) {
     state.activeTab = name;
-    document.getElementById("inst-tab-profiel").classList.toggle("filter-chip--active", name === "profiel");
-    document.getElementById("inst-tab-notificaties").classList.toggle("filter-chip--active", name === "notificaties");
-    document.getElementById("inst-tab-profiel").setAttribute("aria-selected", name === "profiel" ? "true" : "false");
-    document.getElementById("inst-tab-notificaties").setAttribute("aria-selected", name === "notificaties" ? "true" : "false");
-    document.getElementById("inst-panel-profiel").style.display = name === "profiel" ? "" : "none";
-    document.getElementById("inst-panel-notificaties").style.display = name === "notificaties" ? "" : "none";
+    var tabs = [
+      { btn: "inst-tab-profiel", panel: "inst-panel-profiel", key: "profiel" },
+      { btn: "inst-tab-mijn-notificaties", panel: "inst-panel-mijn-notificaties", key: "mijn-notificaties" },
+      { btn: "inst-tab-notificaties", panel: "inst-panel-notificaties", key: "notificaties" },
+    ];
+    tabs.forEach(function (t) {
+      var btn = document.getElementById(t.btn);
+      var panel = document.getElementById(t.panel);
+      if (!btn || !panel) return;
+      var active = (t.key === name);
+      btn.classList.toggle("filter-chip--active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+      panel.style.display = active ? "" : "none";
+    });
     if (name === "notificaties") renderNt();
+    else if (name === "mijn-notificaties") renderMijnNotificaties();
   }
 
   // ---------------------------------------------------------------------------
@@ -85,6 +94,75 @@
     } finally {
       btn.disabled = false;
       setTimeout(function () { fb.textContent = ""; }, 4000);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab: Mijn notificaties (M2M profile_notification_preferences)
+  // ---------------------------------------------------------------------------
+
+  function getCurrentProfileId() {
+    if (window.profilesDB && window.profilesDB.getCurrentSync) {
+      try {
+        var p = window.profilesDB.getCurrentSync();
+        if (p && p.id) return p.id;
+      } catch (e) { /* */ }
+    }
+    return null;
+  }
+
+  function renderMijnNotificaties() {
+    var list = document.getElementById("inst-mn-list");
+    var empty = document.getElementById("inst-mn-empty");
+    if (!list) return;
+    var profileId = getCurrentProfileId();
+    var types = (window.notificationTypesDB && window.notificationTypesDB.getAllSync()) || [];
+    types = types.filter(function (t) { return t && !t.archived; });
+    types.sort(function (a, b) { return String(a.naam || "").localeCompare(String(b.naam || "")); });
+
+    if (!types.length) {
+      list.innerHTML = "";
+      if (empty) empty.style.display = "";
+      return;
+    }
+    if (empty) empty.style.display = "none";
+
+    list.innerHTML = types.map(function (t) {
+      var effective = window.profileNotificationPrefsDB
+        ? window.profileNotificationPrefsDB.getEffective(profileId, t.id, t.defaultAan)
+        : t.defaultAan;
+      var kanaalLabel = ({ in_app: "In-app", email: "E-mail", sms: "SMS", push: "Push" })[t.kanaal] || t.kanaal || "";
+      return ''
+        + '<div class="inst-mn-row" data-type-id="' + escapeHtml(t.id) + '">'
+        + '  <div class="inst-mn-info">'
+        + '    <div class="inst-mn-name">' + escapeHtml(t.naam) + '</div>'
+        + '    <div class="inst-mn-meta">'
+        +        '<span class="inst-mn-kanaal">' + escapeHtml(kanaalLabel) + '</span>'
+        + (t.beschrijving ? ' <span class="inst-mn-sep">·</span> <span class="inst-mn-desc">' + escapeHtml(t.beschrijving) + '</span>' : '')
+        + '    </div>'
+        + '  </div>'
+        + '  <label class="switch" title="Notificatie ' + (effective ? 'uitzetten' : 'aanzetten') + '">'
+        + '    <input type="checkbox" data-action="toggle-pref" data-type-id="' + escapeHtml(t.id) + '" ' + (effective ? 'checked' : '') + ' />'
+        + '    <span class="switch-slider"></span>'
+        + '  </label>'
+        + '</div>';
+    }).join("");
+  }
+
+  async function toggleNotifPref(typeId, enabled) {
+    var profileId = getCurrentProfileId();
+    if (!profileId) {
+      if (window.showError) window.showError("Geen actief profiel — log opnieuw in.");
+      return;
+    }
+    if (!window.profileNotificationPrefsDB) return;
+    try {
+      await window.profileNotificationPrefsDB.setEnabled(profileId, typeId, !!enabled);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Voorkeur opgeslagen");
+    } catch (err) {
+      if (window.showError) window.showError("Voorkeur opslaan mislukt: " + (err && err.message || err));
+      // Re-render om de toggle terug te zetten naar de echte waarde
+      renderMijnNotificaties();
     }
   }
 
@@ -185,7 +263,20 @@
 
   function wireEvents() {
     document.getElementById("inst-tab-profiel").addEventListener("click", function () { setTab("profiel"); });
+    var tabMijnNotif = document.getElementById("inst-tab-mijn-notificaties");
+    if (tabMijnNotif) tabMijnNotif.addEventListener("click", function () { setTab("mijn-notificaties"); });
     document.getElementById("inst-tab-notificaties").addEventListener("click", function () { setTab("notificaties"); });
+
+    // Mijn notificaties: toggle handler (delegated)
+    var mnList = document.getElementById("inst-mn-list");
+    if (mnList) {
+      mnList.addEventListener("change", function (e) {
+        var input = e.target;
+        if (!input || input.getAttribute("data-action") !== "toggle-pref") return;
+        var typeId = input.getAttribute("data-type-id");
+        toggleNotifPref(typeId, input.checked);
+      });
+    }
 
     document.getElementById("inst-profiel-form").addEventListener("submit", submitProfielForm);
 
@@ -215,7 +306,13 @@
       }
     });
 
-    window.addEventListener("besa:notification-types-updated", renderNt);
+    window.addEventListener("besa:notification-types-updated", function () {
+      renderNt();
+      if (state.activeTab === "mijn-notificaties") renderMijnNotificaties();
+    });
+    window.addEventListener("besa:notification-prefs-updated", function () {
+      if (state.activeTab === "mijn-notificaties") renderMijnNotificaties();
+    });
     window.addEventListener("besa:profile-updated", loadProfielForm);
   }
 
@@ -228,6 +325,11 @@
     if (window.notificationTypesDB) {
       renderNt();
       window.notificationTypesDB.ready.then(renderNt);
+    }
+    if (window.profileNotificationPrefsDB && window.profileNotificationPrefsDB.ready) {
+      window.profileNotificationPrefsDB.ready.then(function () {
+        if (state.activeTab === "mijn-notificaties") renderMijnNotificaties();
+      });
     }
   }
 
