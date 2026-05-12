@@ -27,4 +27,6 @@ scripts/bs2-exports/*.csv
 scripts/bs2-exports/*.xlsx
 scripts/bs2-exports/*.xls
 scripts/bs2-exports/*.json
+scripts/bs2-exports/*.sql
 !scripts/bs2-exports/README.md
+scripts/_tmp_*
