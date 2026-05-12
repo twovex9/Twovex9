@@ -165,29 +165,6 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
 
-### 20. Browser cache invalidatie voltooid (2026-05-12)
-
-**Status**: ✅ geïmplementeerd via `scripts/bust-cache.mjs` + `vercel.json` headers.
-
-**Mechanisme**:
-- `vercel.json` heeft `buildCommand: "npm run build"` die `bust-cache.mjs` aanroept tijdens elke Vercel deploy.
-- Script gebruikt `VERCEL_GIT_COMMIT_SHA` (eerste 7 chars) als versie-stempel.
-- Loopt door alle 53 HTML files en vervangt `src="*.js"` / `href="*.css"` door `src="*.js?v=<sha>"` etc. Externe URLs (https://) blijven onaangetast.
-- HTML files krijgen `Cache-Control: no-cache, must-revalidate` → browser revalideert altijd.
-- JS/CSS files krijgen `Cache-Control: public, max-age=31536000, immutable` → cache 1 jaar (veilig want elke deploy = nieuwe `?v=<sha>` URL).
-
-**Effect**: na elke Vercel deploy worden nieuwe JS/CSS versies automatisch geladen door browsers. Geen `Ctrl+Shift+R` meer nodig.
-
-**Lokaal testen**: `npm run build:check` (dry-run, toont wat zou veranderen zonder schrijven).
-
-### 19. Dedupe records onderzoek voltooid (2026-05-12)
-
-**Resultaat**: pagination-overlap in BS2 export. 6+6 dedupe records waren legitime duplicaten (zelfde ID in 2 paginas). Geen data-verlies.
-
-**Verificatie**: Node-command `bs2-export-full.planning.length === 4454` en `new Set(bs2-export-full.planning.map(x=>x.id)).size === 4448` → 6 dubbele IDs in JSON zelf. Idem clienten: 87 → 81.
-
-**Conclusie**: open-items #4 gesloten.
-
 ### 25. Dev-experience: feature-branch workflow + setup-script (2026-05-12)
 
 **Status**: ✅ workflow voor toekomstige sessies geformaliseerd + nieuwe-machine bootstrap.
@@ -211,6 +188,94 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 3. DB-password in passwordmanager bewaren
 
 **Effort openblijvend**: scripts/backup-storage.mjs + scripts/export-supabase.mjs nog te schrijven indien gewenst (zie 07-backup-strategie.md sectie "Voor v2"). Item 4.4 uit 06-professional-finish gesloten.
+
+### 23. Medewerker-detail tabs verificatie voltooid (2026-05-12)
+
+**Status**: ✅ alle 7 tabs op `medewerker.html?id=<uuid>` getest via Chrome MCP. Geen placeholders, alle tabs hebben functionele content.
+
+| Tab | Content sample | textLen |
+|---|---|---|
+| Details | NAW velden (Voornaam/Achternaam/Email/Tel/Roepnaam/Initialen) | 4244 |
+| Professioneel | Locaties multi-select, salaris, contract, etc. | 14457 |
+| Opleiding | SKJ checkbox + "+Opleiding toevoegen" knop | 1036 |
+| Notities | Rich-text editor (B/I/S/U/H1/H2/Lijst/Image) | 504 |
+| Documenten | Tabel met kolomkiezer (Naam/Type) | 2767 |
+| Verzuim | "Korte termijn" sectie + Eerste Ziektedag tabel | 2369 |
+| Verlof | Verlofsaldo (Toegekende/Gebruikt uren) | 6043 |
+
+**Test-medewerker**: `c7bbc1f3-1c0a-4202-951c-ab827f16ceed`. Iteratieve check via `data-tab` attribute. Item 1.3 uit professional-finish gesloten.
+
+### 22. Beschikking-detail tabs verificatie voltooid (2026-05-12)
+
+**Status**: ✅ alle 5 tabs op `beschikking-detail.html?id=<uuid>` getest via Chrome MCP. Geen placeholders.
+
+| Tab | Content sample | textLen |
+|---|---|---|
+| Details | Cliënt-dropdown (gevuld), beschikking-gegevens, naam/declaratie methode/start/eind/zorgsoort/fase | 5314 |
+| Facturen | Filter chips (Expiring/Gearchiveerd) + status-filter (Alle/Betaald/Gedeclareerd) | 2287 |
+| Tarieven | Geldig-vanaf tabel + tariefkolommen | 908 |
+| Notities | Rich-text editor (B/I/Lijst/H3) | 442 |
+| Audit | Auditlog met "wie heeft bekeken/gewijzigd/vastgelegd" — IP-adres lokaal gesimuleerd | 1821 |
+
+**Test-beschikking**: `18330ecc-4964-41dc-b6b5-7142ee83aced` ("ambulant 24 u / week gedurende 4 weken"). Iteratieve tab-clicks via `bdtl-tab-*` IDs. Item 1.2 uit professional-finish gesloten.
+
+### 21. Test-data sweep voltooid (2026-05-12)
+
+**Status**: ✅ 8 actieve test-records gearchiveerd via Supabase MCP. Alle archive-acties zijn reversibel via "Herstel"-knop in BS1 UI.
+
+**Gearchiveerd**:
+- **beschikkingen** (2): `97457fe8-2867-4258-9131-fce4222c8461` ("Test beschikking"), `b_besc_056` ("Test beschikking")
+- **incidenten** (5):
+  - `1e79f425-698d-414b-9098-ed22d9c77f35` ("test")
+  - `916f5030-ab1b-4a3e-908f-15e010bff54f` ("test")
+  - `56ba990d-0365-4406-b831-2f08e041b129` ("Test")
+  - `1430b9b5-041c-4d1b-86f3-a36c84917f91` ("Test")
+  - `cf4ceb10-e369-408e-8139-c2cc40bd4dda` ("Testnfndbd")
+- **organisaties** (1): `ad56d5fb-27e2-45d6-b979-86ea669d34b2` ("Test bedrijf")
+
+**Al gearchiveerd vóór sweep** (gevonden, niets te doen):
+- bureaus: `9f4432ab-98db-42d2-89d9-dce834777ce6` ("test")
+- clienten: `cd7db67c-5b28-47dd-bf37-47be4267fcb4` ("Test Client")
+- locaties: `c16013d1-29ee-4e28-b3ae-976a5dd527a6` ("test")
+- medewerkers: 2× "Test Medewerker"
+
+**Reversibel**: bij ontdekking dat een record echt was, klik "Herstel" in de gearchiveerde tab van de betreffende UI-pagina.
+
+**Scan-query** (voor toekomstige sweeps):
+```sql
+SELECT 'medewerkers' AS tabel, id::text, voornaam||' '||achternaam AS preview, archived FROM medewerkers WHERE voornaam ILIKE '%test%' OR achternaam ILIKE '%test%' OR email ILIKE '%test%'
+UNION ALL SELECT 'clienten', id::text, voornaam||' '||achternaam, archived FROM clienten WHERE voornaam ILIKE '%test%' OR achternaam ILIKE '%test%'
+UNION ALL SELECT 'beschikkingen', id::text, COALESCE(naam,id), gearchiveerd FROM beschikkingen WHERE naam ILIKE '%test%'
+UNION ALL SELECT 'facturen', id::text, COALESCE(beschikking_label,id), gearchiveerd FROM facturen WHERE beschikking_label ILIKE '%test%' OR client_label ILIKE '%test%'
+UNION ALL SELECT 'locaties', id::text, naam, archived FROM locaties WHERE naam ILIKE '%test%'
+UNION ALL SELECT 'bureaus', id::text, naam, archived FROM bureaus WHERE naam ILIKE '%test%'
+UNION ALL SELECT 'organisaties', id::text, naam, archived FROM organisaties WHERE naam ILIKE '%test%'
+UNION ALL SELECT 'incidenten', id::text, COALESCE(omschrijving,id::text), archived FROM incidenten WHERE omschrijving ILIKE '%test%'
+ORDER BY tabel, archived, preview;
+```
+
+### 20. Browser cache invalidatie voltooid (2026-05-12)
+
+**Status**: ✅ geïmplementeerd via `scripts/bust-cache.mjs` + `vercel.json` headers.
+
+**Mechanisme**:
+- `vercel.json` heeft `buildCommand: "npm run build"` die `bust-cache.mjs` aanroept tijdens elke Vercel deploy.
+- Script gebruikt `VERCEL_GIT_COMMIT_SHA` (eerste 7 chars) als versie-stempel.
+- Loopt door alle 53 HTML files en vervangt `src="*.js"` / `href="*.css"` door `src="*.js?v=<sha>"` etc. Externe URLs (https://) blijven onaangetast.
+- HTML files krijgen `Cache-Control: no-cache, must-revalidate` → browser revalideert altijd.
+- JS/CSS files krijgen `Cache-Control: public, max-age=31536000, immutable` → cache 1 jaar (veilig want elke deploy = nieuwe `?v=<sha>` URL).
+
+**Effect**: na elke Vercel deploy worden nieuwe JS/CSS versies automatisch geladen door browsers. Geen `Ctrl+Shift+R` meer nodig.
+
+**Lokaal testen**: `npm run build:check` (dry-run, toont wat zou veranderen zonder schrijven).
+
+### 19. Dedupe records onderzoek voltooid (2026-05-12)
+
+**Resultaat**: pagination-overlap in BS2 export. 6+6 dedupe records waren legitime duplicaten (zelfde ID in 2 paginas). Geen data-verlies.
+
+**Verificatie**: Node-command `bs2-export-full.planning.length === 4454` en `new Set(bs2-export-full.planning.map(x=>x.id)).size === 4448` → 6 dubbele IDs in JSON zelf. Idem clienten: 87 → 81.
+
+**Conclusie**: open-items #4 gesloten.
 
 ## Toekomstige BS2 → BS1 refresh
 
