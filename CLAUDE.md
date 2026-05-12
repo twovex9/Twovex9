@@ -43,7 +43,14 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
 2. Lees `docs/phase4/99-final-success.md` (eindstand)
 3. Voor toekomstige BS2-data refresh: nieuwe export via `scripts/bs2-exports/`, run `node scripts/bs2-full-import.mjs` (idempotent) + `node scripts/bs2-fk-resolve.mjs`
 
-**Hard rule blijft gelden**: destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen.
+### Persistente werkwijze-regels (gelden ALTIJD)
+
+1. **Hard rule**: destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen.
+2. **🚨 ZELF live verifiëren via Chrome MCP** — onderbreek de user NIET met "open de site en check". Open BS1 `https://besa-suite.vercel.app` via `mcp__Claude_in_Chrome__navigate` + `get_page_text` + `read_page` zelf. Onderbreek alleen wanneer:
+   - Een stap volledig afgerond is met rapport
+   - User iets fysiek moet doen dat Claude niet kan (service_role key uit dashboard kopiëren, in Supabase Studio handmatig SQL plakken, JS-snippet in BS2 console runnen, etc.)
+3. **Doorgaan tot stap klaar is** — niet onderweg pauzeren voor "wil je dit?" tenzij echt destructief.
+4. **Bij vragen aan user**: alleen wanneer iets fundamenteel onduidelijk is óf user-actie vereist is. Niet als beleefdheidscheck.
 
 ### Domeinen & toegangsregels (kritisch — niet vergeten, ook na compactie)
 
