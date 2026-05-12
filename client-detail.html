@@ -864,8 +864,78 @@
               </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-q" role="tabpanel" aria-hidden="true" hidden>
-              <h3 class="client-detail-pan-h">Vragenlijsten</h3>
-              <p class="client-detail-placeholder">Ingevulde of openstaande vragenlijsten per cliënt. Koppeling met toets- of e-forms volgt.</p>
+              <div class="cd-vrl-head">
+                <h3 class="client-detail-pan-h">Vragenlijsten</h3>
+                <button type="button" class="btn-primary cd-vrl-add-btn" id="cd-vrl-add-btn">+ Vragenlijst toevoegen</button>
+              </div>
+              <div class="table-card cd-vrl-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="naam">Naam</th>
+                        <th data-col="template">Template</th>
+                        <th data-col="status">Status</th>
+                        <th data-col="ingevuld">Ingevuld op</th>
+                        <th data-col="vragen">Vragen</th>
+                        <th data-col="acties" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-vrl-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-vrl-empty" hidden>Geen vragenlijsten. Klik op "+ Vragenlijst toevoegen" om er één te starten.</div>
+              </div>
+
+              <!-- Modal: nieuw / bewerk vragenlijst -->
+              <div class="modal-overlay" id="cd-vrl-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-vrl-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-vrl-modal-title">Vragenlijst toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-vrl-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-vrl-form" novalidate>
+                    <input type="hidden" id="cd-vrl-f-id" />
+                    <div class="modal-field cd-vrl-f-row">
+                      <div class="modal-field cd-vrl-f-half">
+                        <label class="modal-label" for="cd-vrl-f-naam">Naam *</label>
+                        <input class="modal-input" id="cd-vrl-f-naam" type="text" required autocomplete="off" />
+                      </div>
+                      <div class="modal-field cd-vrl-f-half">
+                        <label class="modal-label" for="cd-vrl-f-template">Template</label>
+                        <select class="modal-input" id="cd-vrl-f-template">
+                          <option value="">— Aangepast / eigen vragen —</option>
+                          <option value="intake">Intake vragenlijst</option>
+                          <option value="evaluatie">Tussenevaluatie</option>
+                          <option value="afsluiting">Afsluiting / eindevaluatie</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-field cd-vrl-f-row">
+                      <div class="modal-field cd-vrl-f-half">
+                        <label class="modal-label" for="cd-vrl-f-status">Status</label>
+                        <select class="modal-input" id="cd-vrl-f-status">
+                          <option value="openstaand">Openstaand</option>
+                          <option value="ingevuld">Ingevuld</option>
+                        </select>
+                      </div>
+                      <div class="modal-field cd-vrl-f-half">
+                        <label class="modal-label" for="cd-vrl-f-datum">Ingevuld-datum</label>
+                        <input class="modal-input" id="cd-vrl-f-datum" type="date" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label">Vragen + antwoorden</label>
+                      <div class="cd-vrl-qa-list" id="cd-vrl-qa-list"></div>
+                      <button type="button" class="btn-outline cd-vrl-qa-add" id="cd-vrl-qa-add">+ Vraag toevoegen</button>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-vrl-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-vrl-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-i" role="tabpanel" aria-hidden="true" hidden>
               <h3 class="client-detail-pan-h">Incidenten</h3>
@@ -1170,6 +1240,7 @@
   <script src="facturen-data.js" defer></script>
   <script src="client-contacten-data.js" defer></script>
   <script src="client-rapportages-data.js" defer></script>
+  <script src="client-vragenlijsten-data.js" defer></script>
   <script src="client-detail.js" defer></script>
 </body>
 </html>

@@ -485,6 +485,7 @@
     if (k === "p") renderBetalingen();
     if (k === "c") renderContacten();
     if (k === "r") renderRapportages();
+    if (k === "q") renderVragenlijsten();
   }
 
   /**
@@ -992,6 +993,271 @@
   window.addEventListener("besa:client-rapportages-updated", function () {
     var panR = document.getElementById("cd-pan-r");
     if (panR && !panR.hidden) renderRapportages();
+  });
+
+  // ============================================================
+  // VRAGENLIJSTEN-tab: render + CRUD via clientVragenlijstenDB
+  // ============================================================
+
+  function statusBadgeVrl(status) {
+    var s = String(status || "openstaand").toLowerCase();
+    var cls = "cd-vrl-status";
+    var label = "Openstaand";
+    if (s === "ingevuld") { cls += " cd-vrl-status--ingevuld"; label = "Ingevuld"; }
+    else { cls += " cd-vrl-status--openstaand"; }
+    return '<span class="' + cls + '">' + escapeHtml(label) + '</span>';
+  }
+
+  function renderVragenlijsten() {
+    var tbody = document.getElementById("cd-vrl-tbody");
+    var empty = document.getElementById("cd-vrl-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var rows = (window.clientVragenlijstenDB && typeof window.clientVragenlijstenDB.getForClientSync === "function")
+      ? window.clientVragenlijstenDB.getForClientSync(cl.id).filter(function (r) { return r && !r.archived; })
+      : [];
+
+    rows.sort(function (a, b) {
+      var da = a.ingevuldDatum || a.aanmaakdatum || "";
+      var db = b.ingevuldDatum || b.aanmaakdatum || "";
+      return da < db ? 1 : da > db ? -1 : 0;
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-id", r.id);
+      var qaCount = Array.isArray(r.vragenAntwoorden) ? r.vragenAntwoorden.length : 0;
+      var beantwoord = Array.isArray(r.vragenAntwoorden)
+        ? r.vragenAntwoorden.filter(function (qa) { return qa && qa.antwoord && String(qa.antwoord).trim(); }).length
+        : 0;
+      var tmplLabel = r.templateNaam ? (r.templateNaam.charAt(0).toUpperCase() + r.templateNaam.slice(1)) : "Eigen";
+      tr.innerHTML =
+        '<td data-col="naam">' + escapeHtml(r.naam || "—") + '</td>' +
+        '<td data-col="template">' + escapeHtml(tmplLabel) + '</td>' +
+        '<td data-col="status">' + statusBadgeVrl(r.status) + '</td>' +
+        '<td data-col="ingevuld">' + escapeHtml(formatDateNL(r.ingevuldDatum)) + '</td>' +
+        '<td data-col="vragen">' + beantwoord + ' / ' + qaCount + '</td>' +
+        '<td data-col="acties" class="cd-vrl-actions-cell">' +
+          '<button type="button" class="btn-outline cd-vrl-edit-btn" data-id="' + r.id + '">Bewerken</button>' +
+          '<button type="button" class="employee-delete-btn cd-vrl-archive-btn" data-id="' + r.id + '" aria-label="Archiveren">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+            '</svg>' +
+          '</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    empty.hidden = rows.length > 0;
+  }
+
+  // Modal controls
+  var vrlModal = document.getElementById("cd-vrl-modal");
+  var vrlForm = document.getElementById("cd-vrl-form");
+  var vrlTitle = document.getElementById("cd-vrl-modal-title");
+  var vrlFId = document.getElementById("cd-vrl-f-id");
+  var vrlFNaam = document.getElementById("cd-vrl-f-naam");
+  var vrlFTemplate = document.getElementById("cd-vrl-f-template");
+  var vrlFStatus = document.getElementById("cd-vrl-f-status");
+  var vrlFDatum = document.getElementById("cd-vrl-f-datum");
+  var vrlQaList = document.getElementById("cd-vrl-qa-list");
+
+  function renderQaList(qa) {
+    if (!vrlQaList) return;
+    vrlQaList.innerHTML = "";
+    qa.forEach(function (item, idx) {
+      var div = document.createElement("div");
+      div.className = "cd-vrl-qa-item";
+      div.innerHTML =
+        '<div class="cd-vrl-qa-head">' +
+          '<input type="text" class="modal-input cd-vrl-qa-vraag" placeholder="Vraag" data-idx="' + idx + '" data-field="vraag" value="' + escapeAttr(item.vraag || "") + '" />' +
+          '<button type="button" class="cd-vrl-qa-remove" data-idx="' + idx + '" aria-label="Verwijderen">&times;</button>' +
+        '</div>' +
+        '<textarea class="modal-input cd-vrl-qa-antwoord" placeholder="Antwoord" rows="2" data-idx="' + idx + '" data-field="antwoord">' + escapeHtml(item.antwoord || "") + '</textarea>';
+      vrlQaList.appendChild(div);
+    });
+  }
+
+  function readQaFromForm() {
+    if (!vrlQaList) return [];
+    var items = vrlQaList.querySelectorAll(".cd-vrl-qa-item");
+    var out = [];
+    items.forEach(function (div) {
+      var v = div.querySelector(".cd-vrl-qa-vraag");
+      var a = div.querySelector(".cd-vrl-qa-antwoord");
+      out.push({
+        vraag: v ? String(v.value || "").trim() : "",
+        antwoord: a ? String(a.value || "").trim() : "",
+      });
+    });
+    return out;
+  }
+
+  function openVrlModal(rec) {
+    if (!vrlModal) return;
+    if (rec && rec.id) {
+      if (vrlTitle) vrlTitle.textContent = "Vragenlijst bewerken";
+      vrlFId.value = rec.id;
+      vrlFNaam.value = rec.naam || "";
+      vrlFTemplate.value = rec.templateNaam || "";
+      vrlFStatus.value = rec.status || "openstaand";
+      vrlFDatum.value = rec.ingevuldDatum || "";
+      renderQaList(Array.isArray(rec.vragenAntwoorden) ? rec.vragenAntwoorden : []);
+    } else {
+      if (vrlTitle) vrlTitle.textContent = "Vragenlijst toevoegen";
+      vrlForm.reset();
+      vrlFId.value = "";
+      vrlFStatus.value = "openstaand";
+      renderQaList([]);
+    }
+    vrlModal.hidden = false;
+    vrlModal.setAttribute("aria-hidden", "false");
+    try { vrlFNaam.focus(); } catch (e) { /* */ }
+  }
+  function closeVrlModal() {
+    if (!vrlModal) return;
+    vrlModal.hidden = true;
+    vrlModal.setAttribute("aria-hidden", "true");
+  }
+
+  async function saveVragenlijstFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var naam = (vrlFNaam.value || "").trim();
+    if (!naam) { try { vrlFNaam.focus(); } catch (e) {} return; }
+
+    var qa = readQaFromForm().filter(function (item) { return item.vraag || item.antwoord; });
+
+    var rec = {
+      clientId: cl.id,
+      naam: naam,
+      templateNaam: vrlFTemplate.value || null,
+      status: vrlFStatus.value || "openstaand",
+      ingevuldDatum: vrlFDatum.value || null,
+      vragenAntwoorden: qa,
+    };
+
+    try {
+      var id = vrlFId.value;
+      if (id) {
+        await window.clientVragenlijstenDB.update(id, rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Vragenlijst");
+      } else {
+        await window.clientVragenlijstenDB.add(rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Vragenlijst toegevoegd");
+      }
+      closeVrlModal();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // Template-change: pre-fill vragen
+  if (vrlFTemplate) {
+    vrlFTemplate.addEventListener("change", function () {
+      var key = vrlFTemplate.value;
+      if (!key || !window.clientVragenlijstenDB) return;
+      var tmpl = window.clientVragenlijstenDB.getTemplateSync(key);
+      if (!tmpl) return;
+      // Vraag voor confirmatie als er al vragen waren (slider-modal, geen browser-popup)
+      var currentQa = readQaFromForm();
+      var hasContent = currentQa.some(function (q) { return q.vraag || q.antwoord; });
+      if (hasContent) {
+        (async function () {
+          var go = await window.showSliderConfirmModal({
+            title: "Vragen vervangen?",
+            preview: tmpl.naam + " — " + tmpl.vragen.length + " vragen",
+            okLabel: "Ja, vervangen",
+            cancelLabel: "Behoud huidig",
+          });
+          if (!go) return;
+          // Vervang met template
+          if (!vrlFNaam.value.trim()) vrlFNaam.value = tmpl.naam;
+          renderQaList(tmpl.vragen.map(function (v) { return { vraag: v, antwoord: "" }; }));
+        })();
+      } else {
+        if (!vrlFNaam.value.trim()) vrlFNaam.value = tmpl.naam;
+        renderQaList(tmpl.vragen.map(function (v) { return { vraag: v, antwoord: "" }; }));
+      }
+    });
+  }
+
+  // QA list: add + remove buttons
+  document.getElementById("cd-vrl-qa-add")?.addEventListener("click", function () {
+    var current = readQaFromForm();
+    current.push({ vraag: "", antwoord: "" });
+    renderQaList(current);
+    // Focus op het nieuwe vraag-veld
+    setTimeout(function () {
+      var inputs = vrlQaList.querySelectorAll(".cd-vrl-qa-vraag");
+      if (inputs.length) {
+        try { inputs[inputs.length - 1].focus(); } catch (e) { /* */ }
+      }
+    }, 0);
+  });
+
+  if (vrlQaList) {
+    vrlQaList.addEventListener("click", function (e) {
+      var rm = e.target.closest(".cd-vrl-qa-remove");
+      if (!rm) return;
+      var idx = parseInt(rm.getAttribute("data-idx"), 10);
+      if (isNaN(idx)) return;
+      var current = readQaFromForm();
+      current.splice(idx, 1);
+      renderQaList(current);
+    });
+  }
+
+  // Event wiring
+  document.getElementById("cd-vrl-add-btn")?.addEventListener("click", function () { openVrlModal(null); });
+  document.getElementById("cd-vrl-modal-close")?.addEventListener("click", closeVrlModal);
+  document.getElementById("cd-vrl-cancel-btn")?.addEventListener("click", closeVrlModal);
+  document.getElementById("cd-vrl-save-btn")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    saveVragenlijstFromForm();
+  });
+  if (vrlForm) {
+    vrlForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      saveVragenlijstFromForm();
+    });
+  }
+  if (vrlModal) {
+    vrlModal.addEventListener("click", function (e) {
+      if (e.target === vrlModal) closeVrlModal();
+    });
+  }
+
+  // Row-actions: edit + archive
+  document.getElementById("cd-vrl-tbody")?.addEventListener("click", async function (e) {
+    var editBtn = e.target.closest(".cd-vrl-edit-btn");
+    var arcBtn = e.target.closest(".cd-vrl-archive-btn");
+    if (editBtn) {
+      var rec = window.clientVragenlijstenDB && window.clientVragenlijstenDB.getByIdSync(editBtn.getAttribute("data-id"));
+      if (rec) openVrlModal(rec);
+      return;
+    }
+    if (arcBtn) {
+      var aid = arcBtn.getAttribute("data-id");
+      var rec2 = window.clientVragenlijstenDB && window.clientVragenlijstenDB.getByIdSync(aid);
+      if (!rec2) return;
+      try {
+        var ok = await window.showArchiveConfirm({ preview: rec2.naam || "Vragenlijst" });
+        if (!ok) return;
+        await window.clientVragenlijstenDB.archive(aid);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Vragenlijst");
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+
+  // Live-refresh
+  window.addEventListener("besa:client-vragenlijsten-updated", function () {
+    var panQ = document.getElementById("cd-pan-q");
+    if (panQ && !panQ.hidden) renderVragenlijsten();
   });
 
   setTab("d");
