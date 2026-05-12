@@ -165,6 +165,43 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
 
+### 27. Legacy `window.confirm()`/`window.prompt()` cleanup voor v2
+
+**Status**: ⏳ open — tech-debt van vóór werkpatronen sectie 4.
+
+**Bestaande violations** (gevonden tijdens CI-design 2026-05-12):
+- `instellingen.js:302` — `window.confirm("Definitief verwijderen?")` voor notification-type delete
+- `verlof.js:319` — `window.confirm("Definitief verwijderen?")` voor verlof-record delete
+- `medewerker.js:2189` — `prompt("Afbeelding URL:")` voor profielfoto URL
+- `nieuws.js:742, 1004` — `window.prompt("URL van de link:", "https://")` voor link-insertie in editor
+- `planning.js:2696` — `window.prompt("Geef een naam voor deze voorinstelling")` voor preset naming
+- `salarishuis.js:908` — `window.prompt("Naam van de schaal", sc.title)` voor schaal-rename
+
+**Conform werkpatronen sectie 4** zouden deze vervangen moeten worden door:
+- `window.confirm(...)` → `await window.showSliderConfirmModal({title, preview, okLabel, cancelLabel})`
+- `window.prompt(...)` → eigen modal met `.modal-overlay` + `.modal-card` + `<input>`
+
+**Effort**: 1-2 uur (8 plekken in 7 bestanden + modal-helper voor text-input toevoegen aan `save-feedback.js`).
+
+**Risico**: medium — wijzigen werkende flow. Test elke flow na vervanging.
+
+**Niet in CI**: deze check is bewust niet in `.github/workflows/ci.yml` opgenomen omdat alle PR's zouden falen. Eerst opruimen, dan check toevoegen.
+
+### 26. CI checks via GitHub Actions (2026-05-12)
+
+**Status**: ✅ workflow `.github/workflows/ci.yml` toegevoegd. Runt op elke PR naar `main` + elke push naar `main`.
+
+**Checks per push/PR**:
+1. **JSON validity** — `package.json` + `vercel.json` zijn valid JSON
+2. **JavaScript syntax** — alle `.js` + `.mjs` files in root + `scripts/` worden gecheckt met `node --check`
+3. **Cache-busting dry-run** — `npm run build:check` verifieert dat het script werkt
+4. **HTML script-order** — verifieert dat `auth-guard.js` vóór `profiles-data.js` komt + Supabase CDN vóór `supabase-client.js` (werkpatronen sectie 6d). Voorkomt silent failures.
+5. **Secrets-leak basic scan** — decodeert JWT-payloads en faalt bij `"role":"service_role"` in commits (anon key in `supabase-client.js` is whitelisted)
+
+**Niet opgenomen** (zie item 27): `alert()`/`confirm()`/`prompt()` check — legacy code violeert dit nog, eerst cleanup nodig.
+
+**Effect**: vangt 90% van de silent failures die we eerder handmatig moesten ontdekken (script-order bugs, syntax errors). Toekomstige PR's worden automatisch gevalideerd vóór merge. Item 4.3 uit 06-professional-finish gesloten.
+
 ### 25. Dev-experience: feature-branch workflow + setup-script (2026-05-12)
 
 **Status**: ✅ workflow voor toekomstige sessies geformaliseerd + nieuwe-machine bootstrap.

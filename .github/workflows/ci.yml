@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate code + config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # --- JSON validity ---
+      - name: Validate JSON config files
+        run: |
+          set -e
+          for f in package.json vercel.json; do
+            if [ -f "$f" ]; then
+              echo "Checking $f..."
+              node -e "JSON.parse(require('node:fs').readFileSync('$f','utf8')); console.log('  OK');"
+            else
+              echo "  $f not present (skipping)"
+            fi
+          done
+
+      # --- JS / MJS syntax ---
+      - name: JavaScript syntax check
+        run: |
+          set -e
+          FILES=$(find . -maxdepth 3 \( -name "*.js" -o -name "*.mjs" \) \
+            -not -path "./.git/*" \
+            -not -path "./node_modules/*" \
+            -not -path "./scripts/bs2-exports/*" | sort)
+          if [ -z "$FILES" ]; then
+            echo "No JS/MJS files found"
+            exit 1
+          fi
+          ERRORS=0
+          for f in $FILES; do
+            if ! node --check "$f" 2>/dev/null; then
+              echo "SYNTAX ERROR in: $f"
+              node --check "$f" || true
+              ERRORS=$((ERRORS+1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "$ERRORS file(s) have syntax errors"
+            exit 1
+          fi
+          echo "All JS/MJS files have valid syntax"
+
+      # --- Cache-busting script verification ---
+      - name: Cache-busting dry-run
+        if: ${{ hashFiles('scripts/bust-cache.mjs') != '' }}
+        run: |
+          npm run build:check
+          echo "Cache-busting script runs without errors"
+
+      # --- Script-order check (werkpatronen sectie 6d) ---
+      - name: HTML script-order check
+        run: |
+          set -e
+          ERRORS=0
+          for f in $(ls *.html 2>/dev/null); do
+            # Skip files that don't use auth (login.html has its own flow)
+            if ! grep -q "auth-guard.js" "$f"; then continue; fi
+
+            # auth-guard.js MOET vóór profiles-data.js komen
+            if grep -q "profiles-data.js" "$f"; then
+              AUTH_LINE=$(grep -n "auth-guard.js" "$f" | head -1 | cut -d: -f1)
+              PROF_LINE=$(grep -n "profiles-data.js" "$f" | head -1 | cut -d: -f1)
+              if [ -n "$AUTH_LINE" ] && [ -n "$PROF_LINE" ] && [ "$AUTH_LINE" -gt "$PROF_LINE" ]; then
+                echo "WRONG ORDER in $f: auth-guard.js (line $AUTH_LINE) after profiles-data.js (line $PROF_LINE)"
+                ERRORS=$((ERRORS+1))
+              fi
+            fi
+
+            # Supabase CDN MOET vóór supabase-client.js komen
+            if grep -q "supabase-client.js" "$f" && grep -q "cdn.jsdelivr.net/npm/@supabase" "$f"; then
+              CDN_LINE=$(grep -n "cdn.jsdelivr.net/npm/@supabase" "$f" | head -1 | cut -d: -f1)
+              CLIENT_LINE=$(grep -n "supabase-client.js" "$f" | head -1 | cut -d: -f1)
+              if [ -n "$CDN_LINE" ] && [ -n "$CLIENT_LINE" ] && [ "$CDN_LINE" -gt "$CLIENT_LINE" ]; then
+                echo "WRONG ORDER in $f: CDN (line $CDN_LINE) after supabase-client.js (line $CLIENT_LINE)"
+                ERRORS=$((ERRORS+1))
+              fi
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "$ERRORS HTML file(s) have wrong script load-order"
+            exit 1
+          fi
+          echo "All HTML files have correct script load-order"
+
+      # --- Secrets-leak basic scan ---
+      - name: Secrets-leak basic scan
+        run: |
+          set -e
+          # Zoek JWT-tokens met "role":"service_role" in payload (base64 decoded)
+          # Hardcoded service_role keys mogen NOOIT in repo
+          # Anon key in supabase-client.js is bekend en intentioneel
+          ERRORS=0
+          for f in $(git ls-files | grep -E '\.(js|mjs|ts|md|json|yml|yaml|sh|ps1)$'); do
+            # Check op vermoedelijke service_role JWT payloads
+            if grep -lE 'eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' "$f" 2>/dev/null > /dev/null; then
+              # Found JWT-pattern, check if it's the known anon key
+              if [ "$f" != "supabase-client.js" ]; then
+                MATCHES=$(grep -oE 'eyJ[A-Za-z0-9_-]{20,}' "$f" || true)
+                for m in $MATCHES; do
+                  # Decode payload (2nd part) — base64url
+                  PAYLOAD=$(echo "$m" | cut -d. -f2 | tr '_-' '/+')
+                  # Pad to multiple of 4
+                  PAD=$((4 - ${#PAYLOAD} % 4))
+                  if [ "$PAD" -ne 4 ]; then PAYLOAD="${PAYLOAD}$(printf '=%.0s' $(seq 1 $PAD))"; fi
+                  DECODED=$(echo -n "$PAYLOAD" 2>/dev/null | base64 -d 2>/dev/null || echo "")
+                  if echo "$DECODED" | grep -q '"role":"service_role"'; then
+                    echo "SECRET LEAK: service_role JWT found in $f"
+                    ERRORS=$((ERRORS+1))
+                  fi
+                done
+              fi
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then exit 1; fi
+          echo "No service_role keys leaked in repo"
+
+  summary:
+    name: CI summary
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    steps:
+      - name: Report
+        run: |
+          if [ "${{ needs.validate.result }}" = "success" ]; then
+            echo "All CI checks passed"
+          else
+            echo "One or more CI checks failed"
+            exit 1
+          fi
