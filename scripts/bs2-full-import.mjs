@@ -1,29 +1,27 @@
 #!/usr/bin/env node
 /**
- * bs2-full-import.mjs
+ * bs2-full-import.mjs (v2 — met fixes voor alle bekende errors)
  *
  * Volledige BS2 -> BS1 data port. Leest scripts/bs2-exports/bs2-export-full.json
  * en INSERTs alle records direct via Supabase REST API (PostgREST).
  *
- * Idempotent: gebruikt `Prefer: resolution=merge-duplicates` -> upsert op PK.
- * Niet-destructief: BS1 records die niet in BS2 staan blijven onaangetast.
- *
- * Requirements:
- *   - Node 18+ (heeft globale fetch)
- *   - Supabase SERVICE ROLE KEY (NIET anon key)
- *     → Vind op: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api
- *     → Onder "Project API keys" → klik "Reveal" naast "service_role"
- *     → BELANGRIJK: deze key bypasst RLS. Lekken = volle DB-toegang. Niet committen!
+ * Fixes vs v1:
+ *  - Master-data (gemeenten, zorgsoorten, bureaus, competenties, opleidingen) standaard
+ *    skipped: BS1 is superset, lower(naam) unique constraint blokkeert duplicate inserts.
+ *    Gebruik --include-masterdata om toch te proberen.
+ *  - organisaties: filter records met null name
+ *  - salarisschalen: title fallback "Schaal {idx+1}"
+ *  - clienten: clientnummer = NULL (bewaard in data.bs2_client_number)
+ *  - beschikkingen: zorgsoort_key fallback "Onbekend", naam fallback van care_type/client
+ *  - incidenten: impact_op_zorgverlener fallback "Niet opgegeven"
+ *  - facturen: client_label string-only (geen [object Object]), beschikking_label fallback
+ *  - planning: dedupe IDs per batch
  *
  * Usage:
- *   # PowerShell:
  *   $env:SUPABASE_SERVICE_KEY = "eyJhbG..."
- *   node scripts/bs2-full-import.mjs
- *
- *   # Of per resource:
- *   node scripts/bs2-full-import.mjs --only clienten
- *
- *   # Of dry-run (laat samenvatting zien, geen inserts):
+ *   node scripts/bs2-full-import.mjs           # alle non-master-data
+ *   node scripts/bs2-full-import.mjs --include-masterdata  # ook master-data proberen
+ *   node scripts/bs2-full-import.mjs --only clienten --verbose
  *   node scripts/bs2-full-import.mjs --dry-run
  */
 import { readFileSync } from "node:fs";
@@ -35,28 +33,26 @@ const JSON_PATH = join(__dirname, "bs2-exports", "bs2-export-full.json");
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://boscwvojcggkbdxhlfys.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 
-// CLI args
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const onlyIdx = args.indexOf("--only");
 const ONLY = onlyIdx >= 0 ? args[onlyIdx + 1] : null;
 const VERBOSE = args.includes("--verbose");
+const INCLUDE_MASTER = args.includes("--include-masterdata");
 const BATCH_SIZE = 50;
+
+// BS1 superset — skip by default (lower(naam) unique constraint blocks our BS2 UUIDs)
+const MASTERDATA_SKIP = new Set([
+  "gemeenten", "zorgsoorten", "bureaus", "competenties", "opleidingen",
+]);
 
 if (!SUPABASE_KEY && !DRY_RUN) {
   console.error("\nERROR: SUPABASE_SERVICE_KEY env var ontbreekt.");
   console.error("\nHaal de service_role key op:");
   console.error("  https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api");
-  console.error("\nPowerShell:");
-  console.error("  $env:SUPABASE_SERVICE_KEY = \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9....\"");
-  console.error("  node scripts/bs2-full-import.mjs");
-  console.error("\nOf gebruik --dry-run om zonder inserts te zien wat zou gebeuren.\n");
   process.exit(1);
 }
 
-// =============================================================================
-// Helper: Supabase REST upsert
-// =============================================================================
 async function supabaseUpsert(table, rows) {
   if (DRY_RUN) {
     console.log(`    [DRY-RUN] zou ${rows.length} rijen upserten naar ${table}`);
@@ -66,7 +62,6 @@ async function supabaseUpsert(table, rows) {
   let inserted = 0, skipped = 0;
   const errors = [];
 
-  // Batch in groepen van BATCH_SIZE
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE);
     try {
@@ -82,8 +77,7 @@ async function supabaseUpsert(table, rows) {
       });
       if (!r.ok) {
         const txt = await r.text();
-        errors.push({ batch: i, status: r.status, body: txt.slice(0, 500) });
-        // Probeer per-record fallback bij batch-fout
+        // Per-record fallback
         for (const row of batch) {
           try {
             const r2 = await fetch(url, {
@@ -97,7 +91,12 @@ async function supabaseUpsert(table, rows) {
               body: JSON.stringify([row]),
             });
             if (r2.ok) inserted++;
-            else { skipped++; if (VERBOSE) errors.push({ id: row.id, status: r2.status, body: (await r2.text()).slice(0, 200) }); }
+            else {
+              skipped++;
+              if (errors.length < 5 || VERBOSE) {
+                errors.push({ id: row.id, status: r2.status, body: (await r2.text()).slice(0, 300) });
+              }
+            }
           } catch (e) { skipped++; errors.push({ id: row?.id, err: String(e) }); }
         }
       } else {
@@ -111,15 +110,13 @@ async function supabaseUpsert(table, rows) {
 }
 
 // =============================================================================
-// Helpers: type conversion
+// Type helpers
 // =============================================================================
 function dateOrNull(v) {
   if (!v) return null;
   const s = String(v).trim();
   if (!s) return null;
-  // ISO 8601
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  // DD-MM-YYYY
   const m = /^(\d{2})-(\d{2})-(\d{4})/.exec(s);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   return null;
@@ -136,18 +133,24 @@ function numOrNull(v) {
   const n = Number(String(v).replace(",", "."));
   return isFinite(n) ? n : null;
 }
-function boolOrFalse(v) { return !!v; }
 function trimOrNull(v) {
   if (v == null) return null;
+  if (typeof v === "object") return null; // voorkom [object Object]
   const s = String(v).trim();
   return s === "" ? null : s;
 }
+function nameOf(v) {
+  // Resolve "name" uit zowel string als object
+  if (v == null) return null;
+  if (typeof v === "string") { const s = v.trim(); return s === "" ? null : s; }
+  if (typeof v === "object") return trimOrNull(v.name) || trimOrNull(v.title) || trimOrNull(v.label);
+  return null;
+}
 
 // =============================================================================
-// Per-resource mappers
+// Mappers
 // =============================================================================
 const mappers = {
-  // -- MASTER-DATA (uuid PK, BS1 mogelijk superset; we upserten met BS2 UUID) --
   zorgsoorten: {
     endpoint: "/api/care-types",
     table: "zorgsoorten",
@@ -157,6 +160,7 @@ const mappers = {
       tarieftype: ({ daily: "dag", hourly: "uur", weekly: "week" })[r.tariff_type] || null,
       archived: false,
     }),
+    validate: r => !!r.naam,
   },
   locaties: {
     endpoint: "/api/locations",
@@ -165,7 +169,7 @@ const mappers = {
       const a = r.address || {};
       return {
         id: r.id,
-        naam: trimOrNull(r.name),
+        naam: trimOrNull(r.name) || "Naamloze locatie",
         adres: [a.street, a.house_number, a.house_number_addition].filter(Boolean).join(" ") || null,
         kleur: trimOrNull(r.color),
         postcode: trimOrNull(a.postcode),
@@ -187,11 +191,13 @@ const mappers = {
       fee_per_uur: numOrNull(r.default_hourly_fee),
       archived: !!r.deleted_at,
     }),
+    validate: r => !!r.naam,
   },
   competenties: {
     endpoint: "/api/competencies",
     table: "competenties",
     map: r => ({ id: r.id, naam: trimOrNull(r.name), archived: !!r.deleted_at }),
+    validate: r => !!r.naam,
   },
   opleidingen: {
     endpoint: "/api/certifications",
@@ -202,23 +208,28 @@ const mappers = {
       skj: !!r.is_skj,
       archived: !!r.deleted_at,
     }),
+    validate: r => !!r.naam,
   },
   gemeenten: {
     endpoint: "/api/municipalities",
     table: "gemeenten",
     map: r => ({ id: r.id, naam: trimOrNull(r.name), archived: !!r.deleted_at }),
+    validate: r => !!r.naam,
   },
   organisaties: {
     endpoint: "/api/organizations",
     table: "organisaties",
     map: r => ({ id: String(r.id), naam: trimOrNull(r.name), archived: !!r.deleted_at }),
+    // FIX: filter records met null name
+    validate: r => !!r.naam,
   },
   salarisschalen: {
     endpoint: "/api/salary-scales",
     table: "salarisschalen",
     map: (r, idx) => ({
       id: String(r.id),
-      title: trimOrNull(r.title || r.name),
+      // FIX: fallback voor null title
+      title: trimOrNull(r.title) || trimOrNull(r.name) || `BS2-schaal ${idx + 1}`,
       rows: r.rows || r.steps || [],
       sort_order: idx,
     }),
@@ -234,7 +245,7 @@ const mappers = {
     }),
   },
 
-  // -- KERN PII --
+  // -- PII --
   medewerkers: {
     endpoint: "/api/employees",
     table: "medewerkers",
@@ -243,7 +254,7 @@ const mappers = {
       voornaam: trimOrNull(r.first_name),
       achternaam: trimOrNull(r.last_name),
       email: trimOrNull(r.email),
-      fase: trimOrNull(r.phase?.name || r.phase),
+      fase: nameOf(r.phase),
       dienstverband: trimOrNull(r.employment_type),
       functie: trimOrNull(r.function || r.role),
       archived: !!r.deleted_at,
@@ -279,17 +290,16 @@ const mappers = {
       id: String(r.id),
       voornaam: trimOrNull(r.first_name),
       achternaam: trimOrNull(r.last_name),
-      clientnummer: r.client_number || null,
-      locatie: trimOrNull(r.location?.name || r.location),
-      fase: trimOrNull(r.phase?.name || r.phase),
-      gemeente: trimOrNull(r.municipality?.name || r.municipality),
-      organisatie: trimOrNull(r.organization?.name || r.organization),
+      // FIX: clientnummer NULL i.p.v. conflict. BS2 nummer bewaard in data.bs2_client_number.
+      clientnummer: null,
+      locatie: nameOf(r.location),
+      fase: nameOf(r.phase),
+      gemeente: nameOf(r.municipality),
+      organisatie: nameOf(r.organization),
       archived: !!r.deleted_at,
       data: {
         bs2_id: r.id,
         bs2_full_name: r.name,
-        bs2_first_name: r.first_name,
-        bs2_last_name: r.last_name,
         bs2_client_number: r.client_number,
         bs2_referrer_name: r.referrer_name,
         bs2_referrer_phone: r.referrer_phone,
@@ -316,11 +326,12 @@ const mappers = {
     table: "beschikkingen",
     map: r => ({
       id: String(r.id),
-      client_id: r.client_id || r.client?.id ? String(r.client_id || r.client.id) : null,
-      naam: trimOrNull(r.name || r.label),
-      zorgsoort_key: trimOrNull(r.care_type?.name || r.care_type),
-      fase: trimOrNull(r.phase?.name || r.phase),
-      locatie: trimOrNull(r.location?.name || r.location),
+      client_id: r.client_id ? String(r.client_id) : (r.client?.id ? String(r.client.id) : null),
+      naam: trimOrNull(r.name) || trimOrNull(r.label) || nameOf(r.care_type) || `Beschikking ${r.id}`,
+      // FIX: zorgsoort_key NOT NULL — fallback "Onbekend"
+      zorgsoort_key: nameOf(r.care_type) || trimOrNull(r.care_type_id) || "Onbekend",
+      fase: nameOf(r.phase) || trimOrNull(r.status),
+      locatie: nameOf(r.location),
       start_iso: dateOrNull(r.start_date),
       eind_iso: dateOrNull(r.end_date),
       decl_meth: trimOrNull(r.declaration_method),
@@ -340,22 +351,23 @@ const mappers = {
     map: r => ({
       id: r.id,
       client_id: r.client_id || (r.client?.id ? String(r.client.id) : null),
-      categorie: trimOrNull(r.category?.name || r.category),
-      status: trimOrNull(r.status),
-      melder_id: null, // resolve later via medewerker_id lookup
+      categorie: nameOf(r.category),
+      status: trimOrNull(r.status) || "open",
+      melder_id: null,
       beoordelaar_id: null,
       locatie_id: r.location?.id || null,
       incident_datum: tsOrNull(r.incident_date),
-      omschrijving: trimOrNull(r.description),
-      genomen_maatregelen: trimOrNull(r.safety_measures),
+      omschrijving: trimOrNull(r.description) || "Geen omschrijving",
+      genomen_maatregelen: trimOrNull(r.safety_measures) || "Geen maatregelen vermeld",
       archived: !!r.deleted_at,
       tijdstip_van_dag: trimOrNull(r.time_of_day),
       is_buiten: !!r.outside_location,
-      actor_type: trimOrNull(r.incident_actors?.[0] || null),
+      actor_type: trimOrNull(Array.isArray(r.incident_actors) ? r.incident_actors[0] : r.incident_actors) || "alleen_client",
       betrokken_partijen: r.incident_actors || [],
       ouders_geinformeerd: !!r.parents_informed,
       wil_gebeld_worden: !!r.wants_callback,
-      impact_op_zorgverlener: trimOrNull(r.personal_impact),
+      // FIX: NOT NULL fallback
+      impact_op_zorgverlener: trimOrNull(r.personal_impact) || "Niet opgegeven",
       notificeer_team: !!r.notify_team,
       notificeer_medewerker_ids: r.notify_employee_ids || [],
     }),
@@ -366,10 +378,12 @@ const mappers = {
     map: r => ({
       id: String(r.id),
       factuurnummer: trimOrNull(r.number),
-      beschikking_label: trimOrNull(r.disposition?.name || r.disposition),
-      client_label: trimOrNull(r.client?.name || r.client),
+      // FIX: NOT NULL fallback voor beschikking_label
+      beschikking_label: nameOf(r.disposition) || nameOf(r.decision) || trimOrNull(r.disposition_label) || `Factuur ${r.number || r.id}`,
+      // FIX: string-only (geen [object Object])
+      client_label: nameOf(r.client),
       client_id: r.client?.id ? String(r.client.id) : null,
-      clientnummer: r.client?.client_number ? String(r.client.client_number) : null,
+      clientnummer: r.client?.client_number != null ? String(r.client.client_number) : null,
       periode: trimOrNull(r.period),
       betaling_text: trimOrNull(r.payment_status),
       status: trimOrNull(r.status),
@@ -394,13 +408,13 @@ const mappers = {
       start_iso: tsOrNull(r.start_at || r.start_time || r.start),
       einde_iso: tsOrNull(r.end_at || r.end_time || r.end),
       diensttype: trimOrNull(r.type),
-      afdeling: trimOrNull(r.department?.name || r.department),
-      functie: trimOrNull(r.function?.name || r.function),
-      teamlead: trimOrNull(r.team_lead?.name || null),
-      teamlid: trimOrNull(r.assigned_to?.name || r.employees?.[0]?.name || null),
-      client: trimOrNull(r.client?.name || null),
-      vestiging: trimOrNull(r.organization?.name || null),
-      locatie: trimOrNull(r.location?.name || null),
+      afdeling: nameOf(r.department),
+      functie: nameOf(r.function),
+      teamlead: nameOf(r.team_lead),
+      teamlid: nameOf(r.assigned_to) || (Array.isArray(r.employees) && r.employees[0] ? nameOf(r.employees[0]) : null),
+      client: nameOf(r.client),
+      vestiging: nameOf(r.organization),
+      locatie: nameOf(r.location),
       conflict: false,
       archived: !!r.deleted_at,
       data: {
@@ -419,21 +433,31 @@ const mappers = {
   },
 };
 
-// =============================================================================
-// Main run
-// =============================================================================
+function dedupeById(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const row of rows) {
+    const id = String(row.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(row);
+  }
+  return out;
+}
+
 async function main() {
-  console.log(`\n=== BS2 -> BS1 import ===`);
+  console.log(`\n=== BS2 -> BS1 import (v2) ===`);
   console.log(`JSON     : ${JSON_PATH}`);
   console.log(`Supabase : ${SUPABASE_URL}`);
   console.log(`Mode     : ${DRY_RUN ? "DRY-RUN" : "LIVE INSERT"}`);
   if (ONLY) console.log(`Only     : ${ONLY}`);
+  if (INCLUDE_MASTER) console.log(`Master   : ENABLED (force-import)`);
+  else console.log(`Master   : default skip (BS1 superset). Gebruik --include-masterdata om te forceren.`);
   console.log();
 
   const raw = JSON.parse(readFileSync(JSON_PATH, "utf8"));
   const data = raw.data;
 
-  // Volgorde van import (FK-dependency):
   const order = [
     "gemeenten", "zorgsoorten", "bureaus", "competenties", "opleidingen",
     "locaties", "organisaties", "salarisschalen", "incident_categorieen",
@@ -443,16 +467,31 @@ async function main() {
   const summary = [];
   for (const name of order) {
     if (ONLY && ONLY !== name) continue;
+    if (!INCLUDE_MASTER && MASTERDATA_SKIP.has(name) && !ONLY) {
+      console.log(`[${name}] standaard skip (BS1 superset). --include-masterdata om te forceren.`);
+      summary.push({ resource: name, table: name, inserted: 0, skipped: "BS1-superset", errors: 0 });
+      continue;
+    }
     const spec = mappers[name];
     if (!spec) { console.warn(`Geen mapper voor ${name}`); continue; }
     const arr = Array.isArray(data[spec.endpoint]) ? data[spec.endpoint] : (data[spec.endpoint]?.data || []);
     if (!arr.length) { console.log(`[${name}] geen data in JSON, skip`); continue; }
-    const rows = arr.map((r, i) => spec.map(r, i)).filter(Boolean);
-    console.log(`\n[${name}] ${rows.length} records -> public.${spec.table}`);
+
+    // Map + filter null-name records + dedupe id
+    let rows = arr.map((r, i) => spec.map(r, i)).filter(Boolean);
+    if (spec.validate) {
+      const before = rows.length;
+      rows = rows.filter(spec.validate);
+      const filtered = before - rows.length;
+      if (filtered > 0) console.log(`[${name}] ${filtered} records gefilterd (null/invalid)`);
+    }
+    rows = dedupeById(rows);
+
+    console.log(`[${name}] ${rows.length} records -> public.${spec.table}`);
     const result = await supabaseUpsert(spec.table, rows);
     console.log(`  inserted: ${result.inserted}, skipped: ${result.skipped}, errors: ${result.errors.length}`);
     if (result.errors.length && VERBOSE) {
-      console.log("  Errors:", JSON.stringify(result.errors.slice(0, 3), null, 2));
+      console.log("  Errors (eerste 3):", JSON.stringify(result.errors.slice(0, 3), null, 2));
     } else if (result.errors.length) {
       console.log("  (gebruik --verbose voor error-details)");
     }
