@@ -32,12 +32,26 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
+  var ACTIE_LABELS = {
+    aanmaken: "Aanmaken",
+    bewerken: "Bewerken",
+    bekijken: "Bekijken",
+    verwijderen: "Verwijderen",
+    archiveren: "Archiveren",
+    herstellen: "Herstellen",
+    status_wijziging: "Status",
+  };
+
   function actieBadge(actie) {
-    var label = actie || "";
+    var label = ACTIE_LABELS[actie] || actie || "";
     var style = "padding:2px 8px;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:600;";
     if (actie === "aanmaken") style += "color:var(--green);background:var(--green-soft);";
     else if (actie === "bekijken") style += "color:var(--blue);background:var(--blue-soft);";
     else if (actie === "bewerken") style += "color:var(--yellow);background:var(--yellow-soft);";
+    else if (actie === "verwijderen") style += "color:var(--red);background:var(--red-soft);";
+    else if (actie === "archiveren") style += "color:var(--yellow);background:var(--yellow-soft);";
+    else if (actie === "herstellen") style += "color:var(--green);background:var(--green-soft);";
+    else if (actie === "status_wijziging") style += "color:var(--blue);background:var(--blue-soft);";
     else style += "color:var(--text-muted);background:var(--line);";
     return '<span style="' + style + '">' + escapeHtml(label) + '</span>';
   }
