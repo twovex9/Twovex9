@@ -22,6 +22,11 @@ node_modules/
 # Claude Code per-user permissies (niet team-shared)
 .claude/settings.local.json
 
+# Playwright test outputs
+playwright-report/
+test-results/
+playwright/.cache/
+
 # BS2 handmatige exports (PII — nooit naar GitHub)
 scripts/bs2-exports/*.csv
 scripts/bs2-exports/*.xlsx

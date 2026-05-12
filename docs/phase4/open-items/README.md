@@ -41,6 +41,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | **38** | **[BS2 sync eerste poging: bevindingen + v2 aanpak](38-bs2-sync-eerste-poging-bevindingen.md)** | ⏳ **Defer naar v2 — gebruik JS-snippet in BS2 console** | 2026-05-12 |
 | 39 | [RLS-policies security audit (rapport)](39-rls-audit.md) | ✅ Voltooid — audit rapport + v2 hardening aanbevelingen | 2026-05-12 |
 | 40 | [GDPR Art. 9 compliance verzuim](40-gdpr-art-9-verzuim.md) | ✅ Compliance rapport + v2 actieplan + quick-wins (DPA tekenen) | 2026-05-13 |
+| 41 | [E2E test-suite skelet (Playwright)](41-e2e-test-suite.md) | ✅ Voltooid — 22 tests in 3 spec-files | 2026-05-13 |
 | 37 | [Cliënt-detail Vragenlijsten-tab geïmplementeerd](37-vragenlijsten-tab-implementatie.md) | ✅ Voltooid — **item 14 volledig gesloten** | 2026-05-12 |
 
 ## Voor v3

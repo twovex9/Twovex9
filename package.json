@@ -9,6 +9,12 @@
   },
   "scripts": {
     "build": "node scripts/bust-cache.mjs",
-    "build:check": "node scripts/bust-cache.mjs --check"
+    "build:check": "node scripts/bust-cache.mjs --check",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
   }
 }
