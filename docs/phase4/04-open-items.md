@@ -346,26 +346,15 @@ Stappen zijn herhaalbaar zonder data-verlies (alles idempotent + archive ipv del
 
 **Ook persisted in**: `feedback_besa_workflow.md` memory file + `CLAUDE.md` regel (overleeft sessie-compactie en nieuwe Claude-sessies).
 
-### 30. Performance benchmarks gemeten (2026-05-12)
+---
 
-**Status**: ✅ baseline timings vastgelegd in `docs/phase4/08-performance-benchmarks.md`.
+## Recente items (item 29+) — aparte files
 
-**Resultaten** (productie, na PR #1 cache-busting actief):
-- 7 key pages gemeten via Chrome MCP `performance.getEntriesByType('navigation')[0]`
-- Server response (HTML): 186-290ms — consistent + snel
-- DOMInteractive < 1s voor 5 van 7 pages
-- Full LoadComplete < 1.5s voor alle 7 pages
-- Cache-Control headers werken correct (HTML transferSize: 2-6 KB per page)
+> **Vanaf 2026-05-12 (na item 28's append-at-end faalde)**: nieuwe items worden geplaatst als aparte `.md` files in `docs/phase4/open-items/<nn>-<slug>.md`. Geen overlap meer mogelijk tussen parallelle PR's — elke PR heeft zijn eigen file. Zie [`docs/phase4/open-items/README.md`](open-items/README.md) voor index + nieuwste items.
 
-**Langzaamste pages**:
-- `index.html` (medewerkers): 1086ms DCL / 953ms DI — door 102 rijen direct rendered
-- `facturen.html`: 1312ms Load — mogelijk async fetches buiten `loadEvent`
-
-**Niet kritiek nu**, wel relevante bottleneck-analyse voor groei:
-- Bij > 1000 actieve records per hoofdtabel: virtualisatie of pagination overwegen
-- Preconnect `<link>` naar Supabase kan 50-100ms DNS+TLS besparen (optioneel)
-
-**Item 6.2 uit 06-professional-finish gesloten**. Herhaal benchmarks elke ~6 maanden of na grote feature-additions om regressies te detecteren.
+Items 29 en 30 hebben de overgang gemaakt:
+- [29: Cliënt-detail tabs verificatie](open-items/29-client-detail-tabs-verification.md)
+- [30: Performance benchmarks](open-items/30-performance-benchmarks.md)
 
 ## Definitie van klaar — wanneer Phase 5 nodig?
 
