@@ -95,12 +95,26 @@
 
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
-      .from(TABLE)
-      .select("*")
-      .order("start_iso", { ascending: true, nullsFirst: false });
-    if (res.error) throw res.error;
-    return (res.data || []).map(rowToObj).filter(Boolean);
+    // Chunked fetch: PostgREST default limit is 1000 per query. Voor grotere
+    // datasets (planning kan duizenden records hebben) loopen we via .range()
+    // in chunks van 1000 tot we minder records terugkrijgen dan chunkSize.
+    var chunkSize = 1000;
+    var all = [];
+    var offset = 0;
+    while (true) {
+      var res = await global.besaSupabase
+        .from(TABLE)
+        .select("*")
+        .order("start_iso", { ascending: true, nullsFirst: false })
+        .range(offset, offset + chunkSize - 1);
+      if (res.error) throw res.error;
+      var batch = res.data || [];
+      all = all.concat(batch);
+      if (batch.length < chunkSize) break;
+      offset += chunkSize;
+      if (offset > 50000) break; // safety
+    }
+    return all.map(rowToObj).filter(Boolean);
   }
 
   async function maybeMigrateLocalToSupabase() {

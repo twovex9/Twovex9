@@ -144,13 +144,27 @@
   // ---------------------------------------------------------------------------
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
-      .from(TABLE)
-      .select("*")
-      .order("factuurnummer", { ascending: false })
-      .order("id", { ascending: true });
-    if (res.error) throw res.error;
-    return (res.data || []).map(rowToObj).filter(Boolean);
+    // Chunked fetch: PostgREST default limit is 1000 per query.
+    // Voor facturen (990+ records) preventief paginatie zodat we niet
+    // bij groei door 1000-grens vallen.
+    var chunkSize = 1000;
+    var all = [];
+    var offset = 0;
+    while (true) {
+      var res = await global.besaSupabase
+        .from(TABLE)
+        .select("*")
+        .order("factuurnummer", { ascending: false })
+        .order("id", { ascending: true })
+        .range(offset, offset + chunkSize - 1);
+      if (res.error) throw res.error;
+      var batch = res.data || [];
+      all = all.concat(batch);
+      if (batch.length < chunkSize) break;
+      offset += chunkSize;
+      if (offset > 50000) break;
+    }
+    return all.map(rowToObj).filter(Boolean);
   }
 
   /** Eenmalige migratie van bestaande facturen-supplementen (door gebruiker
