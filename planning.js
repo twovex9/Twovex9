@@ -1618,7 +1618,32 @@ function renderAllViews() {
   if (filterState.locatieToolbar && !dataState.hrVestigingen.includes(filterState.locatieToolbar)) {
     filterState.locatieToolbar = "";
   }
-  if (!ui.weekStart) ui.weekStart = getMonday(new Date());
+  if (!ui.weekStart) {
+    ui.weekStart = getMonday(new Date());
+    // Auto-jump: als huidige week 0 records heeft maar er zijn shifts elders
+    // (bv. BS2-imports met oudere data), spring naar week van meest recente shift.
+    // Zo ziet user data bij eerste open, ipv lege "deze week"-view.
+    try {
+      const allShifts = (dataState && Array.isArray(dataState.shifts)) ? dataState.shifts : [];
+      if (allShifts.length > 0) {
+        const cw = ui.weekStart;
+        const cwEnd = new Date(cw); cwEnd.setDate(cw.getDate() + 7);
+        let currentWeekHasData = false;
+        let latestStart = null;
+        for (const s of allShifts) {
+          const startStr = s.start || s.start_iso || s.startIso || null;
+          if (!startStr) continue;
+          const d = new Date(startStr);
+          if (!isFinite(d.getTime())) continue;
+          if (d >= cw && d < cwEnd) { currentWeekHasData = true; break; }
+          if (!latestStart || d > latestStart) latestStart = d;
+        }
+        if (!currentWeekHasData && latestStart) {
+          ui.weekStart = getMonday(latestStart);
+        }
+      }
+    } catch (e) { /* fallback: laat default huidige week */ }
+  }
   if (!ui.dayDate) ui.dayDate = new Date();
   if (!ui.monthDate) ui.monthDate = new Date();
   if (ui.dayDate) ui.dayDate = new Date(ui.dayDate);

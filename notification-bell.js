@@ -36,9 +36,11 @@
   if (file === "login.html") return;
 
   var LAST_SEEN_KEY = "besa:notification-bell:lastSeen";
+  var FLOOD_ACK_KEY = "besa:notification-bell:flood-ack-v1";
   var POLL_INTERVAL_MS = 60 * 1000;
   var DEFAULT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 dagen als geen lastSeen
   var REFRESH_LOCK_MS = 5000; // throttle dubbele refresh-calls
+  var FLOOD_THRESHOLD = 1000; // > 1000 events = systeem-flood (Phase 3/4 import); auto-acknowledge
 
   var lastFetchAt = 0;
   var currentCount = 0;
@@ -107,6 +109,18 @@
     lastFetchAt = now;
     try {
       currentCount = await fetchUnreadCount();
+      // Flood detection: bij eerste load met > FLOOD_THRESHOLD events
+      // (Phase 3/4 bulk imports veroorzaken duizenden audit-events) → auto-acknowledge.
+      // User klikt anders nooit alles weg. Werkt eenmalig per browser (flag in localStorage).
+      try {
+        if (currentCount > FLOOD_THRESHOLD &&
+            window.localStorage.getItem(FLOOD_ACK_KEY) !== "1") {
+          setLastSeen(isoNow());
+          window.localStorage.setItem(FLOOD_ACK_KEY, "1");
+          currentCount = 0;
+          console.info("[notification-bell] systeem-flood gedetecteerd; auto-acknowledge gedaan.");
+        }
+      } catch (e) { /* */ }
     } catch (e) {
       currentCount = 0;
     }

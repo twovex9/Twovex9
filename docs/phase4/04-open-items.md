@@ -142,6 +142,37 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Monitor**: query in item 11 blijft staan voor toekomstige sessies.
 
+### 16. Secrets-leak scan voltooid (2026-05-12)
+
+**Status**: ✅ schoon. Grep op `service_role`, `SUPABASE_SERVICE_KEY`, `sb-svc-`, `eyJhbGciOi` toont:
+- Anon key staat in `supabase-client.js:35` (bekend + intentioneel, role=anon, RLS-protected)
+- Alle service_role-referenties zijn env-var lookups (`process.env.SUPABASE_SERVICE_KEY`) of doc-tekst
+- Geen JWT-strings met `"role":"service_role"` in payload
+
+**Conclusie**: geen accidentele secret-commit. Repo is veilig voor open-source mocht dat ooit moeten (al is project intern).
+
+**Monitor**: pre-commit hook (toekomstig) zou `git secrets` of `trufflehog` kunnen runnen om dit automatisch te bewaken.
+
+### 17. Notification-bell flood auto-acknowledge (2026-05-12)
+
+**Status**: ✅ geïmplementeerd in `notification-bell.js`. Bij eerste load met > 1000 audit-events (Phase 3/4 import-flood) wordt automatisch `lastSeen = now()` gezet en een flag `besa:notification-bell:flood-ack-v1` in localStorage. Werkt eenmalig per browser.
+
+**Rationale**: 2322 audit_log events na Phase 3 bulk-import zijn niet "nieuw voor de user" maar systeemtech. User zou anders nooit alles wegklikken.
+
+### 18. Planning auto-jump naar laatste week met data (2026-05-12)
+
+**Status**: ✅ geïmplementeerd in `planning.js`. Bij eerste page-load (`ui.weekStart` is null): als huidige week 0 shifts heeft, scant code alle shifts en springt naar de week van de meest recente shift.
+
+**Rationale**: BS2-geporte planning is van 2020-2025; default-view "huidige week" (mei 2026) toonde 0 records voor users.
+
+### 19. Dedupe records onderzoek voltooid (2026-05-12)
+
+**Resultaat**: pagination-overlap in BS2 export. 6+6 dedupe records waren legitime duplicaten (zelfde ID in 2 paginas). Geen data-verlies.
+
+**Verificatie**: Node-command `bs2-export-full.planning.length === 4454` en `new Set(bs2-export-full.planning.map(x=>x.id)).size === 4448` → 6 dubbele IDs in JSON zelf. Idem clienten: 87 → 81.
+
+**Conclusie**: open-items #4 gesloten.
+
 ## Toekomstige BS2 → BS1 refresh
 
 Wanneer nieuwe BS2 data komt (bv. nieuwe medewerkers, beschikkingen):
