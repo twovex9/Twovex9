@@ -21,3 +21,10 @@ node_modules/
 
 # Claude Code per-user permissies (niet team-shared)
 .claude/settings.local.json
+
+# BS2 handmatige exports (PII — nooit naar GitHub)
+scripts/bs2-exports/*.csv
+scripts/bs2-exports/*.xlsx
+scripts/bs2-exports/*.xls
+scripts/bs2-exports/*.json
+!scripts/bs2-exports/README.md
