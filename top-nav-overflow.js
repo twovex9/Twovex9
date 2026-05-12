@@ -147,7 +147,7 @@
       Beleid: "beleid.html",
       Audit: "audit.html",
       Organisatie: "teams.html",
-      Instellingen: "werkruimte.html#instellingen",
+      Instellingen: "instellingen.html",
     };
   const DROPDOWN_ROUTE_BY_TITLE = {
       "Overzicht planning": "planning.html",

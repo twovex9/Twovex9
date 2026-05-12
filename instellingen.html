@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instellingen — HR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9">
+</head>
+<body>
+  <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <a href="planning.html" class="top-link">Planning</a>
+            <a href="werkuren.html" class="top-link">Urenregistratie</a>
+            <a href="index.html" class="top-link">HR</a>
+            <a href="clienten.html" class="top-link">Cliënten</a>
+            <a href="kilometers.html" class="top-link">Kilometers</a>
+            <a href="facturen-te-beoordelen.html" class="top-link">Facturen</a>
+            <a href="taken.html" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <a href="verlof.html" class="top-link">Verlof</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <a href="teams.html" class="top-link">Organisatie</a>
+            <a href="instellingen.html" class="top-link is-active">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Meldingen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="content-header">
+        <h1>Instellingen</h1>
+      </div>
+
+      <div class="toolbar">
+        <div class="filter-chips" role="tablist" aria-label="Instellingen tabs">
+          <button type="button" class="filter-chip filter-chip--active" role="tab" id="inst-tab-profiel" aria-selected="true">Mijn profiel</button>
+          <button type="button" class="filter-chip" role="tab" id="inst-tab-notificaties" aria-selected="false">Notificatietypes</button>
+        </div>
+      </div>
+
+      <!-- Tab: Mijn profiel -->
+      <section id="inst-panel-profiel" class="table-card" style="padding:24px;">
+        <h2 style="margin-top:0;">Mijn profiel</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">Wijzig hier je naam — die wordt zichtbaar in de welkomstgroet en bij audit-logs.</p>
+        <form id="inst-profiel-form" style="max-width:520px;">
+          <label class="emp-verzuim-modal-field">
+            <span>Voornaam</span>
+            <input type="text" id="inst-profiel-voornaam" class="comp-modal-input" />
+          </label>
+          <label class="emp-verzuim-modal-field">
+            <span>Achternaam</span>
+            <input type="text" id="inst-profiel-achternaam" class="comp-modal-input" />
+          </label>
+          <label class="emp-verzuim-modal-field">
+            <span>E-mailadres</span>
+            <input type="email" id="inst-profiel-email" class="comp-modal-input" readonly style="background:var(--line);" />
+            <small style="color:var(--text-muted);">E-mail kan alleen via Supabase Auth gewijzigd worden.</small>
+          </label>
+          <label class="emp-verzuim-modal-field">
+            <span>Rol</span>
+            <input type="text" id="inst-profiel-rol" class="comp-modal-input" readonly style="background:var(--line);" />
+            <small style="color:var(--text-muted);">Rol wordt door admin beheerd.</small>
+          </label>
+          <div style="margin-top:16px;">
+            <button type="submit" class="btn-primary" id="inst-profiel-save-btn">Opslaan</button>
+            <span id="inst-profiel-feedback" style="margin-left:12px;color:var(--green);font-size:14px;"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- Tab: Notificatietypes -->
+      <section id="inst-panel-notificaties" class="table-card" style="display:none;">
+        <div class="content-header" style="padding:16px 24px 0;border-bottom:none;">
+          <h2 style="margin:0;">Notificatietypes</h2>
+          <div class="header-actions">
+            <button class="btn-primary" type="button" id="inst-nt-add-btn">+ Type toevoegen</button>
+          </div>
+        </div>
+        <div class="toolbar" style="padding:8px 24px;">
+          <input class="search" type="search" id="inst-nt-search" placeholder="Zoeken..." autocomplete="off" />
+          <label class="switch switch--yellow">
+            <input type="checkbox" id="inst-nt-archived-toggle" />
+            <span class="switch-slider"></span>
+            <span class="switch-label">Gearchiveerd</span>
+          </label>
+        </div>
+        <div class="table-wrapper">
+          <table class="employees-table">
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>Beschrijving</th>
+                <th>Kanaal</th>
+                <th>Default aan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inst-nt-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="emp-verzuim-modal-overlay" id="inst-nt-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:520px">
+      <div class="emp-verzuim-modal-head">
+        <h3 id="inst-nt-modal-title">Notificatietype toevoegen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="inst-nt-close-btn">&times;</button>
+      </div>
+      <form id="inst-nt-form" novalidate>
+        <input type="hidden" id="inst-nt-edit-id" value="" />
+        <div class="emp-verzuim-modal-body">
+          <label class="emp-verzuim-modal-field">
+            <span>Naam</span>
+            <input type="text" id="inst-nt-naam" class="comp-modal-input" required>
+          </label>
+          <label class="emp-verzuim-modal-field">
+            <span>Beschrijving</span>
+            <textarea id="inst-nt-beschrijving" class="comp-modal-input" rows="2"></textarea>
+          </label>
+          <div style="display:flex;gap:12px;">
+            <label class="emp-verzuim-modal-field" style="flex:1">
+              <span>Kanaal</span>
+              <select id="inst-nt-kanaal" class="comp-modal-input">
+                <option value="in_app">In-app</option>
+                <option value="email">E-mail</option>
+                <option value="sms">SMS</option>
+                <option value="push">Push</option>
+              </select>
+            </label>
+            <label class="emp-verzuim-modal-field" style="flex:1;align-items:flex-end;display:flex;flex-direction:column;justify-content:center;">
+              <label class="switch">
+                <input type="checkbox" id="inst-nt-default-aan" checked>
+                <span class="switch-slider"></span>
+                <span class="switch-label">Default aan</span>
+              </label>
+            </label>
+          </div>
+        </div>
+        <div class="emp-verzuim-modal-footer">
+          <button type="button" class="emp-verzuim-modal-cancel" id="inst-nt-cancel-btn">Annuleren</button>
+          <button type="submit" class="emp-verzuim-modal-submit" id="inst-nt-submit-btn">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="profiles-data.js"></script>
+  <script src="notification-types-data.js"></script>
+  <script src="instellingen.js"></script>
+</body>
+</html>
