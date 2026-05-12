@@ -1,0 +1,14 @@
+{
+  "name": "besa-suite-etf",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BS1 — vanilla HTML/JS + Supabase BESA suite (interne ETF tool)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/bust-cache.mjs",
+    "build:check": "node scripts/bust-cache.mjs --check"
+  }
+}
