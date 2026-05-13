@@ -44,6 +44,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 41 | [E2E test-suite skelet (Playwright)](41-e2e-test-suite.md) | ✅ Voltooid — 22 tests in 3 spec-files | 2026-05-13 |
 | **42** | **[BS2 → BS1 feature parity gap-analyse](42-bs2-feature-parity-gap.md)** | 🟡 **Gap-analyse compleet — Sprint 1 Rollen volgende** | 2026-05-13 |
 | 37 | [Cliënt-detail Vragenlijsten-tab geïmplementeerd](37-vragenlijsten-tab-implementatie.md) | ✅ Voltooid — **item 14 volledig gesloten** | 2026-05-12 |
+| 43 | [Sprint 1: Rollen-organogram (BS2 parity)](43-sprint-1-rollen-organogram.md) | 🟡 In review (PR open) | 2026-05-13 |
 
 ## Voor v3
 
