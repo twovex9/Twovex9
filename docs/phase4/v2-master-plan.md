@@ -43,14 +43,26 @@ Na elke merge MOET Claude zelf via `mcp__Claude_in_Chrome__*` tools verifiëren 
 
 Resultaat in 1-2 regels naar user (of in PR-body volgende sprint). Geen user-pauze. Geldt voor ALLE sprints tot 100% klaar.
 
+### Fix-until-correct (user-quote 2026-05-13)
+
+> *"Zo niet, dan herstel je dit tot wanneer deze stap volledig in orde is en gecontroleerd via de extensietool."*
+
+Bij faal van verificatie:
+- ❌ Niet doorgaan naar volgende sprint
+- ✅ Direct herstellen via follow-up PR
+- ✅ Opnieuw verifiëren tot ✅ OK
+- Pas dan ✅ DONE markeren + door naar volgende sprint
+
+**Voorbeeld**: Sprint 1 rollen.html toonde "0 rollen" door render-timing bug. Direct gefixt in PR #26, niet uitgesteld. Een sprint is **pas ✅ DONE** als productie-verificatie ✅ is.
+
 ## Sprint volgorde (vast)
 
 | # | Sprint | Effort | Status | PR# |
 |---|---|---|---|---|
-| S1 | Rollen-organogram + profile koppeling | 8-12u | ✅ DONE | #24 |
+| S1 | Rollen-organogram + profile koppeling | 8-12u | ✅ DONE | #24 (fix #26) |
 | S2 | RLS hardening kritieke tabellen (verzuim, clienten, medewerker_documenten, medewerker_notities) | 8u | ✅ DONE | #25 |
-| **S3** | **RLS hardening salaris + uren tabellen** | 4u | 🟡 IN PROGRESS | (volgende PR) |
-| S4 | BS2 deep walk + implementatie: Planning Voorinstellingen-save | 3u | ⏳ TODO | — |
+| S3 | RLS hardening salaris + uren tabellen | 4u | ✅ DONE | #27 |
+| **S4** | **BS2 deep walk + implementatie: Planning Voorinstellingen-save** | 3u | 🟡 IN PROGRESS | (volgende PR) |
 | S5 | Planning Exporteren CSV | 2u | ⏳ TODO | — |
 | S6 | BS2 deep walk: Planning Financiën sub-page → implementatie | 4u | ⏳ TODO | — |
 | S7 | BS2 deep walk: HR/Salarisadministratie processing → implementatie | 4u | ⏳ TODO | — |

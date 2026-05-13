@@ -2684,22 +2684,13 @@ function initNav() {
     toggleFilterDtList();
   });
 
-  /* Voorinstellingen (placeholder) */
-  document.getElementById("planning-presets-new-btn")?.addEventListener("click", async () => {
-    const naam = await window.showPromptModal({
-      title: "Nieuwe voorinstelling",
-      label: "Geef een naam voor deze voorinstelling",
-      placeholder: "Naam van de voorinstelling",
-      okLabel: "Opslaan",
-    });
-    if (!naam) return;
-    if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback(
-        "info",
-        "Voorinstelling opgeslagen",
-        `“${naam}” is lokaal opgeslagen. Volledig beheer van voorinstellingen volgt in een vervolgrelease.`
-      );
-    }
+  /* Voorinstellingen — inline naam-input + Supabase data-laag */
+  document.getElementById("planning-presets-new-btn")?.addEventListener("click", showPresetNameInput);
+  document.getElementById("planning-presets-save-btn")?.addEventListener("click", savePresetFromInput);
+  document.getElementById("planning-presets-cancel-btn")?.addEventListener("click", hidePresetNameInput);
+  document.getElementById("planning-presets-input")?.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); savePresetFromInput(); }
+    else if (ev.key === "Escape") { ev.preventDefault(); hidePresetNameInput(); }
   });
 
   /* Toolbar: Genereren + Optimaliseren (placeholders, bevestigen + log) */
@@ -2756,6 +2747,138 @@ function initSearch() {
   searchInput?.addEventListener("input", () => {
     filterState.search = searchInput.value || "";
     renderAllViews();
+  });
+}
+
+/* ---------------- Filter-voorinstellingen (Sprint 4 / S4) ---------------- */
+
+function serializeFilterStateForPreset() {
+  return {
+    diensttypes: Array.from(filterState.diensttypes || []),
+    assignStatus: filterState.assignStatus || "alle",
+    teamlid: filterState.teamlid || "",
+    client: filterState.client || "",
+    locatieToolbar: filterState.locatieToolbar || "",
+  };
+}
+
+function applyFilterStateFromPreset(fs) {
+  if (!fs || typeof fs !== "object") return;
+  filterState.diensttypes.clear();
+  (Array.isArray(fs.diensttypes) ? fs.diensttypes : []).forEach((d) => filterState.diensttypes.add(d));
+  filterState.assignStatus = fs.assignStatus || "alle";
+  filterState.teamlid = fs.teamlid || "";
+  filterState.client = fs.client || "";
+  filterState.locatieToolbar = fs.locatieToolbar || "";
+  const teamSel = document.getElementById("filter-teamlid");
+  if (teamSel) teamSel.value = filterState.teamlid;
+  const cliSel = document.getElementById("filter-client");
+  if (cliSel) cliSel.value = filterState.client;
+  const locSel = document.getElementById("planning-loc-select");
+  if (locSel) locSel.value = filterState.locatieToolbar;
+  document.querySelectorAll('input[name="planning-assign-status"]').forEach((r) => {
+    r.checked = (r.value === filterState.assignStatus);
+  });
+  try { renderFilterDiensttypeMultiselect(); } catch (e) { /* */ }
+  syncFilterDtTriggerText();
+  renderAllViews();
+}
+
+function showPresetNameInput() {
+  const form = document.getElementById("planning-presets-form");
+  const input = document.getElementById("planning-presets-input");
+  const btn = document.getElementById("planning-presets-new-btn");
+  if (!form || !input || !btn) return;
+  form.removeAttribute("hidden");
+  btn.setAttribute("hidden", "");
+  input.value = "";
+  setTimeout(() => input.focus(), 10);
+}
+
+function hidePresetNameInput() {
+  const form = document.getElementById("planning-presets-form");
+  const btn = document.getElementById("planning-presets-new-btn");
+  if (form) form.setAttribute("hidden", "");
+  if (btn) btn.removeAttribute("hidden");
+}
+
+async function savePresetFromInput() {
+  const input = document.getElementById("planning-presets-input");
+  if (!input) return;
+  const naam = (input.value || "").trim();
+  if (!naam) { input.focus(); return; }
+  if (!window.planningVoorinstellingenDB) {
+    if (window.showError) window.showError("Data-laag voor voorinstellingen niet geladen.");
+    return;
+  }
+  try {
+    await window.planningVoorinstellingenDB.add({
+      naam,
+      filter_state: serializeFilterStateForPreset(),
+    });
+    if (window.showActionFeedback) window.showActionFeedback("saved", "Voorinstelling");
+    hidePresetNameInput();
+  } catch (err) {
+    const msg = String((err && err.message) || err);
+    if (/duplicate|unique|23505/i.test(msg)) {
+      if (window.showError) window.showError(`Er bestaat al een voorinstelling met naam "${naam}".`);
+    } else if (window.showError) {
+      window.showError("Opslaan mislukt: " + msg);
+    }
+  }
+}
+
+function renderPresetsList() {
+  const ul = document.getElementById("planning-presets-list");
+  if (!ul) return;
+  const db = window.planningVoorinstellingenDB;
+  const items = db && typeof db.getAllSync === "function" ? db.getAllSync() : [];
+  ul.innerHTML = "";
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "planning-erm-preset-item";
+    li.dataset.presetId = item.id;
+
+    const label = document.createElement("button");
+    label.type = "button";
+    label.className = "planning-erm-preset-label";
+    label.textContent = item.naam;
+    label.title = "Klik om voorinstelling toe te passen";
+    label.addEventListener("click", () => {
+      applyFilterStateFromPreset(item.filter_state || {});
+      if (window.showActionFeedback) {
+        window.showActionFeedback("info", "Voorinstelling geladen", `"${item.naam}"`);
+      }
+    });
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "planning-erm-preset-del";
+    del.setAttribute("aria-label", `Verwijder ${item.naam}`);
+    del.title = "Verwijderen";
+    del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+    del.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      const ok = await (window.showSliderConfirmModal
+        ? window.showSliderConfirmModal({
+            title: "Bent u zeker dat dit verwijderd wordt?",
+            preview: item.naam,
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren",
+          })
+        : Promise.resolve(window.confirm(`Verwijder "${item.naam}"?`)));
+      if (!ok) return;
+      try {
+        await window.planningVoorinstellingenDB.delete(item.id);
+        if (window.showActionFeedback) window.showActionFeedback("deleted", "Voorinstelling");
+      } catch (err) {
+        if (window.showError) window.showError("Verwijderen mislukt: " + (err.message || err));
+      }
+    });
+
+    li.appendChild(label);
+    li.appendChild(del);
+    ul.appendChild(li);
   });
 }
 
@@ -2882,6 +3005,14 @@ function initPlanningPage() {
   window.addEventListener("besa:comp-diensttypes-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
   });
+  // Sprint 4 / S4: filter-voorinstellingen lijst rendert direct uit cache + live-refresh
+  try { renderPresetsList(); } catch (e) { /* */ }
+  window.addEventListener("besa:planning-voorinstellingen-updated", () => {
+    try { renderPresetsList(); } catch (e) { /* */ }
+  });
+  if (window.planningVoorinstellingenDB && window.planningVoorinstellingenDB.ready) {
+    Promise.resolve(window.planningVoorinstellingenDB.ready).then(renderPresetsList, renderPresetsList);
+  }
 }
 
 initPlanningPage();

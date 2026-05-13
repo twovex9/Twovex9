@@ -108,10 +108,32 @@
         <aside class="planning-filters-card planning-filters-card--erm planning-filters-card--v3">
           <div class="planning-erm-presets">
             <h2 class="planning-erm-presets-title">Filter Voorinstellingen</h2>
+            <ul class="planning-erm-presets-list" id="planning-presets-list" aria-label="Opgeslagen filter-voorinstellingen"></ul>
             <button type="button" class="planning-erm-presets-new" id="planning-presets-new-btn">
               <span class="planning-erm-presets-plus" aria-hidden="true">+</span>
               <span>Nieuwe voorinstelling maken</span>
             </button>
+            <div class="planning-erm-presets-form" id="planning-presets-form" hidden>
+              <input
+                type="text"
+                class="planning-erm-presets-input"
+                id="planning-presets-input"
+                placeholder="Naam"
+                maxlength="80"
+                aria-label="Naam voor nieuwe voorinstelling"
+              />
+              <button type="button" class="planning-erm-presets-save" id="planning-presets-save-btn" aria-label="Opslaan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="planning-erm-presets-cancel" id="planning-presets-cancel-btn" aria-label="Annuleren">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="planning-erm-customf">
@@ -490,6 +512,7 @@
   <script src="profiles-data.js"></script>
   <script src="planning-data.js"></script>
   <script src="comp-diensttypes-data.js"></script>
+  <script src="planning-voorinstellingen-data.js"></script>
   <script src="planning.js"></script>
 </body>
 </html>
