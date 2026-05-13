@@ -707,6 +707,61 @@
     });
   }
 
+  /**
+   * Sprint 15 / S15 — AVG Art. 9 safeguards op vrije-tekst veld.
+   * - Character counter (0 / 500)
+   * - Detectie van medische trefwoorden → rode hint (niet hard-block, want
+   *   sommige termen kunnen administratief gerechtvaardigd zijn)
+   * - submit waarschuwing als trefwoorden gevonden
+   */
+  var GDPR_MEDISCH_KEYWORDS = [
+    "diagnose", "diagnos", "medicat", "medicij", "medicat", "antidepres",
+    "depress", "angststoorn", "burn-?out", "burnout", "kanker", "tumor",
+    "hart", "longontsteking", "covid", "corona", "griep", "hiv", "aids",
+    "zwanger", "miskraam", "abortus", "kanker", "operatie", "operat",
+    "ziekenhuis", "psychiat", "trauma", "therapie", "therapeut",
+    "ms-?diagnose", "diabetes", "epileps", "huisarts", "specialist"
+  ];
+
+  function findMedischTokens(text) {
+    var t = String(text || "").toLowerCase();
+    return GDPR_MEDISCH_KEYWORDS.filter(function (k) {
+      var pattern = new RegExp("\\b" + k + "\\b", "i");
+      return pattern.test(t);
+    });
+  }
+
+  function updateBeschrijvingCounter() {
+    if (!editBeschrijving) return;
+    var counter = document.getElementById("vz-edit-beschrijving-counter");
+    var len = (editBeschrijving.value || "").length;
+    if (counter) counter.textContent = len + " / 500";
+    if (counter) counter.classList.toggle("vz-field-hint--near-limit", len > 400);
+
+    // Medische trefwoord detectie
+    var tokens = findMedischTokens(editBeschrijving.value);
+    var warning = document.getElementById("vz-edit-beschrijving-medisch");
+    if (tokens.length > 0) {
+      if (!warning) {
+        warning = document.createElement("div");
+        warning.id = "vz-edit-beschrijving-medisch";
+        warning.className = "vz-medisch-warning";
+        warning.setAttribute("role", "alert");
+        editBeschrijving.parentElement.appendChild(warning);
+      }
+      warning.innerHTML = '⚠️ <strong>Mogelijk medische term gedetecteerd:</strong> ' +
+        tokens.map(function(t) { return '<code>' + t + '</code>'; }).join(", ") +
+        '. Overweeg administratief-neutrale formulering.';
+    } else if (warning) {
+      warning.remove();
+    }
+  }
+
+  if (editBeschrijving) {
+    editBeschrijving.addEventListener("input", updateBeschrijvingCounter);
+    editBeschrijving.addEventListener("focus", updateBeschrijvingCounter);
+  }
+
   if (editForm) {
     editForm.addEventListener("submit", function (e) {
       e.preventDefault();
