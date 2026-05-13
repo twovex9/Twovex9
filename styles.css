@@ -2093,6 +2093,44 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* Sprint 8 / S8 — taken toolbar uitbreidingen (Teamlid + Deadline + Aanmaakdatum + Reset) */
+.taken-date-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 4px 10px;
+  height: 36px;
+}
+.taken-date-filter:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.taken-date-filter-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.taken-date-filter input[type="date"] {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  height: auto;
+  font: inherit;
+  color: var(--text);
+  outline: none;
+  min-width: 130px;
+}
+.taken-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+}
+
 .sa-dl-now {
   display: inline-flex;
   align-items: center;

@@ -17,6 +17,10 @@
     onlyMine: false,
     filterStatus: "",
     filterPrioriteit: "",
+    // Sprint 8 / S8 — BS2 parity uitbreidingen
+    filterTeamlid: "",          // medewerker_id van toegewezenAanId
+    filterDeadline: "",         // YYYY-MM-DD
+    filterAanmaakdatum: "",     // YYYY-MM-DD (matcht op datum-deel van aanmaakdatum)
     page: 1,
     rowsPerPage: ROWS_PER_PAGE_DEFAULT,
     editingId: null,
@@ -101,12 +105,22 @@
       if (state.hideDone && (t.status === "voltooid" || t.status === "geannuleerd")) return false;
       if (state.filterStatus && t.status !== state.filterStatus) return false;
       if (state.filterPrioriteit && t.prioriteit !== state.filterPrioriteit) return false;
+      // Sprint 8 / S8 — teamlid + deadline + aanmaakdatum filters
+      if (state.filterTeamlid && String(t.toegewezenAanId) !== String(state.filterTeamlid)) return false;
+      if (state.filterDeadline) {
+        var dl = String(t.deadline || "").slice(0, 10);
+        if (dl !== state.filterDeadline) return false;
+      }
+      if (state.filterAanmaakdatum) {
+        var ad = String(t.aanmaakdatum || "").slice(0, 10);
+        if (ad !== state.filterAanmaakdatum) return false;
+      }
       if (state.onlyMine) {
         if (!myId) return false;
         if (String(t.toegewezenAanId) !== String(myId)) return false;
       }
       if (!q) return true;
-      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + medewerkerLabel(t.toegewezenAanId);
+      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + medewerkerLabel(t.toegewezenAanId) + " " + medewerkerLabel(t.aangemaaktDoorId);
       return hay.toLowerCase().indexOf(q) >= 0;
     });
   }
@@ -138,6 +152,7 @@
     return '<tr data-id="' + escapeHtml(t.id) + '">' +
       '<td data-col="naam">' + nameButton + (t.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(t.beschrijving.slice(0, 80)) + (t.beschrijving.length > 80 ? "…" : "") + '</span>' : '') + '</td>' +
       '<td data-col="toegewezen">' + escapeHtml(medewerkerLabel(t.toegewezenAanId)) + '</td>' +
+      '<td data-col="aangemaakt_door">' + escapeHtml(medewerkerLabel(t.aangemaaktDoorId)) + '</td>' +
       '<td data-col="status">' + statusPill(t) + '</td>' +
       '<td data-col="prioriteit">' + prioriteitPill(t) + '</td>' +
       '<td data-col="deadline">' + escapeHtml(fmtNlDate(t.deadline)) + '</td>' +
@@ -160,7 +175,7 @@
     var pageItems = visible.slice(start, start + rpp);
 
     if (pageItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted);">Geen taken gevonden.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text-muted);">Geen taken gevonden.</td></tr>';
     } else {
       tbody.innerHTML = pageItems.map(renderRow).join("");
     }
@@ -177,6 +192,67 @@
     document.getElementById("taken-pager-prev").disabled = state.page <= 1;
     document.getElementById("taken-pager-next").disabled = state.page >= totalPages;
     document.getElementById("taken-pager-last").disabled = state.page >= totalPages;
+  }
+
+  /**
+   * Sprint 8 / S8 — vul Teamlid-filter dropdown met alle actieve medewerkers.
+   * Wordt herstellen na medewerkers-data update via besa:medewerkers-updated event.
+   */
+  function populateTeamlidFilter(sel) {
+    if (!sel) return;
+    var prev = sel.value || "";
+    sel.innerHTML = '<option value="">Alle teamleden</option>';
+    if (!window.medewerkersDB || typeof window.medewerkersDB.getAllSync !== "function") return;
+    var list = window.medewerkersDB.getAllSync() || [];
+    list
+      .filter(function (m) { return m && !m.archived; })
+      .sort(function (a, b) {
+        var an = (a.voornaam || "") + " " + (a.achternaam || a.naam || "");
+        var bn = (b.voornaam || "") + " " + (b.achternaam || b.naam || "");
+        return an.localeCompare(bn, "nl", { sensitivity: "base" });
+      })
+      .forEach(function (m) {
+        var opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = ((m.voornaam || "") + " " + (m.achternaam || m.naam || "")).trim() || m.email || "Onbekend";
+        sel.appendChild(opt);
+      });
+    if (prev) sel.value = prev;
+  }
+
+  /**
+   * Sprint 8 / S8 — reset alle filters (mirror BS2 Reset-knop).
+   */
+  function resetAllFilters() {
+    state.search = "";
+    state.filterStatus = "";
+    state.filterPrioriteit = "";
+    state.filterTeamlid = "";
+    state.filterDeadline = "";
+    state.filterAanmaakdatum = "";
+    state.showArchived = false;
+    state.hideDone = true;
+    state.page = 1;
+    var ids = [
+      "taken-search",
+      "taken-filter-status",
+      "taken-filter-prioriteit",
+      "taken-filter-teamlid",
+      "taken-filter-deadline",
+      "taken-filter-aanmaakdatum",
+    ];
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    var arch = document.getElementById("taken-archived-toggle");
+    if (arch) arch.checked = false;
+    var hide = document.getElementById("taken-hide-done-toggle");
+    if (hide) hide.checked = true;
+    render();
+    if (window.showActionFeedback) {
+      window.showActionFeedback("info", "Filters gewist", "Alle taken-filters zijn teruggezet.");
+    }
   }
 
   function fillMedewerkerSelect() {
@@ -356,6 +432,20 @@
     document.getElementById("taken-hide-done-toggle").addEventListener("change", function (e) { state.hideDone = !!e.target.checked; state.page = 1; render(); });
     document.getElementById("taken-filter-status").addEventListener("change", function (e) { state.filterStatus = e.target.value || ""; state.page = 1; render(); });
     document.getElementById("taken-filter-prioriteit").addEventListener("change", function (e) { state.filterPrioriteit = e.target.value || ""; state.page = 1; render(); });
+
+    // Sprint 8 / S8 — nieuwe filters
+    var teamlidSel = document.getElementById("taken-filter-teamlid");
+    if (teamlidSel) {
+      populateTeamlidFilter(teamlidSel);
+      teamlidSel.addEventListener("change", function (e) { state.filterTeamlid = e.target.value || ""; state.page = 1; render(); });
+      window.addEventListener("besa:medewerkers-updated", function () { populateTeamlidFilter(teamlidSel); });
+    }
+    var dlInput = document.getElementById("taken-filter-deadline");
+    if (dlInput) dlInput.addEventListener("change", function (e) { state.filterDeadline = e.target.value || ""; state.page = 1; render(); });
+    var adInput = document.getElementById("taken-filter-aanmaakdatum");
+    if (adInput) adInput.addEventListener("change", function (e) { state.filterAanmaakdatum = e.target.value || ""; state.page = 1; render(); });
+    var resetBtn = document.getElementById("taken-filter-reset");
+    if (resetBtn) resetBtn.addEventListener("click", resetAllFilters);
 
     document.getElementById("taken-rows-per-page").addEventListener("change", function (e) { state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; render(); });
     document.getElementById("taken-pager-first").addEventListener("click", function () { state.page = 1; render(); });
