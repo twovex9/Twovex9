@@ -63,6 +63,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 54 | [Sprint 12: Per-feature regression tests](54-sprint-12-per-feature-regression.md) | ✅ Voltooid PR #36 | 2026-05-13 |
 | 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | ✅ Voltooid PR #37 | 2026-05-13 |
 | 56 | [Sprint 14: GDPR retention + DSR flow](56-sprint-14-gdpr-retention-dsr.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 62 | [v3 Fase 0.5 — errors.html admin-pagina](62-v3-errors-html-admin-pagina.md) | ⏳ TODO (deferred naar Fase E gap-fix) | 2026-05-13 |
 
 ## Voor v3
 
