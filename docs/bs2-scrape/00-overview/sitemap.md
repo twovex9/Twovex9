@@ -7,8 +7,8 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE BS2 (PR #48 + #50) + ✅ BS1-parity-fix PR #55 pending merge — notifications backend + avatar dropdown + count-badge + arrow-icon (~100% na merge) |
-| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit BS2** (PR #49 + #51 + #52 + #53 merged). ✅ BS1-parity-fix PR #56 pending merge — 8 nieuwe tabellen + 5 kolommen + 7-section view-modal + Toewijzen/Uitnodigen/Comments/AI-suggesties + 5 management sub-pages (~95%, 4 niet-blokkerende 🟡 voor productie) |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | 🟡 **IN-PROGRESS** — BS2-scrape klaar (PR #48 + #50), parity-fix PR #55 pending merge, **lockdown-checklist nog niet gestart (0/30)** |
+| 02 | Planning | `docs/bs2-scrape/02-planning/` | 🟡 **IN-PROGRESS** — BS2-scrape klaar (PR #49 + #51 + #52 + #53), parity-fix PR #56 pending merge, **lockdown-checklist nog niet gestart (0/30)** |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
@@ -44,7 +44,7 @@
 | 35 | Mijn-gegevens | `docs/bs2-scrape/35-mijn-gegevens/` | ⏳ TODO |
 | 36 | Manual (/manual) | `docs/bs2-scrape/36-manual/` | ⏳ TODO |
 
-## Per module 6 bestanden + screenshots (VERPLICHT vanaf 2026-05-14)
+## Per module 7 bestanden + screenshots (VERPLICHT vanaf 2026-05-14)
 
 Voor élke module:
 - `structure.md` — BS2 DOM-structuur (sitemap, toolbar, tabel, dropdowns, knoppen) — HARDCORE
@@ -53,7 +53,20 @@ Voor élke module:
 - `prints.md` — BS2 print/PDF/Excel-exports (indien aanwezig)
 - `bulk-actions.md` — BS2 bulk-acties (indien aanwezig)
 - **`bs1-parity.md` — BS1 status vs BS2 (Chrome MCP test + schema-check + per-actie ✅/🟡/❌/❓ tabel + gap-categorisatie + Fase E-prioritering) — EVEN HARDCORE als BS2-scrape**
+- **`lockdown-checklist.md` — 30-items hardcore-verificatie (10 BS2 + 10 BS1 + 10 Schema/Data/Audit) MET BEWIJS per item. Module status mag NIET ✅ zonder 30/30 + user-override. Zie `_template/lockdown-checklist.md` voor vorm.**
 - `img/` — screenshots per sub-page (BS2 + BS1 waar relevant)
+
+## 🔒 LOCKDOWN-regel (user 2026-05-14, ABSOLUTE bindend)
+
+Geen module mag status `✅ DONE` krijgen zonder **30/30 ✅ in lockdown-checklist.md + user-override-tekst**. Override-teksten (alleen user kan geven):
+- `LOCKDOWN OVERRIDE GO`
+- `Ja, ga door zonder volledige hardcore-test`
+- `User-override: doorgaan naar volgende module`
+
+Status-symbolen in deze sitemap:
+- ⏳ TODO — niet gestart
+- 🟡 IN-PROGRESS — gestart, niet alle items afgewerkt OF wachten op override
+- ✅ DONE — 30/30 ✅ + user-override ontvangen
 
 ## Tools
 
