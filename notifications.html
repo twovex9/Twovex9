@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Notificaties — HR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9">
+</head>
+<body>
+  <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <a href="planning.html" class="top-link">Planning</a>
+            <a href="werkuren.html" class="top-link">Urenregistratie</a>
+            <a href="index.html" class="top-link">HR</a>
+            <a href="clienten.html" class="top-link">Cliënten</a>
+            <a href="kilometers.html" class="top-link">Kilometers</a>
+            <a href="facturen-te-beoordelen.html" class="top-link">Facturen</a>
+            <a href="taken.html" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <a href="verlof.html" class="top-link">Verlof</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <a href="teams.html" class="top-link">Organisatie</a>
+            <a href="instellingen.html" class="top-link">Instellingen</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="content-header">
+        <h1>Notificaties</h1>
+        <div class="header-actions">
+          <button type="button" class="btn-outline" id="notif-mark-all-read">Alles markeren als gelezen</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filter-chips" id="notif-tabs" role="tablist">
+          <button type="button" class="filter-chip is-active" data-tab="ongelezen" role="tab" aria-selected="true">Ongelezen <span class="filter-chip-badge" id="notif-tab-unread-count">0</span></button>
+          <button type="button" class="filter-chip" data-tab="gelezen" role="tab" aria-selected="false">Gelezen</button>
+        </div>
+      </div>
+
+      <section class="table-card">
+        <div class="notif-list" id="notif-list"></div>
+        <div class="notif-empty" id="notif-empty" hidden>Geen notificaties</div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="error-reporter.js?v=er1"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="profiles-data.js"></script>
+  <script src="notifications-data.js"></script>
+  <script src="notification-bell.js?v=nb2" defer></script>
+  <script src="notifications.js"></script>
+</body>
+</html>
