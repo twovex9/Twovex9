@@ -56,7 +56,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 52 | [Sprint 10: BS2 data resync via browser-snippet](52-sprint-10-bs2-resync-snippet.md) | ✅ Voltooid PR #34 — Claude haalde via Chrome MCP paginated alle data zelf op | 2026-05-13 |
 | 57 | [Sprint 15: Vrije tekst safeguards verzuim](57-sprint-15-verzuim-tekst-safeguards.md) | ✅ Voltooid PR #39 | 2026-05-13 |
 | 58 | [Sprint 16: BS2 deep walk resterende modules](58-sprint-16-resterende-modules.md) | ✅ Voltooid PR #40 | 2026-05-13 |
-| 59 | [Sprint 17: Entiteiten (STRICT BS2 parity)](59-sprint-17-entiteiten-strict-parity.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 59 | [Sprint 17: Entiteiten (STRICT BS2 parity)](59-sprint-17-entiteiten-strict-parity.md) | ✅ Voltooid PR #41 | 2026-05-13 |
+| 60 | [Sprint 18: Final BS1↔BS2 verification + Gebruikers tab](60-sprint-18-final-bs2-verify.md) | 🟡 In review (PR open) | 2026-05-13 |
 | 53 | [Sprint 11: Authenticated E2E tests](53-sprint-11-authenticated-e2e.md) | ✅ Voltooid PR #35 | 2026-05-13 |
 | 54 | [Sprint 12: Per-feature regression tests](54-sprint-12-per-feature-regression.md) | ✅ Voltooid PR #36 | 2026-05-13 |
 | 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | ✅ Voltooid PR #37 | 2026-05-13 |
