@@ -14,6 +14,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const BASE_URL = process.env.BESA_BASE_URL || "https://besa-suite.vercel.app";
+const HAS_E2E_CREDS = !!process.env.BESA_E2E_EMAIL && !!process.env.BESA_E2E_PASSWORD;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -25,6 +26,10 @@ export default defineConfig({
     ["html", { open: "never" }],
     ["list"],
   ],
+  // Sprint 11 / S11 — global-setup voor authenticated tests
+  // Schrijft tests/e2e/.auth/storage.json met sessie-cookies.
+  // Skipt graceful als BESA_E2E_EMAIL niet gezet is.
+  globalSetup: "./tests/e2e/auth-setup.mjs",
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
@@ -36,8 +41,22 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // Unauthenticated tests (geen storageState) — smoke, auth-redirect, content
+      name: "chromium-unauth",
+      testMatch: /(01-smoke|02-auth-redirect|03-page-content)\.spec\.mjs/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: { cookies: [], origins: [] },
+      },
+    },
+    {
+      // Authenticated tests — herbruiken sessie uit auth-setup
+      name: "chromium-auth",
+      testMatch: /04-authenticated\.spec\.mjs/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: HAS_E2E_CREDS ? "./tests/e2e/.auth/storage.json" : undefined,
+      },
     },
   ],
   // Geen webServer config — we testen tegen al gedeployde site
