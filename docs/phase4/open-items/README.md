@@ -53,7 +53,9 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 49 | [Sprint 7: HR Salarisadministratie — Dienst-gebaseerde export](49-sprint-7-hr-salarisadmin-shift-export.md) | ✅ Voltooid PR #31 | 2026-05-13 |
 | 50 | [Sprint 8: Taken filters/statussen](50-sprint-8-taken-filters.md) | ✅ Voltooid PR #32 | 2026-05-13 |
 | 51 | [Sprint 9: Beleid documenten (Reset + Kolommen)](51-sprint-9-beleid-documents.md) | ✅ Voltooid PR #33 | 2026-05-13 |
-| 52 | [Sprint 10: BS2 data resync via browser-snippet](52-sprint-10-bs2-resync-snippet.md) | ✅ Voltooid PR #34 — Claude haalde data zelf via Chrome MCP + paginatie | 2026-05-13 |
+| 52 | [Sprint 10: BS2 data resync via browser-snippet](52-sprint-10-bs2-resync-snippet.md) | ✅ Voltooid PR #34 — Claude haalde via Chrome MCP paginated alle data zelf op | 2026-05-13 |
+| 53 | [Sprint 11: Authenticated E2E tests](53-sprint-11-authenticated-e2e.md) | ✅ Voltooid PR #35 | 2026-05-13 |
+| 54 | [Sprint 12: Per-feature regression tests](54-sprint-12-per-feature-regression.md) | ✅ Voltooid PR #36 | 2026-05-13 |
 | 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | 🟡 In review (PR open) | 2026-05-13 |
 
 ## Voor v3
