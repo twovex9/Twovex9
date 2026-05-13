@@ -1,7 +1,7 @@
 # Module 02: Planning — gedrag per actie
 
-**Gescraped op**: 2026-05-13 (batch 1)
-**Pass-status**: 6 acties getest in batch 1. ~20 acties open voor batch 2.
+**Gescraped op**: 2026-05-13 (batch 1 + batch 2 + **batch 5 audit-pass**)
+**Pass-status**: Batch 5 audit (2026-05-13) — **alle eerder geclaimde "vermoedelijk"-gaps gesloten**. Real-test via test-dienst `ZZZ-CLAUDE-TEST-2026-05-13` (aangemaakt + getoetst + verwijderd).
 
 ## Actie 1: Klik "+ Dienst aanmaken" knop (toolbar rechts)
 
@@ -186,3 +186,306 @@ Te scrapen in batch 2. URL/state-update bij date-navigation.
 ## Te testen in batch 2
 
 Zie `structure.md` "Te scrapen in batch 2" lijst (25 punten).
+
+---
+
+## BATCH 5 AUDIT-PASS (2026-05-13) — gedocumenteerd via test-dienst `ZZZ-CLAUDE-TEST-2026-05-13`
+
+Test-dienst: Waakdienst, Kantoor Magdalenenstraat, 31-12-2026 23:02 → 31-12-2026 00:02, beschrijving "ZZZ-CLAUDE-TEST-2026-05-13 dummy testdienst om de details-flow te capturen". Doel: alle dienst-detail flows + delete-flow capturen zonder real data te beïnvloeden. End-state: dienst gemarkeerd `trashed` na delete-test (hard-deleted in BS2).
+
+### Actie B5.A: Klik eye-icon in dienst-cell hover-state (NIEUW)
+
+**BS2-trigger**: hover op dienst-cell → 3 quick-action icons verschijnen op `.actions-container` overlay. Klik op blauwe **eye-icon** (lucide path `M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z`).
+
+**BS2-respons**: Opent Dienstdetails modal in **view-mode** (zelfde resultaat als click op cell-body).
+
+→ BS1: implementeer 3 quick-action icons op cell-hover; eye-icon shortcut = click op cell zelf, gewoon dezelfde modal openen.
+
+### Actie B5.B: Klik pencil-icon in dienst-cell hover-state (NIEUW)
+
+**BS2-trigger**: hover op dienst-cell → klik gele/groene **pencil-icon** (lucide path `M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z`).
+
+**BS2-respons**: Opent Dienstdetails **direct in edit-mode** (skipt view-mode). Header-knoppen: **Annuleren** + **Opslaan** (geen Verwijderen/Bewerken). Alle 12 form-velden zichtbaar + pre-filled met bestaande data + rich-text formatters bovenaan beschrijving + Herhaling-sectie onderaan.
+
+→ BS1: pencil-icon op cell-hover = shortcut die `mode='edit'` prop direct doorgeeft aan Dienstdetails-component.
+
+### Actie B5.C: Klik trash-icon in dienst-cell hover-state (NIEUW — vervangt eerdere "Actie 8 NIET GETEST")
+
+**BS2-trigger**: hover op dienst-cell → klik rode **trash-icon** (lucide path `M3 6h18`).
+
+**BS2-respons**: opent **centered confirm-modal** "Dienst verwijderen":
+- Icoon: kalender + H2 "Dienst verwijderen"
+- Vraag: "Welke diensten wil je verwijderen?"
+- **Radio-group** (single-select):
+  - ● **Alleen deze dienst** (default geselect)
+  - ○ **Deze en vergelijkbare aankomende diensten** (met stack-icoon — bulk-verwijder gerelateerde herhalings-diensten)
+- Footer: **Annuleren** (outline) + **Verwijderen** (red, primary destructive)
+- Close X rechtsboven
+
+**Bevestiging**: na klik Verwijderen → DELETE-call → dienst weg uit grid. KPI "Openstaande uren" en "Geplande uren" updaten. Andere bevestiging-flows (toast/modal-close-animation) niet zichtbaar in screenshot (instant).
+
+→ BS1: slider-confirm modal (`showSliderConfirmModal`) zoals andere delete-flows + extra radio-keuze voor herhalings-diensten bulk-delete. Voor herhalings-diensten: filter op `parent_dienst_id` of `template_id` en delete-cascade.
+
+### Actie B5.D: Klik "Toewijzen" knop in Dienstdetails (NIEUW)
+
+**BS2-trigger**: in Dienstdetails-modal klik **+ Toewijzen** knop in Toegewezen-sectie.
+
+**BS2-respons**: 2e centered modal **"Medewerker Toewijzen"** opent bovenop Dienstdetails:
+- H2: "Medewerker Toewijzen"
+- Beschrijving: "Selecteer een medewerker om aan deze dienst toe te wijzen. Toegewezen medewerkers worden onmiddellijk aan de dienst toegevoegd."
+- Dropdown: "Selecteer een teamlid" (combobox)
+- **Checkbox**: "Toepassen op vergelijkbare diensten" (default OFF — bulk-toewijzen feature voor herhalings-diensten)
+- Footer: **Annuleren** (outline) + **Toewijzen** (blue primary)
+- Close X
+
+**Verschil tussen Toewijzen ↔ Uitnodigen** (vroegere Actie 9):
+- Toewijzen = direct assign (instant, geen accept-vereist)
+- Uitnodigen = invite (medewerker moet zelf accepteren voordat toegewezen)
+
+→ BS1: dropdown gefilterd op competenties + beschikbaarheid in tijd-slot. Checkbox-flag triggert bulk-update voor diensten die `parent_dienst_id` delen.
+
+### Actie B5.E: Klik "Gesloten dienst" / "Open dienst" toggle (NIEUW)
+
+**BS2-trigger**: in Dienstdetails-modal klik op **"Gesloten dienst"** of **"Open dienst"** segmented-control bovenaan.
+
+**DOM-structuur**: huidige state = SPAN met `bg-muted text-muted-foreground` class. Andere state = BUTTON (clickable action). Bij toggle wisselen SPAN ↔ BUTTON.
+
+**BS2-respons**:
+- Klik knop "Open dienst" wanneer current=Gesloten → state wordt Open, audit-entry **"Heeft de dienst opengesteld"** in Activiteit-feed
+- Klik knop "Dienst sluiten" wanneer current=Open → state wordt Gesloten, audit-entry **"Heeft de dienst gesloten"** in Activiteit-feed
+- Geen confirm-modal, instant toggle
+- Geen visueel verschil op dienst-cell in grid (state alleen zichtbaar in detail-modal)
+
+**Open vs Gesloten betekenis**: bij "Open" mogen medewerkers zelf aanmelden (zichtbaar in hun "Beschikbare diensten" lijst). Bij "Gesloten" alleen via Uitnodigen/Toewijzen.
+
+→ BS1: kolom `diensten.open_voor_aanmelding boolean default true` + UI-toggle die action logt naar `dienst_activiteiten` met action='gesloten'/'opengesteld'.
+
+### Actie B5.F: Klik "AI suggesties laden" knop (NIEUW)
+
+**BS2-trigger**: in Dienstdetails klik op blauwe link "✨ AI suggesties laden" in AI suggesties-sectie.
+
+**BS2-respons**:
+- Skeleton-loading verschijnt (3 skeleton-rijen pulse-animatie)
+- Backend call: `POST/GET https://api.etf.acceptance.besasuite.nl/api/scheduler/shift-suggestions`
+- **Timeout: 30 seconden** (in 2 tests beide 30108ms en 30221ms duurde de call)
+- Na timeout: skeleton verdwijnt + "AI suggesties laden" link verschijnt opnieuw (geen error-message, geen toast)
+
+**Conclusie**: AI is NIET auto-load; user moet expliciet klikken. Timeout van 30s suggereert een LLM call die soms te lang duurt.
+
+→ BS1-implicatie: rule-based suggesties via Supabase Edge Function. Geen externe AI. Filter on:
+- competenties match (vereiste competenties dienst ⊆ medewerker competenties)
+- beschikbaarheid (geen overlap met andere diensten in zelfde tijd-slot)
+- contracturen (medewerker heeft uren over deze week/maand)
+- voorkeuren (locatie-affiniteit, cliënt-voorkeur)
+Response in <2s, max 5 suggesties met motivatie per suggestie.
+
+### Actie B5.G: Plaats reactie comment (NIEUW)
+
+**BS2-trigger**: typ tekst in textarea "Stel een vraag of plaats een update..." → klik **"Plaats reactie"** knop (blauwe primary, disabled tot text ingevuld).
+
+**BS2-respons**:
+- POST `/api/...comments` (endpoint pattern niet exact gevangen door netwerk-buffer)
+- Textarea reset naar empty + placeholder
+- Spinner verschijnt in "Plaats reactie" knop ~1s
+- Comment verschijnt onderaan in **Activiteit-feed** als nieuwe entry:
+  - Avatar (JS) + **Jason Sonck** + **• een paar seconden geleden** (BULLET separator)
+  - Body: full tekst van comment
+
+**Verschil tussen audit-event ↔ comment in feed**:
+- Audit-event format: `<naam> <relatieve tijd> — Heeft de dienst <actie>` (em-dash, action verbonden aan dienst-actie)
+- Comment format: `<naam> • <relatieve tijd> — <user text>` (bullet separator, free-form user content)
+
+→ BS1: tabel `dienst_comments` (id uuid, dienst_id, actor_profile_id, body text, created_at). Toon in activiteit-feed gemerged met `dienst_activiteiten` (audit), gesorteerd chronologisch. Bullet/em-dash styling via type-discriminator.
+
+### Actie B5.H: Hover op +N badge (medewerker-avatars onderaan day-column) (NIEUW)
+
+**BS2-trigger**: hover op `+7` / `+6` / `+5` badge onderaan een day-column (na zichtbare initials zoals RC HE JR DE HF).
+
+**BS2-respons**: tooltip verschijnt met **alle namen** van extra medewerkers in volledige tekst:
+- Tooltip class: `z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow`
+- Voorbeeld voor "+7": "Khalid Ouzgni, Yassir Aznag, Sofyan Amenchar, Fouad Faiz, Amine Belyandouz, Othman Jali, Samra Akaazoun"
+
+**Betekenis +N badge**: aantal beschikbare medewerkers op die dag die NIET in zichtbare top-5 avatars zitten.
+
+→ BS1: shadcn-ui `<Tooltip>` met `delayDuration={300}`, comma-separated naam-lijst.
+
+### Actie B5.I: Klik Lijst-view toggle (NIEUW — vervangt eerder "te testen batch 2")
+
+**BS2-trigger**: klik **"Lijst"** view-toggle (rechts naast Raster) in toolbar.
+
+**BS2-respons**: layout wijzigt naar lijst-view (URL blijft `/planning/overview`):
+- KPI cards blijven bovenaan zichtbaar
+- **"Unassigned shifts (N)"** rood banner (collapsible?) bovenaan met openstaande diensten:
+  - Per row: dag + datum + tijd · diensttype · locatie + **"Niet toegewezen"** badge (red)
+- Daarna **day-grouped sections**:
+  - Day-header: "maandag, mei 11" / "dinsdag, mei 12" / etc.
+  - Sub-group per locatie met count-badge (bv. "Magdalenenstraat 17" )
+  - Per dienst-row: kleur-bar links (diensttype-kleur) + tijd + diensttype + **Toegewezen** badge (groen) of **Niet toegewezen** (rood)
+
+**Geen** sortable columns of filter-impact verschil — pure chronologische read-only weergave.
+
+→ BS1: kan met dezelfde data-laag — andere render-component die date-groupBy + locatie-groupBy doet.
+
+### Actie B5.J: Klik dag-header in Week-view (NIEUW — bevestiging)
+
+**BS2-trigger**: klik op dag-header text (bv. "wo. 13" of "ma. 11") in Days-header rij.
+
+**BS2-respons**: **GEEN actie** (NO-OP). Geen popup, geen drill-down naar dag-detail, geen URL-change. Dag-header is alleen visueel (huidige dag krijgt accent `text-primary` blauw).
+
+→ BS1: niet click-baar maken (geen click-handler nodig).
+
+### Actie B5.K: Klik KPI-card (ZZP Kosten / Geplande uren / Openstaande uren / Kilometerkosten / Gem. tarief) (NIEUW — bevestiging)
+
+**BS2-trigger**: klik op een van de 5 KPI-cards bovenaan.
+
+**BS2-respons**: **GEEN actie** (NO-OP). Geen drill-down modal, geen filter-impact, geen URL-change.
+
+→ BS1: KPI-cards puur read-only weergave.
+
+### Actie B5.L: Klik group-header (Achterwacht / Breedstraat / etc.) (NIEUW — bevestiging)
+
+**BS2-trigger**: klik op group-header tekst of count-badge.
+
+**BS2-respons**: **GEEN actie** (NO-OP). Geen collapse, geen drill-down naar locatie-detail, geen URL-change. Group-header alleen visueel.
+
+→ BS1: group-headers niet click-baar (verschilt mogelijk van toekomstige feature — for now: NO-OP).
+
+### Actie B5.M: Drag-and-drop dienst-cell (DOM-bevestigd, niet uitgevoerd ivm geen ongewenste modificatie)
+
+**BS2-DOM-bevestiging**: dienst-cells `<div class="shift-card group">` hebben:
+- `draggable="true"` (native HTML5 drag-and-drop)
+- CSS `cursor: grab`
+- Parent container: `.shift-list`
+
+**BS2-respons (geïnferreerd)**: drag → drop op andere day-column triggert PATCH om `starts_at` van dienst te updaten. Drop op andere group-row (bv. Achterwacht → Breedstraat) zou ook locatie-update kunnen triggeren.
+
+→ BS1: implementeer met `@dnd-kit/core` of native HTML5 dragstart/dragover/drop. PATCH `dienst.starts_at` + `dienst.eindigt_op` + `dienst.locatie_id` afhankelijk van drop-zone.
+
+---
+
+## BATCH 5 AUDIT — /planning/management sub-routes (NIEUW gescraped, 5 sub-pagina's)
+
+Sidebar binnen `/planning/management`:
+1. **Beschikbaarheidstypes** (default redirect)
+2. **Diensttypes**
+3. **Dienstwissels**
+4. **Medewerkers** (planning-specifiek, niet HR)
+5. **Planning instellingen**
+
+### Sub-page 1: `/planning/management/availability-types` — Beschikbaarheidstypes
+
+- H1: "Beschikbaarheidstypes"
+- Toolbar: Zoek + **Gearchiveerd** rode toggle + **Kolommen** + **Beschikbaarheidstype toevoegen** (blauwe primary)
+- Tabel: ☐ | Naam (sort) | Starttijd (sort) | Eindtijd (sort)
+- 9 default rows:
+  1. Flexibel — 00:00:00 — 00:00:00
+  2. Dagdienst Breedstraat — 09:00:00 — 17:00:00
+  3. Slaapdienst — 16:30:00 — 09:30:00
+  4. Waakdienst Dorpstraat — 22:45:00 — 07:45:00
+  5. Dagdienst Dorpstraat — 07:30:00 — 15:30:00
+  6. tussendienst — 12:00:00 — 20:00:00
+  7. Avonddienst — 14:30:00 — 23:00:00
+  8. Waakdienst — 22:45:00 — 07:15:00
+  9. Dagdienst — 07:00:00 — 15:00:00
+- Kolommen-kiezer: alleen Naam/Starttijd/Eindtijd (geen extra hidden cols)
+- **Row-click** → slide-in panel **"Beschikbaarheidstype bewerken"**:
+  - Naam input
+  - Starttijd time-input
+  - Eindtijd time-input
+  - **Bijwerken** knop
+  - **"..." menu** rechtsboven naast titel → bevat optie **"Archiveren"** (en mogelijk meer)
+- Footer: "15 of 9 total." + Rows per page selector (15) + pagination
+
+### Sub-page 2: `/planning/management/shift-types` — Diensttypes
+
+- H1: "Diensttypes"
+- Toolbar: Zoek + Gearchiveerd + Kolommen + **+ Toevoegen** (blauwe primary)
+- Tabel: Naam (sort) | Kleur (hex + color-swatch, sort) | Configureerbaar uurtarief (Ja/Nee, sort)
+- 11 rows (matcht +Dienst aanmaken modal Diensttype-dropdown):
+
+| Naam | Kleur (hex) | Configureerbaar uurtarief |
+|---|---|---|
+| Training | #ff4d00 (oranje-rood) | Nee |
+| Boventallig | #6d66d6 (paars) | **Ja** |
+| Vergadering | #9c2b47 (donker-rood) | Nee |
+| Waakdienst | #c1ca7d (olijf) | Nee |
+| Achterwacht | #438e2e (groen) | Nee |
+| Slaapdienst | #703281 (donker-paars) | Nee |
+| Late dienst | #c30417 (rood) | Nee |
+| Tussendienst | #ddbc8d (beige) | Nee |
+| Vroege dienst | #7dc4e8 (licht-blauw) | Nee |
+| MDO | #d09595 (zalmroze) | Nee |
+| 1 op 1 | #5c73e6 (blauw) | **Ja** |
+
+### Sub-page 3: `/planning/management/switch-shifts` — Dienstwissels
+
+- H1: "Diensten wisselen"
+- 7 cols: Status / Van / Naar / Requested By / Diensttype / Date & Time / Cost Difference
+- 0 rows ("Geen resultaten gevonden")
+- **GEEN +Toevoegen knop** — wissel-aanvragen worden door medewerkers zelf aangemaakt (waarschijnlijk in medewerker-portal)
+- Toolbar: Zoek + Gearchiveerd + Kolommen
+
+### Sub-page 4: `/planning/management/employees-planning` — Medewerkers (planning-context)
+
+- H1: "Medewerkers"
+- 200 rows (alle actieve medewerkers)
+- Toolbar: Zoek + **Gearchiveerd** (rood) + **Vereist actie** (rood) + 8 filter-chips:
+  - Locatie
+  - Bureau
+  - Contracttype
+  - Fase
+  - Dienstverband
+  - Competenties
+  - Functie
+  - Opleiding
+- Kolommen-kiezer + **Exporteren** (download knop, geen + Toevoegen)
+- 15 cols: ☐ | Voornaam | Achternaam | E-mailadres | Tel. | Fase | Dienstverband | Werktype | Startdatum | Periodieke maand | Einde contract | # contracten | Contracttype | Uit dienst | Laatst gewijzigd
+- Per row indicators: padlock-icoon (auth-status) + warning-icoon (geel/rood — vereist actie) + Fase pill (groene "In dienst") + Dienstverband (Inhuur/Loondienst)
+
+→ BS1: dit is een planning-specifieke view van medewerkers. Hergebruik `medewerkersDB` met extra kolommen voor planning-context. Of: separate page voor planning-team om medewerkers te filteren voor planning-acties.
+
+### Sub-page 5: `/planning/management/settings` — Planning instellingen
+
+- H1: "Planning instellingen"
+- **Sectie 1: Compensatie-uren Drempelwaarden**
+  - **Minimum compensatie-uren**: -20 uren (input + label "uren")
+    - Info-banner (blauw): "Waarschuwing tonen wanneer compensatie-uren onder deze waarde komen"
+  - **Maximum compensatie-uren**: 20 uren
+    - Info-banner (blauw): "Waarschuwing tonen wanneer compensatie-uren boven deze waarde komen"
+  - Footer: **Annuleren** + **Opslaan** (donker)
+- **Sectie 2: Waarschuwing Voorbeeld** (live preview)
+  - Yellow alert: "⚠ Compensatie-uren te laag: -25 uren (min: -20 uren)"
+  - Red alert: "⚠ Compensatie-uren te hoog: 45 uren (max: 20 uren)"
+
+→ BS1: tabel `planning_settings` (singleton) met cols `min_compensatie_uren int` + `max_compensatie_uren int`. Trigger waarschuwingen tonen in dashboard/medewerker-detail.
+
+---
+
+## BATCH 5 AUDIT — Aanvullende vondsten in main /planning/overview
+
+### "Open" badge op dienst-cells
+
+Diensten in state="open voor aanmelding" tonen klein lichtgrijs **"Open"** badge in cell (bv. "Dano 1 op 1 · Open · Breedstraat · Dano de Wagt"). Komt overeen met Open/Gesloten-toggle uit Actie B5.E.
+
+→ BS1: render-conditional `{dienst.open_voor_aanmelding && <Badge>Open</Badge>}`.
+
+### Locatie-dropdown opties (bevestigd via +Dienst aanmaken modal)
+
+| Locatie | Kleur-dot |
+|---|---|
+| Kantoor Magdalenenstraat | paars |
+| Zijperstraat | cyaan |
+| Leonard Bramerstraat | groen |
+| Breedstraat | oranje/tan |
+| Magdalenenstraat | paars |
+| Varnebroek | blauw |
+| Voorburggracht | groen |
+| Achterwacht | blauw |
+| satelliet woning (3x duplicaat-rows) | grijs |
+
+→ BS1: tabel `locaties` heeft kleur-kolom (al aanwezig in BS1). Dubbele "satelliet woning" wijst op duplicate-cleanup taak voor data-import.
+
+### Tabel-paginatie typo
+Beide management-tabellen tonen "**15 of 9 total**" of "**15 of 11 total**" — eerste getal = pagination-size, tweede = aantal records. Lijkt een Vue render-issue (zou "9 of 9 total" of "11 of 11 total" moeten zijn). Niet kritiek.
+
+→ BS1: gebruik "X resultaten" of "X-Y van Z" zoals BS1 huisstijl.

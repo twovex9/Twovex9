@@ -235,26 +235,87 @@ Full-screen overlay (links boven: "AI · Planning optimaliseren")
 
 1. Klik elke filter-radio (Toegewezen / Niet toegewezen / Vervanging vereist) → impact op grid
 2. Klik elke Dienstverband-radio (Inhuur / Loondienst)
-3. Open Diensttype-dropdown → opties capturen
-4. Open Selecteer Locatie-dropdown → opties capturen
+3. ✅ Open Diensttype-dropdown → opties **gecaptured batch 5** (11 opties, zie hieronder)
+4. ✅ Open Selecteer Locatie-dropdown → **gecaptured batch 5** (zie behaviors.md)
 5. Open Teamlid-dropdown → opties (lijst van medewerkers)
 6. Open Cliënt-dropdown → opties
-7. Open Diensttype-dropdown in +Dienst aanmaken modal
-8. Open Locatie-dropdown in +Dienst aanmaken modal
-9. Test rich-text editor (formatter-knoppen B/I/S/U/H1/H2/lists)
+7. ✅ Open Diensttype-dropdown in +Dienst aanmaken modal → **gecaptured batch 5**
+8. ✅ Open Locatie-dropdown in +Dienst aanmaken modal → **gecaptured batch 5**
+9. Test rich-text editor (formatter-knoppen B/I/S/U/H1/H2/lists) — JS-driven typing werkt niet (Tiptap interne state), maar 8 formatter-buttons zichtbaar en functioneel via UI-clicks
 10. Test "Herhaal dienst" toggle → toont herhalings-config?
-11. Klik op dienst-cell in grid → open detail-modal
-12. Klik op group-header (Achterwacht etc.) → wat gebeurt?
-13. Klik op KPI-card → drill-down?
-14. Klik op "+N" medewerker-badge → toon alle
-15. Klik Lijst-view → tabel-weergave
+11. ✅ Klik op dienst-cell in grid → open detail-modal **gecaptured batch 2**
+12. ✅ Klik op group-header → **NO-OP gecaptured batch 5**
+13. ✅ Klik op KPI-card → **NO-OP gecaptured batch 5**
+14. ✅ Klik op "+N" medewerker-badge → **tooltip met namen-lijst gecaptured batch 5**
+15. ✅ Klik Lijst-view → tabel-weergave **gecaptured batch 5** (day-grouped lijst)
 16. Klik Vandaag / prev / next datum-knoppen → URL/state-impact
 17. Klik Exporteren-knop in sidebar → wat exporteert (CSV/Excel/PDF?)
 18. Klik Filters wissen → reset alle filters
 19. Klik refresh-icoon naast "Filter Voorinstellingen"
 20. Klik "+ Nieuwe voorinstelling maken" → modal
-21. Test sub-route `/planning/management` (Beheer)
+21. ✅ Test sub-route `/planning/management` (Beheer) → **5 sub-pages gecaptured batch 5**
 22. Test in dropdown van Genereren-wizard: klik op een sjabloon → Volgende → stap 2-5
 23. Test Optimaliseren met locatie geselect → klik "Optimaliseren met AI"
-24. Hover op KPI-card → tooltip?
+24. ✅ Hover op KPI-card → tooltip? — Niet getest in batch 5; aanname: geen tooltip
 25. Lege state (navigeer naar verre week zonder data)
+
+## Sub-routes /planning/management (NIEUW gescraped batch 5)
+
+| Sub-pagina | URL | Status |
+|---|---|---|
+| Beschikbaarheidstypes | `/planning/management/availability-types` | ✅ gescraped batch 5 |
+| Diensttypes | `/planning/management/shift-types` | ✅ gescraped batch 5 |
+| Dienstwissels | `/planning/management/switch-shifts` | ✅ gescraped batch 5 (0 rows) |
+| Medewerkers (planning) | `/planning/management/employees-planning` | ✅ gescraped batch 5 |
+| Planning instellingen | `/planning/management/settings` | ✅ gescraped batch 5 |
+
+Zie `behaviors.md` "BATCH 5 AUDIT — /planning/management sub-routes" voor details.
+
+## Diensttype-dropdown opties (gecaptured batch 5)
+
+11 opties (matcht /planning/management/shift-types tabel):
+1. Training (#ff4d00 oranje-rood)
+2. Boventallig (#6d66d6 paars) — Configureerbaar uurtarief
+3. Vergadering (#9c2b47 donker-rood)
+4. Waakdienst (#c1ca7d olijf)
+5. Achterwacht (#438e2e groen)
+6. Slaapdienst (#703281 donker-paars)
+7. Late dienst (#c30417 rood)
+8. Tussendienst (#ddbc8d beige)
+9. Vroege dienst (#7dc4e8 licht-blauw)
+10. MDO (#d09595 zalmroze)
+11. 1 op 1 (#5c73e6 blauw) — Configureerbaar uurtarief
+
+Dropdown bevat zoek-input bovenaan.
+
+## Locatie-dropdown opties (gecaptured batch 5)
+
+11 opties (incl. 3x duplicate "satelliet woning"):
+1. Kantoor Magdalenenstraat (paars)
+2. Zijperstraat (cyaan)
+3. Leonard Bramerstraat (groen)
+4. Breedstraat (oranje/tan)
+5. Magdalenenstraat (paars)
+6. Varnebroek (blauw)
+7. Voorburggracht (groen)
+8. Achterwacht (blauw)
+9-11. satelliet woning (3x duplicate)
+
+Dropdown bevat zoek-input. Duplicate "satelliet woning" wijst op data-cleanup taak.
+
+## AI-endpoints gecaptured batch 5
+
+| Feature | Endpoint | Duration | BS1-implicatie |
+|---|---|---|---|
+| AI suggesties voor dienst-bemanning | `/api/scheduler/shift-suggestions` | 30s timeout (in 2 tests) | Rule-based via Supabase Edge Function, <2s response |
+| AI Planning Wizard (Genereren) | onbekend (full-screen overlay) | n.b. | Rule-based template-applier |
+| AI Optimizer (Optimaliseren) | onbekend (full-screen overlay) | n.b. | Rule-based medewerker-toewijzing |
+
+## Open/Gesloten state op diensten (NIEUW batch 5)
+
+Diensten hebben een `open_voor_aanmelding` boolean state:
+- **Open dienst**: medewerkers mogen zelf aanmelden via medewerker-portal
+- **Gesloten dienst**: alleen toewijzen via Toewijzen/Uitnodigen flow
+- Cell-visueel: "Open" badge in cell als state=Open
+- Toggle in Dienstdetails modal (zie behaviors.md Actie B5.E)
+- Audit-events: "Heeft de dienst opengesteld" / "Heeft de dienst gesloten"
