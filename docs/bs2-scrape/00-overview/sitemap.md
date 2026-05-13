@@ -8,7 +8,7 @@
 | # | Module | Folder | Status |
 |---|---|---|---|
 | 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE (PR #48 + #50) |
-| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ 100% HARDCORE (PR #49 + #51 merged + batch 4 in PR pending). 37 acties + 5 sub-pages + alle filters + recurring + lege-state |
+| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit** (PR #49 + #51 + #52 merged, batch 5 audit pending PR #53). 37 acties + 13 audit-acties (B5.A-M) + 5 sub-pages + alle filters + recurring + lege-state + ZZZ-CLAUDE-TEST-2026-05-13 audit-pass |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
