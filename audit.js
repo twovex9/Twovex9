@@ -12,6 +12,8 @@
     search: "",
     filterResource: "",
     filterActie: "",
+    // Sprint 16 / S16 — BS2 parity uitbreidingen
+    filterVeroorzaker: "",
     page: 1,
     rowsPerPage: ROWS_PER_PAGE_DEFAULT,
   };
@@ -72,10 +74,31 @@
       if (!a) return false;
       if (state.filterResource && a.resourceType !== state.filterResource) return false;
       if (state.filterActie && a.actieType !== state.filterActie) return false;
+      // Sprint 16 / S16 — veroorzaker filter (mirror BS2)
+      if (state.filterVeroorzaker && String(a.gebruiker || "") !== state.filterVeroorzaker) return false;
       if (!q) return true;
       var hay = (a.gebruiker || "") + " " + (a.resourceType || "") + " " + (a.resourceId || "") + " " + (a.actieType || "") + " " + (a.details || "");
       return hay.toLowerCase().indexOf(q) >= 0;
     });
+  }
+
+  // Sprint 16 / S16 — vul Veroorzaker dropdown met unieke gebruikers uit data
+  function populateVeroorzakerFilter() {
+    var sel = document.getElementById("audit-filter-veroorzaker");
+    if (!sel) return;
+    var prev = sel.value || "";
+    var items = (window.auditDB && window.auditDB.getAllSync()) || [];
+    var users = [...new Set(items.map(function (a) { return a && a.gebruiker; }).filter(Boolean))].sort(function (a, b) {
+      return String(a).localeCompare(String(b), "nl", { sensitivity: "base" });
+    });
+    sel.innerHTML = '<option value="">Alle veroorzakers</option>';
+    users.forEach(function (u) {
+      var opt = document.createElement("option");
+      opt.value = u;
+      opt.textContent = u;
+      sel.appendChild(opt);
+    });
+    if (prev) sel.value = prev;
   }
 
   function renderRow(a) {
@@ -216,6 +239,25 @@
     document.getElementById("audit-search").addEventListener("input", function (e) { state.search = e.target.value || ""; state.page = 1; render(); });
     document.getElementById("audit-filter-resource").addEventListener("change", function (e) { state.filterResource = e.target.value || ""; state.page = 1; render(); });
     document.getElementById("audit-filter-actie").addEventListener("change", function (e) { state.filterActie = e.target.value || ""; state.page = 1; render(); });
+
+    // Sprint 16 / S16 — veroorzaker + reset + kolommen
+    var verSel = document.getElementById("audit-filter-veroorzaker");
+    if (verSel) {
+      populateVeroorzakerFilter();
+      verSel.addEventListener("change", function (e) { state.filterVeroorzaker = e.target.value || ""; state.page = 1; render(); });
+      window.addEventListener("besa:audit-updated", populateVeroorzakerFilter);
+    }
+    var resetBtn = document.getElementById("audit-filter-reset");
+    if (resetBtn) resetBtn.addEventListener("click", function () {
+      state.search = ""; state.filterResource = ""; state.filterActie = ""; state.filterVeroorzaker = ""; state.page = 1;
+      ["audit-search", "audit-filter-resource", "audit-filter-actie", "audit-filter-veroorzaker"].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.value = "";
+      });
+      render();
+      if (window.showActionFeedback) window.showActionFeedback("info", "Filters gewist", "Alle audit-filters zijn teruggezet.");
+    });
+    buildAuditColumnsPanel();
+    wireAuditColumnsPanel();
     document.getElementById("audit-rows-per-page").addEventListener("change", function (e) { state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; render(); });
     document.getElementById("audit-pager-first").addEventListener("click", function () { state.page = 1; render(); });
     document.getElementById("audit-pager-prev").addEventListener("click", function () { if (state.page > 1) { state.page -= 1; render(); } });
@@ -226,6 +268,93 @@
       render();
     });
     window.addEventListener("besa:audit-updated", render);
+  }
+
+  /**
+   * Sprint 16 / S16 — Kolommen-kiezer (zelfde pattern als beleid.js).
+   * Configureerbare zichtbaarheid van audit-tabel kolommen.
+   */
+  var AUDIT_COLUMN_CONFIG = [
+    { id: "tijdstip", label: "Tijdstip", defaultOn: true },
+    { id: "gebruiker", label: "Gebruiker", defaultOn: true },
+    { id: "resource", label: "Resource", defaultOn: true },
+    { id: "resource_id", label: "Resource ID", defaultOn: true },
+    { id: "actie", label: "Actie", defaultOn: true, skipToggle: true },
+    { id: "details", label: "Details", defaultOn: true },
+    { id: "status", label: "Status", defaultOn: true },
+  ];
+  var AUDIT_COLUMNS_PREFS_KEY = "audit_columns_v1";
+
+  function readAuditColumnPrefs() {
+    try { var raw = localStorage.getItem(AUDIT_COLUMNS_PREFS_KEY); return raw ? JSON.parse(raw) || {} : {}; }
+    catch (e) { return {}; }
+  }
+  function writeAuditColumnPrefs(p) {
+    try { localStorage.setItem(AUDIT_COLUMNS_PREFS_KEY, JSON.stringify(p || {})); } catch (e) { /* */ }
+  }
+  function setAuditColumnVisible(colId, visible) {
+    document.querySelectorAll('#audit-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applyAuditColumnVisibility() {
+    var prefs = readAuditColumnPrefs();
+    AUDIT_COLUMN_CONFIG.forEach(function (c) {
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      setAuditColumnVisible(c.id, on);
+    });
+  }
+  function buildAuditColumnsPanel() {
+    var list = document.getElementById("audit-columns-list");
+    if (!list) return;
+    var prefs = readAuditColumnPrefs();
+    list.innerHTML = "";
+    AUDIT_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("role", "menuitemcheckbox");
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.setAttribute("data-col", c.id);
+      btn.className = "column-toggle";
+      btn.innerHTML = '<span class="column-toggle-check" aria-hidden="true">' +
+        (on ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+        '</span><span class="column-toggle-label">' + c.label + '</span>';
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var isOn = btn.getAttribute("aria-checked") === "true";
+        var nextOn = !isOn;
+        btn.setAttribute("aria-checked", nextOn ? "true" : "false");
+        btn.querySelector(".column-toggle-check").innerHTML = nextOn
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : "";
+        var p = readAuditColumnPrefs();
+        p[c.id] = nextOn;
+        writeAuditColumnPrefs(p);
+        applyAuditColumnVisibility();
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+  function wireAuditColumnsPanel() {
+    var btn = document.getElementById("audit-columns-menu-btn");
+    var panel = document.getElementById("audit-columns-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = btn.getAttribute("aria-expanded") === "true";
+      if (open) { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); }
+      else { panel.removeAttribute("hidden"); btn.setAttribute("aria-expanded", "true"); }
+    });
+    document.addEventListener("click", function () {
+      panel.setAttribute("hidden", "");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    applyAuditColumnVisibility();
   }
 
   function init() {
