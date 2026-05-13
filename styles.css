@@ -12736,6 +12736,24 @@ button.planning-erm-new {
   font-size: 10px;
 }
 
+/* Sprint 6 / S6 — Openstaande uren chip + Gem. tarief chip (BS2 parity) */
+.planning-erm-glabel-chip--open {
+  background: #fff7ed;
+  color: #9a3412;
+}
+.planning-erm-glabel-chip--open .planning-erm-glabel-chip-ico {
+  color: #ea580c;
+  font-weight: 900;
+}
+.planning-erm-glabel-chip--tarief {
+  background: #f0fdf4;
+  color: #14532d;
+}
+.planning-erm-glabel-chip--tarief .planning-erm-glabel-chip-ico {
+  color: #16a34a;
+  font-size: 10px;
+}
+
 #planning-week-grid.planning-erm--locations .planning-erm-row-badge {
   font-size: 9.5px;
   font-weight: 800;
