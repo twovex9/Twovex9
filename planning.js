@@ -796,28 +796,42 @@ function getMetrics(items) {
   let hours = 0;
   let zzpHours = 0;
   let kmKosten = 0;
+  let openHours = 0;   // Sprint 6 / S6: niet-toegewezen uren (mirror BS2 "Openstaande uren")
+  let openCount = 0;   // Aantal openstaande diensten
   items.forEach((r) => {
     const h = durationHours(r.start, r.einde);
     const pauze = Math.max(0, Number(r.pauzeUren) || 0);
     const net = Math.max(0, h - pauze);
     hours += net;
     if (isZzpEmployeeName(r.teamlid)) zzpHours += net;
+    if (!r.teamlid || !String(r.teamlid).trim()) {
+      openHours += net;
+      openCount += 1;
+    }
     const km = Number(r.kilometers) || 0;
     const kmTar = Number(r.kmTarief) || 0.23;
     if (km > 0) kmKosten += km * kmTar;
   });
   const uren = formatHoursShort(hours);
+  const openUren = formatHoursShort(openHours);
   const kosten = hours * ui.tarief;
   const zzpKosten = zzpHours * ui.tarief;
   const per = items.length > 0 ? kosten / items.length : 0;
+  // Gem. tarief = kosten / uren (mirror BS2 "Gem. tarief"). Fallback naar ui.tarief
+  // wanneer er geen uren zijn, want anders krijg je een lelijke € 0,00 zonder context.
+  const gemTarief = hours > 0 ? kosten / hours : ui.tarief;
   return {
     count: items.length,
     hours,
     uren,
+    openHours,
+    openUren,
+    openCount,
     kosten,
     zzpKosten,
     kmKosten,
     per,
+    gemTarief,
     tarief: ui.tarief,
   };
 }
@@ -826,6 +840,8 @@ function renderSummary(items) {
   const el = document.getElementById("planning-summary");
   if (!el) return;
   const m = getMetrics(items);
+  // Sprint 6 / S6: 5 KPI cards (mirror BS2). Volgorde: ZZP, Geplande uren,
+  // Openstaande uren, Kilometerkosten, Gem. tarief.
   el.innerHTML = `
     <div class="planning-kpi planning-kpi--v3 planning-kpi--zzp">
       <span class="planning-kpi-ico" aria-hidden="true">€</span>
@@ -845,11 +861,29 @@ function renderSummary(items) {
         <strong class="planning-stat-value">${m.uren}</strong>
       </div>
     </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--open">
+      <span class="planning-kpi-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.6" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Openstaande uren</span>
+        <strong class="planning-stat-value">${m.openUren}</strong>
+      </div>
+    </div>
     <div class="planning-kpi planning-kpi--v3 planning-kpi--km">
       <span class="planning-kpi-ico" aria-hidden="true">€</span>
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">Kilometerkosten</span>
         <strong class="planning-stat-value planning-stat-value--money">${formatEuro(m.kmKosten)}</strong>
+      </div>
+    </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--tarief">
+      <span class="planning-kpi-ico" aria-hidden="true">€/u</span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Gem. tarief</span>
+        <strong class="planning-stat-value planning-stat-value--money">${formatEuro(m.gemTarief)}</strong>
       </div>
     </div>
   `;
@@ -1341,9 +1375,17 @@ function renderWeekGrid() {
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">⏱</span>
             <span>${formatHoursShort(m.hours)}</span>
           </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--open" title="Openstaande uren in deze rij">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">!</span>
+            <span>Open ${formatHoursShort(m.openHours)}</span>
+          </span>
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--km" title="Kilometerkosten in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€</span>
             <span>KM ${formatEuro(m.kmKosten)}</span>
+          </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--tarief" title="Gemiddeld tarief per uur in deze rij">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
+            <span>${formatEuro(m.gemTarief)}</span>
           </span>
         </div>
       `;
