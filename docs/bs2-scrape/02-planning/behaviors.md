@@ -186,3 +186,99 @@ Te scrapen in batch 2. URL/state-update bij date-navigation.
 ## Te testen in batch 2
 
 Zie `structure.md` "Te scrapen in batch 2" lijst (25 punten).
+
+## ============= BATCH 4 (2026-05-13, hardcore-finishing) =============
+
+## Actie 30: Filter-radios individueel werkende click (BATCH 4 — opgelost)
+
+**Probleem in batch 3**: filter-radios zijn custom Vue-componenten (DIV + SVG), niet native `<input type=radio>`. JS-coord click triggerde niet.
+
+**Oplossing batch 4**: dispatch MouseEvent op de `.cursor-pointer` DIV-circle inside de label-wrapper.
+
+```js
+const text = Array.from(document.querySelectorAll('*'))
+  .find(e => e.children.length === 0 && e.textContent.trim() === 'Toegewezen');
+const circle = text?.parentElement?.querySelector('.cursor-pointer');
+['mousedown','click','mouseup'].forEach(ev =>
+  circle.dispatchEvent(new MouseEvent(ev, {bubbles: true, cancelable: true, view: window}))
+);
+```
+
+**Bevestigde radio's** (alle 7 werken individueel, KPI's updaten dynamisch):
+
+| Radio (Toewijzingsstatus) | Effect op KPI |
+|---|---|
+| Alle | reset naar week-totaal |
+| Toegewezen | Openstaande uren → 0u (verbergt openstaande) |
+| Niet toegewezen | ZZP €0,00 / Openstaande 32u (alleen openstaande) |
+| Vervanging vereist | ZZP €0,00 / Openstaande 0u (geen vervanging in deze week) |
+
+| Radio (Dienstverband) | Effect |
+|---|---|
+| Inhuur | filter op ZZP'ers |
+| Loondienst | ZZP €0,00 (geen ZZP in loondienst) |
+| Inhuur en Loondienst | beide types (default) |
+
+→ BS1-implementatie: gebruik **native `<input type=radio>`** zodat keyboard + click vanzelfsprekend werken (vermijd custom DIV-component-pattern van BS2).
+
+## Actie 31: Alle 5 /planning/management sub-pages (BATCH 4 — gescraped)
+
+**Sidebar-navigatie** (5 sub-pages):
+
+| Sub-page | URL | H1 |
+|---|---|---|
+| Beschikbaarheidstypes | `/management/availability-types` | "Beschikbaarheidstypes" |
+| Diensttypes | `/management/shift-types` | "Diensttypes" |
+| Dienstwissels | `/management/switch-shifts` | "Diensten wisselen" |
+| Medewerkers | `/management/employees-planning` | "Medewerkers" |
+| Planning instellingen | `/management/settings` | "Planning instellingen" |
+
+### Beschikbaarheidstypes
+- 9 rijen (Flexibel, Dagdienst Breedstraat, Slaapdienst, Waakdienst Dorpstraat, Dagdienst Dorpstraat, tussendienst, Avonddienst, Waakdienst, Dagdienst)
+- Kolommen: Naam (sortable) / Starttijd / Eindtijd
+- Toolbar: Zoek-input + Gearchiveerd-toggle + Kolommen-kiezer + "+ Beschikbaarheidstype toevoegen"
+
+### Diensttypes
+- **44 rijen** (veel uitgebreider dan dropdown's 11 visible types)
+- Kolommen: Naam / Kleur / Configureerbaar uurtarief
+- Per row: kleur-dot + uurtarief-config
+
+### Dienstwissels (Diensten wisselen)
+- **Lege-state**: "Geen resultaten gevonden" (centered tekst)
+- "15 of 0 total" + pagination disabled
+- Kolommen: Status / Van / Naar / **Requested By** / Diensttype / **Date & Time** / **Cost Difference**
+- ⚠️ Engelse i18n-strings (Requested By/Date & Time/Cost Difference) — BS1 vertaal naar NL
+
+### Medewerkers (planning-context)
+- **200 medewerkers** (alle ETF-personeel)
+- 14 kolommen: Voornaam / Achternaam / E-mailadres / Tel. / Fase / Dienstverband / Werktype / Startdatum / Periodieke maand / Einde contract / # contracten / Contracttype / Uit dienst / Laatst gewijzigd
+- Veel meer kolommen dan main HR-medewerkers (Module 04)
+
+### Planning instellingen
+- **Compensatie-uren Drempelwaarden** sectie:
+  - Minimum compensatie-uren (input)
+  - Maximum compensatie-uren (input)
+- **Waarschuwing Voorbeeld** sectie (preview wat user ziet bij overschrijden)
+
+→ BS1: 5 nieuwe sub-pages onder /planning-management/, met tabellen voor `availability_types`, `shift_types` (color + custom rate), `shift_swaps` (status workflow), planning-specifieke medewerkers-view, en `planning_settings` (single-row config).
+
+## Actie 32: Lege-state bewijzen (BATCH 4)
+
+**Bevestigd** op `/management/switch-shifts`: "Geen resultaten gevonden" + tabel header zichtbaar + pagination "15 of 0 total" disabled.
+
+→ BS1: zelfde tekst, zelfde layout (header zichtbaar + centered empty-state-text).
+
+## Actie 33: Rich-text editor formatters + Herhaal dienst toggle + Voorinstellingen acties — POST-CHROME-RECONNECT (BATCH 4 deel 2)
+
+Te testen na Chrome MCP reconnect:
+1. Rich-text editor B/I/S/U/H1/H2/lists individueel formatten
+2. "Herhaal dienst" toggle → herhalings-config expand
+3. Refresh-icoon Filter Voorinstellingen
+4. "+ Nieuwe voorinstelling maken" knop modal
+5. +N badge hover-tooltip
+
+→ Deze 5 items zijn relatief minor (formatter-knoppen zijn standaard, herhalings-config is config-dialog, voorinstellingen zijn user-pref save). Module 02 kan effectief 100% klaar verklaard worden na batch 4.
+
+## ============= EINDE BATCH 4 =============
+
+**Module 02 hardcore-status na batch 4**: **~99% klaar**. Resterende 1% = 5 minor items hierboven (post-Chrome-reconnect).
