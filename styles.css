@@ -19056,3 +19056,146 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   }
 }
 
+
+
+/* ============================================================
+   Rollen — organogram view (Sprint 1 / item 42-A)
+   ============================================================ */
+
+.rollen-subtitle {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
+.rollen-toolbar {
+  align-items: center;
+}
+
+.rollen-totaal {
+  margin-left: auto;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
+.rollen-organogram {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rollen-loading {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+.rollen-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 18px 18px 20px;
+}
+
+.rollen-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.rollen-section-title {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.rollen-section-meta {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.rollen-section-desc {
+  margin: 0 0 14px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+}
+
+.rollen-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.rollen-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rollen-card:hover {
+  border-color: var(--blue);
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.08);
+}
+
+.rollen-card--empty {
+  opacity: 0.65;
+}
+
+.rollen-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rollen-card-title {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rollen-card-badge {
+  flex-shrink: 0;
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft, rgba(37, 99, 235, 0.08));
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+.rollen-card--empty .rollen-card-badge {
+  background: var(--line);
+  color: var(--text-muted);
+}
+
+.rollen-card-desc {
+  margin: 0;
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .rollen-section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .rollen-cards {
+    grid-template-columns: 1fr;
+  }
+}

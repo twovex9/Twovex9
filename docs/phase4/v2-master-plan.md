@@ -33,7 +33,7 @@ Bij elke nieuwe sessie:
 
 | # | Sprint | Effort | Status | PR# |
 |---|---|---|---|---|
-| **S1** | **Rollen-organogram + profile koppeling** | 8-12u | ⏳ TODO | — |
+| **S1** | **Rollen-organogram + profile koppeling** | 8-12u | 🟡 IN PROGRESS | (in deze PR) |
 | S2 | RLS hardening kritieke tabellen (verzuim, clienten, medewerker_documenten, medewerker_notities) | 8u | ⏳ TODO | — |
 | S3 | RLS hardening salaris + uren tabellen | 4u | ⏳ TODO | — |
 | S4 | BS2 deep walk + implementatie: Planning Voorinstellingen-save | 3u | ⏳ TODO | — |
