@@ -49,7 +49,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 45 | [Sprint 3: RLS hardening salaris + uren](45-sprint-3-rls-salaris-uren.md) | ✅ Voltooid PR #27 | 2026-05-13 |
 | 46 | [Sprint 4: Planning filter-voorinstellingen](46-sprint-4-planning-voorinstellingen.md) | ✅ Voltooid PR #28 | 2026-05-13 |
 | 47 | [Sprint 5: Planning Exporteren CSV](47-sprint-5-planning-export-csv.md) | ✅ Voltooid PR #29 | 2026-05-13 |
-| 48 | [Sprint 6: Planning Financiën (KPI parity)](48-sprint-6-planning-financien.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 48 | [Sprint 6: Planning Financiën (KPI parity)](48-sprint-6-planning-financien.md) | ✅ Voltooid PR #30 | 2026-05-13 |
+| 49 | [Sprint 7: HR Salarisadministratie — Dienst-gebaseerde export](49-sprint-7-hr-salarisadmin-shift-export.md) | 🟡 In review (PR open) | 2026-05-13 |
 
 ## Voor v3
 

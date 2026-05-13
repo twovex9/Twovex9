@@ -64,8 +64,8 @@ Bij faal van verificatie:
 | S3 | RLS hardening salaris + uren tabellen | 4u | ✅ DONE | #27 |
 | S4 | BS2 deep walk + implementatie: Planning Voorinstellingen-save | 3u | ✅ DONE | #28 |
 | S5 | Planning Exporteren CSV | 2u | ✅ DONE | #29 |
-| **S6** | **Planning Financiën — KPI cards "Openstaande uren" + "Gem. tarief" + per-row chips** | 4u | 🟡 IN PROGRESS | (volgende PR) |
-| S7 | BS2 deep walk: HR/Salarisadministratie processing → implementatie | 4u | ⏳ TODO | — |
+| S6 | Planning Financiën — KPI cards "Openstaande uren" + "Gem. tarief" + per-row chips | 4u | ✅ DONE | #30 |
+| **S7** | **HR/Salarisadministratie — Dienst-gebaseerde export** | 4u | 🟡 IN PROGRESS | (volgende PR) |
 | S8 | BS2 deep walk: Taken filters/statussen → implementatie | 3u | ⏳ TODO | — |
 | S9 | BS2 deep walk: Beleid document-import + Storage → implementatie | 3u | ⏳ TODO | — |
 | S10 | BS2 data resync via JS-snippet (item 36/38 v2) | 3u + user-actie | ⏳ TODO | — |

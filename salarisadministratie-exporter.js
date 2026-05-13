@@ -184,6 +184,97 @@
     return rows.join("\n");
   }
 
+  /**
+   * Sprint 7 / S7 — Dienst-gebaseerde export (BS2 parity).
+   * Maakt een CSV met één regel per dienst (planning-item) in plaats van per
+   * medewerker. Pakt huidige `planning` cache, filtert op maand/jaar van de
+   * gekozen periode. Output: Datum, Start, Einde, Medewerker, Diensttype,
+   * Locatie, Uren, Pauze, Netto uren, Tarief, Bruto.
+   */
+  function buildShiftCsvForPeriod(period, month, year) {
+    var rows = [];
+    rows.push(toCsvRow(["Periode", period]));
+    rows.push(toCsvRow(["Type", "Dienst-gebaseerd"]));
+    rows.push(toCsvRow(["Aangemaakt op", new Date().toISOString()]));
+    rows.push("");
+    rows.push(toCsvRow([
+      "Datum", "Start", "Einde", "Medewerker", "Diensttype",
+      "Locatie", "Uren", "Pauze (u)", "Netto uren", "Tarief", "Bruto",
+    ]));
+
+    var planning = [];
+    try {
+      if (window.planningDB && typeof window.planningDB.getAllSync === "function") {
+        planning = window.planningDB.getAllSync() || [];
+      } else {
+        var raw = localStorage.getItem("planning_items_v1");
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          planning = Array.isArray(parsed) ? parsed : [];
+        }
+      }
+    } catch (e) {
+      planning = [];
+    }
+
+    var TARIEF = 45;
+    var monthInt = parseInt(month, 10) || 0;
+    var yearInt = parseInt(year, 10) || 0;
+    var filtered = planning.filter(function (p) {
+      if (!p || !p.start) return false;
+      try {
+        var d = new Date(p.start);
+        if (isNaN(d.getTime())) return false;
+        return (
+          (monthInt === 0 || d.getMonth() + 1 === monthInt) &&
+          (yearInt === 0 || d.getFullYear() === yearInt)
+        );
+      } catch (e) { return false; }
+    });
+
+    if (!filtered.length) {
+      rows.push(toCsvRow([
+        "(geen diensten in deze periode)", "", "", "", "", "", "", "", "", "", "",
+      ]));
+      return rows.join("\n");
+    }
+
+    var fmtNumber = function (n) {
+      var v = Number(n) || 0;
+      return v.toFixed(2).replace(".", ",");
+    };
+
+    filtered.forEach(function (p) {
+      try {
+        var ds = new Date(p.start);
+        var de = p.einde ? new Date(p.einde) : null;
+        var hours = 0;
+        if (de && !isNaN(de.getTime())) {
+          hours = Math.max(0, (de - ds) / 3.6e6);
+        }
+        var pauze = Math.max(0, Number(p.pauzeUren) || 0);
+        var net = Math.max(0, hours - pauze);
+        var bruto = net * TARIEF;
+        rows.push(toCsvRow([
+          ds.toLocaleDateString("nl-NL"),
+          ds.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }),
+          de && !isNaN(de.getTime())
+            ? de.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
+            : "",
+          p.teamlid || "(open)",
+          p.diensttype || "",
+          p.vestiging || p.locatie || "",
+          fmtNumber(hours),
+          fmtNumber(pauze),
+          fmtNumber(net),
+          fmtNumber(TARIEF),
+          fmtNumber(bruto),
+        ]));
+      } catch (e) { /* skip */ }
+    });
+    return rows.join("\n");
+  }
+
   /* ── Hoofdtabs ───────────────────────────────────────── */
   var mainTabs = document.querySelectorAll("#sa-main-tabs [data-sa-tab]");
   var panelExport = document.getElementById("sa-panel-export");
@@ -418,9 +509,46 @@
     }
   }
 
+  /**
+   * Sprint 7 / S7 — Dienst-gebaseerde export wire-up.
+   * Genereert een tweede CSV met één regel per dienst i.p.v. per medewerker.
+   * Wordt naast de bestaande "Export genereren" knop getoond.
+   */
+  function generateShiftExport() {
+    var month = monthSel ? monthSel.value : "";
+    var year = yearSel ? yearSel.value : "";
+    var period = fmtPeriod(month, year);
+    var csv = buildShiftCsvForPeriod(period, month, year);
+    var hist = readHistory();
+    var entry = {
+      id: "exp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
+      createdAt: new Date().toISOString(),
+      period: period + " (dienst-gebaseerd)",
+      employees: 0,
+      by: "Vennie Küster",
+      csv: csv,
+      type: "shift",
+    };
+    hist.unshift(entry);
+    writeHistory(hist.slice(0, 50));
+    renderHistory();
+    var willDownloadNow = !!(nowDl && nowDl.checked);
+    if (willDownloadNow) {
+      var fname = "salarisadministratie_dienst_" + period.replace(/\s+/g, "_") + ".csv";
+      downloadText(fname, csv, "text/csv;charset=utf-8");
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Dienst-gebaseerde export klaar", "“" + period + "” is opgeslagen en " + fname + " is gedownload.");
+      }
+    } else if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("saved", "Dienst-export “" + period + "”");
+    }
+  }
+
   if (monthSel) monthSel.addEventListener("change", renderValidation);
   if (yearSel) yearSel.addEventListener("change", renderValidation);
   if (genBtn) genBtn.addEventListener("click", generateExport);
+  var shiftBtn = document.getElementById("sa-generate-shift-btn");
+  if (shiftBtn) shiftBtn.addEventListener("click", generateShiftExport);
 
   /* ── ORT ─────────────────────────────────────────────── */
   (function ortModule() {
