@@ -186,3 +186,154 @@ Te scrapen in batch 2. URL/state-update bij date-navigation.
 ## Te testen in batch 2
 
 Zie `structure.md` "Te scrapen in batch 2" lijst (25 punten).
+
+## ============= BATCH 4 (2026-05-13, hardcore-finishing) =============
+
+## Actie 30: Filter-radios individueel werkende click (BATCH 4 — opgelost)
+
+**Probleem in batch 3**: filter-radios zijn custom Vue-componenten (DIV + SVG), niet native `<input type=radio>`. JS-coord click triggerde niet.
+
+**Oplossing batch 4**: dispatch MouseEvent op de `.cursor-pointer` DIV-circle inside de label-wrapper.
+
+```js
+const text = Array.from(document.querySelectorAll('*'))
+  .find(e => e.children.length === 0 && e.textContent.trim() === 'Toegewezen');
+const circle = text?.parentElement?.querySelector('.cursor-pointer');
+['mousedown','click','mouseup'].forEach(ev =>
+  circle.dispatchEvent(new MouseEvent(ev, {bubbles: true, cancelable: true, view: window}))
+);
+```
+
+**Bevestigde radio's** (alle 7 werken individueel, KPI's updaten dynamisch):
+
+| Radio (Toewijzingsstatus) | Effect op KPI |
+|---|---|
+| Alle | reset naar week-totaal |
+| Toegewezen | Openstaande uren → 0u (verbergt openstaande) |
+| Niet toegewezen | ZZP €0,00 / Openstaande 32u (alleen openstaande) |
+| Vervanging vereist | ZZP €0,00 / Openstaande 0u (geen vervanging in deze week) |
+
+| Radio (Dienstverband) | Effect |
+|---|---|
+| Inhuur | filter op ZZP'ers |
+| Loondienst | ZZP €0,00 (geen ZZP in loondienst) |
+| Inhuur en Loondienst | beide types (default) |
+
+→ BS1-implementatie: gebruik **native `<input type=radio>`** zodat keyboard + click vanzelfsprekend werken (vermijd custom DIV-component-pattern van BS2).
+
+## Actie 31: Alle 5 /planning/management sub-pages (BATCH 4 — gescraped)
+
+**Sidebar-navigatie** (5 sub-pages):
+
+| Sub-page | URL | H1 |
+|---|---|---|
+| Beschikbaarheidstypes | `/management/availability-types` | "Beschikbaarheidstypes" |
+| Diensttypes | `/management/shift-types` | "Diensttypes" |
+| Dienstwissels | `/management/switch-shifts` | "Diensten wisselen" |
+| Medewerkers | `/management/employees-planning` | "Medewerkers" |
+| Planning instellingen | `/management/settings` | "Planning instellingen" |
+
+### Beschikbaarheidstypes
+- 9 rijen (Flexibel, Dagdienst Breedstraat, Slaapdienst, Waakdienst Dorpstraat, Dagdienst Dorpstraat, tussendienst, Avonddienst, Waakdienst, Dagdienst)
+- Kolommen: Naam (sortable) / Starttijd / Eindtijd
+- Toolbar: Zoek-input + Gearchiveerd-toggle + Kolommen-kiezer + "+ Beschikbaarheidstype toevoegen"
+
+### Diensttypes
+- **44 rijen** (veel uitgebreider dan dropdown's 11 visible types)
+- Kolommen: Naam / Kleur / Configureerbaar uurtarief
+- Per row: kleur-dot + uurtarief-config
+
+### Dienstwissels (Diensten wisselen)
+- **Lege-state**: "Geen resultaten gevonden" (centered tekst)
+- "15 of 0 total" + pagination disabled
+- Kolommen: Status / Van / Naar / **Requested By** / Diensttype / **Date & Time** / **Cost Difference**
+- ⚠️ Engelse i18n-strings (Requested By/Date & Time/Cost Difference) — BS1 vertaal naar NL
+
+### Medewerkers (planning-context)
+- **200 medewerkers** (alle ETF-personeel)
+- 14 kolommen: Voornaam / Achternaam / E-mailadres / Tel. / Fase / Dienstverband / Werktype / Startdatum / Periodieke maand / Einde contract / # contracten / Contracttype / Uit dienst / Laatst gewijzigd
+- Veel meer kolommen dan main HR-medewerkers (Module 04)
+
+### Planning instellingen
+- **Compensatie-uren Drempelwaarden** sectie:
+  - Minimum compensatie-uren (input)
+  - Maximum compensatie-uren (input)
+- **Waarschuwing Voorbeeld** sectie (preview wat user ziet bij overschrijden)
+
+→ BS1: 5 nieuwe sub-pages onder /planning-management/, met tabellen voor `availability_types`, `shift_types` (color + custom rate), `shift_swaps` (status workflow), planning-specifieke medewerkers-view, en `planning_settings` (single-row config).
+
+## Actie 32: Lege-state bewijzen (BATCH 4)
+
+**Bevestigd** op `/management/switch-shifts`: "Geen resultaten gevonden" + tabel header zichtbaar + pagination "15 of 0 total" disabled.
+
+→ BS1: zelfde tekst, zelfde layout (header zichtbaar + centered empty-state-text).
+
+## Actie 33: Rich-text editor formatters (BATCH 4 deel 2 — gedocumenteerd)
+
+**8 toolbar-knoppen** in rich-text editor van + Dienst aanmaken / Bewerken modal:
+- **B** — Bold
+- **I** — Italic
+- **S** — Strikethrough
+- **U** — Underline
+- **H₁** — Heading 1
+- **H₂** — Heading 2
+- **bullet-list** — ongeordende lijst
+- **numbered-list** — geordende lijst
+
+→ BS1: gebruik standaard `contenteditable` met execCommand of een ProseMirror/Tiptap-based editor. Implementatie binnen Supabase-infra (geen externe editor-service).
+
+## Actie 34: "Herhaal dienst" toggle expand (BATCH 4 — getest)
+
+**BS2-trigger**: klik toggle-switch "Herhaal dienst" in Herhaling-sectie van + Dienst aanmaken modal.
+
+**BS2-respons**: toggle wordt blauw + onthult **3 nieuwe form-velden**:
+
+| Veld | Type | Default | Verplicht |
+|---|---|---|---|
+| **Herhaal iedere** | dropdown | "1 week" (opties: 1/2/3/4 weken) | nee |
+| **Eindigt op** | date-picker (dd-mm-jjjj) | leeg | ✅ JA (rode "Verplicht" tekst) |
+| **Herhaal op** | 7 dag-buttons | huidige dag geselect (W = woensdag voor 2026-05-13) | nee |
+
+Dag-buttons: **M D W D V Z Z** (Maandag/Dinsdag/Woensdag/Donderdag/Vrijdag/Zaterdag/Zondag). Geselecteerde dag heeft blauw accent.
+
+→ BS1-implementatie:
+- Tabel `dienst_recurring` met `interval_weeks` (1-4), `end_date` (required), `days_of_week` (array van 1-7 of bitmask)
+- Bij submit: backend genereert N losse dienst-records voor periode [start, end] op gekozen dagen
+
+## Actie 35: Refresh-icoon Filter Voorinstellingen (BATCH 4 — getest)
+
+**BS2-trigger**: klik refresh-circulair pijl-icoon naast "Filter Voorinstellingen" header.
+
+**BS2-respons**: **silent reload** van presets-lijst. Geen toast, geen modal, geen visuele indicatie. (Vermoedelijk GET `/api/filter-presets` opnieuw.)
+
+→ BS1: implementeer als `await refresh()` met `showActionFeedback("refreshed", "Voorinstellingen")` voor user-feedback.
+
+## Actie 36: "+ Nieuwe voorinstelling maken" knop (BATCH 4 — getest)
+
+**BS2-trigger**: klik "+ Nieuwe voorinstelling maken" knop.
+
+**BS2-respons**: **geen modal opent direct**. Vermoedelijk save-flow:
+1. User stelt eerst filters in
+2. Klikt deze knop
+3. Inline-input verschijnt om naam in te voeren (te bevestigen via diepere test)
+4. Save → preset verschijnt in lijst
+
+→ BS1: implementeer als inline-modal met name-input + Save-knop.
+
+## Actie 37: +N medewerker-overflow badges (BATCH 4 — gedocumenteerd)
+
+**Plaatsing**: 7 badges gevonden onder dienst-cells op y=1035 (buiten huidige viewport, vereist scroll).
+
+**Format**: "+N" waarbij N = aantal extra medewerkers naast de zichtbare 4 avatar-circles (RC HE JR DE).
+
+**Vermoedelijke interactie** (niet expliciet getest):
+- Hover → tooltip met namen
+- Klik → popover met alle overflow-medewerker-namen
+
+→ BS1: implementeer als hover-tooltip (CSS `:hover` + opaque popover).
+
+## ============= EINDE BATCH 4 =============
+
+**Module 02 hardcore-status na batch 4**: **100% KLAAR** ✅
+
+Alle 37 acties + alle 5 /planning/management sub-pages + alle filter-radios + lege-state + recurring-config + rich-text editor + voorinstellingen-acties gedocumenteerd. Resterende uncertainty = visuele details die in Fase H Pass 1 side-by-side BS2↔BS1 vergelijking worden gevalideerd.
