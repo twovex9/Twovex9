@@ -140,6 +140,24 @@
           <option value="midden">Midden</option>
           <option value="laag">Laag</option>
         </select>
+        <select class="search" id="taken-filter-teamlid" style="max-width:200px" aria-label="Filter op teamlid">
+          <option value="">Alle teamleden</option>
+        </select>
+        <label class="taken-date-filter" title="Filter op deadline-datum">
+          <span class="taken-date-filter-label">Deadline</span>
+          <input type="date" class="search" id="taken-filter-deadline" aria-label="Filter op deadline" />
+        </label>
+        <label class="taken-date-filter" title="Filter op aanmaakdatum">
+          <span class="taken-date-filter-label">Aanmaakdatum</span>
+          <input type="date" class="search" id="taken-filter-aanmaakdatum" aria-label="Filter op aanmaakdatum" />
+        </label>
+        <button type="button" class="btn-outline taken-reset-btn" id="taken-filter-reset" title="Alle filters wissen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Reset
+        </button>
       </div>
 
       <section class="table-card">
@@ -149,6 +167,7 @@
               <tr>
                 <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Taaknaam</span></div></th>
                 <th data-col="toegewezen"><div class="th-sort-inner"><span class="th-label">Toegewezen aan</span></div></th>
+                <th data-col="aangemaakt_door"><div class="th-sort-inner"><span class="th-label">Aangemaakt door</span></div></th>
                 <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
                 <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
                 <th data-col="deadline"><div class="th-sort-inner"><span class="th-label">Deadline</span></div></th>
