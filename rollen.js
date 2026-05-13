@@ -100,9 +100,14 @@
     renderTotaal(totalRoles, totalUsers);
   }
 
-  // Initial render (toont cache direct als er is)
+  // Initial render (toont cache direct als er is, daarna re-render na bootstrap)
   document.addEventListener("DOMContentLoaded", function () {
-    renderOrganogram();
+    renderOrganogram(); // 1e poging — toont cache als die er is
+
+    // Wacht op data-laag bootstrap en re-render (fix voor lege cache op first-load)
+    if (window.orgRollenDB && window.orgRollenDB.ready) {
+      Promise.resolve(window.orgRollenDB.ready).then(renderOrganogram, renderOrganogram);
+    }
 
     // Search input
     var search = $("rollen-search");
