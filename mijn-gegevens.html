@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Mijn gegevens — GDPR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9">
+</head>
+<body>
+  <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <a href="instellingen.html" class="top-link is-active">Mijn gegevens</a>
+          </nav>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <span class="top-avatar" title="Gebruiker">JS</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="content-header">
+        <h1>Mijn gegevens</h1>
+        <div class="header-actions">
+          <p class="rollen-subtitle">Inzage en download van je eigen data (AVG Art. 15 — recht op inzage).</p>
+        </div>
+      </div>
+
+      <section class="mijn-gegevens-section">
+        <h2>Wat staat er over jou in BESA-suite?</h2>
+        <p>BESA-suite verzamelt en bewaart gegevens over jou voor de uitvoering van je arbeidscontract. Hieronder zie je een samenvatting van je eigen gegevens. Met de download-knop krijg je een complete JSON-export.</p>
+
+        <div class="mijn-gegevens-grid" id="mijn-gegevens-grid">
+          <div class="mijn-gegevens-loading">Gegevens laden…</div>
+        </div>
+
+        <div class="mijn-gegevens-actions">
+          <button type="button" class="btn-primary" id="mijn-gegevens-download-btn">
+            <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/>
+            </svg>
+            Download mijn data (JSON)
+          </button>
+          <button type="button" class="btn-outline" id="mijn-gegevens-refresh-btn">Vernieuwen</button>
+        </div>
+      </section>
+
+      <section class="mijn-gegevens-section">
+        <h2>Rechten onder de AVG</h2>
+        <ul class="mijn-gegevens-rights">
+          <li><strong>Recht op inzage (Art. 15)</strong> — je ziet hierboven welke gegevens we over je bewaren. Volledige export via download-knop.</li>
+          <li><strong>Recht op rectificatie (Art. 16)</strong> — onjuiste gegevens kunnen via HR aangepast worden. Neem contact op met je HR-contactpersoon.</li>
+          <li><strong>Recht op vergetelheid (Art. 17)</strong> — verzoek tot verwijdering loopt via formele schriftelijke aanvraag aan HR. Sommige data moet wettelijk bewaard blijven (loon, fiscaal).</li>
+          <li><strong>Recht op gegevensoverdraagbaarheid (Art. 20)</strong> — de JSON-download is een machine-leesbaar formaat dat voldoet aan deze eis.</li>
+          <li><strong>Recht van bezwaar (Art. 21)</strong> — verzoeken via privacy@etfalkmaar.nl (placeholder).</li>
+        </ul>
+      </section>
+
+      <section class="mijn-gegevens-section">
+        <h2>Bewaartermijnen (Retention)</h2>
+        <p>BS1 hanteert de volgende bewaartermijnen (automatische verwerking via <code>gdpr_retention_run_v1()</code>):</p>
+        <ul class="mijn-gegevens-rights">
+          <li><strong>Planning</strong> — geplande diensten worden 24 maanden bewaard, daarna gearchiveerd.</li>
+          <li><strong>Audit-logs</strong> — beschikking-audit-logs worden 5 jaar bewaard, daarna verwijderd.</li>
+          <li><strong>Notificatie-geschiedenis</strong> — meldingen worden 12 maanden bewaard, daarna verwijderd.</li>
+          <li><strong>Personeelsdossier</strong> — wettelijk verplicht 7 jaar bewaring na einde dienstverband (fiscaal + arbeidsrecht).</li>
+          <li><strong>Verzuim/Medisch</strong> — alleen toegankelijk voor HR, 20 jaar wettelijk bewaartermijn (Arbo).</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="profiles-data.js"></script>
+  <script src="mijn-gegevens.js" defer></script>
+</body>
+</html>

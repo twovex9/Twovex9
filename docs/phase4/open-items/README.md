@@ -56,7 +56,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 52 | [Sprint 10: BS2 data resync via browser-snippet](52-sprint-10-bs2-resync-snippet.md) | ✅ Voltooid PR #34 — Claude haalde via Chrome MCP paginated alle data zelf op | 2026-05-13 |
 | 53 | [Sprint 11: Authenticated E2E tests](53-sprint-11-authenticated-e2e.md) | ✅ Voltooid PR #35 | 2026-05-13 |
 | 54 | [Sprint 12: Per-feature regression tests](54-sprint-12-per-feature-regression.md) | ✅ Voltooid PR #36 | 2026-05-13 |
-| 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | ✅ Voltooid PR #37 | 2026-05-13 |
+| 56 | [Sprint 14: GDPR retention + DSR flow](56-sprint-14-gdpr-retention-dsr.md) | 🟡 In review (PR open) | 2026-05-13 |
 
 ## Voor v3
 
