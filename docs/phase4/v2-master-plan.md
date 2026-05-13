@@ -62,8 +62,8 @@ Bij faal van verificatie:
 | S1 | Rollen-organogram + profile koppeling | 8-12u | ✅ DONE | #24 (fix #26) |
 | S2 | RLS hardening kritieke tabellen (verzuim, clienten, medewerker_documenten, medewerker_notities) | 8u | ✅ DONE | #25 |
 | S3 | RLS hardening salaris + uren tabellen | 4u | ✅ DONE | #27 |
-| **S4** | **BS2 deep walk + implementatie: Planning Voorinstellingen-save** | 3u | 🟡 IN PROGRESS | (volgende PR) |
-| S5 | Planning Exporteren CSV | 2u | ⏳ TODO | — |
+| S4 | BS2 deep walk + implementatie: Planning Voorinstellingen-save | 3u | ✅ DONE | #28 |
+| **S5** | **Planning Exporteren CSV** | 2u | 🟡 IN PROGRESS | (volgende PR) |
 | S6 | BS2 deep walk: Planning Financiën sub-page → implementatie | 4u | ⏳ TODO | — |
 | S7 | BS2 deep walk: HR/Salarisadministratie processing → implementatie | 4u | ⏳ TODO | — |
 | S8 | BS2 deep walk: Taken filters/statussen → implementatie | 3u | ⏳ TODO | — |
