@@ -263,9 +263,17 @@
             <span>Werkelijke terugkeer (leeg = nog niet)</span>
             <input type="text" id="vz-edit-werkelijk" class="comp-modal-input" inputmode="numeric" autocomplete="off" />
           </label>
+          <div class="vz-gdpr-warning" role="alert" aria-live="polite">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span><strong>Geen medische informatie noteren.</strong> AVG Art. 9 verbiedt verwerking van gezondheidsgegevens buiten strikt noodzakelijke context. Beschrijf alleen administratieve feiten (datum, status, contactmoment).</span>
+          </div>
           <label class="emp-verzuim-modal-field">
-            <span>Beschrijving</span>
-            <textarea id="vz-edit-beschrijving" class="comp-modal-input vz-edit-textarea" rows="3" autocomplete="off"></textarea>
+            <span>Beschrijving <small class="vz-field-hint" id="vz-edit-beschrijving-counter">0 / 500</small></span>
+            <textarea id="vz-edit-beschrijving" class="comp-modal-input vz-edit-textarea" rows="3" maxlength="500" autocomplete="off" data-gdpr-safeguarded="true" placeholder="Bijv: ziekgemeld op 13 mei, gesprek 18 mei gepland. GEEN diagnose/medicatie."></textarea>
           </label>
           <label class="emp-verzuim-modal-field">
             <span>Status</span>
