@@ -68,8 +68,8 @@ Bij faal van verificatie:
 | S7 | HR/Salarisadministratie — Dienst-gebaseerde export | 4u | ✅ DONE | #31 |
 | S8 | Taken filters — Teamlid + Deadline + Aanmaakdatum + Reset + "Aangemaakt door" kolom | 3u | ✅ DONE | #32 |
 | S9 | Beleid documenten — Reset + Kolommen-kiezer (upload al aanwezig) | 3u | ✅ DONE | #33 |
-| **S10** | **BS2 data resync via browser-snippet — user-actie vereist** | 3u + user | 🟡 IN PROGRESS | (volgende PR) |
-| S11 | Authenticated E2E tests met test-user | 2u | ⏳ TODO | — |
+| S10 | BS2 data resync via browser-snippet — user-actie loopt asynchroon | 3u + user | ✅ DONE | #34 |
+| **S11** | **Authenticated E2E tests met test-user** | 2u | 🟡 IN PROGRESS | (volgende PR) |
 | S12 | Per-feature regression tests (Betalingen/Contacten/Rapportages/Vragenlijsten) | 4u | ⏳ TODO | — |
 | S13 | CI integratie op release-tag | 1u | ⏳ TODO | — |
 | S14 | GDPR retention-policy + DSR flow (uit item 40) | 4u | ⏳ TODO | — |

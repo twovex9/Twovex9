@@ -27,6 +27,9 @@ playwright-report/
 test-results/
 playwright/.cache/
 
+# Sprint 11 / S11 — Playwright authenticated tests storage-state (sessie-cookies)
+tests/e2e/.auth/
+
 # BS2 handmatige exports (PII — nooit naar GitHub)
 scripts/bs2-exports/*.csv
 scripts/bs2-exports/*.xlsx
