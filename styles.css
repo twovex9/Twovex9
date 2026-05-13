@@ -12290,6 +12290,37 @@ button.planning-erm-new {
   color: var(--text);
 }
 
+/* Sprint 5 / S5 — sidebar Exporteren-knop (BS2 parity) */
+.planning-erm-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.planning-erm-export-btn:hover {
+  background: #eff6ff;
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.planning-erm-export-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.planning-erm-export-ico {
+  flex-shrink: 0;
+}
+
 .planning-erm-customf {
   display: flex;
   flex-direction: column;

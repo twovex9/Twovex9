@@ -2489,6 +2489,12 @@ function initDienstPanel() {
   });
 }
 
+/**
+ * Sprint 5 / S5 — Planning Exporteren CSV (BS2 parity).
+ * Pakt huidige zichtbare items (na filters), normaliseert kolommen naar
+ * Nederlandse labels, en delegeert naar `window.besaExport` voor de
+ * format-keuze-modal (CSV/TXT/XLS/PDF). Filename bevat periode-info.
+ */
 function exportPlanningCsv() {
   const items = getItemsForView();
   if (items.length === 0) {
@@ -2497,31 +2503,81 @@ function exportPlanningCsv() {
     }
     return;
   }
-  const cols = [
-    "afdeling",
-    "diensttype",
-    "functie",
-    "teamlid",
-    "client",
-    "vestiging",
-    "locatie",
-    "start",
-    "einde",
+
+  // Bouw export-rijen met user-friendly NL labels
+  const fmtDT = (iso) => {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mi = String(d.getMinutes()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    } catch (e) { return String(iso); }
+  };
+  const rows = items.map((r) => ({
+    Datum: r.start ? new Date(r.start).toLocaleDateString("nl-NL") : "",
+    Start: r.start ? new Date(r.start).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : "",
+    Einde: r.einde ? new Date(r.einde).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : "",
+    Diensttype: r.diensttype || "",
+    Functie: r.functie || "",
+    Teamlid: r.teamlid || "",
+    Cliënt: r.client || "",
+    Afdeling: r.afdeling || "",
+    Vestiging: r.vestiging || "",
+    Locatie: r.locatie || "",
+    Uren: r.start && r.einde ? formatHoursShort(durationHours(r.start, r.einde)) : "",
+    Tarief: r.tarief != null ? formatEuro(r.tarief) : "",
+  }));
+  const columns = [
+    "Datum", "Start", "Einde", "Diensttype", "Functie",
+    "Teamlid", "Cliënt", "Afdeling", "Vestiging", "Locatie", "Uren", "Tarief",
   ];
-  const head = cols.join(";");
-  const body = items
-    .map((r) => cols.map((c) => `"${String(r[c] ?? "").replace(/"/g, '""')}"`).join(";"))
-    .join("\n");
-  const blob = new Blob([head + "\n" + body], { type: "text/csv;charset=utf-8" });
-  const filename = `planning-${new Date().toISOString().slice(0, 10)}.csv`;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 500);
-  if (typeof window.showActionFeedback === "function") {
-    window.showActionFeedback("exported", filename);
+
+  // Filename met periode
+  let periodeSlug = "";
+  try {
+    if (ui.calMode === "day" && ui.dayDate) periodeSlug = new Date(ui.dayDate).toISOString().slice(0, 10);
+    else if (ui.calMode === "week" && ui.weekStart) periodeSlug = "week-" + getIsoWeek(ui.weekStart);
+    else if (ui.calMode === "month" && ui.monthDate) {
+      const m = new Date(ui.monthDate);
+      periodeSlug = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
+    }
+  } catch (e) { periodeSlug = ""; }
+  const filename = periodeSlug ? `planning-${periodeSlug}` : `planning-${new Date().toISOString().slice(0, 10)}`;
+
+  if (typeof window.besaExport === "function") {
+    window.besaExport({
+      filename: filename,
+      title: "Planning",
+      data: rows,
+      columns: columns,
+    });
+  } else {
+    // Fallback: directe CSV-download (besa-export.js niet geladen)
+    const csvField = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const head = columns.map(csvField).join(";");
+    const body = rows.map((r) => columns.map((c) => csvField(r[c])).join(";")).join("\n");
+    const content = "﻿" + head + "\n" + body;
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { URL.revokeObjectURL(a.href); } catch (e) { /* */ }
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 100);
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", filename + ".csv");
+    }
   }
+  // Voorkom dat de daadwerkelijke 'fmtDT' helper niet wordt opgenomen (lint clean)
+  void fmtDT;
 }
 
 function initAddModal() {
@@ -2625,6 +2681,7 @@ function initNav() {
     renderAllViews();
   });
   document.getElementById("planning-export-btn")?.addEventListener("click", exportPlanningCsv);
+  document.getElementById("planning-sidebar-export-btn")?.addEventListener("click", exportPlanningCsv);
   document.getElementById("planning-clear-all-btn")?.addEventListener("click", () => {
     var clearConfirm;
     if (typeof window.showSliderConfirmModal === "function") {
