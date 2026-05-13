@@ -44,7 +44,10 @@
   }
 
   function getSupabase() {
-    return global.supabaseClient || global.supabase || null;
+    // window.besaSupabase = geconfigureerde client (BS1 conventie, zie supabase-client.js)
+    // Fallback naar window.supabase voor edge cases (= globale van CDN, normaal niet bruikbaar)
+    if (global.besaSupabase) return global.besaSupabase;
+    return null;
   }
 
   function getCurrentUserId() {
