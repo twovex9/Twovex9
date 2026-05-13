@@ -59,16 +59,19 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
 
 ### Bij vervolgsessies (leesvolgorde)
 
-1. **`docs/phase4/v2-master-plan.md`** — 🚀 **actief stappenplan v2 (100% BS2 parity)**. Vind eerste sprint met status `⏳ TODO`, voer direct uit. NOOIT vragen "welke wil je?".
-2. `docs/phase4/99-v1-eindrapport.md` — v1 state (productie-klaar als interne ETF tool)
-3. `docs/phase4/open-items/README.md` — items 29+ index
-4. Optioneel ouder: `docs/phase4/00-plan.md`, `docs/phase4/99-final-success.md`, `docs/phase4/06-professional-finish.md`
+1. **`docs/phase4/v3-complete-bs2-verification-plan.md`** — 🚀 **ACTIEF v3-plan (100% productie-klaar voor 100+ medewerkers)**. 32 user-keuzes + 9 fasen (0→A→B→C→D→E→F→G→I→H). Vind eerste fase met status `⏳ TODO`, voer direct uit. NOOIT vragen "welke fase?".
+2. `docs/phase4/v2-master-plan.md` — v2 historie (alle 19 sprints DONE)
+3. `docs/phase4/99-v1-eindrapport.md` + `99-v2-eindrapport.md` — eindrapporten voorgaande versies
+4. `docs/phase4/open-items/README.md` — items 29+ index
+5. Optioneel ouder: `docs/phase4/00-plan.md`, `docs/phase4/99-final-success.md`, `docs/phase4/06-professional-finish.md`
 
-**Workflow-regel v2** (vanaf 2026-05-13):
-- Sprints staan in vaste volgorde in v2-master-plan
-- Per sprint: feature-branch + PR + merge-link aan user
-- Na merge: status update → ✅ DONE in master-plan + memory `project_besa_v2_parity.md`
-- Volgende sprint direct beginnen, geen tussenvraag
+**Workflow-regel v3** (vanaf 2026-05-13):
+- Fasen staan in vaste volgorde in v3-plan (0→A→B→C→D→E→F→G→I→H)
+- Triple-check per fase + 4-pass eindverificatie in Fase H
+- Per gap-fix: feature-branch + PR + "Klik om te mergen" link aan user
+- Na merge: status update → ✅ DONE in v3-plan + memory `project_besa_v2_parity.md`
+- Bij blocker (rol-omschakeling, service-role-key, DPA-vraag, BS2-sessie verlopen): stop + vraag user
+- Eindstand: BS1 100% letterlijk BS2-kopie + productie-klaar met verplichte 2FA, Supabase Pro, DPA's, daily backup, monitoring (Sentry), helpdesk-link, ETF-branded e-mails
 
 Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerste-poging-bevindingen.md` voor v2 aanpak via JS-snippet in browser console (Bearer-token alleen werkt niet).
 
