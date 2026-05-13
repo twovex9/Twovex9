@@ -7,8 +7,8 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ⏳ TODO |
-| 02 | Planning | `docs/bs2-scrape/02-planning/` | ⏳ TODO |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE (PR #48 + #50) |
+| 02 | Planning | `docs/bs2-scrape/02-planning/` | 🟡 batch 1 ~30% (PR #49 merged), batch 2 in progress |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
