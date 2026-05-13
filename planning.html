@@ -26,7 +26,7 @@
               <a href="#" class="top-link top-link--dropdown is-active">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
                 <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
-                <a href="#" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+                <a href="planning-beheer.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -489,6 +489,34 @@
           <div class="modal-field"><label class="modal-label" for="plan-add-leer">Leer (0–3)</label><input id="plan-add-leer" class="modal-input" type="number" min="0" max="3" value="0" /></div>
           <div class="modal-field"><label class="modal-label" for="plan-add-sterren">Sterren (0–3)</label><input id="plan-add-sterren" class="modal-input" type="number" min="0" max="3" value="0" /></div>
           <div class="modal-field modal-field--rowspan2"><label class="modal-label planning-checkbox"><input type="checkbox" id="plan-add-conflict" /> Markeer als aandacht (conflict / risico)</label></div>
+          <!-- BS2-parity extra velden -->
+          <div class="modal-field"><label class="modal-label" for="plan-add-pauze">Pauze (uren)</label><input id="plan-add-pauze" class="modal-input" type="number" step="0.25" min="0" value="0" /></div>
+          <div class="modal-field"><label class="modal-label" for="plan-add-vereist-aantal">Vereist aantal medewerkers</label><input id="plan-add-vereist-aantal" class="modal-input" type="number" min="1" value="1" /></div>
+          <div class="modal-field modal-field--rowspan2"><label class="modal-label" for="plan-add-competenties">Vereiste competenties</label><select id="plan-add-competenties" class="modal-input modal-select" multiple size="3"></select></div>
+          <div class="modal-field modal-field--full"><label class="modal-label" for="plan-add-beschrijving">Beschrijving</label><textarea id="plan-add-beschrijving" class="modal-input" rows="3" placeholder="Optionele beschrijving van de dienst…"></textarea></div>
+          <!-- Herhaling sectie -->
+          <div class="modal-field modal-field--full"><label class="modal-label planning-checkbox"><input type="checkbox" id="plan-add-herhaal-toggle" /> Herhaal dienst</label></div>
+          <div class="modal-field modal-field--rowspan2 plan-recurring-fields" id="plan-recurring-fields" hidden>
+            <label class="modal-label" for="plan-add-recurring-interval">Herhaal iedere</label>
+            <select id="plan-add-recurring-interval" class="modal-input modal-select">
+              <option value="1">1 week</option>
+              <option value="2">2 weken</option>
+              <option value="3">3 weken</option>
+              <option value="4">4 weken</option>
+            </select>
+            <label class="modal-label" for="plan-add-recurring-enddate" style="margin-top:8px">Eindigt op <span style="color:var(--red)">*</span></label>
+            <input id="plan-add-recurring-enddate" class="modal-input" type="date" />
+            <label class="modal-label" style="margin-top:8px">Herhaal op</label>
+            <div class="plan-recurring-days">
+              <button type="button" class="plan-recurring-day-btn" data-day="1">M</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="2">D</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="3">W</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="4">D</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="5">V</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="6">Z</button>
+              <button type="button" class="plan-recurring-day-btn" data-day="7">Z</button>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-outline" id="planning-add-cancel-btn">Annuleren</button>
@@ -498,16 +526,151 @@
     </div>
   </div>
 
+  <!-- BS2-parity view-modal: 7 secties + Open/Gesloten toggle -->
   <div class="modal-overlay" id="planning-view-modal" hidden aria-hidden="true">
-    <div class="modal-dialog planning-view-dialog" role="dialog" aria-modal="true" aria-labelledby="planning-view-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="planning-view-title" class="modal-title">Dienst bekijken</h2>
-        <button type="button" class="modal-close" id="planning-view-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+    <div class="modal-dialog planning-view-dialog planning-view-dialog--full" role="dialog" aria-modal="true" aria-labelledby="planning-view-title" tabindex="-1">
+      <div class="modal-header planning-detail-header">
+        <h2 id="planning-view-title" class="modal-title">Dienstdetails</h2>
+        <div class="planning-detail-actions">
+          <button type="button" class="btn-outline btn-outline--red" id="planning-view-delete-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Verwijderen
+          </button>
+          <button type="button" class="btn-primary" id="planning-view-edit-btn">Bewerken</button>
+          <button type="button" class="modal-close" id="planning-view-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        </div>
       </div>
-      <div class="modal-body planning-view-body" id="planning-view-body"></div>
+      <div class="modal-body planning-view-body" id="planning-view-body">
+        <!-- Open/Gesloten toggle -->
+        <div class="planning-detail-toggle">
+          <button type="button" class="planning-detail-toggle-btn" id="planning-toggle-gesloten" data-state="closed">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Gesloten dienst
+          </button>
+          <button type="button" class="planning-detail-toggle-btn is-active" id="planning-toggle-open" data-state="open">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+            Open dienst
+          </button>
+        </div>
+
+        <!-- Top-info row -->
+        <div class="planning-detail-info-row" id="planning-detail-info-row"></div>
+
+        <!-- Beschrijving -->
+        <section class="planning-detail-section">
+          <h3 class="planning-detail-section-title">Beschrijving</h3>
+          <div class="planning-detail-beschrijving" id="planning-detail-beschrijving">-</div>
+        </section>
+
+        <!-- Toegewezen (N/M) -->
+        <section class="planning-detail-section">
+          <div class="planning-detail-section-head">
+            <h3 class="planning-detail-section-title">Toegewezen <span id="planning-detail-toegewezen-count">(0/1)</span></h3>
+            <button type="button" class="btn-outline btn-sm" id="planning-detail-toewijzen-btn">+ Toewijzen</button>
+          </div>
+          <div class="planning-detail-list" id="planning-detail-toegewezen-list"></div>
+        </section>
+
+        <!-- AI suggesties -->
+        <section class="planning-detail-section">
+          <h3 class="planning-detail-section-title">AI suggesties</h3>
+          <div class="planning-detail-ai" id="planning-detail-ai">
+            <button type="button" class="planning-detail-ai-load" id="planning-detail-ai-load-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/></svg>
+              AI suggesties laden
+            </button>
+          </div>
+        </section>
+
+        <!-- Uitgenodigd -->
+        <section class="planning-detail-section">
+          <div class="planning-detail-section-head">
+            <h3 class="planning-detail-section-title">Uitgenodigd</h3>
+            <button type="button" class="btn-outline btn-sm" id="planning-detail-uitnodigen-btn">+ Uitnodigen</button>
+          </div>
+          <div class="planning-detail-list" id="planning-detail-uitgenodigd-list"></div>
+        </section>
+
+        <!-- Aanmeldingen -->
+        <section class="planning-detail-section">
+          <h3 class="planning-detail-section-title">Aanmeldingen</h3>
+          <div class="planning-detail-list" id="planning-detail-aanmeldingen-list"></div>
+        </section>
+
+        <!-- Activiteit -->
+        <section class="planning-detail-section">
+          <h3 class="planning-detail-section-title">Activiteit</h3>
+          <div class="planning-detail-activity" id="planning-detail-activity"></div>
+        </section>
+      </div>
+
+      <!-- Sticky comment-box -->
+      <div class="planning-detail-comment-box">
+        <span class="planning-detail-comment-avatar" id="planning-detail-comment-avatar">JS</span>
+        <textarea id="planning-detail-comment-input" rows="2" placeholder="Stel een vraag of plaats een update..."></textarea>
+        <button type="button" class="btn-primary btn-sm" id="planning-detail-comment-submit" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 3 3 9-3 9 19-9Z"/></svg>
+          Plaats reactie
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toewijzen modal (over view-modal) -->
+  <div class="modal-overlay" id="planning-toewijzen-modal" hidden aria-hidden="true">
+    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="planning-toewijzen-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="planning-toewijzen-title">Medewerker Toewijzen</h2>
+        <button type="button" class="modal-close" id="planning-toewijzen-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">Selecteer een medewerker om aan deze dienst toe te wijzen. Toegewezen medewerkers worden onmiddellijk aan de dienst toegevoegd.</p>
+        <select id="planning-toewijzen-select" class="modal-input modal-select" required></select>
+        <label class="modal-label planning-checkbox" style="margin-top:12px"><input type="checkbox" id="planning-toewijzen-bulk" /> Toepassen op vergelijkbare diensten</label>
+      </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="planning-view-close-sec">Sluiten</button>
-        <button type="button" class="btn-primary" id="planning-view-edit-btn">Bewerken</button>
+        <button type="button" class="btn-outline" id="planning-toewijzen-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="planning-toewijzen-submit">Toewijzen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uitnodigen modal -->
+  <div class="modal-overlay" id="planning-uitnodigen-modal" hidden aria-hidden="true">
+    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="planning-uitnodigen-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="planning-uitnodigen-title">Medewerker uitnodigen</h2>
+        <button type="button" class="modal-close" id="planning-uitnodigen-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">Selecteer een medewerker om uit te nodigen voor deze dienst. Uitgenodigde medewerkers moeten accepteren voordat ze worden toegewezen.</p>
+        <select id="planning-uitnodigen-select" class="modal-input modal-select" required></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="planning-uitnodigen-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="planning-uitnodigen-submit">Uitnodigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete-confirm modal -->
+  <div class="modal-overlay" id="planning-delete-modal" hidden aria-hidden="true">
+    <div class="modal-dialog modal-dialog--sm" role="alertdialog" aria-modal="true" aria-labelledby="planning-delete-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="planning-delete-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          Dienst verwijderen
+        </h2>
+        <button type="button" class="modal-close" id="planning-delete-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">Welke diensten wil je verwijderen?</p>
+        <label class="planning-delete-option"><input type="radio" name="planning-delete-scope" value="single" checked /> <span>Alleen deze dienst</span></label>
+        <label class="planning-delete-option"><input type="radio" name="planning-delete-scope" value="recurring" /> <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg> Deze en vergelijkbare aankomende diensten</span></label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="planning-delete-cancel">Annuleren</button>
+        <button type="button" class="btn-primary btn-primary--red" id="planning-delete-confirm">Verwijderen</button>
       </div>
     </div>
   </div>
@@ -518,11 +681,18 @@
   <script src="error-reporter.js?v=er1"></script>
   <script src="besa-sync-reporter.js"></script>
   <script src="auth-guard.js"></script>
-  <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
+  <script src="notifications-data.js"></script>
+  <script src="notification-bell.js?v=nb2" defer></script>
   <script src="planning-data.js"></script>
   <script src="comp-diensttypes-data.js"></script>
   <script src="planning-voorinstellingen-data.js"></script>
+  <script src="dienst-uitnodigingen-data.js"></script>
+  <script src="dienst-activiteiten-data.js"></script>
+  <script src="dienst-recurring-data.js"></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="competenties-data.js"></script>
+  <script src="dienst-detail.js"></script>
   <script src="planning.js"></script>
 </body>
 </html>
