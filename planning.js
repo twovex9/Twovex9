@@ -2982,36 +2982,19 @@ function renderPresetsList() {
 }
 
 function openViewModal(id) {
+  // BS2-parity: delegeer naar dienst-detail.js voor de uitgebreide modal met 7 secties
+  if (window.dienstDetail && typeof window.dienstDetail.open === "function") {
+    ui.viewingId = id;
+    window.dienstDetail.open(id);
+    return;
+  }
+  // Legacy-fallback: oude minimalistische view-modal (alleen indien dienst-detail.js ontbreekt)
   const it = getItemById(id);
   if (!it) return;
-  const oids = buildOverlapConflictIds(getItemsForView());
-  const autoOv = oids.has(it.id);
-  let risk = "—";
-  if (it.conflict && autoOv) risk = "Aandacht + overlappende tijd";
-  else if (it.conflict) risk = "Aandacht / risico (handmatig)";
-  else if (autoOv) risk = "Overlap (zelfde medewerker, automatisch)";
-  else risk = "Geen";
-  const h = durationHours(it.start, it.einde);
   const body = document.getElementById("planning-view-body");
   const modal = document.getElementById("planning-view-modal");
   if (!body || !modal) return;
-  body.innerHTML = `
-    <dl class="planning-view-dl">
-      <div><dt>Teamlid</dt><dd>${escapeHtml(it.teamlid || "—")}</dd></div>
-      <div><dt>Functie / rol</dt><dd>${escapeHtml(it.functie || "—")}</dd></div>
-      <div><dt>Afdeling</dt><dd>${escapeHtml(it.afdeling || "—")}</dd></div>
-      <div><dt>Diensttype</dt><dd>${escapeHtml(it.diensttype || "—")}</dd></div>
-      <div><dt>Teamlead</dt><dd>${escapeHtml(it.teamlead || "—")}</dd></div>
-      <div><dt>Cliënt</dt><dd>${escapeHtml(it.client || "—")}</dd></div>
-      <div><dt>Vestiging</dt><dd>${escapeHtml(String(it.vestiging || "—"))}</dd></div>
-      <div><dt>Locatie (zone)</dt><dd>${escapeHtml(String(it.locatie || "—"))}</dd></div>
-      <div><dt>Start</dt><dd>${formatDateTime(it.start)}</dd></div>
-      <div><dt>Einde</dt><dd>${formatDateTime(it.einde)}</dd></div>
-      <div><dt>Duur</dt><dd>${h > 0 ? `${h.toFixed(1).replace(".", ",")} u` : "—"}</dd></div>
-      <div><dt>Leer (niveau)</dt><dd>${it.leer}</dd></div>
-      <div><dt>Sterren</dt><dd>${it.sterren}</dd></div>
-      <div><dt>Risico / overlap</dt><dd>${escapeHtml(risk)}</dd></div>
-    </dl>`;
+  body.innerHTML = '<div class="planning-detail-empty">Dienst-detail module niet geladen — herlaad de pagina.</div>';
   ui.viewingId = id;
   modal.removeAttribute("hidden");
   modal.setAttribute("aria-hidden", "false");

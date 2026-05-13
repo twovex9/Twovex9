@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Planning beheer — HR</title>
+  <link rel="stylesheet" href="styles.css?v=imcols9">
+</head>
+<body>
+  <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
+
+  <div class="app-shell app-shell--home">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <a href="planning.html" class="top-link is-active">Planning</a>
+            <a href="werkuren.html" class="top-link">Urenregistratie</a>
+            <a href="index.html" class="top-link">HR</a>
+            <a href="clienten.html" class="top-link">Cliënten</a>
+            <a href="kilometers.html" class="top-link">Kilometers</a>
+            <a href="facturen-te-beoordelen.html" class="top-link">Facturen</a>
+            <a href="taken.html" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <a href="verlof.html" class="top-link">Verlof</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <a href="teams.html" class="top-link">Organisatie</a>
+            <a href="instellingen.html" class="top-link">Instellingen</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <a href="#availability-types" class="side-link is-active" data-tab="availability-types">📅 Beschikbaarheidstypes</a>
+      <a href="#shift-types" class="side-link" data-tab="shift-types">📋 Diensttypes</a>
+      <a href="#switch-shifts" class="side-link" data-tab="switch-shifts">🔄 Dienstwissels</a>
+      <a href="#employees" class="side-link" data-tab="employees">👤 Medewerkers</a>
+      <a href="#settings" class="side-link" data-tab="settings">⚙️ Planning instellingen</a>
+    </aside>
+
+    <main class="content">
+      <!-- Tab: Beschikbaarheidstypes -->
+      <section class="pb-tab" data-tab="availability-types">
+        <div class="content-header">
+          <h1>Beschikbaarheidstypes</h1>
+          <div class="header-actions">
+            <button type="button" class="btn-outline" id="pb-at-kolommen">Kolommen</button>
+            <button type="button" class="btn-primary" id="pb-at-add">+ Beschikbaarheidstype toevoegen</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="search" class="search" id="pb-at-search" placeholder="Zoeken..." />
+          <label class="switch switch--yellow"><input type="checkbox" id="pb-at-archived" /> <span>Gearchiveerd</span></label>
+        </div>
+        <section class="table-card"><div class="table-wrapper">
+          <table class="employees-table" id="pb-at-table">
+            <thead><tr><th><input type="checkbox" id="pb-at-check-all" /></th><th>Naam</th><th>Starttijd</th><th>Eindtijd</th><th></th></tr></thead>
+            <tbody id="pb-at-tbody"></tbody>
+          </table>
+        </div></section>
+      </section>
+
+      <!-- Tab: Diensttypes -->
+      <section class="pb-tab" data-tab="shift-types" hidden>
+        <div class="content-header">
+          <h1>Diensttypes</h1>
+          <div class="header-actions">
+            <button type="button" class="btn-outline" id="pb-st-kolommen">Kolommen</button>
+            <button type="button" class="btn-primary" id="pb-st-add">+ Toevoegen</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="search" class="search" id="pb-st-search" placeholder="Zoeken..." />
+          <label class="switch switch--yellow"><input type="checkbox" id="pb-st-archived" /> <span>Gearchiveerd</span></label>
+        </div>
+        <section class="table-card"><div class="table-wrapper">
+          <table class="employees-table" id="pb-st-table">
+            <thead><tr><th>Naam</th><th>Kleur</th><th>Configureerbaar uurtarief</th><th></th></tr></thead>
+            <tbody id="pb-st-tbody"></tbody>
+          </table>
+        </div></section>
+      </section>
+
+      <!-- Tab: Dienstwissels -->
+      <section class="pb-tab" data-tab="switch-shifts" hidden>
+        <div class="content-header">
+          <h1>Diensten wisselen</h1>
+          <div class="header-actions">
+            <button type="button" class="btn-outline" id="pb-sw-kolommen">Kolommen</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="search" class="search" id="pb-sw-search" placeholder="Zoeken..." />
+          <label class="switch switch--yellow"><input type="checkbox" id="pb-sw-archived" /> <span>Gearchiveerd</span></label>
+        </div>
+        <section class="table-card"><div class="table-wrapper">
+          <table class="employees-table" id="pb-sw-table">
+            <thead><tr><th>Status</th><th>Van</th><th>Naar</th><th>Aangevraagd door</th><th>Diensttype</th><th>Datum & Tijd</th><th>Kostenverschil</th></tr></thead>
+            <tbody id="pb-sw-tbody"><tr><td colspan="7" class="planning-detail-empty" style="text-align:center;padding:32px">Geen resultaten gevonden</td></tr></tbody>
+          </table>
+        </div></section>
+      </section>
+
+      <!-- Tab: Medewerkers (planning-context) -->
+      <section class="pb-tab" data-tab="employees" hidden>
+        <div class="content-header">
+          <h1>Medewerkers</h1>
+          <div class="header-actions">
+            <button type="button" class="btn-outline" id="pb-emp-kolommen">Kolommen</button>
+            <button type="button" class="btn-outline" id="pb-emp-export">Exporteren</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="search" class="search" id="pb-emp-search" placeholder="Zoeken..." />
+          <label class="switch switch--yellow"><input type="checkbox" id="pb-emp-archived" /> <span>Gearchiveerd</span></label>
+          <label class="switch switch--red"><input type="checkbox" id="pb-emp-vereist-actie" /> <span>Vereist actie</span></label>
+        </div>
+        <section class="table-card"><div class="table-wrapper">
+          <table class="employees-table" id="pb-emp-table">
+            <thead><tr><th>Voornaam</th><th>Achternaam</th><th>E-mailadres</th><th>Tel.</th><th>Fase</th><th>Dienstverband</th><th>Werktype</th><th>Startdatum</th></tr></thead>
+            <tbody id="pb-emp-tbody"></tbody>
+          </table>
+        </div></section>
+      </section>
+
+      <!-- Tab: Planning instellingen -->
+      <section class="pb-tab" data-tab="settings" hidden>
+        <div class="content-header">
+          <h1>Planning instellingen</h1>
+        </div>
+        <section class="table-card" style="padding:20px">
+          <h3 style="margin:0 0 12px">Compensatie-uren Drempelwaarden</h3>
+          <div class="modal-field"><label class="modal-label" for="pb-min-uren">Minimum compensatie-uren</label>
+            <input id="pb-min-uren" class="modal-input" type="number" value="-20" style="width:120px" /> <span>uren</span>
+            <p class="planning-detail-info-label" style="margin:6px 0 0">ℹ Waarschuwing tonen wanneer compensatie-uren onder deze waarde komen</p>
+          </div>
+          <div class="modal-field" style="margin-top:16px"><label class="modal-label" for="pb-max-uren">Maximum compensatie-uren</label>
+            <input id="pb-max-uren" class="modal-input" type="number" value="20" style="width:120px" /> <span>uren</span>
+            <p class="planning-detail-info-label" style="margin:6px 0 0">ℹ Waarschuwing tonen wanneer compensatie-uren boven deze waarde komen</p>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:8px">
+            <button type="button" class="btn-outline" id="pb-settings-cancel">Annuleren</button>
+            <button type="button" class="btn-primary" id="pb-settings-save">Opslaan</button>
+          </div>
+        </section>
+        <section class="table-card" style="padding:20px;margin-top:16px">
+          <h3 style="margin:0 0 12px">Waarschuwing Voorbeeld</h3>
+          <div class="planning-detail-empty" style="background:#fef3c7;color:#92400e;padding:12px;border-radius:8px;font-style:normal">⚠ Compensatie-uren te laag: -25 uren (min: <span id="pb-preview-min">-20</span> uren)</div>
+          <div class="planning-detail-empty" style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;font-style:normal;margin-top:8px">⚠ Compensatie-uren te hoog: 45 uren (max: <span id="pb-preview-max">20</span> uren)</div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- Beschikbaarheidstype bewerken/aanmaken modal -->
+  <div class="modal-overlay" id="pb-at-modal" hidden aria-hidden="true">
+    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true">
+      <div class="modal-header"><h2 class="modal-title" id="pb-at-modal-title">Beschikbaarheidstype</h2>
+        <button type="button" class="modal-close" id="pb-at-modal-close">&times;</button></div>
+      <div class="modal-body">
+        <div class="modal-field"><label class="modal-label" for="pb-at-naam">Naam</label><input id="pb-at-naam" class="modal-input" /></div>
+        <div class="modal-field"><label class="modal-label" for="pb-at-start">Starttijd</label><input id="pb-at-start" class="modal-input" type="time" /></div>
+        <div class="modal-field"><label class="modal-label" for="pb-at-eind">Eindtijd</label><input id="pb-at-eind" class="modal-input" type="time" /></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="pb-at-modal-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="pb-at-modal-save">Bijwerken</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diensttype bewerken/aanmaken modal -->
+  <div class="modal-overlay" id="pb-st-modal" hidden aria-hidden="true">
+    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true">
+      <div class="modal-header"><h2 class="modal-title" id="pb-st-modal-title">Diensttype</h2>
+        <button type="button" class="modal-close" id="pb-st-modal-close">&times;</button></div>
+      <div class="modal-body">
+        <div class="modal-field"><label class="modal-label" for="pb-st-naam">Naam</label><input id="pb-st-naam" class="modal-input" /></div>
+        <div class="modal-field"><label class="modal-label" for="pb-st-kleur">Kleur (hex)</label><input id="pb-st-kleur" class="modal-input" type="color" value="#5c73e6" /></div>
+        <div class="modal-field"><label class="modal-label planning-checkbox"><input type="checkbox" id="pb-st-uurtarief" /> Configureerbaar uurtarief</label></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="pb-st-modal-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="pb-st-modal-save">Bijwerken</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="error-reporter.js?v=er1"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="profiles-data.js"></script>
+  <script src="notifications-data.js"></script>
+  <script src="notification-bell.js?v=nb2" defer></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="beschikbaarheidstypes-data.js"></script>
+  <script src="comp-diensttypes-data.js"></script>
+  <script src="dienstwissels-data.js"></script>
+  <script src="planning-settings-data.js"></script>
+  <script src="planning-beheer.js"></script>
+</body>
+</html>

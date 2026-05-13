@@ -7,8 +7,8 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE BS2 (PR #48 + #50) + ✅ BS1-parity-check ~60% (notification-feature backend ontbreekt, manual-feature ontbreekt) |
-| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit BS2** (PR #49 + #51 + #52 merged, batch 5 audit pending PR #53). 37 acties + 13 audit-acties (B5.A-M) + 5 sub-pages + alle filters + recurring + lege-state + ZZZ-CLAUDE-TEST-2026-05-13 audit-pass. ✅ BS1-parity-check ~35% (6 schema-tabellen + 7 dienst-detail secties + 5 management sub-pages ontbreken) |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE BS2 (PR #48 + #50) + ✅ BS1-parity-fix PR #55 pending merge — notifications backend + avatar dropdown + count-badge + arrow-icon (~100% na merge) |
+| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit BS2** (PR #49 + #51 + #52 + #53 merged). ✅ BS1-parity-fix PR #56 pending merge — 8 nieuwe tabellen + 5 kolommen + 7-section view-modal + Toewijzen/Uitnodigen/Comments/AI-suggesties + 5 management sub-pages (~95%, 4 niet-blokkerende 🟡 voor productie) |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
