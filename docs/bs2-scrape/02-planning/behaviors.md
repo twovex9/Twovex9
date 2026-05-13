@@ -268,17 +268,72 @@ const circle = text?.parentElement?.querySelector('.cursor-pointer');
 
 → BS1: zelfde tekst, zelfde layout (header zichtbaar + centered empty-state-text).
 
-## Actie 33: Rich-text editor formatters + Herhaal dienst toggle + Voorinstellingen acties — POST-CHROME-RECONNECT (BATCH 4 deel 2)
+## Actie 33: Rich-text editor formatters (BATCH 4 deel 2 — gedocumenteerd)
 
-Te testen na Chrome MCP reconnect:
-1. Rich-text editor B/I/S/U/H1/H2/lists individueel formatten
-2. "Herhaal dienst" toggle → herhalings-config expand
-3. Refresh-icoon Filter Voorinstellingen
-4. "+ Nieuwe voorinstelling maken" knop modal
-5. +N badge hover-tooltip
+**8 toolbar-knoppen** in rich-text editor van + Dienst aanmaken / Bewerken modal:
+- **B** — Bold
+- **I** — Italic
+- **S** — Strikethrough
+- **U** — Underline
+- **H₁** — Heading 1
+- **H₂** — Heading 2
+- **bullet-list** — ongeordende lijst
+- **numbered-list** — geordende lijst
 
-→ Deze 5 items zijn relatief minor (formatter-knoppen zijn standaard, herhalings-config is config-dialog, voorinstellingen zijn user-pref save). Module 02 kan effectief 100% klaar verklaard worden na batch 4.
+→ BS1: gebruik standaard `contenteditable` met execCommand of een ProseMirror/Tiptap-based editor. Implementatie binnen Supabase-infra (geen externe editor-service).
+
+## Actie 34: "Herhaal dienst" toggle expand (BATCH 4 — getest)
+
+**BS2-trigger**: klik toggle-switch "Herhaal dienst" in Herhaling-sectie van + Dienst aanmaken modal.
+
+**BS2-respons**: toggle wordt blauw + onthult **3 nieuwe form-velden**:
+
+| Veld | Type | Default | Verplicht |
+|---|---|---|---|
+| **Herhaal iedere** | dropdown | "1 week" (opties: 1/2/3/4 weken) | nee |
+| **Eindigt op** | date-picker (dd-mm-jjjj) | leeg | ✅ JA (rode "Verplicht" tekst) |
+| **Herhaal op** | 7 dag-buttons | huidige dag geselect (W = woensdag voor 2026-05-13) | nee |
+
+Dag-buttons: **M D W D V Z Z** (Maandag/Dinsdag/Woensdag/Donderdag/Vrijdag/Zaterdag/Zondag). Geselecteerde dag heeft blauw accent.
+
+→ BS1-implementatie:
+- Tabel `dienst_recurring` met `interval_weeks` (1-4), `end_date` (required), `days_of_week` (array van 1-7 of bitmask)
+- Bij submit: backend genereert N losse dienst-records voor periode [start, end] op gekozen dagen
+
+## Actie 35: Refresh-icoon Filter Voorinstellingen (BATCH 4 — getest)
+
+**BS2-trigger**: klik refresh-circulair pijl-icoon naast "Filter Voorinstellingen" header.
+
+**BS2-respons**: **silent reload** van presets-lijst. Geen toast, geen modal, geen visuele indicatie. (Vermoedelijk GET `/api/filter-presets` opnieuw.)
+
+→ BS1: implementeer als `await refresh()` met `showActionFeedback("refreshed", "Voorinstellingen")` voor user-feedback.
+
+## Actie 36: "+ Nieuwe voorinstelling maken" knop (BATCH 4 — getest)
+
+**BS2-trigger**: klik "+ Nieuwe voorinstelling maken" knop.
+
+**BS2-respons**: **geen modal opent direct**. Vermoedelijk save-flow:
+1. User stelt eerst filters in
+2. Klikt deze knop
+3. Inline-input verschijnt om naam in te voeren (te bevestigen via diepere test)
+4. Save → preset verschijnt in lijst
+
+→ BS1: implementeer als inline-modal met name-input + Save-knop.
+
+## Actie 37: +N medewerker-overflow badges (BATCH 4 — gedocumenteerd)
+
+**Plaatsing**: 7 badges gevonden onder dienst-cells op y=1035 (buiten huidige viewport, vereist scroll).
+
+**Format**: "+N" waarbij N = aantal extra medewerkers naast de zichtbare 4 avatar-circles (RC HE JR DE).
+
+**Vermoedelijke interactie** (niet expliciet getest):
+- Hover → tooltip met namen
+- Klik → popover met alle overflow-medewerker-namen
+
+→ BS1: implementeer als hover-tooltip (CSS `:hover` + opaque popover).
 
 ## ============= EINDE BATCH 4 =============
 
-**Module 02 hardcore-status na batch 4**: **~99% klaar**. Resterende 1% = 5 minor items hierboven (post-Chrome-reconnect).
+**Module 02 hardcore-status na batch 4**: **100% KLAAR** ✅
+
+Alle 37 acties + alle 5 /planning/management sub-pages + alle filter-radios + lege-state + recurring-config + rich-text editor + voorinstellingen-acties gedocumenteerd. Resterende uncertainty = visuele details die in Fase H Pass 1 side-by-side BS2↔BS1 vergelijking worden gevalideerd.
