@@ -33,6 +33,8 @@
       { btn: "inst-tab-profiel", panel: "inst-panel-profiel", key: "profiel" },
       { btn: "inst-tab-mijn-notificaties", panel: "inst-panel-mijn-notificaties", key: "mijn-notificaties" },
       { btn: "inst-tab-notificaties", panel: "inst-panel-notificaties", key: "notificaties" },
+      // Sprint 17 / S17 — Entiteiten tab (BS2 parity met /settings/entities)
+      { btn: "inst-tab-entiteiten", panel: "inst-panel-entiteiten", key: "entiteiten" },
     ];
     tabs.forEach(function (t) {
       var btn = document.getElementById(t.btn);
@@ -45,6 +47,155 @@
     });
     if (name === "notificaties") renderNt();
     else if (name === "mijn-notificaties") renderMijnNotificaties();
+    else if (name === "entiteiten") renderEntiteiten();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sprint 17 / S17 — Tab: Entiteiten (read-only metadata-tabel BS2 parity)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * BS2 toont 7 entity-namen: client, employee, disposition, invoice, quotation,
+   * Disposition, Phase. BS1 spiegelt deze + voegt counts uit Supabase toe voor
+   * extra waarde. Records ARE de structurele Laravel models — read-only.
+   */
+  var ENTITEITEN_LIST = [
+    { naam: "client",      beschrijving: "Cliënt-entiteit",                   bs1_table: "clienten" },
+    { naam: "employee",    beschrijving: "Medewerker-entiteit",              bs1_table: "medewerkers" },
+    { naam: "disposition", beschrijving: "Beschikking-entiteit",             bs1_table: "beschikkingen" },
+    { naam: "invoice",     beschrijving: "Factuur-entiteit",                 bs1_table: "facturen" },
+    { naam: "quotation",   beschrijving: "Offerte-entiteit",                 bs1_table: null },
+    { naam: "Disposition", beschrijving: "Beschikking-fase entiteit",        bs1_table: null },
+    { naam: "Phase",       beschrijving: "Fase-entiteit (algemeen)",         bs1_table: null },
+  ];
+
+  var ENTITEITEN_COLUMN_CONFIG = [
+    { id: "naam", label: "Naam", defaultOn: true, skipToggle: true },
+    { id: "beschrijving", label: "Beschrijving", defaultOn: true },
+    { id: "aantal", label: "Aantal records", defaultOn: true },
+  ];
+  var ENTITEITEN_COLUMNS_PREFS_KEY = "inst_entiteiten_columns_v1";
+
+  function readEntColumnPrefs() {
+    try { var raw = localStorage.getItem(ENTITEITEN_COLUMNS_PREFS_KEY); return raw ? JSON.parse(raw) || {} : {}; }
+    catch (e) { return {}; }
+  }
+  function writeEntColumnPrefs(p) {
+    try { localStorage.setItem(ENTITEITEN_COLUMNS_PREFS_KEY, JSON.stringify(p || {})); } catch (e) { /* */ }
+  }
+  function setEntColVisible(colId, visible) {
+    document.querySelectorAll('#inst-ent-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applyEntColumnVisibility() {
+    var prefs = readEntColumnPrefs();
+    ENTITEITEN_COLUMN_CONFIG.forEach(function (c) {
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      setEntColVisible(c.id, on);
+    });
+  }
+  function buildEntColumnsPanel() {
+    var list = document.getElementById("inst-ent-columns-list");
+    if (!list) return;
+    var prefs = readEntColumnPrefs();
+    list.innerHTML = "";
+    ENTITEITEN_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("role", "menuitemcheckbox");
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.setAttribute("data-col", c.id);
+      btn.className = "column-toggle";
+      btn.innerHTML = '<span class="column-toggle-check" aria-hidden="true">' +
+        (on ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+        '</span><span class="column-toggle-label">' + c.label + '</span>';
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var isOn = btn.getAttribute("aria-checked") === "true";
+        var nextOn = !isOn;
+        btn.setAttribute("aria-checked", nextOn ? "true" : "false");
+        btn.querySelector(".column-toggle-check").innerHTML = nextOn
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : "";
+        var p = readEntColumnPrefs();
+        p[c.id] = nextOn;
+        writeEntColumnPrefs(p);
+        applyEntColumnVisibility();
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+
+  function wireEntColumnsPanel() {
+    var btn = document.getElementById("inst-ent-columns-menu-btn");
+    var panel = document.getElementById("inst-ent-columns-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = btn.getAttribute("aria-expanded") === "true";
+      if (open) { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); }
+      else { panel.removeAttribute("hidden"); btn.setAttribute("aria-expanded", "true"); }
+    });
+    document.addEventListener("click", function () {
+      panel.setAttribute("hidden", "");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    applyEntColumnVisibility();
+  }
+
+  function escEnt(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  async function getEntCount(table) {
+    if (!table || !window.besaSupabase) return null;
+    try {
+      var r = await window.besaSupabase.from(table).select("*", { count: "exact", head: true });
+      return r.error ? null : r.count;
+    } catch (e) { return null; }
+  }
+
+  async function renderEntiteiten() {
+    var tbody = document.getElementById("inst-ent-tbody");
+    var countEl = document.getElementById("inst-ent-count");
+    var searchEl = document.getElementById("inst-ent-search");
+    if (!tbody) return;
+    var q = (searchEl ? searchEl.value : "").trim().toLowerCase();
+    var filtered = ENTITEITEN_LIST.filter(function (e) {
+      if (!q) return true;
+      return (e.naam + " " + (e.beschrijving || "")).toLowerCase().indexOf(q) >= 0;
+    });
+    tbody.innerHTML = filtered.map(function (e) {
+      return '<tr>' +
+        '<td data-col="naam"><code style="font-family:var(--font-mono, monospace);font-size:13px;">' + escEnt(e.naam) + '</code></td>' +
+        '<td data-col="beschrijving">' + escEnt(e.beschrijving) + '</td>' +
+        '<td data-col="aantal" data-table="' + escEnt(e.bs1_table || "") + '">' + (e.bs1_table ? '<span style="color:var(--text-muted)">laden…</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+      '</tr>';
+    }).join("");
+    if (countEl) countEl.textContent = filtered.length + " van " + ENTITEITEN_LIST.length;
+    applyEntColumnVisibility();
+
+    // Async laden van counts via Supabase
+    for (var i = 0; i < filtered.length; i++) {
+      var ent = filtered[i];
+      if (!ent.bs1_table) continue;
+      (function (table) {
+        getEntCount(table).then(function (count) {
+          var cells = tbody.querySelectorAll('td[data-col="aantal"][data-table="' + table + '"]');
+          cells.forEach(function (cell) {
+            cell.innerHTML = count == null ? '<span style="color:var(--red)">?</span>' : '<strong>' + count + '</strong>';
+          });
+        });
+      })(ent.bs1_table);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -266,6 +417,13 @@
     var tabMijnNotif = document.getElementById("inst-tab-mijn-notificaties");
     if (tabMijnNotif) tabMijnNotif.addEventListener("click", function () { setTab("mijn-notificaties"); });
     document.getElementById("inst-tab-notificaties").addEventListener("click", function () { setTab("notificaties"); });
+    // Sprint 17 / S17 — Entiteiten tab init
+    var tabEnt = document.getElementById("inst-tab-entiteiten");
+    if (tabEnt) tabEnt.addEventListener("click", function () { setTab("entiteiten"); });
+    var entSearch = document.getElementById("inst-ent-search");
+    if (entSearch) entSearch.addEventListener("input", function () { renderEntiteiten(); });
+    buildEntColumnsPanel();
+    wireEntColumnsPanel();
 
     // Mijn notificaties: toggle handler (delegated)
     var mnList = document.getElementById("inst-mn-list");
