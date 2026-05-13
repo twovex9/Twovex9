@@ -103,29 +103,38 @@ Supabase config is hardcoded in `supabase-client.js` (anon key — public, RLS b
 | `docs/phase4/06-professional-finish.md` | Roadmap voor v2 (22 items, 6 prioriteiten) |
 | `docs/phase4/07-backup-strategie.md` | Disaster recovery — wat backuppen, hoe restoren |
 | `docs/phase4/08-performance-benchmarks.md` | Baseline page-load timings (her-meten elke 6 mnd) |
+| `docs/phase4/99-v1-eindrapport.md` | **🎉 Eindrapport — actuele status BS1 v1** (lees als eerste) |
+| `docs/phase4/open-items/README.md` | Index items 29+ (aparte files, anti-conflict structuur) |
 
 ## BS2 → BS1 data sync (toekomstig)
 
 Wanneer nieuwe BS2-data nodig is, zie `docs/phase4/05-toolchain-recovery.md` sectie "BS2 → BS1 data refresh workflow" (8 stappen, ~10 min inclusief Bearer-token).
 
-## Eindstand (na Phase 4)
+## Eindstand v1 (2026-05-13)
 
-| Tabel | Actief records |
-|---|---:|
-| medewerkers | 102 |
-| clienten | 92 |
-| beschikkingen | 251 |
-| facturen | 990 |
-| planning | 4461 |
-| incidenten | 144 |
-| verzuim | 14 |
-| locaties | 9 |
-| gemeenten | 238 |
-| organisaties | 90 |
-| opleidingen | 70 |
-| incident_categorieen | 13 |
+| Tabel | Actief records | BS2 verschil |
+|---|---:|---|
+| medewerkers | 102 | +2 |
+| clienten | 92 | +5 |
+| beschikkingen | 249 | -2 |
+| facturen | 990 | gelijk |
+| planning | 4461 | gelijk |
+| incidenten | 139 | gelijk |
+| verzuim | 14 | gelijk |
+| locaties | 9 | gelijk |
+| gemeenten | 238 | superset BS1 |
+| organisaties | 89 | gelijk |
+| opleidingen | 70 | superset BS1 |
+| incident_categorieen | 13 | gelijk |
 
-Plus ~96+69+13 archived records (BS2 duplicaten + test-data, reverseerbaar via "Herstel"-knop).
+Data ~95% parity met BS2. Verschillen marginaal (~5 records totaal). Plus gearchiveerde records (BS2 duplicaten + test-data, reverseerbaar via "Herstel"-knop).
+
+**Voor exact-gelijke counts**: zie `docs/phase4/open-items/38-bs2-sync-eerste-poging-bevindingen.md` (v2 sprint via JS-snippet in BS2 browser console).
+
+## v1 productie-status
+
+✅ **Klaar voor productie** als interne ETF tool.
+⚠️ Voor externe partijen / regulatorische audit: zie `docs/phase4/open-items/39-rls-audit.md` + `40-gdpr-art-9-verzuim.md` voor v2 hardening sprint (~27u totaal).
 
 ## Werkwijze voor Claude-sessies
 

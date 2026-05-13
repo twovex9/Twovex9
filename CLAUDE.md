@@ -57,11 +57,14 @@ We bouwen secties van **BESA-suite 2** na in deze codebase met behoud van BS1's 
 
 medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, planning 4461, incidenten 144, verzuim 14, locaties 10 actief, organisaties 90, incident_categorieën 13 actief.
 
-### Bij vervolgsessies
+### Bij vervolgsessies (leesvolgorde)
 
-1. Lees `docs/phase4/00-plan.md` (canonical plan)
-2. Lees `docs/phase4/99-final-success.md` (eindstand)
-3. Voor toekomstige BS2-data refresh: nieuwe export via `scripts/bs2-exports/`, run `node scripts/bs2-full-import.mjs` (idempotent) + `node scripts/bs2-fk-resolve.mjs`
+1. **`docs/phase4/99-v1-eindrapport.md`** — 🎉 single source of truth voor v1 status. Lees als eerste.
+2. `docs/phase4/open-items/README.md` — items 29+ index met current status
+3. `docs/phase4/06-professional-finish.md` — originele roadmap (status per item in eindrapport)
+4. Optioneel ouder: `docs/phase4/00-plan.md` (Phase 4 plan) + `docs/phase4/99-final-success.md` (Phase 4 eindstand 2026-05-12)
+
+Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerste-poging-bevindingen.md` voor v2 aanpak via JS-snippet in browser console (Bearer-token alleen werkt niet).
 
 ### Persistente werkwijze-regels (gelden ALTIJD)
 
