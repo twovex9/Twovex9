@@ -59,10 +59,16 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
 
 ### Bij vervolgsessies (leesvolgorde)
 
-1. **`docs/phase4/99-v1-eindrapport.md`** — 🎉 single source of truth voor v1 status. Lees als eerste.
-2. `docs/phase4/open-items/README.md` — items 29+ index met current status
-3. `docs/phase4/06-professional-finish.md` — originele roadmap (status per item in eindrapport)
-4. Optioneel ouder: `docs/phase4/00-plan.md` (Phase 4 plan) + `docs/phase4/99-final-success.md` (Phase 4 eindstand 2026-05-12)
+1. **`docs/phase4/v2-master-plan.md`** — 🚀 **actief stappenplan v2 (100% BS2 parity)**. Vind eerste sprint met status `⏳ TODO`, voer direct uit. NOOIT vragen "welke wil je?".
+2. `docs/phase4/99-v1-eindrapport.md` — v1 state (productie-klaar als interne ETF tool)
+3. `docs/phase4/open-items/README.md` — items 29+ index
+4. Optioneel ouder: `docs/phase4/00-plan.md`, `docs/phase4/99-final-success.md`, `docs/phase4/06-professional-finish.md`
+
+**Workflow-regel v2** (vanaf 2026-05-13):
+- Sprints staan in vaste volgorde in v2-master-plan
+- Per sprint: feature-branch + PR + merge-link aan user
+- Na merge: status update → ✅ DONE in master-plan + memory `project_besa_v2_parity.md`
+- Volgende sprint direct beginnen, geen tussenvraag
 
 Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerste-poging-bevindingen.md` voor v2 aanpak via JS-snippet in browser console (Bearer-token alleen werkt niet).
 
