@@ -7,8 +7,8 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE (PR #48 + #50) |
-| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit** (PR #49 + #51 + #52 merged, batch 5 audit pending PR #53). 37 acties + 13 audit-acties (B5.A-M) + 5 sub-pages + alle filters + recurring + lege-state + ZZZ-CLAUDE-TEST-2026-05-13 audit-pass |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ 100% HARDCORE BS2 (PR #48 + #50) + ✅ BS1-parity-check ~60% (notification-feature backend ontbreekt, manual-feature ontbreekt) |
+| 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **100% HARDCORE + batch 5 audit BS2** (PR #49 + #51 + #52 merged, batch 5 audit pending PR #53). 37 acties + 13 audit-acties (B5.A-M) + 5 sub-pages + alle filters + recurring + lege-state + ZZZ-CLAUDE-TEST-2026-05-13 audit-pass. ✅ BS1-parity-check ~35% (6 schema-tabellen + 7 dienst-detail secties + 5 management sub-pages ontbreken) |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
@@ -44,15 +44,16 @@
 | 35 | Mijn-gegevens | `docs/bs2-scrape/35-mijn-gegevens/` | ⏳ TODO |
 | 36 | Manual (/manual) | `docs/bs2-scrape/36-manual/` | ⏳ TODO |
 
-## Per module 5 bestanden + screenshots
+## Per module 6 bestanden + screenshots (VERPLICHT vanaf 2026-05-14)
 
 Voor élke module:
-- `structure.md` — DOM-structuur (sitemap, toolbar, tabel, dropdowns, knoppen)
-- `behaviors.md` — wat élke actie doet (modals, validatie, network, audit)
-- `emails.md` — uitgaande e-mails (indien aanwezig)
-- `prints.md` — print/PDF/Excel-exports (indien aanwezig)
-- `bulk-actions.md` — bulk-acties (indien aanwezig)
-- `img/` — screenshots per sub-page
+- `structure.md` — BS2 DOM-structuur (sitemap, toolbar, tabel, dropdowns, knoppen) — HARDCORE
+- `behaviors.md` — BS2 gedrag per actie (modals, validatie, network, audit) — HARDCORE
+- `emails.md` — BS2 uitgaande e-mails (indien aanwezig)
+- `prints.md` — BS2 print/PDF/Excel-exports (indien aanwezig)
+- `bulk-actions.md` — BS2 bulk-acties (indien aanwezig)
+- **`bs1-parity.md` — BS1 status vs BS2 (Chrome MCP test + schema-check + per-actie ✅/🟡/❌/❓ tabel + gap-categorisatie + Fase E-prioritering) — EVEN HARDCORE als BS2-scrape**
+- `img/` — screenshots per sub-page (BS2 + BS1 waar relevant)
 
 ## Tools
 
