@@ -1,0 +1,94 @@
+name: E2E (Playwright)
+
+# Sprint 13 / v2 master-plan S13.
+#
+# Runt Playwright E2E test-suite tegen productie bij:
+#   - release-tag push (v*.*.* of bs1-v* patterns)
+#   - manual workflow_dispatch (handmatig vanuit Actions tab)
+#
+# Tests draaien NIET op elke PR/push:
+#   - Authenticated tests vereisen BESA_E2E_EMAIL/PASSWORD secrets
+#   - Chromium install (~120MB) is duur per run
+#   - E2E tests duren ~30s per spec
+#
+# Voor lokale dev: gebruik `npm run test:e2e` direct.
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "bs1-v*"
+      - "release-*"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Override BESA_BASE_URL (default: production)"
+        required: false
+        default: "https://besa-suite.vercel.app"
+
+jobs:
+  e2e:
+    name: Playwright E2E tegen ${{ github.event.inputs.base_url || 'production' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      BESA_BASE_URL: ${{ github.event.inputs.base_url || 'https://besa-suite.vercel.app' }}
+      # Authenticated tests skippen graceful als deze secrets niet gezet zijn.
+      # Zie Settings > Secrets and variables > Actions om ze toe te voegen.
+      BESA_E2E_EMAIL: ${{ secrets.BESA_E2E_EMAIL }}
+      BESA_E2E_PASSWORD: ${{ secrets.BESA_E2E_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: "true"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
+
+  summary:
+    name: E2E summary
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: always()
+    steps:
+      - name: Report
+        run: |
+          if [ "${{ needs.e2e.result }}" = "success" ]; then
+            echo "E2E tests passed against ${{ github.event.inputs.base_url || 'production' }}"
+          elif [ "${{ needs.e2e.result }}" = "failure" ]; then
+            echo "E2E tests FAILED — zie playwright-report artifact"
+            exit 1
+          else
+            echo "E2E result: ${{ needs.e2e.result }}"
+          fi
