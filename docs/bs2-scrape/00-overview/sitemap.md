@@ -7,7 +7,7 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | 🟡 **IN-PROGRESS — wacht op user-override** — PR #48+#50+#55+#57 merged, lockdown-checklist **30/30 ✅ fysiek gevalideerd** (BS2 hardcore 10/10, BS1 hardcore 10/10 live op vercel, Schema+Data+Audit 10/10 via Supabase MCP). |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | 🟡 **IN-PROGRESS — wacht op user-override** — PR #48+#50+#55+#57 merged, lockdown-checklist **30/30 ✅ + DATA-PARITEIT 15=15** (BS2 hardcore 10/10, BS1 hardcore 10/10 FYSIEK `computer.left_click` op vercel live, Schema+Data+Audit 10/10 via Supabase MCP, 12 ontbrekende nieuws-records geïmporteerd). |
 | 02 | Planning | `docs/bs2-scrape/02-planning/` | 🟡 **IN-PROGRESS** — BS2-scrape klaar (PR #49 + #51 + #52 + #53), parity-fix PR #56 pending merge, **lockdown-checklist nog niet gestart (0/30)** |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
