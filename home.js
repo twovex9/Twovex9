@@ -153,6 +153,13 @@ function createCard(item, onOpen) {
     card.appendChild(fallback);
   }
 
+  // BS2-parity: arrow-icoon rechtsboven (visuele indicator "klik om te openen")
+  const arrow = document.createElement("span");
+  arrow.className = "home-news-card-arrow";
+  arrow.setAttribute("aria-hidden", "true");
+  arrow.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>';
+  card.appendChild(arrow);
+
   const body = document.createElement("div");
   body.className = "home-news-card-body";
 
@@ -293,6 +300,26 @@ function renderHomeNews() {
   const modal = initNewsModal();
   const items = getVisibleNewsItems();
   grid.innerHTML = "";
+
+  // BS2-parity: subtitle krijgt count-badge "(N)"
+  const subtitle = document.querySelector(".home-subtitle");
+  if (subtitle) {
+    const baseText = subtitle.dataset.baseText || "Nieuws & Mededelingen";
+    subtitle.dataset.baseText = baseText;
+    subtitle.innerHTML = baseText + ' <span class="home-news-count-badge" aria-label="' + items.length + ' nieuwsberichten">(' + items.length + ')</span>';
+  }
+
+  // Handle URL hash #nieuws=<id> (vanuit notifications.html navigate)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const nieuwsParam = urlParams.get("nieuws");
+    if (nieuwsParam) {
+      const target = items.find((it) => String(it.id) === String(nieuwsParam));
+      if (target) {
+        setTimeout(() => modal.open(target), 100);
+      }
+    }
+  } catch (e) { /* */ }
 
   if (items.length === 0) {
     const empty = document.createElement("div");

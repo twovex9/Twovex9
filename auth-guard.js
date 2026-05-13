@@ -130,6 +130,121 @@
     return (user && user.email) || "";
   }
 
+  function getInitials(user) {
+    if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
+      try {
+        var p = window.profilesDB.getCurrentSync();
+        if (p) {
+          var first = (p.voornaam || "").trim();
+          var last = (p.achternaam || "").trim();
+          if (first && last) return (first[0] + last[0]).toUpperCase();
+          if (first) return first.slice(0, 2).toUpperCase();
+        }
+      } catch (e) { /* */ }
+    }
+    var email = (user && user.email) || "";
+    if (!email) return "?";
+    return email.slice(0, 2).toUpperCase();
+  }
+
+  function getFullName(user) {
+    if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
+      try {
+        var p = window.profilesDB.getCurrentSync();
+        if (p) {
+          var first = (p.voornaam || "").trim();
+          var last = (p.achternaam || "").trim();
+          if (first || last) return (first + " " + last).trim();
+        }
+      } catch (e) { /* */ }
+    }
+    return (user && user.email) || "";
+  }
+
+  var dropdownOpen = false;
+
+  function closeAvatarDropdown() {
+    var dd = document.getElementById("besa-avatar-dropdown");
+    if (dd) dd.remove();
+    var avatar = document.getElementById("besa-avatar-btn");
+    if (avatar) avatar.setAttribute("aria-expanded", "false");
+    dropdownOpen = false;
+  }
+
+  function buildAvatarDropdown(user) {
+    var dd = document.createElement("div");
+    dd.id = "besa-avatar-dropdown";
+    dd.setAttribute("role", "menu");
+    dd.setAttribute("aria-label", "Gebruikersmenu");
+    dd.style.cssText = [
+      "position:absolute",
+      "top:calc(100% + 8px)",
+      "right:0",
+      "min-width:240px",
+      "background:var(--surface,#fff)",
+      "border:1px solid var(--line)",
+      "border-radius:var(--r-lg)",
+      "box-shadow:0 8px 24px rgba(0,0,0,0.12)",
+      "z-index:1000",
+      "overflow:hidden",
+    ].join(";");
+
+    // Header met naam + email
+    var header = document.createElement("div");
+    header.style.cssText = "padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface-alt,#fafbfc)";
+    var nameEl = document.createElement("div");
+    nameEl.style.cssText = "font-size:14px;font-weight:600;color:var(--text);line-height:1.3";
+    nameEl.textContent = getFullName(user) || "Gebruiker";
+    var emailEl = document.createElement("div");
+    emailEl.style.cssText = "font-size:12px;color:var(--text-muted);margin-top:2px";
+    emailEl.textContent = user.email || "";
+    header.appendChild(nameEl);
+    header.appendChild(emailEl);
+    dd.appendChild(header);
+
+    // Mijn profiel link → instellingen.html (waar voornaam/achternaam beheerd worden)
+    var profielLink = document.createElement("a");
+    profielLink.href = "instellingen.html";
+    profielLink.setAttribute("role", "menuitem");
+    profielLink.style.cssText = "display:block;padding:10px 16px;color:var(--text);text-decoration:none;font-size:13px;transition:background 0.15s ease";
+    profielLink.textContent = "Mijn profiel";
+    profielLink.addEventListener("mouseover", function () { profielLink.style.background = "var(--surface-alt,#f7f8fa)"; });
+    profielLink.addEventListener("mouseout", function () { profielLink.style.background = "transparent"; });
+    dd.appendChild(profielLink);
+
+    // Uitloggen knop met shortcut
+    var logoutBtn = document.createElement("button");
+    logoutBtn.type = "button";
+    logoutBtn.setAttribute("role", "menuitem");
+    logoutBtn.style.cssText = "display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 16px;border:0;background:transparent;color:var(--text);font:inherit;font-size:13px;cursor:pointer;text-align:left;transition:background 0.15s ease";
+    var lblSpan = document.createElement("span");
+    lblSpan.textContent = "Uitloggen";
+    var shortcutSpan = document.createElement("span");
+    var isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform || "");
+    shortcutSpan.textContent = isMac ? "⇧⌘Q" : "Shift+Ctrl+Q";
+    shortcutSpan.style.cssText = "color:var(--text-muted);font-size:11px;font-family:monospace";
+    logoutBtn.appendChild(lblSpan);
+    logoutBtn.appendChild(shortcutSpan);
+    logoutBtn.addEventListener("mouseover", function () { logoutBtn.style.background = "var(--surface-alt,#f7f8fa)"; });
+    logoutBtn.addEventListener("mouseout", function () { logoutBtn.style.background = "transparent"; });
+    logoutBtn.addEventListener("click", function () {
+      closeAvatarDropdown();
+      performLogoutAndRedirect({ reason: "manual", preserveNext: false });
+    });
+    dd.appendChild(logoutBtn);
+
+    return dd;
+  }
+
+  function avatarOutsideClick(e) {
+    var avatar = document.getElementById("besa-auth-badge");
+    if (avatar && !avatar.contains(e.target)) {
+      closeAvatarDropdown();
+    } else {
+      document.addEventListener("click", avatarOutsideClick, { once: true });
+    }
+  }
+
   function injectUserBadge(user) {
     if (!user || !user.email) return;
     if (document.getElementById("besa-auth-badge")) return;
@@ -139,60 +254,81 @@
 
     var wrap = document.createElement("div");
     wrap.id = "besa-auth-badge";
-    wrap.style.cssText = [
-      "display:flex",
-      "align-items:center",
-      "gap:10px",
-      "margin-left:auto",
-      "padding:0 14px",
-      "font-size:13px",
-      "color:#1a2540",
-      "white-space:nowrap",
-    ].join(";");
+    wrap.style.cssText = "position:relative;display:inline-flex;align-items:center;margin-left:auto;padding:0 14px";
 
-    var label = document.createElement("span");
-    label.id = "besa-auth-badge-label";
-    label.textContent = getDisplayLabel(user);
-    label.title = user.email;
-    label.style.cssText = "color:#6b7798;max-width:220px;overflow:hidden;text-overflow:ellipsis;";
+    var avatarBtn = document.createElement("button");
+    avatarBtn.type = "button";
+    avatarBtn.id = "besa-avatar-btn";
+    avatarBtn.title = user.email;
+    avatarBtn.setAttribute("aria-label", "Gebruikersmenu " + (user.email || ""));
+    avatarBtn.setAttribute("aria-haspopup", "menu");
+    avatarBtn.setAttribute("aria-expanded", "false");
+    avatarBtn.style.cssText = [
+      "display:inline-flex",
+      "align-items:center",
+      "justify-content:center",
+      "width:36px",
+      "height:36px",
+      "border:0",
+      "border-radius:var(--r-pill)",
+      "background:var(--blue)",
+      "color:#fff",
+      "font-weight:700",
+      "font-size:13px",
+      "cursor:pointer",
+      "transition:filter 0.15s ease",
+    ].join(";");
+    avatarBtn.textContent = getInitials(user);
+
+    avatarBtn.addEventListener("mouseover", function () { avatarBtn.style.filter = "brightness(1.1)"; });
+    avatarBtn.addEventListener("mouseout", function () { avatarBtn.style.filter = ""; });
+
+    avatarBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (dropdownOpen) {
+        closeAvatarDropdown();
+      } else {
+        var dd = buildAvatarDropdown(user);
+        wrap.appendChild(dd);
+        dropdownOpen = true;
+        avatarBtn.setAttribute("aria-expanded", "true");
+        setTimeout(function () {
+          document.addEventListener("click", avatarOutsideClick, { once: true });
+        }, 0);
+      }
+    });
 
     window.addEventListener("besa:profile-updated", function () {
-      var newLabel = getDisplayLabel(user);
-      if (newLabel) label.textContent = newLabel;
+      avatarBtn.textContent = getInitials(user);
+      // Update dropdown header if open
+      var dd = document.getElementById("besa-avatar-dropdown");
+      if (dd) {
+        var nameEl = dd.querySelector("div div");
+        if (nameEl) nameEl.textContent = getFullName(user) || "Gebruiker";
+      }
     });
 
-    var sep = document.createElement("span");
-    sep.setAttribute("aria-hidden", "true");
-    sep.textContent = "·";
-    sep.style.cssText = "color:#c7cfe0;";
-
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = "Uitloggen";
-    btn.style.cssText = [
-      "background:transparent",
-      "border:none",
-      "padding:6px 10px",
-      "font:inherit",
-      "color:#2962ff",
-      "cursor:pointer",
-      "border-radius:6px",
-    ].join(";");
-    btn.addEventListener("mouseover", function () { btn.style.background = "rgba(41,98,255,0.08)"; });
-    btn.addEventListener("mouseout", function () { btn.style.background = "transparent"; });
-
-    btn.addEventListener("click", function () {
-      btn.disabled = true;
-      btn.textContent = "Uitloggen…";
-      // Bewuste handmatige uitlog: geen ?next=, ga gewoon naar login.
-      performLogoutAndRedirect({ reason: "manual", preserveNext: false });
-    });
-
-    wrap.appendChild(label);
-    wrap.appendChild(sep);
-    wrap.appendChild(btn);
-
+    wrap.appendChild(avatarBtn);
     topbar.appendChild(wrap);
+
+    // Keyboard shortcut: Shift+Cmd+Q (Mac) / Shift+Ctrl+Q (Win/Linux) → logout
+    document.addEventListener("keydown", function (e) {
+      var key = (e.key || "").toLowerCase();
+      var mod = /Mac|iPod|iPhone|iPad/.test(navigator.platform || "") ? e.metaKey : e.ctrlKey;
+      if (mod && e.shiftKey && key === "q") {
+        e.preventDefault();
+        closeAvatarDropdown();
+        performLogoutAndRedirect({ reason: "manual", preserveNext: false });
+      }
+    });
+
+    // Escape sluit dropdown
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && dropdownOpen) {
+        closeAvatarDropdown();
+      }
+    });
   }
 
   function listenForAuthChange() {

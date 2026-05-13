@@ -9838,6 +9838,7 @@ select.cd-config-select {
 }
 
 .home-news-card {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: #fff;
@@ -9847,6 +9848,54 @@ select.cd-config-select {
   flex-direction: column;
   min-height: 300px;
   transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.home-news-card-arrow {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: color 0.15s ease, background 0.15s ease;
+  pointer-events: none;
+}
+
+.home-news-card:hover .home-news-card-arrow {
+  color: var(--blue);
+  background: #fff;
+}
+
+.home-news-count-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-alt, #f1f5f9);
+  border-radius: var(--r-pill);
+}
+
+.home-nudge {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.home-nudge-link {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.home-nudge-link:hover {
+  text-decoration: underline;
 }
 
 .home-news-card:hover {
