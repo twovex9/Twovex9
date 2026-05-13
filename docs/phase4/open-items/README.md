@@ -46,7 +46,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 37 | [Cliënt-detail Vragenlijsten-tab geïmplementeerd](37-vragenlijsten-tab-implementatie.md) | ✅ Voltooid — **item 14 volledig gesloten** | 2026-05-12 |
 | 43 | [Sprint 1: Rollen-organogram (BS2 parity)](43-sprint-1-rollen-organogram.md) | ✅ Voltooid PR #24 | 2026-05-13 |
 | 44 | [Sprint 2: RLS hardening kritieke tabellen](44-sprint-2-rls-hardening-critical.md) | ✅ Voltooid PR #25 | 2026-05-13 |
-| 45 | [Sprint 3: RLS hardening salaris + uren](45-sprint-3-rls-salaris-uren.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 45 | [Sprint 3: RLS hardening salaris + uren](45-sprint-3-rls-salaris-uren.md) | ✅ Voltooid PR #27 | 2026-05-13 |
+| 46 | [Sprint 4: Planning filter-voorinstellingen](46-sprint-4-planning-voorinstellingen.md) | 🟡 In review (PR open) | 2026-05-13 |
 
 ## Voor v3
 

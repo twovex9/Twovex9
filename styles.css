@@ -12177,6 +12177,119 @@ button.planning-erm-new {
   font-size: 12px;
 }
 
+/* Sprint 4 / S4 — filter-voorinstellingen lijst + inline naam-input */
+.planning-erm-presets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.planning-erm-presets-list:empty {
+  display: none;
+}
+.planning-erm-preset-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border-radius: var(--r-sm);
+  transition: background-color 120ms ease;
+}
+.planning-erm-preset-item:hover {
+  background: #f1f5fb;
+}
+.planning-erm-preset-label {
+  flex: 1 1 auto;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.planning-erm-preset-label:hover {
+  color: var(--blue);
+}
+.planning-erm-preset-del {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+.planning-erm-preset-item:hover .planning-erm-preset-del,
+.planning-erm-preset-item:focus-within .planning-erm-preset-del {
+  opacity: 1;
+}
+.planning-erm-preset-del:hover {
+  background: #fee2e2;
+  color: var(--red);
+}
+.planning-erm-presets-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.planning-erm-presets-form[hidden] {
+  display: none;
+}
+.planning-erm-presets-input {
+  flex: 1 1 auto;
+  height: 30px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.planning-erm-presets-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.planning-erm-presets-save,
+.planning-erm-presets-cancel {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.planning-erm-presets-save:hover {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.planning-erm-presets-cancel:hover {
+  background: #f1f5f9;
+  color: var(--text);
+}
+
 .planning-erm-customf {
   display: flex;
   flex-direction: column;
