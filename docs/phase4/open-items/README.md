@@ -52,7 +52,8 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 48 | [Sprint 6: Planning Financiën (KPI parity)](48-sprint-6-planning-financien.md) | ✅ Voltooid PR #30 | 2026-05-13 |
 | 49 | [Sprint 7: HR Salarisadministratie — Dienst-gebaseerde export](49-sprint-7-hr-salarisadmin-shift-export.md) | ✅ Voltooid PR #31 | 2026-05-13 |
 | 50 | [Sprint 8: Taken filters/statussen](50-sprint-8-taken-filters.md) | ✅ Voltooid PR #32 | 2026-05-13 |
-| 51 | [Sprint 9: Beleid documenten (Reset + Kolommen)](51-sprint-9-beleid-documents.md) | 🟡 In review (PR open) | 2026-05-13 |
+| 51 | [Sprint 9: Beleid documenten (Reset + Kolommen)](51-sprint-9-beleid-documents.md) | ✅ Voltooid PR #33 | 2026-05-13 |
+| 52 | [Sprint 10: BS2 data resync via browser-snippet](52-sprint-10-bs2-resync-snippet.md) | 🟡 In review (PR open) — **user-actie na merge** | 2026-05-13 |
 
 ## Voor v3
 
