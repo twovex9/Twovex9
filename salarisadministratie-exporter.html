@@ -196,10 +196,16 @@
             <div class="sa-validation__list" id="sa-validation-list" aria-live="polite"></div>
             <div class="sa-export-footer">
               <p class="sa-export-summary" id="sa-validation-summary">0 medewerkers met onvolledige gegevens</p>
-              <button type="button" class="btn-primary btn-with-ico" id="sa-generate-btn">
-                <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
-                Export genereren
-              </button>
+              <div class="sa-export-actions">
+                <button type="button" class="btn-outline btn-with-ico" id="sa-generate-shift-btn" title="Eén regel per dienst i.p.v. per medewerker">
+                  <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                  Dienst-gebaseerde export
+                </button>
+                <button type="button" class="btn-primary btn-with-ico" id="sa-generate-btn">
+                  <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+                  Export genereren
+                </button>
+              </div>
             </div>
             <label class="sa-dl-now">
               <input type="checkbox" id="sa-download-now" />

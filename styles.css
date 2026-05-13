@@ -2085,6 +2085,14 @@ h1 {
   font-size: 13px;
 }
 
+/* Sprint 7 / S7 — twee export-knoppen naast elkaar (Dienst-gebaseerd + Standaard) */
+.sa-export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .sa-dl-now {
   display: inline-flex;
   align-items: center;
