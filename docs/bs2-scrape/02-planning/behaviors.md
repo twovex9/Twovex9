@@ -71,9 +71,92 @@
 
 **BS2-respons**: terug naar week-view met KPI-cards opnieuw gevuld.
 
-## Actie 6: Klik op nieuws-card / dienst-cell — NIET GETEST IN BATCH 1
+## Actie 6: Klik op dienst-cell (BATCH 2 — getest 2026-05-13)
 
-Te scrapen in batch 2.
+**BS2-trigger**: klik op een dienst-cell in grid (bv. Achterwacht op wo 13).
+
+**BS2-respons** = **Dienstdetails slide-in panel** rechts met VEEL features:
+
+### Header
+- H1: "Dienstdetails"
+- 2 knoppen rechtsboven: **Verwijderen** (rood, met X-icoon) + **Bewerken** (donker)
+- Close X uiterst rechts
+
+### Top-info row (4 inline kolommen)
+- Diensttype + kleur-dot (Achterwacht groen)
+- Locatie + kleur-dot
+- Datum: 13/05/2026
+- Tijd: 17:00 - 09:00
+
+### Beschrijving sectie
+- Tekst (of "-" indien leeg)
+
+### Toegewezen (1/1) sectie
+- Per toegewezen medewerker: avatar-circle + naam + email + locatie + **X-icoon** (de-assign)
+- Counter (1/1 = 1 van benodigd 1)
+
+### AI suggesties sectie
+- Tekst: "Geen suggesties nodig - dienst is volledig bemand."
+- Verwacht bij niet-bemande dienst: suggestie-lijst met namen op basis van competenties + beschikbaarheid
+
+### Uitgenodigd sectie
+- **"Uitnodigen"** knop rechtsboven sectie
+- Lijst van uitgenodigde medewerkers (of "Nog geen medewerkers uitgenodigd.")
+
+### Aanmeldingen sectie
+- Lijst van zelf-aangemelde medewerkers
+- Tekst: "Er hebben zich nog geen medewerkers aangemeld."
+
+### Activiteit (audit-log) sectie
+- Per event: avatar + actor-naam + tijd + actie-beschrijving
+- Voorbeeld: "Medine Yetim 4 mei 2026 om 00:10 — Heeft de dienst aangemaakt"
+
+### Comment-box (sticky onderaan)
+- User-avatar
+- Textarea: "Stel een vraag of plaats een update..."
+- "Plaats reactie" knop
+
+→ BS1-implementatie:
+- Tabel `dienst_uitnodigingen` met status enum (uitgenodigd/aangemeld/toegewezen/geweigerd)
+- Tabel `dienst_activiteiten` audit-log
+- Tabel `dienst_comments` thread
+- Modal-component met 7 secties + comment-box
+- AI-suggesties: rule-based via Supabase Edge Function (filter op competenties + beschikbaarheid)
+
+## Actie 7: Klik "Bewerken" knop in Dienstdetails (BATCH 2 getest)
+
+**BS2-trigger**: klik "Bewerken" knop rechtsboven Dienstdetails modal.
+
+**BS2-respons**: modal **wisselt naar edit-mode** (inline, geen nieuwe modal):
+- Knoppen rechtsboven: **Annuleren** + **Opslaan** (vervangen Verwijderen + Bewerken)
+- Form-velden zichtbaar (zelfde 12 velden als + Dienst aanmaken modal)
+- Voorbeeld voor Achterwacht: Pauze=14,75 / Starttijd=13-05-2026 17:00 / Eindtijd=14-05-2026 09:00 (overnight)
+- Medewerkers-veld toont chip(s) met X om te verwijderen (de-assign via edit-mode)
+- Annuleren = terug naar view-mode zonder save
+- Opslaan = UPDATE + back naar view-mode
+
+→ BS1: gebruik zelfde modal-component met mode={'view'|'edit'} prop.
+
+## Actie 8: Klik "Verwijderen" knop in Dienstdetails — NIET GETEST IN BATCH 2
+
+Te testen in batch 3: maak eerst ZZZ-CLAUDE-TEST-2026-05-13 dienst aan, klik Verwijderen, capture confirm-modal + DELETE-flow.
+
+## Actie 9: Klik "Uitnodigen" knop in Dienstdetails (BATCH 2 getest)
+
+**BS2-trigger**: klik "Uitnodigen" knop in Uitgenodigd-sectie.
+
+**BS2-respons**: **2e modal** opent bovenop Dienstdetails (centered, kleine):
+- H2: "Medewerker uitnodigen"
+- Beschrijving: "Selecteer een medewerker om uit te nodigen voor deze dienst. Uitgenodigde medewerkers moeten accepteren voordat ze worden toegewezen."
+- Dropdown: "Selecteer een teamlid"
+- Footer: **Annuleren** + **Uitnodigen** (primary)
+- Close X
+
+→ BS1: dropdown gefilterd op competenties + beschikbaarheid in tijd-slot.
+
+## Actie 10: Klik X bij medewerker in Toegewezen-lijst — NIET GETEST IN BATCH 2
+
+Te testen in batch 3: vermoedelijk confirm-modal "Medewerker de-toewijzen".
 
 ## Actie 7: Klik op group-header (Achterwacht / Breedstraat) — NIET GETEST IN BATCH 1
 
