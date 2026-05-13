@@ -294,6 +294,26 @@
       render();
     });
 
+    // Sprint 9 / S9 — Reset-knop (mirror BS2 /documents)
+    var resetBtn = document.getElementById("beleid-reset-btn");
+    if (resetBtn) resetBtn.addEventListener("click", function () {
+      state.search = "";
+      state.showArchived = false;
+      state.page = 1;
+      var s = document.getElementById("beleid-search");
+      if (s) s.value = "";
+      var a = document.getElementById("beleid-archived-toggle");
+      if (a) a.checked = false;
+      render();
+      if (window.showActionFeedback) {
+        window.showActionFeedback("info", "Filters gewist", "Zoek en archief-toggle zijn teruggezet.");
+      }
+    });
+
+    // Sprint 9 / S9 — Kolommen-kiezer (mirror BS2 /documents)
+    buildBeleidColumnsPanel();
+    wireBeleidColumnsPanel();
+
     document.getElementById("beleid-rows-per-page").addEventListener("change", function (e) {
       state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT;
       state.page = 1;
@@ -363,6 +383,101 @@
 
     // Re-render on data updates
     window.addEventListener("besa:beleidsdocumenten-updated", render);
+  }
+
+  /**
+   * Sprint 9 / S9 — Kolommen-kiezer (mirror BS2 /documents Kolommen-knop).
+   * Configureerbare zichtbaarheid van tabel-kolommen. Per-user voorkeuren via
+   * localStorage zodat keuze persistent is.
+   */
+  var BELEID_COLUMN_CONFIG = [
+    { id: "volgnummer", label: "Nr.", defaultOn: true },
+    { id: "naam", label: "Naam", defaultOn: true, skipToggle: true },
+    { id: "type", label: "Type", defaultOn: true },
+    { id: "uploaddatum", label: "Uploaddatum", defaultOn: true },
+    { id: "laatst-gewijzigd", label: "Laatst gewijzigd", defaultOn: true },
+    { id: "bestand", label: "Bestand", defaultOn: true },
+  ];
+  var BELEID_COLUMNS_PREFS_KEY = "beleid_columns_v1";
+
+  function readBeleidColumnPrefs() {
+    try {
+      var raw = localStorage.getItem(BELEID_COLUMNS_PREFS_KEY);
+      var p = raw ? JSON.parse(raw) : {};
+      return p && typeof p === "object" ? p : {};
+    } catch (e) { return {}; }
+  }
+  function writeBeleidColumnPrefs(prefs) {
+    try { localStorage.setItem(BELEID_COLUMNS_PREFS_KEY, JSON.stringify(prefs || {})); } catch (e) { /* */ }
+  }
+  function setBeleidColumnVisible(colId, visible) {
+    document.querySelectorAll('#beleid-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applyBeleidColumnVisibility() {
+    var prefs = readBeleidColumnPrefs();
+    BELEID_COLUMN_CONFIG.forEach(function (c) {
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      setBeleidColumnVisible(c.id, on);
+    });
+  }
+  function buildBeleidColumnsPanel() {
+    var list = document.getElementById("beleid-columns-list");
+    if (!list) return;
+    var prefs = readBeleidColumnPrefs();
+    list.innerHTML = "";
+    BELEID_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("role", "menuitemcheckbox");
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.setAttribute("data-col", c.id);
+      btn.className = "column-toggle";
+      btn.innerHTML = '<span class="column-toggle-check" aria-hidden="true">' +
+        (on ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+        '</span><span class="column-toggle-label">' + c.label + '</span>';
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var isOn = btn.getAttribute("aria-checked") === "true";
+        var nextOn = !isOn;
+        btn.setAttribute("aria-checked", nextOn ? "true" : "false");
+        btn.querySelector(".column-toggle-check").innerHTML = nextOn
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : "";
+        var p = readBeleidColumnPrefs();
+        p[c.id] = nextOn;
+        writeBeleidColumnPrefs(p);
+        applyBeleidColumnVisibility();
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+  function wireBeleidColumnsPanel() {
+    var btn = document.getElementById("beleid-columns-menu-btn");
+    var panel = document.getElementById("beleid-columns-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = btn.getAttribute("aria-expanded") === "true";
+      if (open) {
+        panel.setAttribute("hidden", "");
+        btn.setAttribute("aria-expanded", "false");
+      } else {
+        panel.removeAttribute("hidden");
+        btn.setAttribute("aria-expanded", "true");
+      }
+    });
+    document.addEventListener("click", function () {
+      panel.setAttribute("hidden", "");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    applyBeleidColumnVisibility();
   }
 
   function init() {

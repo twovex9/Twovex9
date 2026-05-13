@@ -107,12 +107,29 @@
       <div class="content-header">
         <h1>Beleidsdocumenten</h1>
         <div class="header-actions">
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="beleid-columns-menu-btn" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="beleid-columns-panel" role="menu" aria-labelledby="beleid-columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" id="beleid-columns-list" role="none"></ul>
+            </div>
+          </div>
           <button class="btn-primary" type="button" id="beleid-add-btn">+ Beleidsdocument toevoegen</button>
         </div>
       </div>
 
       <div class="toolbar">
         <input class="search" type="search" id="beleid-search" placeholder="Zoeken..." autocomplete="off" />
+        <button type="button" class="btn-outline taken-reset-btn" id="beleid-reset-btn" title="Zoek en filters wissen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Reset
+        </button>
         <label class="switch switch--yellow">
           <input type="checkbox" id="beleid-archived-toggle" />
           <span class="switch-slider"></span>

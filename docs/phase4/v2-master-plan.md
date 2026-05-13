@@ -66,8 +66,8 @@ Bij faal van verificatie:
 | S5 | Planning Exporteren CSV | 2u | ✅ DONE | #29 |
 | S6 | Planning Financiën — KPI cards "Openstaande uren" + "Gem. tarief" + per-row chips | 4u | ✅ DONE | #30 |
 | S7 | HR/Salarisadministratie — Dienst-gebaseerde export | 4u | ✅ DONE | #31 |
-| **S8** | **Taken filters — Teamlid + Deadline + Aanmaakdatum + Reset + "Aangemaakt door" kolom** | 3u | 🟡 IN PROGRESS | (volgende PR) |
-| S9 | BS2 deep walk: Beleid document-import + Storage → implementatie | 3u | ⏳ TODO | — |
+| S8 | Taken filters — Teamlid + Deadline + Aanmaakdatum + Reset + "Aangemaakt door" kolom | 3u | ✅ DONE | #32 |
+| **S9** | **Beleid documenten — Reset + Kolommen-kiezer (upload al aanwezig)** | 3u | 🟡 IN PROGRESS | (volgende PR) |
 | S10 | BS2 data resync via JS-snippet (item 36/38 v2) | 3u + user-actie | ⏳ TODO | — |
 | S11 | Authenticated E2E tests met test-user | 2u | ⏳ TODO | — |
 | S12 | Per-feature regression tests (Betalingen/Contacten/Rapportages/Vragenlijsten) | 4u | ⏳ TODO | — |
