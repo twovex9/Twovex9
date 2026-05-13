@@ -27,15 +27,29 @@ Bij elke nieuwe sessie:
 5. Find first sprint status `⏳ TODO` of `🟡 IN PROGRESS`
 6. Execute sprint as 1 PR
 7. Give merge link
-8. On merge confirmation: update status → `✅ DONE`, move to next
+8. On merge confirmation: update status → `✅ DONE`, **doe Chrome MCP live verificatie** (zie regel hieronder), move to next
+
+## 🚨 Live Chrome MCP verificatie per sprint (regel sinds 2026-05-13)
+
+User-quote: *"Het is wel belangrijk dat je zelf de extensietool op Google Chrome gebruikt om dit zelf ook te controleren. Ik ga dit niet controleren."*
+
+Na elke merge MOET Claude zelf via `mcp__Claude_in_Chrome__*` tools verifiëren op `https://besa-suite.vercel.app`:
+
+1. `navigate` naar wijzigde pagina('s)
+2. `get_page_text` + `read_page` → content rendert?
+3. `read_console_messages onlyErrors:true` → 0 JS-errors?
+4. UI-changes → ook screenshot/visuele check
+5. Data-changes → query via Supabase MCP
+
+Resultaat in 1-2 regels naar user (of in PR-body volgende sprint). Geen user-pauze. Geldt voor ALLE sprints tot 100% klaar.
 
 ## Sprint volgorde (vast)
 
 | # | Sprint | Effort | Status | PR# |
 |---|---|---|---|---|
 | S1 | Rollen-organogram + profile koppeling | 8-12u | ✅ DONE | #24 |
-| **S2** | **RLS hardening kritieke tabellen (verzuim, clienten, medewerker_documenten, medewerker_notities)** | 8u | 🟡 IN PROGRESS | (in deze PR) |
-| S3 | RLS hardening salaris + uren tabellen | 4u | ⏳ TODO | — |
+| S2 | RLS hardening kritieke tabellen (verzuim, clienten, medewerker_documenten, medewerker_notities) | 8u | ✅ DONE | #25 |
+| **S3** | **RLS hardening salaris + uren tabellen** | 4u | 🟡 IN PROGRESS | (volgende PR) |
 | S4 | BS2 deep walk + implementatie: Planning Voorinstellingen-save | 3u | ⏳ TODO | — |
 | S5 | Planning Exporteren CSV | 2u | ⏳ TODO | — |
 | S6 | BS2 deep walk: Planning Financiën sub-page → implementatie | 4u | ⏳ TODO | — |
