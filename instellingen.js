@@ -31,6 +31,8 @@
     state.activeTab = name;
     var tabs = [
       { btn: "inst-tab-profiel", panel: "inst-panel-profiel", key: "profiel" },
+      // Sprint 18 / S18 — Gebruikers tab (BS2 parity met /settings/users)
+      { btn: "inst-tab-gebruikers", panel: "inst-panel-gebruikers", key: "gebruikers" },
       { btn: "inst-tab-mijn-notificaties", panel: "inst-panel-mijn-notificaties", key: "mijn-notificaties" },
       { btn: "inst-tab-notificaties", panel: "inst-panel-notificaties", key: "notificaties" },
       // Sprint 17 / S17 — Entiteiten tab (BS2 parity met /settings/entities)
@@ -48,6 +50,143 @@
     if (name === "notificaties") renderNt();
     else if (name === "mijn-notificaties") renderMijnNotificaties();
     else if (name === "entiteiten") renderEntiteiten();
+    else if (name === "gebruikers") renderGebruikers();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sprint 18 / S18 — Tab: Gebruikers (BS2 parity met /settings/users)
+  // ---------------------------------------------------------------------------
+
+  var GEBRUIKERS_COLUMN_CONFIG = [
+    { id: "naam", label: "Naam", defaultOn: true, skipToggle: true },
+    { id: "email", label: "E-mailadres", defaultOn: true },
+    { id: "rollen", label: "Rollen", defaultOn: true },
+    { id: "status", label: "Status", defaultOn: true },
+    { id: "aanmaakdatum", label: "Aanmaakdatum", defaultOn: true },
+  ];
+  var GEBRUIKERS_COLUMNS_PREFS_KEY = "inst_gebruikers_columns_v1";
+
+  function readUsrColPrefs() {
+    try { var raw = localStorage.getItem(GEBRUIKERS_COLUMNS_PREFS_KEY); return raw ? JSON.parse(raw) || {} : {}; }
+    catch (e) { return {}; }
+  }
+  function writeUsrColPrefs(p) {
+    try { localStorage.setItem(GEBRUIKERS_COLUMNS_PREFS_KEY, JSON.stringify(p || {})); } catch (e) { /* */ }
+  }
+  function setUsrColVisible(colId, visible) {
+    document.querySelectorAll('#inst-usr-table [data-col="' + colId + '"]').forEach(function (cell) {
+      cell.classList.toggle("col-hidden", !visible);
+    });
+  }
+  function applyUsrColVisibility() {
+    var prefs = readUsrColPrefs();
+    GEBRUIKERS_COLUMN_CONFIG.forEach(function (c) {
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      setUsrColVisible(c.id, on);
+    });
+  }
+  function buildUsrColPanel() {
+    var list = document.getElementById("inst-usr-columns-list");
+    if (!list) return;
+    var prefs = readUsrColPrefs();
+    list.innerHTML = "";
+    GEBRUIKERS_COLUMN_CONFIG.forEach(function (c) {
+      if (c.skipToggle) return;
+      var on = (prefs[c.id] != null) ? !!prefs[c.id] : !!c.defaultOn;
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("role", "menuitemcheckbox");
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.setAttribute("data-col", c.id);
+      btn.className = "column-toggle";
+      btn.innerHTML = '<span class="column-toggle-check" aria-hidden="true">' +
+        (on ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+        '</span><span class="column-toggle-label">' + c.label + '</span>';
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var isOn = btn.getAttribute("aria-checked") === "true";
+        var nextOn = !isOn;
+        btn.setAttribute("aria-checked", nextOn ? "true" : "false");
+        btn.querySelector(".column-toggle-check").innerHTML = nextOn
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : "";
+        var p = readUsrColPrefs();
+        p[c.id] = nextOn;
+        writeUsrColPrefs(p);
+        applyUsrColVisibility();
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+  function wireUsrColPanel() {
+    var btn = document.getElementById("inst-usr-columns-menu-btn");
+    var panel = document.getElementById("inst-usr-columns-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = btn.getAttribute("aria-expanded") === "true";
+      if (open) { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); }
+      else { panel.removeAttribute("hidden"); btn.setAttribute("aria-expanded", "true"); }
+    });
+    document.addEventListener("click", function () {
+      panel.setAttribute("hidden", "");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    applyUsrColVisibility();
+  }
+  function escUsr(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  async function renderGebruikers() {
+    var tbody = document.getElementById("inst-usr-tbody");
+    var countEl = document.getElementById("inst-usr-count");
+    var searchEl = document.getElementById("inst-usr-search");
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-muted)">Gebruikers laden…</td></tr>';
+    var q = (searchEl ? searchEl.value : "").trim().toLowerCase();
+    try {
+      var profiles = window.profilesDB && typeof window.profilesDB.getAllSync === "function"
+        ? window.profilesDB.getAllSync() : [];
+      if (!profiles.length && window.profilesDB && typeof window.profilesDB.refresh === "function") {
+        await window.profilesDB.refresh();
+        profiles = window.profilesDB.getAllSync();
+      }
+      var filtered = (profiles || []).filter(function (p) {
+        if (!p) return false;
+        if (!q) return true;
+        var hay = ((p.voornaam || "") + " " + (p.achternaam || "") + " " + (p.email || "") + " " + (p.rol || "")).toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      filtered.sort(function (a, b) {
+        var ad = a.aanmaakdatum || "", bd = b.aanmaakdatum || "";
+        return bd.localeCompare(ad);
+      });
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--text-muted)">Geen gebruikers gevonden.</td></tr>';
+      } else {
+        tbody.innerHTML = filtered.map(function (p) {
+          var naam = ((p.voornaam || "") + " " + (p.achternaam || "")).trim() || "(geen naam)";
+          var status = '<span style="padding:2px 8px;border-radius:var(--r-pill);background:var(--green-soft);color:var(--green);font-size:var(--font-ui-badge);font-weight:600;">Actief</span>';
+          var dt = p.aanmaakdatum ? new Date(p.aanmaakdatum).toLocaleDateString("nl-NL") : "—";
+          return '<tr>' +
+            '<td data-col="naam">' + escUsr(naam) + '</td>' +
+            '<td data-col="email">' + escUsr(p.email || "—") + '</td>' +
+            '<td data-col="rollen">' + escUsr(p.rol || "—") + '</td>' +
+            '<td data-col="status">' + status + '</td>' +
+            '<td data-col="aanmaakdatum">' + escUsr(dt) + '</td>' +
+          '</tr>';
+        }).join("");
+      }
+      if (countEl) countEl.textContent = filtered.length + " van " + (profiles || []).length;
+      applyUsrColVisibility();
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--red)">Fout bij laden: ' + escUsr(err.message || String(err)) + '</td></tr>';
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -424,6 +563,18 @@
     if (entSearch) entSearch.addEventListener("input", function () { renderEntiteiten(); });
     buildEntColumnsPanel();
     wireEntColumnsPanel();
+
+    // Sprint 18 / S18 — Gebruikers tab init
+    var tabUsr = document.getElementById("inst-tab-gebruikers");
+    if (tabUsr) tabUsr.addEventListener("click", function () { setTab("gebruikers"); });
+    var usrSearch = document.getElementById("inst-usr-search");
+    if (usrSearch) usrSearch.addEventListener("input", function () { renderGebruikers(); });
+    buildUsrColPanel();
+    wireUsrColPanel();
+    // Re-render bij profile-updates
+    window.addEventListener("besa:profile-updated", function () {
+      if (state.activeTab === "gebruikers") renderGebruikers();
+    });
 
     // Mijn notificaties: toggle handler (delegated)
     var mnList = document.getElementById("inst-mn-list");

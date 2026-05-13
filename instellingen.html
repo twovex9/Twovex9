@@ -111,6 +111,7 @@
       <div class="toolbar">
         <div class="filter-chips" role="tablist" aria-label="Instellingen tabs">
           <button type="button" class="filter-chip filter-chip--active" role="tab" id="inst-tab-profiel" aria-selected="true">Mijn profiel</button>
+          <button type="button" class="filter-chip" role="tab" id="inst-tab-gebruikers" aria-selected="false">Gebruikers</button>
           <button type="button" class="filter-chip" role="tab" id="inst-tab-mijn-notificaties" aria-selected="false">Mijn notificaties</button>
           <button type="button" class="filter-chip" role="tab" id="inst-tab-notificaties" aria-selected="false">Notificatietypes</button>
           <button type="button" class="filter-chip" role="tab" id="inst-tab-entiteiten" aria-selected="false">Entiteiten</button>
@@ -156,6 +157,48 @@
         </p>
         <div id="inst-mn-list" class="inst-mn-list"></div>
         <p id="inst-mn-empty" style="display:none;color:var(--text-muted);">Er zijn nog geen notificatietypes gedefinieerd.</p>
+      </section>
+
+      <!-- Sprint 18 / S18 — Tab: Gebruikers (BS2 parity met /settings/users) -->
+      <section id="inst-panel-gebruikers" class="table-card" style="display:none;">
+        <div class="content-header" style="padding:16px 24px 0;border-bottom:none;">
+          <h2 style="margin:0;">Gebruikers</h2>
+          <div class="header-actions">
+            <div class="columns-dropdown">
+              <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="inst-usr-columns-menu-btn" aria-label="Kolommen">
+                <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Kolommen
+              </button>
+              <div class="columns-panel" id="inst-usr-columns-panel" role="menu" aria-labelledby="inst-usr-columns-menu-btn" hidden>
+                <div class="columns-panel-title">Kolommen weergeven</div>
+                <ul class="columns-list" id="inst-usr-columns-list" role="none"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar" style="padding:8px 24px;">
+          <input class="search" type="search" id="inst-usr-search" placeholder="Zoeken..." autocomplete="off" />
+          <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:32px;">
+            <em>Gebruikers worden beheerd via Supabase Auth dashboard.</em>
+          </p>
+        </div>
+        <div class="table-wrapper">
+          <table class="employees-table" id="inst-usr-table">
+            <thead>
+              <tr>
+                <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Naam</span></div></th>
+                <th data-col="email"><div class="th-sort-inner"><span class="th-label">E-mailadres</span></div></th>
+                <th data-col="rollen"><div class="th-sort-inner"><span class="th-label">Rollen</span></div></th>
+                <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
+                <th data-col="aanmaakdatum"><div class="th-sort-inner"><span class="th-label">Aanmaakdatum</span></div></th>
+              </tr>
+            </thead>
+            <tbody id="inst-usr-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <div class="footer-left"><span id="inst-usr-count" class="pager-range">— van —</span></div>
+        </div>
       </section>
 
       <!-- Sprint 17 / S17 — Tab: Entiteiten (BS2 parity met /settings/entities) -->
