@@ -119,6 +119,69 @@
     });
   }
 
+  /* ── ••• Meer opties menu (Module 05 Bug #20 fix) ── */
+  const menuBtn = document.querySelector(".comp-detail-menu");
+  if (menuBtn) {
+    let menuEl = null;
+    function closeMenu() {
+      if (menuEl) { menuEl.remove(); menuEl = null; }
+      document.removeEventListener("click", outsideClick, true);
+    }
+    function outsideClick(e) {
+      if (menuEl && !menuEl.contains(e.target) && e.target !== menuBtn) closeMenu();
+    }
+    menuBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (menuEl) { closeMenu(); return; }
+      menuEl = document.createElement("div");
+      menuEl.className = "comp-detail-menu-popover";
+      menuEl.style.cssText = "position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:100;min-width:200px;";
+      menuEl.innerHTML = '<button type="button" class="comp-menu-archive" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:var(--r-sm)">Archiveren</button>' +
+                         '<button type="button" class="comp-menu-purge" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--red);border-radius:var(--r-sm)">Definitief verwijderen</button>';
+      document.body.appendChild(menuEl);
+      const r = menuBtn.getBoundingClientRect();
+      menuEl.style.left = (r.left) + "px";
+      menuEl.style.top = (r.bottom + window.scrollY + 4) + "px";
+      menuEl.querySelector(".comp-menu-archive").addEventListener("click", async () => {
+        closeMenu();
+        if (window.showArchiveConfirm) {
+          const ok = await window.showArchiveConfirm({ preview: document.getElementById("comp-hero-name")?.textContent || "" });
+          if (!ok) return;
+        }
+        try {
+          await window.competentiesDB.archive(compId);
+          if (window.showActionFeedback) window.showActionFeedback("archived", "Competentie");
+          setTimeout(() => { window.location.href = "competenties.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Archiveren mislukt: " + err.message);
+        }
+      });
+      menuEl.querySelector(".comp-menu-purge").addEventListener("click", async () => {
+        closeMenu();
+        if (window.showSliderConfirmModal) {
+          const ok = await window.showSliderConfirmModal({
+            title: "Definitief verwijderen",
+            preview: document.getElementById("comp-hero-name")?.textContent || "",
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren"
+          });
+          if (!ok) return;
+        }
+        try {
+          await window.competentiesDB.delete(compId);
+          if (window.showActionFeedback) window.showActionFeedback("deleted", "Competentie");
+          setTimeout(() => { window.location.href = "competenties.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Verwijderen mislukt: " + err.message);
+        }
+      });
+      setTimeout(() => document.addEventListener("click", outsideClick, true), 0);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && menuEl) closeMenu();
+    });
+  }
+
   /* ── Toast ── */
   function showToast(msg) {
     let t = document.querySelector(".app-toast");
