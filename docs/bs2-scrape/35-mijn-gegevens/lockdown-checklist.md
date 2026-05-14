@@ -1,7 +1,7 @@
 # Module 35 — Mijn-gegevens LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 35 Mijn-gegevens (mijn-gegevens.html, BS2 /account)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op merge + 2 HARDCORE CLEAN RUNS post-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bug gefixt**:
@@ -45,32 +45,37 @@
 - [x] C9. v3 Fase G deferred: active-sessions feature (BS2-only)
 - [x] C10. parity.md: BS1 is bewust GDPR-focus, niet profile-edit mirror
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — WACHT OP MERGE
-- [ ] BS1 mijn-gegevens.html laadt: h1="Mijn gegevens"
-- [ ] **Bug #69 verified live**: topbar "Mijn gegevens"-link href = mijn-gegevens.html (geen redirect naar instellingen)
-- [ ] 12 stats renderd met data (NAAM=Sonck, E-MAIL=sonck802@gmail.com, etc.)
-- [ ] 5 AVG-rechten li-items
-- [ ] 5 retention-policies li-items
-- [ ] Download JSON button present
-- [ ] Vernieuwen button werkt → GEËXPORTEERD OP timestamp update
-- [ ] Console = 0 app-errors
+### CLEAN RUN #1 (post-PR #134 merge)
+
+- [x] BS1 mijn-gegevens.html laadt: h1="Mijn gegevens" ✅
+- [x] **Bug #69 verified live**: topbar link href = "mijn-gegevens.html" (self-reference) + is-active class ✅
+- [x] 12 stats renderd met data: NAAM=Sonck, E-MAIL=sonck802@gmail.com, ROL=admin, MEDEWERKER-ID=2bb2755a-..., FUNCTIE=—, FASE=in_dienst, DIENSTVERBAND=Loondienst, NOTITIES/DOCUMENTEN/VERZUIM/PLANNING=0, GEËXPORTEERD OP=22:40:25 ✅
+- [x] 10 li-items total (5 AVG-rechten + 5 retention-policies) ✅
+- [x] Download JSON button present ✅
+- [x] Vernieuwen button present ✅
+- [x] Console = 0 app-errors ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1
-- [ ] Topbar link self-reference verified
-- [ ] Console = 0 app-errors
+
+- [x] Identiek RUN #1: h1="Mijn gegevens", bug69_href="mijn-gegevens.html" ✅
+- [x] Grid has data (sonck802 visible) ✅
+- [x] **Vernieuwen verified live**: GEËXPORTEERD OP timestamp updated (22:40:46 → 22:40:50) ✅
+- [x] 3 sections present ✅
+- [x] 5 AVG-rechten + 5 retention-policies li-items ✅
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 - **0 modals** (read-only inzage)
-- Bug #69 (topbar self-reference) verified live
+- Bug #69 (topbar self-reference) verified live in beide runs
 - 12 stats + 5 AVG-rechten + 5 retention-policies
+- Vernieuwen-button werkt (timestamp re-update)
 - Console errors 0
 
 📌 v3 Fase G: active-sessions feature toevoegen (BS2 has, BS1 missing).
-📌 DPA: Niet blokkerend voor Module 36 (Manual).
+📌 DPA: Niet blokkerend voor Module 36 (Manual — laatste module).
