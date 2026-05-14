@@ -40,6 +40,8 @@
     "teamlead", "teamlid", "client",
     "vestiging", "locatie",
     "conflict", "archived",
+    "open_voor_aanmelding", "pauze_uren", "vereist_aantal_medewerkers",
+    "beschrijving", "parent_dienst_id",
   ];
 
   function toIsoOrNull(s) {
@@ -104,6 +106,11 @@
       locatie: safe.locatie || null,
       conflict: !!safe.conflict,
       archived: !!safe.archived,
+      open_voor_aanmelding: safe.open_voor_aanmelding !== false,
+      pauze_uren: safe.pauze_uren != null ? Number(safe.pauze_uren) : 0,
+      vereist_aantal_medewerkers: safe.vereist_aantal_medewerkers != null ? Number(safe.vereist_aantal_medewerkers) : 1,
+      beschrijving: safe.beschrijving || null,
+      parent_dienst_id: safe.parent_dienst_id || null,
       data: data,
     };
   }
