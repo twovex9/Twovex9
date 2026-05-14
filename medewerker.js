@@ -3673,3 +3673,47 @@ if (typeof window.__setRoosterWeekendModes === "function") {
 }
 initBedrijfsvoorzieningenNotes();
 initDocumentenSection();
+
+// Bug #61 fix: globale Escape close-way voor alle 4 emp-modals (defensieve fallback
+// die altijd werkt, ook als per-modal init bailout heeft gehad)
+(function initGlobalEscapeForEmpModals() {
+  var modalIds = ["emp-doc-delete-modal", "emp-doc-modal", "emp-verlof-overd-modal", "emp-verzuim-modal"];
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    for (var i = 0; i < modalIds.length; i++) {
+      var m = document.getElementById(modalIds[i]);
+      if (!m) continue;
+      var visible = m.style.display !== "none" && getComputedStyle(m).display !== "none" && !m.hasAttribute("hidden");
+      if (visible) {
+        m.style.display = "none";
+        m.setAttribute("aria-hidden", "true");
+        e.stopPropagation();
+        return;
+      }
+    }
+  });
+  // Defensieve overlay-click + X-close fallback voor modals die anders niet wired worden
+  modalIds.forEach(function (id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    // Overlay click
+    m.addEventListener("click", function (e) {
+      if (e.target !== m) return;
+      m.style.display = "none";
+      m.setAttribute("aria-hidden", "true");
+    });
+    // X-close (zoek alle bekende close-btn IDs)
+    var closeCandidates = [
+      id + "-close",
+      id.replace("-modal", "") + "-close"
+    ];
+    closeCandidates.forEach(function (cid) {
+      var btn = document.getElementById(cid);
+      if (!btn) return;
+      btn.addEventListener("click", function () {
+        m.style.display = "none";
+        m.setAttribute("aria-hidden", "true");
+      });
+    });
+  });
+})();
