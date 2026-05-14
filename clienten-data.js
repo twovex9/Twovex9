@@ -219,6 +219,10 @@
         writeCache(items);
         try { window.localStorage.setItem(SEED_FLAG, "1"); } catch (e) { /* */ }
         dispatchUpdated();
+        // Fase E.7 — subscribe to Realtime changes voor live multi-user sync
+        if (window.besaRealtime && typeof window.besaRealtime.subscribe === "function") {
+          window.besaRealtime.subscribe("clienten", function () { refresh(); });
+        }
       } catch (err) {
         console.error("[clientenDB] Bootstrap mislukt:", err);
         // Cache blijft staan zodat de UI toch iets toont.

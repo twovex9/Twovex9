@@ -202,6 +202,10 @@
         try {
           await maybeMigrateLocalToSupabase();
           await fetchAll();
+          // Fase E.7 — subscribe to Realtime changes voor live multi-user sync
+          if (global.besaRealtime && typeof global.besaRealtime.subscribe === "function") {
+            global.besaRealtime.subscribe("medewerkers", function () { refresh(); });
+          }
         } catch (e) {
           dispatchUpdated();
         }
