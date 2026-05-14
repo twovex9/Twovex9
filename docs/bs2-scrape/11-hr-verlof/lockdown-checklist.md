@@ -1,15 +1,20 @@
-# Module 11 — HR Verlof LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS)
+# Module 11 — HR Verlof LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS + Bug #32 restructure)
 
-**Module**: 11 HR Verlof (verlof.html)
-**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor — **wacht op user-override**
+**Module**: 11 HR Verlof (verlof.html + verlofstanden.html + plus-minuren.html + verloftypes.html)
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor + Bug #32 (sidebar-relocation) gefixt
 **Voltooid**: 2026-05-14
 
-**Belangrijke bevinding**:
-- **BS2 heeft GEEN aparte Verlof-page**. HR-menu in BS2: Medewerkers/Competenties/Opleidingen/Locaties/Salarishuis/Bureau's/Salarisadministratie/Verzuim/Nieuws (geen Verlof).
-- BS1 heeft `verlof.html` als **BS1-only feature** (uitbreiding voorbij BS2-scope).
-- Pariteit interpretatie: niet "BS2=BS1" maar "BS1 heeft extra functionaliteit". Geen data-pariteit-check vereist.
+**Belangrijke bevinding (geüpdatet 2026-05-14)**:
+- **BS2 heeft Verlof als expandable groep in de left sidebar** (user-screenshot 2026-05-14), niet in de top-bar.
+- Sub-items in BS2-sidebar: Verlofaanvragen / Verlofstanden / Plus-/minuren / Verloftypes.
+- **BS1 spiegelt nu de BS2-structuur**: top-bar Verlof verwijderd uit alle 53 HTML's; sidebar-groep met 4 sub-items toegevoegd aan 19 HR-pagina's.
+- Verlofaanvragen functioneel 100% (CRUD + state-machine). 3 sub-items (Verlofstanden / Plus-/minuren / Verloftypes) zijn stubs voor volgende module/fase.
 
-**Geen bugs gevonden** in CLEAN RUNS — verlofDB werkt 100% met complete state-machine.
+**Bug #32 gefixt via PR #93** (structural fix conform BS2-screenshot):
+- Top-bar Verlof-dropdown verwijderd uit alle 53 HTML-pagina's.
+- Sidebar-groep `<div class="side-group" data-side-group="verlof">` toegevoegd aan 19 HR-pagina's (na Salarisadministratie, vóór Compensatie) met 4 sub-items.
+- verlof.html krijgt nu de volledige sidebar (had voorheen geen) met Verlof-groep `is-active` + auto-open.
+- 3 stub-pagina's gecreëerd: `verlofstanden.html`, `plus-minuren.html`, `verloftypes.html` — elk met huisstijl-shell + empty-state "Deze functionaliteit komt in een volgende module/fase. De pagina is gereserveerd in de structuur conform BS2-pariteit."
 
 ---
 
@@ -68,12 +73,46 @@ Live test op verlof.html.
 
 ---
 
+## E. POST-RESTRUCTURE CLEAN RUNS — Bug #32 sidebar-relocation (2/2 ✅ ZONDER fix tussendoor)
+
+Na PR #93 merge: top-bar Verlof verwijderd + sidebar-groep met 4 sub-items toegevoegd. Vers getest in nieuwe structuur op `https://besa-suite.vercel.app/verlof.html`.
+
+### Post-restructure verify (Chrome MCP, fresh navigate)
+- ✅ `index.html` top-bar Verlof count = 0
+- ✅ `index.html` sidebar Verlof-groep bestaat + collapsed by default; toggle-click → `aria-expanded="true"` + panel visible
+- ✅ `verlof.html` h1="Verlofaanvragen", title="Verlof — HR", sidebar Verlof-groep `is-active` + auto-open, Verlofaanvragen sub-link `is-active`
+- ✅ `verlofstanden.html` h1="Verlofstanden", empty-state "gereserveerd / volgende module" zichtbaar, sub-link `is-active`
+- ✅ `plus-minuren.html` h1="Plus-/minuren", empty-state zichtbaar, sub-link `is-active`
+- ✅ `verloftypes.html` h1="Verloftypes", empty-state zichtbaar, sub-link `is-active`
+
+### CLEAN RUN #1 (post-restructure, fresh)
+- ✅ `verlof.html` top-bar Verlof count = 0
+- ✅ Sidebar-groep open + Verlofaanvragen `is-active`
+- ✅ Scroll (scrollHeight = 1066, scrolled OK)
+- ✅ Add modal × 3 close-ways: X ✅ Escape ✅ Overlay ✅ (Bug #31 fix nog steeds werkend)
+- ✅ Tab switch Mijn ↔ Alle aanvragen
+- ✅ CRUD: add → indienen → goedkeuren → delete (state-machine 4-stappen)
+- ✅ Console = 0 app-errors (alleen chrome-extension error, geen app-error)
+
+### CLEAN RUN #2 (post-restructure, ZONDER fix tussendoor)
+- ✅ Top-bar Verlof count = 0
+- ✅ Sidebar-groep open + Verlofaanvragen `is-active`
+- ✅ Scroll
+- ✅ Add modal × 3 close-ways: X ✅ Escape ✅ Overlay ✅
+- ✅ Tab switch
+- ✅ CRUD: add (bovenwettelijk) → indienen → afwijzen → delete (afwijzen-flow getest)
+- ✅ Console = 0 app-errors
+
+---
+
 ## Eindstand
 
 - 30/30 ✅
-- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
-- **Geen bugs gefixt** (none gevonden)
-- BS1-only feature, geen BS2-pariteit-check applicabel
+- 2 CLEAN RUNS (pre-restructure) ✅
+- 2 CLEAN RUNS (post-restructure, na Bug #32 fix) ✅
+- Bugs gefixt: **#31** (Escape+Overlay modals, PR #91) + **#32** (sidebar-relocation conform BS2, PR #93)
+- 4 pagina's in Verlof-bundel: verlof.html (functioneel) + 3 stubs voor volgende module/fase
 - Console errors 0
+- Sidebar-structuur 100% conform BS2-screenshot (user 2026-05-14)
 
 📌 DPA: Niet blokkerend voor Module 12 (Fase A).
