@@ -545,10 +545,19 @@ function oplFmtDate(iso) {
 
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (opPurgeModal && !opPurgeModal.hasAttribute("hidden")) {
+    // Module 06 Bug #21 fix: generic Escape sluit topmost open modal
+    // (op-purge, opl-delete, opl-add, opl-edit, etc.)
+    const openModals = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"));
+    if (openModals.length === 0) return;
+    const topmost = openModals[openModals.length - 1];
+    if (opPurgeModal && topmost.id === opPurgeModal.id) {
       closeOplPurgeModal();
-      e.preventDefault();
+    } else {
+      topmost.setAttribute("hidden", "");
+      topmost.setAttribute("aria-hidden", "true");
+      if (!document.querySelector(".modal-overlay:not([hidden])")) document.body.classList.remove("modal-open");
     }
+    e.preventDefault();
   });
 
   initialRender();
