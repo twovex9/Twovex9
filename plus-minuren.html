@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Beleid — HR</title>
+  <title>Plus-/minuren — HR</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
 </head>
 <body>
@@ -69,7 +69,7 @@
               </div>
             </div>            <a href="taken.html" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
-            <a href="beleid.html" class="top-link is-active">Beleid</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
             <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
@@ -97,163 +97,78 @@
       </div>
     </header>
 
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="index.html" class="side-link">Medewerkers</a>
+        <a href="competenties.html" class="side-link">Competenties</a>
+        <a href="opleidingen.html" class="side-link">Opleidingen</a>
+        <a href="locaties.html" class="side-link">Locaties</a>
+        <div class="side-group" data-side-group="salarishuis">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
+            <span class="side-group__label">Salarishuis</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
+            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
+            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested">Wijzigingsgeschiedenis</a>
+          </div>
+        </div>
+        <a href="bureaus.html" class="side-link">Bureau's</a>
+        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
+        <div class="side-group" data-side-group="verlof">
+          <button type="button" class="side-link side-link--sub side-group__toggle is-active" aria-expanded="true" aria-controls="side-verlof-sub">
+            <span class="side-group__label">Verlof</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-verlof-sub">
+            <a href="verlof.html" class="side-link side-link--nested">Verlofaanvragen</a>
+            <a href="verlofstanden.html" class="side-link side-link--nested">Verlofstanden</a>
+            <a href="plus-minuren.html" class="side-link side-link--nested is-active">Plus-/minuren</a>
+            <a href="verloftypes.html" class="side-link side-link--nested">Verloftypes</a>
+          </div>
+        </div>
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
+            <span class="side-group__label">Compensatie</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
+            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
+            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
+            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
+            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
+            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
+          </div>
+        </div>
+        <a href="nieuws.html" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
+
     <main class="content">
       <div class="content-header">
-        <h1>Beleidsdocumenten</h1>
-        <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="beleid-columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="beleid-columns-panel" role="menu" aria-labelledby="beleid-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="beleid-columns-list" role="none"></ul>
-            </div>
-          </div>
-          <button class="btn-primary" type="button" id="beleid-add-btn">+ Beleidsdocument toevoegen</button>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <input class="search" type="search" id="beleid-search" placeholder="Zoeken..." autocomplete="off" />
-        <button type="button" class="btn-outline taken-reset-btn" id="beleid-reset-btn" title="Zoek en filters wissen">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Reset
-        </button>
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="beleid-archived-toggle" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Gearchiveerd</span>
-        </label>
+        <h1>Plus-/minuren</h1>
       </div>
 
       <section class="table-card">
-        <div class="table-wrapper">
-          <table class="employees-table" id="beleid-table">
-            <thead>
-              <tr>
-                <th data-col="volgnummer"><div class="th-sort-inner"><span class="th-label">Nr.</span></div></th>
-                <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Naam</span></div></th>
-                <th data-col="type"><div class="th-sort-inner"><span class="th-label">Type</span></div></th>
-                <th data-col="uploaddatum"><div class="th-sort-inner"><span class="th-label">Uploaddatum</span></div></th>
-                <th data-col="laatst-gewijzigd"><div class="th-sort-inner"><span class="th-label">Laatst gewijzigd</span></div></th>
-                <th data-col="bestand"><div class="th-sort-inner"><span class="th-label">Bestand</span></div></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="beleid-tbody"></tbody>
-          </table>
-        </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="beleid-pager-range" class="pager-range">0 van 0</span>
-          </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="beleid-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="beleid-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="30" selected>30</option>
-                <option value="50">50</option>
-              </select>
-            </label>
-            <span id="beleid-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="beleid-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="beleid-pager-last" disabled>&raquo;</button>
-            </span>
+        <div style="padding:48px 24px;text-align:center;">
+          <div style="max-width:480px;margin:0 auto;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:0.55;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <h2 style="font-size:18px;margin:0 0 12px;color:var(--text);">Plus-/minuren — gereserveerd</h2>
+            <p style="font-size:14px;color:var(--text-secondary);margin:0 0 8px;">
+              Deze functionaliteit komt in een volgende module/fase.
+            </p>
+            <p style="font-size:13px;color:var(--text-muted);margin:0;">
+              De pagina is gereserveerd in de structuur conform BS2-pariteit.
+            </p>
           </div>
         </div>
       </section>
     </main>
-  </div>
-
-  <div class="emp-verzuim-modal-overlay" id="beleid-add-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:520px">
-      <div class="emp-verzuim-modal-head">
-        <h3 id="beleid-add-title">Beleidsdocument toevoegen</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="beleid-add-close-btn">&times;</button>
-      </div>
-      <form id="beleid-add-form" novalidate>
-        <input type="hidden" id="beleid-edit-id" value="" />
-        <div class="emp-verzuim-modal-body">
-          <label class="emp-verzuim-modal-field">
-            <span>Volgnummer</span>
-            <input type="number" id="beleid-add-volgnummer" class="comp-modal-input" min="1" placeholder="bv. 24">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Naam</span>
-            <input type="text" id="beleid-add-naam" class="comp-modal-input" required placeholder="bv. 24. Mijn beleidsdocument">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Type</span>
-            <input type="text" id="beleid-add-type" class="comp-modal-input" placeholder="bv. protocol, beleid, richtlijn">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Bestand (PDF/Word — optioneel)</span>
-            <input type="file" id="beleid-add-file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-            <small id="beleid-existing-file-info" style="color:var(--text-muted);"></small>
-          </label>
-        </div>
-        <div class="emp-verzuim-modal-footer">
-          <button type="button" class="emp-verzuim-modal-cancel" id="beleid-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="emp-verzuim-modal-submit" id="beleid-add-submit-btn">Opslaan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="beleid-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="beleid-archive-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="beleid-archive-title" class="modal-title">Beleidsdocument archiveren</h2>
-        <button type="button" class="modal-close" id="beleid-archive-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Het document wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
-        <p class="employee-delete-preview" id="beleid-archive-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="beleid-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="beleid-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="beleid-archive-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="beleid-archive-confirm-btn" disabled>Archiveren</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="beleid-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="beleid-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="beleid-purge-title" class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="beleid-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit document wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
-        <p class="employee-delete-preview" id="beleid-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="beleid-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="beleid-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig definitief verwijderen" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="beleid-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="beleid-purge-confirm-btn" disabled>Definitief verwijderen</button>
-      </div>
-    </div>
   </div>
 
   <script src="top-nav-overflow.js?v=imcols9"></script>
@@ -264,7 +179,5 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="beleidsdocumenten-data.js"></script>
-  <script src="beleid.js"></script>
 </body>
 </html>

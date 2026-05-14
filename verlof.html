@@ -69,12 +69,6 @@
               </div>
             </div>            <a href="taken.html" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="verlof.html" class="top-link top-link--dropdown is-active">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
-                <a href="verlof.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
-              </div>
-            </div>
             <a href="beleid.html" class="top-link">Beleid</a>
             <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -102,6 +96,54 @@
         <span class="top-avatar" title="Gebruiker">JS</span>
       </div>
     </header>
+
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="index.html" class="side-link">Medewerkers</a>
+        <a href="competenties.html" class="side-link">Competenties</a>
+        <a href="opleidingen.html" class="side-link">Opleidingen</a>
+        <a href="locaties.html" class="side-link">Locaties</a>
+        <div class="side-group" data-side-group="salarishuis">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
+            <span class="side-group__label">Salarishuis</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
+            <a href="salarishuis.html" class="side-link side-link--nested">Salarishuis</a>
+            <a href="salarishuis-wijzigingsgeschiedenis.html" class="side-link side-link--nested">Wijzigingsgeschiedenis</a>
+          </div>
+        </div>
+        <a href="bureaus.html" class="side-link">Bureau's</a>
+        <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
+        <div class="side-group" data-side-group="verlof">
+          <button type="button" class="side-link side-link--sub side-group__toggle is-active" aria-expanded="true" aria-controls="side-verlof-sub">
+            <span class="side-group__label">Verlof</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-verlof-sub">
+            <a href="verlof.html" class="side-link side-link--nested is-active">Verlofaanvragen</a>
+            <a href="verlofstanden.html" class="side-link side-link--nested">Verlofstanden</a>
+            <a href="plus-minuren.html" class="side-link side-link--nested">Plus-/minuren</a>
+            <a href="verloftypes.html" class="side-link side-link--nested">Verloftypes</a>
+          </div>
+        </div>
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
+            <span class="side-group__label">Compensatie</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
+            <a href="compensatie-saldi.html" class="side-link side-link--nested">Saldi</a>
+            <a href="compensatie-berekeningen.html" class="side-link side-link--nested">Berekeningen</a>
+            <a href="compensatie-feestdagen.html" class="side-link side-link--nested">Feestdagen</a>
+            <a href="compensatie-diensttypes.html" class="side-link side-link--nested">Diensttypes</a>
+            <a href="verzuim.html" class="side-link side-link--nested">Verzuim</a>
+          </div>
+        </div>
+        <a href="nieuws.html" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
 
     <main class="content">
       <div class="content-header">

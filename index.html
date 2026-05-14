@@ -71,12 +71,6 @@
               </div>
             </div>            <a href="taken.html" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="verlof.html" class="top-link top-link--dropdown">Verlof<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Verlof opties">
-                <a href="verlof.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Verlofaanvragen</span><span class="top-dropdown-subtitle">Verlofaanvragen bekijken en beheren</span></a>
-              </div>
-            </div>
             <a href="beleid.html" class="top-link">Beleid</a>
             <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -123,6 +117,18 @@
         </div>
         <a href="bureaus.html" class="side-link">Bureau's</a>
         <a href="salarisadministratie-exporter.html" class="side-link">Salarisadministratie</a>
+        <div class="side-group" data-side-group="verlof">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-verlof-sub">
+            <span class="side-group__label">Verlof</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="side-verlof-sub" hidden>
+            <a href="verlof.html" class="side-link side-link--nested">Verlofaanvragen</a>
+            <a href="verlofstanden.html" class="side-link side-link--nested">Verlofstanden</a>
+            <a href="plus-minuren.html" class="side-link side-link--nested">Plus-/minuren</a>
+            <a href="verloftypes.html" class="side-link side-link--nested">Verloftypes</a>
+          </div>
+        </div>
         <div class="side-group" data-side-group="compensatie">
           <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
             <span class="side-group__label">Compensatie</span>
