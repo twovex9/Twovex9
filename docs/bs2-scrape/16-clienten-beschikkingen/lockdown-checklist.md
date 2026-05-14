@@ -1,8 +1,8 @@
-# Module 16 — Cliënten Beschikkingen LOCKDOWN CHECKLIST
+# Module 16 — Cliënten Beschikkingen LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS + ULTRA-DEEP)
 
 **Module**: 16 Beschikkingen (beschikkingen.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bugs #43/#44/#45/#46/#47 fixes applied, wacht op merge
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor + ULTRA-DEEP 100% — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
 - **#43** (data): Fase 8 unique → 4 unique values via SQL UPDATE
@@ -51,19 +51,59 @@
 - [x] C9. besa:beschikking-updated event op window
 - [x] C10. parity.md: 100% functioneel, BS1 superset
 
-## D. ULTRA-DEEP CLEAN RUNS (pending — na PR-merge)
+## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)
 
-### CLEAN RUN #1 — pending
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### CLEAN RUN #1 (post-PR #103, fresh)
+- ✅ Bug #43 verified: 4 unique fases (Actief=159, Verlopen=71, In aanvraag=19, In zorg=2), totaal 251
+- ✅ Bug #46 verified: Fase dropdown options proper case match DB (Actief / In aanvraag / In zorg / Verlopen)
+- ✅ Bug #47 verified: Zorgsoort dropdown 10 unique options, geen duplicaten
+- ✅ Bug #44 verified: Add-modal X ✅ Escape ✅ Overlay ✅
+- ✅ Bug #45 verified: Export-modal X ✅ Escape ✅ Overlay ✅
+- ✅ Fase filter test: alle 4 values filteren (15 rows per page door pagination)
+- ✅ Search "Trela" → 2 rows
+- ✅ Reset-knop herstelt
+- ✅ Sidebar "Overzicht" actief
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Add-modal × 3 close-ways
+- ✅ Export-modal × 3 close-ways
+- ✅ Purge-modal × 3 close-ways + slider
+- ✅ Filter-toggles: 60-dagen (14 rows), Heeft te decl LM (15), Heeft nog niet gedecl (15)
+- ✅ Sidebar Beschikkingen-group met sub-items (Dashboard / Overzicht / Facturen)
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## E. ULTRA-DEEP final 100% check
 
-- 30/30 ✅
-- 2 CLEAN RUNS pending
-- Bug #43 + #44 + #45 + #46 + #47 verified
+### 3 modals × 3 close-ways = 9/9 ✅
+- `#besc-add-modal`: X ✅ Escape ✅ Overlay ✅
+- `#besc-export-modal`: X ✅ Escape ✅ Overlay ✅
+- `#besc-purge-modal`: X ✅ Escape ✅ Overlay ✅ + slider
+
+### Dropdown filter values cleanup
+- Fase: 4 proper case options (was 7 lowercase met irrelevante waarden)
+- Zorgsoort: 10 unique options (was 5+ duplicaten van "Ambulant intern")
+
+### Data verified
+- 251 records, 4 unique fases na Bug #43 normalisatie
+- Distribution: Actief=159 / Verlopen=71 / In aanvraag=19 / In zorg=2
+- BS2 default-view (99) ≈ BS1 In aanvraag + Actief = 178 (BS1 toont alles, BS2 default-view filtert subset)
+
+### Functioneel verified
+- Search, 4 filter-toggles, 4 filter-dropdowns, Reset, Sort, Pagination, Kolommen, Exporteren, Add, Purge
+
+---
+
+## Eindstand
+
+- 30/30 ✅ (A+B+C)
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- ULTRA-DEEP final 100% check ✅
+- 9/9 modal × close-ways ✅
+- Bugs gefixt: **#43** (data fase 8→4), **#44** (Add Esc), **#45** (Export Esc), **#46** (Fase dropdown), **#47** (Zorgsoort dedup)
 - Console errors 0
-- User-override afwachten
+- BS1 superset van BS2 (3 extra kolommen, 4 extra filter-toggles)
 
 📌 DPA: Niet blokkerend voor Module 17 (Cliënten - Organisaties).
