@@ -512,6 +512,40 @@
 
     window.addEventListener("besa:taken-updated", render);
     window.addEventListener("besa:medewerkers-updated", function () { fillMedewerkerSelect(); render(); });
+
+    // Bug #59 fix: Escape + Overlay close-ways voor alle 3 taken-modals
+    function isAddModalOpen() {
+      var m = document.getElementById("taken-add-modal");
+      return m && getComputedStyle(m).display !== "none";
+    }
+    function isArchiveModalOpen() {
+      var m = document.getElementById("taken-archive-modal");
+      return m && !m.hasAttribute("hidden");
+    }
+    function isPurgeModalOpen() {
+      var m = document.getElementById("taken-purge-modal");
+      return m && !m.hasAttribute("hidden");
+    }
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      // Priority: purge → archive → add
+      if (isPurgeModalOpen()) { ev.stopPropagation(); closePurgeModal(); return; }
+      if (isArchiveModalOpen()) { ev.stopPropagation(); closeArchiveModal(); return; }
+      if (isAddModalOpen()) { ev.stopPropagation(); closeAddModal(); return; }
+    });
+
+    // Overlay click handlers
+    ["taken-add-modal", "taken-archive-modal", "taken-purge-modal"].forEach(function (id) {
+      var m = document.getElementById(id);
+      if (!m) return;
+      m.addEventListener("click", function (e) {
+        if (e.target !== m) return;
+        if (id === "taken-add-modal") closeAddModal();
+        else if (id === "taken-archive-modal") closeArchiveModal();
+        else if (id === "taken-purge-modal") closePurgeModal();
+      });
+    });
   }
 
   function init() {
