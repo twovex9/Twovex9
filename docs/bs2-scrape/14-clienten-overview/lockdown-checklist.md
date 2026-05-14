@@ -1,8 +1,8 @@
-# Module 14 — Cliënten overview LOCKDOWN CHECKLIST
+# Module 14 — Cliënten overview LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS + ULTRA-DEEP)
 
 **Module**: 14 Cliënten overview (clienten.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bugs #38+#39+#40 fixes applied, wacht op merge + CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor + ULTRA-DEEP 100% — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
 - **#38** (data): 6 fase-values (case-mix) → 3 unieke values via SQL UPDATE
@@ -49,19 +49,53 @@
 - [x] C9. besa:clienten-updated event
 - [x] C10. parity.md: functioneel 100%, data-count gap → Fase B/D scope
 
-## D. ULTRA-DEEP CLEAN RUNS (pending — na PR-merge)
+## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)
 
-### CLEAN RUN #1 — pending
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### CLEAN RUN #1 (post-PR #100, fresh)
+- ✅ Bug #38 verify: 3 unique phases (In zorg=116, Uit zorg=36, In aanvraag=8)
+- ✅ Bug #39 verify: Total=160, Test Client gone
+- ✅ Bug #40 verify Add-modal: X ✅ Escape ✅ Overlay ✅
+- ✅ Bug #40 verify Archive-modal: X ✅ Escape ✅ Overlay ✅ + slider
+- ✅ Search "Ader" → 2 rows, restored 50
+- ✅ Gearchiveerd toggle werkt
+- ✅ Kolommen panel opent (10 toggles)
+- ✅ Exporteren-knop bestaat
+- ✅ Topnav active = "Cliënten"
+- ✅ Scroll werkt
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Add-modal: X/Esc/Overlay alle 3 sluiten
+- ✅ Archive-modal: X/Esc/Overlay alle 3 sluiten
+- ✅ Sidebar consistent (Cliënten + Zorgsoorten + Beschikkingen-group + Organisatie + Gemeenten + Urendeclaraties + Urenbudgetering + Facturen importeren + Incidenten-group)
+- ✅ Console = 0 app-errors
+
+## E. ULTRA-DEEP — Purge-modal full 3-close-ways test
+
+Temp-archived record `cl_184` (Raymond Ader) om purge-modal te kunnen testen.
+- ✅ Purge modal opens via trash-icon op archived row
+- ✅ Has slider (huisstijl-conform)
+- ✅ Close by X (`#cl-purge-close`) ✅
+- ✅ Close by Escape (Bug #40 fix verified) ✅
+- ✅ Close by Overlay-click (Bug #40 fix verified) ✅
+- ✅ Restored cl_184 + final archived count = 0 (clean state)
+
+## F. Cross-page sidebar consistency
+
+- zorgsoorten.html: Cliënten-link bestaat ✅, topnav "Cliënten" active ✅
+- beschikkingen.html: Cliënten-link bestaat ✅, h1 "Beschikkingen" ✅
+- Sidebar volgorde matches BS2 (Cliënten / Zorgsoorten / Beschikkingen / Organisatie / Gemeenten / Urendeclaraties / Urenbudgetering / Facturen importeren / Incidenten)
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 
-- 30/30 ✅
-- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor — pending
-- Bug #38 + #39 + #40 verified
+- 30/30 ✅ (A+B+C)
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- ULTRA-DEEP final 100% check ✅
+- **Alle 3 modals × 3 close-ways = 9/9** ✅ (Add + Archive + Purge)
+- Bugs gefixt: **#38** (phase case 6→3), **#39** (Test Client cleanup), **#40** (modals close-ways)
 - Console errors 0
-- User-override afwachten
+- Sidebar volgorde matches BS2 (Cliënten module, 9 items)
+- 160 records (na cleanup), 3 clean phase-values
 
 📌 DPA: Niet blokkerend voor Module 15 (Cliënten - Zorgsoorten).
