@@ -1843,14 +1843,6 @@ function openEditModal(id, isMove) {
   const it = getItemById(id);
   if (!it) return;
   ui.editingId = id;
-  // Sluit eerst de view-modal (anders zit-ie boven de edit-modal)
-  try {
-    const view = document.getElementById("planning-view-modal");
-    if (view && !view.hasAttribute("hidden")) {
-      view.setAttribute("hidden", "");
-      view.setAttribute("aria-hidden", "true");
-    }
-  } catch (e) { /* */ }
   const modal = document.getElementById("planning-add-modal");
   const h = document.getElementById("planning-add-title");
   if (h) h.textContent = isMove ? "Verplaatsen" : "Planning bewerken";
@@ -3105,18 +3097,6 @@ function initPlanningPage() {
   if (window.planningVoorinstellingenDB && window.planningVoorinstellingenDB.ready) {
     Promise.resolve(window.planningVoorinstellingenDB.ready).then(renderPresetsList, renderPresetsList);
   }
-
-  // Expose hook voor dienst-detail.js (Bewerken-button in view-modal)
-  window.openPlanningEditModal = function (dienst) {
-    if (!dienst || !dienst.id) return;
-    openEditModal(dienst.id, true);
-  };
-
-  // Luister ook op event-bus fallback
-  window.addEventListener("besa:planning-edit-request", function (e) {
-    var d = e && e.detail && e.detail.dienst;
-    if (d && d.id) openEditModal(d.id, true);
-  });
 }
 
 initPlanningPage();
