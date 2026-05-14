@@ -809,6 +809,25 @@
     });
   }
 
+  // Module 08 Bug #27 fix: Escape sluit sal-modal-schaal + sal-delete-modal
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    // sal-modal-schaal is custom (uses style.display niet hidden-attr)
+    if (modal && getComputedStyle(modal).display !== "none" && modal.getAttribute("aria-hidden") !== "true") {
+      closeModal();
+      e.preventDefault();
+      return;
+    }
+    // Andere .modal-overlay modals
+    var openModals = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"));
+    if (openModals.length > 0) {
+      var topmost = openModals[openModals.length - 1];
+      topmost.setAttribute("hidden", "");
+      topmost.setAttribute("aria-hidden", "true");
+      e.preventDefault();
+    }
+  });
+
   if (modalForm) {
     modalForm.addEventListener("submit", function (e) {
       e.preventDefault();
