@@ -275,16 +275,17 @@
     $("fact-tb-pager-last").addEventListener("click", function () { state.page = 99999; render(); });
 
     // Filter chips: Status + Periode (besa-filter-chips.js)
+    // Bug #55 fix: label zonder leading "+" — renderButtonContent voegt de "+" zelf toe
     if (window.besaFilterChips) {
       window.besaFilterChips.createSearchSelectChip({
         button: $("fact-tb-status-chip"),
-        label: "+ Status",
+        label: "Status",
         options: STATUS_OPTIONS,
         onChange: function (val) { state.statusFilter = val; state.page = 1; render(); },
       });
       window.besaFilterChips.createDateRangeChip({
         button: $("fact-tb-period-chip"),
-        label: "+ Periode",
+        label: "Periode",
         onChange: function (range) { state.periodFilter = range; state.page = 1; render(); },
       });
     }
