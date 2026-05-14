@@ -539,7 +539,9 @@ function getColumnDates() {
 
 function getRowKey(it) {
   const ax = ui.rowAxis || "afdeling";
-  if (ax === "vestiging") return (it.vestiging || "").trim() || "Onbekende locatie";
+  // BS2-parity: groupering op locatie (BS2 toont locatie-namen als group-headers).
+  // Fallback naar locatie als vestiging leeg is (Phase 3 import vult vestiging niet).
+  if (ax === "vestiging") return (it.vestiging || it.locatie || "").trim() || "Onbekende locatie";
   if (ax === "medewerker") return (it.teamlid || "—").trim() || "—";
   if (ax === "functie") return (it.functie || it.diensttype || "—").trim() || "—";
   return (it.afdeling || it.diensttype || "Overig").trim() || "Overig";
