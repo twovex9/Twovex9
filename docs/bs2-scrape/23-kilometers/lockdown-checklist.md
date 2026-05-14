@@ -1,8 +1,8 @@
-# Module 23 — Kilometers LOCKDOWN CHECKLIST
+# Module 23 — Kilometers LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS)
 
 **Module**: 23 Kilometers (kilometers.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bug #54 fix applied, wacht op merge + 2 CLEAN RUNS (hardcore-regel)
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bug gefixt** in deze module:
 - **#54** (UI): Escape close-way ontbrak voor 5 modals (km-add-choice/manual/kantoor/edit/purge). Fix via globale keydown-handler in kilometers.js.
@@ -50,19 +50,38 @@
 - [x] C9. besa:kilometers-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Exporteren / Reset / 2 add-types)
 
-## D. ULTRA-DEEP CLEAN RUNS (pending — na PR-merge)
+## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — pending (na merge Bug #54 fix)
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### CLEAN RUN #1 (post-PR #112, fresh)
+- ✅ h1 "Kilometer declaraties", title "Kilometer declaraties — HR"
+- ✅ 3 stat-cards (Totale declaraties / Totale afstand / Totaalbedrag)
+- ✅ Top-nav active = "Kilometers"
+- ✅ Scroll werkt
+- ✅ Alle 5 modals × 3 close-ways = 15/15:
+  - km-add-choice-modal: X ✅ Escape ✅ Overlay ✅
+  - km-add-manual-modal: X ✅ Escape ✅ Overlay ✅
+  - km-add-kantoor-modal: X ✅ Escape ✅ Overlay ✅
+  - km-edit-modal: X ✅ Escape ✅ Overlay ✅
+  - km-purge-modal: X ✅ Escape ✅ Overlay ✅
+- ✅ Search / Maand-filter / Jaar-filter / Reset / Exporteren bestaan
+- ✅ Kolommen-panel opent
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Identiek RUN #1 + extra search-input test (live filter werkt)
+- ✅ Alle 5 modals × 3 close-ways = 15/15 ✅
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 
-- 30/30 ✅ pending CLEAN RUNS
-- 15/15 modal × close-ways: 5 modals × 3 close-ways
-- Bug #54 fix verified ✅
-- Bug #53 gedocumenteerd
+- 30/30 ✅
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- 15/15 modal × close-ways = 5 modals × 3 close-ways ✅
+- Bug #54 (Escape close 5 modals) gefixt + verified
+- Bug #53 (data 16 records gap) gedocumenteerd voor Phase B
 - Console errors 0
+- BS1 superset (Exporteren / Reset / Multi-add Manual+Kantoor)
 
 📌 DPA: Niet blokkerend voor Module 24 (Facturen - te beoordelen).
