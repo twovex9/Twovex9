@@ -210,6 +210,19 @@
 
   var readyPromise = null;
 
+  var realtimeSubscribedCl = false;
+  function trySubscribeRealtimeCl(attempt) {
+    // Bug #73 fix: defensieve retry-pattern voor non-defer script-load scenarios
+    if (realtimeSubscribedCl) return;
+    if (window.besaRealtime && typeof window.besaRealtime.subscribe === "function") {
+      window.besaRealtime.subscribe("clienten", function () { refresh(); });
+      realtimeSubscribedCl = true;
+      return;
+    }
+    if ((attempt || 0) < 10) {
+      setTimeout(function () { trySubscribeRealtimeCl((attempt || 0) + 1); }, 300);
+    }
+  }
   function bootstrap() {
     if (readyPromise) return readyPromise;
     readyPromise = (async function () {
@@ -220,9 +233,7 @@
         try { window.localStorage.setItem(SEED_FLAG, "1"); } catch (e) { /* */ }
         dispatchUpdated();
         // Fase E.7 — subscribe to Realtime changes voor live multi-user sync
-        if (window.besaRealtime && typeof window.besaRealtime.subscribe === "function") {
-          window.besaRealtime.subscribe("clienten", function () { refresh(); });
-        }
+        trySubscribeRealtimeCl();
       } catch (err) {
         console.error("[clientenDB] Bootstrap mislukt:", err);
         // Cache blijft staan zodat de UI toch iets toont.
