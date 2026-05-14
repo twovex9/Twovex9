@@ -1504,7 +1504,12 @@
     var mAr = document.getElementById(__F("fact-arch-modal"));
     if (mAr && !mAr.hasAttribute("hidden")) { ev.preventDefault(); closeFactArchModal(); return; }
     var m4 = document.getElementById(__F("fact-purge-modal"));
-    if (m4 && !m4.hasAttribute("hidden")) { ev.preventDefault(); closeFactPurgeModal(); }
+    if (m4 && !m4.hasAttribute("hidden")) { ev.preventDefault(); closeFactPurgeModal(); return; }
+    // Bug #58 fix: Escape voor add-modal + export-modal
+    var mAdd = document.getElementById(__F("fact-add-modal"));
+    if (mAdd && !mAdd.hasAttribute("hidden")) { ev.preventDefault(); closeFactAddModal(); return; }
+    var mExp = document.getElementById(__F("fact-export-modal"));
+    if (mExp && !mExp.hasAttribute("hidden")) { ev.preventDefault(); mExp.setAttribute("hidden", ""); mExp.setAttribute("aria-hidden", "true"); }
   });
   if (addBtn) addBtn.addEventListener("click", openFactAddModal);
   (function initFactAddModal() {
