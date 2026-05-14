@@ -1,8 +1,8 @@
-# Module 25 — Facturen alle LOCKDOWN CHECKLIST
+# Module 25 — Facturen alle LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS)
 
 **Module**: 25 Facturen alle (facturen.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bug #57 + #58 fixes, wacht op merge + 2 CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
 - **#57** (UI): h1 "Facturen" → "Alle facturen" (matches BS2)
@@ -45,17 +45,35 @@
 - [x] C9. besa:facturen-updated event
 - [x] C10. parity.md: BS1 uitgebreid superset
 
-## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor (pending — na PR-merge)
+## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — pending
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### CLEAN RUN #1 (post-PR #116, fresh)
+- ✅ h1 "Alle facturen" (Bug #57 fix verified live)
+- ✅ 990 records totaal
+- ✅ Scroll werkt
+- ✅ Alle 4 modals × 3 close-ways = 12/12:
+  - fact-add-modal: X ✅ Escape ✅ (Bug #58 fix) Overlay ✅
+  - fact-export-modal: X ✅ Escape ✅ (Bug #58 fix) Overlay ✅
+  - fact-arch-modal: X ✅ Escape ✅ Overlay ✅
+  - fact-purge-modal: X ✅ Escape ✅ Overlay ✅
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + 990 records consistent
+- ✅ Alle 4 modals × 3 close-ways = 12/12 ✅
+- ✅ Search "AB-Care" → 2 rows
+- ✅ Status filter "Ingediend" → 25 rows (default page-size)
+- ✅ Reset herstelt naar 25 rows initial
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 - 30/30 ✅
-- 2 CLEAN RUNS pending
-- Bug #57 + #58 verified
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- **12/12 modal × close-ways** ✅
+- Bug #57 (h1 label) + Bug #58 (2 modals Escape) verified live
 - Console errors 0
+- BS1 uitgebreid superset
 
 📌 DPA: Niet blokkerend voor Module 26 (Taken).
