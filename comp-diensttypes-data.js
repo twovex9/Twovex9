@@ -36,6 +36,10 @@
     return {
       id: row.id,
       diensttype: row.diensttype || "",
+      naam: row.naam || row.diensttype || "",
+      kleur: row.kleur || "#5c73e6",
+      configureerbaar_uurtarief: !!row.configureerbaar_uurtarief,
+      archived: !!row.archived,
       basis: Number(row.basis) || 0,
       overuren: Number(row.overuren) || 0,
       regels: row.regels || "full_time_only",
@@ -46,7 +50,11 @@
     var safe = o || {};
     return {
       id: safe.id || ("cd_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6)),
-      diensttype: String(safe.diensttype || ""),
+      diensttype: String(safe.diensttype || safe.naam || ""),
+      naam: String(safe.naam || safe.diensttype || ""),
+      kleur: safe.kleur || "#5c73e6",
+      configureerbaar_uurtarief: !!safe.configureerbaar_uurtarief,
+      archived: !!safe.archived,
       basis: Number(safe.basis) || 0,
       overuren: Number(safe.overuren) || 0,
       regels: safe.regels || "full_time_only",
@@ -135,6 +143,53 @@
     }
   }
 
+  function getAllSync() { return readCache(); }
+
+  function getByIdSync(id) {
+    return readCache().find(function (r) { return String(r.id) === String(id); }) || null;
+  }
+
+  async function add(obj) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var payload = objToInsertPayload(obj);
+    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    if (res.error) throw res.error;
+    var row = rowToObj(res.data);
+    var cur = readCache();
+    cur.unshift(row);
+    writeCache(cur);
+    dispatchUpdated();
+    return row;
+  }
+
+  async function update(id, patch) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var existing = getByIdSync(id) || {};
+    var merged = Object.assign({}, existing, patch || {});
+    var payload = objToInsertPayload(merged);
+    delete payload.id;
+    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    var row = rowToObj(res.data);
+    var cur = readCache().map(function (r) { return String(r.id) === String(id) ? row : r; });
+    writeCache(cur);
+    dispatchUpdated();
+    return row;
+  }
+
+  async function archive(id) { return update(id, { archived: true }); }
+  async function restore(id) { return update(id, { archived: false }); }
+
+  async function remove(id) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    var cur = readCache().filter(function (r) { return String(r.id) !== String(id); });
+    writeCache(cur);
+    dispatchUpdated();
+    return true;
+  }
+
   global.compDiensttypesDB = {
     get ready() { return readyPromise || bootstrap(); },
     pushAll: pushAll,
@@ -143,6 +198,13 @@
       writeCache(items);
       dispatchUpdated();
     },
+    getAllSync: getAllSync,
+    getByIdSync: getByIdSync,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
   };
 
   bootstrap();

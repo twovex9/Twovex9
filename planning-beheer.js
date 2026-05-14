@@ -235,6 +235,37 @@
   }
 
   // ===== Medewerkers planning-context =====
+  function attachEmp() {
+    var s = document.getElementById("pb-emp-search");
+    var a = document.getElementById("pb-emp-archived");
+    var v = document.getElementById("pb-emp-vereist-actie");
+    var exp = document.getElementById("pb-emp-export");
+    if (s) s.addEventListener("input", renderEmp);
+    if (a) a.addEventListener("change", renderEmp);
+    if (v) v.addEventListener("change", renderEmp);
+    if (exp) exp.addEventListener("click", exportEmp);
+  }
+  function exportEmp() {
+    var rows = (window.medewerkersDB ? window.medewerkersDB.getAllSync() : []);
+    var header = "Voornaam,Achternaam,E-mail,Telefoon,Fase,Dienstverband,Werktype,Startdatum\n";
+    var body = rows.map(function (m) {
+      var d = m.data || {};
+      return [m.voornaam, m.achternaam, m.email, d.telefoon || "", d.fase || "In dienst", d.dienstverband || "Loondienst", d.werktype || "", d.startdatum || ""].map(function (v) { return '"' + String(v || "").replace(/"/g, '""') + '"'; }).join(",");
+    }).join("\n");
+    var blob = new Blob([header + body], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "medewerkers-export-" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if (window.showActionFeedback) window.showActionFeedback("exported", "Medewerkers");
+  }
+  function attachSW() {
+    var s = document.getElementById("pb-sw-search");
+    var a = document.getElementById("pb-sw-archived");
+    if (s) s.addEventListener("input", renderSW);
+    if (a) a.addEventListener("change", renderSW);
+  }
   function renderEmp() {
     var tbody = document.getElementById("pb-emp-tbody");
     if (!window.medewerkersDB) {
@@ -297,6 +328,8 @@
     attachSidebar();
     attachAT();
     attachST();
+    attachEmp();
+    attachSW();
     attachSettings();
     switchTab(currentTab);
 
