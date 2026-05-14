@@ -17,8 +17,8 @@
 | 08 | HR - Salarishuis | `docs/bs2-scrape/08-hr-salarishuis/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #83+#84 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=13. Bugs #25+#27 gefixt. |
 | 09 | HR - Bureau's | `docs/bs2-scrape/09-hr-bureaus/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #85+#86 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=4. Bugs #28+#29 gefixt. |
 | 10 | HR - Salarisadministratie | `docs/bs2-scrape/10-hr-salarisadmin/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #87+#88+#89 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Bug #30 gefixt. Data-pariteit functioneel 100%. |
-| 11 | HR - Verlof | `docs/bs2-scrape/11-hr-verlof/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. BS1-only feature (BS2 heeft GEEN Verlof page). Geen bugs gevonden. Complete state-machine getest. |
-| 12 | HR - Verzuim | `docs/bs2-scrape/12-hr-verzuim/` | ⏳ TODO |
+| 11 | HR - Verlof | `docs/bs2-scrape/11-hr-verlof/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #91+#93+#94 merged. LOCKDOWN 30/30 + 4 CLEAN RUNS (2 pre + 2 post-restructure) + ULTRA-DEEP 100% test op 33 pagina's. Bugs gefixt: #31 (Escape+Overlay modals) + #32 (sidebar-relocation conform BS2). 4 pagina's: verlof.html + 3 stubs (verlofstanden/plus-minuren/verloftypes). |
+| 12 | HR - Verzuim | `docs/bs2-scrape/12-hr-verzuim/` | 🟡 **IN-PROGRESS** (gestart 2026-05-14) |
 | 13 | HR - Nieuws | `docs/bs2-scrape/13-hr-nieuws/` | ⏳ TODO |
 | 14 | Cliënten - overview | `docs/bs2-scrape/14-clienten-overview/` | ⏳ TODO |
 | 15 | Cliënten - Zorgsoorten | `docs/bs2-scrape/15-clienten-zorgsoorten/` | ⏳ TODO |
