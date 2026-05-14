@@ -15,8 +15,8 @@
 | 06 | HR - Opleidingen | `docs/bs2-scrape/06-hr-opleidingen/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #79+#80 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=69. Bugs #21+#22 gefixt. |
 | 07 | HR - Locaties | `docs/bs2-scrape/07-hr-locaties/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #81+#82 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=11. Bugs #23+#24 gefixt. |
 | 08 | HR - Salarishuis | `docs/bs2-scrape/08-hr-salarishuis/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #83+#84 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=13. Bugs #25+#27 gefixt. |
-| 09 | HR - Bureau's | `docs/bs2-scrape/09-hr-bureaus/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. PR #85 merged. Data-pariteit BS1=BS2=4 (1 garbage cleanup). Bugs #28+#29 gefixt. |
-| 10 | HR - Salarisadministratie | `docs/bs2-scrape/10-hr-salarisadmin/` | ⏳ TODO |
+| 09 | HR - Bureau's | `docs/bs2-scrape/09-hr-bureaus/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #85+#86 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit BS1=BS2=4. Bugs #28+#29 gefixt. |
+| 10 | HR - Salarisadministratie | `docs/bs2-scrape/10-hr-salarisadmin/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. Geen bugs gevonden. Data-pariteit functioneel 100% (history-count NA per design). |
 | 11 | HR - Verlof | `docs/bs2-scrape/11-hr-verlof/` | ⏳ TODO |
 | 12 | HR - Verzuim | `docs/bs2-scrape/12-hr-verzuim/` | ⏳ TODO |
 | 13 | HR - Nieuws | `docs/bs2-scrape/13-hr-nieuws/` | ⏳ TODO |
