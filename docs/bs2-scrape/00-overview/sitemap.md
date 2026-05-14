@@ -22,7 +22,7 @@
 | 13 | HR - Nieuws | `docs/bs2-scrape/13-hr-nieuws/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #98 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS + ULTRA-DEEP 100%. Bugs gefixt: #35 (status 12 'Gepubliceerd' + 3 'Published' → 15/15 'Published' SQL UPDATE) + #37 (Meer-opties popover in news-edit-modal). 15 records. 4 modals × 3 close-ways. Sort dropdown (Asc/Desc/Hide). |
 | 14 | Cliënten - overview | `docs/bs2-scrape/14-clienten-overview/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #100 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS + ULTRA-DEEP 100%. Bugs gefixt: #38 (phase case 6→3 unique values SQL UPDATE) + #39 (Test Client cleanup SQL DELETE) + #40 (Add/Archive/Purge modals Escape+Overlay close-ways). 160 records. Alle 3 modals × 3 close-ways = 9/9 ✅. |
 | 15 | Cliënten - Zorgsoorten | `docs/bs2-scrape/15-clienten-zorgsoorten/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Bugs gefixt: #41 (test record SQL DELETE) + #42 (Wlz→WLZ SQL UPDATE). 6/6 records match BS2 1:1. |
-| 16 | Cliënten - Beschikkingen | `docs/bs2-scrape/16-clienten-beschikkingen/` | ⏳ TODO |
+| 16 | Cliënten - Beschikkingen | `docs/bs2-scrape/16-clienten-beschikkingen/` | 🟡 **IN-PROGRESS** (gestart 2026-05-14) |
 | 17 | Cliënten - Organisaties | `docs/bs2-scrape/17-clienten-organisaties/` | ⏳ TODO |
 | 18 | Cliënten - Gemeenten | `docs/bs2-scrape/18-clienten-gemeenten/` | ⏳ TODO |
 | 19 | Cliënten - Urendeclaraties | `docs/bs2-scrape/19-clienten-urendeclaraties/` | ⏳ TODO |

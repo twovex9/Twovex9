@@ -735,7 +735,15 @@
     }
     var cur = selZ.value;
     var opts2 = ['<option value="">Alle zorgsoorten</option>'];
-    Object.keys(byKey).sort(function (a, b) { return String(byKey[a]).localeCompare(String(byKey[b])); }).forEach(function (key) {
+    // Bug #47 fix: dedupe by label (multiple zorgsoortKey UUIDs kunnen dezelfde label hebben)
+    var seenLabels = {};
+    var uniqueKeys = Object.keys(byKey).filter(function (k) {
+      var lbl = String(byKey[k] || "");
+      if (seenLabels[lbl]) return false;
+      seenLabels[lbl] = true;
+      return true;
+    });
+    uniqueKeys.sort(function (a, b) { return String(byKey[a]).localeCompare(String(byKey[b])); }).forEach(function (key) {
       opts2.push(
         "<option value=\"" + String(key).replace(/&/g, "&amp;").replace(/"/g, "&quot;") + "\">" +
         String(byKey[key]).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</option>"
@@ -1021,6 +1029,15 @@
   if (addModal) {
     addModal.addEventListener("click", function (e) { if (e.target === addModal) { addModal.setAttribute("hidden", ""); addModal.setAttribute("aria-hidden", "true"); } });
   }
+  // Bug #44 + #45 fix: Escape close voor add + export + purge modals
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var purgeM = document.getElementById("besc-purge-modal");
+    if (purgeM && !purgeM.hasAttribute("hidden")) { purgeM.setAttribute("hidden", ""); purgeM.setAttribute("aria-hidden", "true"); e.stopPropagation(); return; }
+    var exportM = document.getElementById("besc-export-modal");
+    if (exportM && !exportM.hasAttribute("hidden")) { exportM.setAttribute("hidden", ""); exportM.setAttribute("aria-hidden", "true"); e.stopPropagation(); return; }
+    if (addModal && !addModal.hasAttribute("hidden")) { addModal.setAttribute("hidden", ""); addModal.setAttribute("aria-hidden", "true"); e.stopPropagation(); return; }
+  });
   document.getElementById("besc-add-form") && document.getElementById("besc-add-form").addEventListener("submit", handleAdd);
   if (document.getElementById("besc-purge-confirm") && removeBeschikkingById) {
     document.getElementById("besc-purge-confirm").addEventListener("click", function () {
