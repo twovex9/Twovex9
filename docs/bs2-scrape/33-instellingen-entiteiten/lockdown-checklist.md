@@ -1,7 +1,7 @@
 # Module 33 — Instellingen / Entiteiten LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 33 Instellingen / Entiteiten (instellingen.html Entiteiten-tab, BS2 /settings/entities)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op merge + 2 HARDCORE CLEAN RUNS post-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bug gefixt**:
@@ -45,34 +45,40 @@
 - [x] C9. Error-fallback "?" in rood bij count-fetch failure
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (Beschrijving/Aantal/Search/Count/Empty-state)
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — WACHT OP MERGE
+### CLEAN RUN #1 (post-PR #130 merge)
 
-- [ ] BS1 instellingen.html → klik Entiteiten-tab → 7 rows visible
-- [ ] Counts: client=160, employee=103, disposition=251, invoice=990
-- [ ] Search "client" → "1 van 7"
-- [ ] Search "xyz" → "0 van 7" + **Bug #67 fix**: "Geen entiteiten gevonden." placeholder
-- [ ] Search "invoice" → 1 row
-- [ ] Clear → 7 rows back
-- [ ] Kolommen-kiezer: 2 toggles (Beschrijving + Aantal records)
-- [ ] Toggle Beschrijving OFF → TH + 7 TD cellen ALLE hidden
-- [ ] Toggle back ON → visible
-- [ ] Console = 0 app-errors
+- [x] BS1 instellingen.html → klik Entiteiten-tab → 7 rows visible ✅
+- [x] Counts live verified: client=160, employee=103, disposition=251, invoice=990 ✅
+- [x] 3 entities zonder bs1_table: "—" (quotation/Disposition/Phase) ✅
+- [x] Async-load counts werkt na 2s wait ✅
+- [x] Search "client" → "1 van 7" ✅
+- [x] **Bug #67 verified live**: Search "xyz" → "0 van 7" + placeholder "Geen entiteiten gevonden." ✅
+- [x] Clear → 7 rows terug ✅
+- [x] **Kolommen-kiezer "Beschrijving" toggle**: TH hidden ✅ + 7 TD cellen ALLE hidden ✅
+- [x] Toggle back ON → visible ✅
+- [x] Console = 0 app-errors ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1
-- [ ] Bug #67 verified opnieuw
-- [ ] Console = 0 app-errors
+
+- [x] Baseline: 7 rows, "7 van 7" ✅
+- [x] Search "invoice" → "1 van 7" ✅
+- [x] **Bug #67 verified opnieuw**: Search "abc123" → "0 van 7" + placeholder "Geen entiteiten gevonden." ✅
+- [x] Clear → 7 rows terug ✅
+- [x] **Kolommen-kiezer "Aantal records" toggle**: TH hidden ✅ + 7 TD cellen ALLE hidden ✅
+- [x] Toggle back ON → final 7 rows ✅
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 - **0 modals** (read-only viewer)
-- Bug #67 (empty-state placeholder) verified live
+- Bug #67 (empty-state placeholder) verified live op 2 verschillende search-queries ("xyz" + "abc123")
 - 7 entiteiten 1:1 BS2 match
+- Live counts uit Supabase (4 met bs1_table)
 - Console errors 0
 
 📌 DPA: Niet blokkerend voor Module 34 (Notificaties).
