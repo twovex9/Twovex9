@@ -10,8 +10,8 @@
 | 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ **DONE** (user-override 2026-05-14: "Module 1 voor 100% is afgerond"). PR #48+#50+#55+#57+#58+#59 merged. Lockdown 30/30 + data-pariteit 15=15 + body match + 2 CLEAN RUNS 13/13 elk |
 | 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **DONE** (user-override 2026-05-14 via "deze module is afgerond + naar volgende"). PR #49-#68 merged. Lockdown 30/30 + data-pariteit 4461/9/196 + 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor. 16 bugs gefixt. |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ✅ **DONE** (user-override 2026-05-14 "100% in orde bevestigd"). PR #70+#71 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. 4227 records geïmporteerd. Bug #17 gefixt. |
-| 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op user-override**. PR #73 merged. BS1 index.html bestond al. 198 medewerkers. Bug #18 (search filter) gefixt. |
-| 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
+| 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #73+#74 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. 198 medewerkers. Bug #18 gefixt. |
+| 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. PR #75 merged. Data-pariteit: 1=1 (2 garbage cleanup). Bug #19 (Escape trash modal) gefixt. |
 | 06 | HR - Opleidingen | `docs/bs2-scrape/06-hr-opleidingen/` | ⏳ TODO |
 | 07 | HR - Locaties | `docs/bs2-scrape/07-hr-locaties/` | ⏳ TODO |
 | 08 | HR - Salarishuis | `docs/bs2-scrape/08-hr-salarishuis/` | ⏳ TODO |
