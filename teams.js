@@ -110,6 +110,41 @@
     document.getElementById("teams-pager-prev").disabled = state.page <= 1;
     document.getElementById("teams-pager-next").disabled = state.page >= totalPages;
     document.getElementById("teams-pager-last").disabled = state.page >= totalPages;
+
+    renderStats();
+  }
+
+  // Fase E.2 — 4 stat-cards (BS2 mirror)
+  function renderStats() {
+    var totaalEl = document.getElementById("teams-stat-totaal");
+    var medEl = document.getElementById("teams-stat-medewerkers");
+    var leidersEl = document.getElementById("teams-stat-teamleiders");
+    var locEl = document.getElementById("teams-stat-locaties");
+    if (!totaalEl) return;
+
+    var allTeams = (window.teamsDB && window.teamsDB.getAllSync()) || [];
+    var actief = allTeams.filter(function (t) { return t && !t.archived; });
+    var teamleiderIds = {};
+    var locatieIds = {};
+    var totalMembers = 0;
+
+    var memberships = (window.medewerkerTeamsDB && window.medewerkerTeamsDB.getAllSync && window.medewerkerTeamsDB.getAllSync()) || [];
+    var membershipsPerTeam = {};
+    memberships.forEach(function (m) {
+      if (!m || !m.team_id) return;
+      membershipsPerTeam[m.team_id] = (membershipsPerTeam[m.team_id] || 0) + 1;
+    });
+
+    actief.forEach(function (t) {
+      if (t.teamLeiderId || t.team_leider_id) teamleiderIds[t.teamLeiderId || t.team_leider_id] = true;
+      if (t.locatieId || t.locatie_id) locatieIds[t.locatieId || t.locatie_id] = true;
+      totalMembers += membershipsPerTeam[t.id] || 0;
+    });
+
+    totaalEl.textContent = actief.length;
+    medEl.textContent = totalMembers;
+    leidersEl.textContent = Object.keys(teamleiderIds).length;
+    locEl.textContent = Object.keys(locatieIds).length;
   }
 
   function fillMedewerkerSelect(selId) {
