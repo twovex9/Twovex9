@@ -55,6 +55,24 @@
 - Bulk bewerken-functie blijft werkend (extra feature)
 - Cliënt-selector + Jaar-selector werken
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (retroactief 2026-05-14)
+
+### CLEAN RUN #1
+- ✅ h1 "Uren budgetering" (Bug #50 fix verified — single 't')
+- ✅ Title "Uren budgetering — HR"
+- ✅ Scroll werkt
+- ✅ Cliënt-selector + Jaar-selector bestaan
+- ✅ Bulk bewerken-knop + Verlaat bulk bewerken bestaan
+- ✅ Kolommen-knop bestaat
+- ✅ 52 weken rijen rendered
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Identiek RUN #1
+- ✅ Alle 5 controls bestaan (#ub-sel-client, #ub-sel-year, #ub-columns-menu-btn, #ub-bulk-start, #ub-bulk-exit)
+- ✅ 52 weken rijen consistent
+- ✅ Console = 0 app-errors
+
 ---
 
 ## Eindstand

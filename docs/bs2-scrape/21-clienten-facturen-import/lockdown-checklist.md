@@ -55,6 +55,22 @@
 - Import-history tabel met empty-state
 - Naar facturen-link
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (retroactief 2026-05-14)
+
+### CLEAN RUN #1
+- ✅ h1 "Facturen importeren", title "Facturen importeren — Cliënten"
+- ✅ Scroll werkt
+- ✅ File-upload input (#fi-file-input)
+- ✅ Step 1 buttons: Volgende / Vergroten / Ander bestand / Clear
+- ✅ Step 2 buttons: Vorige / Importeren
+- ✅ Import history tabel bestaat
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + alle 6 wizard buttons bestaan
+- ✅ Upload input + history tabel consistent
+- ✅ Console = 0 app-errors
+
 ---
 
 ## Eindstand

@@ -55,6 +55,21 @@
 - Kolommen-panel met 6 toggles
 - Sidebar Cliënten-menu cross-page consistent
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (retroactief 2026-05-14)
+
+### CLEAN RUN #1
+- ✅ h1 "Urendeclaraties", title "Urendeclaraties — HR"
+- ✅ Scroll werkt
+- ✅ Kolom-headers proper: "Gebudgetteerde uren" + "Geregistreerde uren" (Bug #49 fix verified)
+- ✅ 7 filter mechanismes (search/jaar/maand/zorg/reset/cols/lock) bestaan
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Kolom-headers nog steeds proper case
+- ✅ Year-filter change naar 2025 toont 2 records
+- ✅ Alle filters bestaan
+- ✅ Console = 0 app-errors
+
 ---
 
 ## Eindstand

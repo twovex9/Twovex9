@@ -52,6 +52,21 @@
 - Archive modal: X ✅ Escape ✅ Overlay ✅ + slider
 - Purge modal: X ✅ Escape ✅ Overlay ✅ + slider (temp-archived WLZ + restore cleanup)
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (retroactief 2026-05-14)
+
+### CLEAN RUN #1
+- ✅ h1 "Gemeenten", total 238 records
+- ✅ Scroll werkt
+- ✅ Add modal × 3 close (X / Escape / Overlay)
+- ✅ Search "Uitgeest" → 1 row
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + 238 records consistent
+- ✅ Add modal × 3 close
+- ✅ Archive modal × 3 close + slider
+- ✅ Console = 0 app-errors
+
 ---
 
 ## Eindstand

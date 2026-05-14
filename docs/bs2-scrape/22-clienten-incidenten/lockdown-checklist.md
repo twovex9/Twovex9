@@ -54,6 +54,31 @@
 - Add-flow navigeert naar dedicated incident-melden.html form-page
 - Form has all sections: Cliënten / Betrokken partijen / Tijd-plaats / Categorie / Omschrijving / Maatregelen / Bijlages / Notificaties
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (post-PR #110 met Bug #51+#52 fix)
+
+### CLEAN RUN #1
+- ✅ h1 "Incidenten overzicht"
+- ✅ Tab "Alle incidenten" actief, "Mijn cliënten" bestaat
+- ✅ 144 records totaal
+- ✅ First row status display "In afwachting" (proper case)
+- ✅ Scroll werkt
+- ✅ Archive-modal × 3 close: X ✅ Escape ✅ (Bug #51 fix) Overlay ✅ (Bug #51 fix)
+- ✅ Purge-modal × 3 close: X ✅ Escape ✅ (Bug #52 fix) Overlay ✅ (Bug #52 fix)
+- ✅ Tab switch Mijn ↔ Alle werkt
+- ✅ Search "Delinquent" → 50 rows
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + 144 records consistent
+- ✅ Archive-modal × 3 close (X / Escape / Overlay)
+- ✅ Purge-modal × 3 close (X / Escape / Overlay)
+- ✅ Status-filter "in_afwachting" → 50 rows
+- ✅ Console = 0 app-errors
+
+**Bugs gefixt in deze module**:
+- #51 Archive-modal Escape + Overlay close-ways
+- #52 Purge-modal Escape + Overlay close-ways
+
 ---
 
 ## Eindstand
