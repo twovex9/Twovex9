@@ -2376,6 +2376,15 @@ function initDienstPanel() {
   closeBtn?.addEventListener("click", () => closeDienstPanel());
   cancel?.addEventListener("click", () => closeDienstPanel());
   back?.addEventListener("click", () => closeDienstPanel());
+  // Escape sluit dienst-panel (Bug #13 fix, CLEAN RUN #1)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const panel = document.getElementById("planning-dienst-panel");
+    if (!panel || panel.hasAttribute("hidden")) return;
+    // Niet sluiten als diensttype-multiselect open is — die heeft eigen Escape
+    if (planningDiensttypeListOpen) return;
+    closeDienstPanel();
+  });
   herhaal?.addEventListener("change", syncDienstRepeatOptions);
   form?.addEventListener("submit", (ev) => {
     ev.preventDefault();
@@ -2637,6 +2646,12 @@ function initAddModal() {
   cancelBtn?.addEventListener("click", close);
   modal.addEventListener("click", (event) => {
     if (event.target === modal) close();
+  });
+  // Escape sluit planning-add-modal (Bug #13 fix, CLEAN RUN #1)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!modal || modal.hasAttribute("hidden")) return;
+    close();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
