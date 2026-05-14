@@ -102,14 +102,16 @@
   }
 
   function renderRow(a) {
+    // Bug #64 fix: data-col op elke <td> zodat Kolommen-kiezer-hide
+    // ook de data-cellen verbergt (niet alleen de <th> headers).
     return '<tr class="audit-row" data-audit-id="' + escapeHtml(a.id) + '" tabindex="0" role="button" aria-label="Open audit-detail">' +
-      '<td style="white-space:nowrap;">' + escapeHtml(fmtTime(a.tijdstip)) + '</td>' +
-      '<td>' + escapeHtml(a.gebruiker) + '</td>' +
-      '<td>' + escapeHtml(a.resourceType) + '</td>' +
-      '<td style="font-family:monospace;font-size:12px;color:var(--text-secondary);">' + escapeHtml(a.resourceId) + '</td>' +
-      '<td>' + actieBadge(a.actieType) + '</td>' +
-      '<td style="color:var(--text-secondary);">' + escapeHtml(a.details) + '</td>' +
-      '<td>' + statusBadge(a.status) + '</td>' +
+      '<td data-col="tijdstip" style="white-space:nowrap;">' + escapeHtml(fmtTime(a.tijdstip)) + '</td>' +
+      '<td data-col="gebruiker">' + escapeHtml(a.gebruiker) + '</td>' +
+      '<td data-col="resource">' + escapeHtml(a.resourceType) + '</td>' +
+      '<td data-col="resource_id" style="font-family:monospace;font-size:12px;color:var(--text-secondary);">' + escapeHtml(a.resourceId) + '</td>' +
+      '<td data-col="actie">' + actieBadge(a.actieType) + '</td>' +
+      '<td data-col="details" style="color:var(--text-secondary);">' + escapeHtml(a.details) + '</td>' +
+      '<td data-col="status">' + statusBadge(a.status) + '</td>' +
     '</tr>';
   }
 
