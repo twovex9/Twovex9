@@ -853,6 +853,14 @@
     ortModal.addEventListener("click", function (e) {
       if (e.target === ortModal) ortCloseModal();
     });
+    // Module 10 Bug #30 fix: Escape sluit ORT modal (style.display-pattern)
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (ortModal && getComputedStyle(ortModal).display !== "none" && ortModal.getAttribute("aria-hidden") !== "true") {
+        ortCloseModal();
+        e.preventDefault();
+      }
+    });
 
     ortForm.addEventListener("submit", function (e) {
       e.preventDefault();
