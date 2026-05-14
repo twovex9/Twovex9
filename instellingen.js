@@ -661,4 +661,38 @@
   } else {
     init();
   }
+
+  // Bug #68 fix: defensieve globale Escape + Overlay close-ways
+  // voor inst-nt-modal (Notificatietype-bewerken modal in Notificatietypes-tab).
+  // Spiegelt Bug #61 / #63 / #66 oplossingen voor emp-/beleid-/teams-modals.
+  (function initGlobalCloseForInstNtModal() {
+    function getModal() { return document.getElementById("inst-nt-modal"); }
+    function isVisible(m) {
+      if (!m) return false;
+      if (m.style && m.style.display === "none") return false;
+      return getComputedStyle(m).display !== "none" && !m.hasAttribute("hidden");
+    }
+    function closeModal(m) {
+      if (!m) return;
+      m.style.display = "none";
+      m.setAttribute("aria-hidden", "true");
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var m = getModal();
+      if (m && isVisible(m)) {
+        closeModal(m);
+        e.stopPropagation();
+      }
+    });
+
+    var modal = getModal();
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target !== modal) return;
+        closeModal(modal);
+      });
+    }
+  })();
 })();
