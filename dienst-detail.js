@@ -104,8 +104,8 @@
     el.innerHTML = ''
       + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Diensttype</span><span class="planning-detail-info-value">' + escapeHtml(dienst.diensttype || "-") + '</span></div>'
       + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Locatie</span><span class="planning-detail-info-value">' + escapeHtml(dienst.locatie || "-") + '</span></div>'
-      + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Datum</span><span class="planning-detail-info-value">' + formatNlDate(dienst.start_iso) + '</span></div>'
-      + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Tijd</span><span class="planning-detail-info-value">' + formatTimeRange(dienst.start_iso, dienst.einde_iso) + '</span></div>';
+      + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Datum</span><span class="planning-detail-info-value">' + formatNlDate((dienst.start_iso || dienst.start)) + '</span></div>'
+      + '<div class="planning-detail-info-col"><span class="planning-detail-info-label">Tijd</span><span class="planning-detail-info-value">' + formatTimeRange((dienst.start_iso || dienst.start), (dienst.einde_iso || dienst.einde)) + '</span></div>';
   }
 
   function renderBeschrijving(dienst) {
@@ -240,8 +240,8 @@
   function computeSuggestions(dienst) {
     if (!global.medewerkersDB) return [];
     var medewerkers = global.medewerkersDB.getAllSync ? global.medewerkersDB.getAllSync() : [];
-    var startMs = new Date(dienst.start_iso).getTime();
-    var endMs = new Date(dienst.einde_iso).getTime();
+    var startMs = new Date((dienst.start_iso || dienst.start)).getTime();
+    var endMs = new Date((dienst.einde_iso || dienst.einde)).getTime();
     var planning = global.planningDB && global.planningDB.getAllSync ? global.planningDB.getAllSync() : [];
 
     var scored = medewerkers.filter(function (m) {
@@ -253,8 +253,8 @@
         if (!p.teamlid || p.id === dienst.id || p.archived) return false;
         var matches = String(p.teamlid).toLowerCase() === ((m.voornaam || "") + " " + (m.achternaam || "")).toLowerCase().trim();
         if (!matches) return false;
-        var pStart = new Date(p.start_iso).getTime();
-        var pEnd = new Date(p.einde_iso).getTime();
+        var pStart = new Date((p.start_iso || p.start)).getTime();
+        var pEnd = new Date((p.einde_iso || p.einde)).getTime();
         return !(pEnd <= startMs || pStart >= endMs);
       });
       if (hasOverlap) score -= 100;
@@ -480,7 +480,7 @@
           var allDiensten = global.planningDB.getAllSync();
           var related = allDiensten.filter(function (d) {
             return (d.parent_dienst_id === currentDienst.parent_dienst_id || d.id === currentDienst.parent_dienst_id)
-              && new Date(d.start_iso).getTime() >= new Date(currentDienst.start_iso).getTime();
+              && new Date((d.start_iso || d.start)).getTime() >= new Date((currentDienst.start_iso || currentDienst.start)).getTime();
           });
           for (var i = 0; i < related.length; i++) {
             try { await global.planningDB.archive(related[i].id); } catch (e) {}
