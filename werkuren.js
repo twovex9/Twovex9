@@ -574,6 +574,18 @@
     wireSliderConfirm("wu-purge-slider", "wu-purge-confirm");
     $("wu-purge-confirm").addEventListener("click", confirmPurge);
 
+    // Escape sluit eerst topmost open modal (Module 03 Bug #17 fix)
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var openModals = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"));
+      if (openModals.length === 0) return;
+      // Sluit de meest recent geopende (laatste in DOM-order is meestal topmost)
+      var topmost = openModals[openModals.length - 1];
+      topmost.hidden = true;
+      topmost.setAttribute("aria-hidden", "true");
+      if (!document.querySelector(".modal-overlay:not([hidden])")) document.body.classList.remove("modal-open");
+    });
+
     // Modal overlay click sluit
     document.querySelectorAll(".modal-overlay").forEach(function (overlay) {
       overlay.addEventListener("click", function (e) {
