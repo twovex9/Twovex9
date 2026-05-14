@@ -239,7 +239,21 @@
    */
   function computeSuggestions(dienst) {
     if (!global.medewerkersDB) return [];
-    var medewerkers = global.medewerkersDB.getAllSync ? global.medewerkersDB.getAllSync() : [];
+    var medewerkersRaw = global.medewerkersDB.getAllSync ? global.medewerkersDB.getAllSync() : [];
+    // Dedupe op id én (voornaam+achternaam+email) — voorkomt dat dezelfde persoon
+    // meerdere keren met Score 50 verschijnt wanneer cache toevallig dubbele rijen heeft.
+    var seenIds = Object.create(null);
+    var seenKeys = Object.create(null);
+    var medewerkers = medewerkersRaw.filter(function (m) {
+      if (!m) return false;
+      var id = String(m.id || "");
+      var key = ((m.voornaam || "") + "|" + (m.achternaam || "") + "|" + (m.email || "")).toLowerCase();
+      if (id && seenIds[id]) return false;
+      if (key !== "||" && seenKeys[key]) return false;
+      if (id) seenIds[id] = 1;
+      if (key !== "||") seenKeys[key] = 1;
+      return true;
+    });
     var startMs = new Date((dienst.start_iso || dienst.start)).getTime();
     var endMs = new Date((dienst.einde_iso || dienst.einde)).getTime();
     var planning = global.planningDB && global.planningDB.getAllSync ? global.planningDB.getAllSync() : [];
@@ -376,14 +390,38 @@
   }
 
   function attachEvents() {
-    // Close X / overlay-click
+    // Close X / overlay-click + Escape
     var modal = document.getElementById("planning-view-modal");
     if (modal) {
       document.getElementById("planning-view-close-btn") && document.getElementById("planning-view-close-btn").addEventListener("click", close);
       modal.addEventListener("click", function (e) {
         if (e.target === modal) close();
       });
+      // Escape sluit view-modal of side-modals
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape") return;
+        if (modal.hasAttribute("hidden")) return;
+        // Eerst side-modal sluiten als die open is, anders main view-modal
+        var openSide = ["planning-toewijzen-modal", "planning-uitnodigen-modal", "planning-delete-modal", "planning-edit-modal"]
+          .map(function (id) { return document.getElementById(id); })
+          .find(function (m) { return m && !m.hasAttribute("hidden"); });
+        if (openSide) { closeSideModal(openSide.id); }
+        else { close(); }
+      });
     }
+
+    // Bewerken — open edit-modal vóór bestaande dienst
+    var editBtn = document.getElementById("planning-view-edit-btn");
+    editBtn && editBtn.addEventListener("click", function () {
+      if (!currentDienst) return;
+      // Hergebruik planning-add-modal als edit-modal (vult bestaande velden + save = update)
+      if (global.openPlanningEditModal) {
+        global.openPlanningEditModal(currentDienst);
+      } else {
+        // Fallback: dispatch event zodat planning.js het oppakt
+        global.dispatchEvent(new CustomEvent("besa:planning-edit-request", { detail: { dienst: currentDienst } }));
+      }
+    });
 
     // Toggle Open/Gesloten
     var togGesloten = document.getElementById("planning-toggle-gesloten");
