@@ -496,4 +496,54 @@
   } else {
     init();
   }
+
+  // Bug #63 fix: defensieve globale Escape + Overlay close-ways
+  // voor alle 3 beleid-modals (add / archive / purge).
+  // Spiegelt Bug #61 oplossing in medewerker.js voor emp-modals.
+  (function initGlobalCloseForBeleidModals() {
+    var ADD_ID = "beleid-add-modal";              // gebruikt style.display="none"
+    var CONFIRM_IDS = ["beleid-archive-modal", "beleid-purge-modal"]; // gebruiken hidden attr
+    var modalIds = [ADD_ID].concat(CONFIRM_IDS);
+
+    function isVisible(m) {
+      if (!m) return false;
+      if (CONFIRM_IDS.indexOf(m.id) >= 0) {
+        return !m.hasAttribute("hidden");
+      }
+      if (m.style && m.style.display === "none") return false;
+      return getComputedStyle(m).display !== "none" && !m.hasAttribute("hidden");
+    }
+    function closeModal(m) {
+      if (!m) return;
+      if (CONFIRM_IDS.indexOf(m.id) >= 0) {
+        m.setAttribute("hidden", "");
+        m.setAttribute("aria-hidden", "true");
+      } else {
+        m.style.display = "none";
+      }
+    }
+
+    // Globale Escape close-way
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      for (var i = 0; i < modalIds.length; i++) {
+        var m = document.getElementById(modalIds[i]);
+        if (m && isVisible(m)) {
+          closeModal(m);
+          e.stopPropagation();
+          return;
+        }
+      }
+    });
+
+    // Overlay-click close-way per modal
+    modalIds.forEach(function (id) {
+      var m = document.getElementById(id);
+      if (!m) return;
+      m.addEventListener("click", function (e) {
+        if (e.target !== m) return;
+        closeModal(m);
+      });
+    });
+  })();
 })();
