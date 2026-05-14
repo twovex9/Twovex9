@@ -1,7 +1,7 @@
 # Module 29 — Audit LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 29 Audit (audit.html, BS2 /audit)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op merge + 2 HARDCORE CLEAN RUNS post-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bug gefixt**:
@@ -52,39 +52,56 @@
 - [x] C9. Kolommen-kiezer voorkeuren persistent in `audit_columns_v1` localStorage
 - [x] C10. parity.md: 100% functioneel + BS1 superset (search/reset/refresh/detail-modal/badges/2-bron merge)
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-**Test methode**: navigeer naar /audit.html → controleer alle features inclusief Bug #64 fix.
+**Test methode**: navigeer naar `/audit.html?run=N` → verifieer alle features via JS DOM-probing + Bug #64 fix verification.
 
-### CLEAN RUN #1 (post-PR Bug #64 fix live) — WACHT OP MERGE
-- [ ] BS1 audit.html laadt 504 records (1-30 van 504, Pagina 1 van 17)
-- [ ] Detail-modal × 3 close-ways = 3/3 ✅
-- [ ] Resource filter "Beleidsdocument" → 10 records
-- [ ] Actie filter "verwijderen" → 113 records
-- [ ] Veroorzaker filter "Systeem" → 438 records
-- [ ] Combo Beleidsdocument+aanmaken → 10 records
-- [ ] Reset → 504 records terug + alle filters gewist
-- [ ] Search "Onboarding" → 0 records (correct, geen matches in details)
-- [ ] RPP 15 → 34 pagina's / RPP 100 → 6 pagina's
-- [ ] Pagination Next/Last/First werken
-- [ ] **Bug #64 verified live**: toggle "Details" OFF in Kolommen-kiezer → TH + alle TD details-cellen verbergen
-- [ ] Vernieuwen-button werkt zonder errors
-- [ ] Console = 0 app-errors
+### CLEAN RUN #1 (post-PR #124 Bug #64 fix live)
+
+- [x] BS1 audit.html laadt: h1="Audit Logs", 30 rows, "1-30 van 504", "Pagina 1 van 17" ✅
+- [x] **TD-cellen hebben `data-col` attribuut** (Bug #64 fix live: `tdDataCol="tijdstip"`) ✅
+- [x] Detail-modal × 3 close-ways = 3/3 ✅:
+  - X-button ✅
+  - Escape ✅
+  - Overlay-click ✅
+- [x] Resource filter "Beleidsdocument" → "1-10 van 10" ✅
+- [x] Actie filter "verwijderen" → "1-30 van 113" ✅
+- [x] Veroorzaker filter "Systeem" → "1-30 van 438" ✅
+- [x] Reset-button → search="" + 3 dropdowns leeg + 504 records terug ✅
+- [x] Search "Mahi" → 1 hit (matches delete-audit "Hicham el Mahi") ✅
+- [x] RPP 100 → 100 rows + 6 pagina's ✅
+- [x] Pagination Last → Pagina 17 van 17 (24 rows) ✅
+- [x] Pagination First → Pagina 1 van 17 ✅
+- [x] Kolommen-kiezer 6 toggles + close on body click ✅
+- [x] **Bug #64 verified live op "Details"**: TH hidden ✅ + 30 TD cellen ALLE hidden ✅
+- [x] **Bug #64 verified live op "Resource ID"**: TH hidden ✅ + 30 TD cellen ALLE hidden ✅
+- [x] Toggle back ON → TH + alle TD weer visible ✅
+- [x] Vernieuwen-button werkt zonder errors ✅
+- [x] Console = 0 app-errors ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1 (geen fix tussendoor)
-- [ ] 504 records visible
-- [ ] Detail-modal × 3 close-ways = 3/3
-- [ ] Bug #64 verified opnieuw (toggle column → TH + TD beide hidden)
-- [ ] Console = 0 app-errors
+
+- [x] Identiek RUN #1: 30 rows, "1-30 van 504", "Pagina 1 van 17" ✅
+- [x] Detail-modal × 3 close-ways = 3/3 ✅
+- [x] Filter Medewerker → "1-30 van 110" ✅
+- [x] Reset → 504 records terug ✅
+- [x] RPP 50 → 11 pagina's ✅
+- [x] **Bug #64 verified opnieuw op "Gebruiker"**: TH hidden ✅ + 30 TD cellen ALLE hidden ✅
+- [x] Toggle back ON → alle visible ✅
+- [x] Veroorzaker dropdown: 4 options (blank/JS/sonck802@gmail.com/Systeem) ✅
+- [x] Search "bd_H03" → 1 hit (Bug #62 imported audit-record gevonden) ✅
+- [x] Combo Beschikking+bewerken → 0 records (data heeft geen bewerken-actie op Beschikking, correct) ✅
+- [x] Final reset → 504 records terug ✅
+- [x] TD `data-col="tijdstip"` confirmed ✅
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
-- **3/3 modal × close-ways** (audit-detail-overlay)
-- Bug #64 (Kolommen-kiezer TD-hide) verified live
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- **3/3 modal × close-ways** (audit-detail-overlay X / Escape / Overlay)
+- Bug #64 (Kolommen-kiezer TD-hide) verified live op 3 kolommen (Details/Resource ID/Gebruiker)
 - 504 records visible (max 500 generic + 4 beschikking)
 - Console errors 0
 
