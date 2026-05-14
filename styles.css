@@ -19736,3 +19736,118 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================================
+   v3 Fase E.9 — Print-CSS — algemeen print-friendly stylesheet
+   ========================================================================
+   Past automatisch toe bij Ctrl+P op alle pagina's. Hide non-essentiële
+   UI-elementen + maakt tabellen print-friendly.
+*/
+@media print {
+  /* Hide chrome elementen die niet horen op print */
+  .topbar,
+  .sidebar,
+  .top-nav-track,
+  .topbar-icons,
+  .toolbar,
+  .table-footer,
+  .header-actions,
+  .hr-row-actions,
+  .employee-delete-btn,
+  .hr-restore-btn,
+  .filter-chips,
+  .columns-dropdown,
+  .modal-overlay,
+  .emp-verzuim-modal-overlay,
+  .app-toast,
+  .icon-btn,
+  #notification-bell,
+  .besa-helpdesk-modal,
+  .besa-no-print {
+    display: none !important;
+  }
+
+  /* Maak main content full-width voor print */
+  .app-shell,
+  .content,
+  .table-card {
+    display: block !important;
+    grid-template-columns: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  /* Typography voor print */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  h1, h2, h3 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Tabellen print-friendly: geen scroll, full-width, kleine font */
+  .table-wrapper {
+    overflow: visible !important;
+  }
+  .employees-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 9pt !important;
+    border-collapse: collapse !important;
+  }
+  .employees-table th,
+  .employees-table td {
+    border: 1px solid #ccc !important;
+    padding: 4px 6px !important;
+    color: black !important;
+    background: white !important;
+  }
+  .employees-table thead {
+    background: #f3f3f3 !important;
+  }
+
+  /* Page-break-control */
+  tr {
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;  /* Herhaalt header op elke print-page */
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* Badges / pills weergeven als gewone tekst voor print */
+  .cl-fase-pill,
+  .cd-besc-fase,
+  [class*="-pill"],
+  [class*="-badge"] {
+    background: transparent !important;
+    border: 1px solid #999 !important;
+    color: black !important;
+    padding: 1px 4px !important;
+  }
+
+  /* Links onderstreept blijven, maar zonder URL-suffix uitprinten */
+  a {
+    color: black !important;
+    text-decoration: underline;
+  }
+  a[href]::after {
+    content: "" !important;
+  }
+
+  /* Print-header met datum + besa-naam onderaan ieder vel */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}
