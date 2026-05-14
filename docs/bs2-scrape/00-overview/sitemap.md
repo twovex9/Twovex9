@@ -31,7 +31,7 @@
 | 22 | Cliënten - Incidenten | `docs/bs2-scrape/22-clienten-incidenten/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + ULTRA-DEEP. **Geen bugs**. 8 kolommen + 2 tabs + 7 filters identiek aan BS2. 144 records, 11 categorieën. Incident creation via dedicated incident-melden.html form-page. Status storage snake_case + display proper case via dropdown labels. |
 | 23 | Kilometers | `docs/bs2-scrape/23-kilometers/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #112 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS ZONDER fix tussendoor + 15/15 modal × close-ways. Bug #54 gefixt (Escape close-way 5 modals). Bug #53 (data 0 vs 16 records) gedocumenteerd voor Phase B. BS1 superset met Exporteren / Reset / Multi-add Manual+Kantoor. |
 | 24 | Facturen - te beoordelen | `docs/bs2-scrape/24-facturen-beoordelen/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #114 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS ZONDER fix tussendoor. Bug #55 gefixt (filter chips dubbele "+") + Bug #56 gefixt (status normalisatie submitted→Ingediend etc.). 15 Ingediend + 7 Concept = 22 te beoordelen records. Stats real-time. |
-| 25 | Facturen - alle (monthly) | `docs/bs2-scrape/25-facturen-alle/` | ⏳ TODO |
+| 25 | Facturen - alle (monthly) | `docs/bs2-scrape/25-facturen-alle/` | 🟡 **IN-PROGRESS** (gestart 2026-05-14) |
 | 26 | Taken | `docs/bs2-scrape/26-taken/` | ⏳ TODO |
 | 27 | Medewerker-detail (per persoon) | `docs/bs2-scrape/27-medewerker-detail/` | ⏳ TODO |
 | 28 | Beleid (documents) | `docs/bs2-scrape/28-beleid/` | ⏳ TODO |
