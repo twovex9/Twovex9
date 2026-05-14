@@ -447,10 +447,18 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (pModal && !pModal.hasAttribute("hidden")) {
+    // Module 09 Bug #28 fix: generic Escape voor topmost modal
+    const openModals = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"));
+    if (openModals.length === 0) return;
+    const topmost = openModals[openModals.length - 1];
+    if (pModal && topmost.id === pModal.id) {
       closeBurPurgeModal();
-      e.preventDefault();
+    } else {
+      topmost.setAttribute("hidden", "");
+      topmost.setAttribute("aria-hidden", "true");
+      if (!document.querySelector(".modal-overlay:not([hidden])")) document.body.classList.remove("modal-open");
     }
+    e.preventDefault();
   });
 
   tbody.addEventListener("click", async function (e) {

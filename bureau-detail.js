@@ -55,6 +55,69 @@
   var feeInput = document.getElementById("bur-detail-fee");
   var saveBtn = document.getElementById("bur-detail-save");
 
+  /* ── ••• Meer opties menu (Module 09 Bug #29 fix) ── */
+  var menuBtn = document.querySelector(".comp-detail-menu");
+  if (menuBtn) {
+    var menuEl = null;
+    function closeMenu() {
+      if (menuEl) { menuEl.remove(); menuEl = null; }
+      document.removeEventListener("click", outsideClick, true);
+    }
+    function outsideClick(e) {
+      if (menuEl && !menuEl.contains(e.target) && e.target !== menuBtn) closeMenu();
+    }
+    menuBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (menuEl) { closeMenu(); return; }
+      menuEl = document.createElement("div");
+      menuEl.className = "bur-detail-menu-popover";
+      menuEl.style.cssText = "position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:100;min-width:200px;";
+      menuEl.innerHTML = '<button type="button" class="bur-menu-archive" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:var(--r-sm)">Archiveren</button>' +
+                         '<button type="button" class="bur-menu-purge" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--red);border-radius:var(--r-sm)">Definitief verwijderen</button>';
+      document.body.appendChild(menuEl);
+      var r = menuBtn.getBoundingClientRect();
+      menuEl.style.left = r.left + "px";
+      menuEl.style.top = (r.bottom + window.scrollY + 4) + "px";
+      menuEl.querySelector(".bur-menu-archive").addEventListener("click", async function () {
+        closeMenu();
+        if (window.showArchiveConfirm) {
+          var ok = await window.showArchiveConfirm({ preview: heroName && heroName.textContent || "" });
+          if (!ok) return;
+        }
+        try {
+          await window.bureausDB.archive(burId);
+          if (window.showActionFeedback) window.showActionFeedback("archived", "Bureau");
+          setTimeout(function () { window.location.href = "bureaus.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Archiveren mislukt: " + err.message);
+        }
+      });
+      menuEl.querySelector(".bur-menu-purge").addEventListener("click", async function () {
+        closeMenu();
+        if (window.showSliderConfirmModal) {
+          var ok = await window.showSliderConfirmModal({
+            title: "Definitief verwijderen",
+            preview: heroName && heroName.textContent || "",
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren"
+          });
+          if (!ok) return;
+        }
+        try {
+          await window.bureausDB.delete(burId);
+          if (window.showActionFeedback) window.showActionFeedback("deleted", "Bureau");
+          setTimeout(function () { window.location.href = "bureaus.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Verwijderen mislukt: " + err.message);
+        }
+      });
+      setTimeout(function () { document.addEventListener("click", outsideClick, true); }, 0);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && menuEl) closeMenu();
+    });
+  }
+
   function toInputNumberValue(v) {
     if (v === null || v === undefined || v === "") return "";
     var n = Number(v);
