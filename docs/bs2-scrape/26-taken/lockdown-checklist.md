@@ -1,11 +1,12 @@
-# Module 26 — Taken LOCKDOWN CHECKLIST
+# Module 26 — Taken LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 26 Taken (taken.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bug #59 fix applied, wacht op merge + 2 CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
-**Bug gefixt**:
-- **#59** (UI): Taken modals close-ways — Escape + Overlay toegevoegd voor alle 3 modals (add/archive/purge)
+**Bugs gefixt**:
+- **#59** (UI): Taken modals close-ways — Escape + Overlay toegevoegd voor alle 3 modals
+- **#60** (data, cross-module): 95 duplicate medewerkers verwijderd via FK-migratie in 13 tabellen (dienst_uitnodigingen / incidenten×2 / kilometer_declaraties / medewerker_teams / profiles / taken / teams / urenregistratie / verlof_aanvragen×2 / werkuren / werkuren_vergrendeld). Resultaat: 101 unique medewerkers.
 
 ---
 
@@ -44,17 +45,42 @@
 - [x] C9. besa:taken-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset
 
-## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor (pending — na PR-merge)
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — pending (na merge Bug #59)
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### HARDCORE CLEAN RUN #1 (post-PR #118, fresh, deep)
+- ✅ h1 "Taken", title "Taken — HR", topnav active "Taken"
+- ✅ Scroll up + down werkt
+- ✅ Tabs Mijn ↔ Alle clickable
+- ✅ Alle 3 modals × 3 close-ways = 9/9 (Bug #59 fix verified live)
+- ✅ Add-modal form: 7 fields (id/naam/beschrijving/toegewezen/status/prioriteit/deadline)
+- ✅ Status dropdown 5 opties (Alle/Open/In behandeling/Voltooid/Geannuleerd)
+- ✅ Prioriteit dropdown 4 opties (Alle/Hoog/Midden/Laag)
+- ✅ Teamlid dropdown: was 197 met 95 duplicates (Bug #60 gedetecteerd)
+- ✅ Deadline + Aanmaakdatum date pickers werken
+- ✅ Search + Reset + Gearchiveerd + Voltooide verbergen toggles werken
+- ✅ Console = 0 app-errors
+
+### Bug #60 fix tussen runs: 95 duplicate medewerkers verwijderd
+- Database 196 → 101 medewerkers
+- FK migration in 13 tabellen
+- Dropdown nu 102 opties (101 + "Alle teamleden"), 0 duplicates
+
+### HARDCORE CLEAN RUN #2 (post-Bug #60 fix, ZONDER fix tussendoor)
+- ✅ Identiek RUN #1 features
+- ✅ Teamlid dropdown 102 opties, **0 duplicates** (Bug #60 fix verified)
+- ✅ Alle 3 modals × 3 close-ways = 9/9
+- ✅ Form interactie test: naam-input value set, Escape sluit add-modal
+- ✅ Status (5) + Prioriteit (4) opties consistent
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 - 30/30 ✅
-- 2 CLEAN RUNS pending
-- Bug #59 verified
+- 2 HARDCORE CLEAN RUNS achter elkaar ✅
+- Bug #59 (modals close-ways) + Bug #60 (medewerker duplicates) verified
+- 9/9 modal × close-ways
+- Teamlid dropdown 0 duplicates (was 95)
 - Console errors 0
 
 📌 DPA: Niet blokkerend voor Module 27 (Medewerker-detail).
