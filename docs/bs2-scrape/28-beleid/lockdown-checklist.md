@@ -1,7 +1,7 @@
 # Module 28 — Beleid LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 28 Beleid (beleid.html, BS2 /documents)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op 2 HARDCORE CLEAN RUNS na user-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
@@ -46,43 +46,53 @@
 - [x] C9. ID-pattern `bd_<volgnummer>` (+ `bd_H01`/`bd_H03` voor non-integer cases)
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Nr./Type/Bestand/Gearchiveerd-toggle)
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-**Test methode**: navigeer naar /beleid.html → controleer alle features.
+**Test methode**: navigeer naar `/beleid.html?run=N` → verifieer alle features via JS DOM-probing + read_console.
 
-### CLEAN RUN #1 (post-PR Bug #62 + #63 fix live) — WACHT OP MERGE
+### CLEAN RUN #1 (post-PR #122 Bug #62 + #63 fix live)
 
-- [ ] BS1 beleid.html laadt met 25 records visible (alle volgnummer 1-23 + H01 + H03)
-- [ ] Search filter werkt op naam/type/volgnummer
-- [ ] Gearchiveerd-toggle: 0 archived records → leeg
-- [ ] Reset-knop wist filters
-- [ ] Pagination werkt (1 page bij 30/page)
-- [ ] Rijen-per-pagina dropdown switch werkt
-- [ ] Kolommen-kiezer: toggle Nr./Type/Uploaddatum/Laatst gewijzigd/Bestand
-- [ ] `+ Beleidsdocument toevoegen` modal opent
-- [ ] Bug #63 verified live — alle 3 modals × 3 close-ways = 9/9:
+- [x] BS1 beleid.html laadt: h1 = "Beleidsdocumenten" ✅
+- [x] 25 records visible (rowCount=25, "1-25 van 25", "Pagina 1 van 1") ✅
+- [x] Search filter "Onboarding" → 2 hits ✅
+- [x] Reset-knop → search="" + archived=false + 25 rows ✅
+- [x] Gearchiveerd-toggle ON → empty state row + 0 records ✅
+- [x] Gearchiveerd-toggle OFF → 25 rows terug ✅
+- [x] Rijen-per-pagina 10 → 10 rows + "1-10 van 25" + "Pagina 1 van 3" ✅
+- [x] Pagination Next → Pagina 2 van 3 ✅
+- [x] Pagination Last → Pagina 3 van 3 ✅
+- [x] Pagination First → Pagina 1 van 3 ✅
+- [x] Kolommen-kiezer opent: 5 toggles (Nr./Type/Uploaddatum/Laatst gewijzigd/Bestand) ✅
+- [x] Kolommen-kiezer sluit op body click ✅
+- [x] Edit-modal via naam-link: opens `bd_1` met volgnr=1 + naam="01.Protocollen & Richtlijnen ETF" + type="protocol" ✅ (Bug #62 import verified live)
+- [x] **Bug #63 verified live — alle 3 modals × 3 close-ways = 9/9**:
   - beleid-add-modal: X ✅ Escape ✅ Overlay ✅
   - beleid-archive-modal: X ✅ Escape ✅ Overlay ✅
   - beleid-purge-modal: X ✅ Escape ✅ Overlay ✅
-- [ ] Klik op naam-link → edit-modal opent met data
-- [ ] Klik trash-icoon → archive-modal opent
-- [ ] Console = 0 app-errors
+- [x] Console = 0 app-errors (alleen Chrome-extension noise) ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1 (geen fix tussendoor)
-- [ ] 25 records visible
-- [ ] 3 modals × 3 close-ways = 9/9
-- [ ] Console = 0 app-errors
+
+- [x] Identiek RUN #1 — 25 rows, "1-25 van 25", "Pagina 1 van 1", h1="Beleidsdocumenten" ✅
+- [x] 9/9 modal × close-ways: ALL closed after X/Escape/Overlay ✅
+- [x] Search filter "Onboarding" → 2 hits ✅
+- [x] Reset → 25 rows + search="" ✅
+- [x] Gearchiveerd-toggle ON → 1 row (empty state) ✅
+- [x] Rijen-per-pagina 10 → 10 rows + "1-10 van 25" + "Pagina 1 van 3" ✅
+- [x] Pagination Next/Last/First → 2/3 → 3/3 → 1/3 ✅
+- [x] Kolommen-kiezer: 5 toggles + close on body click ✅
+- [x] Edit-modal via H01-link: opens `bd_H01` met naam="H01 Handboek beleid ETF versie 8.0" ✅ (Bug #62 H01-import verified live)
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 - **9/9 modal × close-ways** (3 modals × 3 close-ways)
-- Bug #62 (10 missing records) verified live
-- Bug #63 (modals close-ways) verified live
+- Bug #62 (10 missing records geïmporteerd: bd_1 t/m bd_8 + bd_H01 + bd_H03) verified live
+- Bug #63 (3 modals close-ways defensieve fallback) verified live
 - Console errors 0
-- 25 records actief
+- 25 records actief (BS1 = BS2 100% match)
 
 📌 DPA: Niet blokkerend voor Module 29 (Audit).
