@@ -10,8 +10,9 @@
 - BS1 `competenties.html` bestond al volledig + competentiesDB compleet CRUD
 - **Data-pariteit fix**: BS1 had 3 records (1 garbage "[object Object]" + 1 "doorzettingsvermogen" niet in BS2 + 1 "Stressbestendig"). Cleanup naar 1 record matchen BS2.
 
-**1 bug gefixt via PR #75**:
-- #19: Escape sluit alleen `cp-purge-modal`, niet andere modals (comp-add/comp-delete/comp-edit). Generic Escape-handler voor topmost open modal.
+**2 bugs gefixt via PR #75 + #77**:
+- #19 (PR #75): Escape sluit alleen `cp-purge-modal`, niet andere modals (comp-add/comp-delete/comp-edit). Generic Escape-handler voor topmost open modal.
+- #20 (PR #77): ••• "Meer opties" button op competentie-detail page was inert (geen handler). Fix bouwt popover-menu met Archiveren + Definitief verwijderen + outside-click/Escape close.
 
 Override-teksten:
 - `LOCKDOWN OVERRIDE GO`
@@ -66,24 +67,31 @@ Live test op `https://besa-suite.vercel.app/competenties.html` na PR #75.
 - [x] C9. Realtime: `besa:competenties-updated` event
 - [x] C10. parity.md: 100%
 
-## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor)
+## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor, na PR #77)
 
-### CLEAN RUN #1 (vers, na PR #75)
-- ✅ Scroll
+### CLEAN RUN #1 (vers, na PR #77)
+**competenties.html**:
+- ✅ Scroll top↔bottom
 - ✅ 6 page-buttons
-- ✅ Add modal × 3 close
-- ✅ Trash slider × 3 close (Bug #19 fix verified)
-- ✅ CRUD all 5 ops
-- ✅ A11y: 3/3 icon-only buttons aria-label (100%)
+- ✅ Add modal × 3 close-ways (X/Escape/Overlay)
+- ✅ Trash slider × Escape (Bug #19 fix verified)
+- ✅ CRUD all 5 ops (add/update/archive/restore/delete)
+- ✅ A11y: 3/3 icon-only aria-label
+
+**competentie-detail.html**:
+- ✅ ••• menu opens met "Archiveren" + "Definitief verwijderen" (Bug #20 fix verified)
+- ✅ Menu outside-click + Escape close
+- ✅ Save flow (rename) persists naar DB + revert
+- ✅ Back-btn href = "competenties.html"
+- ✅ Tab switch Details ↔ Medewerkers werkt
+- ✅ Medewerkers-tab toont gefilterde medewerker-lijst per competentie
 - ✅ Console = 0 app-errors
 
-### CLEAN RUN #2 (ZONDER fix tussendoor)
-- ✅ Scroll
-- ✅ Add modal × 3 close
-- ✅ Trash slider × 3 close (Escape works permanently)
-- ✅ CRUD all 5 ops
-- ✅ A11y: 3/3 (100%)
-- ✅ Console = 0
+### CLEAN RUN #2 (ZONDER fix tussendoor, identiek)
+**competenties.html**: scroll/modals/CRUD all pass
+**competentie-detail.html**: ••• menu/tabs/save/back all pass
+- ✅ Identiek aan RUN #1
+- ✅ Console = 0 app-errors
 
 ---
 
