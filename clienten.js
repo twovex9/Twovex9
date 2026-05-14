@@ -762,6 +762,33 @@
   document.getElementById("cl-ar-cancel") && document.getElementById("cl-ar-cancel").addEventListener("click", closeArchive);
   document.getElementById("cl-purge-close") && document.getElementById("cl-purge-close").addEventListener("click", closePurge);
   document.getElementById("cl-purge-cancel") && document.getElementById("cl-purge-cancel").addEventListener("click", closePurge);
+
+  // Bug #40 fix: Escape + Overlay close voor alle 3 modals (add/archive/purge)
+  // - Overlay-click sluit alleen wanneer op de overlay zelf geklikt (niet op modal-card)
+  // - Escape sluit de bovenste open modal
+  function clIsOpen(modalId) {
+    var m = document.getElementById(modalId);
+    return m && !m.hasAttribute("hidden");
+  }
+  ["cl-add-modal", "cl-archive-modal", "cl-purge-modal"].forEach(function (modalId) {
+    var m = document.getElementById(modalId);
+    if (!m) return;
+    m.addEventListener("click", function (e) {
+      if (e.target === m) {
+        if (modalId === "cl-add-modal") closeAdd();
+        else if (modalId === "cl-archive-modal") closeArchive();
+        else if (modalId === "cl-purge-modal") closePurge();
+      }
+    });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    // Purge en archive eerst (kunnen open zijn boven add)
+    if (clIsOpen("cl-purge-modal")) { closePurge(); e.stopPropagation(); return; }
+    if (clIsOpen("cl-archive-modal")) { closeArchive(); e.stopPropagation(); return; }
+    if (clIsOpen("cl-add-modal")) { closeAdd(); e.stopPropagation(); return; }
+  });
+
   refreshClOrgDatalist();
 
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
