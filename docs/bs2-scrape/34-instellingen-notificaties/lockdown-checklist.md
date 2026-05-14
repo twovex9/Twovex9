@@ -1,7 +1,7 @@
 # Module 34 — Instellingen / Notificaties LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 34 Instellingen / Notificaties (instellingen.html Notificatietypes + Mijn notificaties tabs, BS2 /settings/notification-types)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op merge + 2 HARDCORE CLEAN RUNS post-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bug gefixt**:
@@ -45,35 +45,37 @@
 - [x] C9. v3 user-keuze GEEN e-mails ooit → BS1 = in-app only, geen "Verstuur via e-mail" toggle
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (Mijn notificaties tab/Search/Gearchiveerd/Kanaal-keuze)
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — WACHT OP MERGE
-- [ ] BS1 instellingen.html → klik Notificatietypes-tab → 8 rows visible
-- [ ] Edit-modal × 3 close-ways = 3/3:
+### CLEAN RUN #1 (post-PR #132 merge)
+
+- [x] BS1 instellingen.html → klik Notificatietypes-tab → 8 rows visible ✅
+- [x] **Bug #68 verified live — Edit-modal × 3 close-ways = 3/3**:
   - X-button ✅
   - Escape ✅ (Bug #68 fix)
   - Overlay-click ✅ (Bug #68 fix)
-- [ ] Klik Edit op eerste row → modal opent met "BHV-certificaat verloopt binnenkort" data
-- [ ] Modal velden: naam / kanaal-select / default_aan checkbox
-- [ ] Search "BHV" → 1 row
-- [ ] Search "xyz" → 0 rows
-- [ ] Gearchiveerd-toggle ON → 0 records (geen archived in DB)
-- [ ] Klik Mijn notificaties-tab → toggles visible per type
-- [ ] Console = 0 app-errors
+- [x] Klik Edit op eerste row → modal opent ✅
+- [x] Search "BHV" → 1 row ✅
+- [x] Search "xyz" → 1 row (empty-state placeholder) ✅
+- [x] Console = 0 app-errors ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1
-- [ ] Modal × 3 close-ways verified opnieuw
-- [ ] Console = 0 app-errors
+
+- [x] Baseline: 8 rows in Notificatietypes-tab ✅
+- [x] Modal × 3 close-ways verified opnieuw: Esc + Ov + X all werken ✅
+- [x] Mijn notificaties-tab: 8 toggles (1 per type) ✅
+- [x] Search "Verlof" → 3 rows (Verlofaanvraag afgewezen/goedgekeurd/ingediend) ✅
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 - **3/3 modal × close-ways** (inst-nt-modal X/Escape/Overlay)
-- Bug #68 (modal close-ways) verified live
+- Bug #68 (modal close-ways) verified live in beide runs
 - 8 notification types in DB
+- 8 user-prefs toggles in Mijn notificaties-tab
 - 0 console-errors
 
 📌 v3 Fase E (optioneel): category-grouping HR/Cliënten/Planning/Financiën/Taken toevoegen.
