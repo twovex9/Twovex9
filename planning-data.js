@@ -222,10 +222,66 @@
 
   function getAllSync() { return readCache(); }
 
+  function getByIdSync(id) {
+    return readCache().find(function (r) { return String(r.id) === String(id); }) || null;
+  }
+
+  /**
+   * Update een enkele planningrij in Supabase + cache + dispatch event.
+   * Patch wordt gemerged in `data` jsonb (alle niet-EXPLICIT_FIELDS) +
+   * top-level kolommen worden direct ge-overwrite.
+   */
+  async function update(id, patch) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var existing = getByIdSync(id) || {};
+    var merged = Object.assign({}, existing, patch || {});
+    var payload = objToInsertPayload(merged);
+    delete payload.id;
+    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    var row = rowToObj(res.data);
+    var cur = readCache().map(function (r) { return String(r.id) === String(id) ? row : r; });
+    writeCache(cur);
+    dispatchUpdated();
+    return row;
+  }
+
+  async function add(obj) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var payload = objToInsertPayload(obj);
+    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    if (res.error) throw res.error;
+    var row = rowToObj(res.data);
+    var cur = readCache();
+    cur.unshift(row);
+    writeCache(cur);
+    dispatchUpdated();
+    return row;
+  }
+
+  async function remove(id) {
+    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    var cur = readCache().filter(function (r) { return String(r.id) !== String(id); });
+    writeCache(cur);
+    dispatchUpdated();
+    return true;
+  }
+
+  async function archive(id) { return update(id, { archived: true }); }
+  async function restore(id) { return update(id, { archived: false }); }
+
   global.planningDB = {
     get ready() { return readyPromise || bootstrap(); },
     pushFullCache: pushFullCache,
     getAllSync: getAllSync,
+    getByIdSync: getByIdSync,
+    add: add,
+    update: update,
+    archive: archive,
+    restore: restore,
+    delete: remove,
     refresh: async function () {
       var items = await fetchAll();
       writeCache(items);
