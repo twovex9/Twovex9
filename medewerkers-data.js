@@ -196,6 +196,20 @@
   }
 
   var bootstrapPromise = null;
+  var realtimeSubscribed = false;
+  function trySubscribeRealtime(attempt) {
+    // Bug #73 fix: medewerkers-data.js loads zonder defer, dus besaRealtime
+    // is mogelijk nog niet beschikbaar bij bootstrap. Retry tot 5×.
+    if (realtimeSubscribed) return;
+    if (global.besaRealtime && typeof global.besaRealtime.subscribe === "function") {
+      global.besaRealtime.subscribe("medewerkers", function () { refresh(); });
+      realtimeSubscribed = true;
+      return;
+    }
+    if ((attempt || 0) < 10) {
+      setTimeout(function () { trySubscribeRealtime((attempt || 0) + 1); }, 300);
+    }
+  }
   function bootstrap() {
     if (!bootstrapPromise) {
       bootstrapPromise = (async function () {
@@ -203,9 +217,7 @@
           await maybeMigrateLocalToSupabase();
           await fetchAll();
           // Fase E.7 — subscribe to Realtime changes voor live multi-user sync
-          if (global.besaRealtime && typeof global.besaRealtime.subscribe === "function") {
-            global.besaRealtime.subscribe("medewerkers", function () { refresh(); });
-          }
+          trySubscribeRealtime();
         } catch (e) {
           dispatchUpdated();
         }
