@@ -396,4 +396,52 @@
   } else {
     init();
   }
+
+  // Bug #66 fix: defensieve globale Escape + Overlay close-ways
+  // voor alle 4 teams-modals (add / members / archive / purge).
+  // Spiegelt Bug #63 oplossing in beleid.js + Bug #61 in medewerker.js.
+  (function initGlobalCloseForTeamsModals() {
+    var DISPLAY_IDS = ["teams-add-modal", "teams-members-modal"];   // gebruiken style.display
+    var HIDDEN_IDS = ["teams-archive-modal", "teams-purge-modal"];  // gebruiken hidden attr
+    var modalIds = DISPLAY_IDS.concat(HIDDEN_IDS);
+
+    function isVisible(m) {
+      if (!m) return false;
+      if (HIDDEN_IDS.indexOf(m.id) >= 0) {
+        return !m.hasAttribute("hidden");
+      }
+      if (m.style && m.style.display === "none") return false;
+      return getComputedStyle(m).display !== "none" && !m.hasAttribute("hidden");
+    }
+    function closeModal(m) {
+      if (!m) return;
+      if (HIDDEN_IDS.indexOf(m.id) >= 0) {
+        m.setAttribute("hidden", "");
+        m.setAttribute("aria-hidden", "true");
+      } else {
+        m.style.display = "none";
+      }
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      for (var i = 0; i < modalIds.length; i++) {
+        var m = document.getElementById(modalIds[i]);
+        if (m && isVisible(m)) {
+          closeModal(m);
+          e.stopPropagation();
+          return;
+        }
+      }
+    });
+
+    modalIds.forEach(function (id) {
+      var m = document.getElementById(id);
+      if (!m) return;
+      m.addEventListener("click", function (e) {
+        if (e.target !== m) return;
+        closeModal(m);
+      });
+    });
+  })();
 })();
