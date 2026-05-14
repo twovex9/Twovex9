@@ -261,6 +261,24 @@
     document.getElementById("verlof-add-cancel-btn").addEventListener("click", closeAddModal);
     document.getElementById("verlof-add-form").addEventListener("submit", submitAddForm);
 
+    // Module 11 Bug #31 fix: Escape + Overlay sluit verlof-add-modal + verlof-beoordeel-modal
+    var addModal = document.getElementById("verlof-add-modal");
+    var beoordeelModal = document.getElementById("verlof-beoordeel-modal");
+    [addModal, beoordeelModal].filter(Boolean).forEach(function (m) {
+      m.addEventListener("click", function (e) {
+        if (e.target === m) { m.style.display = "none"; m.setAttribute("aria-hidden", "true"); }
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var openOnes = [addModal, beoordeelModal].filter(function (m) {
+        return m && getComputedStyle(m).display !== "none" && m.getAttribute("aria-hidden") !== "true";
+      });
+      if (openOnes.length === 0) return;
+      openOnes.forEach(function (m) { m.style.display = "none"; m.setAttribute("aria-hidden", "true"); });
+      e.preventDefault();
+    });
+
     document.getElementById("verlof-search").addEventListener("input", function (e) { state.search = e.target.value || ""; state.page = 1; render(); });
 
     var tabMine = document.getElementById("verlof-tab-mine");
