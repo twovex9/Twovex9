@@ -312,13 +312,18 @@
       if (!q) return true;
       return (e.naam + " " + (e.beschrijving || "")).toLowerCase().indexOf(q) >= 0;
     });
-    tbody.innerHTML = filtered.map(function (e) {
-      return '<tr>' +
-        '<td data-col="naam"><code style="font-family:var(--font-mono, monospace);font-size:13px;">' + escEnt(e.naam) + '</code></td>' +
-        '<td data-col="beschrijving">' + escEnt(e.beschrijving) + '</td>' +
-        '<td data-col="aantal" data-table="' + escEnt(e.bs1_table || "") + '">' + (e.bs1_table ? '<span style="color:var(--text-muted)">laden…</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
-      '</tr>';
-    }).join("");
+    // Bug #67 fix: empty-state placeholder voor consistentie met Gebruikers-tab
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="padding:32px;text-align:center;color:var(--text-muted)">Geen entiteiten gevonden.</td></tr>';
+    } else {
+      tbody.innerHTML = filtered.map(function (e) {
+        return '<tr>' +
+          '<td data-col="naam"><code style="font-family:var(--font-mono, monospace);font-size:13px;">' + escEnt(e.naam) + '</code></td>' +
+          '<td data-col="beschrijving">' + escEnt(e.beschrijving) + '</td>' +
+          '<td data-col="aantal" data-table="' + escEnt(e.bs1_table || "") + '">' + (e.bs1_table ? '<span style="color:var(--text-muted)">laden…</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+        '</tr>';
+      }).join("");
+    }
     if (countEl) countEl.textContent = filtered.length + " van " + ENTITEITEN_LIST.length;
     applyEntColumnVisibility();
 
