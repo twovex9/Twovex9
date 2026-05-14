@@ -53,6 +53,22 @@
 - Archive modal: X ✅ Escape ✅ Overlay ✅ + slider
 - Purge modal: X ✅ Escape ✅ Overlay ✅ + slider (temp-archived IHub voor test, restored cleanup)
 
+## E. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅ (retroactief 2026-05-14)
+
+### CLEAN RUN #1
+- ✅ h1 "Organisatie", total 93 records
+- ✅ Scroll werkt
+- ✅ Add modal × 3 close (X / Escape / Overlay)
+- ✅ Search "IHub" → 1 row
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + 93 records consistent
+- ✅ Add modal × 3 close
+- ✅ Archive modal × 3 close + slider
+- ✅ Kolommen-panel opent
+- ✅ Console = 0 app-errors
+
 ---
 
 ## Eindstand
