@@ -19,7 +19,7 @@
 | 10 | HR - Salarisadministratie | `docs/bs2-scrape/10-hr-salarisadmin/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #87+#88+#89 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Bug #30 gefixt. Data-pariteit functioneel 100%. |
 | 11 | HR - Verlof | `docs/bs2-scrape/11-hr-verlof/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #91+#93+#94 merged. LOCKDOWN 30/30 + 4 CLEAN RUNS (2 pre + 2 post-restructure) + ULTRA-DEEP 100% test op 33 pagina's. Bugs gefixt: #31 (Escape+Overlay modals) + #32 (sidebar-relocation conform BS2). 4 pagina's: verlof.html + 3 stubs (verlofstanden/plus-minuren/verloftypes). |
 | 12 | HR - Verzuim | `docs/bs2-scrape/12-hr-verzuim/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #95+#96 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS + ULTRA-DEEP 100% test op 25 pagina's. Bugs gefixt: #33 (sidebar-relocation Verzuim conform BS2 top-level positie) + #34 (Compensatie auto-open leftover state). 14 records (11 lang + 3 kort). Edit + Delete modals 3-close-ways. Slider-confirm conform huisstijl. |
-| 13 | HR - Nieuws | `docs/bs2-scrape/13-hr-nieuws/` | ⏳ TODO |
+| 13 | HR - Nieuws | `docs/bs2-scrape/13-hr-nieuws/` | 🟡 **IN-PROGRESS** (gestart 2026-05-14) |
 | 14 | Cliënten - overview | `docs/bs2-scrape/14-clienten-overview/` | ⏳ TODO |
 | 15 | Cliënten - Zorgsoorten | `docs/bs2-scrape/15-clienten-zorgsoorten/` | ⏳ TODO |
 | 16 | Cliënten - Beschikkingen | `docs/bs2-scrape/16-clienten-beschikkingen/` | ⏳ TODO |

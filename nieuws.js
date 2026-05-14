@@ -1086,6 +1086,83 @@ function initNewsEditPanel() {
 
   backBtn?.addEventListener("click", closeNewsEdit);
 
+  // Bug #37 fix: Meer-opties (kebab) menu in edit-modal — Archiveren / Herstellen / Definitief verwijderen
+  const menuBtn = document.getElementById("news-edit-menu-btn");
+  let editMenuPopover = null;
+
+  function closeEditMenuPopover() {
+    if (editMenuPopover) {
+      editMenuPopover.remove();
+      editMenuPopover = null;
+    }
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function openEditMenuPopover() {
+    if (!menuBtn || !currentRow) return;
+    closeEditMenuPopover();
+    const isArchived = currentRow.dataset.newsArchived === "1";
+    const id = currentRow.dataset.newsId;
+
+    const pop = document.createElement("div");
+    pop.className = "news-edit-menu-popover";
+    pop.setAttribute("role", "menu");
+
+    function makeItem(label, onClick, danger) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "news-edit-menu-item" + (danger ? " news-edit-menu-item--danger" : "");
+      btn.textContent = label;
+      btn.addEventListener("click", function () {
+        closeEditMenuPopover();
+        onClick();
+      });
+      return btn;
+    }
+
+    if (!isArchived) {
+      pop.appendChild(makeItem("Archiveren", async function () {
+        closeNewsEdit();
+        await archiveNewsItem(id);
+      }));
+    } else {
+      pop.appendChild(makeItem("Herstellen", async function () {
+        closeNewsEdit();
+        await restoreNewsItem(id);
+      }));
+      pop.appendChild(makeItem("Definitief verwijderen", function () {
+        const rowToPurge = currentRow;
+        closeNewsEdit();
+        const purgeBtn = rowToPurge ? rowToPurge.querySelector(".news-purge-btn") : null;
+        if (purgeBtn) purgeBtn.click();
+      }, true));
+    }
+
+    menuBtn.parentElement.appendChild(pop);
+    editMenuPopover = pop;
+    menuBtn.setAttribute("aria-expanded", "true");
+  }
+
+  menuBtn?.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (editMenuPopover) closeEditMenuPopover();
+    else openEditMenuPopover();
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!editMenuPopover) return;
+    if (e.target === menuBtn || (menuBtn && menuBtn.contains(e.target))) return;
+    if (editMenuPopover.contains(e.target)) return;
+    closeEditMenuPopover();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && editMenuPopover) {
+      closeEditMenuPopover();
+      e.stopPropagation();
+    }
+  }, true);
+
   publishBtn?.addEventListener("click", () => {
     if (!currentRow) return;
     const pill = currentRow.querySelector('td[data-col="status"] .status-pill');

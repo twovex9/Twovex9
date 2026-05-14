@@ -6978,6 +6978,53 @@ select.modal-select.modal-select--chevron-right {
   background: rgba(255, 255, 255, 0.32);
 }
 
+/* Bug #37 fix: Meer-opties popover in nieuws edit-modal */
+.news-edit-aside-hero-top {
+  position: relative;
+}
+
+.news-edit-menu-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.news-edit-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: var(--font-table-cell);
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.news-edit-menu-item:hover {
+  background: var(--fill-hover);
+}
+
+.news-edit-menu-item--danger {
+  color: var(--red);
+}
+
+.news-edit-menu-item--danger:hover {
+  background: var(--red-soft);
+}
+
 .news-edit-aside-hero-text {
   flex: 1;
   display: flex;
