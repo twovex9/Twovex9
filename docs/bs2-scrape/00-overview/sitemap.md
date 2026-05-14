@@ -1,6 +1,8 @@
-# BS2 Sitemap — Fase A scrape (in progress)
+# BS2 Sitemap — Fase A scrape (🏆 VOLLEDIG VOLTOOID 2026-05-14)
 
 **Start**: 2026-05-13
+**Eindstand**: 2026-05-14 — alle 36 modules ✅ DONE, 69 bugs gefixt, 0 console-errors
+**Eindrapport**: `docs/phase4/v3-fase-a-eindrapport.md`
 **Doel**: alle BS2-pagina's systematisch in kaart brengen + per pagina scrape-template invullen
 
 ## Modules (volgorde van scrape)
