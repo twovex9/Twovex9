@@ -1,8 +1,8 @@
-# Module 24 — Facturen te beoordelen LOCKDOWN CHECKLIST
+# Module 24 — Facturen te beoordelen LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS)
 
 **Module**: 24 Facturen te beoordelen (facturen-te-beoordelen.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bug #55 + #56 fixes applied, wacht op merge + 2 CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
 - **#55** (UI): Filter chips dubbele "+" → labels gecorrigeerd in facturen-te-beoordelen.js
@@ -53,19 +53,41 @@
 - [x] C9. besa:facturen-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset
 
-## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor (pending — na PR-merge)
+## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — pending (na merge Bug #55+#56)
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+### CLEAN RUN #1 (post-PR #114, fresh)
+- ✅ h1 "Facturen te beoordelen", title "Facturen te beoordelen — HR"
+- ✅ Status chip text: "+ Status" (NIET "+ + Status" — Bug #55 fix verified)
+- ✅ Periode chip text: "+ Periode" (Bug #55 fix verified)
+- ✅ Status counts genormaliseerd (Bug #56 fix verified):
+  - Ingediend: 15
+  - Concept: 7
+  - Goedgekeurd: 12
+  - Betaald: 224
+  - Gedeclareerd en in behandeling: 732
+- ✅ 22 rows zichtbaar in te-beoordelen view (15 Ingediend + 7 Concept = TODO_STATUSES match)
+- ✅ Stat-cards: "€ 138.916,94 / 22 Totaal te beoordelen" + "€ 10.264.061,38 / 236 Totaal goedgekeurd"
+- ✅ First row: "Mei 2026 / AB-Care / 202640015 / Ingediend / 12-05-2026 / € 2.323,00"
+- ✅ Scroll werkt
+- ✅ Search + Archive toggle bestaan
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ h1 + chip-texts + 22 visible rows consistent met RUN #1
+- ✅ Status counts (15 Ingediend + 7 Concept) consistent
+- ✅ Search "AB-Care" → 1 row gefilterd
+- ✅ Archived toggle: 0 archived rows (clean state)
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 
 - 30/30 ✅
-- 2 CLEAN RUNS pending
-- Bug #55 + #56 verified
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- Bug #55 (UI dubbele "+") gefixt + verified
+- Bug #56 (data status normalisatie) gefixt + verified
+- 15/15 te beoordelen records (matches BS2)
 - Console errors 0
-- User-override afwachten
 
 📌 DPA: Niet blokkerend voor Module 25 (Facturen - alle).
