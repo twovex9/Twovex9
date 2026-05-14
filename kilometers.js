@@ -772,6 +772,24 @@
       });
     });
 
+    // Bug #54 fix: Escape sluit alle 5 km-modals
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var modals = ["km-purge-modal", "km-edit-modal", "km-add-kantoor-modal", "km-add-manual-modal", "km-add-choice-modal"];
+      for (var i = 0; i < modals.length; i++) {
+        var m = document.getElementById(modals[i]);
+        if (m && !m.hasAttribute("hidden")) {
+          m.hidden = true;
+          m.setAttribute("aria-hidden", "true");
+          if (!document.querySelector(".modal-overlay:not([hidden])")) {
+            document.body.classList.remove("modal-open");
+          }
+          e.stopPropagation();
+          return;
+        }
+      }
+    });
+
     wireSortMenus("km-overview-table", "overview");
     wireSortMenus("km-detail-table", "detail");
     document.addEventListener("click", function () {
