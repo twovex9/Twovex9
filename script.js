@@ -1258,6 +1258,11 @@ document.querySelectorAll("thead th.th-sort").forEach((th) => {
 });
 
 function applyTableFilters() {
+  // Module 04 Bug #18 fix: toolbar search-input filtert nu medewerker-rijen
+  // op voornaam/achternaam/email/functie/locatie. Geen event-listener was
+  // gebonden — typing deed niets.
+  const searchInput = document.querySelector(".toolbar input.search, .toolbar input[type=search]");
+  const searchQ = (searchInput && searchInput.value || "").trim().toLowerCase();
   document.querySelectorAll("table.employees-table:not(.nieuws-table) tbody tr").forEach((tr) => {
     const empId = tr.dataset && tr.dataset.empId;
     let emp = null;
@@ -1267,6 +1272,22 @@ function applyTableFilters() {
     if (!emp && empId) {
       // Fallback: lokale items (oudere data-flow vóór Stage 6).
       try { emp = readEmployeeItems().find((x) => x.id === empId) || null; } catch (e) { /* */ }
+    }
+
+    // Search-input filter: match op voornaam/achternaam/email/functie/locatie
+    if (searchQ) {
+      const data = emp || {};
+      const dataExt = data.data || data._data || {};
+      const haystack = [
+        data.voornaam, data.achternaam, data.email,
+        dataExt.functie, dataExt.locatie, dataExt.dienstverband,
+        dataExt.werktype, dataExt.contracttype, dataExt.fase,
+        dataExt.bureau, dataExt.telefoon
+      ].filter(Boolean).join(" ").toLowerCase();
+      if (haystack.indexOf(searchQ) === -1) {
+        tr.classList.add("tr-filter-hidden");
+        return;
+      }
     }
 
     // DOM-based filters (kolommen bestaan in tabel) — Functie + Opleiding.
@@ -1566,6 +1587,25 @@ function initOpleidingFilter() {
 
 initFunctieFilter();
 initOpleidingFilter();
+
+// Module 04 Bug #18 fix: bind toolbar search-input → applyTableFilters
+(function initEmployeeSearchInput() {
+  function attach() {
+    const searchInput = document.querySelector(".toolbar input.search, .toolbar input[type=search]");
+    if (!searchInput || searchInput.dataset.bound === "1") return;
+    searchInput.dataset.bound = "1";
+    searchInput.addEventListener("input", function () {
+      try { applyTableFilters(); } catch (e) { /* */ }
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attach);
+  } else {
+    attach();
+  }
+  // Re-try na korte delay als toolbar later in render is ingevoegd
+  setTimeout(attach, 500);
+})();
 
 function closeHeaderActionsOverflow() {
   const panel = document.getElementById("header-actions-overflow-panel");
