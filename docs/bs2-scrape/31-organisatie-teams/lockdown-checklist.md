@@ -1,7 +1,7 @@
 # Module 31 — Teams LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 31 Organisatie / Teams (teams.html, BS2 /organization/teams)
-**Lockdown-status**: 🟡 30/30 ✅ — **wacht op merge + 2 HARDCORE CLEAN RUNS post-merge**
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
 **Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
@@ -46,41 +46,44 @@
 - [x] C9. Cascade re-renders bij besa:medewerkers-updated en besa:locaties-updated
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (Search/Beschrijving/Members-modal)
 
-## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-**Test methode**: navigeer naar /teams.html → controleer alle features post-Bug #65 + #66 fix.
+**Test methode**: navigeer naar `/teams.html?run=N` → verifieer alle 4 modals × 3 close-ways + search + filters + Bug #65 import-data live.
 
-### CLEAN RUN #1 — WACHT OP MERGE
-- [ ] BS1 teams.html laadt: h1="Teams", 10 teams visible
-- [ ] Bug #65 verified: 10 teams uit BS2 in lijst (Kantoor Magdalenenstraat t/m WLZ)
-- [ ] Search filter werkt op teamnaam
-- [ ] Gearchiveerd-toggle ON → 0 records (geen archived in DB)
-- [ ] Pagination: 1 page bij 30/page
-- [ ] 4 modals × 3 close-ways = 12/12:
+### CLEAN RUN #1 (post-PR #127 merge)
+
+- [x] BS1 teams.html laadt: h1="Teams", 10 rows, "1-10 van 10", "Pagina 1 van 1" ✅
+- [x] **Bug #65 verified live**: 10 teams alphabetisch (Achterwacht/Ambulant Extern/Breedstraat/Kantoor Magdalenenstraat/Leonard Bramerstraat/Magdalenenstraat/Varnebroek/Voorburggracht/WLZ/Zijperstraat) ✅
+- [x] **Bug #66 verified live — 12/12 modal × close-ways**:
   - teams-add-modal: X ✅ Escape ✅ Overlay ✅
-  - teams-members-modal: X ✅ Escape ✅ Overlay ✅
   - teams-archive-modal: X ✅ Escape ✅ Overlay ✅
   - teams-purge-modal: X ✅ Escape ✅ Overlay ✅
-- [ ] Klik op team-naam → edit-modal opent met data
-- [ ] Klik trash-icoon → archive-modal opent
-- [ ] Console = 0 app-errors
+  - teams-members-modal: X ✅ Escape ✅ Overlay ✅
+- [x] Search "Voorburg" → 1 row "1-1 van 1" ✅
+- [x] Clear → 10 rows terug ✅
+- [x] Gearchiveerd-toggle ON → empty state (geen archived in DB) ✅
+- [x] RPP 10 → "1-10 van 10", "Pagina 1 van 1" ✅
+- [x] Edit-modal via naam-click: opens met "Achterwacht" pre-populated ✅
+- [x] Console = 0 app-errors ✅
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- [ ] Identiek RUN #1 (geen fix tussendoor)
-- [ ] 10 teams visible
-- [ ] 12/12 modal close-ways
-- [ ] Console = 0 app-errors
+
+- [x] Identiek RUN #1: 10 rows, "1-10 van 10", "Pagina 1 van 1" ✅
+- [x] 12/12 modal × close-ways (alle 4 modals × X/Escape/Overlay) ✅
+- [x] Search "WLZ" → 1 row "1-1 van 1" ✅
+- [x] Clear → 10 rows terug ✅
+- [x] Console = 0 app-errors ✅
 
 ---
 
-## Eindstand (na 2 CLEAN RUNS)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 - **12/12 modal × close-ways** (4 modals × 3 close-ways)
-- Bug #65 (10 missing teams) verified live
-- Bug #66 (modals close-ways) verified live
+- Bug #65 (10 teams import) verified live
+- Bug #66 (modals close-ways defensieve fallback) verified live
 - Console errors 0
-- 10 teams actief
+- 10 teams actief (BS1 = BS2 100% match)
 
 📌 v3 Fase E: 4 stat-cards + Kolommen-kiezer + Laatst gewijzigd-kolom toevoegen.
 📌 DPA: Niet blokkerend voor Module 32 (Gebruikers).
