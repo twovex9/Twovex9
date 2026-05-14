@@ -7,10 +7,10 @@
 **Bevindingen vóór CLEAN RUNS**:
 - BS1 `salarisadministratie-exporter.html` bestond al volledig
 - saladminDB met methods: ready/pushHistory/pushOrt/refresh
-- **Geen bugs gevonden** — alle flows werken correct
 - BS1 export-history: 5-8 records (verschilt door user-acties), BS2: 15 records (legitiem verschil: history is user-action-runtime)
 
-**Geen fix-PRs nodig** voor Module 10.
+**1 bug gefixt via PR #88** (gevonden bij final 100% deep-dive):
+- #30: sa-ort-modal (Regel toevoegen in ORT-configuratie tab) sluit niet via Escape. Modal gebruikt style.display-pattern (niet hidden-attr). Fix: keydown listener specifiek voor ORT-modal in ortModule.
 
 ---
 
@@ -58,12 +58,14 @@ Live test op salarisadministratie-exporter.html.
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅)
 
-### CLEAN RUN #1
+### CLEAN RUN #1 (vers, na PR #88)
 - ✅ Scroll
 - ✅ Tab switch: Exporteren ↔ ORT-configuratie
-- ✅ Maand/Jaar select-inputs
+- ✅ Maand/Jaar select-inputs + Download-now checkbox
 - ✅ Export genereren action button
 - ✅ Dienst-gebaseerde export action button
+- ✅ **ORT modal × 3 close-ways: X ✅ Escape ✅ Overlay ✅** (Bug #30 verified)
+- ✅ CAO tabs (VVT ↔ jeugdzorg)
 - ✅ Console = 0 app-errors
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
