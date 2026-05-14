@@ -26,7 +26,7 @@
 | 17 | Cliënten - Organisaties | `docs/bs2-scrape/17-clienten-organisaties/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Bug #48 gefixt: 3 BS2 records (IHub/Youz/Gripzorg) toegevoegd via SQL INSERT. 93 records (BS1 superset, alle 4 BS2 aanwezig). |
 | 18 | Cliënten - Gemeenten | `docs/bs2-scrape/18-clienten-gemeenten/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Geen bugs gevonden. 238 records (BS1) / 316 records (BS2). Sample 5/5 BS2-records gefound in BS1. |
 | 19 | Cliënten - Urendeclaraties | `docs/bs2-scrape/19-clienten-urendeclaraties/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + ULTRA-DEEP. Bug #49 gefixt: kolom-headers "Gedebiteerde uren"→"Gebudgetteerde uren" + "Ingediende uren"→"Geregistreerde uren" (BS2 terminologie). 9 kolommen, header stats, filters Jaar/Maand/Zorgsoort/Reset, Maand vergrendelen. |
-| 20 | Cliënten - Uren budgetering | `docs/bs2-scrape/20-clienten-uren-budget/` | ⏳ TODO |
+| 20 | Cliënten - Uren budgetering | `docs/bs2-scrape/20-clienten-uren-budget/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + ULTRA-DEEP. Bug #50 gefixt: spelling "Uren budgettering" → "Uren budgetering" (BS2 single 't'). 19 files sidebar + title + h1 aangepast. 52 weken rijen, cliënt-selector + jaar-selector. BS1 superset met Bulk bewerken-feature. |
 | 21 | Cliënten - Facturen importeren | `docs/bs2-scrape/21-clienten-facturen-import/` | ⏳ TODO |
 | 22 | Cliënten - Incidenten | `docs/bs2-scrape/22-clienten-incidenten/` | ⏳ TODO |
 | 23 | Kilometers | `docs/bs2-scrape/23-kilometers/` | ⏳ TODO |
