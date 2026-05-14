@@ -11,8 +11,8 @@
 | 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **DONE** (user-override 2026-05-14 via "deze module is afgerond + naar volgende"). PR #49-#68 merged. Lockdown 30/30 + data-pariteit 4461/9/196 + 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor. 16 bugs gefixt. |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ✅ **DONE** (user-override 2026-05-14 "100% in orde bevestigd"). PR #70+#71 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. 4227 records geïmporteerd. Bug #17 gefixt. |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #73+#74 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. 198 medewerkers. Bug #18 gefixt. |
-| 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. PR #75 merged. Data-pariteit: 1=1 (2 garbage cleanup). Bug #19 (Escape trash modal) gefixt. |
-| 06 | HR - Opleidingen | `docs/bs2-scrape/06-hr-opleidingen/` | ⏳ TODO |
+| 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid"). PR #75+#76+#77+#78 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS. Data-pariteit 1=1. Bugs #19+#20 gefixt. Detail-page + ••• menu volledig getest. |
+| 06 | HR - Opleidingen | `docs/bs2-scrape/06-hr-opleidingen/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op override**. PR #79 merged. Data-pariteit BS1=BS2=69 (1 duplicate cleanup). Bugs #21+#22 gefixt. |
 | 07 | HR - Locaties | `docs/bs2-scrape/07-hr-locaties/` | ⏳ TODO |
 | 08 | HR - Salarishuis | `docs/bs2-scrape/08-hr-salarishuis/` | ⏳ TODO |
 | 09 | HR - Bureau's | `docs/bs2-scrape/09-hr-bureaus/` | ⏳ TODO |
