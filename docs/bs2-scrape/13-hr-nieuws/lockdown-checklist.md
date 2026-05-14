@@ -1,8 +1,8 @@
-# Module 13 — HR Nieuws LOCKDOWN CHECKLIST
+# Module 13 — HR Nieuws LOCKDOWN CHECKLIST (30/30 ✅ + 2 CLEAN RUNS + ULTRA-DEEP)
 
 **Module**: 13 HR Nieuws (nieuws.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bugs #35 + #37 fixes applied, wacht op merge + CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 CLEAN RUNS ZONDER fix tussendoor + ULTRA-DEEP 100% — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bugs gefixt**:
 - **#35** (data): 12 "Gepubliceerd" + 3 "Published" → 15× "Published" via Supabase UPDATE
@@ -48,23 +48,83 @@
 - [x] C9. besa:nieuws-updated event op window
 - [x] C10. parity.md: 100% functioneel + 2 bugs gefixt
 
-## D. ULTRA-DEEP CLEAN RUNS (pending — na PR-merge)
+## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)
 
-### CLEAN RUN #1
-- pending
+### CLEAN RUN #1 (post-PR #98 merge, fresh)
+- ✅ Bug #35 verify: 15/15 records status="Published"
+- ✅ Bug #37 verify: popover opent + 1 item "Archiveren" (active state)
+- ✅ Popover sluit via outside-click + Escape
+- ✅ h1="Nieuws", title="Nieuws — HR", sidebar Nieuws active
+- ✅ topbar Verlof = 0
+- ✅ Add-modal × 3 close: X ✅ Escape ✅ Overlay ✅
+- ✅ Edit-modal × 3 close: Terug ✅ Escape ✅ Overlay ✅
+- ✅ Delete-modal × 3 close + slider (0-100): X ✅ Escape ✅ Overlay ✅
+- ✅ Search "Zaffier": 10→2 rows ✅, restore: 10
+- ✅ Gearchiveerd-toggle: 0 archived rows
+- ✅ Sort Asc: First "Afscheid van Jamilla"
+- ✅ Console = 0 app-errors
 
 ### CLEAN RUN #2 (ZONDER fix tussendoor)
-- pending
+- ✅ Identiek RUN #1 + extra:
+  - Sort Desc: First "Wijzigingen binnen HR, verzuim"
+  - Sort Hide: Titel-kolom verbergt (kan via Kolommen-panel weer aan)
+  - Rows-per-page selector: 10/15/30/40/50 opties beschikbaar
+  - Kolommen panel: 3 toggles (Titel/Status/Aanmaakdatum)
+  - **ARCHIVED state popover (Bug #37 full coverage)**:
+    - Tijdelijk record archived → re-open via title-link → klik Meer-opties
+    - Popover toont 2 items: "Herstellen" (non-danger) + "Definitief verwijderen" (red danger)
+    - Restore + cleanup: 0 archived records final state
+- ✅ Console = 0 app-errors
+
+---
+
+## E. ULTRA-DEEP final 100% check
+
+### Sidebar volgorde (matches BS2)
+```
+0: Medewerkers (link)
+1: Competenties (link)
+2: Opleidingen (link)
+3: Locaties (link)
+4: Salarishuis (group, collapsed default)
+5: Bureau's (link)
+6: Salarisadministratie (link)
+7: Verlof (group, collapsed default)
+8: Compensatie (group, BS1-only — 4 sub-items)
+9: Verzuim (link, top-level) ← Bug #33 fix
+10: Nieuws (link, top-level, ACTIVE op nieuws.html)
+```
+
+### Cross-page sidebar consistency (4 pages tested)
+- index.html / competenties.html / verlof.html / verzuim.html
+- ✅ Nieuws is top-level overal
+- ✅ Verzuim is top-level overal
+- ✅ verzuim.html: Compensatie group collapsed (Bug #34 fix nog steeds OK)
+
+### Data
+- ✅ 15 records totaal, 15 active, 0 archived
+- ✅ Alle statussen "Published" (Bug #35 normalisatie nog steeds OK)
+
+### Visible headers (Kolommen panel test cycle)
+- ✅ Na hide+restore: 5 headers visible (select / Titel / Status / Aanmaakdatum / Acties)
+
+### Bug #37 deep verification — Popover state-conditioned items
+- ✅ Active state: 1 item "Archiveren"
+- ✅ Archived state: 2 items "Herstellen" + "Definitief verwijderen" (danger styling)
+- ✅ Sluit via outside-click
+- ✅ Sluit via Escape (modal blijft open)
+- ✅ Css: --shadow-pop, --r-md, --fill-hover, --red-soft (huisstijl-conform)
 
 ---
 
 ## Eindstand
 
-- Pending na PR-merge:
-  - 30/30 ✅
-  - 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor
-  - Bug #35 + #37 verified
-  - Console errors 0
-- User-override afwachten
+- 30/30 ✅ (A+B+C)
+- 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- ULTRA-DEEP final 100% check ✅
+- Bugs gefixt: **#35** (data, 15/15 "Published" via Supabase) + **#37** (UI, Meer-opties popover)
+- Console errors 0
+- Sidebar volgorde 100% conform BS2 HR-volgorde + cross-page consistent
+- 15 records data-pariteit met BS2
 
-📌 DPA: Niet blokkerend voor Module 14 (Fase A).
+📌 DPA: Niet blokkerend voor Module 14 (Fase A — Cliënten overview).
