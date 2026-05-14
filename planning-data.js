@@ -50,7 +50,17 @@
 
   function rowToObj(row) {
     if (!row) return null;
-    var data = row.data && typeof row.data === "object" ? row.data : {};
+    // BS2-import legacy: row.data kan een bs2_full bevatten (~3KB per record).
+    // Voor 4461 records = ~13MB → overschrijdt localStorage limiet (~5-10MB).
+    // Strip bs2_full + andere bs2_-prefixed legacy-velden uit cache. Backend
+    // behoudt data jsonb intact; UI heeft alleen top-level kolommen nodig.
+    var data = {};
+    if (row.data && typeof row.data === "object") {
+      Object.keys(row.data).forEach(function (k) {
+        if (k === "bs2_full" || k.indexOf("bs2_") === 0) return;
+        data[k] = row.data[k];
+      });
+    }
     return Object.assign({}, data, {
       id: row.id,
       start: row.start_iso || "",
@@ -65,6 +75,11 @@
       locatie: row.locatie || "",
       conflict: !!row.conflict,
       archived: !!row.archived,
+      pauze_uren: row.pauze_uren != null ? Number(row.pauze_uren) : 0,
+      vereist_aantal_medewerkers: row.vereist_aantal_medewerkers != null ? Number(row.vereist_aantal_medewerkers) : 1,
+      beschrijving: row.beschrijving || "",
+      open_voor_aanmelding: row.open_voor_aanmelding !== false,
+      parent_dienst_id: row.parent_dienst_id || null,
     });
   }
 

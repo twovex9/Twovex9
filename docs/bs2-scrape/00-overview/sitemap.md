@@ -7,7 +7,7 @@
 
 | # | Module | Folder | Status |
 |---|---|---|---|
-| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | 🟡 **IN-PROGRESS — wacht op user-override** — PR #48+#50+#55+#57+#58 merged. Lockdown **30/30 ✅** + **data-pariteit 15=15 + body content match** + **2 CLEAN RUNS achter elkaar (13/13 + 13/13)** zonder fixes tussendoor |
+| 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ **DONE** (user-override 2026-05-14: "Module 1 voor 100% is afgerond"). PR #48+#50+#55+#57+#58+#59 merged. Lockdown 30/30 + data-pariteit 15=15 + body match + 2 CLEAN RUNS 13/13 elk |
 | 02 | Planning | `docs/bs2-scrape/02-planning/` | 🟡 **IN-PROGRESS** — BS2-scrape klaar (PR #49 + #51 + #52 + #53), parity-fix PR #56 pending merge, **lockdown-checklist nog niet gestart (0/30)** |
 | 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | ⏳ TODO |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
