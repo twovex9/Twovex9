@@ -125,6 +125,69 @@
     });
   });
 
+  /* ── ••• Meer opties menu (Module 06 Bug #22 fix) ── */
+  var menuBtn = document.querySelector(".comp-detail-menu");
+  if (menuBtn) {
+    var menuEl = null;
+    function closeMenu() {
+      if (menuEl) { menuEl.remove(); menuEl = null; }
+      document.removeEventListener("click", outsideClick, true);
+    }
+    function outsideClick(e) {
+      if (menuEl && !menuEl.contains(e.target) && e.target !== menuBtn) closeMenu();
+    }
+    menuBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (menuEl) { closeMenu(); return; }
+      menuEl = document.createElement("div");
+      menuEl.className = "opl-detail-menu-popover";
+      menuEl.style.cssText = "position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:100;min-width:200px;";
+      menuEl.innerHTML = '<button type="button" class="opl-menu-archive" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:var(--r-sm)">Archiveren</button>' +
+                         '<button type="button" class="opl-menu-purge" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--red);border-radius:var(--r-sm)">Definitief verwijderen</button>';
+      document.body.appendChild(menuEl);
+      var r = menuBtn.getBoundingClientRect();
+      menuEl.style.left = (r.left) + "px";
+      menuEl.style.top = (r.bottom + window.scrollY + 4) + "px";
+      menuEl.querySelector(".opl-menu-archive").addEventListener("click", async function () {
+        closeMenu();
+        if (window.showArchiveConfirm) {
+          var ok = await window.showArchiveConfirm({ preview: document.getElementById("opl-hero-name") && document.getElementById("opl-hero-name").textContent || "" });
+          if (!ok) return;
+        }
+        try {
+          await window.opleidingenDB.archive(oplId);
+          if (window.showActionFeedback) window.showActionFeedback("archived", "Opleiding");
+          setTimeout(function () { window.location.href = "opleidingen.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Archiveren mislukt: " + err.message);
+        }
+      });
+      menuEl.querySelector(".opl-menu-purge").addEventListener("click", async function () {
+        closeMenu();
+        if (window.showSliderConfirmModal) {
+          var ok = await window.showSliderConfirmModal({
+            title: "Definitief verwijderen",
+            preview: document.getElementById("opl-hero-name") && document.getElementById("opl-hero-name").textContent || "",
+            okLabel: "Verwijderen",
+            cancelLabel: "Annuleren"
+          });
+          if (!ok) return;
+        }
+        try {
+          await window.opleidingenDB.delete(oplId);
+          if (window.showActionFeedback) window.showActionFeedback("deleted", "Opleiding");
+          setTimeout(function () { window.location.href = "opleidingen.html"; }, 600);
+        } catch (err) {
+          if (window.showError) window.showError("Verwijderen mislukt: " + err.message);
+        }
+      });
+      setTimeout(function () { document.addEventListener("click", outsideClick, true); }, 0);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && menuEl) closeMenu();
+    });
+  }
+
   var saveBtn = document.getElementById("opl-detail-save");
   if (saveBtn) {
     saveBtn.addEventListener("click", async function () {
