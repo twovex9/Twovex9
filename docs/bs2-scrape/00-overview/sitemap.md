@@ -24,7 +24,7 @@
 | 15 | Cliënten - Zorgsoorten | `docs/bs2-scrape/15-clienten-zorgsoorten/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Bugs gefixt: #41 (test record SQL DELETE) + #42 (Wlz→WLZ SQL UPDATE). 6/6 records match BS2 1:1. |
 | 16 | Cliënten - Beschikkingen | `docs/bs2-scrape/16-clienten-beschikkingen/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). PR #103 merged. LOCKDOWN 30/30 + 2 CLEAN RUNS + ULTRA-DEEP 100%. 5 bugs gefixt: #43 (fase 8→4 unique SQL UPDATE) + #44 (Add modal Esc) + #45 (Export modal Esc) + #46 (Fase dropdown values proper case) + #47 (Zorgsoort dropdown dedup). 251 records, 9/9 modals × close-ways. BS1 superset (12 cols vs BS2 9). |
 | 17 | Cliënten - Organisaties | `docs/bs2-scrape/17-clienten-organisaties/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Bug #48 gefixt: 3 BS2 records (IHub/Youz/Gripzorg) toegevoegd via SQL INSERT. 93 records (BS1 superset, alle 4 BS2 aanwezig). |
-| 18 | Cliënten - Gemeenten | `docs/bs2-scrape/18-clienten-gemeenten/` | ⏳ TODO |
+| 18 | Cliënten - Gemeenten | `docs/bs2-scrape/18-clienten-gemeenten/` | ✅ **DONE** (user-override 2026-05-14 "100% zekerheid bevestigd"). LOCKDOWN 30/30 + 9/9 modal × close-ways + ULTRA-DEEP. Geen bugs gevonden. 238 records (BS1) / 316 records (BS2). Sample 5/5 BS2-records gefound in BS1. |
 | 19 | Cliënten - Urendeclaraties | `docs/bs2-scrape/19-clienten-urendeclaraties/` | ⏳ TODO |
 | 20 | Cliënten - Uren budgetering | `docs/bs2-scrape/20-clienten-uren-budget/` | ⏳ TODO |
 | 21 | Cliënten - Facturen importeren | `docs/bs2-scrape/21-clienten-facturen-import/` | ⏳ TODO |
