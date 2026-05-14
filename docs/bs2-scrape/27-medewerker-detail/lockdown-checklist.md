@@ -1,8 +1,8 @@
-# Module 27 — Medewerker-detail LOCKDOWN CHECKLIST
+# Module 27 — Medewerker-detail LOCKDOWN CHECKLIST (30/30 ✅ + 2 HARDCORE CLEAN RUNS)
 
 **Module**: 27 Medewerker-detail (medewerker.html)
-**Lockdown-status**: 🟡 IN-PROGRESS — Bug #61 fix applied, wacht op merge + 2 HARDCORE CLEAN RUNS
-**Gestart**: 2026-05-14
+**Lockdown-status**: 🔒 30/30 ✅ + 2 HARDCORE CLEAN RUNS ZONDER fix tussendoor — **wacht op user-override**
+**Voltooid**: 2026-05-14
 
 **Bug gefixt**:
 - **#61** (UI): 4 emp-modals close-ways defensieve fallback in medewerker.js
@@ -44,17 +44,37 @@
 - [x] C9. Inloggen als (admin-functie) wordt via auth.admin.updateUserById
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Verlof-tab)
 
-## D. 2 HARDCORE CLEAN RUNS (pending — na PR-merge)
+## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
 
-### CLEAN RUN #1 — pending
-### CLEAN RUN #2 (ZONDER fix tussendoor) — pending
+**Test methode**: navigeer via /index.html → selecteer eerste medewerker rij ("Oumaima Achefay") → medewerker.html laadt geselecteerde medewerker uit localStorage.
+
+### CLEAN RUN #1 (post-PR #120 Bug #61 fix live)
+- ✅ Medewerker "Oumaima Achefay" geladen (title + sidebar card)
+- ✅ Alle 7 tabs activate: Details / Professioneel / Opleiding / Notities / Documenten / Verzuim / Verlof
+- ✅ Per tab visible h2 sections renderen
+- ✅ Verlof tab toont: Verlofsaldo (4 stat-cards) + Overgedragen uren 2025 (4 stat-cards) + Verlofsaldi (tabel jaren 2022-2026) + Verlofaanvraag geschiedenis
+- ✅ Alle 4 emp-modals × 3 close-ways = 12/12 (Bug #61 fix verified live):
+  - emp-doc-modal: X ✅ Escape ✅ Overlay ✅
+  - emp-doc-delete-modal: X ✅ Escape ✅ Overlay ✅
+  - emp-verzuim-modal: X ✅ Escape ✅ Overlay ✅
+  - emp-verlof-overd-modal: X ✅ Escape ✅ Overlay ✅
+- ✅ Sidebar card: Gebruikersinstellingen / Inloggen als / Contactgegevens / Adres / Overige informatie / Verjaardag
+- ✅ Console = 0 app-errors
+
+### CLEAN RUN #2 (ZONDER fix tussendoor)
+- ✅ Identiek RUN #1
+- ✅ 7 tabs allemaal clickable + render correct
+- ✅ 12/12 modal × close-ways
+- ✅ Console = 0 app-errors
 
 ---
 
-## Eindstand (pending)
+## Eindstand
 - 30/30 ✅
-- 2 HARDCORE CLEAN RUNS pending
-- Bug #61 verified
+- 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅
+- **12/12 modal × close-ways** (4 modals × 3 close-ways)
+- 7 tabs alle functioneel
+- Bug #61 (emp-modals close-ways) verified live
 - Console errors 0
 
 📌 DPA: Niet blokkerend voor Module 28 (Beleid).
