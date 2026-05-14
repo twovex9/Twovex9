@@ -526,10 +526,20 @@ function countMedewerkers(compNaam) {
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (cpModal && !cpModal.hasAttribute("hidden")) {
+    // Module 05 Bug #19 fix: generic Escape sluit topmost open modal
+    // (cp-purge, comp-delete, comp-add, comp-edit, etc.)
+    const openModals = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"));
+    if (openModals.length === 0) return;
+    const topmost = openModals[openModals.length - 1];
+    // Specifieke close-functies waar mogelijk, anders generic hide
+    if (cpModal && topmost.id === cpModal.id) {
       closeCompPurgeModal();
-      e.preventDefault();
+    } else {
+      topmost.setAttribute("hidden", "");
+      topmost.setAttribute("aria-hidden", "true");
+      if (!document.querySelector(".modal-overlay:not([hidden])")) document.body.classList.remove("modal-open");
     }
+    e.preventDefault();
   });
 
   // Top nav active state
