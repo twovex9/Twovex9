@@ -493,6 +493,21 @@
     $(cancelId).addEventListener("click", close);
     $(closeId).addEventListener("click", close);
 
+    // Bug #51 + #52 fix: Escape + Overlay close-ways
+    var modalEl = $(modalId);
+    if (modalEl) {
+      modalEl.addEventListener("click", function (e) {
+        if (e.target === modalEl) close();
+      });
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (modalEl && !modalEl.hasAttribute("hidden")) {
+        close();
+        e.stopPropagation();
+      }
+    });
+
     return { open: open, close: close };
   }
 
