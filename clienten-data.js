@@ -267,10 +267,23 @@
   async function update(id, partial) {
     if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
+    // Fase E.11 — optimistic-locking check: voorkomt overwrite van wijzigingen door andere user
+    var existing = getByIdSync(id) || {};
+    if (window.besaOptimisticLock && existing.laatstGewijzigd) {
+      var safe = await window.besaOptimisticLock.check("clienten", id, existing.laatstGewijzigd);
+      if (!safe) {
+        var answer = await window.besaOptimisticLock.showConflictModal({
+          recordName: (existing.voornaam || "") + " " + (existing.achternaam || ""),
+        });
+        if (answer !== "reload") {
+          throw new Error("Cliënt-wijziging geannuleerd — record was inmiddels gewijzigd door iemand anders");
+        }
+        return existing; // user kiest reload → modal triggert window.location.reload()
+      }
+    }
     // We doen een READ -> MERGE -> UPDATE zodat we het volledige object naar de
     // jsonb-kolom kunnen schrijven. Dat is robuust tegen race-condities binnen
     // dezelfde gebruiker (1 cliënt tegelijk).
-    var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     merged.id = id;
     var payload = objToUpdatePayload(merged);
