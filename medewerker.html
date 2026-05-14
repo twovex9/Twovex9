@@ -1749,5 +1749,21 @@
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
   <script src="medewerker.js"></script>
+  <script src="read-audit.js?v=ra1" defer></script>
+  <script>
+    // Fase E.6 — log read-access voor GDPR Art. 15 audit-trail
+    (function(){
+      var emp = (function(){try{return JSON.parse(localStorage.getItem("selectedEmployee"))||{};}catch(e){return {};}})();
+      if (!emp.id) return;
+      function tryLog(){
+        if (window.besaReadAudit && window.besaSupabase) {
+          window.besaReadAudit.log("Medewerker", emp.id);
+        } else {
+          setTimeout(tryLog, 500);
+        }
+      }
+      setTimeout(tryLog, 1500);
+    })();
+  </script>
 </body>
 </html>

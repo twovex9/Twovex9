@@ -235,6 +235,19 @@
     if (!id) throw new Error("id is verplicht.");
     if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var current = readCache().find(function (e) { return e.id === id; }) || {};
+    // Fase E.11 — optimistic-locking check
+    if (global.besaOptimisticLock && current.laatstGewijzigd) {
+      var safe = await global.besaOptimisticLock.check("medewerkers", id, current.laatstGewijzigd);
+      if (!safe) {
+        var answer = await global.besaOptimisticLock.showConflictModal({
+          recordName: ((current.voornaam || "") + " " + (current.achternaam || "")).trim() || id,
+        });
+        if (answer !== "reload") {
+          throw new Error("Medewerker-wijziging geannuleerd — record was inmiddels gewijzigd door iemand anders");
+        }
+        return current;
+      }
+    }
     // Reconstrueer het 'data' deel van de huidige cached medewerker:
     var currentData = {};
     Object.keys(current).forEach(function (k) {
@@ -244,7 +257,7 @@
     });
     var dbPatch = objToUpdatePayload(patch, currentData);
     if (Object.keys(dbPatch).length === 0) return current.id ? current : null;
-    var res = await window.besaSupabase
+    var res = await global.besaSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
