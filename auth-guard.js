@@ -393,5 +393,85 @@
     }
     listenForAuthChange();
     attachVisibilityChecks();
+    attachIdleTimeout();  // Fase E.12 — session-timeout idle-detector
   })();
+
+  // =================================================================
+  // Fase E.12 — Session-timeout idle-detector
+  // =================================================================
+  //
+  // Logt user uit na X minuten inactiviteit. Spiegelt BS2-gedrag.
+  // Default: 30 minuten (user-keuze #23 "zoals BS2").
+  //
+  // Detect activity: mousemove, keydown, click, scroll, touchstart.
+  // Throttled tot 1× per 30s om CPU te sparen.
+  function attachIdleTimeout() {
+    var IDLE_MINUTES = 30;
+    var IDLE_MS = IDLE_MINUTES * 60 * 1000;
+    var WARNING_MS = IDLE_MS - 60 * 1000;  // 1 min vóór logout
+    var lastActivityAt = Date.now();
+    var warningShown = false;
+    var warningEl = null;
+    var idleCheckTimer = null;
+    var throttleMs = 30000;
+    var lastResetAt = 0;
+
+    function resetIdleTimer() {
+      var now = Date.now();
+      if (now - lastResetAt < throttleMs) return;  // throttle
+      lastResetAt = now;
+      lastActivityAt = now;
+      if (warningShown && warningEl) {
+        warningEl.remove();
+        warningShown = false;
+        warningEl = null;
+      }
+    }
+
+    function showWarning(secondsLeft) {
+      if (warningShown) return;
+      warningShown = true;
+      warningEl = document.createElement("div");
+      warningEl.id = "besa-idle-warning";
+      warningEl.style.cssText = "position:fixed;top:20px;right:20px;background:var(--yellow-soft,#fef9c3);color:var(--text,#1a1a1a);" +
+        "padding:14px 18px;border-radius:var(--r-md,8px);box-shadow:0 6px 24px rgba(0,0,0,0.18);" +
+        "z-index:99999;font-family:var(--font-base,sans-serif);font-size:13px;max-width:320px;" +
+        "border-left:3px solid var(--yellow,#facc15);";
+      warningEl.innerHTML = '<strong>Sessie verloopt bijna</strong><br>' +
+        '<span id="besa-idle-countdown">Je wordt over ' + secondsLeft + ' seconden uitgelogd.</span><br>' +
+        '<span style="color:var(--text-muted,#666);font-size:12px;">Beweeg muis of toets om te blijven ingelogd.</span>';
+      document.body.appendChild(warningEl);
+    }
+
+    function checkIdle() {
+      var now = Date.now();
+      var elapsed = now - lastActivityAt;
+      if (elapsed >= IDLE_MS) {
+        // Force logout
+        console.info("[auth-guard] Session-timeout: idle " + (elapsed / 1000).toFixed(0) + "s, force logout");
+        if (warningEl) warningEl.remove();
+        try {
+          if (global.besaAuth && typeof global.besaAuth.signOut === "function") {
+            global.besaAuth.signOut().finally(function () { window.location.replace(buildLoginUrl() + "&idle=1"); });
+          } else {
+            window.location.replace(buildLoginUrl() + "&idle=1");
+          }
+        } catch (e) { window.location.href = buildLoginUrl() + "&idle=1"; }
+      } else if (elapsed >= WARNING_MS) {
+        var secondsLeft = Math.max(0, Math.ceil((IDLE_MS - elapsed) / 1000));
+        if (!warningShown) showWarning(secondsLeft);
+        else {
+          var cd = document.getElementById("besa-idle-countdown");
+          if (cd) cd.textContent = "Je wordt over " + secondsLeft + " seconden uitgelogd.";
+        }
+      }
+    }
+
+    ["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(function (evt) {
+      document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Check every 10s
+    idleCheckTimer = setInterval(checkIdle, 10000);
+  }
 })();
