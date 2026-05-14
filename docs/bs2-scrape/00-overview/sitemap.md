@@ -9,7 +9,7 @@
 |---|---|---|---|
 | 01 | Home + nieuws-feed | `docs/bs2-scrape/01-home/` | ✅ **DONE** (user-override 2026-05-14: "Module 1 voor 100% is afgerond"). PR #48+#50+#55+#57+#58+#59 merged. Lockdown 30/30 + data-pariteit 15=15 + body match + 2 CLEAN RUNS 13/13 elk |
 | 02 | Planning | `docs/bs2-scrape/02-planning/` | ✅ **DONE** (user-override 2026-05-14 via "deze module is afgerond + naar volgende"). PR #49-#68 merged. Lockdown 30/30 + data-pariteit 4461/9/196 + 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor. 16 bugs gefixt. |
-| 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | 🟡 **IN-PROGRESS** — gestart 2026-05-14 |
+| 03 | Urenregistratie | `docs/bs2-scrape/03-urenregistratie/` | 🟡 **LOCKDOWN 30/30 + 2 CLEAN RUNS — wacht op user-override**. PR #70 merged. BS1 werkuren.html + werkuren-labels.html bestonden al volledig. 4227 records geïmporteerd uit planning. 1 bug gefixt (Escape sluit modals). |
 | 04 | HR - Medewerkers | `docs/bs2-scrape/04-hr-medewerkers/` | ⏳ TODO |
 | 05 | HR - Competenties | `docs/bs2-scrape/05-hr-competenties/` | ⏳ TODO |
 | 06 | HR - Opleidingen | `docs/bs2-scrape/06-hr-opleidingen/` | ⏳ TODO |
