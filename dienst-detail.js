@@ -410,18 +410,10 @@
       });
     }
 
-    // Bewerken — open edit-modal vóór bestaande dienst
-    var editBtn = document.getElementById("planning-view-edit-btn");
-    editBtn && editBtn.addEventListener("click", function () {
-      if (!currentDienst) return;
-      // Hergebruik planning-add-modal als edit-modal (vult bestaande velden + save = update)
-      if (global.openPlanningEditModal) {
-        global.openPlanningEditModal(currentDienst);
-      } else {
-        // Fallback: dispatch event zodat planning.js het oppakt
-        global.dispatchEvent(new CustomEvent("besa:planning-edit-request", { detail: { dienst: currentDienst } }));
-      }
-    });
+    // Bewerken-knop click wordt al gebonden door planning.js initViewModal() →
+    // ui.viewingId = currentDienstId → openEditModal(id, false) → opent
+    // planning-dienst-panel met titel "Dienst bewerken". Geen extra handler hier
+    // (vorige iteratie veroorzaakte dubbele-modal-open bug omdat 2 handlers vuurden).
 
     // Toggle Open/Gesloten
     var togGesloten = document.getElementById("planning-toggle-gesloten");
