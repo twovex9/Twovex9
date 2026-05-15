@@ -262,24 +262,21 @@ function renderHomeNews() {
   if (!grid) return;
 
   if (greeting) {
-    // Alleen voornaam tonen voor "Welkom, ${naam}". Geen email-fallback
-    // (vroegere gedrag toonde "Welkom, sonck802@gmail.com" als profiel
-    // nog geen voornaam had — niet wenselijk).
+    // Bug #83 fix: gebruik profile.voornaam, fallback naar linked medewerker
+    // via medewerker_id (NIET sessionStorage.selectedEmployee — dat was de
+    // laatst-bekeken medewerker en gaf verkeerde naam in begroeting).
     let firstName = "";
+    let profile = null;
     if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
       try {
-        const p = window.profilesDB.getCurrentSync();
-        if (p && p.voornaam) firstName = String(p.voornaam).trim();
+        profile = window.profilesDB.getCurrentSync();
+        if (profile && profile.voornaam) firstName = String(profile.voornaam).trim();
       } catch (e) { /* */ }
     }
-    if (!firstName) {
-      // legacy fallback: sessionStorage selectedEmployee
+    if (!firstName && profile && profile.medewerkerId && window.medewerkersDB && typeof window.medewerkersDB.getByIdSync === "function") {
       try {
-        const raw = window.sessionStorage.getItem("selectedEmployee");
-        if (raw) {
-          const sel = JSON.parse(raw);
-          if (sel && sel.voornaam) firstName = String(sel.voornaam).trim();
-        }
+        const linked = window.medewerkersDB.getByIdSync(profile.medewerkerId);
+        if (linked && linked.voornaam) firstName = String(linked.voornaam).trim();
       } catch (e) { /* */ }
     }
     greeting.textContent = firstName ? `Welkom, ${firstName}` : "Welkom";
