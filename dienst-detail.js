@@ -115,15 +115,6 @@
     el.textContent = txt || "-";
   }
 
-  function renderToggle(dienst) {
-    var gesloten = document.getElementById("planning-toggle-gesloten");
-    var open = document.getElementById("planning-toggle-open");
-    if (!gesloten || !open) return;
-    var isOpen = dienst.open_voor_aanmelding !== false;
-    gesloten.classList.toggle("is-active", !isOpen);
-    open.classList.toggle("is-active", isOpen);
-  }
-
   function renderToegewezen(dienst, uitnodigingen) {
     var list = document.getElementById("planning-detail-toegewezen-list");
     var counter = document.getElementById("planning-detail-toegewezen-count");
@@ -315,7 +306,6 @@
     if (!currentDienst) return;
     var uitnodigingen = global.dienstUitnodigingenDB ? global.dienstUitnodigingenDB.getForDienstSync(currentDienstId) : [];
     var activiteiten = global.dienstActiviteitenDB ? global.dienstActiviteitenDB.getForDienstSync(currentDienstId) : [];
-    renderToggle(currentDienst);
     renderInfoRow(currentDienst);
     renderBeschrijving(currentDienst);
     renderToegewezen(currentDienst, uitnodigingen);
@@ -333,10 +323,18 @@
     currentDienst = dienst;
     currentDienstId = dienst.id;
 
-    var modal = document.getElementById("planning-view-modal");
-    if (!modal) return;
-    modal.removeAttribute("hidden");
-    modal.setAttribute("aria-hidden", "false");
+    // Right-side slide-in panel (vervangt vorige centered modal)
+    var panel = document.getElementById("planning-view-modal");
+    var scrim = document.getElementById("planning-view-scrim");
+    if (!panel) return;
+    if (scrim) scrim.removeAttribute("hidden");
+    panel.removeAttribute("hidden");
+    panel.setAttribute("aria-hidden", "false");
+    // Force reflow zodat de transitie van translateX(100%) → 0 zichtbaar animeert
+    requestAnimationFrame(function () {
+      if (scrim) scrim.classList.add("is-open");
+      panel.classList.add("is-open");
+    });
 
     refreshAllSections();
 
@@ -357,10 +355,17 @@
   }
 
   function close() {
-    var modal = document.getElementById("planning-view-modal");
-    if (!modal) return;
-    modal.setAttribute("hidden", "");
-    modal.setAttribute("aria-hidden", "true");
+    var panel = document.getElementById("planning-view-modal");
+    var scrim = document.getElementById("planning-view-scrim");
+    if (!panel) return;
+    // Start slide-out animatie via class-removal; pas na transitie hidden zetten
+    if (scrim) scrim.classList.remove("is-open");
+    panel.classList.remove("is-open");
+    panel.setAttribute("aria-hidden", "true");
+    setTimeout(function () {
+      panel.setAttribute("hidden", "");
+      if (scrim) scrim.setAttribute("hidden", "");
+    }, 260); // iets langer dan de 0.25s CSS-transition
     currentDienst = null;
     currentDienstId = null;
   }
@@ -390,18 +395,20 @@
   }
 
   function attachEvents() {
-    // Close X / overlay-click + Escape
-    var modal = document.getElementById("planning-view-modal");
-    if (modal) {
+    // Close X / scrim-click + Escape
+    var panel = document.getElementById("planning-view-modal");
+    var scrim = document.getElementById("planning-view-scrim");
+    if (panel) {
       document.getElementById("planning-view-close-btn") && document.getElementById("planning-view-close-btn").addEventListener("click", close);
-      modal.addEventListener("click", function (e) {
-        if (e.target === modal) close();
-      });
-      // Escape sluit view-modal of side-modals
+      // Klik op scrim (buiten panel) sluit het panel
+      if (scrim) {
+        scrim.addEventListener("click", close);
+      }
+      // Escape sluit panel of side-modals
       document.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;
-        if (modal.hasAttribute("hidden")) return;
-        // Eerst side-modal sluiten als die open is, anders main view-modal
+        if (panel.hasAttribute("hidden")) return;
+        // Eerst side-modal sluiten als die open is, anders main panel
         var openSide = ["planning-toewijzen-modal", "planning-uitnodigen-modal", "planning-delete-modal", "planning-edit-modal"]
           .map(function (id) { return document.getElementById(id); })
           .find(function (m) { return m && !m.hasAttribute("hidden"); });
@@ -415,26 +422,9 @@
     // planning-dienst-panel met titel "Dienst bewerken". Geen extra handler hier
     // (vorige iteratie veroorzaakte dubbele-modal-open bug omdat 2 handlers vuurden).
 
-    // Toggle Open/Gesloten
-    var togGesloten = document.getElementById("planning-toggle-gesloten");
-    var togOpen = document.getElementById("planning-toggle-open");
-    function toggleOpen(newState) {
-      if (!currentDienst) return;
-      if (currentDienst.open_voor_aanmelding === newState) return;
-      currentDienst.open_voor_aanmelding = newState;
-      if (global.planningDB && global.planningDB.update) {
-        global.planningDB.update(currentDienst.id, { open_voor_aanmelding: newState })
-          .then(function () {
-            renderToggle(currentDienst);
-            if (global.dienstActiviteitenDB) global.dienstActiviteitenDB.fetchForDienst(currentDienstId).then(refreshAllSections);
-          })
-          .catch(function (e) {
-            if (global.showError) global.showError("Toggle mislukt: " + e.message);
-          });
-      }
-    }
-    togGesloten && togGesloten.addEventListener("click", function () { toggleOpen(false); });
-    togOpen && togOpen.addEventListener("click", function () { toggleOpen(true); });
+    // Open/Gesloten-dienst toggle is per user-decision 2026-05-15 verwijderd uit
+    // de UI (sub-task v3-2026-05-15). De DB-kolom `planning.open_voor_aanmelding`
+    // blijft bestaan voor evt. toekomstige feature-mapping; geen UI-pad meer.
 
     // Toewijzen
     var toewijzenBtn = document.getElementById("planning-detail-toewijzen-btn");

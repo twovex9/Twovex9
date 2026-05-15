@@ -526,8 +526,9 @@
     </div>
   </div>
 
-  <!-- BS2-parity view-modal: 7 secties + Open/Gesloten toggle -->
-  <div class="modal-overlay" id="planning-view-modal" hidden aria-hidden="true">
+  <!-- BS2-parity dienst-detail side-panel: 7 secties (slide-in vanaf rechts) -->
+  <div class="planning-detail-scrim" id="planning-view-scrim" hidden></div>
+  <aside class="planning-detail-panel" id="planning-view-modal" hidden aria-hidden="true" aria-label="Dienst details">
     <div class="modal-dialog planning-view-dialog planning-view-dialog--full" role="dialog" aria-modal="true" aria-labelledby="planning-view-title" tabindex="-1">
       <div class="modal-header planning-detail-header">
         <h2 id="planning-view-title" class="modal-title">Dienstdetails</h2>
@@ -541,18 +542,6 @@
         </div>
       </div>
       <div class="modal-body planning-view-body" id="planning-view-body">
-        <!-- Open/Gesloten toggle -->
-        <div class="planning-detail-toggle">
-          <button type="button" class="planning-detail-toggle-btn" id="planning-toggle-gesloten" data-state="closed">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Gesloten dienst
-          </button>
-          <button type="button" class="planning-detail-toggle-btn is-active" id="planning-toggle-open" data-state="open">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-            Open dienst
-          </button>
-        </div>
-
         <!-- Top-info row -->
         <div class="planning-detail-info-row" id="planning-detail-info-row"></div>
 
@@ -614,7 +603,7 @@
         </button>
       </div>
     </div>
-  </div>
+  </aside>
 
   <!-- Toewijzen modal (over view-modal) -->
   <div class="modal-overlay" id="planning-toewijzen-modal" hidden aria-hidden="true">
