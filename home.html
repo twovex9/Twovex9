@@ -106,20 +106,22 @@
 
   <div class="modal-overlay modal-overlay--home-news" id="home-news-modal" hidden aria-hidden="true">
     <article class="home-news-modal" role="dialog" aria-modal="true" aria-labelledby="home-news-modal-title" tabindex="-1">
+      <!-- Bug #85 fix: titel BOVENAAN, body, image, dan auteur+datum onderaan -->
       <div class="home-news-modal-head">
-        <div class="home-news-modal-meta">
-          <p class="home-news-modal-author" id="home-news-modal-author">HR team</p>
-          <p class="home-news-modal-date" id="home-news-modal-date"></p>
-        </div>
+        <h2 class="home-news-modal-title" id="home-news-modal-title"></h2>
         <button type="button" class="modal-close" id="home-news-modal-close" aria-label="Sluiten">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <h2 class="home-news-modal-title" id="home-news-modal-title"></h2>
       <div class="home-news-modal-image-wrap">
         <img class="home-news-modal-image" id="home-news-modal-image" alt="" hidden />
       </div>
       <div class="home-news-modal-content" id="home-news-modal-content"></div>
+      <div class="home-news-modal-footer">
+        <p class="home-news-modal-author" id="home-news-modal-author">HR team</p>
+        <span class="home-news-modal-sep">•</span>
+        <p class="home-news-modal-date" id="home-news-modal-date"></p>
+      </div>
     </article>
   </div>
 

@@ -10204,6 +10204,109 @@ select.cd-config-select {
   margin-top: 0;
 }
 
+/* Bug #85 fix: rich-text rendering binnen modal — bold + links zichtbaar */
+.home-news-modal-content strong,
+.home-news-modal-content b {
+  font-weight: 700;
+  color: #111827;
+}
+.home-news-modal-content a {
+  color: var(--blue, #2962ff);
+  text-decoration: underline;
+}
+.home-news-modal-content a:hover {
+  text-decoration: underline;
+  filter: brightness(0.85);
+}
+.home-news-modal-content ul,
+.home-news-modal-content ol {
+  padding-left: 22px;
+  margin: 8px 0;
+}
+.home-news-modal-content h1,
+.home-news-modal-content h2,
+.home-news-modal-content h3 {
+  margin: 16px 0 8px;
+  font-weight: 700;
+}
+
+/* Bug #86: image in modal klikbaar -> lightbox */
+.home-news-modal-image {
+  cursor: zoom-in;
+  transition: opacity 0.15s;
+}
+.home-news-modal-image:hover {
+  opacity: 0.92;
+}
+
+/* Inline images in content body klikbaar */
+.home-news-modal-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 8px 0;
+  cursor: zoom-in;
+  display: block;
+}
+
+/* Image lightbox overlay */
+.home-news-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  cursor: zoom-out;
+  padding: 32px;
+}
+.home-news-lightbox[hidden] { display: none; }
+.home-news-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.4);
+}
+.home-news-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-news-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Bug #85: modal-footer met auteur + datum onderaan */
+.home-news-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+.home-news-modal-footer .home-news-modal-author,
+.home-news-modal-footer .home-news-modal-date {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 13px;
+}
+.home-news-modal-sep {
+  color: #d1d5db;
+}
+
 .content--planning {
   padding-top: 24px;
 }
