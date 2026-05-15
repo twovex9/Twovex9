@@ -253,6 +253,34 @@ function initNewsModal() {
     }
   });
 
+  // Bug #86 fix: klik op image (main of inline in body) → lightbox vergrooting
+  function openLightbox(src) {
+    if (!src) return;
+    let lightbox = document.getElementById("home-news-lightbox");
+    if (!lightbox) {
+      lightbox = document.createElement("div");
+      lightbox.id = "home-news-lightbox";
+      lightbox.className = "home-news-lightbox";
+      lightbox.innerHTML = '<button type="button" class="home-news-lightbox-close" aria-label="Sluiten">&times;</button><img alt="Vergrote afbeelding" />';
+      document.body.appendChild(lightbox);
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox || e.target.classList.contains("home-news-lightbox-close")) {
+          lightbox.hidden = true;
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !lightbox.hidden) lightbox.hidden = true;
+      });
+    }
+    lightbox.querySelector("img").src = src;
+    lightbox.hidden = false;
+  }
+  image.addEventListener("click", () => openLightbox(image.src));
+  content.addEventListener("click", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "IMG" && t.src) openLightbox(t.src);
+  });
+
   return { open };
 }
 
