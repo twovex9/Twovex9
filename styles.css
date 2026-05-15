@@ -10115,6 +10115,14 @@ select.cd-config-select {
   display: flex;
   flex-direction: column;
 }
+/* Side-modals (Toewijzen / Uitnodigen / Verwijderen) komen BOVEN het dienst-detail panel
+   met een soliderer backdrop zodat de modal-card niet "doorzichtig" voelt over het panel heen */
+.modal-overlay.planning-side-modal {
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.62);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
 .planning-detail-info-row {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); margin-bottom: 14px;
