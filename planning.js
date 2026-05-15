@@ -86,6 +86,8 @@ const filterState = {
   locatie: new Set(),
   /** Toewijzingsstatus uit screenshot (Toegewezen / Niet toegewezen / Vervanging vereist / Alle). */
   assignStatus: "alle",
+  /** Module 2 Bug #87: Dienstverband filter (Inhuur / Loondienst / alle = beide). */
+  employmentType: "alle",
   /** Single-select Teamlid (uit medewerkers van HR). */
   teamlid: "",
   /** Single-select Cliënt (uit hr_bureaus). */
@@ -741,6 +743,25 @@ function rowMatchesFilters(row) {
     if (st === "toegewezen" && !isAssigned) return false;
     if (st === "niet" && isAssigned) return false;
     if (st === "vervanging" && !wantsReplacement) return false;
+  }
+
+  /* Module 2 Bug #87 fix: Dienstverband filter (Inhuur / Loondienst / alle). */
+  const empType = filterState.employmentType || "alle";
+  if (empType !== "alle") {
+    // Lookup linked medewerker via teamlid-naam → bepaal dienstverband-veld.
+    // row.dienstverband mag direct gevuld zijn; anders fall-back op linked medewerker.
+    let rowDv = String(row.dienstverband || "").trim().toLowerCase();
+    if (!rowDv && row.teamlid && window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      try {
+        const med = window.medewerkersDB.getAllSync().find((m) => {
+          const fn = `${m.voornaam || ""} ${m.achternaam || ""}`.trim();
+          return fn === row.teamlid;
+        });
+        rowDv = String(med?.data?.dienstverband || med?.data?.contract_type || "").trim().toLowerCase();
+      } catch (e) { /* */ }
+    }
+    if (empType === "inhuur" && !/inhuur|zzp/.test(rowDv)) return false;
+    if (empType === "loondienst" && !/loondienst|loon/.test(rowDv)) return false;
   }
 
   const q = filterState.search.trim().toLowerCase();
@@ -2543,12 +2564,18 @@ function initDienstPanel() {
 }
 
 /**
- * Sprint 5 / S5 — Planning Exporteren CSV (BS2 parity).
- * Pakt huidige zichtbare items (na filters), normaliseert kolommen naar
- * Nederlandse labels, en delegeert naar `window.besaExport` voor de
- * format-keuze-modal (CSV/TXT/XLS/PDF). Filename bevat periode-info.
+ * Module 2 Bug #91 fix — Planning Exporteren XLSX (BS2 parity).
+ *
+ * 8 kolommen: Cliëntnaam / Cliëntnummer / Diensttype / Startdatum & tijd /
+ *             Einddatum & tijd / Pauze (min) / Gewerkte uren / Toegewezen medewerkers
+ *
+ * Toggle "Splitsen per cliënt aparte tabbladen":
+ *   - UIT (default): één sheet 'Planning' met alle rijen
+ *   - AAN: één sheet per cliëntnaam (incl. "Geen cliënt" voor open diensten)
+ *
+ * Gebruikt SheetJS (xlsx-full) vanaf CDN. Filename bevat periode + datum.
  */
-function exportPlanningCsv() {
+function openExportPlanningModal() {
   const items = getItemsForView();
   if (items.length === 0) {
     if (typeof window.showActionFeedback === "function") {
@@ -2556,41 +2583,53 @@ function exportPlanningCsv() {
     }
     return;
   }
+  const modal = document.getElementById("planning-export-modal");
+  if (!modal) {
+    // Fallback: direct exporteren zonder modal als markup ontbreekt
+    return doExportPlanningXlsx(items, false);
+  }
+  // Reset state
+  const splitCb = document.getElementById("planning-export-split");
+  const errEl = document.getElementById("planning-export-err");
+  if (splitCb) splitCb.checked = false;
+  if (errEl) { errEl.hidden = true; errEl.textContent = ""; }
+  modal.hidden = false;
+}
 
-  // Bouw export-rijen met user-friendly NL labels
+function closeExportPlanningModal() {
+  const modal = document.getElementById("planning-export-modal");
+  if (modal) modal.hidden = true;
+}
+
+function buildExportRow(r) {
   const fmtDT = (iso) => {
     if (!iso) return "";
     try {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return String(iso);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
       const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
       const hh = String(d.getHours()).padStart(2, "0");
       const mi = String(d.getMinutes()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+      return `${dd}-${mm}-${yyyy} ${hh}:${mi}`;
     } catch (e) { return String(iso); }
   };
-  const rows = items.map((r) => ({
-    Datum: r.start ? new Date(r.start).toLocaleDateString("nl-NL") : "",
-    Start: r.start ? new Date(r.start).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : "",
-    Einde: r.einde ? new Date(r.einde).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : "",
-    Diensttype: r.diensttype || "",
-    Functie: r.functie || "",
-    Teamlid: r.teamlid || "",
-    Cliënt: r.client || "",
-    Afdeling: r.afdeling || "",
-    Vestiging: r.vestiging || "",
-    Locatie: r.locatie || "",
-    Uren: r.start && r.einde ? formatHoursShort(durationHours(r.start, r.einde)) : "",
-    Tarief: r.tarief != null ? formatEuro(r.tarief) : "",
-  }));
-  const columns = [
-    "Datum", "Start", "Einde", "Diensttype", "Functie",
-    "Teamlid", "Cliënt", "Afdeling", "Vestiging", "Locatie", "Uren", "Tarief",
-  ];
+  const pauzeMin = (r.pauzeMinuten != null && r.pauzeMinuten !== "") ? Number(r.pauzeMinuten) : (r.pauze_minuten != null ? Number(r.pauze_minuten) : "");
+  const gewerkteUren = (r.start && r.einde) ? durationHours(r.start, r.einde) : "";
+  return {
+    "Cliëntnaam": r.client || r.cliënt || "Geen cliënt",
+    "Cliëntnummer": r.clientNummer || r.client_nummer || r.bs2_id || "",
+    "Diensttype": r.diensttype || "",
+    "Startdatum & tijd": fmtDT(r.start),
+    "Einddatum & tijd": fmtDT(r.einde),
+    "Pauze (min)": pauzeMin === "" ? "" : pauzeMin,
+    "Gewerkte uren": gewerkteUren === "" ? "" : Number(gewerkteUren.toFixed(2)),
+    "Toegewezen medewerkers": r.teamlid || "",
+  };
+}
 
-  // Filename met periode
+function planningExportFilename() {
   let periodeSlug = "";
   try {
     if (ui.calMode === "day" && ui.dayDate) periodeSlug = new Date(ui.dayDate).toISOString().slice(0, 10);
@@ -2600,37 +2639,60 @@ function exportPlanningCsv() {
       periodeSlug = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
     }
   } catch (e) { periodeSlug = ""; }
-  const filename = periodeSlug ? `planning-${periodeSlug}` : `planning-${new Date().toISOString().slice(0, 10)}`;
+  return periodeSlug
+    ? `planning_export_${new Date().toISOString().slice(0, 10).replace(/-/g, "_")}_${periodeSlug}`
+    : `planning_export_${new Date().toISOString().slice(0, 10).replace(/-/g, "_")}`;
+}
 
-  if (typeof window.besaExport === "function") {
-    window.besaExport({
-      filename: filename,
-      title: "Planning",
-      data: rows,
-      columns: columns,
-    });
-  } else {
-    // Fallback: directe CSV-download (besa-export.js niet geladen)
-    const csvField = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const head = columns.map(csvField).join(";");
-    const body = rows.map((r) => columns.map((c) => csvField(r[c])).join(";")).join("\n");
-    const content = "﻿" + head + "\n" + body;
-    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename + ".csv";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      try { URL.revokeObjectURL(a.href); } catch (e) { /* */ }
-      if (a.parentNode) a.parentNode.removeChild(a);
-    }, 100);
+function doExportPlanningXlsx(items, splitPerClient) {
+  if (typeof window.XLSX === "undefined") {
     if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback("exported", filename + ".csv");
+      window.showActionFeedback("error", "Export mislukt", "SheetJS niet geladen. Vernieuw de pagina.");
     }
+    return;
   }
-  // Voorkom dat de daadwerkelijke 'fmtDT' helper niet wordt opgenomen (lint clean)
-  void fmtDT;
+  const filename = planningExportFilename();
+
+  if (!splitPerClient) {
+    // 1 sheet 'Planning' met alle records
+    const data = items.map(buildExportRow);
+    const ws = window.XLSX.utils.json_to_sheet(data);
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, "Planning");
+    window.XLSX.writeFile(wb, filename + ".xlsx");
+  } else {
+    // Group by client, één sheet per cliënt
+    const groups = new Map();
+    items.forEach((r) => {
+      const key = (r.client && String(r.client).trim()) || "Geen cliënt";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    const wb = window.XLSX.utils.book_new();
+    // Sheets gesorteerd alfabetisch, met "Geen cliënt" eerst
+    const keys = Array.from(groups.keys()).sort((a, b) => {
+      if (a === "Geen cliënt") return -1;
+      if (b === "Geen cliënt") return 1;
+      return a.localeCompare(b, "nl");
+    });
+    keys.forEach((clientName) => {
+      const data = groups.get(clientName).map(buildExportRow);
+      const ws = window.XLSX.utils.json_to_sheet(data);
+      // Sheet-naam moet ≤ 31 chars en geen :\/?* []
+      let sheetName = clientName.replace(/[:\\/?*\[\]]/g, "").slice(0, 31) || "Sheet";
+      window.XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+    window.XLSX.writeFile(wb, filename + ".xlsx");
+  }
+
+  if (typeof window.showActionFeedback === "function") {
+    window.showActionFeedback("exported", filename + ".xlsx");
+  }
+}
+
+function exportPlanningCsv() {
+  // Module 2 Bug #91 — open modal i.p.v. direct exporteren
+  openExportPlanningModal();
 }
 
 function initAddModal() {
@@ -2793,6 +2855,14 @@ function initNav() {
     });
   });
 
+  /* Module 2 Bug #87 fix: Dienstverband filter radio */
+  document.querySelectorAll('input[name="planning-employment-type"]').forEach((r) => {
+    r.addEventListener("change", () => {
+      if (r.checked) filterState.employmentType = r.value || "alle";
+      renderAllViews();
+    });
+  });
+
   /* Sidebar: Diensttype filter dropdown */
   document.getElementById("filter-diensttype-trigger")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -2844,10 +2914,34 @@ function initNav() {
       "locatie",
     ].forEach((k) => filterState[k].clear());
     filterState.assignStatus = "alle";
+    filterState.employmentType = "alle";
     filterState.teamlid = "";
     filterState.client = "";
     filterState.locatieToolbar = "";
+    // Reset radio-UI state
+    const alleAssign = document.querySelector('input[name="planning-assign-status"][value="alle"]');
+    if (alleAssign) alleAssign.checked = true;
+    const alleEmp = document.querySelector('input[name="planning-employment-type"][value="alle"]');
+    if (alleEmp) alleEmp.checked = true;
     renderAllViews();
+  });
+
+  /* Module 2 Bug #91 fix: Export-modal handlers */
+  document.getElementById("planning-export-close")?.addEventListener("click", closeExportPlanningModal);
+  document.getElementById("planning-export-cancel")?.addEventListener("click", closeExportPlanningModal);
+  document.getElementById("planning-export-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "planning-export-modal") closeExportPlanningModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    const m = document.getElementById("planning-export-modal");
+    if (e.key === "Escape" && m && !m.hidden) closeExportPlanningModal();
+  });
+  document.getElementById("planning-export-go")?.addEventListener("click", () => {
+    const splitCb = document.getElementById("planning-export-split");
+    const split = splitCb && splitCb.checked;
+    const items = getItemsForView();
+    closeExportPlanningModal();
+    doExportPlanningXlsx(items, !!split);
   });
   document.addEventListener("click", (ev) => {
     if (ev.target.closest?.(".planning-erm-card")) return;
@@ -2872,6 +2966,7 @@ function serializeFilterStateForPreset() {
   return {
     diensttypes: Array.from(filterState.diensttypes || []),
     assignStatus: filterState.assignStatus || "alle",
+    employmentType: filterState.employmentType || "alle",
     teamlid: filterState.teamlid || "",
     client: filterState.client || "",
     locatieToolbar: filterState.locatieToolbar || "",
@@ -2883,6 +2978,7 @@ function applyFilterStateFromPreset(fs) {
   filterState.diensttypes.clear();
   (Array.isArray(fs.diensttypes) ? fs.diensttypes : []).forEach((d) => filterState.diensttypes.add(d));
   filterState.assignStatus = fs.assignStatus || "alle";
+  filterState.employmentType = fs.employmentType || "alle";
   filterState.teamlid = fs.teamlid || "";
   filterState.client = fs.client || "";
   filterState.locatieToolbar = fs.locatieToolbar || "";
@@ -2894,6 +2990,9 @@ function applyFilterStateFromPreset(fs) {
   if (locSel) locSel.value = filterState.locatieToolbar;
   document.querySelectorAll('input[name="planning-assign-status"]').forEach((r) => {
     r.checked = (r.value === filterState.assignStatus);
+  });
+  document.querySelectorAll('input[name="planning-employment-type"]').forEach((r) => {
+    r.checked = (r.value === filterState.employmentType);
   });
   try { renderFilterDiensttypeMultiselect(); } catch (e) { /* */ }
   syncFilterDtTriggerText();

@@ -164,6 +164,16 @@
               </div>
             </div>
 
+            <!-- Module 2 fix: Dienstverband filter (Inhuur / Loondienst / beide) — was missing in BS1 -->
+            <div class="planning-erm-fld">
+              <span class="planning-erm-fld-label">Dienstverband</span>
+              <div class="planning-erm-radios planning-erm-radios--employment" role="radiogroup" aria-label="Dienstverband">
+                <label class="planning-erm-radio"><input type="radio" name="planning-employment-type" value="inhuur"> Inhuur</label>
+                <label class="planning-erm-radio"><input type="radio" name="planning-employment-type" value="loondienst"> Loondienst</label>
+                <label class="planning-erm-radio"><input type="radio" name="planning-employment-type" value="alle" checked> Inhuur en Loondienst</label>
+              </div>
+            </div>
+
             <div class="planning-erm-fld">
               <label class="planning-erm-fld-label" for="filter-teamlid">Teamlid</label>
               <div class="planning-erm-fld-selectwrap">
@@ -691,6 +701,31 @@
   <script src="medewerkers-data.js"></script>
   <script src="competenties-data.js"></script>
   <script src="dienst-detail.js"></script>
+  <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="planning.js"></script>
+
+  <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->
+  <div id="planning-export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="planning-export-title" hidden>
+    <div class="modal-card planning-export-card">
+      <div class="modal-header">
+        <h2 id="planning-export-title">Planning exporteren</h2>
+        <button type="button" class="modal-close" id="planning-export-close" aria-label="Sluiten">×</button>
+      </div>
+      <div class="planning-export-body">
+        <p class="planning-export-info">Exporteer de huidige planning (na actieve filters) als Excel-bestand.</p>
+        <label class="planning-export-toggle">
+          <input type="checkbox" id="planning-export-split" />
+          <span>Splitsen per cliënt (aparte tabbladen)</span>
+        </label>
+        <p class="planning-export-toggle-help">Standaard: 1 tabblad met alle planning-regels. Aangevinkt: één tabblad per cliënt (plus "Geen cliënt" voor open diensten).</p>
+        <p id="planning-export-err" class="planning-export-err" hidden></p>
+      </div>
+      <div class="planning-export-actions">
+        <button type="button" class="btn-outline" id="planning-export-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="planning-export-go">Exporteren</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

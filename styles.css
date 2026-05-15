@@ -10288,6 +10288,64 @@ select.cd-config-select {
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* Module 2 Bug #87 fix: Dienstverband radios in planning sidebar */
+.planning-erm-radios--employment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Module 2 Bug #91 fix: Planning export-modal */
+.planning-export-card {
+  max-width: 480px;
+  width: 92vw;
+}
+.planning-export-body {
+  padding: 18px 22px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.planning-export-info {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+}
+.planning-export-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: var(--font-base);
+  font-weight: 500;
+  padding: 8px 0;
+}
+.planning-export-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+.planning-export-toggle-help {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+  padding-left: 28px;
+}
+.planning-export-err {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--red-soft, #fce5e5);
+  color: var(--red, #a3302a);
+  border-radius: var(--r-sm);
+  font-size: var(--font-table-cell);
+}
+.planning-export-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 22px 18px;
+}
+
 /* Bug #85: modal-footer met auteur + datum onderaan */
 .home-news-modal-footer {
   display: flex;
