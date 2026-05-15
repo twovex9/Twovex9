@@ -195,6 +195,28 @@ function readDiensttypes() {
   });
 }
 
+/** Module 2 Bug #90 fix: kleur per diensttype komt uit `comp_diensttypes.kleur`
+ *  (Supabase, centrale config). Fallback op hardcoded DIENSTTYPE_COLORS.
+ *  Zo matchen filter-chips en schedule-cards 1-op-1, en past admin-config in
+ *  Compensatie → Diensttypes automatisch overal toe. */
+function colorForDiensttype(naam) {
+  if (!naam) return "#94a3b8";
+  const trimmed = String(naam).trim();
+  try {
+    if (window.compDiensttypesDB && typeof window.compDiensttypesDB.getAllSync === "function") {
+      const list = window.compDiensttypesDB.getAllSync() || [];
+      const dt = list.find((d) => {
+        const n = String(d.naam || d.diensttype || "").trim();
+        return n.toLowerCase() === trimmed.toLowerCase();
+      });
+      if (dt && dt.kleur) return dt.kleur;
+    }
+  } catch (e) { /* fallback */ }
+  // Fallback: slug-normalisatie naar hardcoded constants
+  const slug = trimmed.toLowerCase().replace(/\s+/g, "_");
+  return DIENSTTYPE_COLORS[slug] || DIENSTTYPE_COLORS[trimmed.toLowerCase()] || "#94a3b8";
+}
+
 /** Unieke diensttypes uit compensatie (comp_diensttypes_configs), zelfde volgorde als in compensatie-UI. */
 function readCompensatieDiensttypeOptions() {
   const configs = readJsonArray(DIENSTTYPES_STORAGE_KEY);
@@ -207,14 +229,14 @@ function readCompensatieDiensttypeOptions() {
     out.push({
       value: v,
       label: DIENSTTYPE_LABELS[v] || v,
-      color: DIENSTTYPE_COLORS[v] || "#94a3b8",
+      color: colorForDiensttype(v),
     });
   });
   if (out.length === 0) {
     return DIENSTTYPE_ORDER.map((k) => ({
       value: k,
       label: DIENSTTYPE_LABELS[k],
-      color: DIENSTTYPE_COLORS[k] || "#94a3b8",
+      color: colorForDiensttype(DIENSTTYPE_LABELS[k] || k),
     }));
   }
   return out.sort(
@@ -327,6 +349,32 @@ function resolveDiensttypeKey(raw) {
 }
 
 function readClienten() {
+  // Module 2 Bug #92 fix: gebruik centrale clientenDB (individuele cliënten),
+  // NIET bureaus (organisaties). Sync automatisch via besa:clienten-updated event.
+  try {
+    if (window.clientenDB && typeof window.clientenDB.getAllSync === "function") {
+      const all = window.clientenDB.getAllSync() || [];
+      const names = all
+        .filter((c) => !c.archived)
+        .map((c) => {
+          const v = String(c.voornaam || "").trim();
+          const a = String(c.achternaam || "").trim();
+          const naam = `${v} ${a}`.trim();
+          return naam || c.naam || "";
+        })
+        .filter(Boolean);
+      if (names.length) return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "nl"));
+    }
+  } catch (e) { /* fallback */ }
+  // Fallback 1: unique waardes uit planning.client kolom (live data)
+  try {
+    if (window.planningDB && typeof window.planningDB.getAllSync === "function") {
+      const all = window.planningDB.getAllSync() || [];
+      const names = Array.from(new Set(all.map((r) => String(r.client || "").trim()).filter(Boolean)));
+      if (names.length) return names.sort((a, b) => a.localeCompare(b, "nl"));
+    }
+  } catch (e) { /* fallback */ }
+  // Fallback 2: legacy bureaus (organisaties — minder ideaal)
   const bureaus = readJsonArray(BUREAUS_STORAGE_KEY).filter((b) => !b.archived);
   const names = bureaus.map((b) => String(b.naam || "").trim()).filter(Boolean);
   if (names.length) return names;
@@ -1110,11 +1158,14 @@ function buildShiftCardEl(it, gi, overlapIds) {
   const autoOverlap = overlapIds && overlapIds.has(it.id);
   if (it.conflict || autoOverlap) card.classList.add("planning-erm-card--conflict");
   if (ui.selectedId === it.id) card.classList.add("is-selected");
-  /* Streep-kleur volgt het diensttype (zoals in screenshot per dienst). */
+  /* Streep-kleur volgt het diensttype (zoals in screenshot per dienst).
+   * Module 2 Bug #90 fix: gebruik colorForDiensttype() helper die eerst
+   * comp_diensttypes.kleur leest (sync met filter-chip-kleur). */
   const dtParts = rowDiensttypeLabels(it);
   const firstLabel = dtParts[0];
   const dtKey = resolveDiensttypeKey(firstLabel || it.diensttype || it.functie);
-  const accent = (dtKey && DIENSTTYPE_COLORS[dtKey]) || GRID_ACCENT[gi % GRID_ACCENT.length];
+  const dtNaam = firstLabel || it.diensttype || it.functie || "";
+  const accent = colorForDiensttype(dtNaam) || (dtKey && DIENSTTYPE_COLORS[dtKey]) || GRID_ACCENT[gi % GRID_ACCENT.length];
   card.style.setProperty("--erv-stripe", accent);
   const overlapTag =
     autoOverlap && !it.conflict
@@ -3235,6 +3286,13 @@ function initPlanningPage() {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:comp-diensttypes-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
+  // Module 2 Bug #92: cliënt-dropdown sync wanneer cliënten elders in systeem worden gewijzigd
+  window.addEventListener("besa:clienten-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
+  window.addEventListener("besa:medewerkers-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   // Sprint 4 / S4: filter-voorinstellingen lijst rendert direct uit cache + live-refresh
