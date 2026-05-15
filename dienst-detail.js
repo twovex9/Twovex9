@@ -394,6 +394,278 @@
       }).join("");
   }
 
+  // ===== BS2-parity rijke uitnodigen-picker (sub-task 2026-05-15) =====
+  // Toont per medewerker: avatar, naam, beschikbaarheid-warnings, uurtarief.
+  // Warnings: locatie-mismatch, niet-ingeroosterd, planning-overlap, verzuim.
+
+  var pickerCache = { overlapByMid: null, verzuimByMid: null, dienstId: null };
+  var pickerEventsBound = false;
+  var WEEKDAY_SLUGS = ["zo", "ma", "di", "wo", "do", "vr", "za"];
+  var WEEKDAY_NAMES = { zo: "zondag", ma: "maandag", di: "dinsdag", wo: "woensdag", do: "donderdag", vr: "vrijdag", za: "zaterdag" };
+
+  function getInitials(med) {
+    if (!med) return "??";
+    var f = (med.voornaam || "").trim();
+    var l = (med.achternaam || "").trim();
+    if (f && l) return (f[0] + l[0]).toUpperCase();
+    if (f) return f.slice(0, 2).toUpperCase();
+    if (l) return l.slice(0, 2).toUpperCase();
+    return "??";
+  }
+
+  function formatEuro(n) {
+    if (n === null || n === undefined || n === "" || isNaN(n)) return null;
+    return "€ " + Number(n).toFixed(2).replace(".", ",");
+  }
+
+  function getMedewerkerUurtarief(med) {
+    if (!med || !med.data) return null;
+    var t = med.data.uurTarief;
+    if (t === null || t === undefined || t === "") return null;
+    var n = parseFloat(t);
+    return isNaN(n) ? null : n;
+  }
+
+  function parseRooster(raw) {
+    if (!raw) return null;
+    if (typeof raw === "string") {
+      try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+    return raw;
+  }
+
+  function parseTimeToMinutes(s) {
+    if (!s || typeof s !== "string") return null;
+    var parts = s.split(":");
+    if (parts.length < 2) return null;
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+
+  async function loadAvailabilityData(dienst) {
+    if (!dienst || !dienst.start_iso || !dienst.einde_iso) {
+      return { overlapByMid: {}, verzuimByMid: {} };
+    }
+    if (pickerCache.dienstId === dienst.id && pickerCache.overlapByMid && pickerCache.verzuimByMid) {
+      return { overlapByMid: pickerCache.overlapByMid, verzuimByMid: pickerCache.verzuimByMid };
+    }
+    var supa = global.besaSupabase;
+    var overlapByMid = {};
+    var verzuimByMid = {};
+    var dienstDateStr = new Date(dienst.start_iso).toISOString().slice(0, 10);
+    var dS = new Date(dienst.start_iso).getTime();
+    var dE = new Date(dienst.einde_iso).getTime();
+
+    if (supa) {
+      try {
+        // Query 1: alle actieve uitnodigingen/toewijzingen met dienst-tijdvenster
+        var r1 = await supa
+          .from("dienst_uitnodigingen")
+          .select("medewerker_id, dienst_id, status, planning:dienst_id(id, start_iso, einde_iso, locatie, diensttype)")
+          .in("status", ["toegewezen", "uitgenodigd"]);
+        if (r1.error) throw r1.error;
+        (r1.data || []).forEach(function (inv) {
+          if (!inv.planning) return;
+          if (inv.dienst_id === dienst.id) return;
+          var oStart = new Date(inv.planning.start_iso).getTime();
+          var oEnd = new Date(inv.planning.einde_iso).getTime();
+          if (oStart < dE && oEnd > dS) {
+            if (!overlapByMid[inv.medewerker_id]) overlapByMid[inv.medewerker_id] = [];
+            overlapByMid[inv.medewerker_id].push(inv.planning);
+          }
+        });
+      } catch (e) {
+        console.error("[uitnodigen-picker] overlap-query mislukt:", e);
+      }
+
+      try {
+        // Query 2: actieve verzuim-perioden die de dienst-datum dekken
+        var r2 = await supa
+          .from("medewerker_verzuim_perioden")
+          .select("medewerker_id, type, eerst_ziektedag, werkelijke_terug, verwachte_terug, status")
+          .lte("eerst_ziektedag", dienstDateStr);
+        if (r2.error) throw r2.error;
+        (r2.data || []).forEach(function (v) {
+          var terug = v.werkelijke_terug || v.verwachte_terug;
+          if (terug && terug < dienstDateStr) return;
+          if (!verzuimByMid[v.medewerker_id]) verzuimByMid[v.medewerker_id] = [];
+          verzuimByMid[v.medewerker_id].push(v);
+        });
+      } catch (e) {
+        console.error("[uitnodigen-picker] verzuim-query mislukt:", e);
+      }
+    }
+
+    pickerCache = { overlapByMid: overlapByMid, verzuimByMid: verzuimByMid, dienstId: dienst.id };
+    return { overlapByMid: overlapByMid, verzuimByMid: verzuimByMid };
+  }
+
+  function getAvailabilityWarnings(med, dienst, data) {
+    var warnings = [];
+    if (!med || !dienst) return warnings;
+
+    // 1. Locatie-check (data.locatiesSelected is array van locatie-namen)
+    var locaties = (med.data && Array.isArray(med.data.locatiesSelected)) ? med.data.locatiesSelected : [];
+    if (dienst.locatie && locaties.length > 0 && locaties.indexOf(dienst.locatie) === -1) {
+      warnings.push({ type: "locatie", text: "Medewerker is niet toegewezen aan deze locatie" });
+    }
+
+    var dienstStart = new Date(dienst.start_iso);
+    var dienstEinde = new Date(dienst.einde_iso);
+
+    // 2. Rooster-check (data.rooster is stringified JSON met per-dag enabled/start/end)
+    var rooster = parseRooster(med.data && med.data.rooster);
+    if (rooster) {
+      var dag = WEEKDAY_SLUGS[dienstStart.getDay()];
+      var rd = rooster[dag];
+      if (!rd || !rd.enabled) {
+        warnings.push({ type: "rooster_dag", text: "Niet ingeroosterd op " + WEEKDAY_NAMES[dag] });
+      } else {
+        var rStart = parseTimeToMinutes(rd.start);
+        var rEnd = parseTimeToMinutes(rd.end);
+        var dStartMin = dienstStart.getHours() * 60 + dienstStart.getMinutes();
+        var dEndMin = dienstEinde.getHours() * 60 + dienstEinde.getMinutes();
+        if (rStart !== null && rEnd !== null && (dStartMin < rStart || dEndMin > rEnd)) {
+          warnings.push({ type: "rooster_tijd", text: "Dienst valt buiten werkuren (" + rd.start + "–" + rd.end + ")" });
+        }
+      }
+    }
+
+    // 3. Overlap met andere dienst op overlappende tijd
+    var overlap = data.overlapByMid[med.id];
+    if (overlap && overlap.length > 0) {
+      var first = overlap[0];
+      var sameLoc = first.locatie === dienst.locatie;
+      var startT = formatNlTime(first.start_iso);
+      var endT = formatNlTime(first.einde_iso);
+      if (sameLoc) {
+        warnings.push({ type: "overlap", text: "Reeds geboekt: " + (first.diensttype || "dienst") + " (" + startT + "–" + endT + ")" });
+      } else {
+        warnings.push({ type: "andere_locatie", text: "Op dat moment op andere locatie: " + (first.locatie || "onbekend") });
+      }
+    }
+
+    // 4. Verzuim op deze datum
+    var verz = data.verzuimByMid[med.id];
+    if (verz && verz.length > 0) {
+      var label = verz[0].type === "lang" ? "Langdurig verzuim" : "Verzuim / ziek";
+      warnings.push({ type: "verzuim", text: label + " op deze datum" });
+    }
+
+    return warnings;
+  }
+
+  function buildMedewerkerRowHtml(med, warnings, tarief) {
+    var initialen = getInitials(med);
+    var naam = ((med.voornaam || "") + " " + (med.achternaam || "")).trim() || "Onbekend";
+    var hasWarn = warnings.length > 0;
+    var dotClass = "planning-medewerker-row__dot" + (hasWarn ? " planning-medewerker-row__dot--warn" : "");
+    var warnSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+    var warningsHtml = warnings.map(function (w) {
+      return '<div class="planning-medewerker-row__warning">' + warnSvg + '<span>' + escapeHtml(w.text) + '</span></div>';
+    }).join("");
+    var priceHtml = (tarief !== null && tarief !== undefined)
+      ? '<div class="planning-medewerker-row__price">' + escapeHtml(formatEuro(tarief)) + '</div>'
+      : '<div class="planning-medewerker-row__price planning-medewerker-row__price--empty">€ —</div>';
+
+    return ''
+      + '<div class="planning-medewerker-row" role="option" data-mid="' + escapeHtml(med.id) + '" data-name="' + escapeHtml(naam.toLowerCase()) + '" tabindex="0">'
+        + '<div class="planning-medewerker-row__avatar">'
+          + escapeHtml(initialen)
+          + '<span class="' + dotClass + '" aria-hidden="true"></span>'
+        + '</div>'
+        + '<div class="planning-medewerker-row__main">'
+          + '<div class="planning-medewerker-row__name">' + escapeHtml(naam) + '</div>'
+          + warningsHtml
+        + '</div>'
+        + priceHtml
+      + '</div>';
+  }
+
+  async function renderUitnodigenPicker(dienst) {
+    var listEl = document.getElementById("planning-uitnodigen-list");
+    var hiddenEl = document.getElementById("planning-uitnodigen-select");
+    var submitBtn = document.getElementById("planning-uitnodigen-submit");
+    var searchEl = document.getElementById("planning-uitnodigen-search");
+    if (!listEl || !hiddenEl || !global.medewerkersDB || !dienst) return;
+
+    // Reset state per opening
+    hiddenEl.value = "";
+    if (submitBtn) submitBtn.disabled = true;
+    if (searchEl) searchEl.value = "";
+
+    listEl.innerHTML = '<div class="planning-picker-loading">Beschikbaarheid laden…</div>';
+
+    var all = global.medewerkersDB.getAllSync ? global.medewerkersDB.getAllSync() : [];
+    var active = all.filter(function (m) { return m && !m.archived; });
+    active.sort(function (a, b) {
+      var an = ((a.voornaam || "") + " " + (a.achternaam || "")).trim().toLowerCase();
+      var bn = ((b.voornaam || "") + " " + (b.achternaam || "")).trim().toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
+
+    var data;
+    try { data = await loadAvailabilityData(dienst); }
+    catch (e) { console.error("[uitnodigen-picker] data-load mislukt:", e); data = { overlapByMid: {}, verzuimByMid: {} }; }
+
+    // Filter out medewerkers die al uitgenodigd/toegewezen voor DEZE dienst
+    var existing = global.dienstUitnodigingenDB ? global.dienstUitnodigingenDB.getForDienstSync(dienst.id) : [];
+    var alreadyIds = {};
+    existing.forEach(function (inv) { alreadyIds[inv.medewerker_id] = true; });
+    active = active.filter(function (m) { return !alreadyIds[m.id]; });
+
+    if (active.length === 0) {
+      listEl.innerHTML = '<div class="planning-picker-empty">Alle actieve medewerkers zijn al uitgenodigd of toegewezen.</div>';
+      return;
+    }
+
+    var html = active.map(function (med) {
+      var warnings = getAvailabilityWarnings(med, dienst, data);
+      var tarief = getMedewerkerUurtarief(med);
+      return buildMedewerkerRowHtml(med, warnings, tarief);
+    }).join("");
+    listEl.innerHTML = html;
+  }
+
+  function attachUitnodigenPickerEvents() {
+    if (pickerEventsBound) return;
+    var listEl = document.getElementById("planning-uitnodigen-list");
+    var hiddenEl = document.getElementById("planning-uitnodigen-select");
+    var submitBtn = document.getElementById("planning-uitnodigen-submit");
+    var searchEl = document.getElementById("planning-uitnodigen-search");
+
+    if (listEl) {
+      listEl.addEventListener("click", function (e) {
+        var row = e.target.closest ? e.target.closest(".planning-medewerker-row") : null;
+        if (!row) return;
+        var mid = row.getAttribute("data-mid");
+        if (!mid || !hiddenEl) return;
+        var prev = listEl.querySelector(".planning-medewerker-row.is-selected");
+        if (prev) prev.classList.remove("is-selected");
+        row.classList.add("is-selected");
+        hiddenEl.value = mid;
+        if (submitBtn) submitBtn.disabled = false;
+      });
+    }
+
+    if (searchEl && listEl) {
+      searchEl.addEventListener("input", function () {
+        var q = (searchEl.value || "").trim().toLowerCase();
+        var rows = listEl.querySelectorAll(".planning-medewerker-row");
+        for (var i = 0; i < rows.length; i++) {
+          var name = rows[i].getAttribute("data-name") || "";
+          rows[i].style.display = (!q || name.indexOf(q) !== -1) ? "" : "none";
+        }
+      });
+    }
+
+    pickerEventsBound = true;
+  }
+
+  function invalidatePickerCache() { pickerCache = { overlapByMid: null, verzuimByMid: null, dienstId: null }; }
+
   function attachEvents() {
     // Close X / scrim-click + Escape
     var panel = document.getElementById("planning-view-modal");
@@ -463,11 +735,15 @@
       }
     });
 
-    // Uitnodigen
+    // Uitnodigen — BS2-parity rijke picker met avatar/warnings/uurtarief (vervangt populateMedewerkerSelect)
+    attachUitnodigenPickerEvents();
     var uitnodigenBtn = document.getElementById("planning-detail-uitnodigen-btn");
     uitnodigenBtn && uitnodigenBtn.addEventListener("click", function () {
-      populateMedewerkerSelect(document.getElementById("planning-uitnodigen-select"));
       openSideModal("planning-uitnodigen-modal");
+      // Async: rendert eerst loading-state, dan list met warnings na fetch
+      renderUitnodigenPicker(currentDienst).catch(function (e) {
+        console.error("[uitnodigen] renderUitnodigenPicker mislukt:", e);
+      });
     });
     document.getElementById("planning-uitnodigen-cancel") && document.getElementById("planning-uitnodigen-cancel").addEventListener("click", function () { closeSideModal("planning-uitnodigen-modal"); });
     document.getElementById("planning-uitnodigen-close") && document.getElementById("planning-uitnodigen-close").addEventListener("click", function () { closeSideModal("planning-uitnodigen-modal"); });
