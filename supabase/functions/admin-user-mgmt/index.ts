@@ -132,13 +132,18 @@ Deno.serve(async (req) => {
       return json({ ok: true, users: enriched, roles: roles || [], actor_id: user.id });
     }
 
-    if (!target_id) return json({ error: 'target_id ontbreekt' }, 400);
+    // Bug #81 fix: target_id is alleen verplicht voor acties die op een bestaande user werken.
+    // 'create-user' krijgt geen target_id (target is de nieuwe user die we gaan creëren).
+    const TARGET_REQUIRED = ['reset-password', 'reset-2fa', 'change-rol', 'deactivate', 'activate'];
+    if (TARGET_REQUIRED.includes(action) && !target_id) {
+      return json({ error: 'target_id ontbreekt' }, 400);
+    }
 
-    if (target_id === user.id && (action === 'deactivate' || action === 'change-rol')) {
+    if (target_id && target_id === user.id && (action === 'deactivate' || action === 'change-rol')) {
       return json({ error: 'Je kunt je eigen account niet ' + (action === 'deactivate' ? 'deactiveren' : 'van rol wijzigen') + '.' }, 400);
     }
 
-    const targetLabel = await getTargetLabel(target_id);
+    const targetLabel = target_id ? await getTargetLabel(target_id) : '';
 
     if (action === 'reset-password') {
       const { error } = await admin.auth.admin.updateUserById(target_id, { password: 'Welkom123' });
