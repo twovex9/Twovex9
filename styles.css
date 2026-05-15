@@ -2819,13 +2819,23 @@ select.modal-select.modal-select--chevron-right {
   }
 }
 
+/* Modal-dialog base — solide BS1-witte kaart, geen doorzichtigheid (user 2026-05-15: "altijd en overal" zoals BS2 schone modal) */
+.modal-dialog {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 20px 22px 8px;
   flex-shrink: 0;
 }
 
@@ -3003,8 +3013,7 @@ select.modal-select.modal-select--chevron-right {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px 18px;
-  border-top: 1px solid var(--line);
+  padding: 8px 22px 20px;
   flex-shrink: 0;
   background: var(--surface);
 }
@@ -10114,6 +10123,142 @@ select.cd-config-select {
   box-shadow: none;
   display: flex;
   flex-direction: column;
+}
+/* Side-modals (Toewijzen / Uitnodigen / Verwijderen) komen BOVEN het dienst-detail panel
+   met een soliderer backdrop zodat de modal-card niet "doorzichtig" voelt over het panel heen */
+.modal-overlay.planning-side-modal {
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.62);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* Rijke medewerker-picker voor uitnodigen-modal (BS2-parity):
+   zoekveld + verticale lijst met avatar, naam, warnings, uurtarief */
+.planning-uitnodigen-dialog { width: min(520px, 100% - 32px); }
+.planning-medewerker-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.planning-medewerker-picker__search {
+  position: relative;
+}
+.planning-picker-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+}
+.planning-picker-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: var(--font-base);
+  background: var(--surface);
+  color: var(--text);
+}
+.planning-picker-search-input::placeholder { color: var(--text-muted); }
+.planning-picker-search-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+.planning-medewerker-picker__list {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 6px;
+  background: var(--surface);
+}
+.planning-medewerker-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  user-select: none;
+}
+.planning-medewerker-row:hover { background: var(--fill-hover, #f1f5f9); }
+.planning-medewerker-row.is-selected {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+.planning-medewerker-row__avatar {
+  position: relative;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.planning-medewerker-row__dot {
+  position: absolute;
+  bottom: -1px; right: -1px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--green);
+}
+.planning-medewerker-row__dot--warn { background: var(--yellow); }
+.planning-medewerker-row__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.planning-medewerker-row__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.planning-medewerker-row__warning {
+  font-size: 12px;
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.35;
+}
+.planning-medewerker-row__warning svg { flex-shrink: 0; color: var(--yellow); }
+.planning-medewerker-row__price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  margin-left: auto;
+  align-self: center;
+}
+.planning-medewerker-row__price--empty { color: var(--text-muted); font-weight: 500; }
+.planning-picker-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.planning-picker-loading {
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 .planning-detail-info-row {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

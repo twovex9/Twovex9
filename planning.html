@@ -606,7 +606,7 @@
   </aside>
 
   <!-- Toewijzen modal (over view-modal) -->
-  <div class="modal-overlay" id="planning-toewijzen-modal" hidden aria-hidden="true">
+  <div class="modal-overlay planning-side-modal" id="planning-toewijzen-modal" hidden aria-hidden="true">
     <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="planning-toewijzen-title">
       <div class="modal-header">
         <h2 class="modal-title" id="planning-toewijzen-title">Medewerker Toewijzen</h2>
@@ -624,26 +624,33 @@
     </div>
   </div>
 
-  <!-- Uitnodigen modal -->
-  <div class="modal-overlay" id="planning-uitnodigen-modal" hidden aria-hidden="true">
-    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="planning-uitnodigen-title">
+  <!-- Uitnodigen modal (BS2-parity rijke picker: zoek + warnings + uurtarief) -->
+  <div class="modal-overlay planning-side-modal" id="planning-uitnodigen-modal" hidden aria-hidden="true">
+    <div class="modal-dialog planning-uitnodigen-dialog" role="dialog" aria-modal="true" aria-labelledby="planning-uitnodigen-title">
       <div class="modal-header">
         <h2 class="modal-title" id="planning-uitnodigen-title">Medewerker uitnodigen</h2>
         <button type="button" class="modal-close" id="planning-uitnodigen-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
         <p class="modal-text">Selecteer een medewerker om uit te nodigen voor deze dienst. Uitgenodigde medewerkers moeten accepteren voordat ze worden toegewezen.</p>
-        <select id="planning-uitnodigen-select" class="modal-input modal-select" required></select>
+        <div class="planning-medewerker-picker">
+          <div class="planning-medewerker-picker__search">
+            <svg class="planning-picker-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="planning-uitnodigen-search" placeholder="Zoeken..." class="planning-picker-search-input" autocomplete="off" />
+          </div>
+          <div class="planning-medewerker-picker__list" id="planning-uitnodigen-list" role="listbox" aria-label="Beschikbare medewerkers"></div>
+          <input type="hidden" id="planning-uitnodigen-select" value="" />
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-outline" id="planning-uitnodigen-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="planning-uitnodigen-submit">Uitnodigen</button>
+        <button type="button" class="btn-primary" id="planning-uitnodigen-submit" disabled>Uitnodigen</button>
       </div>
     </div>
   </div>
 
   <!-- Delete-confirm modal -->
-  <div class="modal-overlay" id="planning-delete-modal" hidden aria-hidden="true">
+  <div class="modal-overlay planning-side-modal" id="planning-delete-modal" hidden aria-hidden="true">
     <div class="modal-dialog modal-dialog--sm" role="alertdialog" aria-modal="true" aria-labelledby="planning-delete-title">
       <div class="modal-header">
         <h2 class="modal-title" id="planning-delete-title">
@@ -686,6 +693,7 @@
   <script src="comp-diensttypes-data.js"></script>
   <script src="planning-voorinstellingen-data.js"></script>
   <script src="dienst-uitnodigingen-data.js"></script>
+  <script src="medewerker-verzuim-data.js"></script>
   <script src="dienst-activiteiten-data.js"></script>
   <script src="dienst-recurring-data.js"></script>
   <script src="medewerkers-data.js"></script>
