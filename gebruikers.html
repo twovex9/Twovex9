@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Audit Logs — HR</title>
+  <title>Gebruikers — Organisatie</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
 </head>
 <body>
@@ -25,7 +25,6 @@
               <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
                 <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
-                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -48,11 +47,8 @@
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="clienten.html" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
-                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
-                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
-                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
-                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
-                <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Beheer cliënten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beheer beschikkingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -70,13 +66,13 @@
             </div>            <a href="taken.html" class="top-link">Taken</a>
             <a href="index.html" class="top-link">Medewerkers</a>
             <a href="beleid.html" class="top-link">Beleid</a>
-            <a href="audit.html" class="top-link is-active">Audit</a>
+            <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="rollen.html" class="top-link top-link--dropdown is-active">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
                 <a href="rollen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
                 <a href="teams.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
-                <a href="gebruikers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
+                <a href="gebruikers.html" class="top-dropdown-link top-dropdown-link--stacked is-active" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
               </div>
             </div>
             <a href="instellingen.html" class="top-link">Instellingen</a>
@@ -96,116 +92,112 @@
 
     <main class="content">
       <div class="content-header">
-        <h1>Audit Logs</h1>
+        <h1>Gebruikers</h1>
         <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="audit-columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="audit-columns-panel" role="menu" aria-labelledby="audit-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="audit-columns-list" role="none"></ul>
-            </div>
-          </div>
-          <button class="btn-outline" type="button" id="audit-refresh-btn">
-            <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-            Vernieuwen
-          </button>
+          <button type="button" class="btn-primary" id="gebr-add-btn">+ Nieuwe medewerker</button>
         </div>
       </div>
 
-      <div class="toolbar">
-        <input class="search" type="search" id="audit-search" placeholder="Zoeken in gebruiker / resource / details..." autocomplete="off" />
-        <select class="search" id="audit-filter-resource" style="max-width:200px">
-          <option value="">Alle resources</option>
-          <option value="Medewerker">Medewerker</option>
-          <option value="Cliënt">Cliënt</option>
-          <option value="Beschikking">Beschikking</option>
-          <option value="Factuur">Factuur</option>
-          <option value="Incident">Incident</option>
-          <option value="Taak">Taak</option>
-          <option value="Beleidsdocument">Beleidsdocument</option>
-          <option value="Verlofaanvraag">Verlofaanvraag</option>
-          <option value="Team">Team</option>
-          <option value="NotificatieType">NotificatieType</option>
-        </select>
-        <select class="search" id="audit-filter-veroorzaker" style="max-width:220px" aria-label="Filter op veroorzaker">
-          <option value="">Alle veroorzakers</option>
-        </select>
-        <select class="search" id="audit-filter-actie" style="max-width:200px">
-          <option value="">Alle actie-types</option>
-          <option value="aanmaken">Aanmaken</option>
-          <option value="bekijken">Bekijken</option>
-          <option value="bewerken">Bewerken</option>
-          <option value="verwijderen">Verwijderen</option>
-          <option value="archiveren">Archiveren</option>
-          <option value="herstellen">Herstellen</option>
-          <option value="status_wijziging">Status wijziging</option>
-        </select>
-        <button type="button" class="btn-outline taken-reset-btn" id="audit-filter-reset" title="Filters wissen">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Reset
-        </button>
+      <div class="toolbar gebr-toolbar">
+        <input class="search" type="search" id="gebr-search" placeholder="Zoek op naam of email…" autocomplete="off" />
+        <label class="switch switch--yellow">
+          <input type="checkbox" id="gebr-show-archived" />
+          <span class="switch-label">Gearchiveerd</span>
+        </label>
+        <div class="gebr-totaal" id="gebr-totaal" aria-live="polite">— gebruikers</div>
       </div>
 
       <section class="table-card">
         <div class="table-wrapper">
-          <table class="employees-table" id="audit-table">
+          <table class="employees-table gebr-table">
             <thead>
               <tr>
-                <th data-col="tijdstip"><div class="th-sort-inner"><span class="th-label">Tijdstip</span></div></th>
-                <th data-col="gebruiker"><div class="th-sort-inner"><span class="th-label">Gebruiker</span></div></th>
-                <th data-col="resource"><div class="th-sort-inner"><span class="th-label">Resource</span></div></th>
-                <th data-col="resource_id"><div class="th-sort-inner"><span class="th-label">Resource ID</span></div></th>
-                <th data-col="actie"><div class="th-sort-inner"><span class="th-label">Actie</span></div></th>
-                <th data-col="details"><div class="th-sort-inner"><span class="th-label">Details</span></div></th>
-                <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
+                <th>Naam</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>2FA</th>
+                <th>Wachtwoord</th>
+                <th>Status</th>
+                <th>Acties</th>
               </tr>
             </thead>
-            <tbody id="audit-tbody"></tbody>
+            <tbody id="gebr-tbody">
+              <tr><td colspan="7" class="gebr-loading">Gebruikers laden…</td></tr>
+            </tbody>
           </table>
         </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="audit-pager-range" class="pager-range">0 van 0</span>
-          </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="audit-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="audit-rows-per-page" class="footer-rows-select">
-                <option value="15">15</option>
-                <option value="30" selected>30</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </label>
-            <span id="audit-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="audit-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-last" disabled>&raquo;</button>
-            </span>
-          </div>
-        </div>
       </section>
+
+      <p class="gebr-foot">
+        Tijdelijk wachtwoord bij reset of nieuwe medewerker: <strong>Welkom123</strong>. Geef deze mondeling door — BS1 verstuurt geen e-mails.
+      </p>
     </main>
   </div>
 
-  <!-- Audit detail modal: klik op een rij → volledige info -->
-  <div class="modal-overlay" id="audit-detail-overlay" hidden>
-    <div class="modal-card audit-detail-modal" role="dialog" aria-modal="true" aria-labelledby="audit-detail-title">
+  <!-- Add-user modal -->
+  <div id="gebr-add-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-add-title" hidden>
+    <div class="modal-card">
       <div class="modal-header">
-        <h2 id="audit-detail-title">Audit-event</h2>
-        <button type="button" class="modal-close" id="audit-detail-close" aria-label="Sluiten">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-        </button>
+        <h2 id="gebr-add-title">Nieuwe medewerker</h2>
+        <button type="button" class="modal-close" id="gebr-add-close" aria-label="Sluiten">×</button>
       </div>
-      <div class="modal-body" id="audit-detail-body"></div>
+      <form id="gebr-add-form" class="gebr-add-form">
+        <label class="gebr-add-label">
+          Voornaam
+          <input type="text" id="gebr-add-voornaam" required autocomplete="off" />
+        </label>
+        <label class="gebr-add-label">
+          Achternaam
+          <input type="text" id="gebr-add-achternaam" required autocomplete="off" />
+        </label>
+        <label class="gebr-add-label">
+          E-mailadres
+          <input type="email" id="gebr-add-email" required autocomplete="off" />
+        </label>
+        <label class="gebr-add-label">
+          Rol
+          <select id="gebr-add-rol" required></select>
+        </label>
+        <p id="gebr-add-err" class="gebr-add-err" hidden></p>
+        <p class="gebr-add-info">Initieel wachtwoord wordt <strong>Welkom123</strong>. Bij eerste login moet de gebruiker dit wijzigen en 2FA instellen.</p>
+        <div class="gebr-add-actions">
+          <button type="button" class="btn-outline" id="gebr-add-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="gebr-add-submit">Aanmaken</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm modal voor reset password / reset 2FA -->
+  <div id="gebr-confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-confirm-title" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="gebr-confirm-title">Bevestigen</h2>
+        <button type="button" class="modal-close" id="gebr-confirm-close" aria-label="Sluiten">×</button>
+      </div>
+      <div class="gebr-confirm-body">
+        <p id="gebr-confirm-text"></p>
+      </div>
+      <div class="gebr-add-actions">
+        <button type="button" class="btn-outline" id="gebr-confirm-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="gebr-confirm-ok">Bevestigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- "Geen toegang" overlay voor non-admin-tier users -->
+  <div id="gebr-no-access" class="modal-overlay" role="dialog" aria-modal="true" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Geen toegang</h2>
+      </div>
+      <div class="gebr-confirm-body">
+        <p>De Gebruikers-tab is alleen toegankelijk voor de rollen <strong>Eigenaar</strong>, <strong>Admin</strong> en <strong>Directeur</strong>.</p>
+        <p>Klik op de knop hieronder om terug te keren naar de home-pagina.</p>
+      </div>
+      <div class="gebr-add-actions">
+        <a href="home.html" class="btn-primary">Terug naar home</a>
+      </div>
     </div>
   </div>
 
@@ -225,7 +217,7 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="audit-data.js"></script>
-  <script src="audit.js"></script>
+  <script src="gebruikers-data.js?v=gd1" defer></script>
+  <script src="gebruikers.js?v=g1" defer></script>
 </body>
 </html>
