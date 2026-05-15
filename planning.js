@@ -745,23 +745,13 @@ function rowMatchesFilters(row) {
     if (st === "vervanging" && !wantsReplacement) return false;
   }
 
-  /* Module 2 Bug #87 fix: Dienstverband filter (Inhuur / Loondienst / alle). */
+  /* Module 2 Bug #87 fix: Dienstverband filter (Inhuur / Loondienst / alle).
+   * Gebruikt nieuwe getDienstverbandForName() helper die BS2 employment_type leest. */
   const empType = filterState.employmentType || "alle";
   if (empType !== "alle") {
-    // Lookup linked medewerker via teamlid-naam → bepaal dienstverband-veld.
-    // row.dienstverband mag direct gevuld zijn; anders fall-back op linked medewerker.
-    let rowDv = String(row.dienstverband || "").trim().toLowerCase();
-    if (!rowDv && row.teamlid && window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
-      try {
-        const med = window.medewerkersDB.getAllSync().find((m) => {
-          const fn = `${m.voornaam || ""} ${m.achternaam || ""}`.trim();
-          return fn === row.teamlid;
-        });
-        rowDv = String(med?.data?.dienstverband || med?.data?.contract_type || "").trim().toLowerCase();
-      } catch (e) { /* */ }
-    }
-    if (empType === "inhuur" && !/inhuur|zzp/.test(rowDv)) return false;
-    if (empType === "loondienst" && !/loondienst|loon/.test(rowDv)) return false;
+    const dv = getDienstverbandForName(row.teamlid);
+    if (empType === "inhuur" && dv !== "inhuur") return false;
+    if (empType === "loondienst" && dv !== "loondienst") return false;
   }
 
   const q = filterState.search.trim().toLowerCase();
@@ -794,7 +784,9 @@ function getItemsForView() {
   return all.filter((row) => itemOverlapsRange(row, start, end));
 }
 
-/** Schat ZZP-kosten: alleen meetellen wanneer medewerker als ZZP gemarkeerd is in HR. */
+/** Schat ZZP-kosten: alleen meetellen wanneer medewerker als ZZP gemarkeerd is in HR.
+ *  Module 2 Bug #88 fix: BS2-import-data zit in `bs2_employment_type` veld
+ *  (waardes: hiring/permanent/intern). 'hiring' = inhuur/ZZP. */
 function isZzpEmployeeName(name) {
   if (!name) return false;
   const want = String(name).trim().toLowerCase();
@@ -803,6 +795,8 @@ function isZzpEmployeeName(name) {
   return list.some((emp) => {
     const n = getEmployeeName(emp).toLowerCase();
     if (n !== want) return false;
+    const empType = String(emp?.bs2_employment_type || emp?.employmentType || "").trim().toLowerCase();
+    if (empType === "hiring") return true;
     const flags = [
       emp?.zzp,
       emp?.isZzp,
@@ -810,23 +804,65 @@ function isZzpEmployeeName(name) {
       emp?.dienstverband,
       emp?.contracttype,
       emp?.contractsoort,
+      emp?.bs2_worker_type,
+      emp?.bs2_hiring_type,
     ];
-    return flags.some((f) => /zzp/i.test(String(f || "")));
+    return flags.some((f) => /zzp|hiring|agency/i.test(String(f || "")));
   });
+}
+
+/** Module 2 Bug #87 helper: bepaal Inhuur vs Loondienst voor medewerker-naam.
+ *  Returns "inhuur" / "loondienst" / "" (onbekend). */
+function getDienstverbandForName(name) {
+  if (!name) return "";
+  const want = String(name).trim().toLowerCase();
+  if (!want) return "";
+  const list = readEmployees();
+  const emp = list.find((e) => getEmployeeName(e).toLowerCase() === want);
+  if (!emp) return "";
+  const t = String(emp.bs2_employment_type || emp.employmentType || emp.dienstverband || "").trim().toLowerCase();
+  if (t === "hiring") return "inhuur";
+  if (t === "permanent") return "loondienst";
+  if (/inhuur|zzp|agency/.test(t)) return "inhuur";
+  if (/loondienst|loon|vast/.test(t)) return "loondienst";
+  return "";
 }
 
 function getMetrics(items) {
   let hours = 0;
   let zzpHours = 0;
+  let zzpKostenAccum = 0;   // Module 2 Bug #88: ZZP-kosten per-diensttype via comp_diensttypes.basis
+  let kostenAccum = 0;       // Totaal kosten per-diensttype (alle medewerkers)
   let kmKosten = 0;
-  let openHours = 0;   // Sprint 6 / S6: niet-toegewezen uren (mirror BS2 "Openstaande uren")
-  let openCount = 0;   // Aantal openstaande diensten
+  let openHours = 0;
+  let openCount = 0;
+
+  // Diensttype-tarief lookup via comp_diensttypes.basis (per-type uurtarief).
+  function tariefForDiensttype(dtNaam) {
+    if (!dtNaam) return ui.tarief || 0;
+    try {
+      if (window.compDiensttypesDB && typeof window.compDiensttypesDB.getAllSync === "function") {
+        const list = window.compDiensttypesDB.getAllSync() || [];
+        const dt = list.find((d) => String(d.naam || d.diensttype || "").trim().toLowerCase() === String(dtNaam).trim().toLowerCase());
+        const basis = Number(dt?.basis);
+        if (basis > 0) return basis;
+      }
+    } catch (e) { /* */ }
+    return ui.tarief || 0;
+  }
+
   items.forEach((r) => {
     const h = durationHours(r.start, r.einde);
     const pauze = Math.max(0, Number(r.pauzeUren) || 0);
     const net = Math.max(0, h - pauze);
     hours += net;
-    if (isZzpEmployeeName(r.teamlid)) zzpHours += net;
+
+    const tarief = tariefForDiensttype(r.diensttype);
+    kostenAccum += net * tarief;
+    if (isZzpEmployeeName(r.teamlid)) {
+      zzpHours += net;
+      zzpKostenAccum += net * tarief;
+    }
     if (!r.teamlid || !String(r.teamlid).trim()) {
       openHours += net;
       openCount += 1;
@@ -837,11 +873,9 @@ function getMetrics(items) {
   });
   const uren = formatHoursShort(hours);
   const openUren = formatHoursShort(openHours);
-  const kosten = hours * ui.tarief;
-  const zzpKosten = zzpHours * ui.tarief;
+  const kosten = kostenAccum;
+  const zzpKosten = zzpKostenAccum;
   const per = items.length > 0 ? kosten / items.length : 0;
-  // Gem. tarief = kosten / uren (mirror BS2 "Gem. tarief"). Fallback naar ui.tarief
-  // wanneer er geen uren zijn, want anders krijg je een lelijke € 0,00 zonder context.
   const gemTarief = hours > 0 ? kosten / hours : ui.tarief;
   return {
     count: items.length,
