@@ -418,12 +418,31 @@
     return "€ " + Number(n).toFixed(2).replace(".", ",");
   }
 
-  function getMedewerkerUurtarief(med) {
+  function getMedewerkerUurtarief(med, dienst) {
     if (!med || !med.data) return null;
+    // BS2-parity: shift_type_rates is een map {diensttype-naam: rate} per medewerker
+    // (geïmporteerd uit BS2 /api/employees op 2026-05-15).
+    var rates = med.data.shift_type_rates;
+    if (rates && typeof rates === "object" && !Array.isArray(rates)) {
+      var diensttype = dienst && dienst.diensttype;
+      if (diensttype && rates[diensttype] !== undefined && rates[diensttype] !== null) {
+        var n = parseFloat(rates[diensttype]);
+        return isNaN(n) ? null : n;
+      }
+      // Fallback: als er maar 1 rate is, gebruik die ook voor andere diensttypes
+      var keys = Object.keys(rates);
+      if (keys.length === 1) {
+        var solo = parseFloat(rates[keys[0]]);
+        return isNaN(solo) ? null : solo;
+      }
+    }
+    // Legacy fallback: per-medewerker single uurTarief veld
     var t = med.data.uurTarief;
-    if (t === null || t === undefined || t === "") return null;
-    var n = parseFloat(t);
-    return isNaN(n) ? null : n;
+    if (t !== null && t !== undefined && t !== "") {
+      var lt = parseFloat(t);
+      return isNaN(lt) ? null : lt;
+    }
+    return null;
   }
 
   function parseRooster(raw) {
@@ -623,7 +642,7 @@
 
     var html = active.map(function (med) {
       var warnings = getAvailabilityWarnings(med, dienst, data);
-      var tarief = getMedewerkerUurtarief(med);
+      var tarief = getMedewerkerUurtarief(med, dienst);
       return buildMedewerkerRowHtml(med, warnings, tarief);
     }).join("");
     listEl.innerHTML = html;
