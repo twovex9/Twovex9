@@ -3648,7 +3648,21 @@ function initDocumentenSection() {
   render();
 }
 
-loadEmployeeIntoForm();
+// Bootstrap: wacht op medewerkersDB fresh fetch uit Supabase voordat we de form
+// vullen. Voorkomt het "stale cache toont em-dash/leeg adres"-issue bij eerste
+// page-load (fix sub-task 2026-05-15 medewerker-sync testcase Samra).
+(function bootstrapEmployeeForm() {
+  function fillForm() { try { loadEmployeeIntoForm(); } catch (e) { console.error("[medewerker] loadEmployeeIntoForm fout:", e); } }
+  // Run direct met cached data (snelle eerste paint)
+  fillForm();
+  // Plus run opnieuw zodra Supabase fresh data heeft
+  if (window.medewerkersDB && window.medewerkersDB.ready && typeof window.medewerkersDB.ready.then === "function") {
+    window.medewerkersDB.ready.then(fillForm).catch(function (e) { console.error("[medewerker] medewerkersDB.ready fout:", e); });
+  }
+  // En her-render telkens als medewerker-data verandert (real-time + Supabase-sync)
+  window.addEventListener("besa:medewerkers-updated", fillForm);
+})();
+
 initTabs();
 initOpleidingSection();
 initNotitiesSection();
