@@ -1,5 +1,20 @@
 # Besa Suite — projectinstructies voor Claude Code
 
+## 🚨 USER HARDCORE-INSTRUCTIE (BINDEND, HOOGSTE PRIORITEIT)
+
+Zie [`docs/phase4/v3-USER-HARDCORE-INSTRUCTIE.md`](docs/phase4/v3-USER-HARDCORE-INSTRUCTIE.md) voor de volledige tekst en werkwijze. Samenvatting:
+
+- **Controleer ALLES per module** (visueel + functioneel + data + permissions + audit-log).
+- **2 CLEAN RUNS zonder fix tussendoor** per module.
+- **Niet 99,9% maar 100%** voordat ik een module ✅ markeer.
+- **Elke knop, dropdown, modal, form-validatie** moet getest worden.
+- **User-bevestiging vereist** vóór door naar volgende module.
+- **Geen aannames** uit eerdere LOCKDOWN-status — live verifiëren elke keer.
+
+Voortgang per module: zie [`docs/phase4/v3-hardcore-module-checklist.md`](docs/phase4/v3-hardcore-module-checklist.md).
+
+---
+
 Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via de imports hieronder. Beide moeten worden gevolgd, ook als de gebruiker er niet expliciet om vraagt:
 
 @.claude/huisstijl.md
