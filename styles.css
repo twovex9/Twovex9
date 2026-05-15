@@ -2819,13 +2819,23 @@ select.modal-select.modal-select--chevron-right {
   }
 }
 
+/* Modal-dialog base — solide BS1-witte kaart, geen doorzichtigheid (user 2026-05-15: "altijd en overal" zoals BS2 schone modal) */
+.modal-dialog {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 20px 22px 8px;
   flex-shrink: 0;
 }
 
@@ -3003,8 +3013,7 @@ select.modal-select.modal-select--chevron-right {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px 18px;
-  border-top: 1px solid var(--line);
+  padding: 8px 22px 20px;
   flex-shrink: 0;
   background: var(--surface);
 }
