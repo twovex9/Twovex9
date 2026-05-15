@@ -140,7 +140,14 @@
 
     var enrollData = null;
     try {
-      var en = await global.besaSupabase.auth.mfa.enroll({ factorType: "totp" });
+      // issuer = de label die in de authenticator-app boven de 6-cijfer-code staat.
+      // Zonder dit valt Supabase terug op de Site URL (vaak "localhost:3000" in dev).
+      // friendlyName = interne label in Supabase admin (geen invloed op de authenticator).
+      var en = await global.besaSupabase.auth.mfa.enroll({
+        factorType: "totp",
+        issuer: "BESA Suite ETF",
+        friendlyName: "BESA Suite ETF",
+      });
       if (en.error) throw en.error;
       enrollData = en.data;
       var qrEl = document.getElementById("besa-onb-2fa-qr");
