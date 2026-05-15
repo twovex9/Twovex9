@@ -19889,3 +19889,133 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ============================================================================
+   Gebruikers-tab (v3 Fase G.5 + G.6 + G.7)
+   ============================================================================ */
+
+.gebr-toolbar { gap: 12px; flex-wrap: wrap; align-items: center; }
+.gebr-totaal {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.gebr-loading {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: var(--font-table-cell);
+}
+.gebr-error { color: var(--red); }
+
+.gebr-table tr.is-archived { opacity: 0.7; }
+.gebr-self {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.gebr-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.gebr-badge--ok {
+  background: var(--green-soft, #e0f4ea);
+  color: var(--green, #1f8a4c);
+}
+.gebr-badge--warn {
+  background: var(--yellow-soft, #fdf3d4);
+  color: #946800;
+}
+.gebr-badge--muted {
+  background: var(--line, #e5e7eb);
+  color: var(--text-muted);
+}
+.gebr-badge--archived {
+  background: var(--red-soft, #fce5e5);
+  color: var(--red, #a3302a);
+}
+
+.gebr-actions { gap: 6px; display: flex; flex-direction: row; flex-wrap: wrap; }
+.gebr-actions .btn-outline { padding: 4px 10px; font-size: var(--font-table-cell); }
+
+.gebr-rol-select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--font-table-cell);
+  background: var(--surface, #fff);
+  min-width: 120px;
+}
+.gebr-rol-select:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gebr-foot {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--yellow-soft, #fdf3d4);
+  border-radius: var(--r-md);
+  color: var(--text-secondary);
+  font-size: var(--font-table-cell);
+}
+
+/* Add-user modal */
+.gebr-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px 12px;
+}
+.gebr-add-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-table-head);
+  font-weight: 500;
+  color: var(--text);
+}
+.gebr-add-label input,
+.gebr-add-label select {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--font-base);
+  background: var(--surface, #fff);
+}
+.gebr-add-label input:focus,
+.gebr-add-label select:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+.gebr-add-err {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--red-soft, #fce5e5);
+  color: var(--red, #a3302a);
+  border-radius: var(--r-sm);
+  font-size: var(--font-table-cell);
+}
+.gebr-add-info {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+.gebr-add-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 22px 18px;
+}
+.gebr-confirm-body {
+  padding: 14px 22px 4px;
+  color: var(--text);
+  font-size: var(--font-base);
+  line-height: 1.5;
+}
+.gebr-confirm-body p { margin: 0 0 10px; }
