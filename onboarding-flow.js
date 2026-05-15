@@ -124,7 +124,8 @@
         '<p style="margin:8px 0 0;color:var(--text-secondary,#444);font-size:13px;">Scan de QR-code met een authenticator-app (Google Authenticator, Microsoft Authenticator, Authy).</p>' +
       '</div>' +
       '<div style="padding:22px 26px;display:flex;flex-direction:column;gap:14px;">' +
-        '<div id="besa-onb-2fa-qr" style="display:flex;justify-content:center;background:#f7f7f7;padding:14px;border-radius:var(--r-md);min-height:200px;align-items:center;">Bezig met laden…</div>' +
+        // Pure #FFFFFF achtergrond verplicht — camera-scanners falen op off-white (#f7f7f7) bij lage contrast.
+        '<div id="besa-onb-2fa-qr" style="display:flex;justify-content:center;background:#FFFFFF;padding:20px;border-radius:var(--r-md);min-height:240px;align-items:center;border:1px solid var(--line,#e5e7eb);">Bezig met laden…</div>' +
         '<p id="besa-onb-2fa-secret" style="margin:0;text-align:center;font-family:monospace;font-size:11px;color:var(--text-muted);"></p>' +
         '<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">' +
           'Vul 6-cijferige code in' +
@@ -143,7 +144,50 @@
       if (en.error) throw en.error;
       enrollData = en.data;
       var qrEl = document.getElementById("besa-onb-2fa-qr");
-      qrEl.innerHTML = '<img src="' + enrollData.totp.qr_code + '" alt="QR code" style="max-width:200px;">';
+      // Bug #75 fix: Supabase JS v2 retourneert `totp.qr_code` als raw SVG XML (geen data: URI).
+      // Stoppen in `<img src="<svg...">` breekt de img + rendert SVG als sibling zonder viewBox/wit-bg → camera scant niet.
+      // Detecteer formaat, voeg expliciete viewBox toe als die ontbreekt, render binnen pure-witte wrapper.
+      var qrCode = enrollData.totp.qr_code || "";
+      qrEl.innerHTML = "";
+      var qrInner = document.createElement("div");
+      qrInner.style.cssText = "background:#FFFFFF;padding:12px;display:inline-block;line-height:0;";
+      if (qrCode.indexOf("data:image") === 0) {
+        // Data URI — gebruik <img>
+        var img = document.createElement("img");
+        img.src = qrCode;
+        img.alt = "QR code voor 2FA";
+        img.style.cssText = "display:block;width:200px;height:200px;";
+        qrInner.appendChild(img);
+      } else if (qrCode.indexOf("<svg") !== -1) {
+        // Raw SVG XML — insert direct, normaliseer attributen voor scanability
+        qrInner.innerHTML = qrCode;
+        var svgEl = qrInner.querySelector("svg");
+        if (svgEl) {
+          var sW = parseFloat(svgEl.getAttribute("width") || "200");
+          var sH = parseFloat(svgEl.getAttribute("height") || sW);
+          if (!svgEl.getAttribute("viewBox")) {
+            svgEl.setAttribute("viewBox", "0 0 " + sW + " " + sH);
+          }
+          // Force witte achtergrond ALS eerste child (quiet zone garantie)
+          if (!svgEl.querySelector("rect[data-qr-bg]")) {
+            var bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            bg.setAttribute("data-qr-bg", "1");
+            bg.setAttribute("x", "0");
+            bg.setAttribute("y", "0");
+            bg.setAttribute("width", String(sW));
+            bg.setAttribute("height", String(sH));
+            bg.setAttribute("fill", "#FFFFFF");
+            svgEl.insertBefore(bg, svgEl.firstChild);
+          }
+          // Schaal SVG naar 200x200 voor consistente scan-grootte
+          svgEl.setAttribute("width", "200");
+          svgEl.setAttribute("height", "200");
+          svgEl.style.display = "block";
+        }
+      } else {
+        qrInner.textContent = "QR-code-formaat niet herkend. Gebruik de handmatige code hieronder.";
+      }
+      qrEl.appendChild(qrInner);
       var secEl = document.getElementById("besa-onb-2fa-secret");
       secEl.textContent = "Of voer handmatig in: " + enrollData.totp.secret;
     } catch (err) {

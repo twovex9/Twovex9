@@ -15,7 +15,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const ANCHOR = '<script src="permissions.js?v=perm1"';
 const NEW_LINES = [
   '  <script src="helpdesk-modal.js?v=help1" defer></script>',
-  '  <script src="onboarding-flow.js?v=onb1" defer></script>',
+  '  <script src="onboarding-flow.js?v=onb2" defer></script>',
 ];
 
 const htmlFiles = fs.readdirSync(repoRoot).filter((f) => f.endsWith(".html"));
