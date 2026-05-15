@@ -524,6 +524,39 @@ function normalizeLocatieNames(list) {
   return out;
 }
 
+// Taal-dropdown: BS1-keuze (user 2026-05-15) = 4 vaste talen, geen landen-lijst.
+// Opslag-code (in data.taal): "NL" / "ENG" / "FR" / "DE".
+// Display-label in span: "Nederlands" / "Engels" / "Frans" / "Duits".
+const TAAL_OPTIONS = [
+  { code: "NL",  label: "Nederlands" },
+  { code: "ENG", label: "Engels" },
+  { code: "FR",  label: "Frans" },
+  { code: "DE",  label: "Duits" },
+];
+
+function taalCodeToLabel(code) {
+  if (!code) return "";
+  const upper = String(code).toUpperCase();
+  // Eerste poging: exact match op code (NL/ENG/FR/DE)
+  const byCode = TAAL_OPTIONS.find((t) => t.code === upper);
+  if (byCode) return byCode.label;
+  // Tweede poging: match op label (case-insensitive, voor migratie van oude waardes)
+  const byLabel = TAAL_OPTIONS.find((t) => t.label.toLowerCase() === String(code).toLowerCase());
+  if (byLabel) return byLabel.label;
+  // Backward-compat: bijv. "Nederland" → map naar "Nederlands"
+  if (/^nederland/i.test(code)) return "Nederlands";
+  if (/^engel|^english/i.test(code)) return "Engels";
+  if (/^frans|^french|^franc/i.test(code)) return "Frans";
+  if (/^duits|^german|^deutsch/i.test(code)) return "Duits";
+  return String(code);
+}
+
+function taalLabelToCode(label) {
+  if (!label) return "";
+  const found = TAAL_OPTIONS.find((t) => t.label === label);
+  return found ? found.code : String(label).toUpperCase();
+}
+
 function initTaalDropdown() {
   const btn = document.getElementById("emp-taal-btn");
   const panel = document.getElementById("emp-taal-panel");
@@ -532,12 +565,27 @@ function initTaalDropdown() {
   const valueSpan = document.getElementById("emp-taal-value");
   if (!btn || !panel || !list) return;
 
-  LANDEN.forEach((land) => {
+  // Search-input is overbodig voor 4 opties — verbergen indien aanwezig.
+  if (search) {
+    const searchWrap = search.closest("[class*='search'], div, label") || search.parentElement;
+    if (searchWrap && searchWrap !== panel) {
+      try { searchWrap.style.display = "none"; } catch (e) { /* */ }
+    }
+  }
+
+  // Wipe eventuele bestaande items (in geval van re-init)
+  list.innerHTML = "";
+
+  TAAL_OPTIONS.forEach((opt) => {
     const li = document.createElement("li");
     li.className = "emp-dropdown-option";
-    li.textContent = land;
+    li.dataset.code = opt.code;
+    li.textContent = opt.label;
     li.addEventListener("click", () => {
-      if (valueSpan) valueSpan.textContent = land;
+      if (valueSpan) {
+        valueSpan.textContent = opt.label;
+        valueSpan.dataset.code = opt.code;
+      }
       panel.setAttribute("hidden", "");
     });
     list.appendChild(li);
@@ -546,26 +594,11 @@ function initTaalDropdown() {
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     const isHidden = panel.hasAttribute("hidden");
-    if (isHidden) {
-      panel.removeAttribute("hidden");
-      search?.focus();
-    } else {
-      panel.setAttribute("hidden", "");
-    }
+    if (isHidden) panel.removeAttribute("hidden");
+    else panel.setAttribute("hidden", "");
   });
 
-  if (search) {
-    search.addEventListener("click", (e) => e.stopPropagation());
-    search.addEventListener("input", () => {
-      const q = search.value.trim().toLowerCase();
-      list.querySelectorAll(".emp-dropdown-option").forEach((opt) => {
-        opt.hidden = q !== "" && !opt.textContent.toLowerCase().includes(q);
-      });
-    });
-  }
-
   panel.addEventListener("click", (e) => e.stopPropagation());
-
   document.addEventListener("click", () => {
     panel.setAttribute("hidden", "");
   });
@@ -847,8 +880,16 @@ function loadEmployeeIntoForm() {
     inhuurEl.dataset.persistedValue = inhuurEl.value || emp.inhuurtype || "";
   }
 
+  // Taal: data.taal bewaart de code ("NL"/"ENG"/"FR"/"DE"); span toont label ("Nederlands" etc.)
   const taalValue = document.getElementById("emp-taal-value");
-  if (taalValue && emp.taal) taalValue.textContent = emp.taal;
+  if (taalValue) {
+    const code = (emp.taal || "").toUpperCase();
+    const label = taalCodeToLabel(code) || (emp.taal || "");
+    if (label) {
+      taalValue.textContent = label;
+      if (code) taalValue.dataset.code = code;
+    }
+  }
 
   const userSetting = document.getElementById("emp-user-setting");
   if (userSetting && emp.userSetting) userSetting.value = emp.userSetting;
@@ -2440,7 +2481,15 @@ function gatherFormData() {
     initialen: val("emp-initialen"),
     bsn: val("emp-bsn"),
     verjaardag: gebDDMMYYYY,
-    taal: document.getElementById("emp-taal-value")?.textContent || "Nederland",
+    taal: (() => {
+      // Save als code ("NL"/"ENG"/"FR"/"DE"), niet als label
+      const span = document.getElementById("emp-taal-value");
+      if (!span) return "NL";
+      const code = span.dataset && span.dataset.code;
+      if (code) return code;
+      // Fallback: probeer label → code conversie
+      return taalLabelToCode(span.textContent.trim()) || "NL";
+    })(),
     cao: document.getElementById("emp-cao-value")?.textContent?.trim() || "CAO Jeugdzorg",
     postcode: val("emp-postcode"),
     huisnummer: val("emp-huisnummer"),
