@@ -12,8 +12,8 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 
-const OLD = "onboarding-flow.js?v=onb1";
-const NEW = "onboarding-flow.js?v=onb2";
+const OLD = "onboarding-flow.js?v=onb2";
+const NEW = "onboarding-flow.js?v=onb3";
 
 let touched = 0, unchanged = 0;
 
