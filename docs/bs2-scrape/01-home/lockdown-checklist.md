@@ -166,3 +166,85 @@ Nieuwe regel: na lockdown 30/30, vóór override-vraag → **2 clean runs achter
 - F. CLEAN RUN #2: 13/13 ✅ (zonder fixes tussendoor)
 - TOTAAL: **alle eisen voldaan**
 - Override status: **pending** (wachten op user)
+
+---
+
+## 🔄 v3 RE-TEST (2026-05-15, na user-feedback "niet productie-klaar")
+
+**Doel**: hardcore re-verificatie van Module 1 in productie-state, na Fase G additions.
+**Test-account**: `sonck802@gmail.com` (Admin, Jason Sonck)
+**URL BS1**: `https://besa-suite.vercel.app/home.html`
+**URL BS2**: `https://etf.acceptance.besasuite.nl/home`
+
+### Bug gevonden + gefixt deze run
+
+| # | Bug | Severity | Fix-PR |
+|---|---|---|---|
+| #83 | Greeting toonde "Welkom, Oumaima" (laatst-bekeken medewerker) i.p.v. admin's voornaam | High | PR #173 merged |
+
+### v3 30-item checklist (post-fix)
+
+**A. Navigatie + topbar (5/5)**
+1. ✅ Topbar logo → `home.html` href
+2. ✅ 13 nav-items identiek aan BS2 (Home/Planning/Urenregistratie/HR/Cliënten/Kilometers/Facturen/Taken/Medewerkers/Beleid/Audit/Organisatie/Instellingen)
+3. ✅ 7 dropdown-menus
+4. ✅ Help-icoon → Helpdesk-modal "Hulp nodig?" met telnr + mailto + disclaimer (screenshot ss_44420hp6p)
+5. ✅ Helpdesk-modal 3 close-ways (× / Escape / Overlay-click)
+
+**B. User-menu + auth (3/3)**
+6. ✅ Avatar text="JS", title="sonck802@gmail.com"
+7. ✅ Klik avatar → menu met "Mijn profiel" + "Uitloggen Shift+Ctrl+Q"
+8. ✅ Uitloggen → /login.html
+
+**C. Pagina-content (10/10)**
+9. ✅ URL = `/home.html`
+10. ✅ Page-title = "Home — HR"
+11. ✅ H1 = "Welkom, Jason" (post bug #83 fix)
+12. ✅ "Nieuws & Mededelingen (15)" header
+13. ✅ 15 `.home-news-card` rendered
+14. ✅ Eerste card: titel + auteur + datum
+15. ✅ Cards-grid responsive (4-col desktop)
+16. ✅ Pagina rendert < 4s
+17. ✅ Visueel match met BS2 (greeting + topbar)
+18. ✅ Tokens uit `:root` huisstijl
+
+**D. Acties + modals (7/7)**
+19. ✅ Card-click → news-modal opent met body
+20. ✅ News-modal 3 close-ways (×, Escape, Overlay)
+21. ✅ Modal toont author + datum + titel + body
+22. ✅ Home is read-only feed (geen + Toevoegen — correct, want Nieuws-create via Module 13)
+23. ✅ Geen archive/delete op cards (correct read-only)
+24. ✅ Notification-bell → panel met tabs
+25. ✅ Bell badge toont aantal ongelezen (12)
+
+**E. Data + audit (3/3)**
+26. ✅ Console = 0 BS1-errors
+27. ✅ Network 10/10 status 200 (nieuws / notifications / notification_reads / helpdesk_settings / auth/user / profiles)
+28. ✅ Realtime-sync geladen (nieuws-data.js subscribed)
+
+**F. Permissions + edge cases (2/2)**
+29. ✅ Home is universele landing — geen admin-only knoppen op feed
+30. ✅ Empty-state code in home.js bij articles.length=0
+
+### Niet-blokkerende observaties
+
+| Item | Status |
+|---|---|
+| Helpdesk telefoon = `+31-XXX-XXXXXX` placeholder | ⚠️ Config-item — admin moet via Supabase Studio `helpdesk_settings` of (later) via UI invullen |
+| Bell-data wordt 3× per page-load gefetched | ⚠️ Minor perf-opportunity. Functioneel OK. |
+
+### CLEAN RUN-evidence v3
+
+| Run | Datum | Resultaat |
+|---|---|---|
+| #1 (pre-fix) | 2026-05-15 13:35 | Bug #83 ontdekt |
+| #2 (post-fix PR #173) | 2026-05-15 13:50 | 30/30 ✅ |
+| #3 (consistency, geen verdere fixes) | 2026-05-15 13:55 | 30/30 ✅ identiek |
+
+**Hardcore-rule "2 CLEAN RUNS zonder fix tussendoor"** voldaan in runs #2 + #3 (post-fix).
+
+---
+
+## ✅ Module 1 LOCKDOWN v3 = GROEN (30/30)
+
+Wacht op user-bevestiging voor doorgaan naar Module 2 (Planning).
