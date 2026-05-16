@@ -913,7 +913,23 @@
           tr.appendChild(td);
         }
 
-        addText("fn", r.fn, false);
+        // Factuurnummer = echte link naar factuur-detail (native <a> →
+        // navigeert altijd, geen JS-handler-afhankelijkheid).
+        (function () {
+          var td = document.createElement("td");
+          td.setAttribute("data-col", "fn");
+          var label = (r.fn != null && String(r.fn).trim() !== "") ? String(r.fn) : "—";
+          if (__fid) {
+            var a = document.createElement("a");
+            a.href = "factuur-detail.html?id=" + encodeURIComponent(__fid);
+            a.className = "fct-fn-link";
+            a.textContent = label;
+            td.appendChild(a);
+          } else {
+            td.textContent = label;
+          }
+          tr.appendChild(td);
+        })();
         addText("besch", r.besch, false);
         addText("client", r.client, false);
         addText("nr", r.nr, false);
