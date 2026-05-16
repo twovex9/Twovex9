@@ -886,19 +886,13 @@
         tr.setAttribute("data-row-ix", String(start + idx));
         tr.setAttribute("data-fact-k", rKey);
 
-        // Rij klikbaar → factuur-detail (BS2-conform: klik factuur = bekijk
-        // alle gegevens). Niet bij checkbox/acties-kolom of knoppen.
+        // Rij klikbaar → factuur-detail (BS2-conform). Het echte id wordt op
+        // de rij gezet; de navigatie loopt via de gedelegeerde tbody-click
+        // handler (overleeft re-renders, één bron van waarheid).
         var __fid = (rKey && rKey.indexOf("id:") === 0) ? rKey.slice(3) : (r && r.id ? String(r.id) : "");
         if (__fid) {
           tr.classList.add("fct-row-click");
-          tr.addEventListener("click", function (ev) {
-            var tEl = ev.target;
-            if (tEl && (tEl.tagName === "INPUT" || tEl.tagName === "BUTTON" || (tEl.closest && tEl.closest("button")))) return;
-            var cell = tEl && tEl.closest ? tEl.closest("td") : null;
-            var col = cell && cell.getAttribute("data-col");
-            if (col === "select" || col === "act") return;
-            window.location.href = "factuur-detail.html?id=" + encodeURIComponent(__fid);
-          });
+          tr.setAttribute("data-fact-id", __fid);
         }
 
         var td0 = document.createElement("td");
@@ -1086,6 +1080,18 @@
         e.preventDefault();
         var k2 = p1.getAttribute("data-fact-k");
         if (k2) { openFactPurgeModal([k2]); }
+        return;
+      }
+      // Rij-klik → factuur-detail (BS2-conform). Niet bij checkbox/knop of
+      // de select-/acties-kolom. Gedelegeerd = overleeft re-renders.
+      if (t.tagName === "INPUT" || t.tagName === "BUTTON" || t.closest("button") || t.closest("a")) return;
+      var cellX = t.closest("td");
+      var colX = cellX && cellX.getAttribute("data-col");
+      if (colX === "select" || colX === "act") return;
+      var trX = t.closest("tr.fact-data-row");
+      var fidX = trX && trX.getAttribute("data-fact-id");
+      if (fidX) {
+        window.location.href = "factuur-detail.html?id=" + encodeURIComponent(fidX);
       }
     });
   }
