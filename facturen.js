@@ -98,6 +98,42 @@
   var sortKey = "fn";
   var sortDir = "desc";
 
+  // ---------------------------------------------------------------------------
+  // Server-side paginatie (alleen facturen-overzicht / facturen.html).
+  // We laden ALLEEN de rijen van de huidige pagina uit Supabase. Pas bij het
+  // klikken op het volgende-pagina-pijltje (of een andere rijen-per-pagina-
+  // keuze) wordt de volgende set opgehaald — nooit alle ~956 in één keer.
+  // Zodra er een filter / zoekterm / niet-default sortering actief wordt valt
+  // de pagina terug op een eenmalige volledige load (raw in geheugen), zodat
+  // filteren over álle facturen correct blijft. Andere pagina's die facturen.js
+  // hergebruiken (beschikking-detail Facturen-tab via __FP/__FVIEW_ROW_FILTER)
+  // blijven volledig client-side — daar is de set klein.
+  var SERVER_PAGING = (!__FP)
+    && (typeof window.__FVIEW_ROW_FILTER !== "function")
+    && !!(window.__FACT_LAZY_OVERVIEW || (window.facturenDB && window.facturenDB.isLazyOverview && window.facturenDB.isLazyOverview()))
+    && !!(window.facturenDB && typeof window.facturenDB.fetchPage === "function");
+  var serverRows = [];
+  var serverTotal = 0;
+  var serverLoading = false;
+  var fellBackToFull = false; // true zodra we (door een filter) volledig laadden
+  var fullDataReady = false;  // true zodra `raw` de volledige dataset bevat
+
+  function activeClientFilters() {
+    if (searchInput && String(searchInput.value || "").trim() !== "") return true;
+    if (elStatus && String(elStatus.value || "").trim() !== "") return true;
+    if (elDecm && String(elDecm.value || "").trim() !== "") return true;
+    if (elPer && String(elPer.value || "").trim() !== "") return true;
+    if (elBeta && String(elBeta.value || "").trim() !== "") return true;
+    if (elExpiring && elExpiring.checked) return true;
+    if (sortKey !== "fn" || sortDir !== "desc") return true; // niet-default sort
+    if (typeof window.__FVIEW_ROW_FILTER === "function") return true;
+    return false; // let op: 'Gearchiveerd' (elArch) gaat server-side mee
+  }
+
+  function serverModeActive() {
+    return SERVER_PAGING && !fellBackToFull && !activeClientFilters();
+  }
+
   var TOGGLE_COLS = [
     { col: "fn", label: "Factuurnummer" },
     { col: "besch", label: "Beschikking" },
@@ -563,6 +599,14 @@
       showToast("Selecteer minstens één kolom");
       return;
     }
+    // Server-paginatie: de export moet ALLE facturen bevatten, niet enkel de
+    // huidige pagina. Forceer eerst een volledige load en laat de gebruiker
+    // de export opnieuw starten zodra die klaar is.
+    if (SERVER_PAGING && !fullDataReady) {
+      ensureFullLoad();
+      showToast("Facturen worden geladen voor de export — probeer zo opnieuw.");
+      return;
+    }
     var items = getFiltered();
     if (!items.length) {
       showToast("Niets te exporteren.");
@@ -862,23 +906,117 @@
   // toont i.p.v. een nette laad-status.
   var factDataLoaded = false;
 
-  function render() {
-    var items = getFiltered();
-    var pageSize = getPageSize();
-    var total = items.length;
-    var totalPages = Math.max(1, Math.ceil(total / pageSize));
-    if (currentPage >= totalPages) currentPage = totalPages - 1;
-    if (currentPage < 0) currentPage = 0;
-    var start = currentPage * pageSize;
-    var end = Math.min(start + pageSize, total);
-    var page = items.slice(start, end);
+  // Bouw één tabelrij (gedeeld door client-side render en server-paginatie).
+  function buildFactRow(r, absIndex, isArchV2) {
+    var rKey = factRowKey(r);
+    var tr = document.createElement("tr");
+    tr.className = "fact-data-row";
+    tr.setAttribute("data-row-ix", String(absIndex));
+    tr.setAttribute("data-fact-k", rKey);
 
-    var isArchV2 = !!(elArch && elArch.checked);
+    // Rij klikbaar → factuur-detail (BS2-conform). Het echte id wordt op
+    // de rij gezet; de navigatie loopt via de gedelegeerde tbody-click
+    // handler (overleeft re-renders, één bron van waarheid).
+    var __fid = (rKey && rKey.indexOf("id:") === 0) ? rKey.slice(3) : (r && r.id ? String(r.id) : "");
+    if (__fid) {
+      tr.classList.add("fct-row-click");
+      tr.setAttribute("data-fact-id", __fid);
+    }
+
+    var td0 = document.createElement("td");
+    td0.setAttribute("data-col", "select");
+    var rid = __F("fact-chk-") + absIndex;
+    td0.innerHTML = '<input type="checkbox" class="table-checkbox fact-row-check" id="' + rid + '" aria-label="Selecteer regel" />';
+    tr.appendChild(td0);
+
+    function addText(col, val, isDash) {
+      var td = document.createElement("td");
+      td.setAttribute("data-col", col);
+      var v = val;
+      if (isDash && (v === "-" || v === "–" || (v != null && String(v).trim() === ""))) {
+        td.textContent = "—";
+      } else {
+        td.textContent = v != null && String(v).trim() !== "" ? String(v) : "—";
+      }
+      tr.appendChild(td);
+    }
+
+    // Factuurnummer = echte link naar factuur-detail (native <a> →
+    // navigeert altijd, geen JS-handler-afhankelijkheid).
+    (function () {
+      var td = document.createElement("td");
+      td.setAttribute("data-col", "fn");
+      var label = (r.fn != null && String(r.fn).trim() !== "") ? String(r.fn) : "—";
+      if (__fid) {
+        var a = document.createElement("a");
+        a.href = "factuur-detail.html?id=" + encodeURIComponent(__fid);
+        a.className = "fct-fn-link";
+        a.textContent = label;
+        td.appendChild(a);
+      } else {
+        td.textContent = label;
+      }
+      tr.appendChild(td);
+    })();
+    addText("besch", r.besch, false);
+    addText("client", r.client, false);
+    addText("nr", r.nr, false);
+    addText("per", r.per, false);
+    addText("beta", r.beta, true);
+
+    var tdSt = document.createElement("td");
+    tdSt.setAttribute("data-col", "st");
+    tdSt.innerHTML = statusPillHtml(r.st);
+    tr.appendChild(tdSt);
+
+    var tdB = document.createElement("td");
+    tdB.setAttribute("data-col", "bedrag");
+    tdB.className = "fact-td-bedrag";
+    tdB.textContent = r.bedr != null && String(r.bedr).trim() !== "" ? String(r.bedr) : "—";
+    tr.appendChild(tdB);
+
+    var tdAct = document.createElement("td");
+    tdAct.setAttribute("data-col", "act");
+    tdAct.className = "cl-actions-cell fact-ov-actions-cell";
+    if (isArchV2) {
+      var w = document.createElement("div");
+      w.className = "hr-row-actions";
+      var br = document.createElement("button");
+      br.type = "button";
+      br.className = "btn-outline hr-restore-btn fact-ov-restore-btn";
+      br.setAttribute("data-fact-k", rKey);
+      br.textContent = "Herstel";
+      var pb = document.createElement("button");
+      pb.type = "button";
+      pb.className = "employee-delete-btn fact-ov-purge-btn";
+      pb.setAttribute("data-fact-k", rKey);
+      pb.setAttribute("aria-label", "Definitief verwijderen");
+      pb.innerHTML = TRASH_SVG;
+      w.appendChild(br);
+      w.appendChild(pb);
+      tdAct.appendChild(w);
+    } else {
+      var ab = document.createElement("button");
+      ab.type = "button";
+      ab.className = "employee-delete-btn fact-ov-arch-btn";
+      ab.setAttribute("data-fact-k", rKey);
+      ab.setAttribute("aria-label", "Archiveren");
+      ab.innerHTML = TRASH_SVG;
+      tdAct.appendChild(ab);
+    }
+    tr.appendChild(tdAct);
+    return tr;
+  }
+
+  // Gedeelde teken-functie: vult tbody met `page`, werkt pager bij.
+  // `total` = totaal aantal rijen (server-count of client-filtered lengte).
+  function paintRows(page, total, start, isArchV2, loading) {
+    var pageSize = getPageSize();
+    var totalPages = Math.max(1, Math.ceil((total || 0) / pageSize));
+    var end = Math.min(start + (page ? page.length : 0), total || 0);
+
     tbody.innerHTML = "";
-    // Niet de (pre-load) bron renderen vóór facturen-data.js de Supabase-
-    // data heeft: die rijen missen het echte id → geen klikbare link
-    // ("iets anders / niet klikbaar"-flash). Toon laad-status tot data er is.
-    if (!factDataLoaded && !isArchV2) {
+    if (loading) {
       var trL = document.createElement("tr");
       var tdL = document.createElement("td");
       tdL.colSpan = 10;
@@ -888,119 +1026,19 @@
       tbody.appendChild(trL);
       return;
     }
-    if (!page.length) {
+    if (!page || !page.length) {
       var trE = document.createElement("tr");
       var tdE = document.createElement("td");
       tdE.colSpan = 10;
       tdE.className = "cl-empty-cell";
-      if (!factDataLoaded && !isArchV2) {
-        tdE.textContent = "Facturen laden…";
-      } else {
-        tdE.textContent = isArchV2 ? "Geen gearchiveerde factuurregels (pas het filter of zoekveld aan)." : "Geen actieve factuurregels voor dit filter.";
-      }
+      tdE.textContent = isArchV2
+        ? "Geen gearchiveerde factuurregels (pas het filter of zoekveld aan)."
+        : "Geen actieve factuurregels voor dit filter.";
       trE.appendChild(tdE);
       tbody.appendChild(trE);
     } else {
       page.forEach(function (r, idx) {
-        var rKey = factRowKey(r);
-        var tr = document.createElement("tr");
-        tr.className = "fact-data-row";
-        tr.setAttribute("data-row-ix", String(start + idx));
-        tr.setAttribute("data-fact-k", rKey);
-
-        // Rij klikbaar → factuur-detail (BS2-conform). Het echte id wordt op
-        // de rij gezet; de navigatie loopt via de gedelegeerde tbody-click
-        // handler (overleeft re-renders, één bron van waarheid).
-        var __fid = (rKey && rKey.indexOf("id:") === 0) ? rKey.slice(3) : (r && r.id ? String(r.id) : "");
-        if (__fid) {
-          tr.classList.add("fct-row-click");
-          tr.setAttribute("data-fact-id", __fid);
-        }
-
-        var td0 = document.createElement("td");
-        td0.setAttribute("data-col", "select");
-        var rid = __F("fact-chk-") + start + "-" + idx;
-        td0.innerHTML = '<input type="checkbox" class="table-checkbox fact-row-check" id="' + rid + '" aria-label="Selecteer regel" />';
-        tr.appendChild(td0);
-
-        function addText(col, val, isDash) {
-          var td = document.createElement("td");
-          td.setAttribute("data-col", col);
-          var v = val;
-          if (isDash && (v === "-" || v === "–" || (v != null && String(v).trim() === ""))) {
-            td.textContent = "—";
-          } else {
-            td.textContent = v != null && String(v).trim() !== "" ? String(v) : "—";
-          }
-          tr.appendChild(td);
-        }
-
-        // Factuurnummer = echte link naar factuur-detail (native <a> →
-        // navigeert altijd, geen JS-handler-afhankelijkheid).
-        (function () {
-          var td = document.createElement("td");
-          td.setAttribute("data-col", "fn");
-          var label = (r.fn != null && String(r.fn).trim() !== "") ? String(r.fn) : "—";
-          if (__fid) {
-            var a = document.createElement("a");
-            a.href = "factuur-detail.html?id=" + encodeURIComponent(__fid);
-            a.className = "fct-fn-link";
-            a.textContent = label;
-            td.appendChild(a);
-          } else {
-            td.textContent = label;
-          }
-          tr.appendChild(td);
-        })();
-        addText("besch", r.besch, false);
-        addText("client", r.client, false);
-        addText("nr", r.nr, false);
-        addText("per", r.per, false);
-        addText("beta", r.beta, true);
-
-        var tdSt = document.createElement("td");
-        tdSt.setAttribute("data-col", "st");
-        tdSt.innerHTML = statusPillHtml(r.st);
-        tr.appendChild(tdSt);
-
-        var tdB = document.createElement("td");
-        tdB.setAttribute("data-col", "bedrag");
-        tdB.className = "fact-td-bedrag";
-        tdB.textContent = r.bedr != null && String(r.bedr).trim() !== "" ? String(r.bedr) : "—";
-        tr.appendChild(tdB);
-
-        var tdAct = document.createElement("td");
-        tdAct.setAttribute("data-col", "act");
-        tdAct.className = "cl-actions-cell fact-ov-actions-cell";
-        if (isArchV2) {
-          var w = document.createElement("div");
-          w.className = "hr-row-actions";
-          var br = document.createElement("button");
-          br.type = "button";
-          br.className = "btn-outline hr-restore-btn fact-ov-restore-btn";
-          br.setAttribute("data-fact-k", rKey);
-          br.textContent = "Herstel";
-          var pb = document.createElement("button");
-          pb.type = "button";
-          pb.className = "employee-delete-btn fact-ov-purge-btn";
-          pb.setAttribute("data-fact-k", rKey);
-          pb.setAttribute("aria-label", "Definitief verwijderen");
-          pb.innerHTML = TRASH_SVG;
-          w.appendChild(br);
-          w.appendChild(pb);
-          tdAct.appendChild(w);
-        } else {
-          var ab = document.createElement("button");
-          ab.type = "button";
-          ab.className = "employee-delete-btn fact-ov-arch-btn";
-          ab.setAttribute("data-fact-k", rKey);
-          ab.setAttribute("aria-label", "Archiveren");
-          ab.innerHTML = TRASH_SVG;
-          tdAct.appendChild(ab);
-        }
-        tr.appendChild(tdAct);
-
-        tbody.appendChild(tr);
+        tbody.appendChild(buildFactRow(r, start + idx, isArchV2));
       });
     }
 
@@ -1008,11 +1046,9 @@
     syncSortTh();
 
     if (rangeEl) {
-      if (total === 0) {
-        rangeEl.textContent = "0 van 0";
-      } else {
-        rangeEl.textContent = start + 1 + "–" + end + " van " + total + " totaal";
-      }
+      rangeEl.textContent = (total === 0)
+        ? "0 van 0"
+        : (start + 1) + "–" + end + " van " + total + " totaal";
     }
     if (pageEl) {
       pageEl.textContent = total === 0 ? "Pagina 0 van 0" : "Pagina " + (currentPage + 1) + " van " + totalPages;
@@ -1031,6 +1067,95 @@
 
     syncFactHeaderDelBtn();
     if (checkAll) checkAll.checked = false;
+  }
+
+  // Eénmalige volledige load forceren (fallback wanneer er gefilterd/gezocht/
+  // gesorteerd wordt). Daarna draait alles client-side op `raw` in geheugen —
+  // dat is snel want het staat al in RAM, en filteren is dan correct over
+  // álle facturen.
+  var fullLoadKicked = false;
+  function ensureFullLoad() {
+    fellBackToFull = true;
+    if (fullLoadKicked) return;
+    fullLoadKicked = true;
+    try {
+      if (window.facturenDB && typeof window.facturenDB.refresh === "function") {
+        window.facturenDB.refresh().catch(function (err) {
+          console.error("[facturen] Volledige load mislukt:", err);
+        });
+      }
+    } catch (e) { /* */ }
+  }
+
+  // Server-side: haal ALLEEN de huidige pagina op. Een request-token zorgt
+  // dat snelle opeenvolgende pagina-klikken niet door elkaar lopen: enkel
+  // het antwoord van de laatste aanvraag wordt getekend (oudere genegeerd).
+  var serverReqSeq = 0;
+  function loadServerPage() {
+    var reqId = ++serverReqSeq;
+    serverLoading = true;
+    var pageSize = getPageSize();
+    var isArchV2 = !!(elArch && elArch.checked);
+    if (!factDataLoaded) paintRows(null, 0, 0, isArchV2, true);
+    var offset = currentPage * pageSize;
+    window.facturenDB.fetchPage({ offset: offset, limit: pageSize, archived: isArchV2 })
+      .then(function (res) {
+        if (reqId !== serverReqSeq) return; // verouderd antwoord — negeren
+        serverRows = (res && res.rows) ? res.rows : [];
+        serverTotal = (res && res.total != null) ? res.total : serverRows.length;
+        factDataLoaded = true;
+        // Clamp wanneer de huidige pagina buiten bereik valt (bv. na het
+        // wijzigen van rijen-per-pagina) → één keer herladen.
+        var totalPages = Math.max(1, Math.ceil(serverTotal / pageSize));
+        if (currentPage > totalPages - 1) {
+          currentPage = totalPages - 1;
+          loadServerPage();
+          return;
+        }
+        serverLoading = false;
+        paintRows(serverRows, serverTotal, currentPage * pageSize, isArchV2, false);
+      })
+      .catch(function (err) {
+        if (reqId !== serverReqSeq) return;
+        serverLoading = false;
+        console.error("[facturen] Pagina laden mislukt — terugval op volledige load:", err);
+        ensureFullLoad();
+        render();
+      });
+  }
+
+  function render() {
+    // Server-paginatie: laad enkel de huidige pagina (geen ~956 in één keer).
+    if (serverModeActive()) {
+      loadServerPage();
+      return;
+    }
+    // Client-side pad. In lazy-overzichtmodus hebben we (nog) geen volledige
+    // dataset → forceer eenmalig een volledige load en toon zolang laad-status.
+    if (SERVER_PAGING && !fullDataReady) {
+      ensureFullLoad();
+      paintRows(null, 0, 0, !!(elArch && elArch.checked), true);
+      return;
+    }
+    var items = getFiltered();
+    var pageSize = getPageSize();
+    var total = items.length;
+    var totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (currentPage >= totalPages) currentPage = totalPages - 1;
+    if (currentPage < 0) currentPage = 0;
+    var start = currentPage * pageSize;
+    var end = Math.min(start + pageSize, total);
+    var page = items.slice(start, end);
+    var isArchV2 = !!(elArch && elArch.checked);
+
+    // Niet de (pre-load) bron renderen vóór facturen-data.js de Supabase-
+    // data heeft: die rijen missen het echte id → geen klikbare link
+    // ("iets anders / niet klikbaar"-flash). Toon laad-status tot data er is.
+    if (!factDataLoaded && !isArchV2) {
+      paintRows(null, 0, 0, isArchV2, true);
+      return;
+    }
+    paintRows(page, total, start, isArchV2, false);
   }
 
   function onFilterChange() {
@@ -1138,9 +1263,10 @@
     var btn = document.getElementById(__F("fact-pager-" + action));
     if (!btn) return;
     btn.addEventListener("click", function () {
-      var items = getFiltered();
       var pageSize = getPageSize();
-      var tot = items.length;
+      // In server-modus baseren we het totaal op de server-count (geen
+      // getFiltered() — dat zou de niet-geladen seed-rijen aanraken).
+      var tot = serverModeActive() ? serverTotal : getFiltered().length;
       var totalPages = Math.max(1, Math.ceil(tot / pageSize));
       if (action === "first") currentPage = 0;
       else if (action === "prev") currentPage = Math.max(0, currentPage - 1);
@@ -1601,7 +1727,15 @@
   // 956+ facturen ziet, en dat archive/purge-acties op andere tabs doorkomen.
   window.addEventListener("besa:facturen-updated", function () {
     factDataLoaded = true;
+    // Pure server-modus (overzicht, geen filter): de server is gezaghebbend.
+    // Niet rebuildFromBulk() doen — de bulk is in lazy-modus enkel de
+    // (id-loze) seed of een kleine cache. Herlaad gewoon de huidige pagina.
+    if (SERVER_PAGING && !fellBackToFull) {
+      loadServerPage();
+      return;
+    }
     rebuildFromBulk();
+    fullDataReady = true;
     // factPurged wordt bij refresh gewist: hard-deleted records zijn al weg
     // uit FACTUREN_BULK, dus de purge-flag is overbodig.
     factPurged = [];
@@ -1614,7 +1748,12 @@
   // bootstrap klaar is (lege/koude cache toonde anders "laden…" tot reload).
   try {
     if (window.facturenDB && window.facturenDB.ready && typeof window.facturenDB.ready.then === "function") {
-      window.facturenDB.ready.then(function () { factDataLoaded = true; currentPage = 0; render(); });
+      window.facturenDB.ready.then(function () {
+        if (SERVER_PAGING && !fellBackToFull) { render(); return; }
+        factDataLoaded = true;
+        currentPage = 0;
+        render();
+      });
     }
   } catch (e) { /* */ }
 })();

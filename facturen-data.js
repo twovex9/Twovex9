@@ -142,6 +142,44 @@
   // ---------------------------------------------------------------------------
   // Supabase fetch + bootstrap
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Server-side paginatie (facturen-overzicht): laad ALLEEN de huidige pagina.
+  // De facturen-overzichtspagina (facturen.html) mag NIET alle ~956 records in
+  // één keer ophalen. Andere consumers (beschikking-detail, client-detail,
+  // facturen-te-beoordelen) blijven de volledige bulk gebruiken — voor die
+  // pagina's verandert er niets.
+  // ---------------------------------------------------------------------------
+  function isFacturenOverviewPage() {
+    try {
+      var p = String((global.location && global.location.pathname) || "").toLowerCase();
+      return /(^|\/)facturen\.html$/.test(p);
+    } catch (e) { return false; }
+  }
+
+  /** Eén pagina facturen + exacte totaal-count, server-side gesorteerd op
+   *  factuurnummer (aflopend) — identiek aan de default-volgorde van het
+   *  overzicht. `archived === true` → enkel gearchiveerde rijen, `false` →
+   *  enkel actieve rijen, `undefined` → alles. */
+  async function fetchPage(opts) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var o = opts || {};
+    var offset = Math.max(0, parseInt(o.offset, 10) || 0);
+    var limit = Math.max(1, parseInt(o.limit, 10) || 25);
+    var q = global.besaSupabase
+      .from(TABLE)
+      .select("*", { count: "exact" })
+      .order("factuurnummer", { ascending: false })
+      .order("id", { ascending: true });
+    if (o.archived === true) q = q.eq("gearchiveerd", true);
+    else if (o.archived === false) q = q.eq("gearchiveerd", false);
+    var res = await q.range(offset, offset + limit - 1);
+    if (res.error) throw res.error;
+    return {
+      rows: (res.data || []).map(rowToObj).filter(Boolean),
+      total: (res.count == null ? null : res.count),
+    };
+  }
+
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     // Chunked fetch: PostgREST default limit is 1000 per query.
@@ -220,6 +258,22 @@
     // Initialiseer global bulk vanuit cache zodat de eerste render snel is.
     var cached = readCache();
     if (cached.length) pushToGlobalBulk(cached);
+
+    // Op het facturen-overzicht (facturen.html) NIET alle records eager
+    // ophalen. facturen.js doet daar server-side paginatie via fetchPage()
+    // en valt enkel terug op een volledige load wanneer er een filter/zoek/
+    // sortering actief is. Vlag zodat facturen.js weet dat lazy-modus geldt.
+    var lazyOverview = isFacturenOverviewPage();
+    if (lazyOverview) {
+      try { global.__FACT_LAZY_OVERVIEW = true; } catch (e) { /* */ }
+      readyPromise = (async function () {
+        try { await maybeMigrateLocalToSupabase(); } catch (err) {
+          console.error("[facturenDB] Bootstrap (lazy) mislukt:", err);
+        }
+      })();
+      return readyPromise;
+    }
+
     readyPromise = (async function () {
       try {
         await maybeMigrateLocalToSupabase();
@@ -352,6 +406,8 @@
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
     fetchAll: fetchAll,
+    fetchPage: fetchPage,
+    isLazyOverview: function () { return !!global.__FACT_LAZY_OVERVIEW; },
     add: add,
     update: update,
     archive: archive,
