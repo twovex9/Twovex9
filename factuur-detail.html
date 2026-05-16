@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Factuur — HR</title>
-  <link rel="stylesheet" href="styles.css?v=fdtl1" />
+  <link rel="stylesheet" href="styles.css?v=fdtl3" />
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -191,12 +191,26 @@
             </div>
             <div class="fdtl-field">
               <label>Status</label>
-              <div class="fdtl-val"><span class="fdtl-pill" id="fdtl-f-status">—</span></div>
+              <div class="fdtl-statussel" id="fdtl-status-sel">
+                <button type="button" class="fdtl-status-btn" id="fdtl-status-btn" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="fdtl-pill" id="fdtl-status-current">—</span>
+                  <span class="fdtl-status-chev" aria-hidden="true"></span>
+                </button>
+                <div class="fdtl-status-panel" id="fdtl-status-panel" role="listbox" hidden>
+                  <button type="button" class="fdtl-status-opt" role="option" data-status="declared_pending"><span class="fdtl-pill fdtl-pill--blue">Gedeclareerd en in behandeling</span></button>
+                  <button type="button" class="fdtl-status-opt" role="option" data-status="paid"><span class="fdtl-pill fdtl-pill--green">Betaald</span></button>
+                  <button type="button" class="fdtl-status-opt" role="option" data-status="to_declare"><span class="fdtl-pill fdtl-pill--amber">Te declareren</span></button>
+                  <button type="button" class="fdtl-status-opt" role="option" data-status="not_yet_paid"><span class="fdtl-pill fdtl-pill--red">Nog niet betaald</span></button>
+                </div>
+              </div>
             </div>
-            <div class="fdtl-field">
-              <label>Declaratiemethode</label>
-              <div class="fdtl-val" id="fdtl-f-declm">—</div>
+            <div class="fdtl-field" id="fdtl-betaaldop-field" hidden>
+              <label>Betaald op</label>
+              <input type="date" class="fdtl-date-input" id="fdtl-f-betaaldop" aria-label="Betaald op datum" />
             </div>
+          </div>
+          <div class="fdtl-actions">
+            <button type="button" class="btn-primary" id="fdtl-save-btn">Wijzigingen opslaan</button>
           </div>
         </section>
       </div>
@@ -212,6 +226,6 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="factuur-detail.js?v=fdtl1" defer></script>
+  <script src="factuur-detail.js?v=fdtl3" defer></script>
 </body>
 </html>
