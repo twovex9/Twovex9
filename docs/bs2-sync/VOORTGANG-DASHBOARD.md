@@ -9,6 +9,15 @@
   Backups `_beschikkingen_oud_bak`/`_facturen_oud_bak`/`_incidenten_oud_bak`.
 - ✅ **Medewerkers**: 100 volledig via API (`data.bs2_scrape`), velden gecorrigeerd
   (locaties 18→86, startdatum schoon). notities/documenten/verzuim = 135/920/8 = BS2.
+- ✅ **Beschikkingen-dashboard: WERKT 100%** (PR #187 gemerged `af84e83`, live op
+  Vercel). **2 CLEAN RUNS na elkaar, geen fix ertussen, 0 BS1-fouten**:
+  RUN#1 & RUN#2 byte-identiek — betaald €764.204,59/67, in behandeling
+  €273.614,13/11, achterstand €600.738,98, te decl. maand €63.503,64,
+  openstaand €664.242,62, actief 89, aanvraag 10, te-laat>60d 8,
+  zorgsoort 93/35/20/7, declm 122/26/7, maandgrafiek 3 kol; periode-filter
+  20mrt-13apr → €0/0 + €166.860,80/8 (2e bewezen periode), periode-
+  onafhankelijke KPI's blijven constant. Enige console-melding = Claude-
+  Chrome-extensie zelf (geen app-fout). db 155d/933p.
 - 🟢 **Beschikkingen-dashboard**: GEBOUWD + DB/JS-geverifieerd EXACT = BS2.
   Migration `bs2_dispositions_dashboard_tables` (2 additieve tabellen), import
   via `scripts/write-dispositions-full.mjs` (155 disp + 933 uniek payments —
