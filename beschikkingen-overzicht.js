@@ -1082,13 +1082,32 @@
   if (_bescOvSess) bescApplyOvSession(_bescOvSess);
   try {
     var _bp = new URLSearchParams(location.search);
-    if (_bp.has("fase") && selF) selF.value = _bp.get("fase");
-    if (_bp.has("betaling") && selP) selP.value = _bp.get("betaling");
-    if (_bp.has("dm") && selD) selD.value = _bp.get("dm");
-    if (_bp.has("z") && selZ) selZ.value = _bp.get("z");
-    if (_bp.get("f60") === "1" && f60) f60.checked = true;
-    if (_bp.get("fted") === "1" && fted) fted.checked = true;
-    if (_bp.get("fng") === "1" && fng) fng.checked = true;
+    var _hasDrill = _bp.has("fase") || _bp.has("betaling") || _bp.has("dm") ||
+      _bp.has("z") || _bp.get("f60") === "1" || _bp.get("fted") === "1" || _bp.get("fng") === "1";
+    if (_hasDrill) {
+      var _applyDrill = function () {
+        if (_bp.has("fase") && selF) selF.value = _bp.get("fase");
+        if (_bp.has("betaling") && selP) selP.value = _bp.get("betaling");
+        if (_bp.has("dm") && selD) selD.value = _bp.get("dm");
+        if (_bp.has("z") && selZ) selZ.value = _bp.get("z");
+        if (_bp.get("f60") === "1" && f60) f60.checked = true;
+        if (_bp.get("fted") === "1" && fted) fted.checked = true;
+        if (_bp.get("fng") === "1" && fng) fng.checked = true;
+        currentPage = 0;
+        if (typeof render === "function") render();
+      };
+      _applyDrill();
+      // Data laadt async — herhaal tot er rijen zijn (cap ~24 = 12s), zodat
+      // de drill-down-filter blijft staan ook na de async cache-load.
+      var _tries = 0;
+      var _drillIv = setInterval(function () {
+        _tries += 1;
+        var _items = (typeof getBeschikkingenItems === "function") ? (getBeschikkingenItems() || []) : [];
+        if (_items.length > 0) { _applyDrill(); clearInterval(_drillIv); }
+        else if (_tries >= 24) { clearInterval(_drillIv); }
+      }, 500);
+      document.addEventListener("beschikkingen:changed", _applyDrill);
+    }
   } catch (_e) { /* drill-down vanaf dashboard is best-effort */ }
   bindTbodyClicks();
   vullingForm();
