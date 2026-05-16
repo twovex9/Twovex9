@@ -1,26 +1,28 @@
 /*
  * beschikkingen-dashboard.js — BS2-conform Beschikkingen-dashboard.
- * Rendert de volledige BS2 /api/rpc "dispositions:dashboard" response, live
- * berekend uit window.bs2DashboardDB (Supabase: bs2_dispositions +
- * bs2_disposition_payments) met de bewezen formules. Periode-filter werkt
- * 1-op-1 zoals BS2 (filter op payment.ends_at ∈ [start,end]).
+ * Layout/labels/kleuren/charts 1-op-1 met BS2 (/dispositions/dashboard),
+ * in BS1-huisstijl. Rekent live uit window.bs2DashboardDB (bewezen formules).
+ * KPI-kaarten zijn klikbaar → gefilterde beschikkingen-overzicht (drill-down,
+ * net als BS2).
  */
 (function () {
   "use strict";
 
   function $(id) { return document.getElementById(id); }
-
   function fmtEuro(n) {
     var v = Math.round((Number(n) || 0) * 100) / 100;
-    return "€ " + v.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return "€ " + v.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function fmtInt(n) { return String(Math.round(Number(n) || 0)); }
   function pad2(n) { return n < 10 ? "0" + n : String(n); }
+  function setText(id, t) { var n = $(id); if (n) n.textContent = t; }
+  function clear(el) { while (el && el.firstChild) el.removeChild(el.firstChild); }
+  function euTick(v) {
+    if (v >= 1000) return "€ " + Math.round(v / 1000) + "k";
+    return "€ " + Math.round(v);
+  }
 
-  function defaultPeriod() {
-    // BS2 dashboard-default = lopend jaar (de gescrapete default-response was
-    // 2026-01-01..12-31). Gebruik het jaar van de meest recente payment-ends_at
-    // zodat het dashboard ook na een data-refresh het juiste jaar toont.
+  function defaultYear() {
     var y = new Date().getFullYear();
     try {
       var ps = window.bs2DashboardDB.getPayments();
@@ -30,205 +32,218 @@
         if (e > mx) mx = e;
       }
       if (mx.length >= 4) y = parseInt(mx.slice(0, 4), 10);
-    } catch (e) { /* fallback huidig jaar */ }
-    return { start: y + "-01-01", end: y + "-12-31", label: "Jaar " + y };
+    } catch (e) { /* huidig jaar */ }
+    return y;
   }
-
   function currentPeriod() {
-    var sel = $("bd-period-preset");
-    var v = sel ? sel.value : "year";
-    var now = new Date();
-    if (v === "custom") {
-      var s = $("bd-period-start"), e = $("bd-period-end");
-      return {
-        start: (s && s.value) || "1970-01-01",
-        end: (e && e.value) || "2999-12-31",
-      };
+    var s = $("bd-period-start"), e = $("bd-period-end");
+    var sv = s && s.value ? s.value : "";
+    var ev = e && e.value ? e.value : "";
+    if (!sv || !ev) {
+      var y = defaultYear();
+      sv = sv || y + "-01-01";
+      ev = ev || y + "-12-31";
     }
-    if (v === "thismonth") {
-      var ym = now.getFullYear() + "-" + pad2(now.getMonth() + 1);
-      var last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      return { start: ym + "-01", end: ym + "-" + pad2(last) };
-    }
-    if (v === "lastmonth") {
-      var d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      var ym2 = d.getFullYear() + "-" + pad2(d.getMonth() + 1);
-      var last2 = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-      return { start: ym2 + "-01", end: ym2 + "-" + pad2(last2) };
-    }
-    var dp = defaultPeriod();
-    return { start: dp.start, end: dp.end };
+    return { start: sv, end: ev };
   }
 
-  function setText(id, t) { var n = $(id); if (n) n.textContent = t; }
-
-  function renderHbar(containerId, rows, nameKey) {
-    var c = $(containerId);
-    if (!c) return;
-    c.innerHTML = "";
-    var max = 1, i;
-    for (i = 0; i < rows.length; i += 1) if (rows[i].count > max) max = rows[i].count;
+  /* ---- verticale staafgrafiek ---- */
+  function renderVBars(opt) {
+    // opt: {barsId, axisId, yId, rows:[{label,value,href?}], stacked?, max?}
+    var bars = $(opt.barsId), axis = $(opt.axisId), yEl = $(opt.yId);
+    if (!bars) return;
+    clear(bars); if (axis) clear(axis); if (yEl) clear(yEl);
+    var rows = opt.rows || [];
     if (!rows.length) {
       var em = document.createElement("div");
       em.className = "bd-hrow-empty";
       em.textContent = "Geen gegevens in deze periode";
-      c.appendChild(em);
+      bars.appendChild(em);
       return;
     }
-    for (i = 0; i < rows.length; i += 1) {
-      var row = document.createElement("div");
-      row.className = "bd-hrow";
-      var l = document.createElement("div");
-      l.className = "bd-hrow-l";
-      l.textContent = String(rows[i][nameKey] || "Onbekend");
-      l.title = l.textContent;
-      var t = document.createElement("div");
-      t.className = "bd-hrow-track";
-      var f = document.createElement("div");
-      f.className = "bd-hrow-fill";
-      f.style.width = (100 * rows[i].count / max) + "%";
-      t.appendChild(f);
-      var v = document.createElement("div");
-      v.className = "bd-hrow-n";
-      v.textContent = fmtInt(rows[i].count);
-      row.appendChild(l);
-      row.appendChild(t);
-      row.appendChild(v);
-      c.appendChild(row);
+    var max = opt.max || 0;
+    if (!max) {
+      rows.forEach(function (r) {
+        var tot = opt.stacked ? (r.segs || []).reduce(function (a, s) { return a + s.v; }, 0) : r.value;
+        if (tot > max) max = tot;
+      });
     }
-  }
-
-  function renderMonthly(months) {
-    var wrap = $("bd-monthly-stack");
-    var ax = $("bd-stack-labels");
-    var yL = $("bd-y-labels");
-    if (!wrap || !ax) return;
-    wrap.innerHTML = "";
-    ax.innerHTML = "";
-    if (yL) yL.innerHTML = "";
-
-    var stapels = months.map(function (m) {
-      var tot = (m.paid || 0) + (m.declared_pending || 0);
-      return { name: m.name, paid: m.paid || 0, dp: m.declared_pending || 0, tot: tot };
-    });
-    var maxT = 1;
-    stapels.forEach(function (s) { if (s.tot > maxT) maxT = s.tot; });
-
-    if (yL) {
+    if (max <= 0) max = 1;
+    // mooie ronde top
+    var step = Math.pow(10, Math.floor(Math.log10(max)));
+    var niceMax = Math.ceil(max / step) * step;
+    if (niceMax < max) niceMax = max;
+    if (yEl) {
       for (var t = 4; t >= 0; t -= 1) {
-        var val = maxT * (t / 4);
-        var s0 = document.createElement("div");
-        s0.className = "bd-y-tick";
-        s0.textContent = val >= 1000 ? Math.round(val / 1000) + "k" : "€" + Math.round(val);
-        yL.appendChild(s0);
+        var d = document.createElement("div");
+        var val = niceMax * (t / 4);
+        d.textContent = opt.euro ? euTick(val) : String(Math.round(val));
+        yEl.appendChild(d);
       }
     }
-    if (!stapels.length) {
-      wrap.style.gridTemplateColumns = "1fr";
-      var ph0 = document.createElement("div");
-      ph0.className = "bd-hrow-empty";
-      ph0.textContent = "Geen betalingen in deze periode";
-      wrap.appendChild(ph0);
-      return;
-    }
-    wrap.style.gridTemplateColumns = "repeat(" + stapels.length + ", minmax(0, 1fr))";
-    ax.style.gridTemplateColumns = "repeat(" + stapels.length + ", minmax(0, 1fr))";
-    stapels.forEach(function (s) {
-      var col = document.createElement("div");
-      col.className = "bd-stack-col";
+    rows.forEach(function (r) {
+      var col = document.createElement(r.href ? "a" : "div");
+      col.className = "bd-vbar-col";
+      if (r.href) { col.href = r.href; col.title = r.label + " — bekijk in overzicht"; }
       var bar = document.createElement("div");
-      bar.className = "bd-stack-bar";
-      if (s.tot > 0) {
-        var hp = (s.tot / maxT) * 100;
-        var inner = document.createElement("div");
-        inner.style.height = hp + "%";
-        inner.style.display = "flex";
-        inner.style.flexDirection = "column";
-        inner.style.justifyContent = "flex-end";
-        if (s.paid > 0) {
-          var g = document.createElement("div");
-          g.className = "bd-stack-seg bd-s--g";
-          g.style.flexGrow = String(s.paid);
-          g.title = "Betaald: " + fmtEuro(s.paid);
-          inner.appendChild(g);
-        }
-        if (s.dp > 0) {
-          var b = document.createElement("div");
-          b.className = "bd-stack-seg bd-s--b";
-          b.style.flexGrow = String(s.dp);
-          b.title = "In behandeling: " + fmtEuro(s.dp);
-          inner.appendChild(b);
-        }
-        bar.appendChild(inner);
+      bar.className = "bd-vbar";
+      var tot = opt.stacked ? (r.segs || []).reduce(function (a, s) { return a + s.v; }, 0) : r.value;
+      bar.style.height = (Math.max(0, tot) / niceMax * 100) + "%";
+      if (opt.stacked) {
+        (r.segs || []).forEach(function (s) {
+          if (s.v <= 0) return;
+          var seg = document.createElement("div");
+          seg.className = "bd-vbar-seg " + s.cls;
+          seg.style.height = (s.v / tot * 100) + "%";
+          seg.title = s.name + ": " + fmtEuro(s.v);
+          bar.appendChild(seg);
+        });
       } else {
-        var ph = document.createElement("div");
-        ph.className = "bd-stack-seg bd-s--ph";
-        ph.style.flexGrow = "1";
-        bar.appendChild(ph);
+        var seg2 = document.createElement("div");
+        seg2.className = "bd-vbar-seg bd-vbar-seg--blue";
+        seg2.style.height = "100%";
+        seg2.title = r.label + ": " + fmtInt(r.value);
+        bar.appendChild(seg2);
       }
       col.appendChild(bar);
-      wrap.appendChild(col);
-      var lb = document.createElement("span");
-      lb.className = "bd-stack-lbl";
-      lb.textContent = s.name;
-      ax.appendChild(lb);
+      bars.appendChild(col);
+      if (axis) {
+        var lb = document.createElement("span");
+        lb.textContent = r.label;
+        lb.title = r.label;
+        axis.appendChild(lb);
+      }
     });
   }
+
+  /* ---- donut (Declaratie Methode) ---- */
+  function renderDonut(rows) {
+    var svg = $("bd-decl-donut"), leg = $("bd-decl-legend");
+    if (!svg) return;
+    clear(svg); if (leg) clear(leg);
+    var total = rows.reduce(function (a, r) { return a + r.count; }, 0);
+    var palette = ["var(--blue)", "var(--yellow)", "var(--green)", "var(--red)", "var(--text-muted)"];
+    var R = 15.915, CX = 21, CY = 21, SW = 7;
+    var ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ring.setAttribute("cx", CX); ring.setAttribute("cy", CY); ring.setAttribute("r", R);
+    ring.setAttribute("fill", "none"); ring.setAttribute("stroke", "var(--line)"); ring.setAttribute("stroke-width", SW);
+    svg.appendChild(ring);
+    var off = 25; // start bovenaan
+    rows.forEach(function (r, i) {
+      if (!total || r.count <= 0) return;
+      var pct = r.count / total * 100;
+      var c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", CX); c.setAttribute("cy", CY); c.setAttribute("r", R);
+      c.setAttribute("fill", "none");
+      c.setAttribute("stroke", palette[i % palette.length]);
+      c.setAttribute("stroke-width", SW);
+      c.setAttribute("stroke-dasharray", pct + " " + (100 - pct));
+      c.setAttribute("stroke-dashoffset", off);
+      c.setAttribute("transform", "rotate(-90 " + CX + " " + CY + ")");
+      var tt = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      tt.textContent = r.name + ": " + r.count;
+      c.appendChild(tt);
+      svg.appendChild(c);
+      off -= pct;
+    });
+    var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", CX); txt.setAttribute("y", CY + 2.4);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("class", "bd-donut-hole-txt");
+    txt.textContent = String(total);
+    svg.appendChild(txt);
+    if (leg) {
+      rows.forEach(function (r, i) {
+        var row = document.createElement("div");
+        row.className = "bd-donut-leg";
+        var sw = document.createElement("span");
+        sw.className = "bd-donut-leg-s";
+        sw.style.background = palette[i % palette.length];
+        var nm = document.createElement("span");
+        nm.textContent = r.name;
+        var nn = document.createElement("span");
+        nn.className = "bd-donut-leg-n";
+        nn.textContent = String(r.count);
+        row.appendChild(sw); row.appendChild(nm); row.appendChild(nn);
+        leg.appendChild(row);
+      });
+    }
+  }
+
+  var DM_LABEL = { ons: "ONS", manual: "Handmatig", wlz: "WLZ", svb: "SVB" };
 
   function render() {
     if (!window.bs2DashboardDB || typeof window.bs2DashboardDB.computeKpis !== "function") return;
     var per = currentPeriod();
     var k = window.bs2DashboardDB.computeKpis(per.start, per.end);
 
-    // KPI-cards (BS2 rpc 1-op-1)
-    setText("bd-v-betaald", fmtEuro(k.paid_amount.amount));
-    setText("bd-s-betaald", k.paid_amount.paid_invoices + (k.paid_amount.paid_invoices === 1 ? " factuur" : " facturen"));
     setText("bd-v-ib", fmtEuro(k.declared_pending_amount.amount));
     setText("bd-s-ib", k.declared_pending_amount.pending_invoices + (k.declared_pending_amount.pending_invoices === 1 ? " betaling te verwerken" : " betalingen te verwerken"));
-    setText("bd-v-achter", fmtEuro(k.not_yet_declared_amount.amount));
-    setText("bd-v-tedecl", fmtEuro(k.to_be_declared_current_month.amount));
     setText("bd-v-out", fmtEuro(k.outstanding_to_declare.amount));
-    setText("bd-v-nietbetaald", fmtEuro(k.not_yet_paid_amount.amount));
-    setText("bd-v-nogtedecl", fmtEuro(k.to_declare_amount.amount));
-
+    setText("bd-v-betaald", fmtEuro(k.paid_amount.amount));
+    setText("bd-s-betaald", k.paid_amount.paid_invoices + (k.paid_amount.paid_invoices === 1 ? " factuur" : " facturen"));
     setText("bd-v-actief", fmtInt(k.active_dispositions.count));
-    setText("bd-v-open", fmtInt(k.pending_dispositions.count));
     setText("bd-v-60", fmtInt(k.overdue_60d.count));
+    setText("bd-v-open", fmtInt(k.pending_dispositions.count));
 
-    renderMonthly(k.monthly_payments);
-    renderHbar("bd-zorg-bars", k.care_types, "name");
-    renderHbar("bd-loc-bars", k.locations, "name");
-    renderHbar("bd-decl-bars", k.payment_methods, "declaration_method");
-    renderHbar("bd-proc-bars", k.processing_time, "time_range");
+    // Maandelijkse Betalingen — gestapeld groen (betaald) + oranje (wacht op betaling)
+    renderVBars({
+      barsId: "bd-monthly-stack", axisId: "bd-stack-labels", yId: "bd-y-labels",
+      euro: true, stacked: true,
+      rows: (k.monthly_payments || []).map(function (m) {
+        return { label: m.name, segs: [
+          { name: "Betaald", v: m.paid || 0, cls: "bd-vbar-seg--g" },
+          { name: "Wacht op betaling", v: m.declared_pending || 0, cls: "bd-vbar-seg--o" },
+        ] };
+      }),
+    });
 
-    var pl = $("bd-period-label");
-    if (pl) pl.textContent = per.start + " t/m " + per.end;
+    renderVBars({
+      barsId: "bd-zorg-bars", axisId: "bd-zorg-axis", yId: "bd-zorg-y",
+      rows: (k.care_types || []).map(function (c) {
+        return { label: c.name, value: c.count };
+      }),
+    });
+    renderVBars({
+      barsId: "bd-loc-bars", axisId: "bd-loc-axis", yId: "bd-loc-y",
+      rows: (k.locations || []).map(function (c) {
+        return { label: c.name, value: c.count };
+      }),
+    });
+    renderVBars({
+      barsId: "bd-proc-bars", axisId: "bd-proc-axis", yId: "bd-proc-y",
+      rows: (k.processing_time || []).map(function (c) {
+        return { label: c.time_range, value: c.count };
+      }),
+    });
+    renderDonut((k.payment_methods || []).map(function (p) {
+      return { name: DM_LABEL[p.declaration_method] || p.declaration_method, count: p.count };
+    }));
   }
 
   function wirePeriod() {
-    var sel = $("bd-period-preset");
-    var cw = $("bd-period-custom");
-    function syncCustom() {
-      if (!sel || !cw) return;
-      cw.style.display = sel.value === "custom" ? "" : "none";
-    }
-    if (sel) sel.addEventListener("change", function () { syncCustom(); render(); });
     var s = $("bd-period-start"), e = $("bd-period-end");
     if (s) s.addEventListener("change", render);
     if (e) e.addEventListener("change", render);
-    syncCustom();
+    var pill = $("bd-daterange");
+    if (pill && s) {
+      pill.addEventListener("click", function (ev) {
+        if (ev.target === pill || (ev.target.classList && ev.target.classList.contains("bd-daterange-ico"))) {
+          if (s.showPicker) { try { s.showPicker(); } catch (_e) { s.focus(); } } else s.focus();
+        }
+      });
+    }
   }
 
   async function init() {
     wirePeriod();
     try {
       if (window.bs2DashboardDB && window.bs2DashboardDB.ready) await window.bs2DashboardDB.ready;
-    } catch (e) { /* reporter heeft al gemeld */ }
-    // default-jaar instellen in custom-velden zodat "Aangepast" zinvol begint
-    var dp = defaultPeriod();
+    } catch (e) { /* reporter meldde al */ }
+    var y = defaultYear();
     var s = $("bd-period-start"), e = $("bd-period-end");
-    if (s && !s.value) s.value = dp.start;
-    if (e && !e.value) e.value = dp.end;
+    if (s && !s.value) s.value = y + "-01-01";
+    if (e && !e.value) e.value = y + "-12-31";
     render();
   }
 

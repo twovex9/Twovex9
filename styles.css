@@ -15479,79 +15479,281 @@ button.planning-erm-new {
   }
 }
 
-/* BS2-conform Beschikkingen-dashboard: periode-filter + extra widgets */
-.bd-period {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.bd-period-lbl {
-  font-size: var(--font-ui-badge);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-.bd-period-sel,
-.bd-period-date {
-  font-family: inherit;
-  font-size: var(--font-table-cell);
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  padding: 6px 10px;
-  line-height: 1.2;
-}
-.bd-period-sel:focus,
-.bd-period-date:focus {
-  outline: none;
-  border-color: var(--blue);
-}
-.bd-period-custom {
+/* ============ BS2-conform Beschikkingen-dashboard ============ */
+
+/* Periode = datum-range pill (rechtsboven, zoals BS2) */
+.bd-daterange {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+  color: var(--text-secondary);
 }
-.bd-period-dash {
+.bd-daterange-ico {
+  display: inline-flex;
   color: var(--text-muted);
 }
-.bd-period-now {
+.bd-daterange-date {
+  font-family: inherit;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.bd-daterange-date:focus {
+  outline: none;
+}
+.bd-daterange-sep {
+  color: var(--text-muted);
+}
+
+/* Grid: links smalle kolom, rechts 2 kolommen (BS2-indeling) */
+.bd2-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 300px) 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-top: 4px;
+}
+.bd2-card {
+  box-shadow: var(--page-shell-shadow, 0 1px 3px rgba(0, 0, 0, 0.08));
+  text-decoration: none;
+  color: inherit;
+}
+.bd2-card--link {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+.bd2-card--link:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+}
+.bd2-card--link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Geld-/aantal-kaart (links + Betaald + Actief) */
+.bd2-card--money {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 20px 16px 22px;
+}
+.bd2-card-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-table-cell);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.bd2-eur {
+  font-weight: 800;
+  color: var(--text-muted);
+}
+.bd2-card-val {
+  font-size: var(--font-h1);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.bd2-val--orange { color: var(--yellow); }
+.bd2-val--red { color: var(--red); }
+.bd2-val--green { color: var(--green); }
+.bd2-val--ink { color: var(--text); }
+.bd2-card-sub {
   font-size: var(--font-ui-badge);
   color: var(--text-muted);
 }
 
-.bd-inline-kpis--5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+/* Counter-kaart (Verlopen binnen 60d / Openstaande Aanvragen) */
+.bd2-card--counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 20px 16px;
 }
-.bd-mini-val--eur {
+.bd2-counter-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: var(--font-table-cell);
-  font-weight: 800;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
+.bd2-counter-lbl svg { color: var(--text-muted); }
+.bd2-counter-val {
+  font-size: var(--font-h1);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* Maandelijkse Betalingen-kaart spant 2 kolommen, 4 rijen */
+.bd2-card--chart {
+  grid-column: 2 / 4;
+  grid-row: 2 / 5;
+  padding: 18px 20px 20px;
+  min-width: 0;
+}
+#bd-card-ib { grid-column: 1; grid-row: 1; }
+#bd-card-60 { grid-column: 2; grid-row: 1; }
+#bd-card-open { grid-column: 3; grid-row: 1; }
+#bd-card-out { grid-column: 1; grid-row: 2; }
+#bd-card-betaald { grid-column: 1; grid-row: 3; }
+#bd-card-actief { grid-column: 1; grid-row: 4; }
+
+/* Verticale staafgrafiek (BS2-stijl: blauwe kolommen) */
+.bd-vchart {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+.bd-vy {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 70px;
+  flex-shrink: 0;
+  min-height: 230px;
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  text-align: right;
+  padding-bottom: 22px;
+  box-sizing: border-box;
+}
+.bd-vchart--sm .bd-vy { width: 34px; min-height: 200px; }
+.bd-vplot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+.bd-vbars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  min-height: 230px;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0 8px;
+}
+.bd-vchart--sm .bd-vbars { min-height: 200px; }
+.bd-vbar-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 230px;
+}
+.bd-vchart--sm .bd-vbar-col { height: 200px; }
+.bd-vbar {
+  width: 100%;
+  max-width: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  overflow: hidden;
+}
+.bd-vbar-seg { width: 100%; }
+.bd-vbar-seg--blue { background: var(--blue); }
+.bd-vbar-seg--g { background: var(--green); }
+.bd-vbar-seg--o { background: var(--yellow); }
+a.bd-vbar-col { text-decoration: none; cursor: pointer; }
+a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
+.bd-vaxis {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 4px 8px 0;
+}
+.bd-vaxis span {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Donut (Declaratie Methode) */
+.bd-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 0;
+}
+.bd-donut {
+  width: 190px;
+  height: 190px;
+  flex-shrink: 0;
+}
+.bd-donut-hole-txt {
+  font-size: 7px;
+  font-weight: 800;
+  fill: var(--text);
+}
+.bd-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bd-donut-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+}
+.bd-donut-leg-s {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.bd-donut-leg-n { font-weight: 800; color: var(--text); margin-left: auto; padding-left: 12px; }
 
 .bd-bottom--4 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-
 .bd-hrow-empty {
   font-size: var(--font-ui-badge);
   color: var(--text-muted);
   padding: 10px 2px;
 }
 
-@media (max-width: 1200px) {
-  .bd-inline-kpis--5 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .bd-bottom--4 {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 1100px) {
+  .bd2-grid { grid-template-columns: 1fr 1fr; }
+  .bd2-card--chart { grid-column: 1 / 3; grid-row: auto; }
+  #bd-card-ib, #bd-card-60, #bd-card-open,
+  #bd-card-out, #bd-card-betaald, #bd-card-actief { grid-column: auto; grid-row: auto; }
+  .bd-bottom--4 { grid-template-columns: 1fr; }
 }
-@media (max-width: 600px) {
-  .bd-inline-kpis--5 {
-    grid-template-columns: 1fr 1fr;
-  }
+@media (max-width: 640px) {
+  .bd2-grid { grid-template-columns: 1fr; }
+  .bd2-card--chart { grid-column: 1; }
 }
 
 /* Uren budgettering (uren-budgettering.html) */
