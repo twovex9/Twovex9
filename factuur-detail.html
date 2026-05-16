@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Factuur — HR</title>
+  <link rel="stylesheet" href="styles.css?v=fdtl1" />
+</head>
+<body>
+  <script src="save-feedback.js?v=sf500" defer></script>
+  <script src="floating-panels.js?v=fpv9" defer></script>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkuren.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkuren.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkuren-labels.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="kilometers.html" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="kilometers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
+                <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
+              </div>
+            </div>            <a href="taken.html" class="top-link">Taken</a>
+            <a href="index.html" class="top-link">Medewerkers</a>
+            <a href="beleid.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="rollen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="teams.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+                <a href="gebruikers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
+              </div>
+            </div>
+            <a href="instellingen.html" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
+      <nav class="side-nav" aria-label="Cliënten module">
+        <a href="clienten.html" class="side-link">Cliënten</a>
+        <a href="zorgsoorten.html" class="side-link">Zorgsoorten</a>
+        <div class="side-group is-open" data-side-group="cl-beschikkingen">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-beschikkingen-btn" aria-expanded="true" aria-controls="besc-nav-beschikkingen-sub" aria-label="Beschikkingen, submenu">
+            <span class="side-group__label">Beschikkingen</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="besc-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen">
+            <a href="beschikkingen-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="beschikkingen.html" class="side-link side-link--nested">Overzicht</a>
+            <a href="facturen.html" class="side-link side-link--nested is-active" aria-current="page">Facturen</a>
+          </div>
+        </div>
+        <a href="organisatie.html" class="side-link">Organisatie</a>
+        <a href="gemeenten.html" class="side-link">Gemeenten</a>
+        <a href="urendeclaraties.html" class="side-link">Uren declaraties</a>
+        <a href="uren-budgettering.html" class="side-link">Uren budgetering</a>
+        <a href="facturen-importeren.html" class="side-link">Facturen importeren</a>
+        <div class="side-group" data-side-group="cl-incidenten">
+          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-incidenten-btn" aria-expanded="false" aria-controls="besc-nav-incidenten-sub" aria-label="Incidenten, open submenu">
+            <span class="side-group__label">Incidenten</span>
+            <span class="side-chev" aria-hidden="true"></span>
+          </button>
+          <div class="side-group__panel" id="besc-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
+            <a href="incidenten.html" class="side-link side-link--nested">Incidenten overzicht</a>
+            <a href="incidenten-dashboard.html" class="side-link side-link--nested">Dashboard</a>
+            <a href="incidenten-categorieen.html" class="side-link side-link--nested">Categorieën</a>
+            <a href="verbeteringsmaatregelen.html" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="index.html">← Alle HR</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+      </div>
+    </aside>
+
+    <main class="content content--besc-detail">
+      <div class="content-header">
+        <h1 id="fdtl-title">Factuur</h1>
+        <div class="header-actions">
+          <a href="facturen.html" class="btn-outline">Terug naar overzicht</a>
+        </div>
+      </div>
+
+      <div id="fdtl-error" class="fdtl-error" hidden></div>
+
+      <div class="fdtl-wrap">
+        <aside class="fdtl-aside" aria-label="Samenvatting">
+          <div class="fdtl-hero">
+            <span class="fdtl-hero-naam" id="fdtl-hero-naam">—</span>
+            <span class="fdtl-hero-sub">BETALING</span>
+          </div>
+          <section class="table-card fdtl-summary">
+            <dl class="fdtl-dl">
+              <dt>Factuurnummer</dt><dd id="fdtl-s-factuur">—</dd>
+              <dt>Beschikking</dt><dd id="fdtl-s-besch">—</dd>
+              <dt>Cliënt</dt><dd id="fdtl-s-client">—</dd>
+              <dt>Datum</dt><dd id="fdtl-s-datum">—</dd>
+              <dt>Betaald</dt><dd id="fdtl-s-betaald">—</dd>
+              <dt>Status</dt><dd id="fdtl-s-status">—</dd>
+              <dt>Ons bericht</dt><dd id="fdtl-s-bericht">—</dd>
+              <dt>Bedrag</dt><dd id="fdtl-s-bedrag">—</dd>
+            </dl>
+          </section>
+          <section class="table-card fdtl-summary">
+            <h2 class="fdtl-card-t">Statistieken</h2>
+            <dl class="fdtl-dl">
+              <dt>Al betaald</dt><dd id="fdtl-st-albetaald">—</dd>
+              <dt>Nog niet ontvangen</dt><dd id="fdtl-st-nogniet">—</dd>
+            </dl>
+          </section>
+        </aside>
+
+        <section class="table-card fdtl-main">
+          <h2 class="fdtl-card-t">Beschikking uitbetaling gegevens</h2>
+          <div class="fdtl-grid">
+            <div class="fdtl-field">
+              <label>Factuurnummer</label>
+              <div class="fdtl-val" id="fdtl-f-factuur">—</div>
+            </div>
+            <div class="fdtl-field">
+              <label>Beschikking</label>
+              <div class="fdtl-val" id="fdtl-f-besch">—</div>
+            </div>
+            <div class="fdtl-field">
+              <label>Startdatum</label>
+              <div class="fdtl-val" id="fdtl-f-start">—</div>
+            </div>
+            <div class="fdtl-field">
+              <label>Einddatum</label>
+              <div class="fdtl-val" id="fdtl-f-eind">—</div>
+            </div>
+            <div class="fdtl-field">
+              <label>Status</label>
+              <div class="fdtl-val"><span class="fdtl-pill" id="fdtl-f-status">—</span></div>
+            </div>
+            <div class="fdtl-field">
+              <label>Declaratiemethode</label>
+              <div class="fdtl-val" id="fdtl-f-declm">—</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="error-reporter.js?v=er1"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="notification-bell.js?v=nb1" defer></script>
+  <script src="profiles-data.js"></script>
+  <script src="factuur-detail.js?v=fdtl1" defer></script>
+</body>
+</html>
