@@ -85,3 +85,17 @@ detail-tabs (Details/Facturen/Tarieven/Notities/Audit) tonen BS2-data,
 ## Bestanden
 `scripts/bs2-console-rec-overzicht.js` (STAP1), `bs2-console-scrape-overzicht.js`
 v3 (STAP2), `inspect-overzicht.mjs` (STAP3). Branch `feature/v3-dashboard-drilldown-fix`.
+
+## STAP 5 + 6 — KLAAR ✅ (2026-05-16)
+Reconciliatie atomair geslaagd (3 CHECK/NOT-NULL-fixes, telkens veilig teruggerold).
+Backups: `_beschikkingen_overzicht_bak`(134) `_facturen_overzicht_bak`(911).
+Resultaat: beschikkingen **151** (alle met `data.bs2_scrape` = volledige ruwe
+disposition incl. 5 tabs = 100%), facturen **956**, beschikking_tarieven 129,
+beschikking_notities 1, beschikking_audit_log 1180. fasen Actief 89/Verlopen 51/
+In aanvraag 10/In zorg 1; betalings_status betaald 124/outstanding 27.
+Dashboard-KPI ongewijzigd exact (89/10/8/EUR764.204,59). **Drill-down nu 100%
+consistent: dashboard 89 = beschikkingen fase=Actief 89**. Controle-beschikking
+fasehuis veld-voor-veld = BS2. Maps: status paid->betaald/outstanding->outstanding;
+declmethode ons->ONS/manual->Handmatig/wlz->WLZ; tariff weekly->week/daily->dag/
+hourly->uur; audit VIEW->bekijken/CREATE->aanmaken/UPDATE+ARCHIVE->bewerken.
+Nog te doen: live 2 CLEAN RUNS (overzicht 151 + drilldown 89 + detail-tabs).
