@@ -857,6 +857,11 @@
     });
   }
 
+  // Wordt true zodra facturen-data.js de Supabase-data heeft binnengehaald.
+  // Voorkomt dat de eerste render (lege/koude cache) "Geen factuurregels"
+  // toont i.p.v. een nette laad-status.
+  var factDataLoaded = false;
+
   function render() {
     var items = getFiltered();
     var pageSize = getPageSize();
@@ -875,7 +880,11 @@
       var tdE = document.createElement("td");
       tdE.colSpan = 10;
       tdE.className = "cl-empty-cell";
-      tdE.textContent = isArchV2 ? "Geen gearchiveerde factuurregels (pas het filter of zoekveld aan)." : "Geen actieve factuurregels voor dit filter.";
+      if (!factDataLoaded && !isArchV2) {
+        tdE.textContent = "Facturen laden…";
+      } else {
+        tdE.textContent = isArchV2 ? "Geen gearchiveerde factuurregels (pas het filter of zoekveld aan)." : "Geen actieve factuurregels voor dit filter.";
+      }
       trE.appendChild(tdE);
       tbody.appendChild(trE);
     } else {
@@ -1578,6 +1587,7 @@
   // Dit zorgt dat een nieuwe gebruiker (lege localStorage) toch direct alle
   // 956+ facturen ziet, en dat archive/purge-acties op andere tabs doorkomen.
   window.addEventListener("besa:facturen-updated", function () {
+    factDataLoaded = true;
     rebuildFromBulk();
     // factPurged wordt bij refresh gewist: hard-deleted records zijn al weg
     // uit FACTUREN_BULK, dus de purge-flag is overbodig.
@@ -1586,4 +1596,12 @@
     currentPage = 0;
     render();
   });
+
+  // Vangnet: ook als het event gemist wordt, re-render zodra de Supabase-
+  // bootstrap klaar is (lege/koude cache toonde anders "laden…" tot reload).
+  try {
+    if (window.facturenDB && window.facturenDB.ready && typeof window.facturenDB.ready.then === "function") {
+      window.facturenDB.ready.then(function () { factDataLoaded = true; currentPage = 0; render(); });
+    }
+  } catch (e) { /* */ }
 })();
