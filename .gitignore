@@ -38,5 +38,3 @@ scripts/bs2-exports/*.json
 scripts/bs2-exports/*.sql
 !scripts/bs2-exports/README.md
 scripts/_tmp_*
-scripts/.env
-scripts/out/
