@@ -823,9 +823,28 @@
     return "fact-status-pill--in-behandeling";
   }
 
-  function statusPillHtml(st) {
-    var cls = factStatusPillClass(st);
-    return '<span class="status-pill fact-status-pill ' + cls + '">' + esc(st) + "</span>";
+  // BS2-status "declared_pending" wordt overal als één label getoond:
+  // "Gedeclareerd en in behandeling". De scrape-import liet sommige rijen
+  // als kale "gedeclareerd" staan — die normaliseren we hier zodat het
+  // overzicht altijd consistent is (user-regel 2026-05-16).
+  function normFactStatusLabel(st, beta) {
+    var s = (st == null ? "" : String(st)).trim();
+    var b = (beta == null ? "" : String(beta)).trim().toLowerCase();
+    var sl = s.toLowerCase();
+    if (b === "declared_pending"
+      || sl === "gedeclareerd"
+      || sl === "declared_pending"
+      || sl.indexOf("gedeclareerd") !== -1
+      || sl.indexOf("in behandeling") !== -1) {
+      return "Gedeclareerd en in behandeling";
+    }
+    return s;
+  }
+
+  function statusPillHtml(st, beta) {
+    var label = normFactStatusLabel(st, beta);
+    var cls = factStatusPillClass(label);
+    return '<span class="status-pill fact-status-pill ' + cls + '">' + esc(label) + "</span>";
   }
 
   function esc(s) {
@@ -966,7 +985,7 @@
 
     var tdSt = document.createElement("td");
     tdSt.setAttribute("data-col", "st");
-    tdSt.innerHTML = statusPillHtml(r.st);
+    tdSt.innerHTML = statusPillHtml(r.st, r.beta);
     tr.appendChild(tdSt);
 
     var tdB = document.createElement("td");
