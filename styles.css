@@ -15922,6 +15922,9 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
   flex-direction: column;
   gap: 6px;
 }
+/* Standaard DICHT: het hidden-attribuut moet de class-display:flex
+   overschrijven (anders staat het menu altijd open). JS togglet `hidden`. */
+.fdtl-status-panel[hidden] { display: none; }
 .fdtl-status-opt {
   display: flex;
   align-items: center;
