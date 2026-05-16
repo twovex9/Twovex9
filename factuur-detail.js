@@ -74,8 +74,16 @@
   function applyCurrentPill() {
     var p = $("fdtl-status-current");
     if (p) { p.textContent = LABEL[curCode]; p.className = "fdtl-pill " + (PILLCLS[curCode] || "fdtl-pill--blue"); }
+    // Status links in de samenvatting óók als massieve gekleurde pill
+    // met witte tekst (zelfde als de dropdown).
     var sp = $("fdtl-s-status");
-    if (sp) sp.textContent = LABEL[curCode];
+    if (sp) {
+      sp.textContent = "";
+      var sPill = document.createElement("span");
+      sPill.className = "fdtl-pill " + (PILLCLS[curCode] || "fdtl-pill--blue");
+      sPill.textContent = LABEL[curCode];
+      sp.appendChild(sPill);
+    }
     // markeer geselecteerde optie
     var opts = document.querySelectorAll(".fdtl-status-opt");
     for (var i = 0; i < opts.length; i += 1) {
