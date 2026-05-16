@@ -15830,6 +15830,10 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .fdtl-main {
   padding: 22px 24px 24px;
   min-width: 0;
+  /* .table-card heeft overflow:hidden → dat kapte de status-dropdown af
+     (maar 2 van 4 opties zichtbaar). Hier overschreven zodat het panel
+     volledig over de kaartrand heen valt (zoals BS2). */
+  overflow: visible;
 }
 .fdtl-grid {
   display: grid;
@@ -15843,10 +15847,8 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
   min-width: 0;
 }
 .fdtl-field label {
-  font-size: var(--font-ui-badge);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: var(--font-table-cell);
+  font-weight: 600;
   color: var(--text-secondary);
 }
 .fdtl-val {
@@ -15897,11 +15899,12 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 }
 .fdtl-status-btn:hover { border-color: var(--line-strong); }
 .fdtl-status-chev {
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid var(--text-muted);
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  margin-top: -4px;
   flex-shrink: 0;
 }
 .fdtl-status-panel {
@@ -15922,15 +15925,26 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .fdtl-status-opt {
   display: flex;
   align-items: center;
+  gap: 8px;
   background: transparent;
   border: 0;
-  border-radius: var(--r-sm);
-  padding: 8px;
+  border-radius: var(--r-pill);
+  padding: 8px 12px;
   cursor: pointer;
   text-align: left;
 }
+/* Vinkje-slot links (zoals BS2): alleen de geselecteerde toont ✓ */
+.fdtl-status-opt::before {
+  content: "";
+  width: 14px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 800;
+  font-size: var(--font-table-cell);
+}
+.fdtl-status-opt.is-selected::before { content: "\2713"; }
 .fdtl-status-opt:hover { background: var(--bg-muted); }
-.fdtl-status-opt.is-selected { background: var(--bg-muted); }
 .fdtl-date-input {
   width: 100%;
   box-sizing: border-box;
