@@ -44,18 +44,31 @@
   }
   function showTip(html, x, y) {
     var t = ensureTip();
-    t.innerHTML = html;
+    if (html != null) t.innerHTML = html;
     t.hidden = false;
     var pad = 14;
-    var r = t.getBoundingClientRect();
-    var nx = x + pad;
-    var ny = y + pad;
-    if (nx + r.width > window.innerWidth - 8) nx = x - r.width - pad;
-    if (ny + r.height > window.innerHeight - 8) ny = y - r.height - pad;
-    if (nx < 8) nx = 8;
-    if (ny < 8) ny = 8;
-    t.style.left = Math.round(nx) + "px";
-    t.style.top = Math.round(ny) + "px";
+    var m = 8;
+    var w = t.offsetWidth;
+    var h = t.offsetHeight;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    // Gewenste viewport-positie pal naast de cursor; flip bij schermrand.
+    var dx = x + pad;
+    var dy = y + pad;
+    if (dx + w > vw - m) dx = x - w - pad;
+    if (dx < m) dx = m;
+    if (dy + h > vh - m) dy = y - h - pad;
+    if (dy < m) dy = m;
+    t.style.left = dx + "px";
+    t.style.top = dy + "px";
+    // Zelfcorrectie: een eventuele containing-block-offset (transform/contain
+    // op een voorouder) zou de fixed-positie verschuiven. Meet de echte rect
+    // en corrigeer zodat de tooltip exact naast de muis staat (en in beeld).
+    var rr = t.getBoundingClientRect();
+    var cl = parseFloat(t.style.left) || 0;
+    var ct = parseFloat(t.style.top) || 0;
+    t.style.left = Math.round(cl + (dx - rr.left)) + "px";
+    t.style.top = Math.round(ct + (dy - rr.top)) + "px";
   }
   function hideTip() { if (tipEl) tipEl.hidden = true; }
   function buildTipHtml(opt, r) {
@@ -84,6 +97,14 @@
         + "</div>";
     }
     return h;
+  }
+  function donutTipHtml(name, count, color) {
+    return '<div class="bd-tip-title">' + escTip(name) + "</div>"
+      + '<div class="bd-tip-row">'
+      + '<span class="bd-tip-sw" style="background:' + color + '"></span>'
+      + '<span class="bd-tip-nm">Aantal</span>'
+      + '<span class="bd-tip-val">' + fmtInt(count) + "</span>"
+      + "</div>";
   }
 
   function defaultYear() {
@@ -214,9 +235,13 @@
       c.setAttribute("stroke-dasharray", pct + " " + (100 - pct));
       c.setAttribute("stroke-dashoffset", off);
       c.setAttribute("transform", "rotate(-90 " + CX + " " + CY + ")");
-      var tt = document.createElementNS("http://www.w3.org/2000/svg", "title");
-      tt.textContent = r.name + ": " + r.count;
-      c.appendChild(tt);
+      c.style.cursor = "pointer";
+      (function (nm, cnt, color) {
+        var html = donutTipHtml(nm, cnt, color);
+        c.addEventListener("mouseenter", function (ev) { showTip(html, ev.clientX, ev.clientY); });
+        c.addEventListener("mousemove", function (ev) { showTip(html, ev.clientX, ev.clientY); });
+        c.addEventListener("mouseleave", hideTip);
+      })(r.name, r.count, palette[i % palette.length]);
       svg.appendChild(c);
       off -= pct;
     });
@@ -239,6 +264,12 @@
         nn.className = "bd-donut-leg-n";
         nn.textContent = String(r.count);
         row.appendChild(sw); row.appendChild(nm); row.appendChild(nn);
+        (function (nme, cnt, color) {
+          var html = donutTipHtml(nme, cnt, color);
+          row.addEventListener("mouseenter", function (ev) { showTip(html, ev.clientX, ev.clientY); });
+          row.addEventListener("mousemove", function (ev) { showTip(html, ev.clientX, ev.clientY); });
+          row.addEventListener("mouseleave", hideTip);
+        })(r.name, r.count, palette[i % palette.length]);
         leg.appendChild(row);
       });
     }
