@@ -51,9 +51,9 @@
   }
 
   function dispatchUpdated(source) {
-    try {
-      global.dispatchEvent(new CustomEvent("besa:beschikking-audit-updated", { detail: { source: source || "beschikking-audit-data" } }));
-    } catch (e) { /* */ }
+    var d = { detail: { source: source || "beschikking-audit-data" } };
+    try { global.dispatchEvent(new CustomEvent("besa:beschikking-audit-updated", d)); } catch (e) { /* */ }
+    try { if (global.document) global.document.dispatchEvent(new CustomEvent("besa:beschikking-audit-updated", d)); } catch (e2) { /* */ }
   }
 
   // Frontend-conventie blijft camelCase + korte keys (t/act/user/details/
@@ -95,12 +95,24 @@
 
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
-      .from(TABLE)
-      .select("*")
-      .order("t", { ascending: false });
-    if (res.error) throw res.error;
-    return (res.data || []).map(rowToObj).filter(Boolean);
+    // PostgREST capt standaard op 1000 rijen. De audit-tabel is na de
+    // BS2-reconciliatie >1000 (1181+), dus pagineer met .range() tot alles
+    // binnen is — anders missen oudere BS2-audit-rijen (bv. per beschikking).
+    var all = [], from = 0, PAGE = 1000;
+    for (;;) {
+      var res = await global.besaSupabase
+        .from(TABLE)
+        .select("*")
+        .order("t", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (res.error) throw res.error;
+      var batch = res.data || [];
+      all = all.concat(batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+      if (from > 200000) break; // veiligheidscap
+    }
+    return all.map(rowToObj).filter(Boolean);
   }
 
   async function maybeMigrateLocalToSupabase() {
