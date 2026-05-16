@@ -15871,6 +15871,12 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .fdtl-pill--amber { background: var(--yellow-soft); color: var(--yellow); }
 .fct-row-click { cursor: pointer; }
 .fct-row-click:hover { background: var(--bg-muted); }
+.fct-fn-link {
+  color: var(--blue);
+  font-weight: 700;
+  text-decoration: none;
+}
+.fct-fn-link:hover { text-decoration: underline; }
 
 @media (max-width: 1000px) {
   .fdtl-wrap { grid-template-columns: 1fr; }
