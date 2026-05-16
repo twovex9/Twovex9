@@ -875,6 +875,19 @@
 
     var isArchV2 = !!(elArch && elArch.checked);
     tbody.innerHTML = "";
+    // Niet de (pre-load) bron renderen vóór facturen-data.js de Supabase-
+    // data heeft: die rijen missen het echte id → geen klikbare link
+    // ("iets anders / niet klikbaar"-flash). Toon laad-status tot data er is.
+    if (!factDataLoaded && !isArchV2) {
+      var trL = document.createElement("tr");
+      var tdL = document.createElement("td");
+      tdL.colSpan = 10;
+      tdL.className = "cl-empty-cell";
+      tdL.textContent = "Facturen laden…";
+      trL.appendChild(tdL);
+      tbody.appendChild(trL);
+      return;
+    }
     if (!page.length) {
       var trE = document.createElement("tr");
       var tdE = document.createElement("td");
