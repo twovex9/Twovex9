@@ -1080,6 +1080,16 @@
 
   var _bescOvSess = bescReadOvSession();
   if (_bescOvSess) bescApplyOvSession(_bescOvSess);
+  try {
+    var _bp = new URLSearchParams(location.search);
+    if (_bp.has("fase") && selF) selF.value = _bp.get("fase");
+    if (_bp.has("betaling") && selP) selP.value = _bp.get("betaling");
+    if (_bp.has("dm") && selD) selD.value = _bp.get("dm");
+    if (_bp.has("z") && selZ) selZ.value = _bp.get("z");
+    if (_bp.get("f60") === "1" && f60) f60.checked = true;
+    if (_bp.get("fted") === "1" && fted) fted.checked = true;
+    if (_bp.get("fng") === "1" && fng) fng.checked = true;
+  } catch (_e) { /* drill-down vanaf dashboard is best-effort */ }
   bindTbodyClicks();
   vullingForm();
   zorgsoortZetOpties();
