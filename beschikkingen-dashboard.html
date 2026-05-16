@@ -136,11 +136,35 @@
     <main class="content content--besc-dashboard">
       <div class="content-header">
         <h1>Beschikkingen dashboard</h1>
-        <div class="header-actions"></div>
+        <div class="header-actions">
+          <div class="bd-period">
+            <label class="bd-period-lbl" for="bd-period-preset">Periode</label>
+            <select id="bd-period-preset" class="bd-period-sel">
+              <option value="year" selected>Lopend jaar</option>
+              <option value="thismonth">Deze maand</option>
+              <option value="lastmonth">Vorige maand</option>
+              <option value="custom">Aangepast…</option>
+            </select>
+            <span id="bd-period-custom" class="bd-period-custom" hidden>
+              <input type="date" id="bd-period-start" class="bd-period-date" aria-label="Periode begin" />
+              <span class="bd-period-dash" aria-hidden="true">–</span>
+              <input type="date" id="bd-period-end" class="bd-period-date" aria-label="Periode einde" />
+            </span>
+            <span id="bd-period-label" class="bd-period-now" aria-live="polite"></span>
+          </div>
+        </div>
       </div>
 
       <div class="bd-wrap">
         <div class="bd-left">
+          <div class="bd-kpi table-card" data-bd-k="betaald">
+            <div class="bd-kpi-ico bd-kpi-ico--green" aria-hidden="true">€</div>
+            <div class="bd-kpi-txt">
+              <span class="bd-kpi-label">Betaald</span>
+              <span class="bd-kpi-val bd-kpi-val--green" id="bd-v-betaald">€ 0,00</span>
+              <span class="bd-kpi-sub" id="bd-s-betaald">0 facturen</span>
+            </div>
+          </div>
           <div class="bd-kpi table-card" data-bd-k="ib">
             <div class="bd-kpi-ico bd-kpi-ico--blue" aria-hidden="true">€</div>
             <div class="bd-kpi-txt">
@@ -163,33 +187,24 @@
               <span class="bd-kpi-val bd-kpi-val--yellow" id="bd-v-tedecl">€ 0,00</span>
             </div>
           </div>
-          <div class="bd-kpi table-card" data-bd-k="betaald">
-            <div class="bd-kpi-ico bd-kpi-ico--green" aria-hidden="true">€</div>
+          <div class="bd-kpi table-card" data-bd-k="out">
+            <div class="bd-kpi-ico bd-kpi-ico--people" aria-hidden="true">€</div>
             <div class="bd-kpi-txt">
-              <span class="bd-kpi-label">Betaald</span>
-              <span class="bd-kpi-val bd-kpi-val--green" id="bd-v-betaald">€ 0,00</span>
-            </div>
-          </div>
-          <div class="bd-kpi table-card" data-bd-k="actief">
-            <div class="bd-kpi-ico bd-kpi-ico--people" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0" /><path d="M2 20v-1a6 6 0 0 1 5.5-6" /><path d="M22 20v-1a6 6 0 0 0-3.2-4.2" /><circle cx="8.5" cy="7" r="3.5" /></svg>
-            </div>
-            <div class="bd-kpi-txt">
-              <span class="bd-kpi-label">Actieve beschikkingen</span>
-              <span class="bd-kpi-val bd-kpi-val--ink" id="bd-v-actief">0</span>
+              <span class="bd-kpi-label">Openstaand te declareren</span>
+              <span class="bd-kpi-val bd-kpi-val--ink" id="bd-v-out">€ 0,00</span>
             </div>
           </div>
         </div>
 
         <div class="bd-mid">
-          <div class="bd-inline-kpis">
+          <div class="bd-inline-kpis bd-inline-kpis--5">
             <div class="table-card bd-mini">
               <div class="bd-mini-ico bd-mini-ico--amber" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l3 2" /></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0" /><path d="M2 20v-1a6 6 0 0 1 5.5-6" /><path d="M22 20v-1a6 6 0 0 0-3.2-4.2" /><circle cx="8.5" cy="7" r="3.5" /></svg>
               </div>
               <div>
-                <span class="bd-mini-lbl">Verlopen binnen 60d</span>
-                <span class="bd-mini-val" id="bd-v-60">0</span>
+                <span class="bd-mini-lbl">Actieve beschikkingen</span>
+                <span class="bd-mini-val" id="bd-v-actief">0</span>
               </div>
             </div>
             <div class="table-card bd-mini">
@@ -201,15 +216,41 @@
                 <span class="bd-mini-val" id="bd-v-open">0</span>
               </div>
             </div>
+            <div class="table-card bd-mini">
+              <div class="bd-mini-ico bd-mini-ico--amber" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l3 2" /></svg>
+              </div>
+              <div>
+                <span class="bd-mini-lbl">Te laat (&gt;60 dagen)</span>
+                <span class="bd-mini-val" id="bd-v-60">0</span>
+              </div>
+            </div>
+            <div class="table-card bd-mini">
+              <div class="bd-mini-ico bd-mini-ico--amber" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1v22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+              </div>
+              <div>
+                <span class="bd-mini-lbl">Nog niet betaald</span>
+                <span class="bd-mini-val bd-mini-val--eur" id="bd-v-nietbetaald">€ 0,00</span>
+              </div>
+            </div>
+            <div class="table-card bd-mini">
+              <div class="bd-mini-ico bd-mini-ico--amber" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
+              </div>
+              <div>
+                <span class="bd-mini-lbl">Nog te declareren</span>
+                <span class="bd-mini-val bd-mini-val--eur" id="bd-v-nogtedecl">€ 0,00</span>
+              </div>
+            </div>
           </div>
 
           <section class="table-card bd-chart-card" aria-label="Maandelijkse betalingen">
             <h2 class="bd-sec-t">Maandelijkse betalingen</h2>
-            <p class="bd-sec-s">Zelfde dataset als Beschikkingen overzicht — per status in de afgelopen 12 maanden (referentiemaand per regel)</p>
+            <p class="bd-sec-s">Betaald + gedeclareerd-in-behandeling per maand binnen de gekozen periode (op declaratie-einddatum)</p>
             <div class="bd-legend" role="list" aria-label="Legenda">
               <span class="bd-leg bd-leg--g" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Betaald</span>
-              <span class="bd-leg bd-leg--b" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>In behandeling</span>
-              <span class="bd-leg bd-leg--o" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Achterstand / open</span>
+              <span class="bd-leg bd-leg--b" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Gedeclareerd / in behandeling</span>
             </div>
             <div class="bd-stack-row">
               <div class="bd-y" id="bd-y-labels" aria-hidden="true"></div>
@@ -222,16 +263,26 @@
         </div>
       </div>
 
-      <div class="bd-bottom">
+      <div class="bd-bottom bd-bottom--4">
         <section class="table-card bd-bar-card" aria-label="Beschikkingen per zorgsoort">
           <h2 class="bd-sec-t">Beschikkingen per zorgsoort</h2>
-          <p class="bd-sec-s">Aantallen (niet-gearchiveerd) uit overzicht</p>
+          <p class="bd-sec-s">Aantal beschikkingen per zorgsoort (volledige set)</p>
           <div class="bd-hbar-wrap" id="bd-zorg-bars"></div>
         </section>
         <section class="table-card bd-bar-card" aria-label="Locatie van de beschikkingen">
           <h2 class="bd-sec-t">Locatie van de beschikkingen</h2>
-          <p class="bd-sec-s">Per cliënt-locatie (zelfde regels als overzicht)</p>
+          <p class="bd-sec-s">Per cliënt-locatie (volledige set)</p>
           <div class="bd-hbar-wrap" id="bd-loc-bars"></div>
+        </section>
+        <section class="table-card bd-bar-card" aria-label="Declaratiemethode">
+          <h2 class="bd-sec-t">Declaratiemethode</h2>
+          <p class="bd-sec-s">Aantal beschikkingen per declaratiemethode</p>
+          <div class="bd-hbar-wrap" id="bd-decl-bars"></div>
+        </section>
+        <section class="table-card bd-bar-card" aria-label="Verwerkingstijd betalingen">
+          <h2 class="bd-sec-t">Verwerkingstijd</h2>
+          <p class="bd-sec-s">Doorlooptijd van declaratie tot betaling (betaalde facturen)</p>
+          <div class="bd-hbar-wrap" id="bd-proc-bars"></div>
         </section>
       </div>
     </main>
@@ -254,9 +305,7 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="clienten-data.js"></script>
-  <script src="beschikkingen-besc-bulk.js" defer></script>
-  <script src="beschikkingen-data.js" defer></script>
-  <script src="beschikkingen-dashboard.js" defer></script>
+  <script src="beschikkingen-dashboard-data.js?v=bd2bs2" defer></script>
+  <script src="beschikkingen-dashboard.js?v=bd2bs2" defer></script>
 </body>
 </html>

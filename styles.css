@@ -15479,6 +15479,81 @@ button.planning-erm-new {
   }
 }
 
+/* BS2-conform Beschikkingen-dashboard: periode-filter + extra widgets */
+.bd-period {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bd-period-lbl {
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.bd-period-sel,
+.bd-period-date {
+  font-family: inherit;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  line-height: 1.2;
+}
+.bd-period-sel:focus,
+.bd-period-date:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.bd-period-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bd-period-dash {
+  color: var(--text-muted);
+}
+.bd-period-now {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+}
+
+.bd-inline-kpis--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.bd-mini-val--eur {
+  font-size: var(--font-table-cell);
+  font-weight: 800;
+}
+
+.bd-bottom--4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bd-hrow-empty {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  padding: 10px 2px;
+}
+
+@media (max-width: 1200px) {
+  .bd-inline-kpis--5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bd-bottom--4 {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .bd-inline-kpis--5 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* Uren budgettering (uren-budgettering.html) */
 .content--ub {
   min-width: 0;
