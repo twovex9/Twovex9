@@ -1114,6 +1114,23 @@
   zorgsoortZetOpties();
   buildColToggles2();
   render();
+  // Vangnet: forceer een re-render zodra de Supabase-bootstrap klaar is, ook
+  // als het "beschikkingen:changed"-event gemist wordt (verse/lege cache toonde
+  // anders 0 rijen tot een handmatige reload).
+  try {
+    if (window.beschikkingenDB && window.beschikkingenDB.ready && typeof window.beschikkingenDB.ready.then === "function") {
+      window.beschikkingenDB.ready.then(function () { currentPage = 0; render(); });
+    }
+  } catch (_re) { /* */ }
+  (function () {
+    var n = 0, last = -1;
+    var iv = setInterval(function () {
+      n += 1;
+      var len = (typeof getBeschikkingenItems === "function") ? (getBeschikkingenItems() || []).length : 0;
+      if (len !== last) { last = len; render(); }
+      if (len > 0 || n >= 20) clearInterval(iv);
+    }, 500);
+  })();
   if (_bescOvSess && typeof _bescOvSess.scrollY === "number") {
     bescScheduleScrollRestore(_bescOvSess.scrollY);
   }
