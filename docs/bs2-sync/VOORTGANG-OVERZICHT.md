@@ -58,16 +58,29 @@ location{id,name,color},phase{},is_not_declared_yet,...}** +
   ip_address, user_agent, context, old_values, new_values, causer{id,name,
   email,...}, resource{id,type,name}, created_at, updated_at.
 
-## STAP 4-6 plan
-4. `scripts/write-overzicht-full.mjs` (niet-destructief): vul/ververs de
-   dashboard-tabellen `bs2_dispositions`(151) + `bs2_disposition_payments`(956)
-   uit deze rijkere scrape, en zet de VOLLEDIGE ruwe tabs (payments/rates/
-   notes/audit) per beschikking in `raw`/jsonb (100% behoud). Nieuwe tabellen
-   `bs2_disposition_rates`, `bs2_disposition_audit` (additief).
-5. Reconciliatie BS1 `beschikkingen`(134) → 151 BS2-set + sub-tabs, mét
-   backup-tabel + atomair + **USER-AKKOORD** (destructief). Daarna dashboard
-   drill-down 100% consistent (89 Actief = 89, niet 88).
-6. Verifieer veld-voor-veld vs BS2 + dashboard/drill-down 2 CLEAN RUNS.
+## STAP 4 — KLAAR ✅ (niet-destructief)
+`scripts/write-overzicht-full.mjs` uitgevoerd. Geschreven (alleen bs2_*-tabellen,
+beschikkingen/facturen ONAANGEROERD): **bs2_dispositions 151** (raw =
+volledige disposition incl. alle tabs = 100% behoud), **bs2_disposition_payments
+956**, **bs2_disposition_rates 129**, **bs2_disposition_audit 1180** (migration
+`bs2_overzicht_rates_audit_tables`). Dashboard-KPI's geverifieerd nog steeds
+EXACT: 89/10/8/€600.738,98/€63.503,64/€664.242,62/€764.204,59·67/€273.614,13·11.
+
+## STAP 5 — reconciliatie gebruikers-tabellen (DESTRUCTIEF — vereist USER-AKKOORD)
+Doel: BS1 `beschikkingen` (134, per-cliënt) → exact de **151 BS2-overzicht-set**
+met `data.bs2_scrape` = volledige ruwe disposition + alle 5 tabs (100% behoud),
+zodat `beschikkingen.html`-overzicht + drill-down + detail-tabs 1-op-1 = BS2
+(Actief 89 = 89, niet 88). Facturen ← de 956 payments.
+Atomair: `BEGIN; CREATE TABLE _beschikkingen_overzicht_bak AS SELECT *; ... ;
+DELETE; INSERT ... ; COMMIT;`. CHECK's respecteren (betalings_status ∈
+{betaald,outstanding}; fase ∈ {Actief,In aanvraag,In zorg,Verlopen}). FK-kinderen
+(beschikking_tarieven/notities/audit) omhangen of vullen uit bs2_*-tabellen.
+NIET uitvoeren zonder expliciet "ja, akkoord".
+
+## STAP 6 — verifiëren
+beschikkingen-telling = 151, fase-verdeling = BS2 (89/10/51/1), drill-down 89,
+detail-tabs (Details/Facturen/Tarieven/Notities/Audit) tonen BS2-data,
+2 CLEAN RUNS, veld-voor-voor-veld controle-beschikking.
 
 ## Bestanden
 `scripts/bs2-console-rec-overzicht.js` (STAP1), `bs2-console-scrape-overzicht.js`
