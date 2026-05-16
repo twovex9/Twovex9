@@ -886,6 +886,21 @@
         tr.setAttribute("data-row-ix", String(start + idx));
         tr.setAttribute("data-fact-k", rKey);
 
+        // Rij klikbaar → factuur-detail (BS2-conform: klik factuur = bekijk
+        // alle gegevens). Niet bij checkbox/acties-kolom of knoppen.
+        var __fid = (rKey && rKey.indexOf("id:") === 0) ? rKey.slice(3) : (r && r.id ? String(r.id) : "");
+        if (__fid) {
+          tr.classList.add("fct-row-click");
+          tr.addEventListener("click", function (ev) {
+            var tEl = ev.target;
+            if (tEl && (tEl.tagName === "INPUT" || tEl.tagName === "BUTTON" || (tEl.closest && tEl.closest("button")))) return;
+            var cell = tEl && tEl.closest ? tEl.closest("td") : null;
+            var col = cell && cell.getAttribute("data-col");
+            if (col === "select" || col === "act") return;
+            window.location.href = "factuur-detail.html?id=" + encodeURIComponent(__fid);
+          });
+        }
+
         var td0 = document.createElement("td");
         td0.setAttribute("data-col", "select");
         var rid = __F("fact-chk-") + start + "-" + idx;
