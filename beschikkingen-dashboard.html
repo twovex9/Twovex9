@@ -137,13 +137,10 @@
       <div class="content-header">
         <h1>Beschikkingen dashboard</h1>
         <div class="header-actions">
-          <div class="bd-daterange" id="bd-daterange">
-            <span class="bd-daterange-ico" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            </span>
-            <input type="date" id="bd-period-start" class="bd-daterange-date" aria-label="Periode begin" />
-            <span class="bd-daterange-sep" aria-hidden="true">-</span>
-            <input type="date" id="bd-period-end" class="bd-daterange-date" aria-label="Periode einde" />
+          <div class="bd-daterange-wrap">
+            <div id="bd-period-range"></div>
+            <input type="hidden" id="bd-period-start" />
+            <input type="hidden" id="bd-period-end" />
           </div>
         </div>
       </div>
@@ -267,7 +264,8 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
+  <script src="besa-daterange.js?v=dr1" defer></script>
   <script src="beschikkingen-dashboard-data.js?v=bd3bs2" defer></script>
-  <script src="beschikkingen-dashboard.js?v=bd3bs2" defer></script>
+  <script src="beschikkingen-dashboard.js?v=bd4dr" defer></script>
 </body>
 </html>

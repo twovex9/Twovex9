@@ -20863,3 +20863,154 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   line-height: 1.5;
 }
 .gebr-confirm-body p { margin: 0 0 10px; }
+
+/* ==========================================================================
+   BesaDateRange — herbruikbare datum-range-kalender (dubbele maand)
+   BS1-huisstijl: alleen tokens, geen losse hex/radius/font-magic.
+   ========================================================================== */
+.besa-dr { position: relative; display: inline-block; }
+
+.besa-dr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+  cursor: pointer;
+}
+.besa-dr-pill:hover { border-color: var(--blue); }
+.besa-dr-pill.is-set { color: var(--text); }
+.besa-dr-pill-ico { display: inline-flex; color: var(--text-muted); }
+.besa-dr-pill-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 9px 0;
+  background: var(--line);
+}
+.besa-dr-pill-txt { white-space: nowrap; }
+
+.besa-dr-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1200;
+  width: 620px;
+  max-width: 92vw;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-pop);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.besa-dr-pop[hidden] { display: none; }
+
+.besa-dr-preset-sel {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: var(--font-base);
+  cursor: pointer;
+}
+
+.besa-dr-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.besa-dr-navbtn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.besa-dr-navbtn:hover { border-color: var(--blue); color: var(--blue); }
+.besa-dr-title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.besa-dr-grids { display: flex; gap: 24px; }
+.besa-dr-month { flex: 1; min-width: 0; }
+.besa-dr-mcap {
+  text-align: center;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.besa-dr-wk,
+.besa-dr-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.besa-dr-wkd {
+  text-align: center;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+.besa-dr-day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--font-base);
+  cursor: pointer;
+}
+button.besa-dr-day:hover { background: var(--blue-soft); }
+.besa-dr-day--out { color: var(--text-muted); opacity: 0.45; cursor: default; }
+.besa-dr-day.is-today {
+  outline: 1px solid var(--line-strong);
+  outline-offset: -1px;
+}
+.besa-dr-day.is-inrange { background: var(--blue-soft); border-radius: 0; }
+.besa-dr-day.is-edge {
+  background: var(--blue);
+  color: var(--surface);
+}
+.besa-dr-day.is-start { border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.besa-dr-day.is-end { border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.besa-dr-day.is-start.is-end { border-radius: var(--r-sm); }
+button.besa-dr-day.is-edge:hover { background: var(--blue); }
+
+.besa-dr-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.besa-dr-footer .besa-dr-clear,
+.besa-dr-footer .besa-dr-apply { height: 38px; }
+
+@media (max-width: 640px) {
+  .besa-dr-grids { flex-direction: column; gap: 16px; }
+  .besa-dr-pop { width: 320px; }
+}

@@ -15,6 +15,14 @@
   var elStatus = document.getElementById(__F("fact-sel-status"));
   var elDecm = document.getElementById(__F("fact-sel-decm"));
   var elPer = document.getElementById(__F("fact-sel-per"));
+  var perStartEl = document.getElementById(__F("fact-per-start"));
+  var perEndEl = document.getElementById(__F("fact-per-end"));
+  var perRangeBox = document.getElementById(__F("fact-per-range"));
+  var perRangeWidget = null;
+  var addPerStartEl = document.getElementById(__F("fact-add-s"));
+  var addPerEndEl = document.getElementById(__F("fact-add-e"));
+  var addPerRangeBox = document.getElementById(__F("fact-add-per-range"));
+  var addPerWidget = null;
   var elBeta = document.getElementById(__F("fact-sel-beta"));
   var elExpiring = document.getElementById(__F("fact-expiring"));
   var elArch = document.getElementById(__F("fact-archived"));
@@ -122,6 +130,7 @@
     if (searchInput && String(searchInput.value || "").trim() !== "") return true;
     if (elStatus && String(elStatus.value || "").trim() !== "") return true;
     if (elDecm && String(elDecm.value || "").trim() !== "") return true;
+    if ((perStartEl && perStartEl.value) || (perEndEl && perEndEl.value)) return true;
     if (elPer && String(elPer.value || "").trim() !== "") return true;
     if (elBeta && String(elBeta.value || "").trim() !== "") return true;
     if (elExpiring && elExpiring.checked) return true;
@@ -261,6 +270,42 @@
     return (r.per != null && String(r.per).indexOf(year) !== -1);
   }
 
+  // Datum-range-filter (BesaDateRange). Periode-tekst van een rij is
+  // "DD-MM-YYYY t/m DD-MM-YYYY"; fallback op enkel jaartal.
+  function parsePeriodeRow(r) {
+    var s = (r && r.per != null) ? String(r.per) : "";
+    var m = s.match(/(\d{2})-(\d{2})-(\d{4})\s*t\/m\s*(\d{2})-(\d{2})-(\d{4})/);
+    if (m) {
+      return {
+        s: new Date(+m[3], +m[2] - 1, +m[1]),
+        e: new Date(+m[6], +m[5] - 1, +m[4])
+      };
+    }
+    var y = s.match(/(20\d{2})/);
+    if (y) return { s: new Date(+y[1], 0, 1), e: new Date(+y[1], 11, 31) };
+    return null;
+  }
+  function periodeRange() {
+    function p(v) {
+      if (!v) return null;
+      var x = String(v).slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return x ? new Date(+x[1], +x[2] - 1, +x[3]) : null;
+    }
+    return {
+      s: p(perStartEl && perStartEl.value),
+      e: p(perEndEl && perEndEl.value)
+    };
+  }
+  function matchesPeriodeRange(r, rng) {
+    if (!rng || (!rng.s && !rng.e)) return true;
+    var pr = parsePeriodeRow(r);
+    if (!pr) return false;
+    var lo = rng.s ? rng.s : new Date(-8640000000000000);
+    var hi = rng.e ? rng.e : new Date(8640000000000000);
+    // overlap: rij-eind >= filter-begin && rij-begin <= filter-eind
+    return pr.e >= lo && pr.s <= hi;
+  }
+
   function getFiltered() {
     var items = raw.slice();
     items = items.filter(function (r) {
@@ -300,6 +345,10 @@
     var perY = (elPer && elPer.value ? elPer.value : "").trim();
     if (perY) {
       items = items.filter(function (r) { return matchesPeriodeYear(r, perY); });
+    }
+    var perRng = periodeRange();
+    if (perRng.s || perRng.e) {
+      items = items.filter(function (r) { return matchesPeriodeRange(r, perRng); });
     }
 
     var betaF = (elBeta && elBeta.value ? elBeta.value : "").trim();
@@ -1197,6 +1246,8 @@
       if (elStatus) elStatus.value = "";
       if (elDecm) elDecm.value = "";
       if (elPer) elPer.value = "";
+      if (perRangeWidget) perRangeWidget.setRange("", "");
+      else { if (perStartEl) perStartEl.value = ""; if (perEndEl) perEndEl.value = ""; }
       if (elBeta) elBeta.value = "";
       if (elExpiring) elExpiring.checked = false;
       if (elArch) elArch.checked = false;
@@ -1389,6 +1440,7 @@
     } else if (elBesch) {
       elBesch.disabled = false;
     }
+    if (addPerWidget) addPerWidget.setRange("", "");
     var fn0 = document.getElementById(__F("fact-add-fn"));
     window.setTimeout(function () { if (fn0) fn0.focus(); }, 20);
   }
@@ -1400,6 +1452,7 @@
     m.setAttribute("aria-hidden", "true");
     var f = document.getElementById(__F("fact-add-form"));
     if (f && f.reset) f.reset();
+    if (addPerWidget) addPerWidget.setRange("", "");
     var elB2 = document.getElementById(__F("fact-add-besch"));
     if (elB2) elB2.disabled = false;
     resetFactStatusCombo();
@@ -1732,6 +1785,27 @@
 
   initFactExport();
   populatePeriodeOptions();
+  if (perRangeBox && perStartEl && perEndEl && window.BesaDateRange) {
+    perRangeWidget = window.BesaDateRange.mount({
+      container: perRangeBox,
+      startInput: perStartEl,
+      endInput: perEndEl,
+      allowEmpty: true,
+      emptyLabel: "Alle periodes",
+      year: new Date().getFullYear(),
+      onApply: function () { onFilterChange(); }
+    });
+  }
+  if (addPerRangeBox && addPerStartEl && addPerEndEl && window.BesaDateRange) {
+    addPerWidget = window.BesaDateRange.mount({
+      container: addPerRangeBox,
+      startInput: addPerStartEl,
+      endInput: addPerEndEl,
+      allowEmpty: false,
+      emptyLabel: "Kies periode",
+      year: new Date().getFullYear()
+    });
+  }
   buildColumnsPanel();
   applyColumnVisibility();
 
