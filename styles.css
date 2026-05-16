@@ -20909,6 +20909,8 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   display: flex;
   flex-direction: column;
   gap: 14px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
 }
 .besa-dr-pop[hidden] { display: none; }
 
