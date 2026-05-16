@@ -15865,10 +15865,12 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
   padding: 4px 10px;
   border-radius: var(--r-pill);
 }
-.fdtl-pill--green { background: var(--green-soft); color: var(--green); }
-.fdtl-pill--blue { background: var(--blue-soft); color: var(--blue); }
-.fdtl-pill--red { background: var(--red-soft); color: var(--red); }
-.fdtl-pill--amber { background: var(--yellow-soft); color: var(--yellow); }
+/* Status-pills: massieve achtergrondkleur + witte tekst (BS2-conform,
+   expliciete user-eis: zelfde kleur achtergrond, witte tekst). */
+.fdtl-pill--green { background: var(--green); color: #fff; }
+.fdtl-pill--blue { background: var(--blue); color: #fff; }
+.fdtl-pill--red { background: var(--red); color: #fff; }
+.fdtl-pill--amber { background: var(--yellow); color: #fff; }
 .fct-row-click { cursor: pointer; }
 .fct-row-click:hover { background: var(--bg-muted); }
 .fct-fn-link {
