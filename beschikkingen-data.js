@@ -210,22 +210,21 @@
   }
 
   function notifyChanged() {
-    try {
-      var ev;
-      if (typeof CustomEvent === "function") {
-        ev = new CustomEvent("beschikkingen:changed", { bubbles: true });
-      } else {
-        ev = document.createEvent("Event");
-        ev.initEvent("beschikkingen:changed", true, true);
-      }
-      global.dispatchEvent(ev);
-    } catch (e) { /* */ }
+    function mkEv(name) {
+      if (typeof CustomEvent === "function") return new CustomEvent(name, { bubbles: true });
+      var e = document.createEvent("Event"); e.initEvent(name, true, true); return e;
+    }
+    // Dispatch op ZOWEL window als document: listeners zitten verspreid
+    // (overzicht luistert op document, andere op window). Eén target missen
+    // betekende dat een verse load (lege cache) 0 rijen bleef tonen tot een
+    // handmatige reload. Beide targets = altijd re-render.
+    try { global.dispatchEvent(mkEv("beschikkingen:changed")); } catch (e) { /* */ }
+    try { if (global.document) global.document.dispatchEvent(mkEv("beschikkingen:changed")); } catch (e1) { /* */ }
     try {
       global.localStorage.setItem("beschikkingen:changedAt", String(Date.now()));
     } catch (e2) { /* */ }
-    try {
-      global.dispatchEvent(new CustomEvent("besa:beschikkingen-updated"));
-    } catch (e3) { /* */ }
+    try { global.dispatchEvent(mkEv("besa:beschikkingen-updated")); } catch (e3) { /* */ }
+    try { if (global.document) global.document.dispatchEvent(mkEv("besa:beschikkingen-updated")); } catch (e4) { /* */ }
   }
 
   // ---------------------------------------------------------------------------
