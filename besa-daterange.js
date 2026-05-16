@@ -273,6 +273,34 @@
       }
     }
 
+    // Houd de popover altijd volledig binnen het scherm: standaard links
+    // uitgelijnd op de pill, maar bij overflow rechts schuift hij naar links
+    // (en klapt omhoog als hij onderaan niet past).
+    function positionPop() {
+      pop.style.left = "0px";
+      pop.style.right = "auto";
+      pop.style.top = "calc(100% + 8px)";
+      pop.style.bottom = "auto";
+      var margin = 8;
+      var crect = container.getBoundingClientRect();
+      var prect = pop.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var leftPx = 0;
+      if (crect.left + prect.width > vw - margin) {
+        leftPx = (vw - margin) - prect.width - crect.left;
+      }
+      if (crect.left + leftPx < margin) {
+        leftPx = margin - crect.left;
+      }
+      pop.style.left = Math.round(leftPx) + "px";
+      var prect2 = pop.getBoundingClientRect();
+      if (prect2.bottom > vh - margin && (crect.top - prect2.height - margin) > 0) {
+        pop.style.top = "auto";
+        pop.style.bottom = "calc(100% + 8px)";
+      }
+    }
+
     function open() {
       // sync vanuit inputs (kan extern gewijzigd zijn)
       selStart = parseISO(startInput.value);
@@ -284,6 +312,7 @@
       pop.hidden = false;
       pill.setAttribute("aria-expanded", "true");
       container.classList.add("besa-dr--open");
+      positionPop();
     }
     function close() {
       pop.hidden = true;
@@ -330,6 +359,9 @@
     });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && !pop.hidden) close();
+    });
+    window.addEventListener("resize", function () {
+      if (!pop.hidden) positionPop();
     });
 
     renderPill();

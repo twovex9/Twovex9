@@ -20909,6 +20909,8 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   display: flex;
   flex-direction: column;
   gap: 14px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
 }
 .besa-dr-pop[hidden] { display: none; }
 
@@ -21013,4 +21015,59 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 @media (max-width: 640px) {
   .besa-dr-grids { flex-direction: column; gap: 16px; }
   .besa-dr-pop { width: 320px; }
+}
+
+/* ==========================================================================
+   Beschikkingen-dashboard — rijke hover-tooltip (1-op-1 BS2)
+   ========================================================================== */
+.bd-tip {
+  position: fixed;
+  z-index: 1300;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  padding: 12px 14px;
+  font-size: var(--font-base);
+  color: var(--text);
+  min-width: 200px;
+  max-width: 340px;
+}
+.bd-tip[hidden] { display: none; }
+.bd-tip-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.bd-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+.bd-tip-sw {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-xs);
+  flex: 0 0 auto;
+}
+.bd-tip-nm {
+  flex: 1;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.bd-tip-val {
+  font-weight: 600;
+  color: var(--text);
+  margin-left: 18px;
+}
+.bd-tip-div {
+  border-top: 1px solid var(--line);
+  margin: 7px 0;
+}
+.bd-tip-row--total .bd-tip-nm,
+.bd-tip-row--total .bd-tip-val {
+  font-weight: 700;
+  color: var(--text);
 }
