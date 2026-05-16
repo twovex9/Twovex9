@@ -9,8 +9,17 @@
   Backups `_beschikkingen_oud_bak`/`_facturen_oud_bak`/`_incidenten_oud_bak`.
 - ✅ **Medewerkers**: 100 volledig via API (`data.bs2_scrape`), velden gecorrigeerd
   (locaties 18→86, startdatum schoon). notities/documenten/verzuim = 135/920/8 = BS2.
-- 🔵 **NU BEZIG**: BS2 **Beschikkingen-dashboard** (`/dispositions/dashboard`)
-  100% functioneel namaken in BS1.
+- 🟢 **Beschikkingen-dashboard**: GEBOUWD + DB/JS-geverifieerd EXACT = BS2.
+  Migration `bs2_dispositions_dashboard_tables` (2 additieve tabellen), import
+  via `scripts/write-dispositions-full.mjs` (155 disp + 933 uniek payments —
+  956 had 23 paginatie-dup-ids; dedup verandert GEEN enkele KPI). Data-laag
+  `beschikkingen-dashboard-data.js` (`computeKpis` met bewezen formules) +
+  herbouwde `beschikkingen-dashboard.js`/`.html` (periode-filter, BS1-huisstijl).
+  **PR #187** open: `https://github.com/ETFalkmaar/besa-suite-/pull/187`.
+  Na merge+deploy: 2 CLEAN RUNS live op Vercel (zie STAP 4 verificatie-tabel
+  in DB — alle 10 KPI's + breakdowns + 2 bewezen periodes exact ✅).
+  Restant (eerlijk, bron-limiet): 23 disp zonder client.location → "Onbekend";
+  processing_time-staven volgen BS2 server-dagconventie (21-30 exact).
 
 ## BS2-dashboard spec (vastgelegd via DevTools network-recorder)
 KPI-bron = **`POST https://api.etf.acceptance.besasuite.nl/api/rpc`** (XHR+fetch;
