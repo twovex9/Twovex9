@@ -173,3 +173,72 @@ Merge-link: https://github.com/ETFalkmaar/besa-suite-/pull/190
 Niet nodig: de goedgekeurde STAP 5-reconciliatie is al uitgevoerd, gecommit
 en geback-upt. De nieuwe chat begint NIET opnieuw — hij pakt op bij "DE ENE
 OPEN BUG" hierboven (beschikkingen-data.js cache-refresh) en verifieert.
+
+## ====================================================================
+## HANDOFF 2 — 2026-05-16 (context bijna vol; nieuwe chat leest dit)
+## ====================================================================
+
+### 100% KLAAR & LIVE (niets terugdraaien — alles in Supabase, niets in code)
+- Dashboard `beschikkingen-dashboard.html` = 1-op-1 BS2 (KPI's exact).
+- Overzicht: `beschikkingen` 151 (alle 5 detail-tabs Details/Facturen/
+  Tarieven/Notities/Audit werken; drill-down dashboard 89 = fase=Actief 89).
+- **Facturen 956**: volledige detail in Supabase (`bs2_disposition_payments`
+  956: status, paid_at, client_name/number, beschikking_naam, al_betaald,
+  nog_niet_ontvangen, ons_message, volledige `raw`). `facturen`=956
+  (gespiegeld). Backups `_beschikkingen_overzicht_bak`/`_facturen_overzicht_bak`.
+- **factuur-detail.html/.js** live: klik factuurnummer (native `<a>`-link) →
+  detail = BS2 (Factuurnummer/Beschikking/Cliënt/Datum/Betaald/Status/Ons
+  bericht/Bedrag/Start-Eind + Statistieken). Status = bewerkbare dropdown,
+  4 massieve gekleurde pills + witte tekst (blauw/groen/oranje/rood),
+  ✓ op geselecteerde, standaard DICHT, toggle. "Betaald op"-datumveld
+  alleen bij Betaald. Opslaan → `bs2_disposition_payments`(status+paid_at+
+  raw) + `facturen`(status NL-label + betaling_text code + data.betaald_op).
+- Gemergede PR's deze reeks: #187-#201 (dashboard, overzicht-reconciliatie,
+  data-slim, drill-down, factuur-detail, status-dropdown). Branch-per-PR;
+  PR-nummers lopen op (GitHub uniek) — niet "hergebruiken".
+
+### DATA-SLIM PATROON (belangrijk, al toegepast)
+`beschikkingen.data` én `facturen.data` zijn geSLANKT tot een kleine
+pointer (`{bs2_id,bs2_scrape_at,bs2_scrape_in}`). De VOLLEDIGE 100% ruwe
+BS2-data leeft in `bs2_dispositions.raw` + `bs2_disposition_payments`(+raw)
++ `bs2_disposition_rates` + `bs2_disposition_audit`. Reden: PostgREST
+`select *` >1MB faalt/bevriest de UI. NOOIT de zware blob terugzetten in
+`beschikkingen.data`/`facturen.data`.
+
+### LES (van user, hard): NIET "het is goed" zeggen op basis van DOM-checks.
+Altijd VISUEEL verifiëren met screenshot naast het BS2-screenshot vóór
+"af". Kleine UI-fouten (afgekapt, kleuren, hoofdletters, default-open)
+worden door DOM-only checks gemist.
+
+### OPENSTAANDE TAAK — facturen server-side paginatie (user-wens 2026-05-16)
+Probleem: `facturen.html` laadt nu ALLE 956 in één keer (facturen-data.js
+`fetchAll` select * → cache → rebuild) → merkbare laadvertraging.
+User wil: laad **per pagina**. Onderaan staat "rijen per pagina 10/25/
+50/100" (`#…fact-page-size` + pager first/prev/next/last in facturen.js).
+Gewenst: toon alleen de huidige pagina; volgende pagina → pas dán de
+volgende rijen ophalen (server-side `.range(offset, offset+limit-1)` +
+`{count:'exact'}` op `facturen`).
+Aandachtspunten/risico's voor de implementatie:
+- facturen.js filtert nu CLIENT-side in `getFiltered()` (zoeken, status,
+  declaratie-methode, periode, betaald, "verloopt binnen 60d",
+  gearchiveerd). Server-side paginatie vereist dat die filters ook
+  server-side gaan (Supabase `.ilike/.eq/.gte` etc.) OF dat bij actief
+  filter teruggevallen wordt op volledige load. Niet half doen.
+- `facturen.js` render() regelnr ~865: gate `if(!factDataLoaded&&!isArchV2)`
+  toont "Facturen laden…" (PR #196/#197 — behouden).
+- Rij = `<a class="fct-fn-link" href="factuur-detail.html?id=">` (PR #195);
+  data-fact-id op tr; tbody delegated click (PR #194). Behouden.
+- Cache-bust: `facturen.js?v=fclickN` + `styles.css?v=…` in facturen.html.
+- factuur-detail leest 1 rij per id (snel) — niets aan wijzigen.
+- Aanpak: nieuwe `facturenDB.fetchPage(offset,limit,filters)` (server-side
+  select+range+count) i.p.v. alles-in-cache; facturen.js render() vraagt
+  alleen de huidige page op; pager-knoppen/pagesize → nieuwe fetch.
+  Verifieer VISUEEL: 1e pagina snel, volgende pagina laadt vlot, filters
+  + zoeken blijven kloppen, factuurnummer-link werkt, 0 console-fouten.
+- Branch `feature/v3-facturen-serverpaginatie` → PR → user merget →
+  visuele screenshot-verificatie.
+
+### Bestanden
+facturen.html, facturen.js, facturen-data.js, factuur-detail.html/.js,
+styles.css (`.fdtl-*`/`.fct-*` blok ~15820+). Scrape/writers in scripts/.
+Service-role in scripts/.env (gitignored). Supabase MCP voor DB/verify.
