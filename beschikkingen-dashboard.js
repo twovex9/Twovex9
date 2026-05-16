@@ -22,6 +22,70 @@
     return "€ " + Math.round(v);
   }
 
+  /* ---- rijke hover-tooltip (1-op-1 BS2 /dispositions/dashboard) ---- */
+  function escTip(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  }
+  function clsColor(cls) {
+    var c = String(cls || "");
+    if (/--g(\s|$)/.test(c)) return "var(--green)";
+    if (/--o(\s|$)/.test(c)) return "var(--yellow)";
+    return "var(--blue)";
+  }
+  var tipEl = null;
+  function ensureTip() {
+    if (tipEl) return tipEl;
+    tipEl = document.createElement("div");
+    tipEl.className = "bd-tip";
+    tipEl.hidden = true;
+    document.body.appendChild(tipEl);
+    return tipEl;
+  }
+  function showTip(html, x, y) {
+    var t = ensureTip();
+    t.innerHTML = html;
+    t.hidden = false;
+    var pad = 14;
+    var r = t.getBoundingClientRect();
+    var nx = x + pad;
+    var ny = y + pad;
+    if (nx + r.width > window.innerWidth - 8) nx = x - r.width - pad;
+    if (ny + r.height > window.innerHeight - 8) ny = y - r.height - pad;
+    if (nx < 8) nx = 8;
+    if (ny < 8) ny = 8;
+    t.style.left = Math.round(nx) + "px";
+    t.style.top = Math.round(ny) + "px";
+  }
+  function hideTip() { if (tipEl) tipEl.hidden = true; }
+  function buildTipHtml(opt, r) {
+    var h = '<div class="bd-tip-title">' + escTip(r.label) + "</div>";
+    if (opt.stacked) {
+      var tot = 0;
+      (r.segs || []).forEach(function (s) {
+        tot += (Number(s.v) || 0);
+        h += '<div class="bd-tip-row">'
+          + '<span class="bd-tip-sw" style="background:' + clsColor(s.cls) + '"></span>'
+          + '<span class="bd-tip-nm">' + escTip(s.name) + "</span>"
+          + '<span class="bd-tip-val">' + (opt.euro ? fmtEuro(s.v) : fmtInt(s.v)) + "</span>"
+          + "</div>";
+      });
+      h += '<div class="bd-tip-div"></div>';
+      h += '<div class="bd-tip-row bd-tip-row--total">'
+        + '<span class="bd-tip-sw" style="background:transparent"></span>'
+        + '<span class="bd-tip-nm">Totaal</span>'
+        + '<span class="bd-tip-val">' + (opt.euro ? fmtEuro(tot) : fmtInt(tot)) + "</span>"
+        + "</div>";
+    } else {
+      h += '<div class="bd-tip-row">'
+        + '<span class="bd-tip-sw" style="background:var(--blue)"></span>'
+        + '<span class="bd-tip-nm">Aantal</span>'
+        + '<span class="bd-tip-val">' + fmtInt(r.value) + "</span>"
+        + "</div>";
+    }
+    return h;
+  }
+
   function defaultYear() {
     var y = new Date().getFullYear();
     try {
@@ -84,7 +148,7 @@
     rows.forEach(function (r) {
       var col = document.createElement(r.href ? "a" : "div");
       col.className = "bd-vbar-col";
-      if (r.href) { col.href = r.href; col.title = r.label + " — bekijk in overzicht"; }
+      if (r.href) { col.href = r.href; }
       var bar = document.createElement("div");
       bar.className = "bd-vbar";
       var tot = opt.stacked ? (r.segs || []).reduce(function (a, s) { return a + s.v; }, 0) : r.value;
@@ -95,17 +159,27 @@
           var seg = document.createElement("div");
           seg.className = "bd-vbar-seg " + s.cls;
           seg.style.height = (s.v / tot * 100) + "%";
-          seg.title = s.name + ": " + fmtEuro(s.v);
           bar.appendChild(seg);
         });
       } else {
         var seg2 = document.createElement("div");
         seg2.className = "bd-vbar-seg bd-vbar-seg--blue";
         seg2.style.height = "100%";
-        seg2.title = r.label + ": " + fmtInt(r.value);
         bar.appendChild(seg2);
       }
       col.appendChild(bar);
+      (function (rowData) {
+        var html = null;
+        col.addEventListener("mouseenter", function (ev) {
+          html = buildTipHtml(opt, rowData);
+          showTip(html, ev.clientX, ev.clientY);
+        });
+        col.addEventListener("mousemove", function (ev) {
+          if (!html) html = buildTipHtml(opt, rowData);
+          showTip(html, ev.clientX, ev.clientY);
+        });
+        col.addEventListener("mouseleave", hideTip);
+      })(r);
       bars.appendChild(col);
       if (axis) {
         var lb = document.createElement("span");
