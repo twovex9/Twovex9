@@ -244,6 +244,17 @@
     var s = $("bd-period-start"), e = $("bd-period-end");
     if (s && !s.value) s.value = y + "-01-01";
     if (e && !e.value) e.value = y + "-12-31";
+    var box = $("bd-period-range");
+    if (box && s && e && window.BesaDateRange) {
+      window.BesaDateRange.mount({
+        container: box,
+        startInput: s,
+        endInput: e,
+        allowEmpty: false,
+        emptyLabel: "Periode",
+        year: y
+      });
+    }
     render();
   }
 
