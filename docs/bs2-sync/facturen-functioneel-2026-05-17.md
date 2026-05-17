@@ -17,16 +17,18 @@ BS2 moet de top-bar Facturen op het `/api/invoices`-model draaien.
 
 ## 2. Endpoints (BS2, autoritatief)
 
-**De twee tabs zijn in BS2 ZELF al twee aparte endpoints + routes** (live
-bevestigd in user-console 2026-05-17). Dit is dé reden dat ze in BS1 ook
-strikt los moeten staan:
+**GECORRIGEERD na full-scrape 2026-05-17:** `/api/invoices-to-review`
+bestaat NIET als API (full-scrape → HTTP 404). `/invoices-module/
+invoices-to-review` is alleen de **Vue-route-naam** (client-side). Beide
+tabs roepen hetzelfde endpoint `GET /api/invoices` aan; "Te beoordelen" =
+gewoon dat endpoint met `filter[status][0]=submitted`. De tabs blijven in
+de UI gescheiden pagina's, maar delen de invoices-dataset (anders
+gefilterd). Wat WEL strikt los moet: deze module vs. de Cliënten→
+Beschikkingen→Facturen disposition-`facturen.html` (geen kruislink).
 
-- **Te beoordelen** — route `/invoices-module/invoices-to-review`, API
-  `GET /api/invoices-to-review?status=submitted&period[start]=YYYY-MM-DD&period[end]=YYYY-MM-DD&page=N&per_page=10`
-  (let op: `status=` los, `per_page` i.p.v. `limit`, eigen endpoint —
-  NIET `/api/invoices`). Responseshape via full-scrape vast te leggen.
-- **Alle facturen** — `GET /api/invoices?with[]=organization&filter[status][]=…&filter[period][start|end]=YYYY-MM-DD&filter[search]=…&filter[trashed]=true|false&page=N&limit=15`
-  — lijst, **server-side paginatie 15/pagina** (`meta.current_page/last_page/from/to/total`, `links[]`).
+- **Te beoordelen** — `GET /api/invoices?with[]=organization&filter[status][0]=submitted[&filter[period][start|end]=YYYY-MM-DD]&page=N&limit=15` (de `submitted`-facturen).
+- **Alle facturen** — `GET /api/invoices?with[]=organization[&filters…]&page=N&limit=15` (geen status-filter = alle statussen).
+- Server-side paginatie 15/pagina (`meta.current_page/last_page/from/to/total`, `links[]`); filters `filter[status][]`, `filter[period][start|end]`, `filter[search]`, `filter[trashed]`.
 - `GET /api/invoices/{id}` — detail incl. `billing_fields[]` (regels),
   `workflow_transitions[]` (historie), `system_generated{}` (bron uit shifts),
   `client`, `contact_person`, `organization`, `employee`.
@@ -65,7 +67,22 @@ Autoritatief voor de factuur = de eigen `billing_fields` + `total(_excl_vat)`.
 (bv. `{status:"approved", comment:"Invoice approved",
 user:"orpheo.parker@embracethefuture.nl", created_at}`).
 
-## 4. Berekeningen (BINDEND — 1-op-1, bewezen tegen 4 facturen)
+## 3b. Geverifieerde feiten (full-scrape `bs2-facturen-full.json`, 43 facturen)
+
+- **43 facturen** totaal (34 actief + 9 trashed). Status×trashed:
+  submitted 15, draft 7, approved 12, draft+trashed 8, submitted+trashed 1.
+- `vat_handling` = `regular` voor alle 43; `total == total_excl_vat`
+  (BTW 0 in deze set) — **verbatim opslaan**, niet 21% afleiden.
+- **Berekening 43/43 exact** (0 afwijkingen): regel `total = price ×
+  amount` én `Σ regels (excl. is_group/is_blank_row) = total_excl_vat`.
+- `can_be_*` per status (BINDEND voor de knop-zichtbaarheid):
+  - `submitted` (16): approve✓ reject✓ mark_under_review✓; submit✗ edit✗ → **Te beoordelen**
+  - `draft` (15): submit✓ edit✓; approve✗ reject✗ review✗
+  - `approved` (12): alles ✗ (afgehandeld, read-only)
+- `workflow_transitions` (12×, alle "approved"): `{id, status, comment
+  ("Invoice approved"), user{id,name(email)}, created_at}`.
+
+## 4. Berekeningen (BINDEND — 1-op-1, bewezen tegen ALLE 43 facturen)
 
 - Regel: `regel.total = price × amount` (46×8,5=391; 45×16=720; 42×5=210 —
   exact in alle 4 facturen).
