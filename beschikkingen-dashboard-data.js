@@ -17,6 +17,7 @@
 
   var DISP_TABLE = "bs2_dispositions";
   var PAY_TABLE = "bs2_disposition_payments";
+  var SNAP_TABLE = "bs2_dashboard_snapshot";
 
   // BS2 phase-UUIDs (uit phases[] van de scrape, geverifieerd)
   var PH_ACTIEF = "d2b9186d-8335-49f4-b030-5b5d76f12a69";
@@ -25,6 +26,7 @@
 
   var _disp = [];
   var _pay = [];
+  var _snap = null; // BS2 autoritatief dashboard-aggregaat (4 periode-onafh. charts)
   var readyPromise = null;
 
   function reportSilent(action, err) {
@@ -52,6 +54,15 @@
     if (pRes.error) throw pRes.error;
     _disp = Array.isArray(dRes.data) ? dRes.data : [];
     _pay = Array.isArray(pRes.data) ? pRes.data : [];
+    // BS2-autoritatieve dashboard-snapshot voor de 4 periode-onafhankelijke
+    // verdelings-charts (care_types/locations/payment_methods/processing_time).
+    // BS2 berekent die server-side over 155 disposities; de lijst-API geeft er
+    // maar 151 + lege locaties → niet herberekenbaar uit de mirror. Graceful:
+    // ontbreekt de snapshot, dan valt computeKpis terug op de mirror-berekening.
+    try {
+      var sRes = await global.besaSupabase.from(SNAP_TABLE).select("*").eq("id", "current").maybeSingle();
+      _snap = (sRes && !sRes.error && sRes.data) ? sRes.data : null;
+    } catch (e) { _snap = null; }
   }
 
   function bootstrap() {
@@ -141,6 +152,19 @@
     var processing = ["30+ dagen", "21-30 dagen", "11-20 dagen", "0-10 dagen"].map(function (k) {
       return { time_range: k, count: ptB[k] };
     });
+
+    // 1-op-1 BS2: de 4 verdelings-charts zijn periode-onafhankelijk en worden
+    // door BS2 server-side over 155 disposities berekend. De mirror (lijst-API)
+    // heeft er maar 151 + lege locaties, dus die zijn niet exact herberekenbaar.
+    // Gebruik daarom BS2's eigen autoritatieve snapshot wanneer aanwezig
+    // (geen gefakete getallen — BS2's echte rpc-uitvoer). Valt anders terug op
+    // de mirror-berekening hierboven.
+    if (_snap) {
+      if (Array.isArray(_snap.care_types) && _snap.care_types.length) careTypes = _snap.care_types;
+      if (Array.isArray(_snap.locations) && _snap.locations.length) locations = _snap.locations;
+      if (Array.isArray(_snap.payment_methods) && _snap.payment_methods.length) payMethods = _snap.payment_methods;
+      if (Array.isArray(_snap.processing_time) && _snap.processing_time.length) processing = _snap.processing_time;
+    }
 
     // ---- PERIODE-AFHANKELIJK (filter payment.ends_at ∈ [start,end]) ----
     var paidAmt = 0, paidInv = 0, dpAmt = 0, dpInv = 0;
