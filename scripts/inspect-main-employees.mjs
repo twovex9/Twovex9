@@ -14,17 +14,36 @@ import path from "path";
 import os from "os";
 
 const DL = path.join(os.homedir(), "Downloads");
+// Robuust: kies het NIEUWSTE bestand dat ook echt de TOP-BAR employees-basic
+// scrape is (stale HR-scrape met andere structuur wordt overgeslagen).
+function isTopbarScrape(file) {
+  try {
+    const root = JSON.parse(fs.readFileSync(file, "utf8"));
+    const src = String((root && root.source) || "");
+    const E = Array.isArray(root) ? root : (root.employees || []);
+    const e0 = E[0] || {};
+    return /employees-basic/i.test(src)
+      && Object.prototype.hasOwnProperty.call(e0, "first_name")
+      && Object.prototype.hasOwnProperty.call(e0, "is_sick");
+  } catch (e) { return false; }
+}
 function resolveInput() {
-  const exact = path.join(DL, "bs2-medewerkers-full.json");
-  if (fs.existsSync(exact)) return exact;
-  const cands = fs.readdirSync(DL)
+  const all = fs.readdirSync(DL)
     .filter((f) => /^bs2-medewerkers-full.*\.json$/i.test(f))
-    .map((f) => ({ f, m: fs.statSync(path.join(DL, f)).mtimeMs }))
+    .map((f) => ({ p: path.join(DL, f), f, m: fs.statSync(path.join(DL, f)).mtimeMs }))
     .sort((a, b) => b.m - a.m);
-  return cands.length ? path.join(DL, cands[0].f) : exact;
+  const valid = all.filter((x) => isTopbarScrape(x.p));
+  if (!valid.length) {
+    console.error("FOUT: geen geldige TOP-BAR employees-basic scrape in " + DL + ".");
+    console.error("Gevonden: " + (all.map((x) => x.f).join(", ") || "(geen)"));
+    process.exit(1);
+  }
+  if (all[0] && !isTopbarScrape(all[0].p)) {
+    console.warn("LET OP: nieuwste bestand " + all[0].f + " is GEEN top-bar scrape (stale) — overgeslagen.");
+  }
+  return valid[0].p;
 }
 const P = resolveInput();
-if (!fs.existsSync(P)) { console.error("FOUT: geen bs2-medewerkers-full*.json in " + DL); process.exit(1); }
 console.log("Bestand:", P);
 
 const root = JSON.parse(fs.readFileSync(P, "utf8"));
