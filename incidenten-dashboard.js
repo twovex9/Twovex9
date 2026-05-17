@@ -149,25 +149,37 @@
   // ---------------------------------------------------------------------------
   // Filter pipeline
   // ---------------------------------------------------------------------------
+  // 1-op-1 BS2 (recorder-bewijs 2026-05-17): BS2's dashboard filtert op
+  // created_at (= BS1 `aanmaakdatum`, registratiedatum), NIET op
+  // incident_date (gebeurtenisdatum). Met aanmaakdatum matchen april=104,
+  // 14-30apr=90, maart=0, feb=1 exact. Vergelijk op kalenderdatum-string
+  // (YYYY-MM-DD) i.p.v. timestamp-math — voorkomt tijdzone-off-by-one.
+  function ymd(dOrStr) {
+    if (!dOrStr) return "";
+    if (typeof dOrStr === "string") return dOrStr.slice(0, 10);
+    var d = dOrStr;
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
   function getFilteredIncidenten() {
     var rows = getAllIncidenten().filter(function (i) { return i && !i.archived; });
 
     if (state.dateFrom) {
-      var fromMs = state.dateFrom.getTime();
+      var fromY = ymd(state.dateFrom);
       rows = rows.filter(function (i) {
-        var t = Date.parse(i.incidentDatum || 0);
-        return isFinite(t) && t >= fromMs;
+        var d = ymd(i.aanmaakdatum);
+        return d && d >= fromY;
       });
     }
     if (state.dateTo) {
-      var toMs = state.dateTo.getTime();
+      var toY = ymd(state.dateTo);
       rows = rows.filter(function (i) {
-        var t = Date.parse(i.incidentDatum || 0);
-        return isFinite(t) && t <= toMs;
+        var d = ymd(i.aanmaakdatum);
+        return d && d <= toY;
       });
     }
     if (state.filterClient) rows = rows.filter(function (i) { return String(i.clientId || "") === state.filterClient; });
-    if (state.filterLocatie) rows = rows.filter(function (i) { return String(i.locatieId || "") === state.filterLocatie; });
+    if (state.filterLocatie) rows = rows.filter(function (i) { return ((i.locatieBs2 && i.locatieBs2.name) || "") === state.filterLocatie; });
     if (state.filterCategorie) rows = rows.filter(function (i) { return i.categorie === state.filterCategorie; });
     if (state.filterMedewerker) {
       var m = state.filterMedewerker;
@@ -178,22 +190,9 @@
     return rows;
   }
 
-  // ---------------------------------------------------------------------------
-  // BS2 /api/incidents/dashboard — core set (PERIODE-ONAFHANKELIJK)
-  // ---------------------------------------------------------------------------
-  // BS2's dashboard-endpoint kent géén periode-parameter: overview,
-  // status_counts/-distribution en average_resolution_time worden server-side
-  // over de VOLLEDIGE actieve set berekend. Voor 1-op-1 dezelfde getallen
-  // negeren deze blokken dus het BS1-datumfilter (zelfde patroon als het
-  // beschikkingen-dashboard). Het datumfilter + de extra filters sturen
-  // alléén de BS1-eigen visualisaties (trend/donut-detail/bars/heatmap/…).
-  function getBs2CoreSet() {
-    return getAllIncidenten().filter(function (i) { return i && !i.archived; });
-  }
-
   // average_resolution_time: gem. uren tussen created_at (aanmaakdatum) en
   // resolved_at (afgehandeld_op) over afgehandelde (status 'opgelost')
-  // incidenten — exact BS2's formule.
+  // incidenten IN DE PERIODE — exact BS2's formule (null als er geen zijn).
   function computeAvgResolutionHours(set) {
     var spans = [];
     set.forEach(function (i) {
@@ -212,8 +211,12 @@
   // KPI's — 1-op-1 BS2 /api/incidents/dashboard
   // ---------------------------------------------------------------------------
   function renderKpis() {
-    // overview + status_distribution + average_resolution_time = hele set.
-    var rows = getBs2CoreSet();
+    // 1-op-1 BS2 /api/incidents/dashboard: overview + status_distribution +
+    // average_resolution_time zijn PERIODE-AFHANKELIJK — ze filteren op de
+    // incident-datum in [start,end] (+ client/medewerker/locatie/categorie),
+    // exact zoals BS2 server-side doet. (Recorder 2026-05-17 bewees dit:
+    // april=104, mei=40, maart=0, feb=1, client-filter=4, …)
+    var rows = getFilteredIncidenten();
     var total = rows.length;
     var afw = rows.filter(function (i) { return i.status === "in_afwachting"; }).length;
     var beh = rows.filter(function (i) { return i.status === "in_behandeling"; }).length;
@@ -230,25 +233,27 @@
     $("id-kpi-behandeling-sub").textContent = pct(beh) + " van totaal";
     $("id-kpi-opgelost-sub").textContent = pct(op) + " van totaal";
 
-    // average_resolution_time { hours, note }
+    // average_resolution_time { hours, note } — 1-op-1 BS2. hours = null als
+    // er geen afgehandelde incidenten in de periode zijn (BS2 geeft dan
+    // null terug); de note is BS2's vaste metric-omschrijving en wordt
+    // áltijd getoond (zoals BS2).
     var ar = computeAvgResolutionHours(rows);
     var arEl = $("id-kpi-resolution");
     var arSub = $("id-kpi-resolution-sub");
     if (arEl) {
-      if (ar.count === 0) {
-        arEl.textContent = "—";
-        if (arSub) arSub.textContent = "Geen afgehandelde incidenten";
-      } else {
-        arEl.textContent = (Math.round(ar.hours * 10) / 10).toLocaleString("nl-NL") + " u";
-        if (arSub) arSub.textContent = "gem. aanmaak → afhandeling (" + ar.count + ")";
-      }
+      arEl.textContent = (ar.count === 0)
+        ? "—"
+        : (Math.round(ar.hours * 10) / 10).toLocaleString("nl-NL") + " u";
+    }
+    if (arSub) {
+      arSub.textContent = "Gemiddelde tijd tussen het aanmaken van een incident en de afhandeling ervan.";
     }
 
     // Trend laatste 7 dagen (binnen filter — vaste 7d ongeacht preset)
     var allInRange = getAllIncidenten().filter(function (i) {
       if (!i || i.archived) return false;
       if (state.filterClient && String(i.clientId || "") !== state.filterClient) return false;
-      if (state.filterLocatie && String(i.locatieId || "") !== state.filterLocatie) return false;
+      if (state.filterLocatie && ((i.locatieBs2 && i.locatieBs2.name) || "") !== state.filterLocatie) return false;
       if (state.filterCategorie && i.categorie !== state.filterCategorie) return false;
       if (state.filterMedewerker) {
         var m = state.filterMedewerker;
@@ -259,11 +264,11 @@
     var now = Date.now();
     var sevenDays = 7 * 86400 * 1000;
     var prev7 = allInRange.filter(function (i) {
-      var t = Date.parse(i.incidentDatum || 0);
+      var t = Date.parse(i.aanmaakdatum || 0);
       return isFinite(t) && t < (now - sevenDays) && t >= (now - 2 * sevenDays);
     }).length;
     var last7 = allInRange.filter(function (i) {
-      var t = Date.parse(i.incidentDatum || 0);
+      var t = Date.parse(i.aanmaakdatum || 0);
       return isFinite(t) && t >= (now - sevenDays) && t <= now;
     }).length;
     $("id-kpi-week").textContent = String(last7);
@@ -277,9 +282,13 @@
     sub.classList.toggle("is-up", delta > 0);
     sub.classList.toggle("is-down", delta < 0);
 
-    // 1-op-1 BS2: overview telt de hele set (periode-onafhankelijk).
+    // Periode-afhankelijk (1-op-1 BS2): toon het actieve datumbereik.
     var totalSub = $("id-kpi-total-sub");
-    if (totalSub) totalSub.textContent = "alle incidenten";
+    if (totalSub) {
+      totalSub.textContent = (state.dateFrom && state.dateTo)
+        ? (formatNlDate(state.dateFrom) + " — " + formatNlDate(state.dateTo))
+        : "alle incidenten";
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -287,13 +296,19 @@
   // ---------------------------------------------------------------------------
   function renderTrend() {
     var rows = getFilteredIncidenten();
+    // 1-op-1 BS2 last_7_days: exact één bucket per dag van start t/m eind
+    // (inclusief, GEEN minimum van 7). Zonder datumbereik = laatste 7 dagen
+    // t/m vandaag (precies wat BS2 dan teruggeeft).
     var bucketDays;
     if (state.dateFrom && state.dateTo) {
-      bucketDays = Math.max(7, Math.round((state.dateTo - state.dateFrom) / 86400000) + 1);
+      bucketDays = Math.round(
+        (startOfDay(state.dateTo) - startOfDay(state.dateFrom)) / 86400000
+      ) + 1;
     } else {
-      bucketDays = 90;
+      bucketDays = 7;
     }
-    if (bucketDays > 365) bucketDays = 365;
+    if (bucketDays < 1) bucketDays = 1;
+    if (bucketDays > 366) bucketDays = 366;
 
     var now = state.dateTo || new Date();
     var endDay = startOfDay(now);
@@ -304,12 +319,13 @@
       labels.push(d);
       counts.push(0);
     }
+    // Tel per kalenderdatum op created_at (aanmaakdatum), exact zoals BS2
+    // last_7_days — tijdzone-veilig (geen Date→local conversie van de stamp).
+    var keyIdx = {};
+    for (var k = 0; k < labels.length; k += 1) keyIdx[ymd(labels[k])] = k;
     rows.forEach(function (r) {
-      var t = Date.parse(r.incidentDatum || 0);
-      if (!isFinite(t)) return;
-      var d = startOfDay(new Date(t));
-      var idx = Math.floor((d - labels[0]) / 86400000);
-      if (idx >= 0 && idx < counts.length) counts[idx]++;
+      var idx = keyIdx[ymd(r.aanmaakdatum)];
+      if (idx != null) counts[idx] += 1;
     });
 
     var sub = $("id-trend-sub");
@@ -391,9 +407,9 @@
   // Status donut
   // ---------------------------------------------------------------------------
   function renderDonut() {
-    // 1-op-1 BS2 status_distribution = hele set (periode-onafhankelijk),
-    // consistent met de status-KPI's.
-    var rows = getBs2CoreSet();
+    // 1-op-1 BS2 status_distribution — periode-afhankelijk, consistent met
+    // de status-KPI's (zelfde gefilterde set).
+    var rows = getFilteredIncidenten();
     var afw = rows.filter(function (i) { return i.status === "in_afwachting"; }).length;
     var beh = rows.filter(function (i) { return i.status === "in_behandeling"; }).length;
     var op  = rows.filter(function (i) { return i.status === "opgelost"; }).length;
@@ -607,7 +623,16 @@
   function populateDropdowns() {
     fillSelect($("id-filter-client"), getAllClienten().filter(function (c) { return c && !c.archived; }), "Filter op cliënt", clientLabel, state.filterClient);
     fillSelect($("id-filter-medewerker"), getAllMedewerkers().filter(function (m) { return m && !m.archived; }), "Filter op medewerker", medewerkerLabel, state.filterMedewerker);
-    fillSelect($("id-filter-locatie"), getAllLocaties().filter(function (l) { return l && !l.archived; }), "Filter op locatie", locatieLabel, state.filterLocatie);
+    // 1-op-1 BS2: filter op de BS2-locatienaam (de BS1-FK locatie_id is bij
+    // gereconcilieerde incidenten leeg) — vul met de locaties die feitelijk
+    // in de incidentendata voorkomen.
+    var locNames = {};
+    getAllIncidenten().forEach(function (i) {
+      var n = i && i.locatieBs2 && i.locatieBs2.name;
+      if (n) locNames[n] = 1;
+    });
+    var locItems = Object.keys(locNames).sort().map(function (n) { return { id: n, label: n }; });
+    fillSelect($("id-filter-locatie"), locItems, "Filter op locatie", function (o) { return o.label; }, state.filterLocatie);
     var cats = (window.incidentenDB && window.incidentenDB.CATEGORIES) || [];
     fillSelect($("id-filter-categorie"), cats.map(function (c) { return { id: c, label: c }; }), "Filter op categorie", function (o) { return o.label; }, state.filterCategorie);
   }
@@ -630,13 +655,15 @@
     renderKpis();
     renderTrend();
     renderDonut();
-    renderBars("id-bars-categorie", function (r) { return r.categorie || "Overig"; }, { top: 5, color: "var(--blue, #2563eb)" });
-    renderBars("id-bars-locatie", function (r) { return r.locatieId || ""; }, {
-      top: 5, color: "var(--green, #16a34a)",
-      labelFn: function (id) {
-        var l = findById(getAllLocaties(), id);
-        return l ? locatieLabel(l) : "Onbekend";
-      },
+    // 1-op-1 BS2 by_category / by_location: counts over de gefilterde
+    // (periode) set. BS2 geeft alle categorieën/locaties terug → toon ze
+    // allemaal (geen top-5-afkapping). by_location komt uit de BS2-locatie
+    // (data.bs2_scrape.location → locatieBs2); de BS1-FK locatie_id is bij
+    // de gereconcilieerde incidenten leeg.
+    renderBars("id-bars-categorie", function (r) { return r.categorie || "Overig"; }, { top: 99, color: "var(--blue, #2563eb)" });
+    renderBars("id-bars-locatie", function (r) { return (r.locatieBs2 && r.locatieBs2.name) || "Onbekend"; }, {
+      top: 99, color: "var(--green, #16a34a)",
+      labelFn: function (k) { return k; },
     });
     renderHeatmap();
     renderTopList("id-top-clienten", function (r) { return r.clientId; },
@@ -702,7 +729,9 @@
   }
 
   function init() {
-    applyPreset("30");
+    // 1-op-1 BS2: BS2 opent het dashboard ZONDER datumfilter (hele set,
+    // timeline = laatste 7 dagen). BS1 spiegelt dat met "Alles" als default.
+    applyPreset("all");
     wireUp();
     var box = $("id-period-range");
     var sEl = $("id-date-from"), eEl = $("id-date-to");
