@@ -301,8 +301,8 @@ body.page-medewerker-detail .content--emp-detail {
 }
 
 .top-link.is-active {
-  color: #fff;
-  background: #000;
+  color: var(--surface);
+  background: var(--blue);
   font-weight: 600;
   box-shadow: none;
 }
@@ -323,7 +323,7 @@ body.page-medewerker-detail .content--emp-detail {
 
 .top-link.is-active .top-link-chev {
   opacity: 0.9;
-  border-top-color: #fff;
+  border-top-color: var(--surface);
 }
 
 .top-nav-item {
