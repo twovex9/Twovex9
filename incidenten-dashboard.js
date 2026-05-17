@@ -661,7 +661,7 @@
     // (data.bs2_scrape.location → locatieBs2); de BS1-FK locatie_id is bij
     // de gereconcilieerde incidenten leeg.
     renderBars("id-bars-categorie", function (r) { return r.categorie || "Overig"; }, { top: 99, color: "var(--blue, #2563eb)" });
-    renderBars("id-bars-locatie", function (r) { return (r.locatieBs2 && r.locatieBs2.name) || "Onbekend"; }, {
+    renderBars("id-bars-locatie", function (r) { return (r.locatieBs2 && r.locatieBs2.name) || null; }, {
       top: 99, color: "var(--green, #16a34a)",
       labelFn: function (k) { return k; },
     });
