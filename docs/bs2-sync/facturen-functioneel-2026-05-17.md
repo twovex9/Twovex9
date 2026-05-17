@@ -17,7 +17,15 @@ BS2 moet de top-bar Facturen op het `/api/invoices`-model draaien.
 
 ## 2. Endpoints (BS2, autoritatief)
 
-- `GET /api/invoices?with[]=organization&filter[status][]=…&filter[period][start|end]=YYYY-MM-DD&filter[search]=…&filter[trashed]=true|false&page=N&limit=15`
+**De twee tabs zijn in BS2 ZELF al twee aparte endpoints + routes** (live
+bevestigd in user-console 2026-05-17). Dit is dé reden dat ze in BS1 ook
+strikt los moeten staan:
+
+- **Te beoordelen** — route `/invoices-module/invoices-to-review`, API
+  `GET /api/invoices-to-review?status=submitted&period[start]=YYYY-MM-DD&period[end]=YYYY-MM-DD&page=N&per_page=10`
+  (let op: `status=` los, `per_page` i.p.v. `limit`, eigen endpoint —
+  NIET `/api/invoices`). Responseshape via full-scrape vast te leggen.
+- **Alle facturen** — `GET /api/invoices?with[]=organization&filter[status][]=…&filter[period][start|end]=YYYY-MM-DD&filter[search]=…&filter[trashed]=true|false&page=N&limit=15`
   — lijst, **server-side paginatie 15/pagina** (`meta.current_page/last_page/from/to/total`, `links[]`).
 - `GET /api/invoices/{id}` — detail incl. `billing_fields[]` (regels),
   `workflow_transitions[]` (historie), `system_generated{}` (bron uit shifts),
@@ -72,9 +80,13 @@ user:"orpheo.parker@embracethefuture.nl", created_at}`).
 
 ## 5. Tabs / filters (1-op-1)
 
-- **Te beoordelen** = `filter[status][0]=submitted` (de facturen die wachten
-  op beoordeling). (`under_review` apart filterbaar; in opname 0.)
-- **Alle facturen** = géén status-filter (alle statussen) — `?with[]=organization&page=N&limit=15`.
+- **Te beoordelen** = eigen endpoint `/api/invoices-to-review` (route
+  `/invoices-module/invoices-to-review`), params `status=submitted` +
+  `period[start|end]` + `per_page` (default 10). NIET `/api/invoices`.
+- **Alle facturen** = `/api/invoices` (géén status-filter = alle statussen)
+  — `?with[]=organization&page=N&limit=15`.
+- Beide endpoints/pagina's staan strikt LOS van de Cliënten→Beschikkingen→
+  Facturen (disposition `facturen.html`, 956). Geen kruislinks.
 - Statussen: `draft, submitted, under_review, approved, rejected`.
 - **Periode-filter** `filter[period][start|end]=YYYY-MM-DD` → server filtert de
   lijst; getallen/totalen per factuur moeten BS2 exact volgen voor élk bereik

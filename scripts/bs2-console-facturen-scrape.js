@@ -1,12 +1,14 @@
 /* ============================================================================
  * BS2 FACTUREN — VOLLEDIGE SCRAPE  v1   (data-export, niet alleen gedrag)
  *
- * De recorder ving het GEDRAG. Deze snippet haalt de VOLLEDIGE DATA op:
- * ALLE facturen (élke status, élke pagina, incl. prullenbak) + per factuur
- * het volledige detail (`billing_fields`, `workflow_transitions`,
- * `system_generated`, organisatie/medewerker/shift-koppeling). Zo kunnen we
- * Facturen 1-op-1 BS2 in BS1 zetten — inclusief alle berekeningen en de
- * getallen per datumbereik.
+ * De recorder ving het GEDRAG. Deze snippet haalt de VOLLEDIGE DATA op van
+ * BEIDE losse endpoints:
+ *  - "Alle facturen" → /api/invoices (alle status, alle pagina's, prullenbak)
+ *    + per factuur /api/invoices/{id} (billing_fields, workflow_transitions,
+ *      system_generated, organisatie/medewerker/shift-koppeling)
+ *  - "Te beoordelen" → /api/invoices-to-review (eigen endpoint, eigen params)
+ * Zo kunnen we Facturen 1-op-1 BS2 zetten incl. alle berekeningen en de
+ * getallen per datumbereik. De twee tabs zijn in BS2 zelf al gescheiden.
  *
  * Werking: BS2's API-subdomein gebruikt wildcard-CORS + een Bearer-token in
  * BS2's eigen requests. Deze snippet KAAPT die token uit BS2's eigen call
@@ -106,6 +108,40 @@
     return out;
   }
 
+  // "Te beoordelen" = EIGEN BS2-endpoint /api/invoices-to-review met andere
+  // params (status, period[start|end], per_page) — los van /api/invoices.
+  // Shape onbekend → raw opslaan (data + meta) zodat we 'm exact kunnen
+  // naspelen. Twee passes: zoals BS2 (status=submitted) + zonder filter.
+  async function reviewAll() {
+    var result = { meta0: null, sample_keys: null, queries: [], passes: {} };
+    async function pass(label, qsBase) {
+      var page = 1, last = 1, rows = [];
+      do {
+        var qs = qsBase + (qsBase.indexOf("?") >= 0 ? "&" : "?") + "page=" + page + "&per_page=100";
+        var j;
+        try { j = await api(qs); }
+        catch (e) { result.queries.push({ pass: label, error: String(e && e.message || e) }); return rows; }
+        var data = (j && j.data) || [];
+        rows = rows.concat(data);
+        if (!result.meta0) {
+          result.meta0 = (j && j.meta) || null;
+          result.sample_keys = (data[0] && Object.keys(data[0])) || (j ? Object.keys(j) : null);
+        }
+        last = (j && j.meta && j.meta.last_page) || 1;
+        console.log("[fac-scrape] te-beoordelen(" + label + ") pagina " + page + "/" + last + " (+" + data.length + ", tot " + rows.length + ")");
+        page++;
+        await sleep(120);
+      } while (page <= last && page <= 80);
+      result.queries.push({ pass: label, count: rows.length });
+      return rows;
+    }
+    result.passes.submitted = await pass("submitted",
+      "/invoices-to-review?status=submitted&period[start]=2000-01-01&period[end]=2100-12-31");
+    result.passes.bare = await pass("bare",
+      "/invoices-to-review?period[start]=2000-01-01&period[end]=2100-12-31");
+    return result;
+  }
+
   window.__facScrapeStart = async function () {
     if (!TOKEN || !API) {
       console.warn("%c[fac-scrape] Nog GEEN token. Klik 1× in Facturen (ververs/tab) en probeer opnieuw.", "color:#b45309;font-weight:bold");
@@ -131,20 +167,28 @@
         }
         await sleep(70);
       }
+      var toReview = null;
+      try {
+        console.log("%c[fac-scrape] Te beoordelen-endpoint (/api/invoices-to-review)…", "color:#2563eb;font-weight:bold");
+        toReview = await reviewAll();
+      } catch (e) {
+        toReview = { __error: String(e && e.message || e) };
+      }
       var payload = {
         captured_at: new Date().toISOString(),
-        source: "BS2 facturen full-scrape v1",
+        source: "BS2 facturen full-scrape v2",
         api: API,
         count_list: list.length,
         invoices_list: list,
         invoices_detail: detail,
+        invoices_to_review: toReview,
       };
       var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = "bs2-facturen-full.json";
       document.body.appendChild(a); a.click(); a.remove();
-      console.log("%c[fac-scrape] KLAAR ✓ — " + list.length + " facturen + details in bs2-facturen-full.json. Stuur dat naar Claude.", "color:green;font-weight:bold");
+      console.log("%c[fac-scrape] KLAAR ✓ — " + list.length + " facturen + details + Te-beoordelen-endpoint in bs2-facturen-full.json. Stuur dat naar Claude.", "color:green;font-weight:bold");
     } catch (err) {
       console.error("%c[fac-scrape] FOUT: " + (err && err.message || err) + " — meld dit aan Claude.", "color:#b91c1c;font-weight:bold");
     }
