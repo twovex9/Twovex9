@@ -127,9 +127,10 @@
   function statusPill(t) {
     var label = STATUS_LABELS[t.status] || t.status;
     var style = STATUS_CLASS[t.status] || "";
-    return '<button class="badge" data-action="advance-status" data-id="' + escapeHtml(t.id) + '" ' +
-           'style="padding:4px 10px;border-radius:var(--r-pill);border:0;cursor:pointer;font-size:var(--font-ui-badge);font-weight:600;' + style + '" ' +
-           'title="Klik om status door te zetten">' + escapeHtml(label) + '</button>';
+    // Niet klikbaar: status wijzig je enkel via de taak openen → Opslaan.
+    return '<span class="badge" ' +
+           'style="display:inline-block;padding:4px 10px;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:600;' + style + '">' +
+           escapeHtml(label) + '</span>';
   }
 
   function prioriteitPill(t) {
@@ -148,7 +149,7 @@
 
     var nameButton = '<button class="link-button" data-action="edit" data-id="' + escapeHtml(t.id) + '" style="background:none;border:0;padding:0;color:var(--blue);cursor:pointer;text-align:left;font:inherit;font-weight:600;">' + escapeHtml(t.naam) + '</button>';
 
-    return '<tr data-id="' + escapeHtml(t.id) + '">' +
+    return '<tr data-id="' + escapeHtml(t.id) + '" class="taken-row" style="cursor:pointer">' +
       '<td data-col="naam">' + nameButton + (t.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(t.beschrijving.slice(0, 80)) + (t.beschrijving.length > 80 ? "…" : "") + '</span>' : '') + '</td>' +
       '<td data-col="toegewezen">' + escapeHtml(t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId) || "—") + '</td>' +
       '<td data-col="aangemaakt_door">' + escapeHtml(t.aangemaaktDoorNaam || medewerkerLabel(t.aangemaaktDoorId) || "—") + '</td>' +
@@ -492,23 +493,27 @@
 
     document.getElementById("taken-tbody").addEventListener("click", function (e) {
       var btn = e.target.closest("[data-action]");
-      if (!btn) return;
-      var id = btn.getAttribute("data-id");
-      var item = window.takenDB.getByIdSync(id);
-      if (!item) return;
-      var action = btn.getAttribute("data-action");
-      if (action === "edit") openAddModal(item);
-      else if (action === "archive") openArchiveModal(item);
-      else if (action === "restore") {
-        window.takenDB.restore(id).then(function () {
-          if (window.showActionFeedback) window.showActionFeedback("restored", item.naam);
-        }).catch(function (err) { if (window.showError) window.showError("Herstellen mislukt: " + err.message); });
+      if (btn) {
+        var id = btn.getAttribute("data-id");
+        var item = window.takenDB.getByIdSync(id);
+        if (!item) return;
+        var action = btn.getAttribute("data-action");
+        if (action === "edit") openAddModal(item);
+        else if (action === "archive") openArchiveModal(item);
+        else if (action === "restore") {
+          window.takenDB.restore(id).then(function () {
+            if (window.showActionFeedback) window.showActionFeedback("restored", item.naam);
+          }).catch(function (err) { if (window.showError) window.showError("Herstellen mislukt: " + err.message); });
+        }
+        else if (action === "purge") openPurgeModal(item);
+        return;
       }
-      else if (action === "purge") openPurgeModal(item);
-      else if (action === "advance-status") {
-        var next = STATUS_NEXT[item.status] || "open";
-        window.takenDB.setStatus(id, next).catch(function (err) { if (window.showError) window.showError("Status wijzigen mislukt: " + err.message); });
-      }
+      // Hele rij klikbaar → taak openen (bewerken). Status wijzig je daar,
+      // niet in de tabel. Groep-/lege rijen hebben geen data-id.
+      var tr = e.target.closest("tr[data-id]");
+      if (!tr) return;
+      var ritem = window.takenDB.getByIdSync(tr.getAttribute("data-id"));
+      if (ritem) openAddModal(ritem);
     });
 
     setupSliderModal("taken-archive-modal", "taken-archive-slider", "taken-archive-confirm-btn");
