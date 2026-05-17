@@ -1,37 +1,34 @@
 /* global window, localStorage */
 /**
- * Kilometer-declaraties — Supabase data-laag.
+ * Kilometer-declaraties — Supabase data-laag, 1-op-1 BS2.
  *
- * Bron-van-waarheid: tabel public.kilometer_declaraties.
- * Vergoeding-regel: 0,39 EUR/km, gecapt op 100 km per rit. Berekening
- * gebeurt client-side via window.kilometerDeclaratiesDB.calcVergoeding().
+ * BS2-model (mileage-declarations): één DECLARATIE = 1 medewerker × 1 maand
+ * (status, total_kilometers, total_reimbursement, submitted_at,
+ * submission_status, …) met per-dag RECORDS als losse rijen.
+ * Bron-van-waarheid: public.kilometer_declaraties + public.kilometer_records.
+ * Totalen/vergoeding komen VERBATIM uit BS2 (niet herrekenen).
+ *
+ * DATA-SLIM + _mem (bindende les): zware BS2-raw niet in de localStorage-
+ * cache; in-memory bron zodat de pagina ook bij volle quota werkt.
  *
  * Public API:
  *   kilometerDeclaratiesDB.ready
  *   kilometerDeclaratiesDB.refresh()
- *   kilometerDeclaratiesDB.getAllSync()
+ *   kilometerDeclaratiesDB.getAllSync()                  → declaraties
  *   kilometerDeclaratiesDB.getByIdSync(id)
- *   kilometerDeclaratiesDB.getForMedewerkerSync(medewerkerId, year?, month?)
- *   kilometerDeclaratiesDB.getMonthlyAggregatesSync()  → array per medewerker+maand
- *   kilometerDeclaratiesDB.add({medewerker_id, datum, type, beschrijving, locatie, dienst, kilometers, ingediend?})
- *   kilometerDeclaratiesDB.update(id, partial)
- *   kilometerDeclaratiesDB.markIngediend(medewerkerId, year, month)
- *   kilometerDeclaratiesDB.delete(id)
- *   kilometerDeclaratiesDB.calcVergoeding(km)  → number EUR
+ *   kilometerDeclaratiesDB.getForMedewerkerSync(mwId)    → declaraties v/d mw
+ *   kilometerDeclaratiesDB.getRecordsForDeclaratieSync(declId) → per-dag
+ *   kilometerDeclaratiesDB.getRawBs2(id)  → volledige BS2-declaratie (on-demand)
  *
  * Events: "besa:kilometer-declaraties-updated" op window.
  */
 (function (global) {
   "use strict";
 
-  var TABLE = "kilometer_declaraties";
-  var CACHE_KEY = "kilometer_declaraties_v1";
-  var EUR_PER_KM = 0.39;
-  var MAX_KM_PER_RIT = 100;
-
-  function generateId() {
-    return "km_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-  }
+  var T_DECL = "kilometer_declaraties";
+  var T_REC = "kilometer_records";
+  var CACHE_DECL = "km_decl_v2";
+  var CACHE_REC = "km_rec_v2";
 
   function reportSilent(action, err) {
     try { console.error("[kilometerDeclaratiesDB] " + action + " mislukt:", err); } catch (e) { /* */ }
@@ -40,21 +37,18 @@
     }
   }
 
-  function readCache() {
+  function readCache(key) {
     try {
-      var raw = localStorage.getItem(CACHE_KEY);
+      var raw = localStorage.getItem(key);
       if (!raw) return [];
       var p = JSON.parse(raw);
       return Array.isArray(p) ? p : [];
     } catch (e) { return []; }
   }
-
-  function writeCache(items) {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-    } catch (e) { /* */ }
+  function writeCache(key, items) {
+    try { localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : [])); }
+    catch (e) { /* quota vol — _mem is de bron */ }
   }
-
   function dispatchUpdated(source) {
     try {
       global.dispatchEvent(new CustomEvent("besa:kilometer-declaraties-updated", {
@@ -63,75 +57,82 @@
     } catch (e) { /* */ }
   }
 
-  function rowToObj(row) {
+  // In-memory bron-van-waarheid (sessie); localStorage best-effort.
+  var _decl = null, _rec = null;
+  function setDecl(items) { _decl = Array.isArray(items) ? items : []; writeCache(CACHE_DECL, _decl); }
+  function setRec(items) { _rec = Array.isArray(items) ? items : []; writeCache(CACHE_REC, _rec); }
+  function declList() { return (_decl !== null) ? _decl : readCache(CACHE_DECL); }
+  function recList() { return (_rec !== null) ? _rec : readCache(CACHE_REC); }
+
+  function declRowToObj(row) {
+    if (!row) return null;
+    var d = (row.data && typeof row.data === "object") ? row.data : {};
+    return {
+      id: row.id,
+      medewerkerId: row.medewerker_id || null,
+      jaar: row.jaar,
+      maand: row.maand,
+      monthDisplay: d.bs2_month_display || null,
+      status: row.status || "draft",
+      totalKilometers: row.total_kilometers == null ? 0 : Number(row.total_kilometers),
+      totalReimbursement: row.total_reimbursement == null ? 0 : Number(row.total_reimbursement),
+      submittedAt: row.submitted_at || null,
+      submissionStatus: row.submission_status || null,
+      isEditable: !!row.is_editable,
+      canBeSubmitted: !!row.can_be_submitted,
+      isDeadlinePassed: !!row.is_deadline_passed,
+      bs2Id: d.bs2_id || null,
+      bs2Employee: d.bs2_employee || null,
+      aanmaakdatum: row.aanmaakdatum,
+      laatstGewijzigd: row.laatst_gewijzigd,
+    };
+  }
+  function recRowToObj(row) {
     if (!row) return null;
     return {
       id: row.id,
-      medewerker_id: row.medewerker_id,
-      datum: row.datum,
-      type: row.type || "handmatig",
+      declaratieId: row.declaratie_id || null,
+      datum: row.datum || null,
       beschrijving: row.beschrijving || "",
-      locatie: row.locatie || "",
-      dienst: row.dienst || "",
-      kilometers: Number(row.kilometers || 0),
-      ingediend: !!row.ingediend,
-      ingediend_op: row.ingediend_op,
+      kilometers: row.kilometers == null ? 0 : Number(row.kilometers),
+      type: row.type || null,
+      typeDisplay: row.type_display || (row.type === "office" ? "Naar kantoor" : row.type || ""),
+      isAutomatic: !!row.is_automatic,
+      locatieNaam: row.locatie_naam || "",
+      locatieBs2Id: row.locatie_bs2_id || null,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
     };
   }
 
-  function objToInsertPayload(o) {
-    var safe = o || {};
-    var payload = {
-      medewerker_id: safe.medewerker_id || null,
-      datum: safe.datum,
-      type: safe.type === "kantoor" ? "kantoor" : "handmatig",
-      beschrijving: String(safe.beschrijving || ""),
-      locatie: String(safe.locatie || ""),
-      dienst: String(safe.dienst || ""),
-      kilometers: Number(safe.kilometers || 0),
-      ingediend: !!safe.ingediend,
-      ingediend_op: safe.ingediend_op || null,
-    };
-    payload.id = safe.id || generateId();
-    return payload;
-  }
-
-  function objToUpdatePayload(o) {
-    var safe = o || {};
-    var payload = {};
-    if (Object.prototype.hasOwnProperty.call(safe, "medewerker_id")) payload.medewerker_id = safe.medewerker_id || null;
-    if (Object.prototype.hasOwnProperty.call(safe, "datum")) payload.datum = safe.datum;
-    if (Object.prototype.hasOwnProperty.call(safe, "type")) payload.type = safe.type === "kantoor" ? "kantoor" : "handmatig";
-    if (Object.prototype.hasOwnProperty.call(safe, "beschrijving")) payload.beschrijving = String(safe.beschrijving || "");
-    if (Object.prototype.hasOwnProperty.call(safe, "locatie")) payload.locatie = String(safe.locatie || "");
-    if (Object.prototype.hasOwnProperty.call(safe, "dienst")) payload.dienst = String(safe.dienst || "");
-    if (Object.prototype.hasOwnProperty.call(safe, "kilometers")) payload.kilometers = Number(safe.kilometers || 0);
-    if (Object.prototype.hasOwnProperty.call(safe, "ingediend")) payload.ingediend = !!safe.ingediend;
-    if (Object.prototype.hasOwnProperty.call(safe, "ingediend_op")) payload.ingediend_op = safe.ingediend_op || null;
-    return payload;
-  }
-
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
-      .from(TABLE)
-      .select("*")
-      .order("datum", { ascending: false });
-    if (res.error) throw res.error;
-    return (res.data || []).map(rowToObj).filter(Boolean);
+    var dRes = await global.besaSupabase
+      .from(T_DECL)
+      .select("id,medewerker_id,jaar,maand,status,total_kilometers,total_reimbursement,submitted_at,submission_status,is_editable,can_be_submitted,is_deadline_passed,data,aanmaakdatum,laatst_gewijzigd")
+      .order("jaar", { ascending: false })
+      .order("maand", { ascending: false });
+    if (dRes.error) throw dRes.error;
+    var rRes = await global.besaSupabase
+      .from(T_REC)
+      .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,aanmaakdatum,laatst_gewijzigd")
+      .order("datum", { ascending: true });
+    if (rRes.error) throw rRes.error;
+    return {
+      decl: (dRes.data || []).map(declRowToObj).filter(Boolean),
+      rec: (rRes.data || []).map(recRowToObj).filter(Boolean),
+    };
   }
 
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
-    var cached = readCache();
-    if (cached.length) dispatchUpdated("cache");
+    if (readCache(CACHE_DECL).length) dispatchUpdated("cache");
     readyPromise = (async function () {
       try {
-        var items = await fetchAll();
-        writeCache(items);
+        var r = await fetchAll();
+        setDecl(r.decl);
+        setRec(r.rec);
         dispatchUpdated("bootstrap");
       } catch (err) {
         reportSilent("Bootstrap", err);
@@ -141,162 +142,57 @@
   }
 
   async function refresh() {
-    var items = await fetchAll();
-    writeCache(items);
+    var r = await fetchAll();
+    setDecl(r.decl);
+    setRec(r.rec);
     dispatchUpdated("refresh");
-    return items;
+    return r.decl;
   }
 
-  function getAllSync() { return readCache(); }
+  function getAllSync() { return declList(); }
 
   function getByIdSync(id) {
     if (id == null) return null;
     var s = String(id);
-    var found = readCache().find(function (r) { return r && String(r.id) === s; });
-    return found ? Object.assign({}, found) : null;
+    var f = declList().find(function (r) { return r && String(r.id) === s; });
+    return f ? Object.assign({}, f) : null;
   }
 
-  function getForMedewerkerSync(medewerkerId, year, month) {
+  function getForMedewerkerSync(medewerkerId) {
     if (!medewerkerId) return [];
-    var all = readCache();
-    return all.filter(function (r) {
-      if (!r || String(r.medewerker_id) !== String(medewerkerId)) return false;
-      if (year != null || month != null) {
-        if (!r.datum) return false;
-        var d = new Date(r.datum);
-        if (isNaN(d.getTime())) return false;
-        if (year != null && d.getFullYear() !== Number(year)) return false;
-        if (month != null && (d.getMonth() + 1) !== Number(month)) return false;
-      }
-      return true;
-    });
+    var s = String(medewerkerId);
+    return declList().filter(function (r) { return r && String(r.medewerkerId) === s; });
   }
 
-  /**
-   * Aggregeer per (medewerker_id, year, month). Eén rij per maand.
-   * Returns: [{medewerker_id, year, month, declaratiesCount, totaleKm, totaleVergoeding,
-   *           ingediend (bool — alle ritten ingediend?), ingediend_op (laatste timestamp)}]
-   */
-  function getMonthlyAggregatesSync() {
-    var all = readCache();
-    var groups = new Map();
-    all.forEach(function (r) {
-      if (!r || !r.datum) return;
-      var d = new Date(r.datum);
-      if (isNaN(d.getTime())) return;
-      var year = d.getFullYear();
-      var month = d.getMonth() + 1;
-      var key = (r.medewerker_id || "—") + "|" + year + "|" + month;
-      if (!groups.has(key)) {
-        groups.set(key, {
-          medewerker_id: r.medewerker_id || null,
-          year: year,
-          month: month,
-          declaratiesCount: 0,
-          totaleKm: 0,
-          totaleVergoeding: 0,
-          ingediend: true,            // wordt false als één rit niet ingediend is
-          ingediend_op: null,         // max van alle ingediend_op timestamps
-        });
-      }
-      var g = groups.get(key);
-      g.declaratiesCount += 1;
-      g.totaleKm += Number(r.kilometers || 0);
-      g.totaleVergoeding += calcVergoeding(Number(r.kilometers || 0));
-      if (!r.ingediend) g.ingediend = false;
-      if (r.ingediend_op) {
-        if (!g.ingediend_op || new Date(r.ingediend_op) > new Date(g.ingediend_op)) {
-          g.ingediend_op = r.ingediend_op;
-        }
-      }
-    });
-    return Array.from(groups.values()).sort(function (a, b) {
-      // Nieuwste maand eerst, daarna alfabetisch op medewerker (later via JOIN op naam in UI).
-      if (a.year !== b.year) return b.year - a.year;
-      if (a.month !== b.month) return b.month - a.month;
-      return 0;
-    });
+  function getRecordsForDeclaratieSync(declId) {
+    if (declId == null) return [];
+    var s = String(declId);
+    return recList()
+      .filter(function (r) { return r && String(r.declaratieId) === s; })
+      .sort(function (a, b) {
+        return String(a.datum || "").localeCompare(String(b.datum || ""));
+      });
   }
 
-  function calcVergoeding(km) {
-    var n = Math.max(0, Math.min(Number(km || 0), MAX_KM_PER_RIT));
-    return Math.round(n * EUR_PER_KM * 100) / 100;
-  }
-
-  async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var payload = objToInsertPayload(rec);
-    if (!payload.datum) throw new Error("Datum is verplicht");
+  // Volledige BS2-raw on-demand (NIET gecachet — DATA-SLIM).
+  async function getRawBs2(id) {
+    if (!global.besaSupabase || id == null) return null;
     var res = await global.besaSupabase
-      .from(TABLE).insert(payload).select().single();
+      .from(T_DECL).select("data").eq("id", id).single();
     if (res.error) throw res.error;
-    var obj = rowToObj(res.data);
-    var cache = readCache();
-    var idx = cache.findIndex(function (r) { return r && String(r.id) === String(obj.id); });
-    if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-    writeCache(cache);
-    dispatchUpdated("add");
-    return obj;
-  }
-
-  async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (!id) throw new Error("Geen id");
-    var payload = objToUpdatePayload(partial || {});
-    var res = await global.besaSupabase
-      .from(TABLE).update(payload).eq("id", id).select().single();
-    if (res.error) throw res.error;
-    var obj = rowToObj(res.data);
-    var cache = readCache();
-    var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
-    if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-    writeCache(cache);
-    dispatchUpdated("update");
-    return obj;
-  }
-
-  async function markIngediend(medewerkerId, year, month) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (!medewerkerId) throw new Error("medewerkerId vereist");
-    var rows = getForMedewerkerSync(medewerkerId, year, month).filter(function (r) { return !r.ingediend; });
-    var now = new Date().toISOString();
-    var updated = [];
-    for (var i = 0; i < rows.length; i += 1) {
-      var u = await update(rows[i].id, { ingediend: true, ingediend_op: now });
-      updated.push(u);
-    }
-    return updated;
-  }
-
-  async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (!id) return false;
-    var res = await global.besaSupabase
-      .from(TABLE).delete().eq("id", id);
-    if (res.error) throw res.error;
-    var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
-    writeCache(cache);
-    dispatchUpdated("remove");
-    return true;
+    var d = res.data && res.data.data;
+    return (d && d.bs2_scrape) || null;
   }
 
   global.kilometerDeclaratiesDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
     fetchAll: fetchAll,
-    add: add,
-    update: update,
-    markIngediend: markIngediend,
-    delete: remove,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     getForMedewerkerSync: getForMedewerkerSync,
-    getMonthlyAggregatesSync: getMonthlyAggregatesSync,
-    calcVergoeding: calcVergoeding,
-    constants: {
-      EUR_PER_KM: EUR_PER_KM,
-      MAX_KM_PER_RIT: MAX_KM_PER_RIT,
-    },
+    getRecordsForDeclaratieSync: getRecordsForDeclaratieSync,
+    getRawBs2: getRawBs2,
   };
 
   bootstrap();

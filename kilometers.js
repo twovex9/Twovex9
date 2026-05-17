@@ -1,20 +1,19 @@
 /* global window, document */
 /**
- * kilometers.js — page-script voor kilometers.html.
+ * kilometers.js — page-script voor kilometers.html. 1-op-1 BS2.
  *
- * Bron-van-waarheid: window.kilometerDeclaratiesDB.
- * Twee views op één pagina:
- *   - Overzicht (default): aggregaten per medewerker per maand
- *   - Detail (?med=<id>&jaar=<n>&maand=<n>): individuele ritten in die maand
+ * BS2-model: één DECLARATIE = 1 medewerker × 1 maand
+ * (status, total_kilometers, total_reimbursement, submitted_at,
+ * submission_status) met per-dag RECORDS. Totalen komen VERBATIM uit
+ * BS2 — niets herrekenen. Bron: window.kilometerDeclaratiesDB.
  *
- * Detail wordt geopend door op een rij in het overzicht te klikken.
- * URL ?-params worden gebruikt zodat browser-back/forward werkt.
+ * Twee views: Overzicht (declaraties) en Detail (?decl=<id> → per-dag).
+ * Read-only spiegel van BS2 (geen toevoegen/bewerken/verwijderen).
  */
 (function () {
   "use strict";
 
   function $(id) { return document.getElementById(id); }
-
   function escHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -24,7 +23,6 @@
 
   var MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni",
     "juli", "augustus", "september", "oktober", "november", "december"];
-  var MONTHS_NL_SHORT = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 
   function formatNlDate(value) {
     if (!value) return "—";
@@ -33,7 +31,6 @@
     var d = new Date(t);
     return ("0" + d.getDate()).slice(-2) + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + d.getFullYear();
   }
-
   function formatEur(n) {
     var v = Number(n || 0);
     return "€ " + v.toFixed(2).replace(".", ",");
@@ -48,15 +45,23 @@
     return MONTHS_NL[month - 1].charAt(0).toUpperCase() + MONTHS_NL[month - 1].slice(1) + " " + year;
   }
 
-  function getMedewerkerNaam(id) {
-    if (!id) return "—";
-    if (!window.medewerkersDB) return id;
-    try {
-      var m = window.medewerkersDB.getByIdSync ? window.medewerkersDB.getByIdSync(id) :
-        (window.medewerkersDB.getAllSync() || []).find(function (x) { return x && String(x.id) === String(id); });
-      if (!m) return "—";
-      return ((m.voornaam || "") + " " + (m.achternaam || "")).trim() || "—";
-    } catch (e) { return id; }
+  // Medewerkernaam: BS1-medewerker (via medewerker_id), anders BS2-employee
+  // (de 3 declaraties die in BS2 zelf employee=null hebben → "—").
+  function declNaam(d) {
+    if (!d) return "—";
+    if (d.medewerkerId && window.medewerkersDB) {
+      try {
+        var m = window.medewerkersDB.getByIdSync
+          ? window.medewerkersDB.getByIdSync(d.medewerkerId)
+          : (window.medewerkersDB.getAllSync() || []).find(function (x) { return x && String(x.id) === String(d.medewerkerId); });
+        if (m) {
+          var nm = ((m.voornaam || "") + " " + (m.achternaam || "")).trim();
+          if (nm) return nm;
+        }
+      } catch (e) { /* */ }
+    }
+    if (d.bs2Employee && d.bs2Employee.name) return d.bs2Employee.name;
+    return "—";
   }
 
   function toast(kind, msg) {
@@ -71,127 +76,103 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Routing via query-params
+  // Routing — ?decl=<declaratie-id>
   // ---------------------------------------------------------------------------
   function getRouteState() {
     var u = new URL(window.location.href);
-    var med = u.searchParams.get("med");
-    var jaar = parseInt(u.searchParams.get("jaar") || "", 10);
-    var maand = parseInt(u.searchParams.get("maand") || "", 10);
-    if (med && jaar && maand) return { mode: "detail", med: med, jaar: jaar, maand: maand };
+    var decl = u.searchParams.get("decl");
+    if (decl) return { mode: "detail", decl: decl };
     return { mode: "overview" };
   }
-
-  function setRouteState(state) {
+  function setRouteState(s) {
     var u = new URL(window.location.href);
-    if (state.mode === "detail") {
-      u.searchParams.set("med", state.med);
-      u.searchParams.set("jaar", state.jaar);
-      u.searchParams.set("maand", state.maand);
+    if (s.mode === "detail") {
+      u.searchParams.set("decl", s.decl);
+      u.searchParams.delete("med"); u.searchParams.delete("jaar"); u.searchParams.delete("maand");
     } else {
-      u.searchParams.delete("med");
-      u.searchParams.delete("jaar");
-      u.searchParams.delete("maand");
+      u.searchParams.delete("decl");
+      u.searchParams.delete("med"); u.searchParams.delete("jaar"); u.searchParams.delete("maand");
     }
     window.history.pushState({}, "", u.toString());
   }
 
-  // ---------------------------------------------------------------------------
-  // State
-  // ---------------------------------------------------------------------------
   var state = {
     overview: { search: "", page: 1, pageSize: 50, sortKey: "periode", sortDir: "desc", filterMaand: "", filterJaar: "" },
-    detail: { sortKey: "datum", sortDir: "desc", page: 1, pageSize: 50, editingId: null, purgingId: null, med: null, jaar: null, maand: null },
+    detail: { sortKey: "datum", sortDir: "asc", page: 1, pageSize: 50, decl: null },
   };
 
+  function getDecls() {
+    return window.kilometerDeclaratiesDB ? (window.kilometerDeclaratiesDB.getAllSync() || []) : [];
+  }
+
   // ---------------------------------------------------------------------------
-  // Overview rendering
+  // Overzicht — declaraties (1 rij = medewerker × maand), verbatim BS2-totalen
   // ---------------------------------------------------------------------------
   function renderOverview() {
-    var aggs = window.kilometerDeclaratiesDB ? window.kilometerDeclaratiesDB.getMonthlyAggregatesSync() : [];
-    // Apply jaar/maand filter (chips)
+    var rows = getDecls();
     if (state.overview.filterJaar) {
       var fj = parseInt(state.overview.filterJaar, 10);
-      aggs = aggs.filter(function (a) { return a.year === fj; });
+      rows = rows.filter(function (a) { return a.jaar === fj; });
     }
     if (state.overview.filterMaand) {
       var fm = parseInt(state.overview.filterMaand, 10);
-      aggs = aggs.filter(function (a) { return a.month === fm; });
+      rows = rows.filter(function (a) { return a.maand === fm; });
     }
-    // Apply search
     var q = state.overview.search.trim().toLowerCase();
     if (q) {
-      aggs = aggs.filter(function (a) {
-        var naam = getMedewerkerNaam(a.medewerker_id).toLowerCase();
-        var period = formatPeriod(a.year, a.month).toLowerCase();
-        return naam.indexOf(q) !== -1 || period.indexOf(q) !== -1;
+      rows = rows.filter(function (a) {
+        var naam = declNaam(a).toLowerCase();
+        var per = (a.monthDisplay || formatPeriod(a.jaar, a.maand)).toLowerCase();
+        return naam.indexOf(q) !== -1 || per.indexOf(q) !== -1;
       });
     }
-    // Sort
     var sk = state.overview.sortKey;
     var dir = state.overview.sortDir === "desc" ? -1 : 1;
-    aggs.sort(function (a, b) {
-      if (sk === "medewerker") {
-        return getMedewerkerNaam(a.medewerker_id).localeCompare(getMedewerkerNaam(b.medewerker_id), "nl") * dir;
-      }
-      if (sk === "periode") {
-        if (a.year !== b.year) return (a.year - b.year) * dir;
-        return (a.month - b.month) * dir;
-      }
-      if (sk === "status") {
-        return ((a.ingediend ? 1 : 0) - (b.ingediend ? 1 : 0)) * dir;
-      }
-      if (sk === "ingediend") {
-        var at = a.ingediend_op ? Date.parse(a.ingediend_op) : 0;
-        var bt = b.ingediend_op ? Date.parse(b.ingediend_op) : 0;
-        return (at - bt) * dir;
-      }
-      if (sk === "km") return (a.totaleKm - b.totaleKm) * dir;
-      if (sk === "bedrag") return (a.totaleVergoeding - b.totaleVergoeding) * dir;
+    rows = rows.slice().sort(function (a, b) {
+      if (sk === "medewerker") return declNaam(a).localeCompare(declNaam(b), "nl") * dir;
+      if (sk === "periode") { if (a.jaar !== b.jaar) return (a.jaar - b.jaar) * dir; return (a.maand - b.maand) * dir; }
+      if (sk === "status") return (((a.status === "submitted") ? 1 : 0) - ((b.status === "submitted") ? 1 : 0)) * dir;
+      if (sk === "ingediend") return (((a.submittedAt ? Date.parse(a.submittedAt) : 0)) - ((b.submittedAt ? Date.parse(b.submittedAt) : 0))) * dir;
+      if (sk === "km") return (a.totalKilometers - b.totalKilometers) * dir;
+      if (sk === "bedrag") return (a.totalReimbursement - b.totalReimbursement) * dir;
       return 0;
     });
 
-    // Stats (van de gefilterde set)
-    var totalCount = 0, totalKm = 0, totalEur = 0;
-    aggs.forEach(function (a) {
-      totalCount += a.declaratiesCount;
-      totalKm += a.totaleKm;
-      totalEur += a.totaleVergoeding;
-    });
+    var totalCount = rows.length, totalKm = 0, totalEur = 0;
+    rows.forEach(function (a) { totalKm += Number(a.totalKilometers || 0); totalEur += Number(a.totalReimbursement || 0); });
     $("km-stat-count").textContent = totalCount;
-    $("km-stat-km").textContent = totalKm.toFixed(2).replace(".", ",");
+    $("km-stat-km").textContent = (Math.round(totalKm * 100) / 100).toFixed(2).replace(".", ",");
     $("km-stat-bedrag").textContent = formatEur(totalEur);
 
-    // Pagination
     var ps = state.overview.pageSize;
-    var total = aggs.length;
+    var total = rows.length;
     var maxPage = Math.max(1, Math.ceil(total / ps));
     if (state.overview.page > maxPage) state.overview.page = maxPage;
     if (state.overview.page < 1) state.overview.page = 1;
     var start = (state.overview.page - 1) * ps;
-    var rows = aggs.slice(start, start + ps);
+    var pageRows = rows.slice(start, start + ps);
 
     var tbody = $("km-overview-tbody");
-    if (rows.length === 0) {
+    if (pageRows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="incident-empty">Geen kilometer-declaraties gevonden</td></tr>';
     } else {
-      tbody.innerHTML = rows.map(function (a) {
-        var naam = getMedewerkerNaam(a.medewerker_id);
-        var statusPill = a.ingediend
+      tbody.innerHTML = pageRows.map(function (a) {
+        var naam = declNaam(a);
+        var ingediend = a.status === "submitted";
+        var statusPill = ingediend
           ? '<span class="km-status-pill km-status-pill--ingediend"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Ingediend</span>'
-          : '<span class="km-status-pill km-status-pill--nietingediend"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Niet ingediend</span>';
-        var ingediendOp = a.ingediend_op ? formatNlDate(a.ingediend_op) : "-";
-        return '<tr class="km-overview-row" data-med="' + escAttr(a.medewerker_id || "") + '" data-jaar="' + a.year + '" data-maand="' + a.month + '" tabindex="0" role="link">'
+          : '<span class="km-status-pill km-status-pill--nietingediend"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Concept</span>';
+        var ingOp = a.submittedAt ? formatNlDate(a.submittedAt) : "-";
+        return '<tr class="km-overview-row" data-decl="' + escAttr(a.id) + '" tabindex="0" role="link">'
           + '<td data-col="medewerker">' + escHtml(naam) + '</td>'
-          + '<td data-col="periode">' + escHtml(formatPeriod(a.year, a.month)) + '</td>'
+          + '<td data-col="periode">' + escHtml(a.monthDisplay || formatPeriod(a.jaar, a.maand)) + '</td>'
           + '<td data-col="status">' + statusPill + '</td>'
-          + '<td data-col="ingediend">' + escHtml(ingediendOp) + '</td>'
-          + '<td data-col="km" class="td-num">' + formatKm(a.totaleKm) + '</td>'
-          + '<td data-col="bedrag" class="td-num">' + formatEur(a.totaleVergoeding) + '</td>'
+          + '<td data-col="ingediend">' + escHtml(ingOp) + '</td>'
+          + '<td data-col="km" class="td-num">' + formatKm(a.totalKilometers) + '</td>'
+          + '<td data-col="bedrag" class="td-num">' + formatEur(a.totalReimbursement) + '</td>'
           + '</tr>';
       }).join("");
     }
-
     var rangeFrom = total === 0 ? 0 : start + 1;
     var rangeTo = Math.min(start + ps, total);
     $("km-overview-range").textContent = total === 0 ? "0 van 0" : (rangeFrom + "–" + rangeTo + " van " + total);
@@ -215,9 +196,6 @@
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Overview kolommen panel
-  // ---------------------------------------------------------------------------
   var OVERVIEW_COLUMNS = [
     { id: "medewerker", label: "Medewerker", defaultOn: true, skipToggle: true },
     { id: "periode", label: "Periode", defaultOn: true },
@@ -233,9 +211,7 @@
   }
   function applyOverviewColumnVisibility() {
     document.querySelectorAll("#km-columns-list .column-toggle").forEach(function (btn) {
-      var colId = btn.getAttribute("data-col");
-      var isOn = btn.getAttribute("aria-checked") === "true";
-      setOverviewColumnVisible(colId, isOn);
+      setOverviewColumnVisible(btn.getAttribute("data-col"), btn.getAttribute("aria-checked") === "true");
     });
   }
   function buildOverviewColumnsPanel() {
@@ -259,90 +235,77 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Detail rendering
+  // Detail — per-dag records van één declaratie (verbatim BS2)
   // ---------------------------------------------------------------------------
   function renderDetail() {
-    var ctx = state.detail;
-    var med = ctx.med, jaar = ctx.jaar, maand = ctx.maand;
-    if (!med || !jaar || !maand) return;
-    var rows = window.kilometerDeclaratiesDB ? window.kilometerDeclaratiesDB.getForMedewerkerSync(med, jaar, maand) : [];
-    // Sort
-    var sk = ctx.sortKey;
-    var dir = ctx.sortDir === "desc" ? -1 : 1;
-    rows.sort(function (a, b) {
-      if (sk === "datum") {
-        return ((Date.parse(a.datum) || 0) - (Date.parse(b.datum) || 0)) * dir;
-      }
-      if (sk === "type") return (a.type || "").localeCompare(b.type || "", "nl") * dir;
+    var declId = state.detail.decl;
+    if (!declId) return;
+    var d = window.kilometerDeclaratiesDB.getByIdSync(declId);
+    if (!d) { $("km-detail-subtitle").textContent = "Declaratie niet gevonden"; return; }
+    var recs = window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(declId) || [];
+
+    var sk = state.detail.sortKey;
+    var dir = state.detail.sortDir === "desc" ? -1 : 1;
+    recs = recs.slice().sort(function (a, b) {
+      if (sk === "datum") return String(a.datum || "").localeCompare(String(b.datum || "")) * dir;
+      if (sk === "type") return (a.typeDisplay || "").localeCompare(b.typeDisplay || "", "nl") * dir;
       if (sk === "beschrijving") return (a.beschrijving || "").localeCompare(b.beschrijving || "", "nl") * dir;
       if (sk === "kilometers") return (a.kilometers - b.kilometers) * dir;
       return 0;
     });
-    // Pagination
-    var ps = ctx.pageSize;
-    var total = rows.length;
-    var maxPage = Math.max(1, Math.ceil(total / ps));
-    if (ctx.page > maxPage) ctx.page = maxPage;
-    if (ctx.page < 1) ctx.page = 1;
-    var start = (ctx.page - 1) * ps;
-    var pageRows = rows.slice(start, start + ps);
 
-    // Header
-    var naam = getMedewerkerNaam(med);
-    var periodLabel = formatPeriod(jaar, maand);
-    $("km-detail-subtitle").textContent = periodLabel + " - " + naam;
-    var allIngediend = total > 0 && rows.every(function (r) { return r.ingediend; });
+    var ps = state.detail.pageSize;
+    var total = recs.length;
+    var maxPage = Math.max(1, Math.ceil(total / ps));
+    if (state.detail.page > maxPage) state.detail.page = maxPage;
+    if (state.detail.page < 1) state.detail.page = 1;
+    var start = (state.detail.page - 1) * ps;
+    var pageRows = recs.slice(start, start + ps);
+
+    var naam = declNaam(d);
+    var periodLabel = d.monthDisplay || formatPeriod(d.jaar, d.maand);
+    $("km-detail-subtitle").textContent = periodLabel + " — " + naam;
     var statusEl = $("km-detail-status");
-    if (allIngediend) {
+    if (d.status === "submitted") {
       statusEl.className = "km-detail-status km-detail-status--ingediend";
-      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Ingediend';
+      var msg = (d.submissionStatus && d.submissionStatus.message) || "Ingediend";
+      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ' + escHtml(msg);
     } else {
       statusEl.className = "km-detail-status km-detail-status--nietingediend";
-      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Nog niet ingediend';
+      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Concept (nog niet ingediend)';
     }
 
-    // Body
-    var TRASH_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-    var EDIT_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
     var tbody = $("km-detail-tbody");
     if (pageRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen kilometer-declaraties in deze periode</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen ritten in deze maand-declaratie</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(function (r) {
-        var typeLabel = r.type === "kantoor"
-          ? '<span class="km-type-pill km-type-pill--kantoor"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg> Kantoor</span>'
-          : '<span class="km-type-pill km-type-pill--handmatig"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Handmatig</span>';
+        var typeLabel = (r.type === "office")
+          ? '<span class="km-type-pill km-type-pill--kantoor"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg> ' + escHtml(r.typeDisplay || "Naar kantoor") + '</span>'
+          : '<span class="km-type-pill km-type-pill--handmatig"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ' + escHtml(r.typeDisplay || r.type || "Rit") + '</span>';
         return '<tr data-id="' + escAttr(r.id) + '">'
           + '<td data-col="datum">' + escHtml(formatNlDate(r.datum)) + '</td>'
           + '<td data-col="type">' + typeLabel + '</td>'
           + '<td data-col="beschrijving">' + escHtml(r.beschrijving || "—") + '</td>'
-          + '<td data-col="locatie">' + escHtml(r.locatie || "-") + '</td>'
-          + '<td data-col="dienst">' + escHtml(r.dienst || "-") + '</td>'
+          + '<td data-col="locatie">' + escHtml(r.locatieNaam || "-") + '</td>'
+          + '<td data-col="dienst">' + (r.isAutomatic ? "Automatisch" : "—") + '</td>'
           + '<td data-col="kilometers" class="td-num">' + formatKm(r.kilometers) + '</td>'
-          + '<td data-col="acties" class="km-detail-actions">'
-          +   '<button type="button" class="km-row-edit" data-id="' + escAttr(r.id) + '" aria-label="Bewerken">' + EDIT_SVG + '</button>'
-          +   '<button type="button" class="employee-delete-btn km-row-purge" data-id="' + escAttr(r.id) + '" aria-label="Verwijderen">' + TRASH_SVG + '</button>'
-          + '</td>'
+          + '<td data-col="acties" class="km-detail-actions"></td>'
           + '</tr>';
       }).join("");
     }
     var rangeFrom = total === 0 ? 0 : start + 1;
     var rangeTo = Math.min(start + ps, total);
     $("km-detail-range").textContent = total === 0 ? "0 van 0" : (rangeFrom + "–" + rangeTo + " van " + total);
-    $("km-detail-page").textContent = "Pagina " + ctx.page + " van " + maxPage;
-    $("km-detail-pager-first").disabled = ctx.page <= 1;
-    $("km-detail-pager-prev").disabled = ctx.page <= 1;
-    $("km-detail-pager-next").disabled = ctx.page >= maxPage;
-    $("km-detail-pager-last").disabled = ctx.page >= maxPage;
+    $("km-detail-page").textContent = "Pagina " + state.detail.page + " van " + maxPage;
+    $("km-detail-pager-first").disabled = state.detail.page <= 1;
+    $("km-detail-pager-prev").disabled = state.detail.page <= 1;
+    $("km-detail-pager-next").disabled = state.detail.page >= maxPage;
+    $("km-detail-pager-last").disabled = state.detail.page >= maxPage;
 
-    // Totals
-    var sumKm = 0, sumEur = 0;
-    rows.forEach(function (r) {
-      sumKm += Number(r.kilometers || 0);
-      sumEur += window.kilometerDeclaratiesDB.calcVergoeding(Number(r.kilometers || 0));
-    });
-    $("km-totals-km").textContent = formatKm(sumKm);
-    $("km-totals-bedrag").textContent = formatEur(sumEur);
+    // Totalen VERBATIM uit BS2 (declaratie-niveau), niet herrekend.
+    $("km-totals-km").textContent = formatKm(d.totalKilometers);
+    $("km-totals-bedrag").textContent = formatEur(d.totalReimbursement);
 
     applyDetailSortIndicators();
   }
@@ -363,26 +326,27 @@
   function showOverview() {
     $("km-overview-view").hidden = false;
     $("km-detail-view").hidden = true;
-    state.detail.med = state.detail.jaar = state.detail.maand = null;
+    state.detail.decl = null;
     setRouteState({ mode: "overview" });
     renderOverview();
   }
-
-  function showDetail(med, jaar, maand) {
-    state.detail.med = med;
-    state.detail.jaar = jaar;
-    state.detail.maand = maand;
+  function showDetail(declId) {
+    state.detail.decl = declId;
     state.detail.page = 1;
     $("km-overview-view").hidden = true;
     $("km-detail-view").hidden = false;
     populateMaandJaarSelects();
-    setRouteState({ mode: "detail", med: med, jaar: jaar, maand: maand });
+    setRouteState({ mode: "detail", decl: declId });
     renderDetail();
   }
 
+  // Maand/jaar-selects in de detail-header tonen de periode van de declaratie
+  // (read-only spiegel: wisselen navigeert naar de declaratie van die
+  // medewerker voor de gekozen maand/jaar, indien die bestaat).
   function populateMaandJaarSelects() {
     var maandSel = $("km-detail-maand");
     var jaarSel = $("km-detail-jaar");
+    if (!maandSel || !jaarSel) return;
     if (!maandSel.options.length) {
       MONTHS_NL.forEach(function (m, i) {
         var opt = document.createElement("option");
@@ -392,180 +356,32 @@
       });
     }
     if (!jaarSel.options.length) {
-      // Vaste range 2025-2030 — consistent met overview-filter chips.
       for (var y = 2025; y <= 2030; y += 1) {
-        var opt2 = document.createElement("option");
-        opt2.value = String(y);
-        opt2.textContent = String(y);
-        jaarSel.appendChild(opt2);
+        var o = document.createElement("option");
+        o.value = String(y); o.textContent = String(y);
+        jaarSel.appendChild(o);
       }
     }
-    maandSel.value = String(state.detail.maand);
-    jaarSel.value = String(state.detail.jaar);
+    var d = window.kilometerDeclaratiesDB.getByIdSync(state.detail.decl);
+    if (d) { maandSel.value = String(d.maand); jaarSel.value = String(d.jaar); }
   }
 
-  // ---------------------------------------------------------------------------
-  // Modal helpers
-  // ---------------------------------------------------------------------------
-  function showModal(id) {
-    var m = $(id);
-    if (!m) return;
-    m.hidden = false;
-    m.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-open");
-    var first = m.querySelector("input, textarea, select, button.km-choice-card");
-    if (first) { try { first.focus(); first.select && first.select(); } catch (e) { /* */ } }
-  }
-  function hideModal(id) {
-    var m = $(id);
-    if (!m) return;
-    m.hidden = true;
-    m.setAttribute("aria-hidden", "true");
-    if (!document.querySelector(".modal-overlay:not([hidden])")) {
-      document.body.classList.remove("modal-open");
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Add flow
-  // ---------------------------------------------------------------------------
-  function openAddChoice() { showModal("km-add-choice-modal"); }
-  function closeAddChoice() { hideModal("km-add-choice-modal"); }
-  function openAddManual() {
-    closeAddChoice();
-    var d = $("km-add-manual-datum");
-    var iso = new Date().toISOString().slice(0, 10);
-    d.value = iso;
-    $("km-add-manual-beschr").value = "";
-    $("km-add-manual-locatie").value = "";
-    $("km-add-manual-dienst").value = "";
-    $("km-add-manual-km").value = "";
-    var err = $("km-add-manual-error"); if (err) { err.hidden = true; err.textContent = ""; }
-    showModal("km-add-manual-modal");
-  }
-  function openAddKantoor() {
-    closeAddChoice();
-    var d = $("km-add-kantoor-datum");
-    d.value = new Date().toISOString().slice(0, 10);
-    $("km-add-kantoor-beschr").value = "Woon-werkverkeer (heen en terug)";
-    $("km-add-kantoor-km").value = "";
-    var err = $("km-add-kantoor-error"); if (err) { err.hidden = true; err.textContent = ""; }
-    showModal("km-add-kantoor-modal");
-  }
-
-  async function submitAdd(form, type) {
-    var prefix = type === "kantoor" ? "km-add-kantoor" : "km-add-manual";
-    var datum = $(prefix + "-datum").value;
-    var km = parseFloat($(prefix + "-km").value);
-    var err = $(prefix + "-error");
-    if (!datum) { err.hidden = false; err.textContent = "Datum is verplicht."; return; }
-    if (!isFinite(km) || km < 0) { err.hidden = false; err.textContent = "Vul een geldig aantal kilometers in."; return; }
-    var beschr = $(prefix + "-beschr").value || "";
-    var locatie = type === "kantoor" ? "Kantoor" : ($(prefix + "-locatie").value || "");
-    var dienst = type === "kantoor" ? "" : ($(prefix + "-dienst").value || "");
-    var btn = $(prefix + "-submit");
-    btn.disabled = true;
-    var orig = btn.textContent; btn.textContent = "Bezig…";
-    try {
-      var med = state.detail.med || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync().medewerker_id) || null;
-      await window.kilometerDeclaratiesDB.add({
-        medewerker_id: med,
-        datum: datum,
-        type: type,
-        beschrijving: beschr,
-        locatie: locatie,
-        dienst: dienst,
-        kilometers: km,
-      });
-      toast("saved", "Declaratie toegevoegd");
-      hideModal(prefix + "-modal");
-    } catch (e) {
-      err.hidden = false; err.textContent = "Toevoegen mislukt: " + (e && e.message ? e.message : String(e));
-    } finally {
-      btn.disabled = false; btn.textContent = orig;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Edit + Delete flows
-  // ---------------------------------------------------------------------------
-  function openEdit(id) {
-    var rec = window.kilometerDeclaratiesDB.getByIdSync(id);
-    if (!rec) return;
-    state.detail.editingId = id;
-    $("km-edit-id").value = id;
-    $("km-edit-datum").value = rec.datum || "";
-    $("km-edit-beschr").value = rec.beschrijving || "";
-    $("km-edit-locatie").value = rec.locatie || "";
-    $("km-edit-dienst").value = rec.dienst || "";
-    $("km-edit-km").value = rec.kilometers || 0;
-    var err = $("km-edit-error"); if (err) { err.hidden = true; err.textContent = ""; }
-    showModal("km-edit-modal");
-  }
-  async function submitEdit(ev) {
-    ev.preventDefault();
-    var id = state.detail.editingId; if (!id) return;
-    var datum = $("km-edit-datum").value;
-    var km = parseFloat($("km-edit-km").value);
-    var err = $("km-edit-error");
-    if (!datum) { err.hidden = false; err.textContent = "Datum is verplicht."; return; }
-    if (!isFinite(km) || km < 0) { err.hidden = false; err.textContent = "Vul een geldig aantal kilometers in."; return; }
-    var btn = $("km-edit-submit");
-    btn.disabled = true;
-    var orig = btn.textContent; btn.textContent = "Bezig…";
-    try {
-      await window.kilometerDeclaratiesDB.update(id, {
-        datum: datum,
-        beschrijving: $("km-edit-beschr").value || "",
-        locatie: $("km-edit-locatie").value || "",
-        dienst: $("km-edit-dienst").value || "",
-        kilometers: km,
-      });
-      toast("saved", "Declaratie bijgewerkt");
-      hideModal("km-edit-modal");
-      state.detail.editingId = null;
-    } catch (e) {
-      err.hidden = false; err.textContent = "Opslaan mislukt: " + (e && e.message ? e.message : String(e));
-    } finally {
-      btn.disabled = false; btn.textContent = orig;
-    }
-  }
-
-  function openPurge(id) {
-    var rec = window.kilometerDeclaratiesDB.getByIdSync(id);
-    if (!rec) return;
-    state.detail.purgingId = id;
-    $("km-purge-preview").textContent = formatNlDate(rec.datum) + " — " + (rec.beschrijving || "(geen beschrijving)");
-    var s = $("km-purge-slider"); s.value = 0; s.style.setProperty("--employee-slider-pct", "0%");
-    $("km-purge-confirm").disabled = true;
-    showModal("km-purge-modal");
-  }
-  async function confirmPurge() {
-    var id = state.detail.purgingId; if (!id) return;
-    hideModal("km-purge-modal");
-    state.detail.purgingId = null;
-    try {
-      await window.kilometerDeclaratiesDB.delete(id);
-      toast("deleted", "Declaratie verwijderd");
-    } catch (e) {
-      toast("error", "Verwijderen mislukt: " + (e && e.message ? e.message : String(e)));
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Wire-up
-  // ---------------------------------------------------------------------------
-  function wireSliderConfirm(sliderId, btnId) {
-    var slider = $(sliderId);
-    var btn = $(btnId);
-    if (!slider || !btn) return;
-    slider.addEventListener("input", function () {
-      var v = Number(slider.value);
-      slider.style.setProperty("--employee-slider-pct", v + "%");
-      btn.disabled = v < 100;
+  function gotoDeclByPeriode() {
+    var d = window.kilometerDeclaratiesDB.getByIdSync(state.detail.decl);
+    if (!d) return;
+    var maand = parseInt($("km-detail-maand").value, 10);
+    var jaar = parseInt($("km-detail-jaar").value, 10);
+    var match = getDecls().find(function (x) {
+      return x && String(x.medewerkerId) === String(d.medewerkerId)
+        && x.jaar === jaar && x.maand === maand;
     });
+    if (match) { showDetail(match.id); }
+    else { toast("info", "Geen declaratie voor die medewerker in " + formatPeriod(jaar, maand)); populateMaandJaarSelects(); }
   }
 
+  // ---------------------------------------------------------------------------
+  // Sort-menus
+  // ---------------------------------------------------------------------------
   function wireSortMenus(tableId, ctxKey) {
     document.querySelectorAll("#" + tableId + " .th-sort-trigger").forEach(function (trigger) {
       trigger.addEventListener("click", function (e) {
@@ -576,10 +392,7 @@
         var wasHidden = menu.hasAttribute("hidden");
         document.querySelectorAll("#" + tableId + " .th-sort-menu").forEach(function (m) { m.setAttribute("hidden", ""); });
         document.querySelectorAll("#" + tableId + " thead th.th-sort").forEach(function (h) { h.classList.remove("th-sort-open"); });
-        if (wasHidden) {
-          menu.removeAttribute("hidden");
-          if (th) th.classList.add("th-sort-open");
-        }
+        if (wasHidden) { menu.removeAttribute("hidden"); if (th) th.classList.add("th-sort-open"); }
       });
     });
     document.querySelectorAll("#" + tableId + " .th-sort-opt").forEach(function (opt) {
@@ -602,44 +415,32 @@
   }
 
   function wireUp() {
-    // Overview
     $("km-search").addEventListener("input", function () { state.overview.search = this.value || ""; state.overview.page = 1; renderOverview(); });
 
-    // Filter chips: maand + jaar — bij selectie filteren + chip stylen als 'gevuld'.
     function syncFilterChipStyle(selectEl) {
       var wrap = selectEl.closest(".filter-chip-select-wrap");
       if (wrap) wrap.setAttribute("data-empty", selectEl.value ? "false" : "true");
     }
     function syncFilterResetVisibility() {
-      var hasFilter = !!(state.overview.filterMaand || state.overview.filterJaar);
       var resetBtn = $("km-filter-reset");
-      if (resetBtn) resetBtn.hidden = !hasFilter;
+      if (resetBtn) resetBtn.hidden = !(state.overview.filterMaand || state.overview.filterJaar);
     }
     var maandSelOv = $("km-filter-maand");
     var jaarSelOv = $("km-filter-jaar");
     if (maandSelOv) maandSelOv.addEventListener("change", function () {
-      state.overview.filterMaand = this.value || "";
-      state.overview.page = 1;
-      syncFilterChipStyle(this);
-      syncFilterResetVisibility();
-      renderOverview();
+      state.overview.filterMaand = this.value || ""; state.overview.page = 1;
+      syncFilterChipStyle(this); syncFilterResetVisibility(); renderOverview();
     });
     if (jaarSelOv) jaarSelOv.addEventListener("change", function () {
-      state.overview.filterJaar = this.value || "";
-      state.overview.page = 1;
-      syncFilterChipStyle(this);
-      syncFilterResetVisibility();
-      renderOverview();
+      state.overview.filterJaar = this.value || ""; state.overview.page = 1;
+      syncFilterChipStyle(this); syncFilterResetVisibility(); renderOverview();
     });
     var resetBtnOv = $("km-filter-reset");
     if (resetBtnOv) resetBtnOv.addEventListener("click", function () {
-      state.overview.filterMaand = "";
-      state.overview.filterJaar = "";
+      state.overview.filterMaand = ""; state.overview.filterJaar = "";
       if (maandSelOv) { maandSelOv.value = ""; syncFilterChipStyle(maandSelOv); }
       if (jaarSelOv) { jaarSelOv.value = ""; syncFilterChipStyle(jaarSelOv); }
-      syncFilterResetVisibility();
-      state.overview.page = 1;
-      renderOverview();
+      syncFilterResetVisibility(); state.overview.page = 1; renderOverview();
     });
 
     $("km-overview-page-size").addEventListener("change", function () { state.overview.pageSize = parseInt(this.value, 10) || 50; state.overview.page = 1; renderOverview(); });
@@ -650,54 +451,51 @@
     $("km-overview-tbody").addEventListener("click", function (e) {
       var row = e.target && e.target.closest && e.target.closest("tr.km-overview-row");
       if (!row) return;
-      var med = row.getAttribute("data-med");
-      var jaar = parseInt(row.getAttribute("data-jaar"), 10);
-      var maand = parseInt(row.getAttribute("data-maand"), 10);
-      if (med && jaar && maand) showDetail(med, jaar, maand);
+      var declId = row.getAttribute("data-decl");
+      if (declId) showDetail(declId);
+    });
+    $("km-overview-tbody").addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      var row = e.target && e.target.closest && e.target.closest("tr.km-overview-row");
+      if (!row) return;
+      e.preventDefault();
+      var declId = row.getAttribute("data-decl");
+      if (declId) showDetail(declId);
     });
 
-    // Kolommen
     var colBtn = $("km-columns-menu-btn");
     var colPanel = $("km-columns-panel");
     if (colBtn && colPanel) {
       colBtn.addEventListener("click", function (e) {
         e.stopPropagation();
-        var hidden = colPanel.hasAttribute("hidden");
-        if (hidden) { colPanel.removeAttribute("hidden"); colBtn.setAttribute("aria-expanded", "true"); }
+        if (colPanel.hasAttribute("hidden")) { colPanel.removeAttribute("hidden"); colBtn.setAttribute("aria-expanded", "true"); }
         else { colPanel.setAttribute("hidden", ""); colBtn.setAttribute("aria-expanded", "false"); }
       });
       colPanel.addEventListener("click", function (e) { e.stopPropagation(); });
     }
-    $("km-columns-list").addEventListener("click", function (e) {
+    var colList = $("km-columns-list");
+    if (colList) colList.addEventListener("click", function (e) {
       var t = e.target && e.target.closest && e.target.closest(".column-toggle");
       if (!t) return;
       t.classList.toggle("is-checked");
-      var on = t.classList.contains("is-checked");
-      t.setAttribute("aria-checked", on ? "true" : "false");
+      t.setAttribute("aria-checked", t.classList.contains("is-checked") ? "true" : "false");
       applyOverviewColumnVisibility();
     });
     document.addEventListener("click", function () {
-      if (colPanel) {
-        colPanel.setAttribute("hidden", "");
-        if (colBtn) colBtn.setAttribute("aria-expanded", "false");
-      }
+      if (colPanel) { colPanel.setAttribute("hidden", ""); if (colBtn) colBtn.setAttribute("aria-expanded", "false"); }
     });
 
-    // Export
-    $("km-export-btn").addEventListener("click", function () {
-      if (typeof window.besaExport !== "function") {
-        toast("error", "Export-helper niet geladen");
-        return;
-      }
-      var aggs = window.kilometerDeclaratiesDB.getMonthlyAggregatesSync();
-      var data = aggs.map(function (a) {
+    var exportBtn = $("km-export-btn");
+    if (exportBtn) exportBtn.addEventListener("click", function () {
+      if (typeof window.besaExport !== "function") { toast("error", "Export-helper niet geladen"); return; }
+      var data = getDecls().map(function (a) {
         return {
-          Medewerker: getMedewerkerNaam(a.medewerker_id),
-          Periode: formatPeriod(a.year, a.month),
-          Status: a.ingediend ? "Ingediend" : "Niet ingediend",
-          "Ingediend op": a.ingediend_op ? formatNlDate(a.ingediend_op) : "",
-          "Totale kilometers": a.totaleKm,
-          "Totale vergoeding": a.totaleVergoeding.toFixed(2),
+          Medewerker: declNaam(a),
+          Periode: a.monthDisplay || formatPeriod(a.jaar, a.maand),
+          Status: a.status === "submitted" ? "Ingediend" : "Concept",
+          "Ingediend op": a.submittedAt ? formatNlDate(a.submittedAt) : "",
+          "Totale kilometers": a.totalKilometers,
+          "Totale vergoeding": Number(a.totalReimbursement || 0).toFixed(2),
         };
       });
       window.besaExport({
@@ -708,87 +506,21 @@
       });
     });
 
-    // Detail period selectors
-    $("km-detail-maand").addEventListener("change", function () {
-      state.detail.maand = parseInt(this.value, 10);
-      setRouteState({ mode: "detail", med: state.detail.med, jaar: state.detail.jaar, maand: state.detail.maand });
-      renderDetail();
-    });
-    $("km-detail-jaar").addEventListener("change", function () {
-      state.detail.jaar = parseInt(this.value, 10);
-      setRouteState({ mode: "detail", med: state.detail.med, jaar: state.detail.jaar, maand: state.detail.maand });
-      renderDetail();
-    });
+    var bk = $("km-detail-back");
+    if (bk) bk.addEventListener("click", function (e) { e.preventDefault(); showOverview(); });
+
+    var dm = $("km-detail-maand"), dj = $("km-detail-jaar");
+    if (dm) dm.addEventListener("change", gotoDeclByPeriode);
+    if (dj) dj.addEventListener("change", gotoDeclByPeriode);
     $("km-detail-page-size").addEventListener("change", function () { state.detail.pageSize = parseInt(this.value, 10) || 50; state.detail.page = 1; renderDetail(); });
     $("km-detail-pager-first").addEventListener("click", function () { state.detail.page = 1; renderDetail(); });
     $("km-detail-pager-prev").addEventListener("click", function () { if (state.detail.page > 1) { state.detail.page--; renderDetail(); } });
     $("km-detail-pager-next").addEventListener("click", function () { state.detail.page++; renderDetail(); });
     $("km-detail-pager-last").addEventListener("click", function () { state.detail.page = 99999; renderDetail(); });
 
-    // Detail row actions
-    $("km-detail-tbody").addEventListener("click", function (e) {
-      var editBtn = e.target && e.target.closest && e.target.closest(".km-row-edit");
-      if (editBtn) { openEdit(editBtn.getAttribute("data-id")); return; }
-      var purgeBtn = e.target && e.target.closest && e.target.closest(".km-row-purge");
-      if (purgeBtn) { openPurge(purgeBtn.getAttribute("data-id")); return; }
-    });
-
-    // Add modal
-    $("km-add-open-btn").addEventListener("click", openAddChoice);
-    $("km-add-choice-close").addEventListener("click", closeAddChoice);
-    $("km-add-choice-cancel").addEventListener("click", closeAddChoice);
-    $("km-choice-handmatig").addEventListener("click", openAddManual);
-    $("km-choice-kantoor").addEventListener("click", openAddKantoor);
-
-    $("km-add-manual-close").addEventListener("click", function () { hideModal("km-add-manual-modal"); });
-    $("km-add-manual-cancel").addEventListener("click", function () { hideModal("km-add-manual-modal"); });
-    $("km-add-manual-form").addEventListener("submit", function (e) { e.preventDefault(); submitAdd(e.target, "handmatig"); });
-
-    $("km-add-kantoor-close").addEventListener("click", function () { hideModal("km-add-kantoor-modal"); });
-    $("km-add-kantoor-cancel").addEventListener("click", function () { hideModal("km-add-kantoor-modal"); });
-    $("km-add-kantoor-form").addEventListener("submit", function (e) { e.preventDefault(); submitAdd(e.target, "kantoor"); });
-
-    // Edit
-    $("km-edit-close").addEventListener("click", function () { hideModal("km-edit-modal"); });
-    $("km-edit-cancel").addEventListener("click", function () { hideModal("km-edit-modal"); });
-    $("km-edit-form").addEventListener("submit", submitEdit);
-
-    // Purge
-    $("km-purge-close").addEventListener("click", function () { hideModal("km-purge-modal"); });
-    $("km-purge-cancel").addEventListener("click", function () { hideModal("km-purge-modal"); });
-    wireSliderConfirm("km-purge-slider", "km-purge-confirm");
-    $("km-purge-confirm").addEventListener("click", confirmPurge);
-
-    // Modal-overlay click sluit
-    document.querySelectorAll(".modal-overlay").forEach(function (overlay) {
-      overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) {
-          overlay.hidden = true;
-          overlay.setAttribute("aria-hidden", "true");
-          if (!document.querySelector(".modal-overlay:not([hidden])")) {
-            document.body.classList.remove("modal-open");
-          }
-        }
-      });
-    });
-
-    // Bug #54 fix: Escape sluit alle 5 km-modals
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      var modals = ["km-purge-modal", "km-edit-modal", "km-add-kantoor-modal", "km-add-manual-modal", "km-add-choice-modal"];
-      for (var i = 0; i < modals.length; i++) {
-        var m = document.getElementById(modals[i]);
-        if (m && !m.hasAttribute("hidden")) {
-          m.hidden = true;
-          m.setAttribute("aria-hidden", "true");
-          if (!document.querySelector(".modal-overlay:not([hidden])")) {
-            document.body.classList.remove("modal-open");
-          }
-          e.stopPropagation();
-          return;
-        }
-      }
-    });
+    // Read-only spiegel van BS2: geen toevoegen/bewerken/verwijderen.
+    var addBtn = $("km-add-open-btn");
+    if (addBtn) addBtn.hidden = true;
 
     wireSortMenus("km-overview-table", "overview");
     wireSortMenus("km-detail-table", "detail");
@@ -797,27 +529,31 @@
       document.querySelectorAll(".th-sort.th-sort-open").forEach(function (h) { h.classList.remove("th-sort-open"); });
     });
 
-    // Live re-render
     window.addEventListener("besa:kilometer-declaraties-updated", function () {
       if ($("km-overview-view").hidden === false) renderOverview();
       if ($("km-detail-view").hidden === false) renderDetail();
     });
     window.addEventListener("besa:medewerkers-updated", function () {
       if ($("km-overview-view").hidden === false) renderOverview();
+      if ($("km-detail-view").hidden === false) renderDetail();
     });
     window.addEventListener("popstate", function () {
       var s = getRouteState();
-      if (s.mode === "detail") showDetail(s.med, s.jaar, s.maand);
-      else showOverview();
+      if (s.mode === "detail") showDetail(s.decl); else showOverview();
     });
   }
 
-  function init() {
+  async function init() {
     buildOverviewColumnsPanel();
     wireUp();
+    try {
+      await Promise.all([
+        window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.ready,
+        window.medewerkersDB && window.medewerkersDB.ready,
+      ]);
+    } catch (e) { /* events herstellen de UI */ }
     var s = getRouteState();
-    if (s.mode === "detail") showDetail(s.med, s.jaar, s.maand);
-    else showOverview();
+    if (s.mode === "detail") showDetail(s.decl); else showOverview();
   }
 
   if (document.readyState === "loading") {
