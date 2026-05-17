@@ -14210,6 +14210,92 @@ button.planning-erm-new {
   white-space: nowrap;
 }
 
+/* Employee-invoice statuspills (top-bar Facturen module) — BS1-tokens */
+.fact-status-pill--blue { background: var(--blue-soft); color: var(--blue); }
+.fact-status-pill--green { background: var(--green-soft); color: var(--green); }
+.fact-status-pill--yellow { background: var(--yellow-soft); color: var(--yellow); }
+.fact-status-pill--red { background: var(--red-soft); color: var(--red); }
+
+/* ===== Employee-invoice detail (top-bar Facturen → factuur) ===== */
+.inv-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1100px) { .inv-detail-grid { grid-template-columns: 1fr; } }
+.inv-detail-data { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.inv-meta-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+.inv-meta-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.inv-meta-lbl { color: var(--text-secondary); font-size: var(--font-table-head); }
+.inv-meta-val { color: var(--text); font-size: var(--font-table-cell); font-weight: 500; text-align: right; }
+.inv-lines-table tr.inv-line-group td { background: var(--blue-soft); font-weight: 600; color: var(--text); }
+.inv-lines-table tr.inv-line-blank td { height: 8px; padding: 0; }
+.inv-lines-table tfoot .inv-foot-row td { font-weight: 600; }
+.inv-lines-table tfoot .inv-foot-total td {
+  font-size: var(--font-table-cell); color: var(--text);
+  border-top: 2px solid var(--line-strong);
+}
+.inv-section-title { font-size: var(--font-table-cell); font-weight: 700; margin: 0 0 8px; color: var(--text); }
+.inv-wf-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-xl); padding: 16px 20px;
+}
+.inv-wf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.inv-wf-item { border-left: 3px solid var(--line-strong); padding: 4px 0 4px 12px; }
+.inv-wf-meta { color: var(--text-secondary); font-size: var(--font-table-head); margin-left: 6px; }
+.inv-wf-comment { color: var(--text); font-size: var(--font-table-cell); margin-top: 4px; }
+.inv-wf-empty { color: var(--text-muted); font-size: var(--font-table-cell); }
+.inv-detail-pdf {
+  position: sticky; top: 16px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-xl); overflow: hidden;
+  display: flex; flex-direction: column; max-height: calc(100vh - 120px);
+}
+.inv-pdf-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+}
+.inv-pdf-label { font-weight: 600; color: var(--text-secondary); font-size: var(--font-table-head); }
+.inv-pdf-sheet { overflow: auto; padding: 20px; background: var(--bg, #f5f5f5); }
+.inv-pdf-doc {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 28px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+  font-size: var(--font-table-cell); color: var(--text);
+}
+.inv-pdf-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.inv-pdf-h1 { font-size: var(--font-h1); font-weight: 800; letter-spacing: 1px; }
+.inv-pdf-sub { color: var(--text-secondary); }
+.inv-pdf-org { text-align: right; font-size: var(--font-table-head); color: var(--text-secondary); }
+.inv-pdf-party { margin: 12px 0; color: var(--text-secondary); font-size: var(--font-table-head); }
+.inv-pdf-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.inv-pdf-table th, .inv-pdf-table td {
+  border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left;
+}
+.inv-pdf-table th { font-size: var(--font-table-head); color: var(--text-secondary); }
+.inv-pdf-table .td-num { text-align: right; }
+.inv-pdf-totals { margin-top: 14px; margin-left: auto; width: 240px; }
+.inv-pdf-totals > div { display: flex; justify-content: space-between; padding: 4px 0; }
+.inv-pdf-grand { border-top: 2px solid var(--line-strong); font-weight: 800; margin-top: 4px; }
+.inv-btn-reject { color: var(--red); }
+@media print {
+  body * { visibility: hidden !important; }
+  .inv-pdf-sheet, .inv-pdf-sheet * { visibility: visible !important; }
+  .inv-pdf-sheet {
+    position: absolute; left: 0; top: 0; width: 100%;
+    padding: 0; background: #fff; overflow: visible;
+  }
+  .inv-pdf-doc { border: none; box-shadow: none; }
+}
+
 /* Cliëntfase — expliciete set + backward-compat (zorg/aanvraag/uit) */
 .cl-fase-pill--in-zorg,
 .cl-fase-pill--zorg {

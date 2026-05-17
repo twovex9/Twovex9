@@ -1,13 +1,10 @@
 /* global window, document */
 /**
- * facturen-te-beoordelen.js — top-bar Facturen → "Te beoordelen".
+ * facturen-alle.js — top-bar Facturen → "Alle facturen".
  * Employee-invoice model (invoicesDB / public.invoices), 1-op-1 BS2
- * `/api/invoices?filter[status][0]=submitted`. STRIKT LOS van de
- * Cliënten→Beschikkingen→Facturen disposition-facturen (facturen.html).
- *
- * "Te beoordelen" = facturen met status `submitted` (wachten op
- * beoordeling: kan goedgekeurd/afgewezen/in beoordeling). Bedragen
- * VERBATIM uit BS2 (total = Σ regels price×amount). Geen herrekening.
+ * `/api/invoices` (geen status-filter = alle statussen). STRIKT LOS van
+ * de Cliënten→Beschikkingen→Facturen disposition-facturen (facturen.html).
+ * Bedragen VERBATIM uit BS2 (total = Σ regels price×amount).
  */
 (function () {
   "use strict";
@@ -28,8 +25,6 @@
     draft: "yellow", submitted: "blue", under_review: "yellow",
     approved: "green", rejected: "red",
   };
-  // "Te beoordelen" = status submitted (BS2: filter[status][0]=submitted).
-  var TODO = ["submitted"];
 
   function formatNlDate(v) {
     if (!v) return "—";
@@ -46,7 +41,7 @@
   }
 
   var state = {
-    search: "", showArchived: false, period: null,
+    search: "", showArchived: false, status: "", period: null,
     page: 1, pageSize: 50, sortKey: "datum", sortDir: "desc",
   };
 
@@ -63,8 +58,8 @@
   }
 
   function filtered() {
-    var rows = getAll().filter(function (r) { return r && TODO.indexOf(r.status) >= 0; });
-    rows = rows.filter(function (r) { return state.showArchived ? r.gearchiveerd : !r.gearchiveerd; });
+    var rows = getAll().filter(function (r) { return state.showArchived ? r.gearchiveerd : !r.gearchiveerd; });
+    if (state.status) rows = rows.filter(function (r) { return r.status === state.status; });
     if (state.search) {
       var q = state.search.toLowerCase();
       rows = rows.filter(function (r) {
@@ -76,28 +71,25 @@
     rows = rows.filter(function (r) { return inPeriod(r, state.period); });
     var dir = state.sortDir === "desc" ? -1 : 1;
     rows.sort(function (a, b) {
-      var k = state.sortKey, av, bv;
-      if (k === "bedrag") { av = a.total; bv = b.total; return (av - bv) * dir; }
-      if (k === "factuurnr") { av = a.number || ""; bv = b.number || ""; return av.localeCompare(bv, "nl") * dir; }
-      if (k === "status") { av = a.status || ""; bv = b.status || ""; return av.localeCompare(bv) * dir; }
-      if (k === "maand") { av = (a.jaar || 0) * 100 + (a.maand || 0); bv = (b.jaar || 0) * 100 + (b.maand || 0); return (av - bv) * dir; }
-      av = a.submittedAt || a.aanmaakdatum || ""; bv = b.submittedAt || b.aanmaakdatum || "";
-      return String(av).localeCompare(String(bv)) * dir;
+      var k = state.sortKey;
+      if (k === "bedrag") return ((a.total) - (b.total)) * dir;
+      if (k === "factuurnr") return String(a.number || "").localeCompare(String(b.number || ""), "nl") * dir;
+      if (k === "status") return String(a.status || "").localeCompare(String(b.status || "")) * dir;
+      if (k === "maand") return (((a.jaar || 0) * 100 + (a.maand || 0)) - ((b.jaar || 0) * 100 + (b.maand || 0))) * dir;
+      return String(a.submittedAt || a.aanmaakdatum || "").localeCompare(String(b.submittedAt || b.aanmaakdatum || "")) * dir;
     });
     return rows;
   }
 
   function renderStats() {
     var all = getAll().filter(function (r) { return !r.gearchiveerd; });
-    var todo = all.filter(function (r) { return r.status === "submitted"; });
     var ok = all.filter(function (r) { return r.status === "approved"; });
     var sum = function (a) { return a.reduce(function (s, r) { return s + (Number(r.total) || 0); }, 0); };
-    $("fact-tb-stat-amount-todo").textContent = formatEur(sum(todo));
-    $("fact-tb-stat-count-todo").textContent = todo.length;
+    $("fact-tb-stat-amount-todo").textContent = formatEur(sum(all));
+    $("fact-tb-stat-count-todo").textContent = all.length;
     $("fact-tb-stat-amount-ok").textContent = formatEur(sum(ok));
     $("fact-tb-stat-count-ok").textContent = ok.length;
   }
-
   function statusPill(st) {
     return '<span class="cl-fase-pill fact-status-pill fact-status-pill--' + (STATUS_CLR[st] || "yellow") + '">'
       + escHtml(STATUS_LABEL[st] || st) + '</span>';
@@ -114,7 +106,7 @@
     var pageRows = rows.slice(start, start + ps);
     var tb = $("fact-tb-tbody");
     if (!pageRows.length) {
-      tb.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen facturen te beoordelen</td></tr>';
+      tb.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen facturen gevonden</td></tr>';
     } else {
       tb.innerHTML = pageRows.map(function (r) {
         return '<tr class="fact-tb-row" data-id="' + escAttr(r.id) + '" tabindex="0" role="link">'
@@ -146,6 +138,12 @@
     if (s) s.addEventListener("input", function () { state.search = this.value || ""; state.page = 1; render(); });
     var arch = $("fact-tb-archived");
     if (arch) arch.addEventListener("change", function () { state.showArchived = this.checked; state.page = 1; render(); });
+    var st = $("fact-alle-status");
+    if (st) st.addEventListener("change", function () {
+      state.status = this.value || ""; state.page = 1;
+      var w = this.closest(".filter-chip-select-wrap"); if (w) w.setAttribute("data-empty", this.value ? "false" : "true");
+      render();
+    });
     $("fact-tb-page-size").addEventListener("change", function () { state.pageSize = parseInt(this.value, 10) || 50; state.page = 1; render(); });
     $("fact-tb-pager-first").addEventListener("click", function () { state.page = 1; render(); });
     $("fact-tb-pager-prev").addEventListener("click", function () { if (state.page > 1) { state.page--; render(); } });
@@ -162,7 +160,6 @@
       var row = e.target && e.target.closest && e.target.closest("tr.fact-tb-row");
       if (row) { e.preventDefault(); openDetail(row.getAttribute("data-id")); }
     });
-    // Sorteer-menus (hergebruik bestaand .th-sort patroon)
     document.querySelectorAll("#fact-tb-table .th-sort-trigger").forEach(function (t) {
       t.addEventListener("click", function (e) {
         e.stopPropagation();
@@ -184,7 +181,6 @@
     document.addEventListener("click", function () {
       document.querySelectorAll("#fact-tb-table .th-sort-menu").forEach(function (m) { m.setAttribute("hidden", ""); });
     });
-    // Periode-filter = BS1-huisstijl BesaDateRange (mount + hidden inputs).
     var pStart = $("fact-tb-period-start"), pEnd = $("fact-tb-period-end");
     if (pStart && pEnd && window.BesaDateRange && window.BesaDateRange.mount) {
       window.BesaDateRange.mount({

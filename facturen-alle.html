@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Facturen te beoordelen — HR</title>
+  <title>Alle facturen — HR</title>
   <link rel="stylesheet" href="styles.css?v=imcols9" />
 </head>
 <body>
@@ -99,11 +99,11 @@
 
     <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
       <nav class="side-nav" aria-label="Facturen module">
-        <a href="facturen-te-beoordelen.html" class="side-link is-active" aria-current="page">
+        <a href="facturen-te-beoordelen.html" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Te beoordelen
         </a>
-        <a href="facturen-alle.html" class="side-link">
+        <a href="facturen-alle.html" class="side-link is-active" aria-current="page">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Alle facturen
         </a>
@@ -117,15 +117,15 @@
     <main class="content content--fact-tb">
       <div class="content-header">
         <div>
-          <h1>Facturen te beoordelen</h1>
-          <p class="content-subtitle">Beheer uw facturering, volg de status en behandel afwijzingen.</p>
+          <h1>Alle facturen</h1>
+          <p class="content-subtitle">Alle medewerker-facturen — alle statussen, periode en zoeken.</p>
         </div>
       </div>
 
       <section class="fact-tb-stats" aria-label="Facturen statistieken">
         <div class="fact-tb-stat-card fact-tb-stat-card--blue">
           <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-todo">€ 0,00</div>
-          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-todo">0</span> Totaal te beoordelen</div>
+          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-todo">0</span> Totaal facturen</div>
         </div>
         <div class="fact-tb-stat-card fact-tb-stat-card--green">
           <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-ok">€ 0,00</div>
@@ -153,6 +153,16 @@
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
+        <span class="filter-chip-select-wrap" data-empty="true">
+          <select id="fact-alle-status" class="filter-chip-select" aria-label="Filter op status">
+            <option value="">Alle statussen</option>
+            <option value="draft">Concept</option>
+            <option value="submitted">Ingediend</option>
+            <option value="under_review">In beoordeling</option>
+            <option value="approved">Goedgekeurd</option>
+            <option value="rejected">Afgewezen</option>
+          </select>
+        </span>
         <div id="fact-tb-period" class="besa-daterange"></div>
         <input type="hidden" id="fact-tb-period-start" />
         <input type="hidden" id="fact-tb-period-end" />
@@ -264,6 +274,6 @@
   <script src="medewerkers-data.js" defer></script>
   <script src="besa-daterange.js?v=bdr1" defer></script>
   <script src="invoices-data.js?v=inv1" defer></script>
-  <script src="facturen-te-beoordelen.js?v=ftbinv1" defer></script>
+  <script src="facturen-alle.js?v=falle1" defer></script>
 </body>
 </html>
