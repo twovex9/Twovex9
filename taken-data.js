@@ -95,7 +95,11 @@
     };
   }
 
+  // DATA-SLIM (bindende les): in-memory bron-van-waarheid zodat de pagina
+  // ook werkt bij volle localStorage-quota; localStorage = best-effort cache.
+  var _mem = null;
   function readCache() {
+    if (_mem !== null) return _mem;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return [];
@@ -105,7 +109,8 @@
   }
 
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    _mem = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* quota vol — _mem is de bron */ }
   }
 
   function sortItems(items) {
