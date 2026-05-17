@@ -221,6 +221,12 @@
                 <option value="">Selecteer tijdstip van de dag</option>
               </select>
             </div>
+            <div class="im-field">
+              <label class="im-label" for="im-locatie">Locatie</label>
+              <select class="im-select" id="im-locatie">
+                <option value="">Selecteer locatie</option>
+              </select>
+            </div>
             <div class="im-field im-field--checkbox">
               <label class="im-checkbox-label">
                 <input type="checkbox" id="im-buiten" />
@@ -276,6 +282,11 @@
             <div class="im-field">
               <label class="im-label" for="im-maatregelen">Hoe wordt de veiligheid gewaarborgd?</label>
               <textarea class="im-textarea" id="im-maatregelen" rows="4" placeholder="Beschrijf welke maatregelen zijn genomen om de veiligheid te waarborgen..."></textarea>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-vereiste-toelichting">Aanvullende toelichting</label>
+              <textarea class="im-textarea" id="im-vereiste-toelichting" rows="3" placeholder="Eventuele aanvullende toelichting bij dit incident..."></textarea>
             </div>
           </div>
         </section>
@@ -338,6 +349,11 @@
                   <span class="im-stack-radio-label">Nee, ze zijn nog niet geïnformeerd</span>
                 </label>
               </div>
+            </div>
+
+            <div class="im-field" id="im-ouders-reden-field" hidden>
+              <label class="im-label" for="im-ouders-reden">Waarom zijn ouders/vertegenwoordigers niet geïnformeerd? <span class="im-req">*</span></label>
+              <textarea class="im-textarea" id="im-ouders-reden" rows="3" placeholder="Geef aan waarom de ouders/vertegenwoordigers (nog) niet geïnformeerd zijn..."></textarea>
             </div>
           </div>
         </section>
@@ -403,6 +419,142 @@
                 <div class="im-betrokken-list" id="im-notif-medewerkers-list" aria-live="polite"></div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Incident afhandelen (alleen bij bestaand incident) -->
+        <section class="im-card" id="im-afhandelen-card" hidden>
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </span>
+            <h2 class="im-card-title">Incident afhandelen</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-field">
+              <label class="im-label" for="im-status">Status <span class="im-req">*</span></label>
+              <select class="im-select" id="im-status">
+                <option value="">Selecteer status</option>
+              </select>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-beoordeling">Beoordeling</label>
+              <textarea class="im-textarea" id="im-beoordeling" rows="4" placeholder="Beoordeling van het incident..."></textarea>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label">Past dit binnen het cliëntprofiel?</label>
+              <div class="im-stack-radio" role="radiogroup" aria-label="Past binnen cliëntprofiel">
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-past-profiel" value="ja" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Ja, dit past binnen het cliëntprofiel</span>
+                </label>
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-past-profiel" value="nee" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Nee, dit past niet binnen het cliëntprofiel</span>
+                </label>
+              </div>
+            </div>
+            <div class="im-field" id="im-past-profiel-toel-field" hidden>
+              <label class="im-label" for="im-past-profiel-toel">Toelichting cliëntprofiel</label>
+              <textarea class="im-textarea" id="im-past-profiel-toel" rows="3" placeholder="Licht toe waarom dit wel/niet binnen het cliëntprofiel past..."></textarea>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label">Is een zorgplan-update nodig?</label>
+              <div class="im-stack-radio" role="radiogroup" aria-label="Zorgplan-update nodig">
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-zorgplan" value="ja" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Ja, het zorgplan moet worden aangepast</span>
+                </label>
+                <label class="im-stack-radio-item">
+                  <input type="radio" name="im-zorgplan" value="nee" />
+                  <span class="im-stack-radio-dot" aria-hidden="true"></span>
+                  <span class="im-stack-radio-label">Nee, het zorgplan hoeft niet te worden aangepast</span>
+                </label>
+              </div>
+            </div>
+            <div class="im-field" id="im-zorgplan-oms-field" hidden>
+              <label class="im-label" for="im-zorgplan-oms">Omschrijving zorgplan-update</label>
+              <textarea class="im-textarea" id="im-zorgplan-oms" rows="3" placeholder="Beschrijf welke aanpassing aan het zorgplan nodig is..."></textarea>
+            </div>
+
+            <div class="im-field">
+              <label class="im-label" for="im-advies">Advies en richtlijnen</label>
+              <textarea class="im-textarea" id="im-advies" rows="4" placeholder="Advies en richtlijnen naar aanleiding van dit incident..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sectie: Taken (alleen bij bestaand incident) -->
+        <section class="im-card" id="im-taken-card" hidden>
+          <header class="im-card-head">
+            <span class="im-card-ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <h2 class="im-card-title">Taken</h2>
+          </header>
+          <div class="im-card-body">
+            <div class="im-taken-add">
+              <div class="im-taken-add-title">Taak toevoegen</div>
+              <div class="im-field">
+                <label class="im-label" for="im-taak-titel">Titel <span class="im-req">*</span></label>
+                <input class="im-input" type="text" id="im-taak-titel" placeholder="Korte omschrijving van de taak" />
+              </div>
+              <div class="im-taken-grid">
+                <div class="im-field">
+                  <label class="im-label" for="im-taak-status">Status</label>
+                  <select class="im-select" id="im-taak-status"></select>
+                </div>
+                <div class="im-field">
+                  <label class="im-label" for="im-taak-prio">Prioriteit</label>
+                  <select class="im-select" id="im-taak-prio"></select>
+                </div>
+                <div class="im-field">
+                  <label class="im-label" for="im-taak-due">Vervaldatum</label>
+                  <input class="im-input" type="date" id="im-taak-due" />
+                </div>
+                <div class="im-field">
+                  <label class="im-label" for="im-taak-assignee">Toegewezen aan</label>
+                  <select class="im-select" id="im-taak-assignee">
+                    <option value="">Niet toegewezen</option>
+                  </select>
+                </div>
+              </div>
+              <div class="im-field">
+                <label class="im-label">Medewerkers (samenwerking)</label>
+                <div class="im-betrokken-input-row">
+                  <select class="im-select" id="im-taak-collab-select">
+                    <option value="">Selecteer medewerker</option>
+                  </select>
+                  <button type="button" class="im-add-btn" id="im-taak-collab-add" aria-label="Toevoegen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+                <div class="im-betrokken-list" id="im-taak-collab-list" aria-live="polite"></div>
+              </div>
+              <div class="im-field im-field--checkbox">
+                <label class="im-checkbox-label">
+                  <input type="checkbox" id="im-taak-prive" />
+                  <span class="im-checkbox-text">
+                    <strong>Privé</strong>
+                    <span class="im-help">Alleen zichtbaar voor de toegewezen medewerker en samenwerkers.</span>
+                  </span>
+                </label>
+              </div>
+              <div class="im-taken-add-actions">
+                <button type="button" class="btn-primary" id="im-taak-add">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Taak toevoegen
+                </button>
+              </div>
+            </div>
+
+            <div class="im-taken-list" id="im-taken-list" aria-live="polite"></div>
           </div>
         </section>
 
