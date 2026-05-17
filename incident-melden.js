@@ -37,7 +37,25 @@
     notificeerTeam: false,
     notificeerMedewerkerIds: [], // [uuid]
     showSpecific: false,    // toggle voor "Specifieke medewerkers"-blok
+    taakCollab: [],         // [uuid] medewerker-ids voor de "Taak toevoegen"-form
+    taakEditId: null,       // id van taak die inline bewerkt wordt (of null)
   };
+
+  // BS2 taak-statussen/prioriteiten. BS2 POST /api/tasks gebruikt status "--"
+  // als default en priority "Low" (zie spec). De volledige optieset wordt in
+  // Stap 5 visueel tegen BS2 geverifieerd; waarden worden verbatim BS2
+  // opgeslagen (NL-labels alleen in de UI).
+  var TAAK_STATUSSEN = [
+    { value: "--", label: "--" },
+    { value: "Te doen", label: "Te doen" },
+    { value: "Bezig", label: "Bezig" },
+    { value: "Afgerond", label: "Afgerond" },
+  ];
+  var TAAK_PRIORITEITEN = [
+    { value: "Low", label: "Laag" },
+    { value: "Medium", label: "Middel" },
+    { value: "High", label: "Hoog" },
+  ];
 
   function $(id) { return document.getElementById(id); }
   function escHtml(s) {
@@ -57,6 +75,14 @@
   function getAllMedewerkers() {
     if (!window.medewerkersDB) return [];
     try { return window.medewerkersDB.getAllSync() || []; } catch (e) { return []; }
+  }
+  function getAllLocaties() {
+    if (!window.locatiesDB) return [];
+    try { return window.locatiesDB.getAllSync() || []; } catch (e) { return []; }
+  }
+  function locatieLabel(l) {
+    if (!l) return "—";
+    return (l.naam || l.name || "").trim() || "—";
   }
   function findById(arr, id) {
     if (!id) return null;
@@ -140,6 +166,22 @@
       "Selecteer tijdstip van de dag", function (o) { return o.label; }, $("im-tijdstip").value);
 
     fillSelect($("im-notif-medewerker-select"), medewerkers, "Selecteer medewerker", medewerkerLabel);
+
+    var locaties = getAllLocaties().filter(function (l) { return l && !l.archived; });
+    fillSelect($("im-locatie"), locaties, "Selecteer locatie", locatieLabel,
+      $("im-locatie") ? $("im-locatie").value : null);
+
+    var statussen = (window.incidentenDB && window.incidentenDB.STATUSES) || [];
+    fillSelect($("im-status"), statussen.map(function (s) { return { id: s.value, label: s.label }; }),
+      "Selecteer status", function (o) { return o.label; }, $("im-status") ? $("im-status").value : null);
+
+    fillSelect($("im-taak-status"), TAAK_STATUSSEN.map(function (t) { return { id: t.value, label: t.label }; }),
+      null, function (o) { return o.label; }, $("im-taak-status") ? $("im-taak-status").value : null);
+    fillSelect($("im-taak-prio"), TAAK_PRIORITEITEN.map(function (t) { return { id: t.value, label: t.label }; }),
+      null, function (o) { return o.label; }, $("im-taak-prio") ? $("im-taak-prio").value : null);
+    fillSelect($("im-taak-assignee"), medewerkers, "Niet toegewezen", medewerkerLabel,
+      $("im-taak-assignee") ? $("im-taak-assignee").value : null);
+    fillSelect($("im-taak-collab-select"), medewerkers, "Selecteer medewerker", medewerkerLabel);
 
     refreshBetrokkenPersonSelect();
   }
@@ -511,6 +553,279 @@
     return null;
   }
 
+  // ---------------------------------------------------------------------------
+  // Afhandelen — stack-radio helpers + conditionele velden
+  // ---------------------------------------------------------------------------
+  function setStackRadio(name, v) {
+    var val = v === true ? "ja" : v === false ? "nee" : "";
+    Array.prototype.forEach.call(
+      document.querySelectorAll('input[name="' + name + '"]'),
+      function (r) { r.checked = (r.value === val); }
+    );
+  }
+  function getStackRadio(name) {
+    var c = document.querySelector('input[name="' + name + '"]:checked');
+    if (!c) return null;
+    if (c.value === "ja") return true;
+    if (c.value === "nee") return false;
+    return null;
+  }
+  function toggleOudersReden() {
+    var f = $("im-ouders-reden-field");
+    if (f) f.hidden = getOudersValue() !== false; // alleen tonen bij "Nee"
+  }
+  function toggleAfhandelConditional() {
+    var pf = $("im-past-profiel-toel-field");
+    if (pf) pf.hidden = getStackRadio("im-past-profiel") === null;
+    var zf = $("im-zorgplan-oms-field");
+    if (zf) zf.hidden = getStackRadio("im-zorgplan") === null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Taken (incident_taken) — 1-op-1 BS2 POST /api/tasks
+  // ---------------------------------------------------------------------------
+  function taakStatusLabel(v) {
+    for (var i = 0; i < TAAK_STATUSSEN.length; i += 1) {
+      if (TAAK_STATUSSEN[i].value === v) return TAAK_STATUSSEN[i].label;
+    }
+    return v || "--";
+  }
+  function taakPrioLabel(v) {
+    for (var i = 0; i < TAAK_PRIORITEITEN.length; i += 1) {
+      if (TAAK_PRIORITEITEN[i].value === v) return TAAK_PRIORITEITEN[i].label;
+    }
+    return v || "—";
+  }
+  function getTakenForCurrent() {
+    if (!state.editingId || !window.incidentTakenDB) return [];
+    try {
+      return (window.incidentTakenDB.getAllSync() || []).filter(function (t) {
+        return t && String(t.incidentId) === String(state.editingId);
+      });
+    } catch (e) { return []; }
+  }
+
+  function renderTaakCollab() {
+    var host = $("im-taak-collab-list");
+    if (!host) return;
+    if (state.taakCollab.length === 0) {
+      host.innerHTML = '<p class="im-betrokken-empty">Nog geen medewerkers toegevoegd.</p>';
+      return;
+    }
+    var meds = getAllMedewerkers();
+    host.innerHTML = state.taakCollab.map(function (id, idx) {
+      var m = findById(meds, id);
+      return '<span class="im-betrokken-chip">'
+        + '<span class="im-betrokken-dot im-betrokken-dot--med" aria-hidden="true"></span>'
+        + '<span class="im-betrokken-chip-type">Medewerker:</span> '
+        + '<span class="im-betrokken-chip-name">' + escHtml(medewerkerLabel(m)) + '</span>'
+        + '<button type="button" class="im-betrokken-chip-x" data-idx="' + idx + '" aria-label="Verwijderen">'
+        + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        + '</button>'
+        + '</span>';
+    }).join("");
+    Array.prototype.forEach.call(host.querySelectorAll(".im-betrokken-chip-x"), function (btn) {
+      btn.addEventListener("click", function () {
+        state.taakCollab.splice(parseInt(btn.getAttribute("data-idx"), 10), 1);
+        renderTaakCollab();
+      });
+    });
+  }
+  function addTaakCollab() {
+    var sel = $("im-taak-collab-select");
+    var id = sel ? sel.value : "";
+    if (!id) { toast("error", "Kies eerst een medewerker."); return; }
+    if (state.taakCollab.indexOf(String(id)) >= 0) {
+      toast("error", "Deze medewerker staat al in de lijst."); return;
+    }
+    state.taakCollab.push(String(id));
+    if (sel) sel.value = "";
+    renderTaakCollab();
+  }
+
+  function resetTaakForm() {
+    state.taakEditId = null;
+    state.taakCollab = [];
+    if ($("im-taak-titel")) $("im-taak-titel").value = "";
+    if ($("im-taak-status")) $("im-taak-status").value = "--";
+    if ($("im-taak-prio")) $("im-taak-prio").value = "Low";
+    if ($("im-taak-due")) $("im-taak-due").value = "";
+    if ($("im-taak-assignee")) $("im-taak-assignee").value = "";
+    if ($("im-taak-prive")) $("im-taak-prive").checked = false;
+    var addBtn = $("im-taak-add");
+    if (addBtn) {
+      addBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Taak toevoegen';
+    }
+    renderTaakCollab();
+  }
+
+  function readTaakForm() {
+    return {
+      incidentId: state.editingId,
+      titel: ($("im-taak-titel").value || "").trim(),
+      status: $("im-taak-status").value || "--",
+      prioriteit: $("im-taak-prio").value || null,
+      dueDate: $("im-taak-due").value || null,
+      assigneeId: $("im-taak-assignee").value || null,
+      isPrivate: !!$("im-taak-prive").checked,
+      collaborators: state.taakCollab.slice(),
+    };
+  }
+
+  async function submitTaak() {
+    if (!state.editingId) { toast("error", "Sla het incident eerst op voordat je taken toevoegt."); return; }
+    if (!window.incidentTakenDB) { toast("error", "Taken-data-laag niet geladen."); return; }
+    var payload = readTaakForm();
+    if (!payload.titel) { toast("error", "Geef de taak een titel."); return; }
+    var btn = $("im-taak-add");
+    if (btn) btn.disabled = true;
+    try {
+      if (state.taakEditId) {
+        await window.incidentTakenDB.update(state.taakEditId, payload);
+        toast("saved", "Taak bijgewerkt");
+      } else {
+        await window.incidentTakenDB.add(payload);
+        toast("saved", "Taak toegevoegd");
+      }
+      resetTaakForm();
+      renderTaken();
+    } catch (err) {
+      toast("error", "Taak opslaan mislukt: " + (err && err.message ? err.message : err));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function startEditTaak(id) {
+    var t = window.incidentTakenDB && window.incidentTakenDB.getByIdSync(id);
+    if (!t) return;
+    state.taakEditId = id;
+    state.taakCollab = Array.isArray(t.collaborators) ? t.collaborators.map(String) : [];
+    $("im-taak-titel").value = t.titel || "";
+    $("im-taak-status").value = t.status || "--";
+    $("im-taak-prio").value = t.prioriteit || "Low";
+    $("im-taak-due").value = t.dueDate ? isoToInputDate(t.dueDate) : "";
+    $("im-taak-assignee").value = t.assigneeId || "";
+    $("im-taak-prive").checked = !!t.isPrivate;
+    var addBtn = $("im-taak-add");
+    if (addBtn) {
+      addBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Wijzigingen opslaan';
+    }
+    renderTaakCollab();
+    var card = $("im-taken-card");
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function archiveTaak(id) {
+    var t = window.incidentTakenDB && window.incidentTakenDB.getByIdSync(id);
+    if (!t) return;
+    var ok = window.showArchiveConfirm
+      ? await window.showArchiveConfirm({ preview: t.titel || "Taak" })
+      : true;
+    if (!ok) return;
+    try {
+      await window.incidentTakenDB.archive(id);
+      toast("archived", "Taak gearchiveerd");
+      renderTaken();
+    } catch (err) {
+      toast("error", "Archiveren mislukt: " + (err && err.message ? err.message : err));
+    }
+  }
+  async function restoreTaak(id) {
+    try {
+      await window.incidentTakenDB.restore(id);
+      toast("restored", "Taak hersteld");
+      renderTaken();
+    } catch (err) {
+      toast("error", "Herstellen mislukt: " + (err && err.message ? err.message : err));
+    }
+  }
+  async function deleteTaak(id) {
+    var t = window.incidentTakenDB && window.incidentTakenDB.getByIdSync(id);
+    if (!t) return;
+    var ok = window.showSliderConfirmModal
+      ? await window.showSliderConfirmModal({
+          title: "Bent u zeker dat dit verwijderd wordt?",
+          preview: t.titel || "Taak",
+          okLabel: "Verwijderen",
+          cancelLabel: "Annuleren",
+        })
+      : true;
+    if (!ok) return;
+    try {
+      await window.incidentTakenDB.delete(id);
+      toast("deleted", "Taak verwijderd");
+      if (state.taakEditId === id) resetTaakForm();
+      renderTaken();
+    } catch (err) {
+      toast("error", "Verwijderen mislukt: " + (err && err.message ? err.message : err));
+    }
+  }
+
+  function renderTaken() {
+    var host = $("im-taken-list");
+    if (!host) return;
+    var taken = getTakenForCurrent();
+    if (taken.length === 0) {
+      host.innerHTML = '<p class="im-betrokken-empty">Nog geen taken voor dit incident.</p>';
+      return;
+    }
+    var meds = getAllMedewerkers();
+    host.innerHTML = taken.map(function (t) {
+      var assignee = t.assigneeId ? medewerkerLabel(findById(meds, t.assigneeId)) : "Niet toegewezen";
+      var collabNames = (Array.isArray(t.collaborators) ? t.collaborators : []).map(function (cid) {
+        return escHtml(medewerkerLabel(findById(meds, cid)));
+      }).join(", ");
+      var actions = t.archived
+        ? '<div class="hr-row-actions">'
+            + '<button type="button" class="btn-outline hr-restore-btn" data-restore="' + escHtml(t.id) + '">Herstel</button>'
+            + '<button type="button" class="employee-delete-btn im-taak-purge-btn" data-del="' + escHtml(t.id) + '" aria-label="Definitief verwijderen">'
+            + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+            + '</button>'
+          + '</div>'
+        : '<div class="im-taak-actions">'
+            + '<button type="button" class="btn-outline im-taak-edit-btn" data-edit="' + escHtml(t.id) + '">Bewerken</button>'
+            + '<button type="button" class="employee-delete-btn im-taak-archive-btn" data-arch="' + escHtml(t.id) + '" aria-label="Archiveren">'
+            + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+            + '</button>'
+          + '</div>';
+      return '<div class="im-taak-row' + (t.archived ? ' im-taak-row--archived' : '') + '">'
+        + '<div class="im-taak-main">'
+        + '<span class="im-taak-titel">' + escHtml(t.titel || "—") + '</span>'
+        + '<span class="im-taak-meta">'
+        + '<span class="im-taak-badge">' + escHtml(taakStatusLabel(t.status)) + '</span>'
+        + '<span class="im-taak-badge im-taak-badge--prio">' + escHtml(taakPrioLabel(t.prioriteit)) + '</span>'
+        + (t.dueDate ? '<span class="im-taak-due">Vervalt: ' + escHtml(isoToInputDate(t.dueDate)) + '</span>' : '')
+        + (t.isPrivate ? '<span class="im-taak-badge im-taak-badge--prive">Privé</span>' : '')
+        + '</span>'
+        + '<span class="im-taak-sub">Toegewezen: ' + escHtml(assignee)
+        + (collabNames ? ' · Samen: ' + collabNames : '') + '</span>'
+        + '</div>'
+        + actions
+        + '</div>';
+    }).join("");
+
+    Array.prototype.forEach.call(host.querySelectorAll("[data-edit]"), function (b) {
+      b.addEventListener("click", function () { startEditTaak(b.getAttribute("data-edit")); });
+    });
+    Array.prototype.forEach.call(host.querySelectorAll("[data-arch]"), function (b) {
+      b.addEventListener("click", function () { archiveTaak(b.getAttribute("data-arch")); });
+    });
+    Array.prototype.forEach.call(host.querySelectorAll("[data-restore]"), function (b) {
+      b.addEventListener("click", function () { restoreTaak(b.getAttribute("data-restore")); });
+    });
+    Array.prototype.forEach.call(host.querySelectorAll("[data-del]"), function (b) {
+      b.addEventListener("click", function () { deleteTaak(b.getAttribute("data-del")); });
+    });
+  }
+
+  function showEditOnlySections(isEdit) {
+    var af = $("im-afhandelen-card");
+    var tk = $("im-taken-card");
+    if (af) af.hidden = !isEdit;
+    if (tk) tk.hidden = !isEdit;
+  }
+
   function populateForm(rec) {
     $("im-id").value = rec ? rec.id : "";
     $("im-client").value = rec && rec.clientId ? rec.clientId : "";
@@ -521,6 +836,18 @@
     $("im-maatregelen").value = rec && rec.genomenMaatregelen ? rec.genomenMaatregelen : "";
     $("im-impact").value = rec && rec.impactOpZorgverlener ? rec.impactOpZorgverlener : "";
     $("im-wil-gebeld").checked = !!(rec && rec.wilGebeldWorden);
+    if ($("im-locatie")) $("im-locatie").value = rec && rec.locatieId ? rec.locatieId : "";
+    if ($("im-vereiste-toelichting")) $("im-vereiste-toelichting").value = rec && rec.vereisteToelichting ? rec.vereisteToelichting : "";
+    if ($("im-ouders-reden")) $("im-ouders-reden").value = rec && rec.oudersNietReden ? rec.oudersNietReden : "";
+
+    // Afhandelen-velden (alleen relevant bij bestaand incident).
+    if ($("im-status")) $("im-status").value = rec && rec.status ? rec.status : "";
+    if ($("im-beoordeling")) $("im-beoordeling").value = rec && rec.beoordeling ? rec.beoordeling : "";
+    setStackRadio("im-past-profiel", rec ? rec.pastClientprofiel : null);
+    if ($("im-past-profiel-toel")) $("im-past-profiel-toel").value = rec && rec.pastClientprofielToelichting ? rec.pastClientprofielToelichting : "";
+    setStackRadio("im-zorgplan", rec ? rec.zorgplanUpdateNodig : null);
+    if ($("im-zorgplan-oms")) $("im-zorgplan-oms").value = rec && rec.zorgplanUpdateOmschrijving ? rec.zorgplanUpdateOmschrijving : "";
+    if ($("im-advies")) $("im-advies").value = rec && rec.adviesRichtlijnen ? rec.adviesRichtlijnen : "";
 
     if (rec && rec.incidentDatum) {
       $("im-datum").value = isoToInputDate(rec.incidentDatum);
@@ -541,6 +868,14 @@
     setNotifTeam(state.notificeerTeam);
     setShowSpecific(state.notificeerMedewerkerIds.length > 0);
     renderNotifMedewerkers();
+
+    // Afhandelen + Taken alleen bij een bestaand incident (BS2: afhandelen
+    // en taken bestaan pas na create).
+    showEditOnlySections(!!(rec && rec.id));
+    toggleOudersReden();
+    toggleAfhandelConditional();
+    resetTaakForm();
+    if (rec && rec.id) renderTaken();
 
     var archiveBtn = $("im-archive-btn");
     if (archiveBtn) archiveBtn.hidden = !rec || !!rec.archived;
@@ -566,14 +901,23 @@
       ? state.rec.melderId
       : (profile && profile.medewerkerId ? String(profile.medewerkerId) : null);
 
-    return {
+    var isEdit = !!state.editingId;
+    var locatieEl = $("im-locatie");
+    var statusEl = $("im-status");
+    var payload = {
       clientId: $("im-client").value || null,
       categorie: $("im-categorie").value || "Overig",
-      status: state.rec && state.rec.status ? state.rec.status : "in_afwachting",
+      // Create → altijd in_afwachting (BS2 pending). Afhandelen (edit) →
+      // status uit de afhandelen-select; de data-laag stempelt afgehandeld_op
+      // zodra status 'opgelost' wordt (1-op-1 BS2 resolved_at).
+      status: isEdit
+        ? ((statusEl && statusEl.value) || (state.rec && state.rec.status) || "in_afwachting")
+        : "in_afwachting",
       incidentDatum: inputDateToIso($("im-datum").value, state.rec && state.rec.incidentDatum),
       melderId: melderId,
       beoordelaarId: state.rec && state.rec.beoordelaarId ? state.rec.beoordelaarId : null,
-      locatieId: state.rec && state.rec.locatieId ? state.rec.locatieId : null,
+      locatieId: locatieEl ? (locatieEl.value || null)
+        : (state.rec && state.rec.locatieId ? state.rec.locatieId : null),
       omschrijving: $("im-omschrijving").value || "",
       genomenMaatregelen: $("im-maatregelen").value || "",
       tijdstipVanDag: $("im-tijdstip").value || null,
@@ -581,11 +925,25 @@
       actorType: getSelectedActorType(),
       betrokkenPartijen: state.betrokken.slice(),
       oudersGeinformeerd: getOudersValue(),
+      oudersNietReden: ($("im-ouders-reden") && $("im-ouders-reden").value) || "",
+      vereisteToelichting: ($("im-vereiste-toelichting") && $("im-vereiste-toelichting").value) || "",
       wilGebeldWorden: !!$("im-wil-gebeld").checked,
       impactOpZorgverlener: $("im-impact").value || "",
       notificeerTeam: state.notificeerTeam,
       notificeerMedewerkerIds: state.showSpecific ? state.notificeerMedewerkerIds.slice() : [],
     };
+
+    // Afhandel-velden uitsluitend bij een bestaand incident meesturen, zodat
+    // een create ze op de DB-default (null) laat — exact als BS2's server.
+    if (isEdit) {
+      payload.beoordeling = ($("im-beoordeling") && $("im-beoordeling").value) || "";
+      payload.pastClientprofiel = getStackRadio("im-past-profiel");
+      payload.pastClientprofielToelichting = ($("im-past-profiel-toel") && $("im-past-profiel-toel").value) || "";
+      payload.zorgplanUpdateNodig = getStackRadio("im-zorgplan");
+      payload.zorgplanUpdateOmschrijving = ($("im-zorgplan-oms") && $("im-zorgplan-oms").value) || "";
+      payload.adviesRichtlijnen = ($("im-advies") && $("im-advies").value) || "";
+    }
+    return payload;
   }
 
   function validate(payload) {
@@ -596,6 +954,12 @@
     if (!payload.categorie) return "Selecteer een type incident.";
     if (!String(payload.omschrijving).trim()) return "Vul een beschrijving in.";
     if (payload.oudersGeinformeerd === null) return "Geef aan of ouders/vertegenwoordigers geïnformeerd zijn.";
+    // 1-op-1 BS2: als ouders/vertegenwoordigers NIET geïnformeerd zijn, is een
+    // reden verplicht (BS2-data: parents_not_notified_reason gevuld bij exact
+    // alle 53 incidenten met parents_notified=false).
+    if (payload.oudersGeinformeerd === false && !String(payload.oudersNietReden || "").trim()) {
+      return "Geef aan waarom ouders/vertegenwoordigers niet geïnformeerd zijn.";
+    }
     return null;
   }
 
@@ -750,17 +1114,36 @@
     });
     $("im-notif-medewerker-add").addEventListener("click", addNotifMedewerker);
 
+    // Conditionele velden (BS2-gedrag).
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="im-ouders"]'), function (r) {
+      r.addEventListener("change", toggleOudersReden);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="im-past-profiel"]'), function (r) {
+      r.addEventListener("change", toggleAfhandelConditional);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="im-zorgplan"]'), function (r) {
+      r.addEventListener("change", toggleAfhandelConditional);
+    });
+
+    // Taken-CRUD.
+    if ($("im-taak-add")) $("im-taak-add").addEventListener("click", submitTaak);
+    if ($("im-taak-collab-add")) $("im-taak-collab-add").addEventListener("click", addTaakCollab);
+
     ["besa:clienten-updated", "besa:medewerkers-updated", "besa:locaties-updated",
      "besa:profile-updated", "besa:incident-categorieen-updated"].forEach(function (evt) {
       window.addEventListener(evt, function () {
         populateDropdowns();
         renderBetrokkenList();
         renderNotifMedewerkers();
+        renderTaakCollab();
       });
     });
 
     window.addEventListener("besa:incident-documenten-updated", function () {
       renderBijlagen();
+    });
+    window.addEventListener("besa:incident-taken-updated", function () {
+      if (state.editingId) renderTaken();
     });
   }
 

@@ -41,8 +41,10 @@
     // Geen data-laag geladen: alles toestaan en op de DB vertrouwen.
     return true;
   }
+  // Strikt 1-op-1 BS2: time_of_day-enum verbatim (geen lossy BS1-vertaling in
+  // opslag; Nederlandse labels zitten alleen in de UI-laag TIJDSTIPPEN).
   var ALLOWED_TIJDSTIP = {
-    vroege_ochtend: 1, ochtend: 1, middag: 1, late_middag: 1, avond: 1, nacht: 1,
+    morning: 1, afternoon: 1, midday: 1, evening: 1, night: 1,
   };
   var ALLOWED_ACTOR = {
     alleen_client: 1, client_naar_client: 1, client_naar_medewerker: 1,
@@ -219,6 +221,15 @@
       archived: !!safe.archived,
     };
     applyBs2AfhandelFields(payload, safe);
+    // 1-op-1 BS2: bij overgang naar 'opgelost' (completed) wordt resolved_at /
+    // afgehandeld_op gevuld (voedt avg_resolution_time op het dashboard).
+    // BS2 doet dit server-side; BS1 heeft geen server dus de data-laag borgt
+    // het voor élke caller (overzicht-statuswissel én afhandelen-flow).
+    // Bestaande afhandel-datum blijft staan; niet-opgelost wist 'm niet
+    // (BS2 behoudt resolved_at ook; voorkomt avg-resolution-corruptie).
+    if (status === "opgelost" && !payload.afgehandeld_op) {
+      payload.afgehandeld_op = safe.afgehandeldOp || new Date().toISOString();
+    }
     if (safe.incidentDatum) payload.incident_datum = safe.incidentDatum;
     if (safe.id) payload.id = safe.id;
     return payload;
@@ -360,19 +371,22 @@
       { value: "in_behandeling", label: "In behandeling", className: "incident-status--behandeling" },
       { value: "opgelost", label: "Opgelost", className: "incident-status--opgelost" },
     ],
+    // 1-op-1 BS2 time_of_day (5 waarden, chronologisch). Waarde = BS2 verbatim;
+    // label = NL-huisstijl. Exacte BS2-labeltekst wordt in Stap 5 visueel
+    // tegen BS2 geverifieerd en zo nodig bijgesteld.
     TIJDSTIPPEN: [
-      { value: "vroege_ochtend", label: "Vroege ochtend (06:00 - 09:00)" },
-      { value: "ochtend", label: "Ochtend (09:00 - 12:00)" },
-      { value: "middag", label: "Middag (12:00 - 15:00)" },
-      { value: "late_middag", label: "Late middag (15:00 - 18:00)" },
-      { value: "avond", label: "Avond (18:00 - 22:00)" },
-      { value: "nacht", label: "Nacht (22:00 - 06:00)" },
+      { value: "morning", label: "Ochtend" },
+      { value: "midday", label: "Middag" },
+      { value: "afternoon", label: "Namiddag" },
+      { value: "evening", label: "Avond" },
+      { value: "night", label: "Nacht" },
     ],
+    // 1-op-1 BS2 incident_actors — exact de 4 waarden die BS2 gebruikt
+    // (geen medewerker_naar_client; die komt in BS2 niet voor).
     ACTOR_TYPES: [
       { value: "alleen_client", label: "Alleen cliënt", desc: "Het incident betreft één cliënt zonder betrokken anderen" },
       { value: "client_naar_client", label: "Cliënt naar cliënt", desc: "Tussen twee of meer cliënten onderling" },
       { value: "client_naar_medewerker", label: "Cliënt naar medewerker", desc: "Een cliënt richting een medewerker" },
-      { value: "medewerker_naar_client", label: "Medewerker naar cliënt", desc: "Een medewerker richting een cliënt" },
       { value: "client_naar_overige", label: "Cliënt naar overige betrokkene", desc: "Een cliënt richting een externe betrokkene" },
     ],
   };
