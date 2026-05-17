@@ -64,6 +64,42 @@
     return "—";
   }
 
+  // Status komt VERBATIM uit BS2's submission_status (message+color+icon).
+  // BS2 kent drie toestanden: submitted (groen "Ingediend op …"),
+  // draft (geel "Nog niet ingediend"), locked (rood "Vergrendeld
+  // (deadline verstreken)"). "Concept" bestaat NIET in BS2.
+  function statusMeta(d) {
+    var ss = (d && d.submissionStatus) || null;
+    var st = (ss && ss.status) || (d && d.status) || "draft";
+    var color = (ss && ss.color)
+      || (st === "submitted" ? "green" : st === "locked" ? "red" : "yellow");
+    var msg = (ss && ss.message)
+      || (st === "submitted" ? "Ingediend"
+        : st === "locked" ? "Vergrendeld (deadline verstreken)"
+        : "Nog niet ingediend");
+    var icon = (ss && ss.icon)
+      || (st === "submitted" ? "checkmark" : st === "locked" ? "lock" : "warning");
+    if (color !== "green" && color !== "yellow" && color !== "red") color = "yellow";
+    return { status: st, color: color, message: msg, icon: icon };
+  }
+  function statusIconSvg(icon, size) {
+    var s = size || 14;
+    var head = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
+    if (icon === "checkmark") {
+      return head + '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+    }
+    if (icon === "lock") {
+      return head + '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+    }
+    return head + '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  }
+  // Korte label voor de overzicht-statuskolom (1-op-1 BS2-toestand).
+  function statusShortLabel(meta) {
+    if (meta.status === "submitted") return "Ingediend";
+    if (meta.status === "locked") return "Vergrendeld";
+    return "Nog niet ingediend";
+  }
+
   function toast(kind, msg) {
     if (typeof window.showActionFeedback === "function") {
       try { window.showActionFeedback(kind || "info", msg); return; } catch (e) { /* */ }
@@ -158,10 +194,9 @@
     } else {
       tbody.innerHTML = pageRows.map(function (a) {
         var naam = declNaam(a);
-        var ingediend = a.status === "submitted";
-        var statusPill = ingediend
-          ? '<span class="km-status-pill km-status-pill--ingediend"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Ingediend</span>'
-          : '<span class="km-status-pill km-status-pill--nietingediend"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Concept</span>';
+        var sm = statusMeta(a);
+        var statusPill = '<span class="km-status-pill km-status-pill--' + sm.color + '">'
+          + statusIconSvg(sm.icon) + ' ' + escHtml(statusShortLabel(sm)) + '</span>';
         var ingOp = a.submittedAt ? formatNlDate(a.submittedAt) : "-";
         return '<tr class="km-overview-row" data-decl="' + escAttr(a.id) + '" tabindex="0" role="link">'
           + '<td data-col="medewerker">' + escHtml(naam) + '</td>'
@@ -266,14 +301,9 @@
     var periodLabel = d.monthDisplay || formatPeriod(d.jaar, d.maand);
     $("km-detail-subtitle").textContent = periodLabel + " — " + naam;
     var statusEl = $("km-detail-status");
-    if (d.status === "submitted") {
-      statusEl.className = "km-detail-status km-detail-status--ingediend";
-      var msg = (d.submissionStatus && d.submissionStatus.message) || "Ingediend";
-      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ' + escHtml(msg);
-    } else {
-      statusEl.className = "km-detail-status km-detail-status--nietingediend";
-      statusEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Concept (nog niet ingediend)';
-    }
+    var sm = statusMeta(d);
+    statusEl.className = "km-detail-status km-detail-status--" + sm.color;
+    statusEl.innerHTML = statusIconSvg(sm.icon, 16) + " " + escHtml(sm.message);
 
     var tbody = $("km-detail-tbody");
     if (pageRows.length === 0) {
