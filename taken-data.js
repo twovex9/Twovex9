@@ -23,11 +23,18 @@
   "use strict";
 
   var TABLE = "taken";
-  var CACHE_KEY = "taken_v1";
+  var CACHE_KEY = "taken_v2";
 
-  var STATUS_VALUES = ["open", "in_progress", "voltooid", "geannuleerd"];
-  var PRIORITEIT_VALUES = ["laag", "midden", "hoog"];
-  var PRIORITEIT_RANK = { hoog: 0, midden: 1, laag: 2 };
+  // 1-op-1 BS2 (/api/tasks) — verbatim status/priority-waarden.
+  var STATUS_VALUES = ["--", "In behandeling", "Voltooid"];
+  var PRIORITEIT_VALUES = ["Low", "Medium", "High"];
+  var PRIORITEIT_RANK = { High: 0, Medium: 1, Low: 2 };
+
+  function stripHtml(s) {
+    return String(s == null ? "" : s).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/\s+/g, " ").trim();
+  }
 
   function isoNow() { return new Date().toISOString(); }
 
@@ -37,35 +44,53 @@
 
   function rowToObj(row) {
     if (!row) return null;
+    var asg = row.assignee && typeof row.assignee === "object" ? row.assignee : null;
+    var crt = row.creator && typeof row.creator === "object" ? row.creator : null;
+    var html = row.description != null ? row.description : (row.beschrijving || "");
     return {
       id: row.id,
-      naam: row.naam || "",
-      beschrijving: row.beschrijving || "",
-      toegewezenAanId: row.toegewezen_aan_id || null,
-      aangemaaktDoorId: row.aangemaakt_door_id || null,
-      status: row.status || "open",
-      prioriteit: row.prioriteit || "midden",
-      deadline: row.deadline || null,
+      bs2Id: row.bs2_id || null,
+      naam: row.title || row.naam || "",
+      beschrijving: stripHtml(html),
+      beschrijvingHtml: html || "",
+      toegewezenAanId: (asg && asg.id) || row.toegewezen_aan_id || null,
+      toegewezenAanNaam: (asg && asg.name) || "",
+      aangemaaktDoorId: (crt && crt.id) || row.aangemaakt_door_id || null,
+      aangemaaktDoorNaam: (crt && crt.name) || "",
+      collaborators: Array.isArray(row.collaborators) ? row.collaborators : [],
+      incident: row.incident || null,
+      isPrivate: !!row.is_private,
+      status: row.status_bs2 || row.status || "--",
+      prioriteit: row.priority_bs2 || row.prioriteit || "Low",
+      deadline: row.due_date || row.deadline || null,
       voltooidOp: row.voltooid_op || null,
       archived: !!row.archived,
-      aanmaakdatum: row.aanmaakdatum || isoNow(),
-      laatstGewijzigd: row.laatst_gewijzigd || row.aanmaakdatum || isoNow(),
+      aanmaakdatum: row.bs2_created_at || row.aanmaakdatum || isoNow(),
+      laatstGewijzigd: row.bs2_updated_at || row.laatst_gewijzigd || row.aanmaakdatum || isoNow(),
     };
   }
 
   function objToPayload(o) {
     var safe = o || {};
-    var status = STATUS_VALUES.indexOf(safe.status) >= 0 ? safe.status : "open";
-    var prioriteit = PRIORITEIT_VALUES.indexOf(safe.prioriteit) >= 0 ? safe.prioriteit : "midden";
+    var status = STATUS_VALUES.indexOf(safe.status) >= 0 ? safe.status : "--";
+    var prioriteit = PRIORITEIT_VALUES.indexOf(safe.prioriteit) >= 0 ? safe.prioriteit : "Low";
+    var title = String(safe.naam || "").trim();
+    var descr = String(safe.beschrijving || "");
+    var asg = (safe.toegewezenAanId)
+      ? { id: safe.toegewezenAanId, name: safe.toegewezenAanNaam || "" }
+      : (safe.assignee || null);
     return {
       id: safe.id,
-      naam: String(safe.naam || "").trim(),
-      beschrijving: String(safe.beschrijving || ""),
-      toegewezen_aan_id: safe.toegewezenAanId || null,
-      aangemaakt_door_id: safe.aangemaaktDoorId || null,
-      status: status,
-      prioriteit: prioriteit,
+      title: title,
+      naam: title,
+      description: descr,
+      beschrijving: descr,
+      status_bs2: status,
+      priority_bs2: prioriteit,
+      due_date: safe.deadline || null,
       deadline: safe.deadline || null,
+      is_private: !!safe.isPrivate,
+      assignee: asg,
       archived: !!safe.archived,
     };
   }
@@ -85,9 +110,9 @@
 
   function sortItems(items) {
     return items.slice().sort(function (a, b) {
-      // 1. Open/in_progress voor voltooid/geannuleerd
-      var aDone = a.status === "voltooid" || a.status === "geannuleerd" ? 1 : 0;
-      var bDone = b.status === "voltooid" || b.status === "geannuleerd" ? 1 : 0;
+      // 1. Niet-voltooid vóór voltooid
+      var aDone = a.status === "Voltooid" ? 1 : 0;
+      var bDone = b.status === "Voltooid" ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
       // 2. Op deadline (null laatst)
       var ad = a.deadline ? String(a.deadline) : "9999-12-31";
