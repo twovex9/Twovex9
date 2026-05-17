@@ -1147,9 +1147,26 @@
     });
   }
 
-  function init() {
-    populateDropdowns();
+  async function init() {
     renderActorTypes();
+    // Wacht tot de data-lagen geladen zijn. Cruciaal: de localStorage-cache
+    // kan leeg zijn (gedeelde quota vol → incidenten-data leunt op _mem na
+    // bootstrap), dus zonder await krijgt loadEditTarget() bij een verse
+    // ?id=-load null en valt de pagina ten onrechte terug op "nieuw incident".
+    // We wachten ook op clienten/medewerkers/locaties zodat de selecties in
+    // edit-mode meteen op de juiste optie blijven staan.
+    try {
+      await Promise.all([
+        window.incidentenDB && window.incidentenDB.ready,
+        window.incidentCategorieenDB && window.incidentCategorieenDB.ready,
+        window.incidentTakenDB && window.incidentTakenDB.ready,
+        window.clientenDB && window.clientenDB.ready,
+        window.medewerkersDB && window.medewerkersDB.ready,
+        window.locatiesDB && window.locatiesDB.ready,
+      ]);
+    } catch (e) { /* events herstellen de UI alsnog */ }
+
+    populateDropdowns();
     renderBijlagen();
     renderNotifMedewerkers();
 
@@ -1160,6 +1177,18 @@
       applyAddMode();
     }
     wireUp();
+
+    // Vangnet: als het incident pas ná init beschikbaar komt (late bootstrap
+    // of realtime-update) en we staan nog in add-mode terwijl er een ?id= is,
+    // alsnog naar edit-mode schakelen.
+    window.addEventListener("besa:incidenten-updated", function () {
+      if (state.editingId) return;
+      var qs = new URLSearchParams(window.location.search);
+      var id = qs.get("id");
+      if (!id) return;
+      var rec = window.incidentenDB && window.incidentenDB.getByIdSync(id);
+      if (rec) applyEditMode(rec);
+    });
   }
 
   if (document.readyState === "loading") {
