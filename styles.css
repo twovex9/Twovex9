@@ -21504,3 +21504,90 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   margin-bottom: 18px;
   font-size: var(--font-base);
 }
+
+/* ---- TOP-BAR Medewerkers — lijst (1-op-1 BS2) ---- */
+.me-avatar {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.me-avatar-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+.me-avatar-dot--ok { background: var(--green); }
+.me-avatar-dot--sick { background: var(--red); }
+.me-row:hover { background: var(--row-hover, rgba(0, 0, 0, 0.03)); }
+#me-table th.me-th-sort { cursor: pointer; user-select: none; }
+.me-sort-chev {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 6px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-muted);
+  opacity: 0.45;
+  vertical-align: middle;
+}
+#me-table th.me-sorted-asc .me-sort-chev {
+  border-top: none;
+  border-bottom: 5px solid var(--blue);
+  opacity: 1;
+}
+#me-table th.me-sorted-desc .me-sort-chev {
+  border-top: 5px solid var(--blue);
+  opacity: 1;
+}
+.me-cols-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  padding: 10px 12px;
+}
+.me-cols-title {
+  font-weight: 700;
+  font-size: var(--font-base);
+  color: var(--text);
+  padding: 4px 4px 8px;
+}
+.me-cols-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 4px;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.me-cols-opt input { accent-color: var(--blue); }
+.header-actions { position: relative; }
+.me-sick-btn {
+  display: inline-block;
+  border: none;
+  background: var(--red);
+  color: var(--surface);
+  font-size: var(--font-base);
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: var(--r-pill);
+  margin-bottom: 14px;
+  cursor: default;
+}

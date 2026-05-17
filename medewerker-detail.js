@@ -2,8 +2,14 @@
 /**
  * medewerker-detail.js — page-script voor /medewerker-detail.html.
  *
- * TOP-BAR Medewerkers (BS2 /main-employee/employee-details/{id}).
- * APART van HR-medewerker.js. Profielkaart + Verzuim-tab, 1-op-1 BS2.
+ * TOP-BAR Medewerkers (BS2 /main-employee/employee-details/{id}/sickness).
+ * 1-op-1 BS2: profielkaart + Verzuim-tab.
+ *  - Verjaardag-countdown: 3 pills "X Maanden" (alleen als >0) · "Y Dagen" ·
+ *    "Z Uren" — midnight→midnight tot eerstvolgende verjaardag (BS2 toont
+ *    consequent 0 Uren). Live geverifieerd vs BS2 (Adriana = 1/14/0).
+ *  - Verzuim niet-ziek: "Registreer een nieuw ziekteverzuim…" + "+ Verzuim
+ *    toevoegen". Ziek: rode knop "Medewerker is ziek" + "Verzuim begonnen op
+ *    DD-MM-YYYY" (Europe/Amsterdam).
  */
 (function () {
   "use strict";
@@ -13,33 +19,57 @@
     return m ? decodeURIComponent(m[1]) : "";
   }
 
-  function fmtNlDate(iso) {
-    if (!iso) return "";
-    var s = String(iso);
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-    if (m) return Number(m[3]) + "-" + Number(m[2]) + "-" + m[1];
-    var t = Date.parse(s);
-    if (!isFinite(t)) return "";
-    var d = new Date(t);
-    return d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear();
+  // Verjaardag: BS2-formaat d-m-jjjj (geen voorloopnullen), bv. "1-7-2026".
+  function fmtBday(iso) {
+    if (!iso) return "—";
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    if (!m) return "—";
+    return Number(m[3]) + "-" + Number(m[2]) + "-" + m[1];
   }
 
-  // Verjaardag-countdown (BS2: "X Dagen" / "Y Uren"). Diff van nu tot de
-  // eerstvolgende verjaardag (om middernacht). Live geverifieerd vs BS2.
+  // Verzuim-startdatum: BS2 toont DD-MM-JJJJ in Europe/Amsterdam
+  // (raw "2025-02-18T23:00:00Z" → "19-02-2025").
+  function fmtVerzuimDate(iso) {
+    if (!iso) return "";
+    var t = Date.parse(iso);
+    if (!isFinite(t)) {
+      var mm = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+      return mm ? mm[3] + "-" + mm[2] + "-" + mm[1] : "";
+    }
+    try {
+      var parts = new Intl.DateTimeFormat("nl-NL", {
+        timeZone: "Europe/Amsterdam", day: "2-digit", month: "2-digit", year: "numeric",
+      }).formatToParts(new Date(t));
+      var g = {};
+      parts.forEach(function (p) { g[p.type] = p.value; });
+      return g.day + "-" + g.month + "-" + g.year;
+    } catch (e) {
+      var d = new Date(t);
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      return pad(d.getDate()) + "-" + pad(d.getMonth() + 1) + "-" + d.getFullYear();
+    }
+  }
+
+  // Countdown tot eerstvolgende verjaardag, midnight→midnight (BS2-gedrag:
+  // Uren consequent 0). Hele maanden, dan resterende dagen.
   function birthdayCountdown(dobIso) {
-    if (!dobIso) return { days: null, hours: 0 };
+    if (!dobIso) return null;
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dobIso));
-    if (!m) return { days: null, hours: 0 };
+    if (!m) return null;
     var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     var month = Number(m[2]) - 1;
     var day = Number(m[3]);
-    var year = now.getFullYear();
-    var next = new Date(year, month, day, 0, 0, 0, 0);
-    if (next.getTime() <= now.getTime()) next = new Date(year + 1, month, day, 0, 0, 0, 0);
-    var diff = next.getTime() - now.getTime();
-    var days = Math.floor(diff / 86400000);
-    var hours = Math.floor((diff % 86400000) / 3600000);
-    return { days: days, hours: hours };
+    var next = new Date(today.getFullYear(), month, day);
+    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day);
+    var months = 0;
+    var cur = new Date(today.getTime());
+    while (true) {
+      var step = new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+      if (step.getTime() <= next.getTime()) { cur = step; months += 1; } else break;
+    }
+    var days = Math.round((next.getTime() - cur.getTime()) / 86400000);
+    return { months: months, days: days, hours: 0 };
   }
 
   function setText(id, txt) {
@@ -47,17 +77,26 @@
     if (el) el.textContent = txt;
   }
 
+  function renderBdayPills(emp) {
+    var box = document.getElementById("me-bday-pills");
+    if (!box) return;
+    var cd = birthdayCountdown(emp.dateOfBirth);
+    if (!cd) { box.innerHTML = ""; return; }
+    var pills = [];
+    if (cd.months > 0) pills.push(cd.months + " Maanden");
+    pills.push(cd.days + " Dagen");
+    pills.push(cd.hours + " Uren");
+    box.innerHTML = pills.map(function (p) { return '<span class="me-pill">' + p + "</span>"; }).join("");
+  }
+
   function renderSickPanel(emp) {
     var panel = document.getElementById("me-verzuim-panel");
     if (!panel) return;
     if (emp.isSick) {
       panel.innerHTML =
-        '<div class="me-sick-active">Actief ziekteverzuim — eerste ziektedag: <strong>' +
-        (fmtNlDate(emp.sicknessStartDate) || "onbekend") + "</strong></div>" +
-        '<p>Beëindig het verzuim wanneer de medewerker hersteld is.</p>' +
-        '<button type="button" class="btn-primary" id="me-verzuim-end-btn">Verzuim beëindigen</button>';
-      var endBtn = document.getElementById("me-verzuim-end-btn");
-      if (endBtn) endBtn.addEventListener("click", function () { endSick(emp.id); });
+        "<h2>Verzuim</h2>" +
+        '<button type="button" class="me-sick-btn">Medewerker is ziek</button>' +
+        "<p>Verzuim begonnen op " + (fmtVerzuimDate(emp.sicknessStartDate) || "onbekend") + "</p>";
     } else {
       panel.innerHTML =
         "<h2>Verzuim</h2>" +
@@ -71,10 +110,7 @@
   var current = null;
 
   function renderEmployee(emp) {
-    if (!emp) {
-      setText("me-name", "Medewerker niet gevonden");
-      return;
-    }
+    if (!emp) { setText("me-name", "Medewerker niet gevonden"); return; }
     current = emp;
     document.title = emp.fullName + " — Medewerker";
     setText("me-name", emp.fullName || "—");
@@ -82,11 +118,9 @@
     setText("me-phone", emp.phone || "—");
     setText("me-email", emp.email || "—");
     setText("me-number", emp.employeeNumber == null ? "—" : "#" + emp.employeeNumber);
-    setText("me-end-date", emp.employmentEndDate ? fmtNlDate(emp.employmentEndDate) : "-");
-    setText("me-bday", emp.dateOfBirth ? fmtNlDate(emp.dateOfBirth) : "—");
-    var cd = birthdayCountdown(emp.dateOfBirth);
-    setText("me-bday-days", (cd.days == null ? "—" : cd.days) + " Dagen");
-    setText("me-bday-hours", cd.hours + " Uren");
+    setText("me-end-date", emp.employmentEndDate ? fmtVerzuimDate(emp.employmentEndDate) : "-");
+    setText("me-bday", emp.dateOfBirth ? fmtBday(emp.dateOfBirth) : "—");
+    renderBdayPills(emp);
     renderSickPanel(emp);
   }
 
@@ -130,16 +164,6 @@
       renderEmployee(updated || window.mainEmployeesDB.getByIdSync(current.id));
     } catch (err) {
       if (window.showError) window.showError("Verzuim opslaan mislukt: " + (err && err.message || err));
-    }
-  }
-
-  async function endSick(id) {
-    try {
-      var updated = await window.mainEmployeesDB.endSickness(id);
-      if (window.showActionFeedback) window.showActionFeedback("saved", "Verzuim beëindigd");
-      renderEmployee(updated || window.mainEmployeesDB.getByIdSync(id));
-    } catch (err) {
-      if (window.showError) window.showError("Verzuim beëindigen mislukt: " + (err && err.message || err));
     }
   }
 
