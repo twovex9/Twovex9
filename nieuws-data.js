@@ -41,7 +41,20 @@
   }
 
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* quota vol — _mem is de bron */ }
+  }
+
+  // In-memory bron-van-waarheid binnen de sessie. De gedeelde browser-quota
+  // (~5 MB) wordt door zware module-caches volgemaakt; zonder _mem zou
+  // getAllSync() [] teruggeven bij een gefaalde cache-write en het nieuws
+  // "verdwijnen" terwijl alles veilig in Supabase staat. Niets gestript.
+  var _mem = null;
+  function setData(items) {
+    _mem = Array.isArray(items) ? items : [];
+    writeCache(_mem);
+  }
+  function currentList() {
+    return (_mem !== null) ? _mem : readCache();
   }
 
   function dispatchUpdated(source) {
@@ -170,7 +183,7 @@
       try {
         await maybeMigrateLocalToSupabase();
         var items = await fetchAll();
-        writeCache(items);
+        setData(items);
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[nieuwsDB] Bootstrap mislukt:", err);
@@ -181,7 +194,7 @@
 
   async function refresh() {
     var items = await fetchAll();
-    writeCache(items);
+    setData(items);
     dispatchUpdated("refresh");
     return items;
   }
@@ -196,9 +209,9 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
+    var cache = currentList().slice();
     cache.unshift(obj);
-    writeCache(cache);
+    setData(cache);
     dispatchUpdated("add");
     return obj;
   }
@@ -217,10 +230,10 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
+    var cache = currentList().slice();
     var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
     if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-    writeCache(cache);
+    setData(cache);
     dispatchUpdated("update");
     return obj;
   }
@@ -236,18 +249,18 @@
       .delete()
       .eq("id", id);
     if (res.error) throw res.error;
-    var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
-    writeCache(cache);
+    var cache = currentList().filter(function (r) { return r && String(r.id) !== String(id); });
+    setData(cache);
     dispatchUpdated("remove");
     return true;
   }
 
-  function getAllSync() { return readCache(); }
+  function getAllSync() { return currentList(); }
 
   function getByIdSync(id) {
     if (id == null) return null;
     var s = String(id);
-    var found = readCache().find(function (r) { return r && String(r.id) === s; });
+    var found = currentList().find(function (r) { return r && String(r.id) === s; });
     return found ? Object.assign({}, found) : null;
   }
 
