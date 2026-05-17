@@ -19517,12 +19517,12 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-weight: 500;
 }
 .km-status-pill--ingediend {
-  background: var(--green-soft);
-  color: var(--green);
+  background: var(--green);
+  color: var(--surface);
 }
 .km-status-pill--nietingediend {
-  background: var(--line);
-  color: var(--text-secondary);
+  background: var(--text-muted);
+  color: var(--surface);
 }
 
 /* Clickable rij in overzicht */
