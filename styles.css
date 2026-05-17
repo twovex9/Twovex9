@@ -14232,6 +14232,26 @@ button.planning-erm-new {
   font-size: var(--font-table-cell);
 }
 
+/* Taken — Taaknaam-kolom: cap breedte + lange tekst over 2-3 regels
+   (geen grote witruimte tussen Taaknaam en Toegewezen aan). id-selector
+   wint van .employees-table td { max-width:none }. */
+#taken-table td[data-col="naam"],
+#taken-table th[data-col="naam"] {
+  max-width: 420px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+#taken-table td[data-col="naam"] .link-button {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+}
+#taken-table td[data-col="naam"] span {
+  white-space: normal;
+}
+
 /* ===== Employee-invoice detail (top-bar Facturen → factuur) ===== */
 .inv-detail-grid {
   display: grid;
