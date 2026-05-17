@@ -546,6 +546,16 @@
   async function init() {
     buildOverviewColumnsPanel();
     wireUp();
+    // Toon meteen de juiste view o.b.v. de URL — vóór de await. Anders flitst
+    // een deep-link (?decl=<id>) eerst het overzicht: km-overview-view is
+    // standaard zichtbaar en de besa:kilometer-declaraties-updated-events
+    // renderen dat overzicht terwijl medewerkersDB.ready (traag) nog laadt.
+    var s0 = getRouteState();
+    if (s0.mode === "detail") {
+      state.detail.decl = s0.decl;
+      $("km-overview-view").hidden = true;
+      $("km-detail-view").hidden = false;
+    }
     try {
       await Promise.all([
         window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.ready,
