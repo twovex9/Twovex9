@@ -18070,6 +18070,7 @@ button.besc-dtl-tab:hover {
 .id-kpi--green::before   { background: #16a34a; }
 .id-kpi--purple::before  { background: #7c3aed; }
 .id-kpi--orange::before  { background: #ea580c; }
+.id-kpi--teal::before    { background: #0d9488; }
 
 .id-kpi-ico {
   flex-shrink: 0;
@@ -18085,6 +18086,7 @@ button.besc-dtl-tab:hover {
 .id-kpi--green  .id-kpi-ico { background: rgba(22, 163, 74, 0.12); color: #15803d; }
 .id-kpi--purple .id-kpi-ico { background: rgba(124, 58, 237, 0.12); color: #6d28d9; }
 .id-kpi--orange .id-kpi-ico { background: rgba(234, 88, 12, 0.12); color: #c2410c; }
+.id-kpi--teal   .id-kpi-ico { background: rgba(13, 148, 136, 0.12); color: #0f766e; }
 
 .id-kpi-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .id-kpi-label {

@@ -168,14 +168,46 @@
   }
 
   // ---------------------------------------------------------------------------
-  // KPI's
+  // BS2 /api/incidents/dashboard — core set (PERIODE-ONAFHANKELIJK)
+  // ---------------------------------------------------------------------------
+  // BS2's dashboard-endpoint kent géén periode-parameter: overview,
+  // status_counts/-distribution en average_resolution_time worden server-side
+  // over de VOLLEDIGE actieve set berekend. Voor 1-op-1 dezelfde getallen
+  // negeren deze blokken dus het BS1-datumfilter (zelfde patroon als het
+  // beschikkingen-dashboard). Het datumfilter + de extra filters sturen
+  // alléén de BS1-eigen visualisaties (trend/donut-detail/bars/heatmap/…).
+  function getBs2CoreSet() {
+    return getAllIncidenten().filter(function (i) { return i && !i.archived; });
+  }
+
+  // average_resolution_time: gem. uren tussen created_at (aanmaakdatum) en
+  // resolved_at (afgehandeld_op) over afgehandelde (status 'opgelost')
+  // incidenten — exact BS2's formule.
+  function computeAvgResolutionHours(set) {
+    var spans = [];
+    set.forEach(function (i) {
+      if (!i || i.status !== "opgelost") return;
+      var created = Date.parse(i.aanmaakdatum || "");
+      var resolved = Date.parse(i.afgehandeldOp || "");
+      if (!isFinite(created) || !isFinite(resolved) || resolved < created) return;
+      spans.push((resolved - created) / 3600000);
+    });
+    if (spans.length === 0) return { hours: 0, count: 0 };
+    var sum = spans.reduce(function (a, b) { return a + b; }, 0);
+    return { hours: sum / spans.length, count: spans.length };
+  }
+
+  // ---------------------------------------------------------------------------
+  // KPI's — 1-op-1 BS2 /api/incidents/dashboard
   // ---------------------------------------------------------------------------
   function renderKpis() {
-    var rows = getFilteredIncidenten();
+    // overview + status_distribution + average_resolution_time = hele set.
+    var rows = getBs2CoreSet();
     var total = rows.length;
     var afw = rows.filter(function (i) { return i.status === "in_afwachting"; }).length;
     var beh = rows.filter(function (i) { return i.status === "in_behandeling"; }).length;
     var op  = rows.filter(function (i) { return i.status === "opgelost"; }).length;
+    // BS2: percentage = count / total * 100.
     var pct = function (n) { return total === 0 ? "0%" : Math.round((n * 100) / total) + "%"; };
 
     $("id-kpi-total").textContent = String(total);
@@ -186,6 +218,20 @@
     $("id-kpi-afwachting-sub").textContent = pct(afw) + " van totaal";
     $("id-kpi-behandeling-sub").textContent = pct(beh) + " van totaal";
     $("id-kpi-opgelost-sub").textContent = pct(op) + " van totaal";
+
+    // average_resolution_time { hours, note }
+    var ar = computeAvgResolutionHours(rows);
+    var arEl = $("id-kpi-resolution");
+    var arSub = $("id-kpi-resolution-sub");
+    if (arEl) {
+      if (ar.count === 0) {
+        arEl.textContent = "—";
+        if (arSub) arSub.textContent = "Geen afgehandelde incidenten";
+      } else {
+        arEl.textContent = (Math.round(ar.hours * 10) / 10).toLocaleString("nl-NL") + " u";
+        if (arSub) arSub.textContent = "gem. aanmaak → afhandeling (" + ar.count + ")";
+      }
+    }
 
     // Trend laatste 7 dagen (binnen filter — vaste 7d ongeacht preset)
     var allInRange = getAllIncidenten().filter(function (i) {
@@ -220,12 +266,9 @@
     sub.classList.toggle("is-up", delta > 0);
     sub.classList.toggle("is-down", delta < 0);
 
+    // 1-op-1 BS2: overview telt de hele set (periode-onafhankelijk).
     var totalSub = $("id-kpi-total-sub");
-    if (state.dateFrom && state.dateTo) {
-      totalSub.textContent = formatNlDate(state.dateFrom) + " — " + formatNlDate(state.dateTo);
-    } else {
-      totalSub.textContent = "alle tijd";
-    }
+    if (totalSub) totalSub.textContent = "alle incidenten";
   }
 
   // ---------------------------------------------------------------------------
@@ -337,7 +380,9 @@
   // Status donut
   // ---------------------------------------------------------------------------
   function renderDonut() {
-    var rows = getFilteredIncidenten();
+    // 1-op-1 BS2 status_distribution = hele set (periode-onafhankelijk),
+    // consistent met de status-KPI's.
+    var rows = getBs2CoreSet();
     var afw = rows.filter(function (i) { return i.status === "in_afwachting"; }).length;
     var beh = rows.filter(function (i) { return i.status === "in_behandeling"; }).length;
     var op  = rows.filter(function (i) { return i.status === "opgelost"; }).length;
