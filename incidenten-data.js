@@ -74,6 +74,55 @@
     return null;
   }
 
+  function strOrNull(v) {
+    if (v == null) return null;
+    var s = String(v);
+    return s.trim() === "" ? null : s;
+  }
+
+  function hasOwn(o, k) {
+    return Object.prototype.hasOwnProperty.call(o || {}, k);
+  }
+
+  // BS2-afhandel-/extra-velden. Worden alléén in de payload geschreven als ze
+  // expliciet op het object staan, zodat een gewone create ze op de DB-default
+  // (null) laat — exact zoals BS2's server bij `POST /api/incidents`. Bij
+  // "afhandelen" (PATCH) zet incident-melden ze wél → worden dan meegeschreven.
+  function applyBs2AfhandelFields(payload, safe) {
+    if (hasOwn(safe, "categorieToelichting")) payload.categorie_toelichting = strOrNull(safe.categorieToelichting);
+    if (hasOwn(safe, "vereisteToelichting")) payload.vereiste_toelichting = strOrNull(safe.vereisteToelichting);
+    if (hasOwn(safe, "oudersNietReden")) payload.ouders_niet_reden = strOrNull(safe.oudersNietReden);
+    if (hasOwn(safe, "beoordeling")) payload.beoordeling = strOrNull(safe.beoordeling);
+    if (hasOwn(safe, "afgehandeldOp")) payload.afgehandeld_op = safe.afgehandeldOp || null;
+    if (hasOwn(safe, "pastClientprofiel")) payload.past_clientprofiel = sanitizeNullableBool(safe.pastClientprofiel);
+    if (hasOwn(safe, "pastClientprofielToelichting")) payload.past_clientprofiel_toelichting = strOrNull(safe.pastClientprofielToelichting);
+    if (hasOwn(safe, "zorgplanUpdateNodig")) payload.zorgplan_update_nodig = sanitizeNullableBool(safe.zorgplanUpdateNodig);
+    if (hasOwn(safe, "zorgplanUpdateOmschrijving")) payload.zorgplan_update_omschrijving = strOrNull(safe.zorgplanUpdateOmschrijving);
+    if (hasOwn(safe, "adviesRichtlijnen")) payload.advies_richtlijnen = strOrNull(safe.adviesRichtlijnen);
+  }
+
+  // Leidt de 1-op-1 BS2-relaties af uit data.bs2_scrape. De BS1-FK's voor
+  // reporter/locatie staan bewust op null (de BS2-id's mappen niet 1-op-1 op
+  // BS1-tabellen); de volledige BS2-objecten blijven 100% bewaard in
+  // data.bs2_scrape en worden hier read-only ontsloten zodat de UI exact
+  // toont wat BS2 toont ("Gemeld door", locatie, cliënten, categorie, ...).
+  function deriveBs2(row) {
+    var d = (row && row.data) || null;
+    var s = (d && d.bs2_scrape) || null;
+    return {
+      bs2Id: (d && (d.bs2_id || (s && s.id))) || null,
+      bs2: s || null,
+      reporter: (s && s.reporter) || null,
+      locatieBs2: (s && s.location) || null,
+      clientsBs2: (s && Array.isArray(s.clients)) ? s.clients : [],
+      categoryBs2: (s && s.category) || null,
+      otherParties: (s && Array.isArray(s.other_parties)) ? s.other_parties : [],
+      bestanden: (s && Array.isArray(s.files)) ? s.files : [],
+      employeesBs2: (s && Array.isArray(s.employees)) ? s.employees : [],
+      tasksBs2: (s && Array.isArray(s.tasks)) ? s.tasks : [],
+    };
+  }
+
   function reportSilent(action, err) {
     try { console.error("[incidentenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
     if (global.besaReportSyncFailure) global.besaReportSyncFailure("Incidenten — " + action, err);
@@ -103,7 +152,7 @@
 
   function rowToObj(row) {
     if (!row) return null;
-    return {
+    var o = {
       id: row.id,
       clientId: row.client_id || null,
       categorie: row.categorie || "Overig",
@@ -126,7 +175,21 @@
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
       archived: !!row.archived,
+      // BS2 afhandel-/extra velden (Stap 4a — 1-op-1 BS2)
+      categorieToelichting: row.categorie_toelichting || "",
+      vereisteToelichting: row.vereiste_toelichting || "",
+      oudersNietReden: row.ouders_niet_reden || "",
+      beoordeling: row.beoordeling || "",
+      afgehandeldOp: row.afgehandeld_op || null,
+      pastClientprofiel: sanitizeNullableBool(row.past_clientprofiel),
+      pastClientprofielToelichting: row.past_clientprofiel_toelichting || "",
+      zorgplanUpdateNodig: sanitizeNullableBool(row.zorgplan_update_nodig),
+      zorgplanUpdateOmschrijving: row.zorgplan_update_omschrijving || "",
+      adviesRichtlijnen: row.advies_richtlijnen || "",
     };
+    var b = deriveBs2(row);
+    for (var k in b) { if (Object.prototype.hasOwnProperty.call(b, k)) o[k] = b[k]; }
+    return o;
   }
 
   function objToInsertPayload(o) {
@@ -155,6 +218,7 @@
       notificeer_medewerker_ids: sanitizeUuidArray(safe.notificeerMedewerkerIds),
       archived: !!safe.archived,
     };
+    applyBs2AfhandelFields(payload, safe);
     if (safe.incidentDatum) payload.incident_datum = safe.incidentDatum;
     if (safe.id) payload.id = safe.id;
     return payload;

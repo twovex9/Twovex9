@@ -69,12 +69,23 @@
     } catch (e) { /* */ }
   }
 
+  // BS2 ordent categorieën op `order`; BS1 spiegelt dat 1-op-1 via `volgorde`.
+  // Categorieën zonder volgorde (legacy/BS1-eigen) komen achteraan op naam.
+  function catSort(a, b) {
+    var av = (a && a.volgorde != null) ? a.volgorde : 9999;
+    var bv = (b && b.volgorde != null) ? b.volgorde : 9999;
+    if (av !== bv) return av - bv;
+    return ((a && a.naam) || "").localeCompare((b && b.naam) || "");
+  }
+
   function rowToObj(row) {
     if (!row) return null;
     return {
       id: row.id,
       naam: row.naam || "",
       beschrijving: row.beschrijving || "",
+      volgorde: (row.volgorde == null ? null : Number(row.volgorde)),
+      bs2Id: (row.data && row.data.bs2_id) || null,
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -88,6 +99,7 @@
       beschrijving: String(safe.beschrijving || ""),
       archived: !!safe.archived,
     };
+    if (safe.volgorde != null && safe.volgorde !== "") payload.volgorde = Number(safe.volgorde);
     payload.id = safe.id || generateId();
     return payload;
   }
@@ -98,6 +110,9 @@
     if (Object.prototype.hasOwnProperty.call(safe, "naam")) payload.naam = String(safe.naam || "").trim();
     if (Object.prototype.hasOwnProperty.call(safe, "beschrijving")) payload.beschrijving = String(safe.beschrijving || "");
     if (Object.prototype.hasOwnProperty.call(safe, "archived")) payload.archived = !!safe.archived;
+    if (Object.prototype.hasOwnProperty.call(safe, "volgorde")) {
+      payload.volgorde = (safe.volgorde == null || safe.volgorde === "") ? null : Number(safe.volgorde);
+    }
     return payload;
   }
 
@@ -106,6 +121,7 @@
     var res = await global.besaSupabase
       .from(TABLE)
       .select("*")
+      .order("volgorde", { ascending: true, nullsFirst: false })
       .order("naam", { ascending: true });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
@@ -165,7 +181,7 @@
     var obj = rowToObj(res.data);
     var cache = readCache();
     cache.push(obj);
-    cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || ""); });
+    cache.sort(catSort);
     writeCache(cache);
     dispatchUpdated("add");
     return obj;
@@ -182,7 +198,7 @@
     var cache = readCache();
     var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
     if (idx >= 0) cache[idx] = obj; else cache.push(obj);
-    cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || ""); });
+    cache.sort(catSort);
     writeCache(cache);
     dispatchUpdated("update");
     return obj;
