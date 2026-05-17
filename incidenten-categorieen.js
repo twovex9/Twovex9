@@ -39,8 +39,8 @@
     pageSize: 15,
     editingId: null,
     deactivatingId: null,
-    sortKey: "naam",   // Default sort: alfabetisch op naam.
-    sortDir: "asc",    // "asc" of "desc"
+    sortKey: "volgorde",   // Default: 1-op-1 BS2-volgorde (incident_categories.order).
+    sortDir: "asc",        // "asc" of "desc"
   };
 
   // ---------------------------------------------------------------------------
@@ -78,6 +78,7 @@
   }
   function sortValue(cat, key) {
     if (!cat) return "";
+    if (key === "volgorde") return (cat.volgorde == null ? 9999 : cat.volgorde); // BS2-order
     if (key === "status") return cat.archived ? 1 : 0; // Actief vóór Gedeactiveerd bij asc
     if (key === "bijgewerkt") {
       var t = Date.parse(cat.laatstGewijzigd || "");

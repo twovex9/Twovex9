@@ -74,6 +74,16 @@
     if (!l) return "—";
     return l.naam || "—";
   }
+  // "Gemeld door" 1-op-1 BS2: de 144 gereconcilieerde incidenten hebben geen
+  // BS1 melder_id (BS2-reporter mapt niet 1-op-1 op medewerkers). De BS2-
+  // reporter zit slim ontsloten in i.reporter ({id,name,email}); val terug
+  // op een BS1-medewerker als die er wél is (nieuw in BS1 gemeld incident).
+  function reporterLabel(i) {
+    if (i && i.reporter && i.reporter.name) return i.reporter.name;
+    var m = i && findMedewerkerById(i.melderId);
+    if (m) return medewerkerLabel(m);
+    return "—";
+  }
 
   function findClientById(id) {
     if (!id) return null;
@@ -206,8 +216,8 @@
             i.omschrijving, i.genomenMaatregelen, i.categorie, i.status,
             clientLabel(findClientById(i.clientId)),
             medewerkerLabel(findMedewerkerById(i.beoordelaarId)),
-            medewerkerLabel(findMedewerkerById(i.melderId)),
-            locatieLabel(findLocatieById(i.locatieId)),
+            reporterLabel(i),
+            (i.locatieBs2 && i.locatieBs2.name) || locatieLabel(findLocatieById(i.locatieId)),
           ].join(" ").toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
@@ -229,7 +239,7 @@
         case "client": return clientLabel(findClientById(i.clientId)).toLowerCase();
         case "categorie": return String(i.categorie || "").toLowerCase();
         case "status": return statusOrder[i.status] || 99;
-        case "melder": return medewerkerLabel(findMedewerkerById(i.melderId)).toLowerCase();
+        case "melder": return reporterLabel(i).toLowerCase();
         case "bijgewerkt": return Date.parse(i.laatstGewijzigd || 0) || 0;
         case "datum": return Date.parse(i.incidentDatum || 0) || 0;
         default: return 0;
@@ -374,7 +384,6 @@
 
   function renderRowHtml(i) {
     var cli = findClientById(i.clientId);
-    var melder = findMedewerkerById(i.melderId);
     var stat = statusInfo(i.status);
 
     var actionHtml;
@@ -393,7 +402,7 @@
       + '<td data-col="client">' + escHtml(clientLabel(cli)) + '</td>'
       + '<td data-col="categorie">' + escHtml(i.categorie || "Overig") + '</td>'
       + '<td data-col="status"><span class="incident-status-pill ' + stat.className + '">' + escHtml(stat.label) + '</span></td>'
-      + '<td data-col="melder">' + escHtml(medewerkerLabel(melder)) + '</td>'
+      + '<td data-col="melder">' + escHtml(reporterLabel(i)) + '</td>'
       + '<td data-col="bijgewerkt" title="' + escAttr(formatNlDateTime(i.laatstGewijzigd)) + '">' + escHtml(formatRelativeTime(i.laatstGewijzigd)) + '</td>'
       + '<td data-col="datum">' + escHtml(formatNlDate(i.incidentDatum)) + '</td>'
       + '<td class="incident-action-cell" data-col="acties">' + actionHtml + '</td>'
