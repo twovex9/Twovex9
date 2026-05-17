@@ -152,7 +152,7 @@
       return bewerken
         + ' <button type="button" class="btn-outline hr-restore-btn ic-action-btn" data-action="restore" data-id="' + escAttr(cat.id) + '">Activeren</button>';
     }
-    var deact = '<button type="button" class="btn-outline btn-danger-outline ic-action-btn" data-action="deactivate" data-id="' + escAttr(cat.id) + '">'
+    var deact = '<button type="button" class="btn-primary btn-primary--red ic-action-btn" data-action="deactivate" data-id="' + escAttr(cat.id) + '">'
       + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
       + ' Deactiveren</button>';
     return bewerken + " " + deact;
