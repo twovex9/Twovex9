@@ -20,17 +20,39 @@ const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!KEY) { console.error("FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt (--env-file=scripts/.env)."); process.exit(1); }
 
 const DL = path.join(os.homedir(), "Downloads");
+// Robuust: kies het NIEUWSTE bestand dat ook echt de TOP-BAR employees-basic
+// scrape is. Een stale `bs2-medewerkers-full.json` van een oudere/HR-scrape
+// (andere structuur, geen first_name/is_sick) wordt overgeslagen.
+function isTopbarScrape(file) {
+  try {
+    const root = JSON.parse(fs.readFileSync(file, "utf8"));
+    const src = String((root && root.source) || "");
+    const E = Array.isArray(root) ? root : (root.employees || []);
+    const e0 = E[0] || {};
+    return /employees-basic/i.test(src)
+      && Object.prototype.hasOwnProperty.call(e0, "first_name")
+      && Object.prototype.hasOwnProperty.call(e0, "is_sick");
+  } catch (e) { return false; }
+}
 function resolveInput() {
-  const exact = path.join(DL, "bs2-medewerkers-full.json");
-  if (fs.existsSync(exact)) return exact;
-  const cands = fs.readdirSync(DL)
+  const all = fs.readdirSync(DL)
     .filter((f) => /^bs2-medewerkers-full.*\.json$/i.test(f))
-    .map((f) => ({ f, m: fs.statSync(path.join(DL, f)).mtimeMs }))
+    .map((f) => ({ p: path.join(DL, f), f, m: fs.statSync(path.join(DL, f)).mtimeMs }))
     .sort((a, b) => b.m - a.m);
-  return cands.length ? path.join(DL, cands[0].f) : exact;
+  const valid = all.filter((x) => isTopbarScrape(x.p));
+  if (!valid.length) {
+    console.error("FOUT: geen geldige TOP-BAR employees-basic scrape in " + DL + ".");
+    console.error("Gevonden bs2-medewerkers-full*.json: " + (all.map((x) => x.f).join(", ") || "(geen)"));
+    console.error("Verwacht: source bevat 'employees-basic' + records met first_name & is_sick.");
+    console.error("Draai scripts/bs2-console-scrape-medewerkers.js opnieuw op /main-employee/employees.");
+    process.exit(1);
+  }
+  if (all[0] && !isTopbarScrape(all[0].p)) {
+    console.warn("LET OP: nieuwste bestand " + all[0].f + " is GEEN top-bar scrape (stale) — overgeslagen.");
+  }
+  return valid[0].p; // nieuwste GELDIGE
 }
 const INPUT = resolveInput();
-if (!fs.existsSync(INPUT)) { console.error("FOUT: geen bs2-medewerkers-full*.json in " + DL); process.exit(1); }
 console.log("Bestand:", INPUT);
 
 const H = { apikey: KEY, Authorization: "Bearer " + KEY, "Content-Type": "application/json" };
