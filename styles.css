@@ -18746,6 +18746,13 @@ button.besc-dtl-tab:hover {
   margin: 0;
 }
 
+/* [hidden] moet winnen: .im-field (display:flex) / .im-card overschrijven
+   anders het hidden-attribuut — zelfde patroon als .side-group__panel. */
+.im-field[hidden],
+.im-card[hidden] {
+  display: none !important;
+}
+
 /* Incident afhandelen + Taken (1-op-1 BS2, BS1-huisstijl) */
 .im-taken-add {
   border: 1px solid var(--line);
