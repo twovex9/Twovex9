@@ -120,16 +120,15 @@
         </label>
         <select class="search" id="taken-filter-status" style="max-width:180px">
           <option value="">Alle statussen</option>
-          <option value="open">Open</option>
-          <option value="in_progress">In behandeling</option>
-          <option value="voltooid">Voltooid</option>
-          <option value="geannuleerd">Geannuleerd</option>
+          <option value="--">—</option>
+          <option value="In behandeling">In behandeling</option>
+          <option value="Voltooid">Voltooid</option>
         </select>
         <select class="search" id="taken-filter-prioriteit" style="max-width:180px">
           <option value="">Alle prioriteiten</option>
-          <option value="hoog">Hoog</option>
-          <option value="midden">Midden</option>
-          <option value="laag">Laag</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
         </select>
         <select class="search" id="taken-filter-teamlid" style="max-width:200px" aria-label="Filter op teamlid">
           <option value="">Alle teamleden</option>
@@ -160,9 +159,8 @@
                 <th data-col="toegewezen"><div class="th-sort-inner"><span class="th-label">Toegewezen aan</span></div></th>
                 <th data-col="aangemaakt_door"><div class="th-sort-inner"><span class="th-label">Aangemaakt door</span></div></th>
                 <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
-                <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
                 <th data-col="deadline"><div class="th-sort-inner"><span class="th-label">Deadline</span></div></th>
-                <th data-col="aanmaak"><div class="th-sort-inner"><span class="th-label">Aangemaakt</span></div></th>
+                <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
                 <th></th>
               </tr>
             </thead>
@@ -223,18 +221,17 @@
             <label class="emp-verzuim-modal-field" style="flex:1">
               <span>Status</span>
               <select id="taken-add-status" class="comp-modal-input">
-                <option value="open">Open</option>
-                <option value="in_progress">In behandeling</option>
-                <option value="voltooid">Voltooid</option>
-                <option value="geannuleerd">Geannuleerd</option>
+                <option value="--">—</option>
+                <option value="In behandeling">In behandeling</option>
+                <option value="Voltooid">Voltooid</option>
               </select>
             </label>
             <label class="emp-verzuim-modal-field" style="flex:1">
               <span>Prioriteit</span>
               <select id="taken-add-prioriteit" class="comp-modal-input">
-                <option value="laag">Laag</option>
-                <option value="midden" selected>Midden</option>
-                <option value="hoog">Hoog</option>
+                <option value="Low" selected>Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
               </select>
             </label>
             <label class="emp-verzuim-modal-field" style="flex:1">
@@ -314,7 +311,7 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="medewerkers-data.js"></script>
-  <script src="taken-data.js"></script>
-  <script src="taken.js"></script>
+  <script src="taken-data.js?v=takenbs2"></script>
+  <script src="taken.js?v=takenbs2"></script>
 </body>
 </html>

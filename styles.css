@@ -14216,6 +14216,22 @@ button.planning-erm-new {
 .fact-status-pill--yellow { background: var(--yellow-soft); color: var(--yellow); }
 .fact-status-pill--red { background: var(--red-soft); color: var(--red); }
 
+/* Taken — deadline-groepering (1-op-1 BS2) */
+.taken-group-row td {
+  background: var(--surface-2, #f8fafc);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 12px;
+  font-size: var(--font-table-head);
+}
+.taken-group-name { font-weight: 700; color: var(--text); }
+.taken-group-count { color: var(--text-muted); margin-left: 4px; }
+.taken-group-empty td {
+  padding: 10px 12px;
+  color: var(--text-muted);
+  font-size: var(--font-table-cell);
+}
+
 /* ===== Employee-invoice detail (top-bar Facturen → factuur) ===== */
 .inv-detail-grid {
   display: grid;

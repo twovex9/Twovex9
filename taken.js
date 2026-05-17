@@ -28,24 +28,23 @@
     purgingId: null,
   };
 
+  // 1-op-1 BS2: verbatim status/priority-waarden.
   var STATUS_LABELS = {
-    open: "Open",
-    in_progress: "In behandeling",
-    voltooid: "Voltooid",
-    geannuleerd: "Geannuleerd",
+    "--": "—",
+    "In behandeling": "In behandeling",
+    "Voltooid": "Voltooid",
   };
-  var STATUS_NEXT = { open: "in_progress", in_progress: "voltooid", voltooid: "open" };
+  var STATUS_NEXT = { "--": "In behandeling", "In behandeling": "Voltooid", "Voltooid": "--" };
   var STATUS_CLASS = {
-    open: "color:var(--blue);background:var(--blue-soft);",
-    in_progress: "color:var(--yellow);background:var(--yellow-soft);",
-    voltooid: "color:var(--green);background:var(--green-soft);",
-    geannuleerd: "color:var(--text-muted);background:var(--line);",
+    "--": "color:var(--text-muted);background:var(--line);",
+    "In behandeling": "color:var(--yellow);background:var(--yellow-soft);",
+    "Voltooid": "color:var(--green);background:var(--green-soft);",
   };
-  var PRIORITEIT_LABELS = { laag: "Laag", midden: "Midden", hoog: "Hoog" };
+  var PRIORITEIT_LABELS = { Low: "Low", Medium: "Medium", High: "High" };
   var PRIORITEIT_CLASS = {
-    laag: "color:var(--text-muted);",
-    midden: "color:var(--blue);",
-    hoog: "color:var(--red);",
+    Low: "color:var(--text-muted);",
+    Medium: "color:var(--blue);",
+    High: "color:var(--red);",
   };
 
   function fmtNlDate(iso) {
@@ -102,7 +101,7 @@
     return items.filter(function (t) {
       if (!t) return false;
       if (!!t.archived !== !!state.showArchived) return false;
-      if (state.hideDone && (t.status === "voltooid" || t.status === "geannuleerd")) return false;
+      if (state.hideDone && t.status === "Voltooid") return false;
       if (state.filterStatus && t.status !== state.filterStatus) return false;
       if (state.filterPrioriteit && t.prioriteit !== state.filterPrioriteit) return false;
       // Sprint 8 / S8 — teamlid + deadline + aanmaakdatum filters
@@ -120,7 +119,7 @@
         if (String(t.toegewezenAanId) !== String(myId)) return false;
       }
       if (!q) return true;
-      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + medewerkerLabel(t.toegewezenAanId) + " " + medewerkerLabel(t.aangemaaktDoorId);
+      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + (t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId)) + " " + (t.aangemaaktDoorNaam || medewerkerLabel(t.aangemaaktDoorId));
       return hay.toLowerCase().indexOf(q) >= 0;
     });
   }
@@ -151,70 +150,104 @@
 
     return '<tr data-id="' + escapeHtml(t.id) + '">' +
       '<td data-col="naam">' + nameButton + (t.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(t.beschrijving.slice(0, 80)) + (t.beschrijving.length > 80 ? "…" : "") + '</span>' : '') + '</td>' +
-      '<td data-col="toegewezen">' + escapeHtml(medewerkerLabel(t.toegewezenAanId)) + '</td>' +
-      '<td data-col="aangemaakt_door">' + escapeHtml(medewerkerLabel(t.aangemaaktDoorId)) + '</td>' +
+      '<td data-col="toegewezen">' + escapeHtml(t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId) || "—") + '</td>' +
+      '<td data-col="aangemaakt_door">' + escapeHtml(t.aangemaaktDoorNaam || medewerkerLabel(t.aangemaaktDoorId) || "—") + '</td>' +
       '<td data-col="status">' + statusPill(t) + '</td>' +
-      '<td data-col="prioriteit">' + prioriteitPill(t) + '</td>' +
       '<td data-col="deadline">' + escapeHtml(fmtNlDate(t.deadline)) + '</td>' +
-      '<td data-col="aanmaak">' + escapeHtml(fmtNlDateTime(t.aanmaakdatum)) + '</td>' +
+      '<td data-col="prioriteit">' + prioriteitPill(t) + '</td>' +
       '<td class="hr-actions-cell">' + actionsCell + '</td>' +
     '</tr>';
   }
+
+  // 1-op-1 BS2: geen paginatie — alle taken, gegroepeerd op deadline-bucket.
+  function deadlineBucket(t) {
+    var dl = String(t && t.deadline || "").slice(0, 10);
+    if (!dl) return "geen";
+    var now = new Date();
+    var today = now.getFullYear() + "-"
+      + ("0" + (now.getMonth() + 1)).slice(-2) + "-"
+      + ("0" + now.getDate()).slice(-2);
+    if (dl < today) return "telaat";
+    if (dl === today) return "vandaag";
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var dow = end.getDay(); // 0=zo
+    var toSun = (7 - dow) % 7; // dagen tot zondag
+    end.setDate(end.getDate() + toSun);
+    var endStr = end.getFullYear() + "-"
+      + ("0" + (end.getMonth() + 1)).slice(-2) + "-"
+      + ("0" + end.getDate()).slice(-2);
+    if (dl <= endStr) return "dezeweek";
+    return "later";
+  }
+
+  var BUCKETS = [
+    { key: "vandaag", label: "Vandaag" },
+    { key: "telaat", label: "Te laat" },
+    { key: "dezeweek", label: "Deze week" },
+    { key: "later", label: "Later" },
+    { key: "geen", label: "Geen deadline" },
+  ];
 
   function render() {
     var tbody = document.getElementById("taken-tbody");
     if (!tbody) return;
 
     var visible = getVisible();
-    var total = visible.length;
-    var rpp = state.rowsPerPage || ROWS_PER_PAGE_DEFAULT;
-    var totalPages = Math.max(1, Math.ceil(total / rpp));
-    if (state.page > totalPages) state.page = totalPages;
+    var groups = { vandaag: [], telaat: [], dezeweek: [], later: [], geen: [] };
+    visible.forEach(function (t) {
+      var b = deadlineBucket(t);
+      (groups[b] || groups.geen).push(t);
+    });
 
-    var start = (state.page - 1) * rpp;
-    var pageItems = visible.slice(start, start + rpp);
-
-    if (pageItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text-muted);">Geen taken gevonden.</td></tr>';
-    } else {
-      tbody.innerHTML = pageItems.map(renderRow).join("");
-    }
+    var html = "";
+    BUCKETS.forEach(function (bk) {
+      var rows = groups[bk.key] || [];
+      html += '<tr class="taken-group-row"><td colspan="7">'
+        + '<span class="taken-group-name">' + escapeHtml(bk.label) + '</span> '
+        + '<span class="taken-group-count">(' + rows.length + ')</span></td></tr>';
+      if (!rows.length) {
+        html += '<tr class="taken-group-empty"><td colspan="7">Geen taken</td></tr>';
+      } else {
+        html += rows.map(renderRow).join("");
+      }
+    });
+    tbody.innerHTML = html;
 
     var rangeEl = document.getElementById("taken-pager-range");
-    if (rangeEl) {
-      if (total === 0) rangeEl.textContent = "0 van 0";
-      else rangeEl.textContent = (start + 1) + "-" + Math.min(total, start + pageItems.length) + " van " + total;
-    }
+    if (rangeEl) rangeEl.textContent = visible.length + " " + (visible.length === 1 ? "taak" : "taken");
     var pageEl = document.getElementById("taken-pager-page");
-    if (pageEl) pageEl.textContent = "Pagina " + state.page + " van " + totalPages;
-
-    document.getElementById("taken-pager-first").disabled = state.page <= 1;
-    document.getElementById("taken-pager-prev").disabled = state.page <= 1;
-    document.getElementById("taken-pager-next").disabled = state.page >= totalPages;
-    document.getElementById("taken-pager-last").disabled = state.page >= totalPages;
+    if (pageEl) pageEl.textContent = "";
+    ["taken-pager-first", "taken-pager-prev", "taken-pager-next", "taken-pager-last"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) { el.disabled = true; el.style.display = "none"; }
+    });
+    var rppWrap = document.querySelector('label[for="taken-rows-per-page"]');
+    if (rppWrap) rppWrap.style.display = "none";
   }
 
   /**
    * Sprint 8 / S8 — vul Teamlid-filter dropdown met alle actieve medewerkers.
    * Wordt herstellen na medewerkers-data update via besa:medewerkers-updated event.
    */
+  // 1-op-1 BS2: "Selecteer een teamlid" filtert op assignee (user-id uit de
+  // taak zelf), niet op medewerker-id. Vul uit de distinct assignees.
   function populateTeamlidFilter(sel) {
     if (!sel) return;
     var prev = sel.value || "";
     sel.innerHTML = '<option value="">Alle teamleden</option>';
-    if (!window.medewerkersDB || typeof window.medewerkersDB.getAllSync !== "function") return;
-    var list = window.medewerkersDB.getAllSync() || [];
-    list
-      .filter(function (m) { return m && !m.archived; })
-      .sort(function (a, b) {
-        var an = (a.voornaam || "") + " " + (a.achternaam || a.naam || "");
-        var bn = (b.voornaam || "") + " " + (b.achternaam || b.naam || "");
-        return an.localeCompare(bn, "nl", { sensitivity: "base" });
-      })
-      .forEach(function (m) {
+    var items = (window.takenDB && window.takenDB.getAllSync && window.takenDB.getAllSync()) || [];
+    var byId = {};
+    items.forEach(function (t) {
+      if (t && t.toegewezenAanId && !byId[t.toegewezenAanId]) {
+        byId[t.toegewezenAanId] = t.toegewezenAanNaam || t.toegewezenAanId;
+      }
+    });
+    Object.keys(byId)
+      .sort(function (a, b) { return String(byId[a]).localeCompare(String(byId[b]), "nl", { sensitivity: "base" }); })
+      .forEach(function (id) {
         var opt = document.createElement("option");
-        opt.value = m.id;
-        opt.textContent = ((m.voornaam || "") + " " + (m.achternaam || m.naam || "")).trim() || m.email || "Onbekend";
+        opt.value = id;
+        opt.textContent = byId[id] || "Onbekend";
         sel.appendChild(opt);
       });
     if (prev) sel.value = prev;
@@ -291,8 +324,8 @@
       naam.value = item.naam || "";
       beschrijving.value = item.beschrijving || "";
       toegewezen.value = item.toegewezenAanId || "";
-      status.value = item.status || "open";
-      prioriteit.value = item.prioriteit || "midden";
+      status.value = item.status || "--";
+      prioriteit.value = item.prioriteit || "Low";
       deadline.value = item.deadline ? String(item.deadline).slice(0, 10) : "";
       submit.textContent = "Opslaan";
     } else {
@@ -301,8 +334,8 @@
       naam.value = "";
       beschrijving.value = "";
       toegewezen.value = "";
-      status.value = "open";
-      prioriteit.value = "midden";
+      status.value = "--";
+      prioriteit.value = "Low";
       deadline.value = "";
       submit.textContent = "Toevoegen";
     }
@@ -510,7 +543,10 @@
       });
     });
 
-    window.addEventListener("besa:taken-updated", render);
+    window.addEventListener("besa:taken-updated", function () {
+      populateTeamlidFilter(document.getElementById("taken-filter-teamlid"));
+      render();
+    });
     window.addEventListener("besa:medewerkers-updated", function () { fillMedewerkerSelect(); render(); });
 
     // Bug #59 fix: Escape + Overlay close-ways voor alle 3 taken-modals
