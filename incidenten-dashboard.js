@@ -390,12 +390,12 @@
       ticks.push('<text class="id-axis" x="' + x(idx) + '" y="' + (h - padB + 18) + '" text-anchor="middle">' + lbl + '</text>');
     }
 
-    // Markers + tooltips
+    // Markers (geen kale browser-title; custom tooltip hieronder).
     var markers = counts.map(function (v, i) {
-      return '<circle class="id-line-pt" cx="' + x(i) + '" cy="' + y(v) + '" r="3.5">'
-        + '<title>' + formatNlDate(labels[i]) + ': ' + v + '</title></circle>';
+      return '<circle class="id-line-pt" cx="' + x(i) + '" cy="' + y(v) + '" r="3.5"></circle>';
     }).join("");
 
+    host.style.position = "relative";
     host.innerHTML = '<svg class="id-line-svg" viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '" preserveAspectRatio="none">'
       + '<defs><linearGradient id="id-line-grad" x1="0" x2="0" y1="0" y2="1">'
       + '<stop offset="0%" stop-color="var(--blue)" stop-opacity="0.28"/>'
@@ -405,8 +405,56 @@
       + '<path class="id-line-area" d="' + areaPts + '" fill="url(#id-line-grad)"/>'
       + '<path class="id-line-path" d="' + linePts + '" />'
       + markers
+      + '<line class="id-trend-cursor-line" x1="0" y1="' + padT + '" x2="0" y2="' + (padT + innerH) + '" style="display:none"/>'
+      + '<circle class="id-trend-cursor-dot" r="5" style="display:none"/>'
       + ticks.join("")
-      + '</svg>';
+      + '</svg>'
+      + '<div class="id-trend-tip" role="status" hidden></div>';
+
+    // Custom hover-tooltip: hover ergens over de grafiek → toont de
+    // dichtstbijzijnde dag, bv. "17-05-2026 — 9 incidenten".
+    var svgEl = host.querySelector(".id-line-svg");
+    var tip = host.querySelector(".id-trend-tip");
+    var curLine = host.querySelector(".id-trend-cursor-line");
+    var curDot = host.querySelector(".id-trend-cursor-dot");
+    if (svgEl && tip) {
+      var showAt = function (clientX) {
+        var r = svgEl.getBoundingClientRect();
+        if (r.width <= 0) return;
+        var svgX = ((clientX - r.left) / r.width) * w;
+        var i = Math.round((svgX - padL) / (stepX || 1));
+        if (i < 0) i = 0;
+        if (i > n - 1) i = n - 1;
+        var v = counts[i];
+        tip.innerHTML = '<span class="id-trend-tip-d">' + formatNlDate(labels[i]) + '</span>'
+          + '<span class="id-trend-tip-v">' + v + (v === 1 ? " incident" : " incidenten") + "</span>";
+        tip.hidden = false;
+        var px = (x(i) / w) * r.width;
+        var py = (y(v) / h) * r.height;
+        var tw = tip.offsetWidth, th = tip.offsetHeight;
+        var left = px - tw / 2;
+        if (left < 4) left = 4;
+        if (left + tw > r.width - 4) left = r.width - 4 - tw;
+        var top = py - th - 12;
+        if (top < 2) top = py + 14;
+        tip.style.left = Math.round(left) + "px";
+        tip.style.top = Math.round(top) + "px";
+        curLine.setAttribute("x1", x(i));
+        curLine.setAttribute("x2", x(i));
+        curLine.style.display = "";
+        curDot.setAttribute("cx", x(i));
+        curDot.setAttribute("cy", y(v));
+        curDot.style.display = "";
+      };
+      var hide = function () {
+        tip.hidden = true;
+        if (curLine) curLine.style.display = "none";
+        if (curDot) curDot.style.display = "none";
+      };
+      svgEl.addEventListener("pointermove", function (e) { showAt(e.clientX); });
+      svgEl.addEventListener("pointerdown", function (e) { showAt(e.clientX); });
+      svgEl.addEventListener("pointerleave", hide);
+    }
   }
 
   // ---------------------------------------------------------------------------
