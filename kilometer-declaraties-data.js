@@ -184,6 +184,121 @@
     return (d && d.bs2_scrape) || null;
   }
 
+  // ---------------------------------------------------------------------------
+  // Vergoeding-rekenmotor (1-op-1 BS2, bewezen 100% tegen alle 16 declaraties
+  // incl. cap-gevallen): per RIT cap op 100 km, daarna × €0,39, som → 2 dec.
+  //   total_kilometers   = Σ rit.kilometers
+  //   total_reimbursement = round( Σ min(rit.kilometers, 100) × 0,39 , 2 )
+  // Alleen voor bewerkbare (draft) declaraties; ingediende/vergrendelde
+  // blijven de VERBATIM BS2-waarde houden (worden nooit gemuteerd).
+  // ---------------------------------------------------------------------------
+  var KM_RATE = 0.39, KM_RIT_CAP = 100;
+  function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+  function computeTotals(recs) {
+    var km = 0, eur = 0;
+    (recs || []).forEach(function (r) {
+      var k = Number(r && r.kilometers) || 0;
+      km += k;
+      eur += Math.min(k, KM_RIT_CAP) * KM_RATE;
+    });
+    return { km: round2(km), eur: round2(eur) };
+  }
+  function genRecId() {
+    try {
+      if (global.crypto && typeof global.crypto.randomUUID === "function") {
+        return global.crypto.randomUUID();
+      }
+    } catch (e) { /* */ }
+    return "kmr-" + Date.now() + "-" + Math.random().toString(16).slice(2, 10);
+  }
+
+  async function persistDeclTotals(declId) {
+    var s = String(declId);
+    var recs = recList().filter(function (r) { return r && String(r.declaratieId) === s; });
+    var t = computeTotals(recs);
+    var arr = declList();
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && String(arr[i].id) === s) {
+        arr[i] = Object.assign({}, arr[i], {
+          totalKilometers: t.km, totalReimbursement: t.eur,
+        });
+        break;
+      }
+    }
+    setDecl(arr);
+    if (global.besaSupabase) {
+      var res = await global.besaSupabase.from(T_DECL).update({
+        total_kilometers: t.km,
+        total_reimbursement: t.eur,
+        laatst_gewijzigd: new Date().toISOString(),
+      }).eq("id", declId);
+      if (res.error) throw res.error;
+    }
+    return t;
+  }
+
+  async function addRecord(p) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!p || !p.declaratieId) throw new Error("declaratieId vereist");
+    var nowIso = new Date().toISOString();
+    var row = {
+      id: genRecId(),
+      declaratie_id: p.declaratieId,
+      datum: p.datum || null,
+      beschrijving: p.beschrijving || "",
+      kilometers: Number(p.kilometers) || 0,
+      type: p.type || "manual",
+      type_display: p.typeDisplay || (p.type === "office" ? "Naar kantoor" : "Handmatig"),
+      is_automatic: false,
+      locatie_naam: p.locatieNaam || "",
+      locatie_bs2_id: p.locatieBs2Id || null,
+      aanmaakdatum: nowIso,
+      laatst_gewijzigd: nowIso,
+    };
+    var res = await global.besaSupabase.from(T_REC).insert(row).select().single();
+    if (res.error) throw res.error;
+    var rec = recRowToObj(res.data || row);
+    var rl = recList(); rl.push(rec); setRec(rl);
+    await persistDeclTotals(p.declaratieId);
+    dispatchUpdated("addRecord");
+    return rec;
+  }
+
+  async function updateRecord(id, patch) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (id == null) throw new Error("record-id vereist");
+    var upd = { laatst_gewijzigd: new Date().toISOString() };
+    if (patch && "datum" in patch) upd.datum = patch.datum || null;
+    if (patch && "beschrijving" in patch) upd.beschrijving = patch.beschrijving || "";
+    if (patch && "kilometers" in patch) upd.kilometers = Number(patch.kilometers) || 0;
+    if (patch && "locatieNaam" in patch) upd.locatie_naam = patch.locatieNaam || "";
+    if (patch && "locatieBs2Id" in patch) upd.locatie_bs2_id = patch.locatieBs2Id || null;
+    var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    var rec = recRowToObj(res.data);
+    var rl = recList();
+    for (var i = 0; i < rl.length; i++) {
+      if (rl[i] && String(rl[i].id) === String(id)) { rl[i] = rec; break; }
+    }
+    setRec(rl);
+    if (rec && rec.declaratieId) await persistDeclTotals(rec.declaratieId);
+    dispatchUpdated("updateRecord");
+    return rec;
+  }
+
+  async function deleteRecord(id) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (id == null) throw new Error("record-id vereist");
+    var rl = recList();
+    var found = rl.find(function (r) { return r && String(r.id) === String(id); });
+    var declId = found ? found.declaratieId : null;
+    var res = await global.besaSupabase.from(T_REC).delete().eq("id", id);
+    if (res.error) throw res.error;
+    setRec(rl.filter(function (r) { return r && String(r.id) !== String(id); }));
+    if (declId) await persistDeclTotals(declId);
+    dispatchUpdated("deleteRecord");
+  }
+
   global.kilometerDeclaratiesDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -193,6 +308,10 @@
     getForMedewerkerSync: getForMedewerkerSync,
     getRecordsForDeclaratieSync: getRecordsForDeclaratieSync,
     getRawBs2: getRawBs2,
+    computeTotals: computeTotals,
+    addRecord: addRecord,
+    updateRecord: updateRecord,
+    deleteRecord: deleteRecord,
   };
 
   bootstrap();

@@ -19516,12 +19516,16 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-size: var(--font-table-cell);
   font-weight: 500;
 }
-.km-status-pill--ingediend {
+.km-status-pill--green {
   background: var(--green);
   color: var(--surface);
 }
-.km-status-pill--nietingediend {
-  background: var(--text-muted);
+.km-status-pill--yellow {
+  background: var(--yellow);
+  color: var(--surface);
+}
+.km-status-pill--red {
+  background: var(--red);
   color: var(--surface);
 }
 
@@ -19560,13 +19564,17 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-size: var(--font-base);
   font-weight: 500;
 }
-.km-detail-status--ingediend {
+.km-detail-status--green {
   background: var(--green-soft);
   color: var(--green);
 }
-.km-detail-status--nietingediend {
+.km-detail-status--yellow {
   background: var(--yellow-soft);
   color: var(--yellow);
+}
+.km-detail-status--red {
+  background: var(--red-soft);
+  color: var(--red);
 }
 
 /* Type pills in detail-tabel */
@@ -19654,6 +19662,12 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 }
 .km-add-btn {
   white-space: nowrap;
+}
+.km-add-btn:disabled,
+.km-add-btn.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Pop-up: Kilometers toevoegen — keuze-modal */
