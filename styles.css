@@ -18180,6 +18180,27 @@ button.besc-dtl-tab:hover {
 .id-grid-line { stroke: var(--line, #e5e7eb); stroke-width: 1; stroke-dasharray: 2 4; }
 .id-axis { font-size: 10px; fill: var(--text-muted); font-family: inherit; }
 
+/* Hover-tooltip "Incidenten per dag" — toont datum + aantal per dag */
+.id-trend-tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--surface, #fff);
+  border: 1px solid var(--line-strong, #cbd5e1);
+  border-radius: var(--r-md, 8px);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+.id-trend-tip[hidden] { display: none; }
+.id-trend-tip-d { font-size: 11px; color: var(--text-muted); }
+.id-trend-tip-v { font-size: 13px; font-weight: 700; color: var(--text); }
+.id-trend-cursor-line { stroke: var(--line-strong, #cbd5e1); stroke-width: 1; stroke-dasharray: 3 3; }
+.id-trend-cursor-dot { fill: var(--blue, #2563eb); stroke: var(--surface, #fff); stroke-width: 2; }
+
 /* Donut */
 .id-donut-wrap {
   display: flex;
