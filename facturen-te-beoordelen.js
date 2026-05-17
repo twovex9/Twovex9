@@ -184,27 +184,31 @@
     document.addEventListener("click", function () {
       document.querySelectorAll("#fact-tb-table .th-sort-menu").forEach(function (m) { m.setAttribute("hidden", ""); });
     });
-    // Periode-filter = BS1-huisstijl BesaDateRange (mount + hidden inputs).
+    // Periode-filter = BS1-huisstijl BesaDateRange. mount() verwacht DOM-
+    // elementen (niet id-strings). Fout hier mag de tabel NOOIT breken.
     var pStart = $("fact-tb-period-start"), pEnd = $("fact-tb-period-end");
-    if (pStart && pEnd && window.BesaDateRange && window.BesaDateRange.mount) {
-      window.BesaDateRange.mount({
-        container: "fact-tb-period", startInput: "fact-tb-period-start",
-        endInput: "fact-tb-period-end", allowEmpty: true, emptyLabel: "Periode",
-      });
-      var onPer = function () {
-        var f = pStart.value, t = pEnd.value;
-        state.period = (f && t) ? { from: f, to: t } : null;
-        state.page = 1; render();
-      };
-      pStart.addEventListener("change", onPer);
-      pEnd.addEventListener("change", onPer);
+    var pCont = $("fact-tb-period");
+    if (pStart && pEnd && pCont && window.BesaDateRange && window.BesaDateRange.mount) {
+      try {
+        window.BesaDateRange.mount({
+          container: pCont, startInput: pStart, endInput: pEnd,
+          allowEmpty: true, emptyLabel: "Periode",
+        });
+        var onPer = function () {
+          var f = pStart.value, t = pEnd.value;
+          state.period = (f && t) ? { from: f, to: t } : null;
+          state.page = 1; render();
+        };
+        pStart.addEventListener("change", onPer);
+        pEnd.addEventListener("change", onPer);
+      } catch (e) { /* date-picker optioneel — tabel blijft werken */ }
     }
     window.addEventListener("besa:invoices-updated", render);
   }
 
   function init() {
-    wire();
     render();
+    wire();
     if (window.invoicesDB && window.invoicesDB.ready) window.invoicesDB.ready.then(render).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
