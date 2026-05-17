@@ -1224,6 +1224,17 @@ h1 {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+/* Actieve tab/chip — duidelijk gevuld blauw (huisstijl), zodat zichtbaar
+   is welke geselecteerd is (Taken Mijn/Alle, verlof, instellingen). */
+.filter-chip--active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--surface);
+}
+.filter-chip--active::before {
+  background: var(--surface) !important;
+}
+
 .filter-chip::before {
   content: "";
   width: 8px;
