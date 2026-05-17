@@ -3,12 +3,15 @@
  * kilometers.js — page-script voor kilometers.html. 1-op-1 BS2.
  *
  * BS2-model: één DECLARATIE = 1 medewerker × 1 maand
- * (status, total_kilometers, total_reimbursement, submitted_at,
- * submission_status) met per-dag RECORDS. Totalen komen VERBATIM uit
- * BS2 — niets herrekenen. Bron: window.kilometerDeclaratiesDB.
+ * (submission_status drie-staat: submitted/draft/locked) met per-dag
+ * RECORDS. Bron: window.kilometerDeclaratiesDB.
  *
  * Twee views: Overzicht (declaraties) en Detail (?decl=<id> → per-dag).
- * Read-only spiegel van BS2 (geen toevoegen/bewerken/verwijderen).
+ * Een DRAFT (geel "Nog niet ingediend", deadline niet verstreken) is
+ * bewerkbaar: ritten toevoegen/bewerken/verwijderen → de data-laag
+ * herrekent + persist de totalen (Σ min(rit,100)×€0,39, 1-op-1 BS2).
+ * submitted (groen) en locked (rood "Vergrendeld") zijn read-only en
+ * houden de VERBATIM BS2-totalen.
  */
 (function () {
   "use strict";
@@ -98,6 +101,11 @@
     if (meta.status === "submitted") return "Ingediend";
     if (meta.status === "locked") return "Vergrendeld";
     return "Nog niet ingediend";
+  }
+  // Bewerkbaar = 1-op-1 BS2: alleen een draft die NIET ingediend en NIET
+  // vergrendeld is (deadline niet verstreken). submitted/locked = read-only.
+  function isDeclEditable(d) {
+    return statusMeta(d).status === "draft";
   }
 
   function toast(kind, msg) {
@@ -305,6 +313,7 @@
     statusEl.className = "km-detail-status km-detail-status--" + sm.color;
     statusEl.innerHTML = statusIconSvg(sm.icon, 16) + " " + escHtml(sm.message);
 
+    var editable = isDeclEditable(d);
     var tbody = $("km-detail-tbody");
     if (pageRows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen ritten in deze maand-declaratie</td></tr>';
@@ -320,7 +329,12 @@
           + '<td data-col="locatie">' + escHtml(r.locatieNaam || "-") + '</td>'
           + '<td data-col="dienst">' + (r.isAutomatic ? "Automatisch" : "—") + '</td>'
           + '<td data-col="kilometers" class="td-num">' + formatKm(r.kilometers) + '</td>'
-          + '<td data-col="acties" class="km-detail-actions"></td>'
+          + '<td data-col="acties" class="km-detail-actions">'
+          + (editable
+            ? '<button type="button" class="km-row-edit" data-rec="' + escAttr(r.id) + '" aria-label="Bewerken" title="Bewerken"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+              + '<button type="button" class="employee-delete-btn km-row-del" data-rec="' + escAttr(r.id) + '" aria-label="Verwijderen" title="Verwijderen"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>'
+            : '')
+          + '</td>'
           + '</tr>';
       }).join("");
     }
@@ -333,9 +347,19 @@
     $("km-detail-pager-next").disabled = state.detail.page >= maxPage;
     $("km-detail-pager-last").disabled = state.detail.page >= maxPage;
 
-    // Totalen VERBATIM uit BS2 (declaratie-niveau), niet herrekend.
+    // Totalen op declaratie-niveau. Bewerkbare (draft) declaraties worden
+    // door de data-laag herrekend + gepersist (Σ min(rit,100)×€0,39);
+    // ingediend/vergrendeld blijven VERBATIM BS2. Toon altijd de
+    // opgeslagen declaratie-waarde.
     $("km-totals-km").textContent = formatKm(d.totalKilometers);
     $("km-totals-bedrag").textContent = formatEur(d.totalReimbursement);
+
+    var addBtn = $("km-add-open-btn");
+    if (addBtn) {
+      addBtn.hidden = false;
+      addBtn.disabled = !editable;
+      addBtn.classList.toggle("is-disabled", !editable);
+    }
 
     applyDetailSortIndicators();
   }
@@ -444,6 +468,213 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Record-CRUD voor bewerkbare (draft) declaraties — 1-op-1 BS2-flow:
+  // Toevoegen → keuze (Handmatige invoer / Naar kantoor) → formulier;
+  // per rij Bewerken (potlood) + Verwijderen (prullenbak, slider-confirm).
+  // De data-laag herrekent + persist de totalen (Σ min(rit,100)×€0,39).
+  // ---------------------------------------------------------------------------
+  function openModal(id) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = false;
+    el.removeAttribute("hidden");
+    el.setAttribute("aria-hidden", "false");
+    var f = el.querySelector("input, select, textarea, button");
+    if (f) { try { f.focus(); } catch (e) { /* */ } }
+  }
+  function closeModal(id) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = true;
+    el.setAttribute("hidden", "");
+    el.setAttribute("aria-hidden", "true");
+  }
+  function setErr(id, msg) {
+    var e = $(id);
+    if (!e) return;
+    if (msg) { e.textContent = msg; e.hidden = false; }
+    else { e.textContent = ""; e.hidden = true; }
+  }
+  function currentDecl() {
+    return state.detail.decl
+      ? window.kilometerDeclaratiesDB.getByIdSync(state.detail.decl)
+      : null;
+  }
+  function recordById(recId) {
+    var d = currentDecl();
+    if (!d) return null;
+    var recs = window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(d.id) || [];
+    return recs.find(function (r) { return r && String(r.id) === String(recId); }) || null;
+  }
+  function fillLocatieSelect() {
+    var sel = $("km-add-kantoor-locatie");
+    if (!sel) return;
+    var locs = [];
+    try {
+      if (window.locatiesDB && window.locatiesDB.getAllSync) {
+        locs = (window.locatiesDB.getAllSync() || []).filter(function (l) { return l && !l.archived; });
+      }
+    } catch (e) { /* */ }
+    sel.innerHTML = '<option value="">Selecteer Locaties</option>'
+      + locs.map(function (l) {
+        return '<option value="' + escAttr(l.id) + '">' + escHtml(l.naam || l.name || "Locatie") + '</option>';
+      }).join("");
+  }
+
+  function wireRecordCrud() {
+    var addBtn = $("km-add-open-btn");
+    if (addBtn) {
+      addBtn.addEventListener("click", function () {
+        var d = currentDecl();
+        if (!d || !isDeclEditable(d)) return;
+        openModal("km-add-choice-modal");
+      });
+    }
+    // Keuze-modal
+    [["km-add-choice-close"], ["km-add-choice-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-add-choice-modal"); });
+    });
+    var cH = $("km-choice-handmatig");
+    if (cH) cH.addEventListener("click", function () {
+      closeModal("km-add-choice-modal");
+      var f = $("km-add-manual-form"); if (f) f.reset();
+      setErr("km-add-manual-error", "");
+      openModal("km-add-manual-modal");
+    });
+    var cK = $("km-choice-kantoor");
+    if (cK) cK.addEventListener("click", function () {
+      closeModal("km-add-choice-modal");
+      var f = $("km-add-kantoor-form"); if (f) f.reset();
+      setErr("km-add-kantoor-error", "");
+      fillLocatieSelect();
+      openModal("km-add-kantoor-modal");
+    });
+
+    // Handmatige invoer — opslaan
+    [["km-add-manual-close"], ["km-add-manual-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-add-manual-modal"); });
+    });
+    var mForm = $("km-add-manual-form");
+    if (mForm) mForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var d = currentDecl();
+      if (!d || !isDeclEditable(d)) { closeModal("km-add-manual-modal"); return; }
+      var datum = ($("km-add-manual-datum").value || "").trim();
+      var beschr = ($("km-add-manual-beschr").value || "").trim();
+      var kmv = parseFloat(($("km-add-manual-km").value || "").replace(",", "."));
+      if (!datum) { setErr("km-add-manual-error", "Datum is verplicht."); return; }
+      if (!beschr) { setErr("km-add-manual-error", "Beschrijving is verplicht."); return; }
+      if (!isFinite(kmv) || kmv < 0) { setErr("km-add-manual-error", "Vul een geldig aantal kilometers in."); return; }
+      var btn = $("km-add-manual-submit"); if (btn) btn.disabled = true;
+      window.kilometerDeclaratiesDB.addRecord({
+        declaratieId: d.id, datum: datum, beschrijving: beschr,
+        kilometers: kmv, type: "manual", typeDisplay: "Handmatig",
+      }).then(function () {
+        closeModal("km-add-manual-modal");
+        toast("saved", "Rit toegevoegd");
+      }).catch(function (err) {
+        setErr("km-add-manual-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+      }).finally(function () { if (btn) btn.disabled = false; });
+    });
+
+    // Naar kantoor — opslaan
+    [["km-add-kantoor-close"], ["km-add-kantoor-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-add-kantoor-modal"); });
+    });
+    var kForm = $("km-add-kantoor-form");
+    if (kForm) kForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var d = currentDecl();
+      if (!d || !isDeclEditable(d)) { closeModal("km-add-kantoor-modal"); return; }
+      var datum = ($("km-add-kantoor-datum").value || "").trim();
+      var locSel = $("km-add-kantoor-locatie");
+      var locId = locSel ? locSel.value : "";
+      var locNaam = locSel && locSel.selectedIndex > 0 ? locSel.options[locSel.selectedIndex].text : "";
+      var beschr = ($("km-add-kantoor-beschr").value || "").trim();
+      var kmRaw = ($("km-add-kantoor-km").value || "").replace(",", ".");
+      var kmv = kmRaw === "" ? 0 : parseFloat(kmRaw);
+      if (!datum) { setErr("km-add-kantoor-error", "Datum is verplicht."); return; }
+      if (!locId) { setErr("km-add-kantoor-error", "Locatie is verplicht."); return; }
+      if (!isFinite(kmv) || kmv < 0) { setErr("km-add-kantoor-error", "Vul een geldig aantal kilometers in."); return; }
+      var btn = $("km-add-kantoor-submit"); if (btn) btn.disabled = true;
+      window.kilometerDeclaratiesDB.addRecord({
+        declaratieId: d.id, datum: datum,
+        beschrijving: beschr || "Woon-werkverkeer (heen en terug)",
+        kilometers: kmv, type: "office", typeDisplay: "Naar kantoor",
+        locatieNaam: locNaam, locatieBs2Id: locId,
+      }).then(function () {
+        closeModal("km-add-kantoor-modal");
+        toast("saved", "Rit toegevoegd");
+      }).catch(function (err) {
+        setErr("km-add-kantoor-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+      }).finally(function () { if (btn) btn.disabled = false; });
+    });
+
+    // Bewerken
+    [["km-edit-close"], ["km-edit-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-edit-modal"); });
+    });
+    var eForm = $("km-edit-form");
+    if (eForm) eForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var id = $("km-edit-id").value;
+      var datum = ($("km-edit-datum").value || "").trim();
+      var beschr = ($("km-edit-beschr").value || "").trim();
+      var kmv = parseFloat(($("km-edit-km").value || "").replace(",", "."));
+      if (!datum) { setErr("km-edit-error", "Datum is verplicht."); return; }
+      if (!beschr) { setErr("km-edit-error", "Beschrijving is verplicht."); return; }
+      if (!isFinite(kmv) || kmv < 0) { setErr("km-edit-error", "Vul een geldig aantal kilometers in."); return; }
+      var btn = $("km-edit-submit"); if (btn) btn.disabled = true;
+      window.kilometerDeclaratiesDB.updateRecord(id, {
+        datum: datum, beschrijving: beschr, kilometers: kmv,
+      }).then(function () {
+        closeModal("km-edit-modal");
+        toast("saved", "Rit bijgewerkt");
+      }).catch(function (err) {
+        setErr("km-edit-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+      }).finally(function () { if (btn) btn.disabled = false; });
+    });
+
+    // Delegated: rij-acties (Bewerken / Verwijderen) in detail-tabel
+    var tb = $("km-detail-tbody");
+    if (tb) tb.addEventListener("click", function (e) {
+      var editBtn = e.target && e.target.closest && e.target.closest(".km-row-edit");
+      var delBtn = e.target && e.target.closest && e.target.closest(".km-row-del");
+      if (editBtn) {
+        var rec = recordById(editBtn.getAttribute("data-rec"));
+        if (!rec) return;
+        $("km-edit-id").value = rec.id;
+        $("km-edit-datum").value = (rec.datum ? String(rec.datum).slice(0, 10) : "");
+        $("km-edit-beschr").value = rec.beschrijving || "";
+        $("km-edit-km").value = rec.kilometers;
+        setErr("km-edit-error", "");
+        openModal("km-edit-modal");
+        return;
+      }
+      if (delBtn) {
+        var r = recordById(delBtn.getAttribute("data-rec"));
+        if (!r) return;
+        var preview = formatNlDate(r.datum) + " · " + (r.beschrijving || r.typeDisplay || "Rit") + " · " + formatKm(r.kilometers);
+        Promise.resolve(
+          typeof window.showSliderConfirmModal === "function"
+            ? window.showSliderConfirmModal({
+              title: "Bent u zeker dat deze rit verwijderd wordt?",
+              preview: preview, okLabel: "Verwijderen", cancelLabel: "Annuleren",
+            })
+            : window.confirm("Rit verwijderen?")
+        ).then(function (ok) {
+          if (!ok) return;
+          return window.kilometerDeclaratiesDB.deleteRecord(r.id).then(function () {
+            toast("deleted", "Rit verwijderd");
+          });
+        }).catch(function (err) {
+          toast("error", "Verwijderen mislukt: " + (err && err.message ? err.message : err));
+        });
+      }
+    });
+  }
+
   function wireUp() {
     $("km-search").addEventListener("input", function () { state.overview.search = this.value || ""; state.overview.page = 1; renderOverview(); });
 
@@ -522,7 +753,7 @@
         return {
           Medewerker: declNaam(a),
           Periode: a.monthDisplay || formatPeriod(a.jaar, a.maand),
-          Status: a.status === "submitted" ? "Ingediend" : "Concept",
+          Status: statusShortLabel(statusMeta(a)),
           "Ingediend op": a.submittedAt ? formatNlDate(a.submittedAt) : "",
           "Totale kilometers": a.totalKilometers,
           "Totale vergoeding": Number(a.totalReimbursement || 0).toFixed(2),
@@ -548,9 +779,7 @@
     $("km-detail-pager-next").addEventListener("click", function () { state.detail.page++; renderDetail(); });
     $("km-detail-pager-last").addEventListener("click", function () { state.detail.page = 99999; renderDetail(); });
 
-    // Read-only spiegel van BS2: geen toevoegen/bewerken/verwijderen.
-    var addBtn = $("km-add-open-btn");
-    if (addBtn) addBtn.hidden = true;
+    wireRecordCrud();
 
     wireSortMenus("km-overview-table", "overview");
     wireSortMenus("km-detail-table", "detail");

@@ -19663,6 +19663,12 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .km-add-btn {
   white-space: nowrap;
 }
+.km-add-btn:disabled,
+.km-add-btn.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 /* Pop-up: Kilometers toevoegen — keuze-modal */
 .km-choice-modal {

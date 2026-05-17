@@ -456,16 +456,8 @@
           <input class="modal-input" type="date" id="km-add-manual-datum" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-add-manual-beschr">Beschrijving</label>
-          <textarea class="modal-input" id="km-add-manual-beschr" rows="3" placeholder="Bv. Van de woongroep naar de cliënt voor begeleiding"></textarea>
-        </div>
-        <div class="modal-field">
-          <label class="modal-label" for="km-add-manual-locatie">Locatie</label>
-          <input class="modal-input" type="text" id="km-add-manual-locatie" />
-        </div>
-        <div class="modal-field">
-          <label class="modal-label" for="km-add-manual-dienst">Dienst</label>
-          <input class="modal-input" type="text" id="km-add-manual-dienst" />
+          <label class="modal-label" for="km-add-manual-beschr">Beschrijving <span class="im-req">*</span></label>
+          <textarea class="modal-input" id="km-add-manual-beschr" rows="3" required placeholder="Bv. Van de woongroep naar de cliënt voor begeleiding"></textarea>
         </div>
         <div class="modal-field">
           <label class="modal-label" for="km-add-manual-km">Kilometers <span class="im-req">*</span></label>
@@ -493,12 +485,19 @@
           <input class="modal-input" type="date" id="km-add-kantoor-datum" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-add-kantoor-beschr">Beschrijving</label>
-          <input class="modal-input" type="text" id="km-add-kantoor-beschr" placeholder="Woon-werkverkeer (heen en terug)" value="Woon-werkverkeer (heen en terug)" />
+          <label class="modal-label" for="km-add-kantoor-locatie">Locatie <span class="im-req">*</span></label>
+          <select class="modal-input" id="km-add-kantoor-locatie" required>
+            <option value="">Selecteer Locaties</option>
+          </select>
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-add-kantoor-km">Kilometers heen en terug <span class="im-req">*</span></label>
-          <input class="modal-input" type="number" min="0" step="0.01" id="km-add-kantoor-km" required placeholder="Bv. 24 (12 km heen + 12 km terug)" />
+          <label class="modal-label" for="km-add-kantoor-beschr">Beschrijving</label>
+          <input class="modal-input" type="text" id="km-add-kantoor-beschr" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="km-add-kantoor-km">Kilometers (Retour)</label>
+          <input class="modal-input" type="number" min="0" step="0.01" id="km-add-kantoor-km" placeholder="0" />
+          <p class="km-totals-hint">Afstand wordt automatisch berekend op basis van je thuisadres naar de geselecteerde locatie</p>
         </div>
         <p class="im-error" id="km-add-kantoor-error" role="alert" hidden></p>
       </form>
@@ -523,16 +522,8 @@
           <input class="modal-input" type="date" id="km-edit-datum" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-edit-beschr">Beschrijving</label>
-          <textarea class="modal-input" id="km-edit-beschr" rows="3"></textarea>
-        </div>
-        <div class="modal-field">
-          <label class="modal-label" for="km-edit-locatie">Locatie</label>
-          <input class="modal-input" type="text" id="km-edit-locatie" />
-        </div>
-        <div class="modal-field">
-          <label class="modal-label" for="km-edit-dienst">Dienst</label>
-          <input class="modal-input" type="text" id="km-edit-dienst" />
+          <label class="modal-label" for="km-edit-beschr">Beschrijving <span class="im-req">*</span></label>
+          <textarea class="modal-input" id="km-edit-beschr" rows="3" required></textarea>
         </div>
         <div class="modal-field">
           <label class="modal-label" for="km-edit-km">Kilometers <span class="im-req">*</span></label>
@@ -547,29 +538,8 @@
     </div>
   </div>
 
-  <!-- Delete confirm (slider) -->
-  <div class="modal-overlay modal-overlay--confirm" id="km-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="km-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="km-purge-title" class="modal-title">Declaratie verwijderen</h2>
-        <button type="button" class="modal-close" id="km-purge-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Deze kilometer-declaratie wordt <strong>permanent</strong> verwijderd.</p>
-        <p class="employee-delete-preview" id="km-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="km-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="km-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="km-purge-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="km-purge-confirm" disabled>Verwijderen</button>
-      </div>
-    </div>
-  </div>
+  <!-- Verwijderen gaat via window.showSliderConfirmModal (save-feedback.js) -->
+
 
   <div class="app-toast" id="km-toast" role="status" aria-live="polite" hidden></div>
 
@@ -591,7 +561,8 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="medewerkers-data.js" defer></script>
-  <script src="kilometer-declaraties-data.js?v=kmbs2" defer></script>
-  <script src="kilometers.js?v=kmbs2" defer></script>
+  <script src="locaties-data.js" defer></script>
+  <script src="kilometer-declaraties-data.js?v=kmcrud" defer></script>
+  <script src="kilometers.js?v=kmcrud" defer></script>
 </body>
 </html>
