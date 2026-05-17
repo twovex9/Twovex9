@@ -124,6 +124,12 @@
     if (preset === "all") {
       state.dateFrom = null;
       state.dateTo = null;
+    } else if (preset === "month") {
+      // Standaard bij openen/refresh: 1e t/m laatste dag van de HUIDIGE
+      // maand (dynamisch uit de datum van dat moment) — user-keuze.
+      var nu = new Date();
+      state.dateFrom = startOfDay(new Date(nu.getFullYear(), nu.getMonth(), 1));
+      state.dateTo = new Date(nu.getFullYear(), nu.getMonth() + 1, 0, 23, 59, 59);
     } else {
       var days = parseInt(preset, 10) || 30;
       var to = new Date();
@@ -729,9 +735,10 @@
   }
 
   function init() {
-    // 1-op-1 BS2: BS2 opent het dashboard ZONDER datumfilter (hele set,
-    // timeline = laatste 7 dagen). BS1 spiegelt dat met "Alles" als default.
-    applyPreset("all");
+    // User-keuze: dashboard opent/refresht ALTIJD op de huidige maand
+    // (1e t/m laatste dag). De berekening zelf blijft 1-op-1 BS2; alleen
+    // het default-bereik wijkt bewust af van BS2 (BS2 opent zonder filter).
+    applyPreset("month");
     wireUp();
     var box = $("id-period-range");
     var sEl = $("id-date-from"), eEl = $("id-date-to");
