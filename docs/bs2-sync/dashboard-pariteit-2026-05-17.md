@@ -162,3 +162,42 @@ data-fixbaar** (de data is nergens op te halen) en mag **niet gefaket** worden
 (user-regel). Het is een BS2-interne dashboard-aggregatie die zijn eigen API
 niet blootgeeft. Eerlijk gerapporteerd; backup `_bs2_dispositions_bak_2026_05_17`
 blijft staan voor reversibiliteit.
+
+---
+
+## OPLOSSING 2026-05-17 — optie A: 4 charts uit BS2's autoritatieve snapshot
+
+User-keuze: de 4 verdelings-charts (care_types / locations / payment_methods /
+processing_time) moeten BS2's **eigen** dashboard-getallen tonen (geen faken —
+het zijn BS2's echte rpc-cijfers; deze charts zijn periode-onafhankelijk,
+identiek in alle 6 periodes).
+
+**Diagnose-bevestiging (user draaide read-only diagnose in BS2-console):**
+élke `/api/dispositions`-query → **151** (baseline, alle trashed/archived-
+varianten, `with_trashed`, `filter[status]=archived`). Dashboard care_types
+totaal = **155**. Cliënten zonder locatie hebben géén enkel locatie-veld op
+disposition óf client. ⇒ de 155-set + locaties bestaan uitsluitend in BS2's
+dashboard-rpc, nergens als records ophaalbaar.
+
+**Implementatie:**
+- Nieuwe tabel `public.bs2_dashboard_snapshot` (1 rij `id='current'`, RLS
+  authenticated) met BS2's exact vastgelegde rpc-arrays:
+  - care_types (sum 155): Verblijf 93, Ambulant intern 35, WLZ 7, Gecombineerd 20
+  - payment_methods (sum 155): ons 122, manual 26, wlz 7
+  - processing_time: 30+ 587, 21-30 54, 11-20 131, 0-10 133
+  - locations (11 entries, sum 148; incl. 2× "Ambulant" 1) — exact BS2-volgorde
+  - bron: `BS2 /api/rpc dispositions:dashboard` 2026-05-17, periode-onafhankelijk
+- `beschikkingen-dashboard-data.js`: `fetchAll()` haalt de snapshot op;
+  `computeKpis()` gebruikt de snapshot-arrays voor die 4 charts (graceful
+  fallback = de mirror-berekening als de snapshot ontbreekt). KPI-kaarten +
+  Maandelijkse Betalingen blijven uit `bs2_dispositions`/`_payments` (matchten
+  al 100% met BS2 na de data-resync). Cache-bust `?v=bd4snap`.
+
+Verwacht eindresultaat (na merge, live te verifiëren over 6 periodes): **100%
+pariteit** — alle KPI's + Maandelijkse Betalingen uit de mirror (= BS2) én de 4
+verdelings-charts = BS2's eigen autoritatieve snapshot. Geen enkel getal gefaket.
+
+**Toekomstige refresh:** wijzigt BS2's onderliggende data, dan moet de snapshot
+opnieuw worden vastgelegd (BS2 `/api/rpc dispositions:dashboard` → upsert rij
+`id='current'` in `bs2_dashboard_snapshot`). De per-rij-mirror ververst via de
+bestaande `write-overzicht-full.mjs`-flow.
