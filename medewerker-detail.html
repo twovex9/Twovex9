@@ -1,19 +1,18 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Werkruimte</title>
+  <title>Medewerker</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="besa-export.js?v=ex1" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
-  <div class="app-shell app-shell--home">
+  <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
         <a href="home.html" class="brand-logo" aria-label="Home">
@@ -69,7 +68,7 @@
                 <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
             </div>            <a href="taken.html" class="top-link">Taken</a>
-            <a href="medewerkers-overzicht.html" class="top-link">Medewerkers</a>
+            <a href="medewerkers-overzicht.html" class="top-link is-active">Medewerkers</a>
             <a href="beleid.html" class="top-link">Beleid</a>
             <a href="audit.html" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -95,178 +94,88 @@
       </div>
     </header>
 
-    <main class="content content--workspace">
-      <section class="workspace-header-card">
-        <h1 id="workspace-title">Werkruimte</h1>
-        <p id="workspace-subtitle">Overzicht en acties</p>
-      </section>
-
-      <section class="workspace-grid">
-        <div class="workspace-card">
-          <div class="workspace-card-head">
-            <h2>Overzicht</h2>
-            <span class="workspace-chip" id="workspace-counter">0 records</span>
+    <main class="content">
+      <div class="me-detail-grid" id="me-detail-root">
+        <div class="me-detail-card">
+          <div class="me-detail-hero">
+            <button type="button" class="me-detail-back" id="me-back-btn" aria-label="Terug naar overzicht">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            </button>
           </div>
-          <div class="workspace-stats" id="workspace-stats"></div>
-        </div>
+          <div class="me-detail-avatar" id="me-avatar">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+          </div>
+          <div class="me-detail-name" id="me-name">—</div>
+          <div class="me-detail-email-sub" id="me-email-sub"></div>
 
-        <div class="workspace-card">
-          <div class="workspace-admin-bar">
-            <label class="switch switch--yellow workspace-toggle">
-              <input type="checkbox" id="workspace-show-archived" />
-              <span class="switch-slider"></span>
-              <span class="switch-label">Toon gearchiveerd</span>
-            </label>
-            <div class="workspace-admin-actions">
-              <button type="button" class="btn-outline" id="workspace-bulk-archive-btn" disabled>Archiveer selectie</button>
-              <button type="button" class="btn-outline" id="workspace-bulk-restore-btn" disabled>Herstel selectie</button>
-              <button type="button" class="btn-outline" id="workspace-reset-btn">Reset module</button>
+          <div class="me-detail-section">
+            <h3>Contactgegevens</h3>
+            <div class="me-detail-row" id="me-row-phone">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.74-1.24a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z"/></svg>
+              <span id="me-phone">—</span>
+            </div>
+            <div class="me-detail-row" id="me-row-email">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+              <span id="me-email">—</span>
             </div>
           </div>
-          <div class="workspace-card-head">
-            <h2>Items</h2>
-            <div class="workspace-actions">
-              <div class="columns-dropdown">
-                <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="ws-columns-menu-btn" aria-label="Kolommen">
-                  <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                  Kolommen
-                </button>
-                <div class="columns-panel" id="ws-columns-panel" role="menu" aria-labelledby="ws-columns-menu-btn" hidden>
-                  <div class="columns-panel-title">Kolommen weergeven</div>
-                  <ul class="columns-list" id="ws-columns-list" role="none"></ul>
-                </div>
-              </div>
-              <button type="button" class="btn-outline" id="workspace-export-btn">Export CSV</button>
-              <button type="button" class="btn-primary" id="workspace-add-btn">+ Item toevoegen</button>
+
+          <div class="me-detail-section">
+            <h3>Overige informatie</h3>
+            <div class="me-detail-row me-detail-row--split">
+              <span class="me-detail-label">Medewerkersnummer:</span>
+              <span class="me-pill" id="me-number">—</span>
+            </div>
+            <div class="me-detail-row me-detail-row--split">
+              <span class="me-detail-label">Datum uit dienst:</span>
+              <span id="me-end-date">-</span>
+            </div>
+            <div class="me-detail-row me-detail-row--split" style="margin-top:8px;">
+              <span class="me-detail-label">Verjaardag:</span>
+              <span id="me-bday">—</span>
+            </div>
+            <div class="me-bday-pills">
+              <span class="me-pill" id="me-bday-days">— Dagen</span>
+              <span class="me-pill" id="me-bday-hours">0 Uren</span>
             </div>
           </div>
-          <input type="search" id="workspace-search" class="search workspace-search" placeholder="Zoeken..." aria-label="Zoek records" />
-          <div class="workspace-table-wrap">
-            <table class="employees-table workspace-table">
-              <thead>
-                <tr>
-                  <th class="workspace-th-check" data-col="select">
-                    <input type="checkbox" id="workspace-select-all" class="table-checkbox" aria-label="Selecteer alles" />
-                  </th>
-                  <th data-col="naam">Naam</th>
-                  <th data-col="status">Status</th>
-                  <th data-col="bijgewerkt">Laatst bijgewerkt</th>
-                  <th data-col="door">Door</th>
-                  <th class="workspace-th-trash" data-col="acties" aria-label="Archiveren"></th>
-                </tr>
-              </thead>
-              <tbody id="workspace-table-body"></tbody>
-            </table>
-          </div>
-          <p class="workspace-empty" id="workspace-empty" hidden>Geen items gevonden.</p>
         </div>
-      </section>
+
+        <div class="me-detail-main">
+          <div class="me-tabbar">
+            <button type="button" class="me-tab is-active" id="me-tab-verzuim">Verzuim</button>
+          </div>
+          <div class="me-detail-panel" id="me-verzuim-panel">
+            <h2>Verzuim</h2>
+            <p>Registreer een nieuw ziekteverzuim voor deze medewerker.</p>
+            <button type="button" class="btn-primary" id="me-verzuim-add-btn">+ Verzuim toevoegen</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <div class="modal-overlay" id="workspace-add-modal" hidden aria-hidden="true">
-    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-add-title" tabindex="-1">
+  <div class="modal-overlay modal-overlay--confirm" id="me-sick-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="me-sick-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="workspace-add-title" class="modal-title">Item toevoegen</h2>
-        <button type="button" class="modal-close" id="workspace-add-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <form class="modal-form" id="workspace-add-form" novalidate>
-        <div class="modal-body">
-          <div class="modal-field">
-            <label class="modal-label" for="workspace-item-name">Naam</label>
-            <input id="workspace-item-name" class="modal-input" type="text" required />
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="workspace-item-status">Status</label>
-            <select id="workspace-item-status" class="modal-input modal-select">
-              <option value="Actief">Actief</option>
-              <option value="Concept">Concept</option>
-              <option value="Afgerond">Afgerond</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="workspace-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="btn-primary">Opslaan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="workspace-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-archive-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="workspace-archive-title" class="modal-title">Item archiveren</h2>
-        <button type="button" class="modal-close" id="workspace-archive-close-btn" aria-label="Sluiten">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <h2 id="me-sick-title" class="modal-title">Verzuim toevoegen</h2>
+        <button type="button" class="modal-close" id="me-sick-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">Het item wordt gearchiveerd. Zet <strong>Toon gearchiveerd</strong> aan om gearchiveerde items te bekijken.</p>
-        <p class="employee-delete-preview" id="workspace-archive-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="workspace-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input
-              type="range"
-              id="workspace-archive-slider"
-              class="employee-delete-slider"
-              min="0"
-              max="100"
-              value="0"
-              step="1"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="0"
-              aria-label="Bevestig archiveren"
-            />
-          </div>
-        </div>
+        <p class="employee-delete-msg">Registreer de eerste ziektedag voor deze medewerker.</p>
+        <label class="emp-verzuim-modal-field" style="display:block;margin-top:10px;">
+          <span>Eerste ziektedag</span>
+          <input type="date" id="me-sick-date" class="comp-modal-input">
+        </label>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="workspace-archive-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="workspace-archive-confirm-btn" disabled>Archiveren</button>
+        <button type="button" class="btn-outline" id="me-sick-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="me-sick-confirm-btn">Verzuim opslaan</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="workspace-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="workspace-purge-title" class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="workspace-purge-close-btn" aria-label="Sluiten">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit item wordt <strong>permanent</strong> uit de lijst gehaald. Dit kan niet ongedaan worden gemaakt.</p>
-        <p class="employee-delete-preview" id="workspace-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="workspace-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input
-              type="range"
-              id="workspace-purge-slider"
-              class="employee-delete-slider"
-              min="0"
-              max="100"
-              value="0"
-              step="1"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="0"
-              aria-label="Bevestig definitief verwijderen"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="workspace-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="workspace-purge-confirm-btn" disabled>Definitief verwijderen</button>
-      </div>
-    </div>
-  </div>
-
+  <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="error-reporter.js?v=er1"></script>
@@ -282,7 +191,7 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="top-nav-overflow.js?v=imcols9"></script>
-  <script src="werkruimte.js"></script>
+  <script src="main-employees-data.js?v=me1"></script>
+  <script src="medewerker-detail.js?v=me1"></script>
 </body>
 </html>
