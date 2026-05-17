@@ -57,17 +57,40 @@ priority("Low"|…), collaborators[], incident_id, files[]}`
 Response: task met `id, creator{}, …`. Taken zijn een **aparte entiteit**
 gekoppeld via `incident_id`.
 
-**Dashboard** `GET /api/incidents/dashboard` → exact:
+**Dashboard** `GET /api/incidents/dashboard` — DEFINITIEF (bewezen via
+user-DevTools-recorder, 31 echte calls, 2026-05-17):
 ```
+?filter[start_date]=YYYY-MM-DD&filter[end_date]=YYYY-MM-DD
+  &filter[client]=<uuid>&filter[employee]=<uuid>   (alle optioneel)
 {
  overview:{ total_incidents, status_counts:{pending,in_progress,completed} },
  status_distribution:{ pending:{count,percentage}, in_progress:{…}, completed:{…} },
- average_resolution_time:{ hours, note },   // uren tussen created_at en afhandeling
- last_7_days:[ {date,day,count} … ~30 dagen ]
+ average_resolution_time:{ hours, note },
+ last_7_days:[ {date:"YYYY-MM-DD", day:"<EN weekday>", count} … ],
+ by_category:[ {category_id 1-13 (BS2-order), category_name, count} … ALLE 13 ],
+ by_location:[ {location_id, color, location_name, count} … alleen >0; GEEN null/Onbekend-bucket ],
+ improvement_measures:{ total, completed, pending, completion_percentage, measures:[] }
 }
 ```
-(% = count/total*100; avg_resolution = gem. uren created_at→resolved_at over
-afgehandelde; last_7_days = per dag #incidenten op incident_date/created_at.)
+**Bindende regels (1-op-1):**
+- **PERIODE-AFHANKELIJK.** Géén filter → hele set. Mét filter → ALLE blokken
+  filteren. (Stap-4d-aanname "periode-onafhankelijk" was FOUT.)
+- Filter op **`created_at`** (registratiedatum = BS1 `aanmaakdatum`), NIET
+  `incident_date` (gebeurtenisdatum). Bewezen: BS1 `aanmaakdatum::date` ==
+  `bs2_scrape.created_at` 144/144; april=104, 14-30apr=90, maart=0, feb=1
+  exact. Vergelijk op kalenderdatum-string (tz-veilig).
+- `status_distribution.percentage` = round(count/total*100); total 0 → 0.
+- `average_resolution_time.hours` = null als geen afgehandelde in periode;
+  `note` = vast: "Gemiddelde tijd tussen het aanmaken van een incident en de
+  afhandeling ervan." (altijd tonen).
+- `last_7_days` = 1 entry per kalenderdag van start t/m eind (GEEN min-7);
+  zonder bereik = laatste 7 dagen t/m vandaag. count op `created_at`.
+- `by_location` telt **niet** incidenten zonder locatie (geen Onbekend);
+  total/by_category tellen ze wél mee.
+- BS1: locatie komt uit `data.bs2_scrape.location` (locatieBs2) — BS1-FK
+  `locatie_id` is bij gereconcilieerde incidenten leeg.
+BS1-implementatie 1-op-1 in `incidenten-dashboard.js` (#223+#224), veld-voor-
+veld live geverifieerd 2026-05-17 (2 clean runs, 0 afwijkingen).
 
 ## BS2 categorieën (`/api/incident-categories`, 13)
 
