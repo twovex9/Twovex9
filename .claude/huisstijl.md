@@ -81,6 +81,7 @@ Gebruik **geen** inline `<style>`-blok in HTML. Voeg page-specifieke CSS toe in 
 - Archief-toggle = `.switch.switch--yellow` met label "Gearchiveerd".
 - "Vereist actie"-toggle = `.switch.switch--red`.
 - Pagination/footer = `.table-footer` zoals in `index.html`.
+- **Datum-/periodekeuze = ALTIJD `window.BesaDateRange` (`besa-daterange.js`)** — de herbruikbare BS1-huisstijl range-kalender (gestileerde pill + dubbele-maand popover + preset-dropdown, NL-labels). Patroon: container-`<div>` + twee `<input type="hidden">` (ISO yyyy-mm-dd) als bron van waarheid; component dispatcht `change` op die inputs zodat bestaande paginalogica blijft werken. Mount: `window.BesaDateRange.mount({container,startInput,endInput,allowEmpty,emptyLabel,year})`. Laad `besa-daterange.js` vóór de page-JS. Referentie-implementaties: `beschikkingen-dashboard`, `facturen`, `incidenten-dashboard`. **Nooit** losse native `<input type="date">` in een toolbar/header/filterbalk gebruiken — die zijn niet onze huisstijl. Quick-preset-knopjes naast de pill mogen, maar moeten na keuze de pill syncen via `widget.setRange(start,end)`.
 
 ## Vaste don'ts
 

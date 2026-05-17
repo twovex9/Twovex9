@@ -109,6 +109,16 @@
   // ---------------------------------------------------------------------------
   // Date-range presets
   // ---------------------------------------------------------------------------
+  // BS1-huisstijl datum-range component (besa-daterange.js). De preset-
+  // knoppen (7d/30d/…) zetten de verborgen inputs direct; daarna syncen we
+  // de pill zodat hij de gekozen periode toont.
+  var drWidget = null;
+  function syncDateWidget() {
+    if (!drWidget) return;
+    var f = $("id-date-from"), t = $("id-date-to");
+    drWidget.setRange(f ? f.value : "", t ? t.value : "");
+  }
+
   function applyPreset(preset) {
     state.rangePreset = preset;
     if (preset === "all") {
@@ -126,6 +136,7 @@
     if (fromEl) fromEl.value = state.dateFrom ? isoToInputDate(state.dateFrom) : "";
     if (toEl) toEl.value = state.dateTo ? isoToInputDate(state.dateTo) : "";
     renderPresetButtons();
+    syncDateWidget();
   }
 
   function renderPresetButtons() {
@@ -693,6 +704,18 @@
   function init() {
     applyPreset("30");
     wireUp();
+    var box = $("id-period-range");
+    var sEl = $("id-date-from"), eEl = $("id-date-to");
+    if (box && sEl && eEl && window.BesaDateRange) {
+      drWidget = window.BesaDateRange.mount({
+        container: box,
+        startInput: sEl,
+        endInput: eEl,
+        allowEmpty: true,
+        emptyLabel: "Alle periodes",
+        year: new Date().getFullYear(),
+      });
+    }
     renderAll();
   }
 

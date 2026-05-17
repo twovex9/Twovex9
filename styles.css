@@ -17984,27 +17984,15 @@ button.besc-dtl-tab:hover {
 .content--inc-dashboard { padding-bottom: 40px; }
 
 /* Datumbereik in header */
+/* Schone flex-row: de BesaDateRange-pill (besa-daterange.js) draagt zijn
+   eigen huisstijl; de container is alleen een rij met de preset-knoppen
+   (geen eigen rand/achtergrond → geen dubbele pill). */
 .id-daterange {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-pill);
-  padding: 6px 10px;
-  color: var(--text-muted);
-  font-size: 13px;
 }
-.id-daterange input[type="date"] {
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--text);
-  padding: 2px 4px;
-  outline: none;
-}
-.id-daterange-sep { color: var(--text-muted); }
+.id-daterange-wrap { position: relative; }
 .id-range-preset {
   background: transparent;
   border: 1px solid transparent;
