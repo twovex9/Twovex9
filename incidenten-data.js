@@ -103,25 +103,30 @@
     if (hasOwn(safe, "adviesRichtlijnen")) payload.advies_richtlijnen = strOrNull(safe.adviesRichtlijnen);
   }
 
-  // Leidt de 1-op-1 BS2-relaties af uit data.bs2_scrape. De BS1-FK's voor
-  // reporter/locatie staan bewust op null (de BS2-id's mappen niet 1-op-1 op
-  // BS1-tabellen); de volledige BS2-objecten blijven 100% bewaard in
-  // data.bs2_scrape en worden hier read-only ontsloten zodat de UI exact
-  // toont wat BS2 toont ("Gemeld door", locatie, cliënten, categorie, ...).
+  // DATA-SLIM (bindend, memory methodology_bs2_reconciliatie): de volledige
+  // BS2-scrape blijft 100% bewaard in Supabase `data.bs2_scrape`, maar mag
+  // NOOIT in de localStorage read-cache komen — 144 × volledige scrape =
+  // ~1 MB en kelderde de cache over de browserquota (incidenten verdwenen
+  // op productie). rowToObj ontsluit hier daarom alléén de kleine velden die
+  // de UI echt nodig heeft (reporter voor "Gemeld door", BS2-locatienaam).
+  // De volledige raw is on-demand op te halen via getRawBs2(id) — niet
+  // gecachet. BS1-FK's voor reporter/locatie blijven null (BS2-id's mappen
+  // niet 1-op-1 op BS1-tabellen).
+  function slimPerson(p) {
+    if (!p) return null;
+    return { id: p.id || null, name: p.name || "", email: p.email || "" };
+  }
+  function slimLocatie(l) {
+    if (!l) return null;
+    return { id: l.id || null, name: l.name || "" };
+  }
   function deriveBs2(row) {
     var d = (row && row.data) || null;
     var s = (d && d.bs2_scrape) || null;
     return {
       bs2Id: (d && (d.bs2_id || (s && s.id))) || null,
-      bs2: s || null,
-      reporter: (s && s.reporter) || null,
-      locatieBs2: (s && s.location) || null,
-      clientsBs2: (s && Array.isArray(s.clients)) ? s.clients : [],
-      categoryBs2: (s && s.category) || null,
-      otherParties: (s && Array.isArray(s.other_parties)) ? s.other_parties : [],
-      bestanden: (s && Array.isArray(s.files)) ? s.files : [],
-      employeesBs2: (s && Array.isArray(s.employees)) ? s.employees : [],
-      tasksBs2: (s && Array.isArray(s.tasks)) ? s.tasks : [],
+      reporter: slimPerson(s && s.reporter),
+      locatieBs2: slimLocatie(s && s.location),
     };
   }
 
@@ -141,7 +146,19 @@
 
   function writeCache(items) {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); }
-    catch (e) { /* */ }
+    catch (e) { /* localStorage kan vol zitten (andere modules) — _mem is de bron */ }
+  }
+
+  // In-memory bron-van-waarheid binnen de sessie. localStorage is best-effort:
+  // de gedeelde browserquota wordt door andere (zwaardere) module-caches
+  // opgevuld, dus de sync-API mag NIET enkel op localStorage leunen.
+  var _mem = null;
+  function setData(items) {
+    _mem = Array.isArray(items) ? items : [];
+    writeCache(_mem);
+  }
+  function currentList() {
+    return (_mem !== null) ? _mem : readCache();
   }
 
   function dispatchUpdated(source) {
@@ -259,7 +276,7 @@
     readyPromise = (async function () {
       try {
         var items = await fetchAll();
-        writeCache(items);
+        setData(items);
         dispatchUpdated("bootstrap");
       } catch (err) {
         reportSilent("Bootstrap", err);
@@ -270,7 +287,7 @@
 
   async function refresh() {
     var items = await fetchAll();
-    writeCache(items);
+    setData(items);
     dispatchUpdated("refresh");
     return items;
   }
@@ -278,7 +295,7 @@
   function getByIdSync(id) {
     if (id == null) return null;
     var s = String(id);
-    var found = readCache().find(function (r) { return r && String(r.id) === s; });
+    var found = currentList().find(function (r) { return r && String(r.id) === s; });
     return found ? Object.assign({}, found) : null;
   }
 
@@ -292,9 +309,9 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
-    cache.unshift(obj);
-    writeCache(cache);
+    var list = currentList().slice();
+    list.unshift(obj);
+    setData(list);
     dispatchUpdated("add");
     return obj;
   }
@@ -313,10 +330,10 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
-    var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
-    if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-    writeCache(cache);
+    var list = currentList().slice();
+    var idx = list.findIndex(function (r) { return r && String(r.id) === String(id); });
+    if (idx >= 0) list[idx] = obj; else list.unshift(obj);
+    setData(list);
     dispatchUpdated("update");
     return obj;
   }
@@ -332,13 +349,25 @@
       .delete()
       .eq("id", id);
     if (res.error) throw res.error;
-    var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
-    writeCache(cache);
+    var list = currentList().filter(function (r) { return r && String(r.id) !== String(id); });
+    setData(list);
     dispatchUpdated("remove");
     return true;
   }
 
-  function getAllSync() { return readCache(); }
+  function getAllSync() { return currentList(); }
+
+  // Volledige BS2-raw on-demand (NIET gecachet — DATA-SLIM). Voor een
+  // detailweergave die een ruw BS2-veld nodig heeft dat niet in de
+  // kolommen/slimme afgeleiden zit.
+  async function getRawBs2(id) {
+    if (!global.besaSupabase || id == null) return null;
+    var res = await global.besaSupabase
+      .from(TABLE).select("data").eq("id", id).single();
+    if (res.error) throw res.error;
+    var d = res.data && res.data.data;
+    return (d && d.bs2_scrape) || null;
+  }
 
   // Dynamic CATEGORIES: leest uit incidentCategorieenDB als die geladen is
   // (Stage 9g — beheerbare categorieën). Fallback op een lege array zodat
@@ -364,6 +393,7 @@
     delete: remove,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
+    getRawBs2: getRawBs2,
     // Constants voor UI dropdowns:
     get CATEGORIES() { return getDynamicCategories(); },
     STATUSES: [
