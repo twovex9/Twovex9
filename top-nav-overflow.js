@@ -120,6 +120,14 @@
       activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
     }
 
+    if (!activeLink && (
+      currentFile === "facturen-te-beoordelen.html" ||
+      currentFile === "facturen-alle.html" ||
+      currentFile === "invoice-detail.html"
+    )) {
+      activeLink = links.find((link) => getTopLinkLabel(link) === "Facturen") || null;
+    }
+
     if (!activeLink) {
       activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
     }
