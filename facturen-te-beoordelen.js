@@ -135,6 +135,42 @@
     $("fact-tb-pager-prev").disabled = state.page <= 1;
     $("fact-tb-pager-next").disabled = state.page >= maxPage;
     $("fact-tb-pager-last").disabled = state.page >= maxPage;
+    applyColumnVisibility();
+  }
+
+  // Kolomkiezer (huisstijl, zoals Kilometers): toggle .col-hidden per data-col.
+  var COLUMNS = [
+    { id: "maand", label: "Maand" },
+    { id: "medewerker", label: "Medewerker" },
+    { id: "factuurnr", label: "Factuurnummer" },
+    { id: "status", label: "Status" },
+    { id: "datum", label: "Aanmaakdatum" },
+    { id: "bedrag", label: "Bedrag" },
+  ];
+  function buildColumnsPanel() {
+    var list = $("fact-tb-columns-list");
+    if (!list) return;
+    list.innerHTML = "";
+    COLUMNS.forEach(function (c) {
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "column-toggle is-checked";
+      b.setAttribute("data-col", c.id);
+      b.setAttribute("role", "menuitemcheckbox");
+      b.setAttribute("aria-checked", "true");
+      b.innerHTML = '<span class="column-check" aria-hidden="true">✓</span> ' + c.label;
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+  function applyColumnVisibility() {
+    document.querySelectorAll("#fact-tb-columns-list .column-toggle").forEach(function (btn) {
+      var visible = btn.getAttribute("aria-checked") === "true";
+      document.querySelectorAll('#fact-tb-table [data-col="' + btn.getAttribute("data-col") + '"]')
+        .forEach(function (cell) { cell.classList.toggle("col-hidden", !visible); });
+    });
   }
 
   function openDetail(id) {
@@ -203,10 +239,32 @@
         pEnd.addEventListener("change", onPer);
       } catch (e) { /* date-picker optioneel — tabel blijft werken */ }
     }
+    var colBtn = $("fact-tb-columns-menu-btn"), colPanel = $("fact-tb-columns-panel");
+    if (colBtn && colPanel) {
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (colPanel.hasAttribute("hidden")) { colPanel.removeAttribute("hidden"); colBtn.setAttribute("aria-expanded", "true"); }
+        else { colPanel.setAttribute("hidden", ""); colBtn.setAttribute("aria-expanded", "false"); }
+      });
+      colPanel.addEventListener("click", function (e) { e.stopPropagation(); });
+      var colList = $("fact-tb-columns-list");
+      if (colList) colList.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest && e.target.closest(".column-toggle");
+        if (!t) return;
+        var on = t.getAttribute("aria-checked") !== "true";
+        t.setAttribute("aria-checked", on ? "true" : "false");
+        t.classList.toggle("is-checked", on);
+        applyColumnVisibility();
+      });
+      document.addEventListener("click", function () {
+        colPanel.setAttribute("hidden", ""); colBtn.setAttribute("aria-expanded", "false");
+      });
+    }
     window.addEventListener("besa:invoices-updated", render);
   }
 
   function init() {
+    buildColumnsPanel();
     render();
     wire();
     if (window.invoicesDB && window.invoicesDB.ready) window.invoicesDB.ready.then(render).catch(function () {});
