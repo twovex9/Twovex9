@@ -139,8 +139,24 @@
         JSON.stringify(Array.isArray(items) ? items : [])
       );
     } catch (e) {
-      /* */
+      /* localStorage kan vol zijn (gedeelde quota) — _mem is de bron */
     }
+  }
+
+  // In-memory bron-van-waarheid binnen de sessie. De gedeelde browser-quota
+  // (~5 MB) wordt door zware module-caches volgemaakt; zodra writeCache
+  // faalt zou getAllSync()/getClientenItems() anders [] teruggeven en de
+  // hele cliëntenlijst "verdwijnen" terwijl de data veilig in Supabase
+  // staat. _mem houdt de volledige set in RAM (geen quota) zodat de UI
+  // ALTIJD alles toont; localStorage blijft een best-effort sneller-laden-
+  // cache. Niets wordt gestript — alle clientvelden blijven 100% behouden.
+  var _mem = null;
+  function setData(items) {
+    _mem = Array.isArray(items) ? items : [];
+    writeCache(_mem);
+  }
+  function currentList() {
+    return (_mem !== null) ? _mem : readCache();
   }
 
   function dispatchUpdated() {
@@ -229,7 +245,7 @@
       try {
         await maybeMigrateLocalToSupabase();
         var items = await fetchAll();
-        writeCache(items);
+        setData(items);
         try { window.localStorage.setItem(SEED_FLAG, "1"); } catch (e) { /* */ }
         dispatchUpdated();
         // Fase E.7 — subscribe to Realtime changes voor live multi-user sync
@@ -245,12 +261,12 @@
   async function refresh() {
     try {
       var items = await fetchAll();
-      writeCache(items);
+      setData(items);
       dispatchUpdated();
       return items;
     } catch (err) {
       console.error("[clientenDB] Refresh mislukt:", err);
-      return readCache();
+      return currentList();
     }
   }
 
@@ -267,14 +283,14 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
+    var cache = currentList().slice();
     // Dedupe-bescherming: als het id al in de cache staat (bv. door een
     // optimistic write elders) vervang het record i.p.v. push (anders 2x
     // dezelfde rij). Smoke-test 2026-05-08 toonde dit gedrag bij +Cliënt
     // toevoegen-modal: cache had na save 2x hetzelfde id.
     var existingIdx = cache.findIndex(function (c) { return c && String(c.id) === String(obj.id); });
     if (existingIdx >= 0) cache[existingIdx] = obj; else cache.push(obj);
-    writeCache(cache);
+    setData(cache);
     dispatchUpdated();
     return obj;
   }
@@ -310,10 +326,10 @@
       .single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
-    var cache = readCache();
+    var cache = currentList().slice();
     var idx = cache.findIndex(function (c) { return c && String(c.id) === String(id); });
     if (idx >= 0) cache[idx] = obj; else cache.push(obj);
-    writeCache(cache);
+    setData(cache);
     dispatchUpdated();
     return obj;
   }
@@ -334,22 +350,22 @@
       .delete()
       .eq("id", id);
     if (res.error) throw res.error;
-    var cache = readCache().filter(function (c) { return c && String(c.id) !== String(id); });
-    writeCache(cache);
+    var cache = currentList().filter(function (c) { return c && String(c.id) !== String(id); });
+    setData(cache);
     dispatchUpdated();
     return true;
   }
 
   // ---------------------------------------------------------------------------
-  // Synchrone helpers (vanuit cache) — backward compat
+  // Synchrone helpers (vanuit _mem / cache) — backward compat
   // ---------------------------------------------------------------------------
   function getAllSync() {
-    return readCache().map(ensureClientDetailFields);
+    return currentList().map(ensureClientDetailFields);
   }
 
   function getByIdSync(id) {
     if (!id) return null;
-    var items = readCache();
+    var items = currentList();
     var found = items.find(function (c) { return c && String(c.id) === String(id); });
     return found ? ensureClientDetailFields(Object.assign({}, found)) : null;
   }
@@ -363,10 +379,11 @@
    * cache nog leeg is, maar geeft direct de huidige cache terug.
    */
   function getClientenItems() {
-    var cache = readCache();
+    var cache = currentList();
     if (!cache.length) {
       // Triggert bootstrap (no-op als al gestart). Geeft tussentijds [] terug,
-      // re-render gebeurt via "besa:clienten-updated".
+      // re-render gebeurt via "besa:clienten-updated" (bootstrap vult _mem,
+      // ook als de localStorage-cache niet geschreven kon worden).
       bootstrap();
     }
     return cache.map(ensureClientDetailFields);
@@ -381,8 +398,8 @@
   function setClientenItems(items) {
     if (!Array.isArray(items)) return;
     var oldMap = {};
-    readCache().forEach(function (c) { if (c && c.id) oldMap[c.id] = c; });
-    writeCache(items);
+    currentList().forEach(function (c) { if (c && c.id) oldMap[c.id] = c; });
+    setData(items);
     items.forEach(function (c) {
       if (!c || !c.id) return;
       var prev = oldMap[c.id];
@@ -413,8 +430,8 @@
   function upsertClienten(client) {
     if (!client) return false;
     if (!client.id) client.id = generateClientenId();
-    // Eerst lokaal in de cache zetten zodat sync reads de wijziging zien.
-    var cache = readCache();
+    // Eerst lokaal in _mem/cache zetten zodat sync reads de wijziging zien.
+    var cache = currentList().slice();
     var idx = cache.findIndex(function (c) { return c && String(c.id) === String(client.id); });
     var merged;
     if (idx >= 0) {
@@ -424,7 +441,7 @@
       merged = Object.assign({ aanmaakdatum: isoNow(), laatstGewijzigd: isoNow() }, client);
       cache.push(merged);
     }
-    writeCache(cache);
+    setData(cache);
     dispatchUpdated();
 
     // En vervolgens fire-and-forget naar Supabase synchroniseren.
@@ -441,8 +458,8 @@
 
   function deleteClientenById(id) {
     if (!id) return false;
-    var cache = readCache().filter(function (c) { return c && String(c.id) !== String(id); });
-    writeCache(cache);
+    var cache = currentList().filter(function (c) { return c && String(c.id) !== String(id); });
+    setData(cache);
     dispatchUpdated();
     if (window.besaSupabase) {
       remove(id).catch(function (err) { console.error("[clientenDB] delete sync mislukt:", err); });
