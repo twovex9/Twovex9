@@ -110,11 +110,37 @@
     go();
   }
 
+  // ---------------------------------------------------------------------------
+  // Robuuste check: is de sessie ÉCHT weg? Eerst getSession; als die (vaak
+  // door een refresh-race) null geeft, één expliciete refreshSession-poging.
+  // Pas TRUE (= echt uitgelogd) als beide niets opleveren. Voorkomt het
+  // willekeurig uitloggen midden in gebruik + de flikker bij herinloggen
+  // (transient null → herstel i.p.v. sessie vernietigen).
+  // ---------------------------------------------------------------------------
+  async function confirmReallyLoggedOut() {
+    try {
+      var s = await window.besaSupabase.auth.getSession();
+      if (s && s.data && s.data.session && s.data.session.user) return false;
+    } catch (e) { /* val door naar refresh-poging */ }
+    try {
+      var r = await window.besaSupabase.auth.refreshSession();
+      if (r && r.data && r.data.session && r.data.session.user) return false;
+    } catch (e) { /* echt weg */ }
+    return true;
+  }
+
   // Stage 8d: globaal beschikbaar voor besa-sync-reporter en eventueel
   // andere modules die een verlopen sessie willen melden.
   window.besaHandleAuthFailure = function (err) {
-    try { console.warn("[auth-guard] auth-fout, ga uitloggen:", err); } catch (e) { /* */ }
-    performLogoutAndRedirect({ reason: "expired" });
+    if (redirectInFlight) return;
+    confirmReallyLoggedOut().then(function (really) {
+      if (really) {
+        try { console.warn("[auth-guard] sessie écht verlopen, ga uitloggen:", err); } catch (e) { /* */ }
+        performLogoutAndRedirect({ reason: "expired" });
+      } else {
+        try { console.warn("[auth-guard] auth-fout maar sessie hersteld — NIET uitgelogd:", err); } catch (e) { /* */ }
+      }
+    });
   };
 
   function getDisplayLabel(user) {
@@ -334,9 +360,16 @@
   function listenForAuthChange() {
     try {
       window.besaSupabase.auth.onAuthStateChange(function (event, session) {
-        if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
-          performLogoutAndRedirect({ reason: "expired" });
-        }
+        // Alleen reageren op een ECHTE SIGNED_OUT (niet op transiënte
+        // null-sessie-events tijdens een token-refresh — die clause gaf
+        // willekeurig uitloggen + flikker). En zelfs SIGNED_OUT eerst
+        // verifiëren: een mislukte refresh emit SIGNED_OUT, maar een
+        // expliciete refresh kan de sessie alsnog herstellen.
+        if (event !== "SIGNED_OUT" || redirectInFlight) return;
+        confirmReallyLoggedOut().then(function (really) {
+          if (really) performLogoutAndRedirect({ reason: "expired" });
+          else { try { console.warn("[auth-guard] SIGNED_OUT maar sessie hersteld — NIET uitgelogd"); } catch (e) {} }
+        });
       });
     } catch (e) { /* */ }
   }
@@ -351,15 +384,14 @@
       if (checking || redirectInFlight) return;
       checking = true;
       try {
-        var res = await window.besaSupabase.auth.getSession();
-        var session = res && res.data ? res.data.session : null;
-        if (!session || !session.user) {
+        // Niet meteen uitloggen bij een lege getSession — eerst een
+        // refresh-poging via confirmReallyLoggedOut (refresh-race-proof).
+        if (await confirmReallyLoggedOut()) {
           performLogoutAndRedirect({ reason: "expired" });
         }
       } catch (e) {
-        if (window.besaIsAuthError && window.besaIsAuthError(e)) {
-          performLogoutAndRedirect({ reason: "expired" });
-        }
+        /* netwerk-hapering: NIET uitloggen, volgende focus/visibility
+           probeert het opnieuw. */
       } finally {
         checking = false;
       }
@@ -379,11 +411,27 @@
     } catch (e) { /* */ }
 
     if (!session || !session.user) {
-      // Geen logout-call (er is geen sessie); ga direct naar login.
-      redirectInFlight = true;
-      try { window.location.replace(buildLoginUrl()); }
-      catch (e) { window.location.href = buildLoginUrl(); }
-      return;
+      // getSession kan vlak na navigatie/refresh-race transient null geven
+      // terwijl er wél een geldige (te verversen) sessie in storage staat.
+      // Eerst een refresh-poging; alleen ECHT weg → naar login (voorkomt
+      // de "kort ingelogd, dan weer login"-flikker).
+      var really = await confirmReallyLoggedOut();
+      if (really) {
+        redirectInFlight = true;
+        try { window.location.replace(buildLoginUrl()); }
+        catch (e) { window.location.href = buildLoginUrl(); }
+        return;
+      }
+      try {
+        var res2 = await window.besaSupabase.auth.getSession();
+        session = res2 && res2.data ? res2.data.session : null;
+      } catch (e) { /* */ }
+      if (!session || !session.user) {
+        redirectInFlight = true;
+        try { window.location.replace(buildLoginUrl()); }
+        catch (e) { window.location.href = buildLoginUrl(); }
+        return;
+      }
     }
 
     if (document.readyState === "loading") {
