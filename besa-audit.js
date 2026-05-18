@@ -52,6 +52,35 @@
     } catch (e) { return "-"; }
   }
 
+  // Canonieke resources (1-op-1 BS2 — zoals in de Audit-filter). De
+  // logger schrijft deze exacte waarden zodat de filter klopt.
+  var PAGE_RESOURCE = [
+    [/^\/?(clienten|client-detail)/, "Client"],
+    [/^\/?(index|medewerker|medewerker-detail|medewerkers-overzicht)/, "Medewerker"],
+    [/^\/?(beschikking|beschikkingen)/, "Beschikking"],
+    [/^\/?(facturen|factuur-detail|invoice-detail)/, "Disposition betaling"],
+    [/^\/?(taken)/, "Taak.toewijzen"],
+    [/^\/?(teams|organisatie)/, "Team.Fase"],
+    [/^\/?(gemeente)/, "Gemeente"],
+    [/^\/?(rollen)/, "Rol"],
+    [/^\/?(gebruikers|mijn-gegevens)/, "Gebruiker"],
+    [/^\/?(planning|werkuren|urendeclaraties|kilometers|verlof|plus-minuren)/, "Dienst"],
+    [/^\/?(nieuws|notifications)/, "Notitie"],
+  ];
+  var CANON_RESOURCES = ["Client", "Product", "Medewerker", "Beschikking",
+    "Disposition betaling", "Gebruiker", "Dienst", "Evenement", "Voorraadoverdracht",
+    "Voorraad aanpassen", "Taak.toewijzen", "Team.Fase", "Notitie", "Gemeente", "Rol"];
+
+  function resolveResource(explicit) {
+    if (explicit && CANON_RESOURCES.indexOf(String(explicit)) >= 0) return String(explicit);
+    var path = "";
+    try { path = (global.location.pathname || "").toLowerCase(); } catch (e) {}
+    for (var i = 0; i < PAGE_RESOURCE.length; i++) {
+      if (PAGE_RESOURCE[i][0].test(path)) return PAGE_RESOURCE[i][1];
+    }
+    return explicit ? String(explicit) : "Gebruiker";
+  }
+
   async function write(row) {
     if (!global.besaSupabase) return;
     if (inflight > 8) return; // burst-bescherming bij bulk-acties
@@ -59,27 +88,35 @@
     try {
       var u = currentUser();
       var payload = {
-        resource: String(row.resource || "Onbekend"),
+        resource: resolveResource(row.resource),
         resource_id: String(row.resourceId == null || row.resourceId === "" ? pageResourceId() : row.resourceId),
-        actie: String(row.actie || "bewerken"),
+        actie: String(row.actie || "bijwerken"),
         gebruiker_id: u.id,
         gebruiker_label: u.label,
         details: String(row.details == null ? "" : row.details).slice(0, 500),
         status: row.status || "succes",
         user_agent: (global.navigator && global.navigator.userAgent) || null,
       };
-      await global.besaSupabase.from(TABLE).insert(payload);
-    } catch (e) { /* audit mag de UI nooit breken */ }
+      var res = await global.besaSupabase.from(TABLE).insert(payload);
+      // Audit mag de UI nooit breken, maar een mislukte insert NIET volledig
+      // stil slikken (anders zie je nooit dat er iets misging — zoals de
+      // CHECK-constraint die alles weigerde). Alleen console, geen toast.
+      if (res && res.error) console.warn("[besa-audit] insert geweigerd:", res.error.message || res.error, payload);
+    } catch (e) {
+      console.warn("[besa-audit] log-exception (UI niet beïnvloed):", e && e.message || e);
+    }
     finally { inflight--; }
   }
 
   function log(opts) { try { write(opts || {}); } catch (e) { /* */ } }
 
   // ---- haak 1: showActionFeedback ----
+  // → canonieke actie-codes (1-op-1 met de Audit-filter; user gebruikt
+  // "bijwerken", niet "bewerken").
   var KIND_TO_ACTIE = {
-    added: "aanmaken", created: "aanmaken", saved: "bewerken", updated: "bewerken",
+    added: "aanmaken", created: "aanmaken", saved: "bijwerken", updated: "bijwerken",
     deleted: "verwijderen", archived: "archiveren", restored: "herstellen",
-    exported: "exporteren", downloaded: "downloaden", status: "status_wijziging",
+    exported: "exporteren", downloaded: "downloaden", status: "bijwerken",
   };
   // info/error = geen data-actie (bv. "Filters gewist") → niet loggen.
   var SKIP_KINDS = { info: 1, error: 1, "": 1 };

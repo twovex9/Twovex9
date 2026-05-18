@@ -45,23 +45,41 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  var ACTIE_LABELS = {
-    aanmaken: "Aanmaken", bewerken: "Bewerken", bekijken: "Bekijken",
-    verwijderen: "Verwijderen", archiveren: "Archiveren", herstellen: "Herstellen",
-    status_wijziging: "Status wijziging", inloggen: "Inloggen", uitloggen: "Uitloggen",
-    exporteren: "Exporteren", downloaden: "Downloaden",
+  // Canonieke resources (exact zoals de user opgaf — 1-op-1 BS2, vaste
+  // volgorde). Vaste filteropties (niet uit data afgeleid).
+  var RESOURCES = ["Client", "Product", "Medewerker", "Beschikking",
+    "Disposition betaling", "Gebruiker", "Dienst", "Evenement", "Voorraadoverdracht",
+    "Voorraad aanpassen", "Taak.toewijzen", "Team.Fase", "Notitie", "Gemeente", "Rol"];
+
+  // Canonieke actietypen (exact + volgorde zoals user opgaf): value=code
+  // dat de logger schrijft, label=NL-weergave.
+  var ACTIES = [
+    ["bijwerken", "Bijwerken"], ["aanmaken", "Aanmaken"], ["verwijderen", "Verwijderen"],
+    ["herstellen", "Herstellen"], ["inloggen", "Inloggen"], ["uitloggen", "Uitloggen"],
+    ["bekijken", "Bekijken"], ["archiveren", "Archiveren"], ["exporteren", "Exporteren"],
+    ["downloaden", "Downloaden"], ["notificatie", "Notificatie"],
+    ["gebruikers_toegang_intrekken", "Gebruikers toegang intrekken"], ["twee_fa", "Twee FA"],
+    ["wachtwoord_resetten", "Resetten wachtwoord"], ["reset_link_verzonden", "Reset link verzonden"],
+    ["wachtwoord_geforceerd_resetten", "Wachtwoord geforceerd resetten"],
+    ["workflow_overgaan", "Workflow overgaan"],
+  ];
+  var ACTIE_LABELS = {};
+  ACTIES.forEach(function (a) { ACTIE_LABELS[a[0]] = a[1]; });
+  // legacy/oude trigger-waarden netjes blijven tonen
+  Object.assign(ACTIE_LABELS, {
+    bewerken: "Bijwerken", status_wijziging: "Status wijziging",
     RolGewijzigd: "Rol gewijzigd", WachtwoordGereset: "Wachtwoord gereset",
     Gedeactiveerd: "Gedeactiveerd", Geactiveerd: "Geactiveerd", "2FAGereset": "2FA gereset",
-  };
+  });
   function actieLabel(a) { return ACTIE_LABELS[a] || a || ""; }
 
   function actieBadge(actie) {
     var label = actieLabel(actie);
     var style = "padding:2px 8px;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:600;";
-    if (actie === "aanmaken" || actie === "herstellen" || actie === "Geactiveerd") style += "color:var(--green);background:var(--green-soft);";
-    else if (actie === "bekijken" || actie === "inloggen" || actie === "status_wijziging" || actie === "exporteren" || actie === "downloaden") style += "color:var(--blue);background:var(--blue-soft);";
-    else if (actie === "bewerken" || actie === "archiveren") style += "color:var(--yellow);background:var(--yellow-soft);";
-    else if (actie === "verwijderen" || actie === "Gedeactiveerd") style += "color:var(--red);background:var(--red-soft);";
+    if (["aanmaken", "herstellen", "Geactiveerd"].indexOf(actie) >= 0) style += "color:var(--green);background:var(--green-soft);";
+    else if (["bekijken", "inloggen", "exporteren", "downloaden", "notificatie", "reset_link_verzonden", "workflow_overgaan", "status_wijziging"].indexOf(actie) >= 0) style += "color:var(--blue);background:var(--blue-soft);";
+    else if (["bijwerken", "bewerken", "archiveren", "twee_fa", "wachtwoord_resetten", "wachtwoord_geforceerd_resetten", "WachtwoordGereset", "2FAGereset", "RolGewijzigd"].indexOf(actie) >= 0) style += "color:var(--yellow);background:var(--yellow-soft);";
+    else if (["verwijderen", "uitloggen", "gebruikers_toegang_intrekken", "Gedeactiveerd"].indexOf(actie) >= 0) style += "color:var(--red);background:var(--red-soft);";
     else style += "color:var(--text-muted);background:var(--line);";
     return '<span style="' + style + '">' + escapeHtml(label) + '</span>';
   }
@@ -258,13 +276,32 @@
     if (prev) sel.value = prev;
   }
 
+  function fillSelectPairs(id, pairs, allLabel) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var prev = sel.value || "";
+    sel.innerHTML = '<option value="">' + allLabel + '</option>';
+    pairs.forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p[0]; opt.textContent = p[1];
+      sel.appendChild(opt);
+    });
+    if (prev) sel.value = prev;
+  }
+
   function loadFilterOptions() {
-    if (!window.auditDB || !window.auditDB.fetchFilterOptions) return;
-    window.auditDB.fetchFilterOptions().then(function (o) {
-      fillSelect("audit-filter-resource", o.resources || [], "Alle resources");
-      fillSelect("audit-filter-veroorzaker", o.veroorzakers || [], "Alle veroorzakers");
-      fillSelect("audit-filter-actie", o.acties || [], "Alle actie-types", actieLabel);
-    }).catch(function (e) { console.warn("[audit] filter-opties:", e); });
+    // Resources + Actietypen = VASTE canonieke lijsten (1-op-1 BS2, exacte
+    // volgorde) — niet uit data afgeleid.
+    fillSelect("audit-filter-resource", RESOURCES, "Alle resources");
+    fillSelectPairs("audit-filter-actie", ACTIES, "Alle actie-types");
+    // Veroorzaker = alle account-namen + alle namen die ooit iets deden
+    // (blijft staan ook na account-verwijdering — gebruiker_label is een
+    // tekst-snapshot, geen FK-join). Komt uit de RPC.
+    if (window.auditDB && window.auditDB.fetchFilterOptions) {
+      window.auditDB.fetchFilterOptions().then(function (o) {
+        fillSelect("audit-filter-veroorzaker", o.veroorzakers || [], "Alle veroorzakers");
+      }).catch(function (e) { console.warn("[audit] veroorzaker-opties:", e); });
+    }
   }
 
   function wireEvents() {
