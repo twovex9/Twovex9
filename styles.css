@@ -21716,3 +21716,21 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .role-perm-grpbtn:hover { border-color: var(--blue); color: var(--blue); }
 .role-perm-group-head { flex-wrap: wrap; }
+
+/* Rollen — rol-detail als aparte pagina (geen modal) */
+.rd-back {
+  display: inline-block; margin-bottom: 4px; font-size: var(--font-table-head);
+  font-weight: 700; color: var(--text-muted); text-decoration: none;
+}
+.rd-back:hover { color: var(--blue); }
+.rd-page {
+  max-width: 980px; margin-top: 14px;
+  border: 1px solid var(--line); border-radius: var(--r-xl);
+  background: var(--surface); padding: 4px 20px;
+}
+.rd-page .role-modal-section { padding: 18px 0; }
+.rd-footer {
+  max-width: 980px; margin: 14px 0 var(--page-footer-space, 24px);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  border-top: 1px solid var(--line);
+}
