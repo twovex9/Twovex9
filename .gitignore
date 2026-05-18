@@ -50,3 +50,6 @@ bs2-documents*.json
 bs2-net*.json
 bs2-beleid-documenten*.zip
 bs2-medewerkers*.json
+
+# BS2 rollen-scrape — rol-toewijzingen bevatten namen/e-mails (PII)
+bs2-roles*.json
