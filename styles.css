@@ -21637,3 +21637,46 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   left: auto !important;
   bottom: auto !important;
 }
+
+/* Rollen-beheer — rol-detailmodal (machtigingen-matrix + gebruikers).
+   Hergebruikt .modal-overlay/.modal-card + .rollen-* kaarten. */
+.role-modal-card { max-width: 860px; width: min(94vw, 860px); }
+.role-modal-sub { margin: 2px 0 0; font-size: var(--font-table-head); color: var(--text-muted); }
+.role-modal-body { max-height: min(72vh, 680px); overflow-y: auto; padding: 4px 2px; }
+.role-modal-section { padding: 14px 2px; border-bottom: 1px solid var(--line); }
+.role-modal-section:last-child { border-bottom: 0; }
+.role-modal-h3 { margin: 0 0 10px; font-size: var(--font-base); font-weight: 800; }
+.role-level-label { display: block; font-size: var(--font-table-head); font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+.role-perm-wrap { display: grid; gap: 12px; }
+.role-perm-group { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+.role-perm-group-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--bg-muted, var(--surface-alt, #f7f8fa));
+  border-bottom: 1px solid var(--line);
+}
+.role-perm-group-title { font-weight: 800; font-size: var(--font-table-head); text-transform: capitalize; flex: 1; }
+.role-perm-group-count { font-size: var(--font-ui-badge); color: var(--text-muted); font-weight: 700; }
+.role-perm-grouptoggle {
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--text-secondary);
+  font: inherit; font-size: var(--font-ui-badge); font-weight: 700; padding: 3px 9px;
+  border-radius: var(--r-pill); cursor: pointer;
+}
+.role-perm-grouptoggle:hover { border-color: var(--blue); color: var(--blue); }
+.role-perm-list { list-style: none; margin: 0; padding: 8px 12px; columns: 2; column-gap: 22px; }
+@media (max-width: 640px) { .role-perm-list { columns: 1; } }
+.role-perm-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: var(--font-table-cell); break-inside: avoid; cursor: pointer; }
+.role-perm-main { color: var(--blue); font-style: normal; font-size: var(--font-ui-badge); font-weight: 700; }
+.role-users-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.role-users-count { font-size: var(--font-ui-badge); font-weight: 700; color: var(--text-muted); background: var(--line); padding: 1px 8px; border-radius: var(--r-pill); }
+.role-users-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+.role-users-empty { color: var(--text-muted); font-size: var(--font-table-cell); }
+.role-user-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.role-user-name { font-weight: 600; }
+.role-user-email { color: var(--text-muted); font-size: var(--font-table-head); flex: 1; }
+.role-user-remove {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-secondary);
+  width: 26px; height: 26px; border-radius: var(--r-md); cursor: pointer; line-height: 1;
+}
+.role-user-remove:hover { border-color: var(--red); color: var(--red); }
+.role-user-add { display: flex; gap: 8px; }
+.role-user-add select { flex: 1; }
