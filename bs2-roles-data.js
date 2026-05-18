@@ -32,9 +32,27 @@
   function dispatch(src) {
     try { global.dispatchEvent(new CustomEvent("besa:bs2-roles-updated", { detail: { source: src || "data" } })); } catch (e) { /* */ }
   }
+  // ⚠️ Een falende READ van een rollen-lijst mag NOOIT de hele app
+  // uitloggen. besaReportSyncFailure classificeert een 401/403 als
+  // auth-fout → besaHandleAuthFailure → logout. Tijdens page-load racet
+  // dit met de sessie-hydratie → /rollen bounce naar login. Daarom: enkel
+  // console.warn, NIET escaleren.
   function reportSilent(action, err) {
-    console.error("[bs2RolesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Rollen — " + action, err);
+    try { console.warn("[bs2RolesDB] " + action + " mislukt (geen logout):", err && err.message || err); } catch (e) { /* */ }
+  }
+
+  // Wacht tot er een ingelogde sessie is vóór we queries vuren — anders
+  // 401's tijdens de load-race die de auth-flow verstoren.
+  async function waitForSession(maxMs) {
+    var deadline = Date.now() + (maxMs || 8000);
+    while (Date.now() < deadline) {
+      try {
+        var s = await global.besaSupabase.auth.getSession();
+        if (s && s.data && s.data.session && s.data.session.user) return true;
+      } catch (e) { /* */ }
+      await new Promise(function (r) { setTimeout(r, 250); });
+    }
+    return false;
   }
 
   async function fetchAll() {
@@ -63,8 +81,14 @@
   function bootstrap() {
     if (readyPromise) return readyPromise;
     readyPromise = (async function () {
-      try { await fetchAll(); dispatch("bootstrap"); }
-      catch (err) { reportSilent("bootstrap", err); }
+      try {
+        // Niet vuren vóór er een sessie is (voorkomt 401-race op page-load
+        // die /rollen naar login bouncete).
+        var ok = await waitForSession(8000);
+        if (!ok) { reportSilent("bootstrap", "geen sessie — overgeslagen"); return; }
+        await fetchAll();
+        dispatch("bootstrap");
+      } catch (err) { reportSilent("bootstrap", err); }
     })();
     return readyPromise;
   }
@@ -204,5 +228,8 @@
     removeUser: removeUser,
   };
 
-  bootstrap();
+  // GEEN eager bootstrap meer: de page-scripts (rollen.js / rol-detail.js)
+  // roepen DB().ready aan ná DOMContentLoaded — dán heeft auth-guard de
+  // sessie al afgehandeld. Eager firen bij module-load racete met de
+  // sessie-hydratie en triggerde de logout/redirect.
 })(typeof window !== "undefined" ? window : this);
