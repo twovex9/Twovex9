@@ -15,7 +15,9 @@
   var COLS_KEY = "beleid_documenten_cols_v1";
   var ALL_COLS = ["naam", "uploaddatum", "gewijzigd"];
 
-  var state = { search: "", page: 1, rowsPerPage: ROWS_PER_PAGE_DEFAULT, sortKey: "name", sortDir: "asc", cols: null, archivingId: null, purgingId: null };
+  // BS2-default lijstvolgorde = nieuwste upload eerst (created_at desc):
+  // 23→…→01, daarna H01/H03/03/02/01 — 1-op-1 met BS2 /documents.
+  var state = { search: "", page: 1, rowsPerPage: ROWS_PER_PAGE_DEFAULT, sortKey: "uploaddatum", sortDir: "desc", cols: null, archivingId: null, purgingId: null };
 
   function loadCols() {
     var on = {}; ALL_COLS.forEach(function (c) { on[c] = true; });
@@ -60,7 +62,10 @@
     var f = { name: "name", uploaddatum: "uploaddatum", gewijzigd: "laatstGewijzigd" }[state.sortKey] || "name";
     list.sort(function (a, b) {
       var av = String(a[f] || "").toLowerCase(), bv = String(b[f] || "").toLowerCase();
-      return av < bv ? -dir : av > bv ? dir : 0;
+      if (av !== bv) return av < bv ? -dir : dir;
+      // BS2-tiebreak bij gelijke datum: naam aflopend (23→…→01).
+      var an = String(a.name || "").toLowerCase(), bn = String(b.name || "").toLowerCase();
+      return an < bn ? 1 : an > bn ? -1 : 0;
     });
     return list;
   }
