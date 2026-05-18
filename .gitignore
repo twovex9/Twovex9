@@ -41,3 +41,12 @@ scripts/_tmp_*
 
 # generated import-SQL met scraped data (nooit committen)
 scripts/out/
+
+# BS2 PRODUCTIE documenten-scrape — echte beleids-PDF's + sessie-token
+# (PII/credentials — NOOIT naar GitHub)
+scripts/_bs2-documents/
+bs2-token.txt
+bs2-documents*.json
+bs2-net*.json
+bs2-beleid-documenten*.zip
+bs2-medewerkers*.json

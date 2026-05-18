@@ -118,10 +118,12 @@
   box.innerHTML = '<div style="position:absolute;top:6px;right:10px;cursor:pointer;color:#94a3b8;font-size:16px;" id="__dX">×</div>'
     + '<b style="color:#7dd3fc;font-size:13px;">[doc] READ-ONLY scrape — Beleid</b>'
     + '<div id="__dStatus" style="color:#fbbf24;margin:8px 0;">init…</div>'
+    + '<div style="color:#cbd5e1;margin:4px 0 6px;">PDF-bytes lukken niet in de browser (S3-CORS). '
+    + 'Download de <b>token</b> hieronder en draai daarna het Node-script (geen CORS in Node).</div>'
     + '<div style="display:flex;gap:6px;margin:6px 0;">'
+    + '<button id="__dTok" style="flex:1.4;padding:8px;border:0;border-radius:6px;background:#dc2626;color:#fff;font:bold 12px monospace;cursor:pointer;">⬇ Token</button>'
     + '<button id="__dStart" style="flex:1;padding:8px;border:0;border-radius:6px;background:#475569;color:#fff;font:bold 12px monospace;cursor:pointer;">▶ Start</button>'
     + '<button id="__dJson" style="flex:1;padding:8px;border:0;border-radius:6px;background:#2563eb;color:#fff;font:bold 12px monospace;cursor:pointer;">⬇ JSON</button>'
-    + '<button id="__dZip" style="flex:1;padding:8px;border:0;border-radius:6px;background:#16a34a;color:#fff;font:bold 12px monospace;cursor:pointer;">⬇ ZIP</button>'
     + '</div>';
   (D.body || D.documentElement).appendChild(box);
   D.getElementById("__dX").onclick = function () { box.style.display = "none"; };
@@ -131,8 +133,15 @@
   function buildPayload() {
     return { scraped_at: new Date().toISOString(), source: "BS2 PRODUCTIE /api/documents (policy, read-only)", origin: location.origin, endpoint: APIBASE + LISTPATH, counts: { documents: S.rec.length, files_ok: S.files.length }, documents: S.rec };
   }
+  function rawJwt() { return String(S.token || "").replace(/^Bearer\s+/i, "").trim(); }
+  D.getElementById("__dTok").onclick = function () {
+    if (!S.token) S.token = findToken();
+    var jwt = rawJwt();
+    if (!jwt) { setStatus("GEEN token — klik 1× een paginering-pijl onderaan, dan opnieuw ⬇ Token."); return; }
+    dl(new Blob([jwt], { type: "text/plain" }), "bs2-token.txt");
+    setStatus("token gedownload → bs2-token.txt. Geef dit aan Claude / draai het Node-script.");
+  };
   D.getElementById("__dJson").onclick = function () { dl(new Blob([JSON.stringify(buildPayload(), null, 2)], { type: "application/json" }), "bs2-documents.json"); };
-  D.getElementById("__dZip").onclick = function () { if (S.files.length) dl(zipStore(S.files), "bs2-beleid-documenten.zip"); else setStatus("nog geen bestanden — eerst Start/klaar."); };
   D.getElementById("__dStart").onclick = function () { run(); };
 
   function maybeAuto() { if (!S.running && !S.done && S.token) run(); }
