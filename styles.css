@@ -21552,35 +21552,8 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   border-top: 5px solid var(--blue);
   opacity: 1;
 }
-.me-cols-panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 50;
-  min-width: 200px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  padding: 10px 12px;
-}
-.me-cols-title {
-  font-weight: 700;
-  font-size: var(--font-base);
-  color: var(--text);
-  padding: 4px 4px 8px;
-}
-.me-cols-opt {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 4px;
-  font-size: var(--font-base);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.me-cols-opt input { accent-color: var(--blue); }
-.header-actions { position: relative; }
+/* (kolommen-chooser gebruikt nu het canonieke .columns-panel/.columns-dropdown
+   patroon uit index.html + floating-panels.js — geen custom .me-cols-* meer) */
 .me-sick-btn {
   display: inline-block;
   border: none;
