@@ -21615,3 +21615,22 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .bd-act-btn:hover { border-color: var(--blue); color: var(--blue); }
 .bd-act-btn--del:hover { border-color: var(--red); color: var(--red); }
+
+/* Kolommen-paneel Documenten + Medewerkers: anker als klassieke dropdown
+   strak onder de knop i.p.v. de viewport-vaste floating-panels-positie.
+   floating-panels.js' fixed-positionering is timing-fragiel op zeer brede
+   schermen (paneel bleef soms op de CSS-default top:60px/right:8px hangen,
+   los van de knop). Deze scoped override binnen de position:relative
+   .columns-dropdown-wrapper is puur CSS → geen JS-timing, niet afgesneden
+   (geen overflow:hidden in content-header/header-actions). !important wint
+   van de canonieke position:fixed én van de inline top/left/right die
+   floating-panels.js zet (stylesheet-!important > inline zonder !important).
+   Alleen plaatsing — lettertype/kleur/afmeting blijven de huisstijl. */
+#bd-columns-panel,
+#me-columns-panel {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+}
