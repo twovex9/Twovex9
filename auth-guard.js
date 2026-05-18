@@ -60,7 +60,11 @@
 
   function clearLocalCaches() {
     try {
-      var keysToKeep = { theme: 1, locale: 1 };
+      // sb-besa-auth NIET wissen: een (vals-positieve) logout mag de nog
+      // geldige Supabase-sessie nooit slopen → anders kan de user niet meer
+      // terug inloggen (cascade). Een ECHTE logout doet auth.signOut() dat
+      // de GoTrue-sessie zelf netjes verwijdert.
+      var keysToKeep = { theme: 1, locale: 1, "sb-besa-auth": 1 };
       var toRemove = [];
       for (var i = 0; i < window.localStorage.length; i += 1) {
         var k = window.localStorage.key(i);
@@ -137,6 +141,28 @@
   // die achtergrond-refresh even tijd krijgt. Single-flight: alle
   // gelijktijdige triggers delen één check.
   // ---------------------------------------------------------------------------
+  // GEBLEKEN ROOT CAUSE (breadcrumb-diagnose): op zwaardere pagina's
+  // (rollen.html) lost auth-guard's getSession() OP vóór de Supabase-client
+  // de sessie uit localStorage heeft gehydrateerd (navigator-lock-race) →
+  // getSession() geeft transient null terwijl `sb-besa-auth` mét geldige
+  // refresh_token gewoon in localStorage staat → onterechte logout.
+  // Daarom: localStorage is de autoritatieve bron. Staat er een geldige
+  // opgeslagen sessie → je bent NIET uitgelogd (Supabase hydrateert/ververst
+  // zelf). NOOIT refreshSession (rotatie). Enkel ÉCHT uitgelogd als er
+  // helemaal geen bruikbare opgeslagen sessie is.
+  function storedSessionLooksValid() {
+    try {
+      var raw = window.localStorage.getItem("sb-besa-auth");
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      var sess = o && (o.currentSession || o.session || o);
+      var rt = sess && sess.refresh_token;
+      if (!rt) return false;
+      // expires_at in seconden; refresh_token aanwezig = Supabase kan
+      // herstellen, ook als het access-token verlopen is.
+      return true;
+    } catch (e) { return false; }
+  }
   var _logoutCheckP = null;
   function confirmReallyLoggedOut() {
     if (_logoutCheckP) return _logoutCheckP;
@@ -144,13 +170,15 @@
       try {
         var s = await window.besaSupabase.auth.getSession();
         if (s && s.data && s.data.session && s.data.session.user) return false;
-      } catch (e) { /* retry hieronder */ }
-      await new Promise(function (r) { setTimeout(r, 1200); });
+      } catch (e) { /* */ }
+      if (storedSessionLooksValid()) return false; // sessie in storage → niet uitloggen
+      await new Promise(function (r) { setTimeout(r, 1500); });
       try {
         var s2 = await window.besaSupabase.auth.getSession();
         if (s2 && s2.data && s2.data.session && s2.data.session.user) return false;
-      } catch (e) { /* echt weg */ }
-      return true;
+      } catch (e) { /* */ }
+      if (storedSessionLooksValid()) return false;
+      return true; // geen sessie + geen bruikbare opgeslagen sessie = echt weg
     })();
     _logoutCheckP.then(function () { _logoutCheckP = null; }, function () { _logoutCheckP = null; });
     return _logoutCheckP;
@@ -438,35 +466,36 @@
     } catch (e) { /* */ }
 
     if (!session || !session.user) {
-      // getSession kan vlak na navigatie/refresh-race transient null geven
-      // terwijl er wél een geldige (te verversen) sessie in storage staat.
-      // Eerst een refresh-poging; alleen ECHT weg → naar login (voorkomt
-      // de "kort ingelogd, dan weer login"-flikker).
+      // getSession kan bij page-init transient null geven door de
+      // Supabase-hydratie/navigator-lock-race terwijl er wél een geldige
+      // sessie in localStorage staat (bewezen root cause op /rollen).
+      // confirmReallyLoggedOut() checkt nu OOK de opgeslagen sessie →
+      // alleen ECHT weg = redirect. Anders: NIET redirecten, sessie
+      // afwachten (Supabase hydrateert/ververst zelf).
       var really = await confirmReallyLoggedOut();
-      try { window.sessionStorage.setItem("__ag_bc", JSON.stringify({ t: new Date().toISOString(), path: window.location.pathname + window.location.search, via: "init-no-session", really: really })); } catch (e) {}
       if (really) {
         redirectInFlight = true;
         try { window.location.replace(buildLoginUrl()); }
         catch (e) { window.location.href = buildLoginUrl(); }
         return;
       }
-      try {
-        var res2 = await window.besaSupabase.auth.getSession();
-        session = res2 && res2.data ? res2.data.session : null;
-      } catch (e) { /* */ }
-      if (!session || !session.user) {
-        try { window.sessionStorage.setItem("__ag_bc", JSON.stringify({ t: new Date().toISOString(), path: window.location.pathname + window.location.search, via: "init-no-session-2" })); } catch (e) {}
-        redirectInFlight = true;
-        try { window.location.replace(buildLoginUrl()); }
-        catch (e) { window.location.href = buildLoginUrl(); }
-        return;
+      // Niet uitgelogd: poll getSession enkele keren voor de badge,
+      // maar redirect NOOIT (de sessie staat in storage).
+      for (var attempt = 0; attempt < 16 && (!session || !session.user); attempt += 1) {
+        await new Promise(function (r) { setTimeout(r, 350); });
+        try {
+          var resN = await window.besaSupabase.auth.getSession();
+          session = resN && resN.data ? resN.data.session : null;
+        } catch (e) { /* */ }
       }
     }
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", function () { injectUserBadge(session.user); });
-    } else {
-      injectUserBadge(session.user);
+    if (session && session.user) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { injectUserBadge(session.user); });
+      } else {
+        injectUserBadge(session.user);
+      }
     }
     listenForAuthChange();
     attachVisibilityChecks();
