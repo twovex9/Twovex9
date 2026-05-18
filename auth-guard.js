@@ -76,6 +76,17 @@
     if (redirectInFlight) return;
     redirectInFlight = true;
     var options = opts || {};
+    // TIJDELIJKE DIAGNOSE: leg vast WAAROM + vanaf welk pad we uitloggen,
+    // zodat we het na de redirect (op login/home) kunnen uitlezen.
+    try {
+      window.sessionStorage.setItem("__ag_bc", JSON.stringify({
+        t: new Date().toISOString(),
+        path: window.location.pathname + window.location.search,
+        via: "performLogoutAndRedirect",
+        reason: options.reason || "?",
+        stack: String((new Error()).stack || "").split("\n").slice(1, 6).join(" | "),
+      }));
+    } catch (e) { /* */ }
     var loginUrl = options.preserveNext === false
       ? "login.html"
       : buildLoginUrl();
@@ -432,6 +443,7 @@
       // Eerst een refresh-poging; alleen ECHT weg → naar login (voorkomt
       // de "kort ingelogd, dan weer login"-flikker).
       var really = await confirmReallyLoggedOut();
+      try { window.sessionStorage.setItem("__ag_bc", JSON.stringify({ t: new Date().toISOString(), path: window.location.pathname + window.location.search, via: "init-no-session", really: really })); } catch (e) {}
       if (really) {
         redirectInFlight = true;
         try { window.location.replace(buildLoginUrl()); }
@@ -443,6 +455,7 @@
         session = res2 && res2.data ? res2.data.session : null;
       } catch (e) { /* */ }
       if (!session || !session.user) {
+        try { window.sessionStorage.setItem("__ag_bc", JSON.stringify({ t: new Date().toISOString(), path: window.location.pathname + window.location.search, via: "init-no-session-2" })); } catch (e) {}
         redirectInFlight = true;
         try { window.location.replace(buildLoginUrl()); }
         catch (e) { window.location.href = buildLoginUrl(); }
