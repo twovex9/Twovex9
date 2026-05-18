@@ -66,10 +66,15 @@ voor de BS1-overname.
 
 ## 5. UI — detail (`medewerker-detail.html`, BS2 screenshot 1-op-1)
 
-Linker profielkaart: gradient-hero + terug-pijl, avatar-cirkel, naam, e-mail
-(blauw, onder naam), **Contactgegevens** (telefoon, e-mail), **Overige
-informatie** (Medewerkersnummer `#N` pill, Datum uit dienst of `-`,
-Verjaardag `d-m-jjjj` + countdown-pills `X Dagen` / `Y Uren`).
+Linker profielkaart: gradient-hero (150px) + terug-pijl, avatar-cirkel
+(140px, half over de hero), naam, e-mail (blauw, onder naam),
+**Contactgegevens** (telefoon, e-mail), **Overige informatie**
+(Medewerkersnummer `#N` pill, Datum uit dienst of `-`, **Verjaardag** =
+eerstvolgende verjaardag-datum `d-m-jjjj` bv. `1-7-2026` (NIET geboortejaar)
++ countdown-pills `X Maanden` (alléén als >0) · `Y Dagen` · `Z Uren`).
+Countdown = kalender-breakdown van NU tot verjaardag-middernacht
+(maanden→dagen→uren); live geverifieerd Adriana #3 = `1 Maanden/13 Dagen/
+13 Uren` (2026-05-18). Uren is écht (niet 0).
 
 Rechts: tab **Verzuim** (enige tab). Leeg: "Registreer een nieuw
 ziekteverzuim voor deze medewerker." + `+ Verzuim toevoegen`. Bij `is_sick`:
@@ -98,8 +103,9 @@ Geen FK naar/uit andere BS1-modules (apart, los systeem). Tabel
   ontdekt is. Niet gokken.
 - BS2-list-kolommen niet apart gescreenshot → kolomset afgeleid van de API +
   live geverifieerd vs BS2 (Chrome MCP) en bijgesteld.
-- Verjaardag-countdown-formule (`X Dagen`/`Y Uren`): redelijke implementatie,
-  live gekalibreerd tegen BS2.
+- Verjaardag-countdown: kalender-breakdown van nu → maanden/dagen/uren.
+  BS2's exacte formule is client-side (niet in API); ±1 dag/uur mogelijk
+  door client-klok/tijdzone-verschil — gedocumenteerde cosmetische delta.
 
 ## 9. Implementatie (atomic PRs)
 
