@@ -111,22 +111,38 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Robuuste check: is de sessie ÉCHT weg? Eerst getSession; als die (vaak
-  // door een refresh-race) null geeft, één expliciete refreshSession-poging.
-  // Pas TRUE (= echt uitgelogd) als beide niets opleveren. Voorkomt het
-  // willekeurig uitloggen midden in gebruik + de flikker bij herinloggen
-  // (transient null → herstel i.p.v. sessie vernietigen).
+  // Robuuste check: is de sessie ÉCHT weg?
+  //
+  // ⚠️ NOOIT zelf auth.refreshSession() aanroepen: dat ROTEERT de
+  // refresh-token. Bij het laden van een pagina vuren meerdere data-calls
+  // tegelijk; één transiënte 401 → besaHandleAuthFailure → een handmatige
+  // refreshSession racet met Supabase's eigen autoRefreshToken én met
+  // andere triggers → "Invalid Refresh Token" → ECHTE logout-loop
+  // (precies wat #284 per ongeluk veroorzaakte op /rollen).
+  //
+  // Daarom: alléén getSession() (roteert NIET; geeft het opgeslagen
+  // sessie-object terug, ook als het access-token net verloopt — Supabase
+  // ververst dat zelf veilig op de achtergrond). Eén korte retry zodat
+  // die achtergrond-refresh even tijd krijgt. Single-flight: alle
+  // gelijktijdige triggers delen één check.
   // ---------------------------------------------------------------------------
-  async function confirmReallyLoggedOut() {
-    try {
-      var s = await window.besaSupabase.auth.getSession();
-      if (s && s.data && s.data.session && s.data.session.user) return false;
-    } catch (e) { /* val door naar refresh-poging */ }
-    try {
-      var r = await window.besaSupabase.auth.refreshSession();
-      if (r && r.data && r.data.session && r.data.session.user) return false;
-    } catch (e) { /* echt weg */ }
-    return true;
+  var _logoutCheckP = null;
+  function confirmReallyLoggedOut() {
+    if (_logoutCheckP) return _logoutCheckP;
+    _logoutCheckP = (async function () {
+      try {
+        var s = await window.besaSupabase.auth.getSession();
+        if (s && s.data && s.data.session && s.data.session.user) return false;
+      } catch (e) { /* retry hieronder */ }
+      await new Promise(function (r) { setTimeout(r, 1200); });
+      try {
+        var s2 = await window.besaSupabase.auth.getSession();
+        if (s2 && s2.data && s2.data.session && s2.data.session.user) return false;
+      } catch (e) { /* echt weg */ }
+      return true;
+    })();
+    _logoutCheckP.then(function () { _logoutCheckP = null; }, function () { _logoutCheckP = null; });
+    return _logoutCheckP;
   }
 
   // Stage 8d: globaal beschikbaar voor besa-sync-reporter en eventueel
