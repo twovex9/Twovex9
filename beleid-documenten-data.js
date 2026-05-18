@@ -166,6 +166,10 @@
   async function remove(id) {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
+    var row = getByIdSync(id);
+    if (row && row.storagePath) {
+      try { await global.besaSupabase.storage.from(BUCKET).remove([row.storagePath]); } catch (e) { /* best-effort */ }
+    }
     var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
