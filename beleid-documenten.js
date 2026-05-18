@@ -3,21 +3,20 @@
  * beleid-documenten.js — page-script voor /beleid-documenten.html.
  *
  * TOP-BAR Beleid (BS2 PRODUCTIE /documents). APART van beleid.html.
- * 1-op-1 BS2: kolommen Naam · Uploaddatum · Laatst gewijzigd · Acties;
- * "Zoeken..." + Reset + Kolommen-chooser; footer "X of Y total." /
- * "Rows per page" / "Page N of M" (15/pagina = BS2). Hele rij klikbaar →
- * document openen (signed URL). Archiveren/verwijderen via slider-modals.
+ * 1-op-1 BS2: kolommen Naam · Uploaddatum · Laatst gewijzigd · Acties
+ * (3 icoontjes naast elkaar: 👁 bekijken · ✏️ Document bewerken · 🗑
+ * verwijderen via slider-bevestiging). "Zoeken..." + Reset + Kolommen.
+ * Footer "X of Y total." / "Rows per page" / "Page N of M" (15/pagina).
+ * Default-volgorde = nieuwste upload eerst (created_at desc) = BS2.
  */
 (function () {
   "use strict";
 
-  var ROWS_PER_PAGE_DEFAULT = 15; // BS2 documents per_page = 15
+  var ROWS_PER_PAGE_DEFAULT = 15;
   var COLS_KEY = "beleid_documenten_cols_v1";
   var ALL_COLS = ["naam", "uploaddatum", "gewijzigd"];
 
-  // BS2-default lijstvolgorde = nieuwste upload eerst (created_at desc):
-  // 23→…→01, daarna H01/H03/03/02/01 — 1-op-1 met BS2 /documents.
-  var state = { search: "", page: 1, rowsPerPage: ROWS_PER_PAGE_DEFAULT, sortKey: "uploaddatum", sortDir: "desc", cols: null, archivingId: null, purgingId: null };
+  var state = { search: "", page: 1, rowsPerPage: ROWS_PER_PAGE_DEFAULT, sortKey: "uploaddatum", sortDir: "desc", cols: null, editId: null, delId: null, pendingFile: null, pendingRemove: false };
 
   function loadCols() {
     var on = {}; ALL_COLS.forEach(function (c) { on[c] = true; });
@@ -42,19 +41,15 @@
       return pad(d.getDate()) + "-" + pad(d.getMonth() + 1) + "-" + d.getFullYear() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
     }
   }
-  function trashSvg() {
-    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="m8 6 1-2h6l1 2"/></svg>';
-  }
-  function eyeSvg() {
-    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
-  }
+  var SVG_EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var SVG_PEN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  var SVG_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="m8 6 1-2h6l1 2"/></svg>';
 
   function getVisible() {
     var items = (window.beleidDocumentenDB && window.beleidDocumentenDB.getAllSync()) || [];
     var q = state.search.trim().toLowerCase();
     var list = items.filter(function (r) {
       if (!r) return false;
-      if (r.archived) return false;
       if (!q) return true;
       return String(r.name || "").toLowerCase().indexOf(q) >= 0;
     });
@@ -63,7 +58,6 @@
     list.sort(function (a, b) {
       var av = String(a[f] || "").toLowerCase(), bv = String(b[f] || "").toLowerCase();
       if (av !== bv) return av < bv ? -dir : dir;
-      // BS2-tiebreak bij gelijke datum: naam aflopend (23→…→01).
       var an = String(a.name || "").toLowerCase(), bn = String(b.name || "").toLowerCase();
       return an < bn ? 1 : an > bn ? -1 : 0;
     });
@@ -80,17 +74,17 @@
   }
 
   function renderRow(r) {
-    var actions = r.archived
-      ? '<div class="hr-row-actions">'
-        + '<button class="btn-outline hr-restore-btn" data-action="restore" data-id="' + escapeHtml(r.id) + '">Herstel</button>'
-        + '<button class="employee-delete-btn" data-action="purge" data-id="' + escapeHtml(r.id) + '" aria-label="Definitief verwijderen">' + trashSvg() + '</button></div>'
-      : '<button class="icon-btn" data-action="view" data-id="' + escapeHtml(r.id) + '" title="Bekijken" aria-label="Bekijken" style="margin-right:6px">' + eyeSvg() + '</button>'
-        + '<button class="employee-delete-btn" data-action="archive" data-id="' + escapeHtml(r.id) + '" aria-label="Archiveren">' + trashSvg() + '</button>';
-    return '<tr data-id="' + escapeHtml(r.id) + '" class="me-row" style="cursor:pointer">' +
+    var id = escapeHtml(r.id);
+    var actions = '<div class="bd-acties-cell">' +
+      '<button class="bd-act-btn" data-action="view" data-id="' + id + '" title="Bekijken" aria-label="Bekijken">' + SVG_EYE + '</button>' +
+      '<button class="bd-act-btn" data-action="edit" data-id="' + id + '" title="Document bewerken" aria-label="Document bewerken">' + SVG_PEN + '</button>' +
+      '<button class="bd-act-btn bd-act-btn--del" data-action="delete" data-id="' + id + '" title="Verwijderen" aria-label="Verwijderen">' + SVG_TRASH + '</button>' +
+      '</div>';
+    return '<tr data-id="' + id + '" class="me-row" style="cursor:pointer">' +
       '<td data-col="naam"><span style="font-weight:600;color:var(--blue);">' + escapeHtml(r.name || "—") + '</span></td>' +
       '<td data-col="uploaddatum">' + escapeHtml(fmtDateTime(r.uploaddatum)) + '</td>' +
       '<td data-col="gewijzigd">' + escapeHtml(fmtDateTime(r.laatstGewijzigd)) + '</td>' +
-      '<td data-col="acties" class="hr-actions-cell" style="text-align:right">' + actions + '</td>' +
+      '<td data-col="acties" class="bd-acties-cell">' + actions + '</td>' +
     '</tr>';
   }
 
@@ -131,43 +125,100 @@
     } catch (e) { if (window.showError) window.showError("Openen mislukt: " + (e && e.message || e)); }
   }
 
+  // ---- Document bewerken ----
+  function openEdit(item) {
+    state.editId = item.id; state.pendingFile = null; state.pendingRemove = false;
+    document.getElementById("bd-edit-naam").value = item.name || "";
+    var fb = document.getElementById("bd-edit-filename");
+    fb.textContent = item.fileName || (item.name ? item.name + (item.fileExtension ? "." + item.fileExtension : "") : "(geen bestand)");
+    var box = document.getElementById("bd-edit-filebox");
+    if (box) box.style.display = "";
+    var m = document.getElementById("bd-edit-modal");
+    m.removeAttribute("hidden"); m.setAttribute("aria-hidden", "false");
+    setTimeout(function () { var n = document.getElementById("bd-edit-naam"); if (n) n.focus(); }, 50);
+  }
+  function closeEdit() {
+    state.editId = null; state.pendingFile = null; state.pendingRemove = false;
+    var m = document.getElementById("bd-edit-modal");
+    if (m) { m.setAttribute("hidden", ""); m.setAttribute("aria-hidden", "true"); }
+  }
+  async function saveEdit() {
+    var id = state.editId;
+    if (!id) return;
+    var item = window.beleidDocumentenDB.getByIdSync(id);
+    if (!item) { closeEdit(); return; }
+    var btn = document.getElementById("bd-edit-save-btn");
+    btn.disabled = true;
+    try {
+      var patch = { name: (document.getElementById("bd-edit-naam").value || "").trim() };
+      if (state.pendingRemove && item.storagePath) {
+        try { await window.besaSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {}
+        patch.storagePath = null; patch.fileName = null; patch.fileExtension = null; patch.fileSize = null;
+      } else if (state.pendingFile) {
+        var file = state.pendingFile;
+        var ext = (file.name.match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
+        var sp = id + "/" + file.name.replace(/[\\/:*?"<>|]+/g, "_");
+        var ab = await file.arrayBuffer();
+        var upl = await window.besaSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
+        if (upl.error) throw upl.error;
+        if (item.storagePath && item.storagePath !== sp) { try { await window.besaSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {} }
+        patch.storagePath = sp; patch.fileName = file.name; patch.fileExtension = ext; patch.fileSize = file.size;
+      }
+      await window.beleidDocumentenDB.update(id, patch);
+      if (window.showActionFeedback) window.showActionFeedback("saved", patch.name || "Document");
+      closeEdit(); render();
+    } catch (e) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (e && e.message || e));
+    } finally { btn.disabled = false; }
+  }
+
+  // ---- Verwijderen (slider-bevestiging) ----
   function setupSlider(sliderId, btnId) {
     var s = document.getElementById(sliderId), b = document.getElementById(btnId);
     if (!s || !b) return;
     s.addEventListener("input", function () { var p = Number(s.value); s.style.setProperty("--employee-slider-pct", p + "%"); b.disabled = p < 100; });
   }
-  function openModal(which, item) {
-    state[which === "archive" ? "archivingId" : "purgingId"] = item.id;
-    var m = document.getElementById("bd-" + which + "-modal");
-    document.getElementById("bd-" + which + "-preview").textContent = item.name || "";
-    var sl = document.getElementById("bd-" + which + "-slider");
+  function openDel(item) {
+    state.delId = item.id;
+    var m = document.getElementById("bd-purge-modal");
+    document.getElementById("bd-purge-preview").textContent = item.name || "";
+    var sl = document.getElementById("bd-purge-slider");
     sl.value = 0; sl.style.setProperty("--employee-slider-pct", "0%");
-    document.getElementById("bd-" + which + "-confirm-btn").disabled = true;
+    document.getElementById("bd-purge-confirm-btn").disabled = true;
     m.removeAttribute("hidden"); m.setAttribute("aria-hidden", "false");
   }
-  function closeModal(which) {
-    var m = document.getElementById("bd-" + which + "-modal");
+  function closeDel() {
+    state.delId = null;
+    var m = document.getElementById("bd-purge-modal");
     if (m) { m.setAttribute("hidden", ""); m.setAttribute("aria-hidden", "true"); }
+  }
+  async function confirmDel() {
+    var id = state.delId; if (!id) return;
+    var item = window.beleidDocumentenDB.getByIdSync(id);
+    try {
+      await window.beleidDocumentenDB.delete(id); // verwijdert ook het Storage-bestand
+      if (window.showActionFeedback) window.showActionFeedback("deleted", item && item.name || "");
+      closeDel(); render();
+    } catch (e) {
+      if (window.showError) window.showError("Verwijderen mislukt: " + (e && e.message || e));
+      closeDel();
+    }
   }
 
   function doUpload(file) {
     if (!file) return;
-    // BS1-huisstijl "+ toevoegen": upload bestand → Storage + rij.
-    var reader = new FileReader();
-    reader.onload = async function () {
+    file.arrayBuffer().then(async function (ab) {
       try {
         var id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ("d_" + Date.now());
         var ext = (file.name.match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
         var sp = id + "/" + file.name.replace(/[\\/:*?"<>|]+/g, "_");
-        var blob = new Blob([reader.result], { type: file.type || "application/octet-stream" });
-        var upl = await window.besaSupabase.storage.from("beleid-documenten").upload(sp, blob, { upsert: true, contentType: file.type || "application/octet-stream" });
+        var upl = await window.besaSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
         if (upl.error) throw upl.error;
         await window.beleidDocumentenDB.add({ id: id, name: file.name.replace(/\.[a-z0-9]+$/i, ""), storagePath: sp, fileName: file.name, fileExtension: ext, fileSize: file.size });
         if (window.showActionFeedback) window.showActionFeedback("saved", file.name);
         render();
       } catch (e) { if (window.showError) window.showError("Uploaden mislukt: " + (e && e.message || e)); }
-    };
-    reader.readAsArrayBuffer(file);
+    });
   }
 
   function wire() {
@@ -185,7 +236,7 @@
       th.addEventListener("click", function () {
         var key = th.getAttribute("data-sort");
         if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-        else { state.sortKey = key; state.sortDir = "asc"; }
+        else { state.sortKey = key; state.sortDir = key === "name" ? "asc" : "desc"; }
         state.page = 1; render();
       });
     });
@@ -223,42 +274,46 @@
         if (!item) return;
         var act = btn.getAttribute("data-action");
         if (act === "view") openDoc(id);
-        else if (act === "archive") openModal("archive", item);
-        else if (act === "purge") openModal("purge", item);
-        else if (act === "restore") window.beleidDocumentenDB.restore(id).then(function () { if (window.showActionFeedback) window.showActionFeedback("restored", item.name); }).catch(function (err) { if (window.showError) window.showError("Herstellen mislukt: " + err.message); });
+        else if (act === "edit") openEdit(item);
+        else if (act === "delete") openDel(item);
         return;
       }
       var tr = e.target.closest("tr[data-id]");
       if (tr) openDoc(tr.getAttribute("data-id"));
     });
 
-    setupSlider("bd-archive-slider", "bd-archive-confirm-btn");
+    // edit-modal
+    document.getElementById("bd-edit-close-btn").addEventListener("click", closeEdit);
+    document.getElementById("bd-edit-cancel-btn").addEventListener("click", closeEdit);
+    document.getElementById("bd-edit-save-btn").addEventListener("click", saveEdit);
+    var efi = document.getElementById("bd-edit-fileinput");
+    document.getElementById("bd-edit-change").addEventListener("click", function () { efi.click(); });
+    efi.addEventListener("change", function () {
+      if (efi.files && efi.files[0]) {
+        state.pendingFile = efi.files[0]; state.pendingRemove = false;
+        document.getElementById("bd-edit-filename").textContent = efi.files[0].name + "  (nieuw)";
+      }
+    });
+    document.getElementById("bd-edit-remove").addEventListener("click", function () {
+      state.pendingRemove = true; state.pendingFile = null;
+      document.getElementById("bd-edit-filename").textContent = "(bestand wordt verwijderd)";
+    });
+    var em = document.getElementById("bd-edit-modal");
+    if (em) em.addEventListener("click", function (e) { if (e.target === em) closeEdit(); });
+
+    // delete-modal (slider)
     setupSlider("bd-purge-slider", "bd-purge-confirm-btn");
-    document.getElementById("bd-archive-close-btn").addEventListener("click", function () { closeModal("archive"); });
-    document.getElementById("bd-archive-cancel-btn").addEventListener("click", function () { closeModal("archive"); });
-    document.getElementById("bd-purge-close-btn").addEventListener("click", function () { closeModal("purge"); });
-    document.getElementById("bd-purge-cancel-btn").addEventListener("click", function () { closeModal("purge"); });
-    document.getElementById("bd-archive-confirm-btn").addEventListener("click", function () {
-      var id = state.archivingId; if (!id) return;
-      var item = window.beleidDocumentenDB.getByIdSync(id);
-      window.beleidDocumentenDB.archive(id).then(function () { if (window.showActionFeedback) window.showActionFeedback("archived", item && item.name || ""); closeModal("archive"); })
-        .catch(function (err) { if (window.showError) window.showError("Archiveren mislukt: " + err.message); closeModal("archive"); });
-    });
-    document.getElementById("bd-purge-confirm-btn").addEventListener("click", function () {
-      var id = state.purgingId; if (!id) return;
-      var item = window.beleidDocumentenDB.getByIdSync(id);
-      window.beleidDocumentenDB.delete(id).then(function () { if (window.showActionFeedback) window.showActionFeedback("deleted", item && item.name || ""); closeModal("purge"); })
-        .catch(function (err) { if (window.showError) window.showError("Verwijderen mislukt: " + err.message); closeModal("purge"); });
-    });
-    ["bd-archive-modal", "bd-purge-modal"].forEach(function (mid) {
-      var m = document.getElementById(mid);
-      if (m) m.addEventListener("click", function (e) { if (e.target === m) closeModal(mid === "bd-archive-modal" ? "archive" : "purge"); });
-    });
+    document.getElementById("bd-purge-close-btn").addEventListener("click", closeDel);
+    document.getElementById("bd-purge-cancel-btn").addEventListener("click", closeDel);
+    document.getElementById("bd-purge-confirm-btn").addEventListener("click", confirmDel);
+    var dm = document.getElementById("bd-purge-modal");
+    if (dm) dm.addEventListener("click", function (e) { if (e.target === dm) closeDel(); });
+
     document.addEventListener("keydown", function (ev) {
       if (ev.key !== "Escape") return;
-      var pm = document.getElementById("bd-purge-modal"), am = document.getElementById("bd-archive-modal");
-      if (pm && !pm.hasAttribute("hidden")) { ev.stopPropagation(); closeModal("purge"); }
-      else if (am && !am.hasAttribute("hidden")) { ev.stopPropagation(); closeModal("archive"); }
+      var d = document.getElementById("bd-purge-modal"), ed = document.getElementById("bd-edit-modal");
+      if (d && !d.hasAttribute("hidden")) { ev.stopPropagation(); closeDel(); }
+      else if (ed && !ed.hasAttribute("hidden")) { ev.stopPropagation(); closeEdit(); }
     });
 
     window.addEventListener("besa:beleid-documenten-updated", render);

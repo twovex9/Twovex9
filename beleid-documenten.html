@@ -159,25 +159,31 @@
     </main>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="bd-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bd-archive-title" tabindex="-1">
+  <div class="modal-overlay" id="bd-edit-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bd-edit-title" tabindex="-1" style="width:680px;max-width:92vw">
       <div class="modal-header">
-        <h2 id="bd-archive-title" class="modal-title">Document archiveren</h2>
-        <button type="button" class="modal-close" id="bd-archive-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="bd-edit-title" class="modal-title">Document bewerken</h2>
+        <button type="button" class="modal-close" id="bd-edit-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="employee-delete-msg">Het document wordt gearchiveerd en is terug te vinden onder Gearchiveerd.</p>
-        <p class="employee-delete-preview" id="bd-archive-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="bd-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="bd-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig archiveren" />
+        <div class="bd-edit-filebox" id="bd-edit-filebox">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div class="bd-edit-filename" id="bd-edit-filename">—</div>
+          <div class="bd-edit-fileactions">
+            <button type="button" class="bd-edit-link" id="bd-edit-change">Change file</button>
+            <span aria-hidden="true">|</span>
+            <button type="button" class="bd-edit-link" id="bd-edit-remove">Remove</button>
           </div>
+          <input type="file" id="bd-edit-fileinput" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none" />
         </div>
+        <label class="emp-verzuim-modal-field" style="display:block;margin-top:16px;">
+          <span>Naam</span>
+          <input type="text" id="bd-edit-naam" class="comp-modal-input" placeholder="Documentnaam">
+        </label>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-outline" id="bd-archive-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="bd-archive-confirm-btn" disabled>Archiveren</button>
+        <button type="button" class="btn-outline" id="bd-edit-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="bd-edit-save-btn">Opslaan</button>
       </div>
     </div>
   </div>
@@ -185,7 +191,7 @@
   <div class="modal-overlay modal-overlay--confirm" id="bd-purge-modal" hidden aria-hidden="true">
     <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="bd-purge-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="bd-purge-title" class="modal-title">Definitief verwijderen</h2>
+        <h2 id="bd-purge-title" class="modal-title">Document verwijderen</h2>
         <button type="button" class="modal-close" id="bd-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">

@@ -21593,3 +21593,52 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   margin-bottom: 14px;
   cursor: default;
 }
+
+/* ---- Beleid — "Document bewerken" modal filebox (1-op-1 BS2) ---- */
+.bd-edit-filebox {
+  border: 2px solid var(--green);
+  border-radius: var(--r-lg);
+  padding: 26px 18px;
+  text-align: center;
+}
+.bd-edit-filename {
+  font-weight: 700;
+  color: var(--text);
+  font-size: var(--font-base);
+  margin: 12px 0 8px;
+  word-break: break-word;
+}
+.bd-edit-fileactions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+.bd-edit-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+.bd-edit-link:hover { color: var(--blue); text-decoration: underline; }
+.bd-acties-cell { white-space: nowrap; text-align: right; }
+.bd-act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-left: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.bd-act-btn:hover { border-color: var(--blue); color: var(--blue); }
+.bd-act-btn--del:hover { border-color: var(--red); color: var(--red); }
