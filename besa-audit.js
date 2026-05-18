@@ -142,39 +142,22 @@
   }
 
   // ---- haak 2: inloggen / uitloggen ----
-  function wireAuth() {
-    var sb = global.besaSupabase;
-    if (!sb || !sb.auth || typeof sb.auth.onAuthStateChange !== "function") return;
-    try {
-      sb.auth.onAuthStateChange(function (event, session) {
-        try {
-          var uid = session && session.user && session.user.id;
-          if (event === "SIGNED_IN" && uid) {
-            var key = "besa_audit_login_" + uid;
-            if (!global.sessionStorage.getItem(key)) {
-              global.sessionStorage.setItem(key, "1");
-              // korte delay zodat het profiel (naam) geladen is
-              setTimeout(function () { log({ resource: "Gebruiker", resourceId: uid, actie: "inloggen", details: "Ingelogd" }); }, 800);
-            }
-          } else if (event === "SIGNED_OUT") {
-            log({ resource: "Gebruiker", resourceId: "-", actie: "uitloggen", details: "Uitgelogd" });
-            try {
-              var rm = [];
-              for (var i = 0; i < global.sessionStorage.length; i++) {
-                var sk = global.sessionStorage.key(i);
-                if (sk && sk.indexOf("besa_audit_login_") === 0) rm.push(sk);
-              }
-              rm.forEach(function (sk) { global.sessionStorage.removeItem(sk); });
-            } catch (e) { /* */ }
-          }
-        } catch (e) { /* */ }
-      });
-    } catch (e) { /* */ }
-  }
+  // ⚠️ BEWUST UITGESCHAKELD (hotfix 2026-05-18). Eerder abonneerde dit op
+  // supabase.auth.onAuthStateChange en deed daarin een audit_log-insert.
+  // Een Supabase-call in/naar aanleiding van de auth-state-callback laat
+  // de Supabase auth-client HANGEN (gedocumenteerde valkuil) → auth-guard's
+  // getSession() lost niet op → "geen sessie" → redirect-loop naar login.
+  // (Trad pas op nadat #276 de te strenge CHECK verwijderde, waardoor de
+  // insert nu écht uitgevoerd werd i.p.v. meteen te falen.)
+  // Inloggen/uitloggen wordt later veilig gelogd vanuit login.html
+  // (na succesvolle signIn) en de uitlog-knop in auth-guard.js —
+  // BUITEN de onAuthStateChange-callback. besa-audit raakt de auth-flow
+  // nooit meer aan.
+  function wireAuth() { /* opzettelijk leeg — zie comment hierboven */ }
 
   global.besaAudit = { log: log };
 
-  function init() { wrapFeedback(); wireAuth(); }
+  function init() { wrapFeedback(); /* geen wireAuth — auth-flow niet aanraken */ }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
   // Vangnet: als save-feedback.js later (defer) klaar is, alsnog wrappen.
