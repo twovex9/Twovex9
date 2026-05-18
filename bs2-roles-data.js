@@ -42,7 +42,7 @@
     var out = await Promise.all([
       r.from("bs2_hierarchy_levels").select("id,name,hierarchy_order").order("hierarchy_order", { ascending: true }),
       r.from("bs2_roles").select("id,name,slug,description,users_count,hierarchy_level_id").order("name", { ascending: true }),
-      r.from("bs2_permissions").select("slug,perm_group,perm_order,model,is_main").order("perm_group", { ascending: true }).order("perm_order", { ascending: true }),
+      r.from("bs2_permissions").select("slug,perm_group,perm_order,model,is_main,allows_hierarchical_configuration,required_permissions").order("perm_group", { ascending: true }).order("perm_order", { ascending: true }),
     ]);
     for (var i = 0; i < out.length; i++) if (out[i].error) throw out[i].error;
     _levels = out[0].data || [];
@@ -88,14 +88,44 @@
   async function loadRoleDetail(id) {
     var r = sb();
     var out = await Promise.all([
-      r.from("bs2_role_permissions").select("permission_slug").eq("role_id", id),
+      r.from("bs2_role_permissions").select("permission_slug,is_hierarchical").eq("role_id", id),
       r.from("bs2_role_users").select("user_email,user_name,status").eq("role_id", id).order("user_name", { ascending: true }),
     ]);
     if (out[0].error) throw out[0].error;
     if (out[1].error) throw out[1].error;
-    var set = {};
-    (out[0].data || []).forEach(function (x) { set[x.permission_slug] = true; });
-    return { permSlugs: set, users: out[1].data || [] };
+    var perms = {};
+    (out[0].data || []).forEach(function (x) { perms[x.permission_slug] = { on: true, hier: !!x.is_hierarchical }; });
+    return { perms: perms, users: out[1].data || [] };
+  }
+
+  // Gebatchte opslag (BS2 "Wijzigingen opslaan"): voeg toe / verwijder /
+  // wijzig is_hierarchical in één keer. addRows = [{slug,hier}].
+  async function applyPermDiff(roleId, addRows, removeSlugs, hierChanges) {
+    var r = sb();
+    if (addRows && addRows.length) {
+      var ins = await r.from("bs2_role_permissions").upsert(
+        addRows.map(function (a) { return { role_id: roleId, permission_slug: a.slug, is_hierarchical: !!a.hier }; }),
+        { onConflict: "role_id,permission_slug" }
+      );
+      if (ins.error) throw ins.error;
+    }
+    if (removeSlugs && removeSlugs.length) {
+      var del = await r.from("bs2_role_permissions").delete().eq("role_id", roleId).in("permission_slug", removeSlugs);
+      if (del.error) throw del.error;
+    }
+    if (hierChanges && hierChanges.length) {
+      for (var i = 0; i < hierChanges.length; i++) {
+        var h = hierChanges[i];
+        var up = await r.from("bs2_role_permissions").update({ is_hierarchical: !!h.hier }).eq("role_id", roleId).eq("permission_slug", h.slug);
+        if (up.error) throw up.error;
+      }
+    }
+    var ro = (_roles || []).find(function (x) { return x.id === roleId; });
+    if (ro) {
+      var add = (addRows && addRows.length) || 0, rem = (removeSlugs && removeSlugs.length) || 0;
+      ro.perm_count = Math.max(0, (ro.perm_count || 0) + add - rem);
+    }
+    dispatch("perm-batch");
   }
 
   function getProfilesSync() {
@@ -166,6 +196,7 @@
     getPermissionsSync: getPermissionsSync,
     getGroupedSync: getGroupedSync,
     loadRoleDetail: loadRoleDetail,
+    applyPermDiff: applyPermDiff,
     getProfilesSync: getProfilesSync,
     togglePerm: togglePerm,
     setLevel: setLevel,
