@@ -128,12 +128,18 @@
           <select id="role-level-select" class="search"></select>
         </div>
         <div class="role-modal-section">
-          <h3 class="role-modal-h3">Machtigingen</h3>
-          <div id="role-perm-wrap" class="role-perm-wrap"></div>
-        </div>
-        <div class="role-modal-section">
           <div id="role-users-wrap" class="role-users-wrap"></div>
         </div>
+        <div class="role-modal-section role-rights-section">
+          <h3 class="role-modal-h3">Rechten</h3>
+          <p class="role-rights-help">Hoe werken rechten? Elk toegangsniveau omvat automatisch het vorige niveau. Bijvoorbeeld: 'Beheren' verleent ook toegang tot 'Browsen' en 'Bekijken'.</p>
+          <input class="search role-rights-search" type="search" id="role-rights-search" placeholder="Zoek rechten op naam of beschrijving…" autocomplete="off" />
+          <div id="role-perm-wrap" class="role-perm-wrap"></div>
+        </div>
+      </div>
+      <div class="role-modal-footer">
+        <button type="button" class="btn-outline" id="role-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="role-save-btn" disabled>Wijzigingen opslaan</button>
       </div>
     </div>
   </div>
@@ -155,7 +161,8 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
+  <script src="bs2-permission-meta.js?v=permmeta1" defer></script>
   <script src="bs2-roles-data.js" defer></script>
-  <script src="rollen.js?v=bs2roles1" defer></script>
+  <script src="rollen.js?v=bs2roles2" defer></script>
 </body>
 </html>

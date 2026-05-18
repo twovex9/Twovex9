@@ -21680,3 +21680,39 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .role-user-remove:hover { border-color: var(--red); color: var(--red); }
 .role-user-add { display: flex; gap: 8px; }
 .role-user-add select { flex: 1; }
+
+/* Rollen — rechten-scherm 1-op-1 BS2 (screenshot 2) */
+.role-modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface);
+}
+.role-rights-section { padding-bottom: 4px; }
+.role-rights-help { margin: 0 0 10px; font-size: var(--font-table-head); color: var(--text-muted); }
+.role-rights-search { width: 100%; margin-bottom: 12px; }
+.role-perm-list { list-style: none; margin: 0; padding: 6px 0 2px; columns: auto; column-gap: 0; }
+.role-perm-item {
+  display: block; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: var(--r-md); margin-bottom: 6px; break-inside: avoid;
+}
+.role-perm-item.is-on { border-color: var(--blue); background: var(--blue-soft); }
+.role-perm-main2 { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.role-perm-main2 input { margin-top: 3px; flex: 0 0 auto; }
+.role-perm-text { display: flex; flex-direction: column; gap: 1px; }
+.role-perm-label { font-weight: 700; font-size: var(--font-table-cell); }
+.role-perm-desc { font-size: var(--font-table-head); color: var(--text-muted); }
+.role-perm-req { font-size: var(--font-ui-badge); color: var(--blue); font-weight: 700; margin-top: 3px; }
+.role-perm-hier {
+  display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 2px 26px;
+  padding: 8px 10px; border-left: 2px solid var(--line-strong);
+  font-size: var(--font-ui-badge); color: var(--text-secondary); cursor: pointer;
+}
+.role-perm-hier.is-disabled { opacity: 0.45; cursor: not-allowed; }
+.role-perm-hier input { margin-top: 2px; }
+.role-perm-group-actions { display: flex; gap: 6px; margin-left: auto; }
+.role-perm-grpbtn {
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--text-secondary);
+  font: inherit; font-size: var(--font-ui-badge); font-weight: 700; padding: 3px 9px;
+  border-radius: var(--r-pill); cursor: pointer;
+}
+.role-perm-grpbtn:hover { border-color: var(--blue); color: var(--blue); }
+.role-perm-group-head { flex-wrap: wrap; }
