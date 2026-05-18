@@ -142,6 +142,10 @@ async function rebuildSeen() {
 
 async function main() {
   if (!fs.existsSync(OUTDIR)) fs.mkdirSync(OUTDIR, { recursive: true });
+  // Zelf-beschermend: alles in deze map negeren (100MB+ audit-data met
+  // IP's + wie-wat-deed mag NOOIT naar git), onafhankelijk van de
+  // root-.gitignore of de merge-volgorde van PR's.
+  try { fs.writeFileSync(path.join(OUTDIR, ".gitignore"), "*\n"); } catch (e) { /* */ }
 
   // 1) limit-probe: wat geeft /api/audit-logs echt terug?
   console.log("\nLimit-probe (1000→200→100→15)…");
