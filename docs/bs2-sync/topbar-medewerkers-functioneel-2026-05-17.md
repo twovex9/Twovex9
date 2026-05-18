@@ -72,11 +72,12 @@ Linker profielkaart: gradient-hero (150px) + terug-pijl, avatar-cirkel
 (Medewerkersnummer `#N` pill, Datum uit dienst of `-`, **Verjaardag** =
 eerstvolgende verjaardag-datum `d-m-jjjj` bv. `1-7-2026` (NIET geboortejaar)
 + countdown-pills `X Maanden` (alléén als >0) · `Y Dagen` · `Z Uren`).
-Countdown-formule (BS2, afgeleid uit live datapunten): **maanden + dagen op
-DATUM-ONLY vanaf vandaag** (kalender-maanden, dan resterende dagen tot de
-verjaardag-datum); **uren = hele uren tot de eerstvolgende lokale
-middernacht** (los van de verjaardag). Geverifieerd Adriana #3:
-`2026-05-17 23:xx → 1/14/0`, `2026-05-18 ~11u → 1/13/13`.
+Countdown-formule (BS2, exact afgeleid uit 4 live datapunten): tijd van NU
+tot de verjaardag@00:00, omgezet met **VASTE 30-daagse "maanden"**:
+`totaalDagen=(verjaardag@00:00−nu)/dag`; `maanden=floor(totaalDagen/30)`;
+`dagen=floor(rest)`; `uren=floor((rest−dagen)·24)`. 1-op-1 geverifieerd:
+Adriana 1997-07-01 → `2026-05-17 23:xx=1/14/0`, `2026-05-18 ~10u=1/13/13`;
+Brahim 1989-06-03 → `2026-05-17 23:xx=0/16/0`, `2026-05-18 ~10u=0/15/13`.
 
 Rechts: tab **Verzuim** (enige tab). Leeg: "Registreer een nieuw
 ziekteverzuim voor deze medewerker." + `+ Verzuim toevoegen`. Bij `is_sick`:
@@ -105,10 +106,10 @@ Geen FK naar/uit andere BS1-modules (apart, los systeem). Tabel
   ontdekt is. Niet gokken.
 - BS2-list-kolommen niet apart gescreenshot → kolomset afgeleid van de API +
   live geverifieerd vs BS2 (Chrome MCP) en bijgesteld.
-- Verjaardag-countdown: BS2-formule exact gereproduceerd (datum-only
-  maanden/dagen vanaf vandaag + uren tot eerstvolgende middernacht); 2
-  datapunten 1-op-1 geverifieerd. Client-klok = bron; minimale drift alleen
-  als BS1- en gebruikersbrowser-klok/tijdzone verschillen (cosmetisch).
+- Verjaardag-countdown: BS2-formule exact gereproduceerd (vaste 30-daagse
+  maanden, zie sectie 5); 4 datapunten (2 medewerkers × 2 momenten) 1-op-1
+  geverifieerd. Client-klok = bron; alleen drift als BS1- en
+  gebruikersbrowser-klok/tijdzone verschillen.
 
 ## 9. Implementatie (atomic PRs)
 

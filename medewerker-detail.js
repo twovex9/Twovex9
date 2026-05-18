@@ -58,12 +58,14 @@
     }
   }
 
-  // Countdown tot eerstvolgende verjaardag — BS2-formule, afgeleid uit live
-  // datapunten (Adriana 1997-07-01): maanden+dagen op DATUM-ONLY vanaf
-  // VANDAAG → kalender-maanden dan resterende dagen; uren = hele uren tot
-  // de EERSTVOLGENDE lokale middernacht (los van de verjaardag).
-  //   2026-05-17 23:xx → 1 Maanden/14 Dagen/0 Uren
-  //   2026-05-18 ~11u  → 1 Maanden/13 Dagen/13 Uren  (beide geverifieerd)
+  // Countdown tot eerstvolgende verjaardag — BS2-formule, exact afgeleid uit
+  // 4 live datapunten: tijd van NU tot de verjaardag (om middernacht),
+  // omgezet met **VASTE 30-daagse "maanden"** + restdagen + resturen:
+  //   totaalDagen = (verjaardag@00:00 − nu) / dag
+  //   maanden = floor(totaalDagen / 30); dagen = floor(rest); uren = floor(rest-uur)
+  // Geverifieerd 1-op-1:
+  //   Adriana 1997-07-01: 2026-05-17 23:xx → 1/14/0 ; 2026-05-18 ~10u → 1/13/13
+  //   Brahim  1989-06-03: 2026-05-17 23:xx → 0/16/0 ; 2026-05-18 ~10u → 0/15/13
   function birthdayCountdown(dobIso) {
     if (!dobIso) return null;
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dobIso));
@@ -72,18 +74,14 @@
     var month = Number(m[2]) - 1;
     var day = Number(m[3]);
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    var next = new Date(today.getFullYear(), month, day);
-    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day);
-    var months = 0;
-    var cur = new Date(today.getTime());
-    while (true) {
-      var step = new Date(cur.getTime());
-      step.setMonth(step.getMonth() + 1);
-      if (step.getTime() <= next.getTime()) { cur = step; months += 1; } else break;
-    }
-    var days = Math.round((next.getTime() - cur.getTime()) / 86400000);
-    var nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-    var hours = Math.floor((nextMidnight.getTime() - now.getTime()) / 3600000);
+    var next = new Date(today.getFullYear(), month, day, 0, 0, 0, 0);
+    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day, 0, 0, 0, 0);
+    var totalDays = (next.getTime() - now.getTime()) / 86400000;
+    if (totalDays < 0) totalDays = 0;
+    var months = Math.floor(totalDays / 30);
+    var rest = totalDays - months * 30;
+    var days = Math.floor(rest);
+    var hours = Math.floor((rest - days) * 24);
     if (hours < 0) hours = 0;
     if (hours > 23) hours = 23;
     return { months: months, days: days, hours: hours };
