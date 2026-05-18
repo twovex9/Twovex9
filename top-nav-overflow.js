@@ -160,7 +160,7 @@
       Taken: "taken.html",
       Medewerkers: "medewerkers-overzicht.html",
       Verlof: "verlof.html",
-      Beleid: "beleid.html",
+      Beleid: "beleid-documenten.html",
       Audit: "audit.html",
       Organisatie: "teams.html",
       Instellingen: "instellingen.html",
