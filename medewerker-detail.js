@@ -58,11 +58,12 @@
     }
   }
 
-  // Countdown tot eerstvolgende verjaardag (om middernacht): kalender-
-  // breakdown van NU → maanden, dan dagen, dan uren (BS2-gedrag, live
-  // geverifieerd: Adriana 1997-07-01 = "1 Maanden/13 Dagen/13 Uren").
-  // Uren is écht (niet 0). Kleine ±1 mogelijk door client-klok/tijdzone
-  // — BS2's countdown is client-side en niet in de API (cosmetisch).
+  // Countdown tot eerstvolgende verjaardag — BS2-formule, afgeleid uit live
+  // datapunten (Adriana 1997-07-01): maanden+dagen op DATUM-ONLY vanaf
+  // VANDAAG → kalender-maanden dan resterende dagen; uren = hele uren tot
+  // de EERSTVOLGENDE lokale middernacht (los van de verjaardag).
+  //   2026-05-17 23:xx → 1 Maanden/14 Dagen/0 Uren
+  //   2026-05-18 ~11u  → 1 Maanden/13 Dagen/13 Uren  (beide geverifieerd)
   function birthdayCountdown(dobIso) {
     if (!dobIso) return null;
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dobIso));
@@ -70,19 +71,21 @@
     var now = new Date();
     var month = Number(m[2]) - 1;
     var day = Number(m[3]);
-    var next = new Date(now.getFullYear(), month, day, 0, 0, 0, 0);
-    if (next.getTime() <= now.getTime()) next = new Date(now.getFullYear() + 1, month, day, 0, 0, 0, 0);
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var next = new Date(today.getFullYear(), month, day);
+    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day);
     var months = 0;
-    var cur = new Date(now.getTime());
+    var cur = new Date(today.getTime());
     while (true) {
       var step = new Date(cur.getTime());
       step.setMonth(step.getMonth() + 1);
       if (step.getTime() <= next.getTime()) { cur = step; months += 1; } else break;
     }
-    var diff = next.getTime() - cur.getTime();
-    if (diff < 0) diff = 0;
-    var days = Math.floor(diff / 86400000);
-    var hours = Math.floor((diff % 86400000) / 3600000);
+    var days = Math.round((next.getTime() - cur.getTime()) / 86400000);
+    var nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    var hours = Math.floor((nextMidnight.getTime() - now.getTime()) / 3600000);
+    if (hours < 0) hours = 0;
+    if (hours > 23) hours = 23;
     return { months: months, days: days, hours: hours };
   }
 
