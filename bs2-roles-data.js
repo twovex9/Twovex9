@@ -1,0 +1,177 @@
+/* global window */
+/**
+ * bs2-roles-data.js — data-laag voor de Rollen-beheerpagina (1-op-1 BS2).
+ *
+ * Bron: public.bs2_roles / bs2_permissions / bs2_role_permissions /
+ * bs2_role_users / bs2_hierarchy_levels (read-only-gescrapet uit BS2
+ * PRODUCTIE, daarna in BS1 beheerbaar). STRIKT los van org_roles /
+ * org_role_sections / profiles.rol — die worden niet aangeraakt.
+ *
+ * window.bs2RolesDB:
+ *   ready, refresh,
+ *   getLevelsSync(), getRolesSync(), getPermissionsSync()  (catalogus),
+ *   getGroupedSync()  -> [{level, roles[]}]  (rollen per hiërarchie-niveau),
+ *   loadRoleDetail(id) -> {permSlugs:Set, users:[]},
+ *   getProfilesSync()  -> [{naam,email}]  (voor toewijzen),
+ *   togglePerm(roleId, slug, on), setLevel(roleId, levelId|null),
+ *   addUser(roleId, email, naam), removeUser(roleId, email)
+ *
+ * Alle mutaties: await Supabase, daarna showActionFeedback (wordt door
+ * besa-audit.js automatisch in de audit gelogd met de echte gebruiker).
+ */
+(function (global) {
+  "use strict";
+
+  var _levels = null, _roles = null, _perms = null;
+  var readyPromise = null;
+
+  function sb() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    return global.besaSupabase;
+  }
+  function dispatch(src) {
+    try { global.dispatchEvent(new CustomEvent("besa:bs2-roles-updated", { detail: { source: src || "data" } })); } catch (e) { /* */ }
+  }
+  function reportSilent(action, err) {
+    console.error("[bs2RolesDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Rollen — " + action, err);
+  }
+
+  async function fetchAll() {
+    var r = sb();
+    var out = await Promise.all([
+      r.from("bs2_hierarchy_levels").select("id,name,hierarchy_order").order("hierarchy_order", { ascending: true }),
+      r.from("bs2_roles").select("id,name,slug,description,users_count,hierarchy_level_id").order("name", { ascending: true }),
+      r.from("bs2_permissions").select("slug,perm_group,perm_order,model,is_main").order("perm_group", { ascending: true }).order("perm_order", { ascending: true }),
+    ]);
+    for (var i = 0; i < out.length; i++) if (out[i].error) throw out[i].error;
+    _levels = out[0].data || [];
+    _perms = out[2].data || [];
+    // live tellingen per rol uit de koppeltabellen (i.p.v. bevroren users_count)
+    var roles = out[1].data || [];
+    var rp = await r.from("bs2_role_permissions").select("role_id");
+    var ru = await r.from("bs2_role_users").select("role_id");
+    if (rp.error) throw rp.error;
+    if (ru.error) throw ru.error;
+    var pc = {}, uc = {};
+    (rp.data || []).forEach(function (x) { pc[x.role_id] = (pc[x.role_id] || 0) + 1; });
+    (ru.data || []).forEach(function (x) { uc[x.role_id] = (uc[x.role_id] || 0) + 1; });
+    roles.forEach(function (ro) { ro.perm_count = pc[ro.id] || 0; ro.user_count = uc[ro.id] || 0; });
+    _roles = roles;
+  }
+
+  function bootstrap() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async function () {
+      try { await fetchAll(); dispatch("bootstrap"); }
+      catch (err) { reportSilent("bootstrap", err); }
+    })();
+    return readyPromise;
+  }
+  async function refresh() { await fetchAll(); dispatch("refresh"); }
+
+  function getLevelsSync() { return _levels || []; }
+  function getRolesSync() { return _roles || []; }
+  function getPermissionsSync() { return _perms || []; }
+
+  function getGroupedSync() {
+    var levels = getLevelsSync().slice();
+    var roles = getRolesSync();
+    var groups = levels.map(function (l) {
+      return { level: l, roles: roles.filter(function (r) { return r.hierarchy_level_id === l.id; }) };
+    });
+    var zonder = roles.filter(function (r) { return !r.hierarchy_level_id; });
+    if (zonder.length) groups.push({ level: { id: null, name: "Niet ingedeeld" }, roles: zonder });
+    return groups;
+  }
+
+  async function loadRoleDetail(id) {
+    var r = sb();
+    var out = await Promise.all([
+      r.from("bs2_role_permissions").select("permission_slug").eq("role_id", id),
+      r.from("bs2_role_users").select("user_email,user_name,status").eq("role_id", id).order("user_name", { ascending: true }),
+    ]);
+    if (out[0].error) throw out[0].error;
+    if (out[1].error) throw out[1].error;
+    var set = {};
+    (out[0].data || []).forEach(function (x) { set[x.permission_slug] = true; });
+    return { permSlugs: set, users: out[1].data || [] };
+  }
+
+  function getProfilesSync() {
+    try {
+      var ps = (global.profilesDB && global.profilesDB.getAllSync && global.profilesDB.getAllSync()) || [];
+      return ps.map(function (p) {
+        var naam = [p.voornaam, p.achternaam].filter(Boolean).join(" ").trim() || p.naam || p.email || "";
+        return { naam: naam, email: (p.email || "").trim() };
+      }).filter(function (p) { return p.email; })
+        .sort(function (a, b) { return a.naam.localeCompare(b.naam, "nl", { sensitivity: "base" }); });
+    } catch (e) { return []; }
+  }
+
+  function bump(roleId, field, delta) {
+    var ro = (_roles || []).find(function (x) { return x.id === roleId; });
+    if (ro) ro[field] = Math.max(0, (ro[field] || 0) + delta);
+  }
+
+  async function togglePerm(roleId, slug, on) {
+    var r = sb();
+    if (on) {
+      var ins = await r.from("bs2_role_permissions").upsert({ role_id: roleId, permission_slug: slug }, { onConflict: "role_id,permission_slug" });
+      if (ins.error) throw ins.error;
+      bump(roleId, "perm_count", 1);
+    } else {
+      var del = await r.from("bs2_role_permissions").delete().eq("role_id", roleId).eq("permission_slug", slug);
+      if (del.error) throw del.error;
+      bump(roleId, "perm_count", -1);
+    }
+    dispatch("perm");
+  }
+
+  async function setLevel(roleId, levelId) {
+    var r = sb();
+    var up = await r.from("bs2_roles").update({ hierarchy_level_id: levelId || null, laatst_gewijzigd: new Date().toISOString() }).eq("id", roleId);
+    if (up.error) throw up.error;
+    var ro = (_roles || []).find(function (x) { return x.id === roleId; });
+    if (ro) ro.hierarchy_level_id = levelId || null;
+    dispatch("level");
+  }
+
+  async function addUser(roleId, email, naam) {
+    email = String(email || "").trim();
+    if (!email) throw new Error("E-mail vereist");
+    var r = sb();
+    var up = await r.from("bs2_role_users").upsert(
+      { role_id: roleId, user_email: email, user_name: naam || null },
+      { onConflict: "role_id,user_email" }
+    );
+    if (up.error) throw up.error;
+    bump(roleId, "user_count", 1);
+    dispatch("user");
+  }
+
+  async function removeUser(roleId, email) {
+    var r = sb();
+    var del = await r.from("bs2_role_users").delete().eq("role_id", roleId).eq("user_email", email);
+    if (del.error) throw del.error;
+    bump(roleId, "user_count", -1);
+    dispatch("user");
+  }
+
+  global.bs2RolesDB = {
+    get ready() { return readyPromise || bootstrap(); },
+    refresh: refresh,
+    getLevelsSync: getLevelsSync,
+    getRolesSync: getRolesSync,
+    getPermissionsSync: getPermissionsSync,
+    getGroupedSync: getGroupedSync,
+    loadRoleDetail: loadRoleDetail,
+    getProfilesSync: getProfilesSync,
+    togglePerm: togglePerm,
+    setLevel: setLevel,
+    addUser: addUser,
+    removeUser: removeUser,
+  };
+
+  bootstrap();
+})(typeof window !== "undefined" ? window : this);
