@@ -1,7 +1,12 @@
 /* global window, document */
 /**
- * audit.js — Read-only viewer voor audit-logs.
- * v1: alleen public.beschikking_audit_log entries.
+ * audit.js — Audit Logs (read-only viewer), server-side.
+ *
+ * Bron = public.audit_log via auditDB.fetchPage (server-side paginatie +
+ * sortering + filtering → toont ALLE rijen, niet meer de oude 500-cap).
+ * Klikbare sorteerkoppen. Filters (Resource / Veroorzaker / Actie type)
+ * + zoeken, server-side. besa-audit.js vult deze tabel met de echte
+ * ingelogde gebruiker per actie + in-/uitloggen.
  */
 (function () {
   "use strict";
@@ -12,11 +17,17 @@
     search: "",
     filterResource: "",
     filterActie: "",
-    // Sprint 16 / S16 — BS2 parity uitbreidingen
     filterVeroorzaker: "",
     page: 1,
     rowsPerPage: ROWS_PER_PAGE_DEFAULT,
+    sortKey: "tijdstip",
+    sortDir: "desc",
   };
+
+  var currentRows = [];
+  var currentTotal = 0;
+  var loadToken = 0;
+  var searchTimer = null;
 
   function fmtTime(iso) {
     if (!iso) return "";
@@ -35,25 +46,22 @@
   }
 
   var ACTIE_LABELS = {
-    aanmaken: "Aanmaken",
-    bewerken: "Bewerken",
-    bekijken: "Bekijken",
-    verwijderen: "Verwijderen",
-    archiveren: "Archiveren",
-    herstellen: "Herstellen",
-    status_wijziging: "Status",
+    aanmaken: "Aanmaken", bewerken: "Bewerken", bekijken: "Bekijken",
+    verwijderen: "Verwijderen", archiveren: "Archiveren", herstellen: "Herstellen",
+    status_wijziging: "Status wijziging", inloggen: "Inloggen", uitloggen: "Uitloggen",
+    exporteren: "Exporteren", downloaden: "Downloaden",
+    RolGewijzigd: "Rol gewijzigd", WachtwoordGereset: "Wachtwoord gereset",
+    Gedeactiveerd: "Gedeactiveerd", Geactiveerd: "Geactiveerd", "2FAGereset": "2FA gereset",
   };
+  function actieLabel(a) { return ACTIE_LABELS[a] || a || ""; }
 
   function actieBadge(actie) {
-    var label = ACTIE_LABELS[actie] || actie || "";
+    var label = actieLabel(actie);
     var style = "padding:2px 8px;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:600;";
-    if (actie === "aanmaken") style += "color:var(--green);background:var(--green-soft);";
-    else if (actie === "bekijken") style += "color:var(--blue);background:var(--blue-soft);";
-    else if (actie === "bewerken") style += "color:var(--yellow);background:var(--yellow-soft);";
-    else if (actie === "verwijderen") style += "color:var(--red);background:var(--red-soft);";
-    else if (actie === "archiveren") style += "color:var(--yellow);background:var(--yellow-soft);";
-    else if (actie === "herstellen") style += "color:var(--green);background:var(--green-soft);";
-    else if (actie === "status_wijziging") style += "color:var(--blue);background:var(--blue-soft);";
+    if (actie === "aanmaken" || actie === "herstellen" || actie === "Geactiveerd") style += "color:var(--green);background:var(--green-soft);";
+    else if (actie === "bekijken" || actie === "inloggen" || actie === "status_wijziging" || actie === "exporteren" || actie === "downloaden") style += "color:var(--blue);background:var(--blue-soft);";
+    else if (actie === "bewerken" || actie === "archiveren") style += "color:var(--yellow);background:var(--yellow-soft);";
+    else if (actie === "verwijderen" || actie === "Gedeactiveerd") style += "color:var(--red);background:var(--red-soft);";
     else style += "color:var(--text-muted);background:var(--line);";
     return '<span style="' + style + '">' + escapeHtml(label) + '</span>';
   }
@@ -67,43 +75,7 @@
     return '<span style="' + style + '">' + escapeHtml(label) + '</span>';
   }
 
-  function getVisible() {
-    var items = (window.auditDB && window.auditDB.getAllSync()) || [];
-    var q = state.search.trim().toLowerCase();
-    return items.filter(function (a) {
-      if (!a) return false;
-      if (state.filterResource && a.resourceType !== state.filterResource) return false;
-      if (state.filterActie && a.actieType !== state.filterActie) return false;
-      // Sprint 16 / S16 — veroorzaker filter (mirror BS2)
-      if (state.filterVeroorzaker && String(a.gebruiker || "") !== state.filterVeroorzaker) return false;
-      if (!q) return true;
-      var hay = (a.gebruiker || "") + " " + (a.resourceType || "") + " " + (a.resourceId || "") + " " + (a.actieType || "") + " " + (a.details || "");
-      return hay.toLowerCase().indexOf(q) >= 0;
-    });
-  }
-
-  // Sprint 16 / S16 — vul Veroorzaker dropdown met unieke gebruikers uit data
-  function populateVeroorzakerFilter() {
-    var sel = document.getElementById("audit-filter-veroorzaker");
-    if (!sel) return;
-    var prev = sel.value || "";
-    var items = (window.auditDB && window.auditDB.getAllSync()) || [];
-    var users = [...new Set(items.map(function (a) { return a && a.gebruiker; }).filter(Boolean))].sort(function (a, b) {
-      return String(a).localeCompare(String(b), "nl", { sensitivity: "base" });
-    });
-    sel.innerHTML = '<option value="">Alle veroorzakers</option>';
-    users.forEach(function (u) {
-      var opt = document.createElement("option");
-      opt.value = u;
-      opt.textContent = u;
-      sel.appendChild(opt);
-    });
-    if (prev) sel.value = prev;
-  }
-
   function renderRow(a) {
-    // Bug #64 fix: data-col op elke <td> zodat Kolommen-kiezer-hide
-    // ook de data-cellen verbergt (niet alleen de <th> headers).
     return '<tr class="audit-row" data-audit-id="' + escapeHtml(a.id) + '" tabindex="0" role="button" aria-label="Open audit-detail">' +
       '<td data-col="tijdstip" style="white-space:nowrap;">' + escapeHtml(fmtTime(a.tijdstip)) + '</td>' +
       '<td data-col="gebruiker">' + escapeHtml(a.gebruiker) + '</td>' +
@@ -115,27 +87,20 @@
     '</tr>';
   }
 
-  // --------------------------------------------------------------------------
-  // Audit detail modal — toont volledige info voor één event
-  // --------------------------------------------------------------------------
+  // ---- detail modal ----
   function buildDetailRow(label, valueHtml) {
-    return '<div class="audit-detail-row">'
-      + '<dt class="audit-detail-label">' + escapeHtml(label) + '</dt>'
-      + '<dd class="audit-detail-value">' + valueHtml + '</dd>'
-      + '</div>';
+    return '<div class="audit-detail-row"><dt class="audit-detail-label">' + escapeHtml(label) +
+      '</dt><dd class="audit-detail-value">' + valueHtml + '</dd></div>';
   }
-
   function renderDetailBody(a) {
     if (!a) return '<p style="color:var(--text-muted);">Geen data.</p>';
-    var rows = '';
+    var rows = "";
     rows += buildDetailRow("Tijdstip", escapeHtml(fmtTime(a.tijdstip)) + ' <span style="color:var(--text-muted);font-size:12px;">(' + escapeHtml(a.tijdstip || "") + ')</span>');
     rows += buildDetailRow("Gebruiker", escapeHtml(a.gebruiker || "—"));
     rows += buildDetailRow("Resource", escapeHtml(a.resourceType || "—"));
     rows += buildDetailRow("Resource ID", '<span style="font-family:monospace;font-size:12px;">' + escapeHtml(a.resourceId || "—") + '</span>');
     rows += buildDetailRow("Actie", actieBadge(a.actieType));
     rows += buildDetailRow("Status", statusBadge(a.status));
-    rows += buildDetailRow("Bron", escapeHtml(a.bron === "beschikking" ? "beschikking_audit_log (legacy)" : "audit_log (generic)"));
-
     var detailsRaw = a.details || "";
     var detailsHtml;
     try {
@@ -147,29 +112,22 @@
         : '<span style="color:var(--text-muted);">— geen details —</span>';
     }
     rows += buildDetailRow("Details", detailsHtml);
-
     if (a.ipAdres) rows += buildDetailRow("IP-adres", '<span style="font-family:monospace;font-size:12px;">' + escapeHtml(a.ipAdres) + '</span>');
     if (a.userAgent) rows += buildDetailRow("User-agent", '<span style="font-family:monospace;font-size:12px;word-break:break-all;">' + escapeHtml(a.userAgent) + '</span>');
-
     return '<dl class="audit-detail-dl">' + rows + '</dl>';
   }
-
   function openDetailModal(auditId) {
-    var items = (window.auditDB && window.auditDB.getAllSync()) || [];
-    var entry = items.find(function (x) { return x && String(x.id) === String(auditId); });
+    var entry = currentRows.find(function (x) { return x && String(x.id) === String(auditId); });
     var overlay = document.getElementById("audit-detail-overlay");
     var body = document.getElementById("audit-detail-body");
     var title = document.getElementById("audit-detail-title");
     if (!overlay || !body) return;
-    if (entry && title) {
-      title.textContent = (entry.resourceType || "Audit-event") + (entry.actieType ? " — " + entry.actieType : "");
-    }
+    if (entry && title) title.textContent = (entry.resourceType || "Audit-event") + (entry.actieType ? " — " + actieLabel(entry.actieType) : "");
     body.innerHTML = renderDetailBody(entry);
     overlay.hidden = false;
     overlay.classList.add("is-open");
     document.body.style.overflow = "hidden";
   }
-
   function closeDetailModal() {
     var overlay = document.getElementById("audit-detail-overlay");
     if (!overlay) return;
@@ -177,27 +135,17 @@
     overlay.classList.remove("is-open");
     document.body.style.overflow = "";
   }
-
   function wireDetailModal() {
     var overlay = document.getElementById("audit-detail-overlay");
     var closeBtn = document.getElementById("audit-detail-close");
     if (closeBtn) closeBtn.addEventListener("click", closeDetailModal);
-    if (overlay) {
-      overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) closeDetailModal();
-      });
-    }
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && overlay && !overlay.hidden) closeDetailModal();
-    });
-
+    if (overlay) overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDetailModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && overlay && !overlay.hidden) closeDetailModal(); });
     var tbody = document.getElementById("audit-tbody");
     if (!tbody) return;
     tbody.addEventListener("click", function (e) {
       var row = e.target.closest("tr.audit-row");
-      if (!row) return;
-      var id = row.getAttribute("data-audit-id");
-      if (id) openDetailModal(id);
+      if (row) { var id = row.getAttribute("data-audit-id"); if (id) openDetailModal(id); }
     });
     tbody.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -209,73 +157,158 @@
     });
   }
 
-  function render() {
+  // ---- sorteerkoppen ----
+  function applySortIndicators() {
+    document.querySelectorAll('#audit-table thead th[data-col]').forEach(function (th) {
+      var col = th.getAttribute("data-col");
+      var inner = th.querySelector(".th-sort-inner");
+      if (!inner) return;
+      var old = inner.querySelector(".audit-sort-arrow");
+      if (old) old.remove();
+      th.style.cursor = "pointer";
+      th.setAttribute("title", "Sorteer op " + (th.textContent || col).trim());
+      var span = document.createElement("span");
+      span.className = "audit-sort-arrow";
+      span.style.cssText = "margin-left:6px;font-size:11px;color:var(--text-muted);";
+      span.textContent = (col === state.sortKey) ? (state.sortDir === "asc" ? "▲" : "▼") : "↕";
+      inner.appendChild(span);
+    });
+  }
+  function wireSortHeaders() {
+    document.querySelectorAll('#audit-table thead th[data-col]').forEach(function (th) {
+      th.addEventListener("click", function () {
+        var col = th.getAttribute("data-col");
+        if (!col) return;
+        if (state.sortKey === col) {
+          state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        } else {
+          state.sortKey = col;
+          state.sortDir = (col === "tijdstip") ? "desc" : "asc";
+        }
+        state.page = 1;
+        loadAndRender();
+      });
+    });
+  }
+
+  function setPagerDisabled(totalPages) {
+    [["audit-pager-first", state.page <= 1], ["audit-pager-prev", state.page <= 1],
+     ["audit-pager-next", state.page >= totalPages], ["audit-pager-last", state.page >= totalPages]
+    ].forEach(function (x) { var el = document.getElementById(x[0]); if (el) el.disabled = x[1]; });
+  }
+
+  function renderRows() {
     var tbody = document.getElementById("audit-tbody");
     if (!tbody) return;
-    var visible = getVisible();
-    var total = visible.length;
-    var rpp = state.rowsPerPage || ROWS_PER_PAGE_DEFAULT;
-    var totalPages = Math.max(1, Math.ceil(total / rpp));
-    if (state.page > totalPages) state.page = totalPages;
-    var start = (state.page - 1) * rpp;
-    var pageItems = visible.slice(start, start + rpp);
-    if (pageItems.length === 0) {
+    if (!currentRows.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted);">Geen audit-entries gevonden.</td></tr>';
     } else {
-      tbody.innerHTML = pageItems.map(renderRow).join("");
+      tbody.innerHTML = currentRows.map(renderRow).join("");
     }
-    document.getElementById("audit-pager-range").textContent = total === 0 ? "0 van 0" : (start + 1) + "-" + Math.min(total, start + pageItems.length) + " van " + total;
-    document.getElementById("audit-pager-page").textContent = "Pagina " + state.page + " van " + totalPages;
-    document.getElementById("audit-pager-first").disabled = state.page <= 1;
-    document.getElementById("audit-pager-prev").disabled = state.page <= 1;
-    document.getElementById("audit-pager-next").disabled = state.page >= totalPages;
-    document.getElementById("audit-pager-last").disabled = state.page >= totalPages;
+    var rpp = state.rowsPerPage || ROWS_PER_PAGE_DEFAULT;
+    var totalPages = Math.max(1, Math.ceil(currentTotal / rpp));
+    var start = (state.page - 1) * rpp;
+    var rangeEl = document.getElementById("audit-pager-range");
+    if (rangeEl) rangeEl.textContent = currentTotal === 0 ? "0 van 0" : (start + 1) + "-" + (start + currentRows.length) + " van " + currentTotal;
+    var pageEl = document.getElementById("audit-pager-page");
+    if (pageEl) pageEl.textContent = "Pagina " + state.page + " van " + totalPages;
+    setPagerDisabled(totalPages);
+    applySortIndicators();
+    if (window.applyAuditColumnVisibility) window.applyAuditColumnVisibility();
+  }
+
+  function loadAndRender() {
+    var tbody = document.getElementById("audit-tbody");
+    var myToken = ++loadToken;
+    if (tbody && !currentRows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted);">Laden…</td></tr>';
+    }
+    if (!window.auditDB || !window.auditDB.fetchPage) { console.error("[audit] auditDB.fetchPage niet beschikbaar"); return; }
+    window.auditDB.fetchPage({
+      page: state.page, perPage: state.rowsPerPage,
+      sortKey: state.sortKey, sortDir: state.sortDir,
+      search: state.search, resource: state.filterResource,
+      actie: state.filterActie, veroorzaker: state.filterVeroorzaker,
+    }).then(function (res) {
+      if (myToken !== loadToken) return; // verouderde respons negeren
+      currentRows = (res && res.rows) || [];
+      currentTotal = (res && res.total) || 0;
+      var rpp = state.rowsPerPage || ROWS_PER_PAGE_DEFAULT;
+      var totalPages = Math.max(1, Math.ceil(currentTotal / rpp));
+      if (state.page > totalPages) { state.page = totalPages; loadAndRender(); return; }
+      renderRows();
+    }).catch(function (err) {
+      if (myToken !== loadToken) return;
+      console.error("[audit] laden mislukt", err);
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--red);">Laden mislukt: ' + escapeHtml(err && err.message || err) + '</td></tr>';
+    });
+  }
+
+  function fillSelect(id, values, allLabel, labelFn) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var prev = sel.value || "";
+    sel.innerHTML = '<option value="">' + allLabel + '</option>';
+    values.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = labelFn ? labelFn(v) : v;
+      sel.appendChild(opt);
+    });
+    if (prev) sel.value = prev;
+  }
+
+  function loadFilterOptions() {
+    if (!window.auditDB || !window.auditDB.fetchFilterOptions) return;
+    window.auditDB.fetchFilterOptions().then(function (o) {
+      fillSelect("audit-filter-resource", o.resources || [], "Alle resources");
+      fillSelect("audit-filter-veroorzaker", o.veroorzakers || [], "Alle veroorzakers");
+      fillSelect("audit-filter-actie", o.acties || [], "Alle actie-types", actieLabel);
+    }).catch(function (e) { console.warn("[audit] filter-opties:", e); });
   }
 
   function wireEvents() {
-    document.getElementById("audit-refresh-btn").addEventListener("click", function () {
-      if (window.auditDB && window.auditDB.refresh) {
-        window.auditDB.refresh().catch(function (err) { console.error("[audit] refresh failed", err); });
-      }
-    });
-    document.getElementById("audit-search").addEventListener("input", function (e) { state.search = e.target.value || ""; state.page = 1; render(); });
-    document.getElementById("audit-filter-resource").addEventListener("change", function (e) { state.filterResource = e.target.value || ""; state.page = 1; render(); });
-    document.getElementById("audit-filter-actie").addEventListener("change", function (e) { state.filterActie = e.target.value || ""; state.page = 1; render(); });
+    var refreshBtn = document.getElementById("audit-refresh-btn");
+    if (refreshBtn) refreshBtn.addEventListener("click", function () { loadFilterOptions(); loadAndRender(); });
 
-    // Sprint 16 / S16 — veroorzaker + reset + kolommen
+    document.getElementById("audit-search").addEventListener("input", function (e) {
+      state.search = e.target.value || "";
+      state.page = 1;
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(loadAndRender, 300);
+    });
+    document.getElementById("audit-filter-resource").addEventListener("change", function (e) { state.filterResource = e.target.value || ""; state.page = 1; loadAndRender(); });
+    document.getElementById("audit-filter-actie").addEventListener("change", function (e) { state.filterActie = e.target.value || ""; state.page = 1; loadAndRender(); });
     var verSel = document.getElementById("audit-filter-veroorzaker");
-    if (verSel) {
-      populateVeroorzakerFilter();
-      verSel.addEventListener("change", function (e) { state.filterVeroorzaker = e.target.value || ""; state.page = 1; render(); });
-      window.addEventListener("besa:audit-updated", populateVeroorzakerFilter);
-    }
+    if (verSel) verSel.addEventListener("change", function (e) { state.filterVeroorzaker = e.target.value || ""; state.page = 1; loadAndRender(); });
+
     var resetBtn = document.getElementById("audit-filter-reset");
     if (resetBtn) resetBtn.addEventListener("click", function () {
       state.search = ""; state.filterResource = ""; state.filterActie = ""; state.filterVeroorzaker = ""; state.page = 1;
       ["audit-search", "audit-filter-resource", "audit-filter-actie", "audit-filter-veroorzaker"].forEach(function (id) {
         var el = document.getElementById(id); if (el) el.value = "";
       });
-      render();
-      if (window.showActionFeedback) window.showActionFeedback("info", "Filters gewist", "Alle audit-filters zijn teruggezet.");
+      loadAndRender();
     });
+
     buildAuditColumnsPanel();
     wireAuditColumnsPanel();
-    document.getElementById("audit-rows-per-page").addEventListener("change", function (e) { state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; render(); });
-    document.getElementById("audit-pager-first").addEventListener("click", function () { state.page = 1; render(); });
-    document.getElementById("audit-pager-prev").addEventListener("click", function () { if (state.page > 1) { state.page -= 1; render(); } });
-    document.getElementById("audit-pager-next").addEventListener("click", function () { state.page += 1; render(); });
+    wireSortHeaders();
+
+    document.getElementById("audit-rows-per-page").addEventListener("change", function (e) {
+      state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; loadAndRender();
+    });
+    document.getElementById("audit-pager-first").addEventListener("click", function () { if (state.page !== 1) { state.page = 1; loadAndRender(); } });
+    document.getElementById("audit-pager-prev").addEventListener("click", function () { if (state.page > 1) { state.page -= 1; loadAndRender(); } });
+    document.getElementById("audit-pager-next").addEventListener("click", function () { state.page += 1; loadAndRender(); });
     document.getElementById("audit-pager-last").addEventListener("click", function () {
       var rpp = state.rowsPerPage || ROWS_PER_PAGE_DEFAULT;
-      state.page = Math.max(1, Math.ceil(getVisible().length / rpp));
-      render();
+      state.page = Math.max(1, Math.ceil(currentTotal / rpp));
+      loadAndRender();
     });
-    window.addEventListener("besa:audit-updated", render);
   }
 
-  /**
-   * Sprint 16 / S16 — Kolommen-kiezer (zelfde pattern als beleid.js).
-   * Configureerbare zichtbaarheid van audit-tabel kolommen.
-   */
+  // ---- Kolommen-kiezer (ongewijzigd patroon) ----
   var AUDIT_COLUMN_CONFIG = [
     { id: "tijdstip", label: "Tijdstip", defaultOn: true },
     { id: "gebruiker", label: "Gebruiker", defaultOn: true },
@@ -286,7 +319,6 @@
     { id: "status", label: "Status", defaultOn: true },
   ];
   var AUDIT_COLUMNS_PREFS_KEY = "audit_columns_v1";
-
   function readAuditColumnPrefs() {
     try { var raw = localStorage.getItem(AUDIT_COLUMNS_PREFS_KEY); return raw ? JSON.parse(raw) || {} : {}; }
     catch (e) { return {}; }
@@ -306,6 +338,7 @@
       setAuditColumnVisible(c.id, on);
     });
   }
+  window.applyAuditColumnVisibility = applyAuditColumnVisibility;
   function buildAuditColumnsPanel() {
     var list = document.getElementById("audit-columns-list");
     if (!list) return;
@@ -321,18 +354,15 @@
       btn.setAttribute("role", "menuitemcheckbox");
       btn.setAttribute("aria-checked", on ? "true" : "false");
       btn.setAttribute("data-col", c.id);
-      btn.className = "column-toggle";
-      btn.innerHTML = '<span class="column-toggle-check" aria-hidden="true">' +
-        (on ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
-        '</span><span class="column-toggle-label">' + c.label + '</span>';
+      btn.className = "column-toggle" + (on ? " is-checked" : "");
+      btn.innerHTML = '<span class="column-check" aria-hidden="true">' + (on ? "✓" : "") + '</span> ' + c.label;
       btn.addEventListener("click", function (e) {
         e.stopPropagation();
         var isOn = btn.getAttribute("aria-checked") === "true";
         var nextOn = !isOn;
         btn.setAttribute("aria-checked", nextOn ? "true" : "false");
-        btn.querySelector(".column-toggle-check").innerHTML = nextOn
-          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-          : "";
+        btn.classList.toggle("is-checked", nextOn);
+        btn.querySelector(".column-check").textContent = nextOn ? "✓" : "";
         var p = readAuditColumnPrefs();
         p[c.id] = nextOn;
         writeAuditColumnPrefs(p);
@@ -348,11 +378,13 @@
     if (!btn || !panel) return;
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
-      var open = btn.getAttribute("aria-expanded") === "true";
+      var open = !panel.hasAttribute("hidden");
       if (open) { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); }
       else { panel.removeAttribute("hidden"); btn.setAttribute("aria-expanded", "true"); }
     });
-    document.addEventListener("click", function () {
+    document.addEventListener("click", function (e) {
+      if (panel.hasAttribute("hidden")) return;
+      if (e.target.closest("#audit-columns-panel") || e.target.closest("#audit-columns-menu-btn")) return;
       panel.setAttribute("hidden", "");
       btn.setAttribute("aria-expanded", "false");
     });
@@ -363,8 +395,8 @@
     if (!window.auditDB) { console.error("[audit] auditDB niet geladen"); return; }
     wireEvents();
     wireDetailModal();
-    render();
-    window.auditDB.ready.then(render);
+    loadFilterOptions();
+    loadAndRender();
   }
 
   if (document.readyState === "loading") {

@@ -141,12 +141,75 @@
     return Object.keys(set).sort();
   }
 
+  // ---- Server-side paginatie/sortering/filtering over public.audit_log ----
+  // (de generieke stream waar besa-audit.js + triggers naar schrijven; dit
+  // is de juiste enkele bron voor de top-bar Audit. Legacy
+  // beschikking_audit_log blijft eruit zodat server-paginatie + sort klopt.)
+  var SORT_MAP = {
+    tijdstip: "aanmaakdatum", gebruiker: "gebruiker_label", resource: "resource",
+    resource_id: "resource_id", actie: "actie", details: "details", status: "status",
+  };
+
+  async function fetchPage(opts) {
+    opts = opts || {};
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var page = Math.max(1, Number(opts.page) || 1);
+    var perPage = Math.max(1, Number(opts.perPage) || 30);
+    var from = (page - 1) * perPage;
+    var to = from + perPage - 1;
+    var sortCol = SORT_MAP[opts.sortKey] || "aanmaakdatum";
+    var asc = opts.sortDir === "asc";
+
+    var q = global.besaSupabase.from(TABLE_GENERIC).select("*", { count: "exact" });
+    if (opts.resource) q = q.eq("resource", opts.resource);
+    if (opts.actie) q = q.eq("actie", opts.actie);
+    if (opts.veroorzaker) q = q.eq("gebruiker_label", opts.veroorzaker);
+    var s = String(opts.search == null ? "" : opts.search).trim();
+    if (s) {
+      var esc = s.replace(/[%,()*]/g, " ");
+      q = q.or(
+        "gebruiker_label.ilike.%" + esc + "%," +
+        "resource.ilike.%" + esc + "%," +
+        "resource_id.ilike.%" + esc + "%," +
+        "actie.ilike.%" + esc + "%," +
+        "details.ilike.%" + esc + "%"
+      );
+    }
+    // Stabiele secundaire sort op id zodat gelijke waarden niet "springen".
+    q = q.order(sortCol, { ascending: asc }).order("id", { ascending: asc }).range(from, to);
+
+    var res = await q;
+    if (res.error) throw res.error;
+    var rows = (res.data || []).map(genericRowToObj).filter(Boolean);
+    return { rows: rows, total: typeof res.count === "number" ? res.count : rows.length };
+  }
+
+  async function fetchFilterOptions() {
+    var empty = { resources: [], acties: [], veroorzakers: [] };
+    if (!global.besaSupabase) return empty;
+    try {
+      var res = await global.besaSupabase.rpc("audit_log_filter_options");
+      if (res.error) throw res.error;
+      var d = res.data || {};
+      return {
+        resources: Array.isArray(d.resources) ? d.resources : [],
+        acties: Array.isArray(d.acties) ? d.acties : [],
+        veroorzakers: Array.isArray(d.veroorzakers) ? d.veroorzakers : [],
+      };
+    } catch (e) {
+      console.warn("[auditDB] filter-options mislukt:", e);
+      return empty;
+    }
+  }
+
   global.auditDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
     fetchAll: fetchAll,
     getAllSync: getAllSync,
     getDistinctResources: getDistinctResources,
+    fetchPage: fetchPage,
+    fetchFilterOptions: fetchFilterOptions,
   };
 
   bootstrap();
