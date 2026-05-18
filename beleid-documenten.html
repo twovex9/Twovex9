@@ -98,13 +98,19 @@
       <div class="content-header">
         <h1>Documenten</h1>
         <div class="header-actions">
-          <button class="btn-outline" type="button" id="bd-cols-btn" aria-haspopup="true" aria-expanded="false">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Kolommen</button>
-          <div class="columns-panel me-cols-panel" id="bd-cols-panel" hidden>
-            <div class="me-cols-title">Kolommen weergeven</div>
-            <label class="me-cols-opt"><input type="checkbox" data-col="naam" checked><span>Naam</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="uploaddatum" checked><span>Uploaddatum</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="gewijzigd" checked><span>Laatst gewijzigd</span></label>
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="bd-columns-menu-btn" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="bd-columns-panel" role="menu" aria-labelledby="bd-columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" role="none">
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Naam</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="uploaddatum" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Uploaddatum</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="gewijzigd" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Laatst gewijzigd</button></li>
+              </ul>
+            </div>
           </div>
           <button class="btn-primary" type="button" id="bd-upload-btn">+ Document uploaden</button>
         </div>

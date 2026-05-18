@@ -137,14 +137,8 @@
     });
   }
 
-  function toggleColsPanel(force) {
-    var panel = document.getElementById("me-cols-panel");
-    var btn = document.getElementById("me-cols-btn");
-    if (!panel) return;
-    var open = force != null ? force : panel.hasAttribute("hidden");
-    if (open) { panel.removeAttribute("hidden"); btn.setAttribute("aria-expanded", "true"); }
-    else { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); }
-  }
+  // Kolommen-chooser is nu canoniek (huisstijl); floating-panels.js
+  // positioneert het paneel onder de knop — zie wireEvents().
 
   function wireEvents() {
     document.getElementById("me-search").addEventListener("input", function (e) {
@@ -161,21 +155,39 @@
       });
     });
 
-    var colsBtn = document.getElementById("me-cols-btn");
-    if (colsBtn) colsBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleColsPanel(); });
-    document.querySelectorAll("#me-cols-panel input[type=checkbox]").forEach(function (cb) {
-      cb.checked = !!state.cols[cb.getAttribute("data-col")];
-      cb.addEventListener("change", function () {
-        state.cols[cb.getAttribute("data-col")] = cb.checked;
-        saveCols(); applyColVisibility();
+    var colsBtn = document.getElementById("me-columns-menu-btn");
+    var colsPanel = document.getElementById("me-columns-panel");
+    function syncToggles() {
+      if (!colsPanel) return;
+      colsPanel.querySelectorAll(".column-toggle").forEach(function (t) {
+        var on = !!state.cols[t.getAttribute("data-col")];
+        t.classList.toggle("is-checked", on);
+        t.setAttribute("aria-checked", on ? "true" : "false");
       });
+    }
+    function closeColsPanel() {
+      if (colsPanel && !colsPanel.hasAttribute("hidden")) colsPanel.setAttribute("hidden", "");
+      if (colsBtn) colsBtn.setAttribute("aria-expanded", "false");
+    }
+    if (colsBtn) colsBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = colsPanel.hasAttribute("hidden");
+      if (open) { colsPanel.removeAttribute("hidden"); colsBtn.setAttribute("aria-expanded", "true"); syncToggles(); }
+      else closeColsPanel();
+    });
+    if (colsPanel) colsPanel.addEventListener("click", function (e) {
+      var t = e.target.closest(".column-toggle");
+      if (!t) return;
+      var col = t.getAttribute("data-col");
+      state.cols[col] = !state.cols[col];
+      saveCols(); syncToggles(); applyColVisibility();
     });
     document.addEventListener("click", function (e) {
-      var panel = document.getElementById("me-cols-panel");
-      if (!panel || panel.hasAttribute("hidden")) return;
-      if (e.target.closest("#me-cols-panel") || e.target.closest("#me-cols-btn")) return;
-      toggleColsPanel(false);
+      if (!colsPanel || colsPanel.hasAttribute("hidden")) return;
+      if (e.target.closest("#me-columns-panel") || e.target.closest("#me-columns-menu-btn")) return;
+      closeColsPanel();
     });
+    syncToggles();
 
     document.getElementById("me-rows-per-page").addEventListener("change", function (e) {
       state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; render();

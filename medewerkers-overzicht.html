@@ -98,15 +98,21 @@
       <div class="content-header">
         <h1>Medewerkers</h1>
         <div class="header-actions">
-          <button class="btn-outline" type="button" id="me-cols-btn" aria-haspopup="true" aria-expanded="false">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Kolommen</button>
-          <div class="columns-panel me-cols-panel" id="me-cols-panel" hidden>
-            <div class="me-cols-title">Kolommen weergeven</div>
-            <label class="me-cols-opt"><input type="checkbox" data-col="avatar" checked><span>Avatar</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="voornaam" checked><span>Voornaam</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="achternaam" checked><span>Achternaam</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="email" checked><span>E-Mailadres</span></label>
-            <label class="me-cols-opt"><input type="checkbox" data-col="tel" checked><span>Tel.</span></label>
+          <div class="columns-dropdown">
+            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="me-columns-menu-btn" aria-label="Kolommen">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Kolommen
+            </button>
+            <div class="columns-panel" id="me-columns-panel" role="menu" aria-labelledby="me-columns-menu-btn" hidden>
+              <div class="columns-panel-title">Kolommen weergeven</div>
+              <ul class="columns-list" role="none">
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="avatar" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Avatar</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="voornaam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Voornaam</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="achternaam" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Achternaam</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="email" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> E-Mailadres</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="tel" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Tel.</button></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

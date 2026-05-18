@@ -241,23 +241,40 @@
       });
     });
 
-    var colsBtn = document.getElementById("bd-cols-btn");
+    // Canoniek BS1-kolommen-chooser (huisstijl + floating-panels.js positioneert).
+    var colsBtn = document.getElementById("bd-columns-menu-btn");
+    var colsPanel = document.getElementById("bd-columns-panel");
+    function syncToggles() {
+      if (!colsPanel) return;
+      colsPanel.querySelectorAll(".column-toggle").forEach(function (t) {
+        var on = !!state.cols[t.getAttribute("data-col")];
+        t.classList.toggle("is-checked", on);
+        t.setAttribute("aria-checked", on ? "true" : "false");
+      });
+    }
+    function closeColsPanel() {
+      if (colsPanel && !colsPanel.hasAttribute("hidden")) colsPanel.setAttribute("hidden", "");
+      if (colsBtn) colsBtn.setAttribute("aria-expanded", "false");
+    }
     if (colsBtn) colsBtn.addEventListener("click", function (e) {
       e.stopPropagation();
-      var p = document.getElementById("bd-cols-panel");
-      if (p.hasAttribute("hidden")) { p.removeAttribute("hidden"); colsBtn.setAttribute("aria-expanded", "true"); }
-      else { p.setAttribute("hidden", ""); colsBtn.setAttribute("aria-expanded", "false"); }
+      var open = colsPanel.hasAttribute("hidden");
+      if (open) { colsPanel.removeAttribute("hidden"); colsBtn.setAttribute("aria-expanded", "true"); syncToggles(); }
+      else closeColsPanel();
     });
-    document.querySelectorAll("#bd-cols-panel input[type=checkbox]").forEach(function (cb) {
-      cb.checked = !!state.cols[cb.getAttribute("data-col")];
-      cb.addEventListener("change", function () { state.cols[cb.getAttribute("data-col")] = cb.checked; saveCols(); applyColVisibility(); });
+    if (colsPanel) colsPanel.addEventListener("click", function (e) {
+      var t = e.target.closest(".column-toggle");
+      if (!t) return;
+      var col = t.getAttribute("data-col");
+      state.cols[col] = !state.cols[col];
+      saveCols(); syncToggles(); applyColVisibility();
     });
     document.addEventListener("click", function (e) {
-      var p = document.getElementById("bd-cols-panel");
-      if (!p || p.hasAttribute("hidden")) return;
-      if (e.target.closest("#bd-cols-panel") || e.target.closest("#bd-cols-btn")) return;
-      p.setAttribute("hidden", ""); if (colsBtn) colsBtn.setAttribute("aria-expanded", "false");
+      if (!colsPanel || colsPanel.hasAttribute("hidden")) return;
+      if (e.target.closest("#bd-columns-panel") || e.target.closest("#bd-columns-menu-btn")) return;
+      closeColsPanel();
     });
+    syncToggles();
 
     document.getElementById("bd-rows-per-page").addEventListener("change", function (e) { state.rowsPerPage = Number(e.target.value) || ROWS_PER_PAGE_DEFAULT; state.page = 1; render(); });
     document.getElementById("bd-pager-first").addEventListener("click", function () { state.page = 1; render(); });
