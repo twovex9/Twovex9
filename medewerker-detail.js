@@ -19,12 +19,20 @@
     return m ? decodeURIComponent(m[1]) : "";
   }
 
-  // Verjaardag: BS2-formaat d-m-jjjj (geen voorloopnullen), bv. "1-7-2026".
+  // Verjaardag: BS2 toont de EERSTVOLGENDE verjaardag-datum (dag-maand van
+  // geboortedatum + jaar van de eerstvolgende verjaardag), formaat d-m-jjjj
+  // zonder voorloopnullen, bv. dob 1997-07-01 → "1-7-2026".
   function fmtBday(iso) {
     if (!iso) return "—";
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
     if (!m) return "—";
-    return Number(m[3]) + "-" + Number(m[2]) + "-" + m[1];
+    var month = Number(m[2]) - 1;
+    var day = Number(m[3]);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var next = new Date(today.getFullYear(), month, day);
+    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day);
+    return next.getDate() + "-" + (next.getMonth() + 1) + "-" + next.getFullYear();
   }
 
   // Verzuim-startdatum: BS2 toont DD-MM-JJJJ in Europe/Amsterdam
@@ -50,26 +58,32 @@
     }
   }
 
-  // Countdown tot eerstvolgende verjaardag, midnight→midnight (BS2-gedrag:
-  // Uren consequent 0). Hele maanden, dan resterende dagen.
+  // Countdown tot eerstvolgende verjaardag (om middernacht): kalender-
+  // breakdown van NU → maanden, dan dagen, dan uren (BS2-gedrag, live
+  // geverifieerd: Adriana 1997-07-01 = "1 Maanden/13 Dagen/13 Uren").
+  // Uren is écht (niet 0). Kleine ±1 mogelijk door client-klok/tijdzone
+  // — BS2's countdown is client-side en niet in de API (cosmetisch).
   function birthdayCountdown(dobIso) {
     if (!dobIso) return null;
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dobIso));
     if (!m) return null;
     var now = new Date();
-    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     var month = Number(m[2]) - 1;
     var day = Number(m[3]);
-    var next = new Date(today.getFullYear(), month, day);
-    if (next.getTime() <= today.getTime()) next = new Date(today.getFullYear() + 1, month, day);
+    var next = new Date(now.getFullYear(), month, day, 0, 0, 0, 0);
+    if (next.getTime() <= now.getTime()) next = new Date(now.getFullYear() + 1, month, day, 0, 0, 0, 0);
     var months = 0;
-    var cur = new Date(today.getTime());
+    var cur = new Date(now.getTime());
     while (true) {
-      var step = new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+      var step = new Date(cur.getTime());
+      step.setMonth(step.getMonth() + 1);
       if (step.getTime() <= next.getTime()) { cur = step; months += 1; } else break;
     }
-    var days = Math.round((next.getTime() - cur.getTime()) / 86400000);
-    return { months: months, days: days, hours: 0 };
+    var diff = next.getTime() - cur.getTime();
+    if (diff < 0) diff = 0;
+    var days = Math.floor(diff / 86400000);
+    var hours = Math.floor((diff % 86400000) / 3600000);
+    return { months: months, days: days, hours: hours };
   }
 
   function setText(id, txt) {

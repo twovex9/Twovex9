@@ -21354,7 +21354,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .me-detail-hero {
   position: relative;
-  height: 200px;
+  height: 150px;
   background: linear-gradient(120deg, var(--green) 0%, var(--blue) 100%);
 }
 .me-detail-back {
@@ -21374,12 +21374,14 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .me-detail-avatar {
-  width: 150px;
-  height: 150px;
+  position: relative;
+  z-index: 1;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: var(--line);
-  border: 6px solid var(--surface);
-  margin: -90px auto 0;
+  border: 4px solid var(--surface);
+  margin: -70px auto 0;
   display: flex;
   align-items: center;
   justify-content: center;
