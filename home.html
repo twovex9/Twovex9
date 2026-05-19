@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
@@ -7,501 +7,101 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Home — HR</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
-  <style>
-    /* ==========================================================================
-       Home redesign — stijl & layout overgenomen uit aangeleverde mockup.
-       Volledig gescoped op body.home-redesign zodat geen enkele andere pagina
-       hierdoor verandert. Inhoud (begroeting, nieuws, modal, navigatie, logo,
-       scripts) is ongewijzigd; enkel visuele stijl + layout.
-       ========================================================================== */
-    body.home-redesign {
-      --hr-bg-app: #0E1116;
-      --hr-bg-side: #0A0D12;
-      --hr-bg-card: #141821;
-      --hr-bg-card-h: #1A1F28;
-      --hr-bg-elev: #1A1F28;
-      --hr-border: #1F242D;
-      --hr-border-h: #2A313C;
-      --hr-t1: #F5F6F8;
-      --hr-t2: #E6E8EC;
-      --hr-t3: #8A92A1;
-      --hr-t4: #6B7280;
-      --hr-accent: #3B82F6;
-      --hr-accent-l: #7AA2F7;
-      background: var(--hr-bg-app);
-      color: var(--hr-t2);
-      min-height: 100vh;
-    }
-
-    /* ---- Layout shell ---- */
-    .home-redesign .app {
-      display: grid;
-      grid-template-columns: 248px 1fr;
-      min-height: 100vh;
-    }
-
-    .home-redesign .sidebar {
-      background: var(--hr-bg-side);
-      border-right: 1px solid var(--hr-border);
-      padding: 18px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .home-redesign .sidebar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 4px 8px 16px;
-    }
-
-    .home-redesign .sidebar-logo img {
-      height: 38px;
-      width: auto;
-      display: block;
-    }
-
-    .home-redesign .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
-      color: var(--hr-t3);
-      font-size: 13px;
-      border-radius: 7px;
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .home-redesign .nav-item:hover {
-      background: var(--hr-bg-elev);
-      color: var(--hr-t2);
-    }
-
-    .home-redesign .nav-item.active {
-      background: var(--hr-bg-elev);
-      color: var(--hr-t1);
-    }
-
-    .home-redesign .nav-ic {
-      width: 18px;
-      height: 18px;
-      stroke: currentColor;
-      stroke-width: 1.75;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
-    }
-
-    .home-redesign .nav-item.active .nav-ic { color: var(--hr-accent-l); }
-
-    .home-redesign .nav-sub {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      margin: 1px 0 6px;
-      padding-left: 28px;
-    }
-
-    .home-redesign .nav-sub a {
-      display: flex;
-      flex-direction: column;
-      padding: 5px 10px;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .home-redesign .nav-sub a:hover { background: var(--hr-bg-elev); }
-    .home-redesign .ns-t { font-size: 12px; color: var(--hr-t3); }
-    .home-redesign .ns-s { font-size: 10.5px; color: var(--hr-t4); line-height: 1.3; }
-    .home-redesign .nav-sub a:hover .ns-t { color: var(--hr-t2); }
-
-    .home-redesign .nav-divider {
-      height: 1px;
-      background: var(--hr-border);
-      margin: 12px 6px;
-    }
-
-    .home-redesign .nav-spacer { flex: 1; min-height: 12px; }
-
-    /* ---- Main ---- */
-    .home-redesign .main {
-      padding: 24px 32px;
-      max-width: 1400px;
-    }
-
-    .home-redesign .topbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-      background: transparent;
-      border: 0;
-      padding: 0;
-      min-height: 0;
-      box-shadow: none;
-      position: static;
-    }
-
-    .home-redesign .home-greet-block { margin-right: auto; }
-
-    .home-redesign #home-greeting {
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--hr-t1);
-      margin: 0;
-    }
-
-    .home-redesign .home-subtitle {
-      margin: 3px 0 0;
-      font-size: 13px;
-      color: var(--hr-t4);
-      font-weight: 500;
-    }
-
-    .home-redesign .home-news-count-badge {
-      display: inline-block;
-      margin-left: 6px;
-      padding: 1px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--hr-t2);
-      background: var(--hr-bg-elev);
-      border-radius: 999px;
-    }
-
-    .home-redesign .home-nudge {
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--hr-t3);
-    }
-
-    .home-redesign .home-nudge-link { color: var(--hr-accent-l); text-decoration: none; }
-    .home-redesign .home-nudge-link:hover { text-decoration: underline; }
-
-    .home-redesign .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .home-redesign .topbar .icon-btn {
-      width: 36px;
-      height: 36px;
-      background: var(--hr-bg-elev);
-      border: 1px solid var(--hr-border);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--hr-t2);
-      cursor: pointer;
-      transition: border-color 0.15s;
-    }
-    .home-redesign .topbar .icon-btn:hover { border-color: var(--hr-border-h); }
-
-    .home-redesign .section { margin-bottom: 28px; }
-
-    /* ---- Nieuws-grid (kaarten worden door home.js gegenereerd) ---- */
-    .home-redesign .home-news-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .home-redesign .home-news-card {
-      position: relative;
-      background: var(--hr-bg-card);
-      border: 1px solid var(--hr-border);
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      box-shadow: none;
-      transition: border-color 0.15s, transform 0.15s;
-    }
-
-    .home-redesign .home-news-card:hover {
-      background: var(--hr-bg-card-h);
-      border-color: var(--hr-border-h);
-      transform: translateY(-1px);
-      box-shadow: none;
-    }
-
-    .home-redesign .home-news-card:focus-visible {
-      outline: 2px solid var(--hr-accent);
-      outline-offset: 2px;
-    }
-
-    .home-redesign .home-news-card-image {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 10;
-      object-fit: cover;
-      background: var(--hr-bg-elev);
-      border-bottom: 1px solid var(--hr-border);
-      display: block;
-    }
-
-    .home-redesign .home-news-card-image--fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--hr-t4);
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .home-redesign .home-news-card-body {
-      padding: 12px 14px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-      height: auto;
-    }
-
-    .home-redesign .home-news-card-title {
-      margin: 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--hr-t1);
-      line-height: 1.4;
-    }
-
-    .home-redesign .home-news-card-preview {
-      margin: 0 0 6px;
-      font-size: 12px;
-      color: var(--hr-t3);
-      line-height: 1.5;
-      flex: 1;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .home-redesign .home-news-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--hr-t4);
-      padding-top: 10px;
-      border-top: 1px solid var(--hr-border);
-    }
-
-    .home-redesign .home-news-card-avatar {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      color: #fff;
-      font-weight: 600;
-      font-size: 9px;
-      letter-spacing: 0.3px;
-      flex-shrink: 0;
-    }
-
-    .home-redesign .home-news-card-author { font-weight: 500; color: var(--hr-t3); }
-
-    .home-redesign .home-news-card-date {
-      margin-left: auto;
-      color: var(--hr-t4);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-
-    .home-redesign .home-news-card-arrow {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: rgba(10, 13, 18, 0.78);
-      color: var(--hr-t3);
-      box-shadow: none;
-      pointer-events: none;
-    }
-
-    .home-redesign .home-news-card:hover .home-news-card-arrow {
-      color: var(--hr-accent-l);
-      background: var(--hr-bg-elev);
-    }
-
-    .home-redesign .home-news-empty {
-      grid-column: 1 / -1;
-      background: var(--hr-bg-card);
-      border: 1px dashed var(--hr-border);
-      border-radius: 10px;
-      padding: 28px;
-      color: var(--hr-t3);
-      font-weight: 600;
-    }
-
-    /* ---- Nieuws-modal + lightbox: zelfde donkere uitstraling ---- */
-    .home-redesign .home-news-modal {
-      background: var(--hr-bg-card);
-      border: 1px solid var(--hr-border);
-      color: var(--hr-t2);
-    }
-    .home-redesign .home-news-modal-title { color: var(--hr-t1); }
-    .home-redesign .home-news-modal-content { color: var(--hr-t2); }
-    .home-redesign .home-news-modal-content strong,
-    .home-redesign .home-news-modal-content b { color: var(--hr-t1); }
-    .home-redesign .home-news-modal-content a { color: var(--hr-accent-l); }
-    .home-redesign .home-news-modal-author,
-    .home-redesign .home-news-modal-date { color: var(--hr-t3); }
-    .home-redesign .home-news-modal-footer { border-top: 1px solid var(--hr-border); }
-    .home-redesign .home-news-modal-footer .home-news-modal-author,
-    .home-redesign .home-news-modal-footer .home-news-modal-date { color: var(--hr-t3); }
-    .home-redesign .home-news-modal-sep { color: var(--hr-t4); }
-    .home-redesign .modal-close { color: var(--hr-t3); }
-    .home-redesign .modal-close:hover { color: var(--hr-t1); }
-
-    @media (max-width: 1200px) {
-      .home-redesign .home-news-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 900px) {
-      .home-redesign .app { grid-template-columns: 1fr; }
-      .home-redesign .sidebar { display: none; }
-      .home-redesign .home-news-grid { grid-template-columns: repeat(2, 1fr); }
-      .home-redesign .main { padding: 20px; }
-    }
-    @media (max-width: 600px) {
-      .home-redesign .home-news-grid { grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
-<body class="home-redesign">
+<body>
   <script src="save-feedback.js?v=sf500" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
-  <!-- SVG icon-definities voor de sidebar (hergebruikt via <use>) -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/></symbol>
-      <symbol id="i-planning" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></symbol>
-      <symbol id="i-uren" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-      <symbol id="i-hr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/></symbol>
-      <symbol id="i-clienten" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1"/><circle cx="17" cy="8" r="2.5"/><path d="M15.5 14h2a3.5 3.5 0 0 1 3.5 3.5V19"/></symbol>
-      <symbol id="i-kilometers" viewBox="0 0 24 24"><path d="M5 17h14"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17v-4l2-5h10l2 5v4"/><path d="M7 13h10"/></symbol>
-      <symbol id="i-facturen" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></symbol>
-      <symbol id="i-taken" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></symbol>
-      <symbol id="i-medewerkers" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 17c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 10h4"/><path d="M14 14h3"/></symbol>
-      <symbol id="i-beleid" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.5 8.5-8 9-4.5-.5-8-4.5-8-9V6l8-3z"/></symbol>
-      <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 5h6a1 1 0 0 1 1 1v1H8V6a1 1 0 0 1 1-1z"/><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 13l2 2 4-4"/></symbol>
-      <symbol id="i-organisatie" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01"/><path d="M14 7h.01"/><path d="M9 11h.01"/><path d="M14 11h.01"/><path d="M9 15h.01"/><path d="M14 15h.01"/><path d="M10 21v-3h4v3"/></symbol>
-      <symbol id="i-instellingen" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
-    </defs>
-  </svg>
-
-  <div class="app">
-
-    <!-- ============ SIDEBAR (alle bestaande navigatie + sublinks behouden) ============ -->
-    <aside class="sidebar">
-      <a href="home.html" class="sidebar-logo" aria-label="Home">
-        <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
-      </a>
-
-      <a href="home.html" class="nav-item active"><svg class="nav-ic"><use href="#i-home"/></svg>Home</a>
-
-      <a href="planning.html" class="nav-item"><svg class="nav-ic"><use href="#i-planning"/></svg>Planning</a>
-      <div class="nav-sub" role="menu" aria-label="Planning opties">
-        <a href="planning.html" role="menuitem"><span class="ns-t">Overzicht planning</span><span class="ns-s">Bekijk planningsoverzicht</span></a>
-        <a href="planning-beheer.html" role="menuitem"><span class="ns-t">Beheer planningbeheer</span><span class="ns-s">Beheer planninginstellingen</span></a>
-      </div>
-
-      <a href="werkuren.html" class="nav-item"><svg class="nav-ic"><use href="#i-uren"/></svg>Urenregistratie</a>
-      <div class="nav-sub" role="menu" aria-label="Urenregistratie opties">
-        <a href="werkuren.html" role="menuitem"><span class="ns-t">Geregistreerde uren</span><span class="ns-s">Overzicht geregistreerde uren</span></a>
-        <a href="werkuren-labels.html" role="menuitem"><span class="ns-t">Labels</span><span class="ns-s">Beheer labels voor urenregistraties</span></a>
-      </div>
-
-      <a href="index.html" class="nav-item"><svg class="nav-ic"><use href="#i-hr"/></svg>HR</a>
-      <div class="nav-sub" role="menu" aria-label="HR opties">
-        <a href="index.html" role="menuitem"><span class="ns-t">Medewerkers</span><span class="ns-s">Beheer je medewerkers</span></a>
-        <a href="competenties.html" role="menuitem"><span class="ns-t">Competenties</span><span class="ns-s">Beheer competenties</span></a>
-        <a href="locaties.html" role="menuitem"><span class="ns-t">Locaties</span><span class="ns-s">Beheer locaties</span></a>
-        <a href="salarishuis.html" role="menuitem"><span class="ns-t">Salarishuis</span><span class="ns-s">Beheer het salarishuis</span></a>
-        <a href="bureaus.html" role="menuitem"><span class="ns-t">Bureau's</span><span class="ns-s">Beheer bureau's</span></a>
-      </div>
-
-      <a href="clienten.html" class="nav-item"><svg class="nav-ic"><use href="#i-clienten"/></svg>Cliënten</a>
-      <div class="nav-sub" role="menu" aria-label="Cliënten opties">
-        <a href="clienten.html" role="menuitem"><span class="ns-t">Cliënten</span><span class="ns-s">Cliëntbeheer</span></a>
-        <a href="zorgsoorten.html" role="menuitem"><span class="ns-t">Zorgsoorten</span><span class="ns-s">Beheer Zorgsoorten</span></a>
-        <a href="beschikkingen.html" role="menuitem"><span class="ns-t">Beschikkingen</span><span class="ns-s">Beschikkingen overzicht</span></a>
-        <a href="facturen.html" role="menuitem"><span class="ns-t">Facturen</span><span class="ns-s">Factuuroverzicht</span></a>
-        <a href="incidenten.html" role="menuitem"><span class="ns-t">Incidenten</span><span class="ns-s">Incidenten overzicht</span></a>
-      </div>
-
-      <a href="kilometers.html" class="nav-item"><svg class="nav-ic"><use href="#i-kilometers"/></svg>Kilometers</a>
-      <div class="nav-sub" role="menu" aria-label="Kilometers opties">
-        <a href="kilometers.html" role="menuitem"><span class="ns-t">Kilometer declaraties</span><span class="ns-s">Bekijk alle kilometer declaraties</span></a>
-      </div>
-
-      <a href="facturen-te-beoordelen.html" class="nav-item"><svg class="nav-ic"><use href="#i-facturen"/></svg>Facturen</a>
-      <div class="nav-sub" role="menu" aria-label="Facturen opties">
-        <a href="facturen-te-beoordelen.html" role="menuitem"><span class="ns-t">Te beoordelen</span><span class="ns-s">Bekijk en beheer facturen te beoordelen</span></a>
-        <a href="facturen.html" role="menuitem"><span class="ns-t">Alle facturen</span><span class="ns-s">Maandelijkse facturen bekijken en beheren</span></a>
-      </div>
-
-      <a href="taken.html" class="nav-item"><svg class="nav-ic"><use href="#i-taken"/></svg>Taken</a>
-
-      <div class="nav-divider"></div>
-
-      <a href="medewerkers-overzicht.html" class="nav-item"><svg class="nav-ic"><use href="#i-medewerkers"/></svg>Medewerkers</a>
-      <a href="beleid-documenten.html" class="nav-item"><svg class="nav-ic"><use href="#i-beleid"/></svg>Beleid</a>
-      <a href="audit.html" class="nav-item"><svg class="nav-ic"><use href="#i-audit"/></svg>Audit</a>
-
-      <a href="teams.html" class="nav-item"><svg class="nav-ic"><use href="#i-organisatie"/></svg>Organisatie</a>
-      <div class="nav-sub" role="menu" aria-label="Organisatie opties">
-        <a href="rollen.html" role="menuitem"><span class="ns-t">Rollen</span><span class="ns-s">Beheer rollen en permissies</span></a>
-        <a href="teams.html" role="menuitem"><span class="ns-t">Teams</span><span class="ns-s">Team structuur beheer</span></a>
-        <a href="gebruikers.html" role="menuitem"><span class="ns-t">Gebruikers</span><span class="ns-s">Beheer login-accounts (admin-tier)</span></a>
-      </div>
-
-      <div class="nav-spacer"></div>
-
-      <a href="instellingen.html" class="nav-item"><svg class="nav-ic"><use href="#i-instellingen"/></svg>Instellingen</a>
-    </aside>
-
-    <!-- ============ MAIN ============ -->
-    <main class="main">
-      <header class="topbar">
-        <div class="home-greet-block">
-          <h1 id="home-greeting">Welkom</h1>
-          <p class="home-subtitle">Nieuws &amp; Mededelingen</p>
-        </div>
-        <div class="topbar-actions">
-          <button type="button" class="icon-btn" aria-label="Help">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+  <div class="app-shell app-shell--home">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning-beheer.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkuren.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkuren.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkuren-labels.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="kilometers.html" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="kilometers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
+                <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
+              </div>
+            </div>            <a href="taken.html" class="top-link">Taken</a>
+            <a href="medewerkers-overzicht.html" class="top-link">Medewerkers</a>
+            <a href="beleid-documenten.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="rollen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="teams.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+                <a href="gebruikers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
+              </div>
+            </div>
+            <a href="instellingen.html" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
           </button>
         </div>
-      </header>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+      </div>
+    </header>
 
-      <section class="section">
-        <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
+    <main class="content content--home">
+      <section class="home-welcome">
+        <h1 id="home-greeting">Welkom</h1>
+        <p class="home-subtitle">Nieuws &amp; Mededelingen</p>
       </section>
-    </main>
 
+      <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
+    </main>
   </div>
 
   <div class="modal-overlay modal-overlay--home-news" id="home-news-modal" hidden aria-hidden="true">
