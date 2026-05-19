@@ -2942,10 +2942,51 @@ function initBedrijfsvoorzieningenNotes() {
 
 /* ── Documenten Section ─────────────── */
 
+// medewerker_documenten is gekoppeld op de ECHTE medewerkers.id (uuid).
+// De HR-UI selecteert echter met een legacy "emp-bulk-XXXX" id, dus
+// listSync(legacyId) gaf 0 → Documenten-tab leeg bij iedereen. Resolve de
+// uuid één keer via Supabase (match op e-mail; voornaam+achternaam als
+// tiebreaker bij dubbele e-mail) en cache 'm op window.
+function resolveDocsEmployeeUuid(emp) {
+  try {
+    emp = emp || getSelectedEmployee();
+    var legacyKey = (emp && (emp.empId || emp.id || emp.naam)) || null;
+    if (!legacyKey) return Promise.resolve(null);
+    var cached = window.__besaDocsEmpUuid;
+    if (cached && cached.key === legacyKey && cached.uuid) return Promise.resolve(cached.uuid);
+    var email = String((emp && emp.email) || "").trim();
+    if (!window.besaSupabase || !email) return Promise.resolve(null);
+    var vn = String((emp && emp.voornaam) || "").trim().toLowerCase();
+    var an = String((emp && emp.achternaam) || "").trim().toLowerCase();
+    return window.besaSupabase
+      .from("medewerkers").select("id,voornaam,achternaam,email").ilike("email", email)
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) return null;
+        var rows = res.data, pick = rows[0];
+        if (rows.length > 1 && (vn || an)) {
+          var m = rows.find(function (r) {
+            return String(r.voornaam || "").trim().toLowerCase() === vn
+              && String(r.achternaam || "").trim().toLowerCase() === an;
+          });
+          if (m) pick = m;
+        }
+        if (pick && pick.id) {
+          window.__besaDocsEmpUuid = { key: legacyKey, uuid: String(pick.id) };
+          return String(pick.id);
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  } catch (e) { return Promise.resolve(null); }
+}
+
 function getCurrentEmployeeIdForDocs() {
   var emp = getSelectedEmployee();
   if (!emp) return null;
-  return emp.empId || emp.id || emp.naam || null;
+  var legacyKey = emp.empId || emp.id || emp.naam || null;
+  var cached = window.__besaDocsEmpUuid;
+  if (cached && cached.key === legacyKey && cached.uuid) return cached.uuid;
+  return legacyKey;
 }
 
 function reportDocumentError(err, prefix) {
@@ -2980,6 +3021,7 @@ function initDocumentenSection() {
   // Eenmalige migratie van legacy emp.documenten / employeeEditsById[id].documenten
   // naar Supabase + Storage. Daarna verse data ophalen.
   Promise.resolve()
+    .then(function () { return resolveDocsEmployeeUuid(emp); })
     .then(function () { return window.medewerkerDocsDB.maybeMigrateFromEmployee(emp); })
     .then(function (migrated) {
       if (migrated > 0) {
@@ -2999,8 +3041,9 @@ function initDocumentenSection() {
           }
         }
       }
-      return window.medewerkerDocsDB.list(empId);
+      return window.medewerkerDocsDB.list(getCurrentEmployeeIdForDocs());
     })
+    .then(function () { try { render(); } catch (e) { /* */ } })
     .catch(function (err) {
       console.error("[medewerker-documenten] initiële sync mislukt:", err);
     });
