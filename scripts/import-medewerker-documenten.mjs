@@ -79,8 +79,15 @@ console.log("BS2-token-bron:", TOKSRC, "| lengte:", BS2TOKEN.length);
 const SB_HEADERS = { apikey: KEY, Authorization: "Bearer " + KEY };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Supabase Storage-keys accepteren alleen veilige tekens. Spaties, %, (),
+// [], accenten/niet-ASCII (Özkaraaslan, "Adobe%20Scan (3) kopie.pdf")
+// gaven HTTP 400 InvalidKey. Strikt naar [A-Za-z0-9._-] — exact zoals
+// safeFileName() in medewerker-documenten-data.js (bewezen op deze bucket).
 function safe(s, fb) {
-  s = String(s == null ? "" : s).replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, " ").trim();
+  s = String(s == null ? "" : s)
+    .normalize("NFKD")
+    .replace(/[^A-Za-z0-9._-]+/g, "_")
+    .replace(/_+/g, "_").replace(/^[._-]+|[._-]+$/g, "");
   if (s.length > 120) s = s.slice(0, 120);
   return s || fb;
 }
@@ -223,6 +230,7 @@ async function main() {
     let eo = 0, ef = 0;
     for (const doc of docs) {
       const f = doc && doc.file;
+      let bytes = null;
       try {
         if (!f || !f.url) throw new Error("geen file.url");
         const ext = String(f.extension || (String(f.name).match(/\.([a-z0-9]+)$/i) || [, "pdf"])[1] || "pdf").toLowerCase();
@@ -230,6 +238,7 @@ async function main() {
         let fname = safe(f.name || doc.name || ("document-" + doc.id), "document-" + doc.id);
         if (!fname.toLowerCase().endsWith("." + ext)) fname += "." + ext;
         const buf = await bs2GetFile(f.url);
+        bytes = buf.length;
         const storagePath = `${mwId}/${doc.id}-${fname}`;
         await sbUploadFile(storagePath, buf, mime);
 
@@ -264,7 +273,11 @@ async function main() {
         await sleep(80);
       } catch (e) {
         ef++; report.fail++;
-        report.details.push({ emp: be.name, mw_id: mwId, doc: doc && doc.name, err: String(e && e.message || e) });
+        report.details.push({
+          emp: be.name, mw_id: mwId, doc: doc && doc.name,
+          bytes: bytes, mb: bytes != null ? +(bytes / 1048576).toFixed(2) : null,
+          err: String(e && e.message || e),
+        });
       }
     }
     console.log(`  [${ei + 1}/${emps.length}] ${be.name}: ${docs.length} docs → ok=${eo} fail=${ef}`);
