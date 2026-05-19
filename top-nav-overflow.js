@@ -136,6 +136,20 @@
       activeLink = links.find((link) => getTopLinkLabel(link) === "Medewerkers") || null;
     }
 
+    // TOP-BAR Organisatie (Rollen / Teams / Gebruikers + rol-detail).
+    // Zonder dit valt rol-detail.html terug op de Home-fallback hieronder
+    // → de top-bar sprong van "Organisatie" naar "Home" bij het openen van
+    // een rol. rollen/teams/gebruikers matchen al op href, maar staan hier
+    // expliciet zodat de hele Organisatie-sectie de tab actief houdt.
+    if (!activeLink && (
+      currentFile === "rollen.html" ||
+      currentFile === "rol-detail.html" ||
+      currentFile === "teams.html" ||
+      currentFile === "gebruikers.html"
+    )) {
+      activeLink = links.find((link) => getTopLinkLabel(link) === "Organisatie") || null;
+    }
+
     if (!activeLink) {
       activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
     }
