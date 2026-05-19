@@ -22464,3 +22464,83 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   border: 1px solid var(--line); border-radius: var(--r-md);
   border-top: 1px solid var(--line);
 }
+
+/* ==========================================================================
+   MOBIELE OPTIMALISATIE (toegevoegd 2026-05-19)
+   Uitsluitend binnen @media (max-width:768px / 480px) → desktop (>768px)
+   blijft BYTE-IDENTIEK. Achteraan zodat dit wint van eerdere ≤900px-regels.
+   Geen nieuwe JS; sectie-subnav blijft via de topbar-dropdowns bereikbaar.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Geen horizontale paginascroll — alles binnen de lijntjes */
+  html, body { max-width: 100vw; overflow-x: hidden; }
+
+  /* Vaste 2-koloms 100vh-grid → normale, scrollbare 1-koloms pagina */
+  .app-shell {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-bottom: var(--page-content-edge-gap);
+  }
+  body.page-medewerker-detail { height: auto; overflow: visible; }
+  body.page-medewerker-detail .app-shell { height: auto; overflow: visible; }
+
+  /* Sectie-zijbalk + inklap-affordances verbergen; sub-navigatie blijft
+     bereikbaar via de topbar-dropdowns (HR/Cliënten/Organisatie/…). */
+  .sidebar,
+  .sidebar-collapse-btn,
+  .sidebar-expand-handle { display: none !important; }
+
+  /* Topbar compact en niet-overlopend; top-nav-overflow.js schuift items
+     vanzelf in het overflow-menu zodra de ruimte krap is. */
+  .topbar { position: sticky; top: 0; min-height: 52px; padding: 0 10px; gap: 8px; }
+  .topbar-left { gap: 8px; min-width: 0; flex: 1 1 auto; }
+  .brand-logo-img { height: 30px; width: auto; }
+  .top-nav-track { min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .topbar-icons { gap: 2px; flex-shrink: 0; }
+
+  /* Content: volle breedte, compacte padding, eigen scroll uit (pagina
+     scrollt nu zelf). Nooit horizontaal forceren. */
+  .content,
+  .content--hr-list,
+  .app-shell--home .content--home {
+    grid-area: auto;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 16px 12px var(--page-footer-space);
+    min-width: 0;
+  }
+
+  /* Witte tablet-shell + koppen: vol breed, kleinere kop, wrappen */
+  .page-shell { padding: 16px 14px var(--page-footer-space); }
+  .content-header { gap: 12px; }
+  .content-header > h1 { font-size: 22px; }
+
+  /* Toolbars/filters/acties netjes laten wrappen i.p.v. overlopen */
+  .toolbar,
+  .header-actions,
+  .filter-chips { flex-wrap: wrap; row-gap: 10px; max-width: 100%; }
+  .toolbar .search { flex: 1 1 100%; max-width: 100%; }
+
+  /* Tabellen: kaart binnen viewport; horizontaal scrollen blijft BINNEN
+     .table-wrapper (bestaande overflow-x:auto), niet de hele pagina. */
+  .table-card,
+  .table-wrapper { max-width: 100%; }
+
+  /* Modals passen op een telefoon */
+  .modal-overlay { padding: 12px; }
+  .modal-card,
+  .home-news-modal { width: min(96vw, 520px); max-width: 96vw; max-height: 90dvh; }
+
+  /* Veelgebruikte content-grid → 1 kolom */
+  .home-news-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .content,
+  .app-shell--home .content--home { padding: 12px 10px var(--page-footer-space); }
+  .content-header > h1 { font-size: 20px; }
+  .brand-logo-img { height: 26px; }
+}
