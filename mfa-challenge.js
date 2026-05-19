@@ -132,10 +132,27 @@
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); doVerify(); }
       });
-      logoutBtn.addEventListener("click", async function () {
-        try { await global.besaSupabase.auth.signOut(); } catch (e) { /* ignore */ }
-        try { if (global.clearLocalCaches) global.clearLocalCaches(); } catch (e) { /* */ }
-        window.location.replace("login.html");
+      logoutBtn.addEventListener("click", function () {
+        // Consistente, bewuste logout (zelfde pad als idle/avatar): marker
+        // + synchrone purge zodat de rehydratie-guard niet terugbounce't.
+        if (typeof global.besaIntentionalLogout === "function") {
+          global.besaIntentionalLogout("login.html");
+          return;
+        }
+        // Fallback (auth-guard niet geladen): zelf marker + purge.
+        try { global.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
+        try { global.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
+        try {
+          var p = global.besaSupabase && global.besaSupabase.auth
+            && global.besaSupabase.auth.signOut();
+          if (p && typeof p.then === "function") {
+            p.then(function () { global.location.replace("login.html"); },
+                   function () { global.location.replace("login.html"); });
+            setTimeout(function () { global.location.replace("login.html"); }, 1200);
+            return;
+          }
+        } catch (e) { /* */ }
+        global.location.replace("login.html");
       });
     });
   }

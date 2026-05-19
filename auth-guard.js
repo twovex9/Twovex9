@@ -64,7 +64,7 @@
       // geldige Supabase-sessie nooit slopen → anders kan de user niet meer
       // terug inloggen (cascade). Een ECHTE logout doet auth.signOut() dat
       // de GoTrue-sessie zelf netjes verwijdert.
-      var keysToKeep = { theme: 1, locale: 1, "sb-besa-auth": 1 };
+      var keysToKeep = { theme: 1, locale: 1, "sb-besa-auth": 1, "besa-logout": 1 };
       var toRemove = [];
       for (var i = 0; i < window.localStorage.length; i += 1) {
         var k = window.localStorage.key(i);
@@ -76,9 +76,47 @@
     } catch (e) { /* */ }
   }
 
+  // ---------------------------------------------------------------------------
+  // BEWUSTE, deterministische logout (idle-timeout, "Uitloggen", bevestigd
+  // verlopen). I.t.t. de valse-positief-bescherming (#289/#293) wordt de
+  // sessie hier ÉCHT en SYNCHROON opgeruimd, plus een marker gezet zodat de
+  // rehydratie-guard in supabase-client.js de sessie NIET terugzet en
+  // login.html niet terug de app in bounce't. signOut() is best-effort met
+  // harde timeout — mag de redirect nooit blokkeren of ermee racen.
+  // (Root cause: idle-logout "plakte" niet omdat élke andere laag bewust de
+  // sessie behield en enkel een traag/lock-geraced signOut() 'm moest
+  // opruimen.)
+  // ---------------------------------------------------------------------------
+  var intentionalLogoutDone = false;
+  function besaIntentionalLogout(loginUrl) {
+    if (intentionalLogoutDone) return;
+    intentionalLogoutDone = true;
+    redirectInFlight = true; // onderdruk SIGNED_OUT/visibility-dubbeltrigger
+    try { window.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
+    try { window.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
+    clearLocalCaches(); // overige caches; marker + theme/locale blijven
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      try { window.location.replace(loginUrl); }
+      catch (e) { window.location.href = loginUrl; }
+    }
+    try {
+      var p = window.besaSupabase && window.besaSupabase.auth
+        && window.besaSupabase.auth.signOut();
+      if (p && typeof p.then === "function") {
+        p.then(go, go);          // server-side revoke (best-effort)
+        setTimeout(go, 1200);    // mag nooit blokkeren
+        return;
+      }
+    } catch (e) { /* */ }
+    go();
+  }
+  window.besaIntentionalLogout = besaIntentionalLogout;
+
   function performLogoutAndRedirect(opts) {
     if (redirectInFlight) return;
-    redirectInFlight = true;
     var options = opts || {};
     var loginUrl = options.preserveNext === false
       ? "login.html"
@@ -94,24 +132,7 @@
       } catch (e) { /* */ }
     }
 
-    // signOut() kan netwerk doen; we wachten max 1500ms en gaan dan sowieso.
-    var done = false;
-    function go() {
-      if (done) return;
-      done = true;
-      clearLocalCaches();
-      try { window.location.replace(loginUrl); }
-      catch (e) { window.location.href = loginUrl; }
-    }
-    try {
-      var p = window.besaSupabase.auth.signOut();
-      if (p && typeof p.then === "function") {
-        p.then(go).catch(go);
-        setTimeout(go, options.reason === "expired" ? 1500 : 1500);
-        return;
-      }
-    } catch (e) { /* */ }
-    go();
+    besaIntentionalLogout(loginUrl);
   }
 
   // ---------------------------------------------------------------------------
@@ -545,12 +566,9 @@
         // Force logout
         console.info("[auth-guard] Session-timeout: idle " + (elapsed / 1000).toFixed(0) + "s, force logout");
         if (warningEl) warningEl.remove();
+        if (idleCheckTimer) { try { clearInterval(idleCheckTimer); } catch (e) { /* */ } }
         try {
-          if (global.besaAuth && typeof global.besaAuth.signOut === "function") {
-            global.besaAuth.signOut().finally(function () { window.location.replace(buildLoginUrl() + "&idle=1"); });
-          } else {
-            window.location.replace(buildLoginUrl() + "&idle=1");
-          }
+          besaIntentionalLogout(buildLoginUrl() + "&idle=1");
         } catch (e) { window.location.href = buildLoginUrl() + "&idle=1"; }
       } else if (elapsed >= WARNING_MS) {
         var secondsLeft = Math.max(0, Math.ceil((IDLE_MS - elapsed) / 1000));
