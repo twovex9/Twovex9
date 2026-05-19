@@ -1182,6 +1182,62 @@ body.page-medewerker-detail .content--emp-detail {
   border-right: 1px solid var(--line-strong);
 }
 
+/* ==========================================================================
+   Inklapbare sectie-zijbalk (standaard uitgeklapt). Toggle via
+   sidebar-collapse.js + html[data-sidebar="collapsed"]. Home/login hebben
+   geen .sidebar -> JS injecteert daar niets (geen toggle).
+   ========================================================================== */
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 0 12px 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.sidebar-collapse-btn:hover {
+  background: var(--fill-hover);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+.sidebar-collapse-btn svg { width: 16px; height: 16px; }
+
+html[data-sidebar="collapsed"] .app-shell:not(.app-shell--home) {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+html[data-sidebar="collapsed"] .sidebar { display: none; }
+
+.sidebar-expand-handle {
+  position: fixed;
+  left: 0;
+  top: 64px;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 44px;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--line-strong);
+  border-left: none;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  cursor: pointer;
+  box-shadow: var(--shadow-pop);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.sidebar-expand-handle:hover { color: var(--blue); background: var(--fill-hover); }
+.sidebar-expand-handle svg { width: 16px; height: 16px; }
+html[data-sidebar="collapsed"] .sidebar-expand-handle { display: flex; }
+
 .side-nav {
   display: flex;
   flex-direction: column;
@@ -1414,9 +1470,6 @@ a.side-nav-exit:hover {
 .page-shell {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1180px;
-  margin-left: auto;
-  margin-right: auto;
   margin-bottom: var(--page-footer-space);
   padding: 22px 22px max(28px, calc(20px + env(safe-area-inset-bottom, 0px)));
   background: var(--surface);
@@ -10492,8 +10545,6 @@ select.cd-config-select {
 
 .app-shell--home .content--home {
   padding-top: 24px;
-  max-width: 1320px;
-  margin: 0 auto;
   width: 100%;
 }
 
