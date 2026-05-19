@@ -3,16 +3,27 @@
   "buildCommand": "npm run build",
   "installCommand": "echo no-install",
   "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     {
       "source": "/",
-      "destination": "/home.html",
+      "destination": "/home",
       "permanent": false
     }
   ],
   "headers": [
     {
       "source": "/(.*\\.html)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/((?!.*\\.).*)",
       "headers": [
         {
           "key": "Cache-Control",

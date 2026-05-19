@@ -227,7 +227,7 @@
         try {
           var res = await window.besaSupabase.auth.getSession();
           if (res && res.data && res.data.session) {
-            window.location.replace("home.html");
+            window.location.replace("home");
           }
         } catch (e) { /* blijf op login */ }
       })();
@@ -279,7 +279,7 @@
           // de auth-guard? Zo ja, daarheen. Anders home.
           var params = new URLSearchParams(window.location.search);
           var next = params.get("next");
-          var safeNext = (next && /^[a-zA-Z0-9_\-./?=&]+$/.test(next)) ? next : "home.html";
+          var safeNext = (next && /^[a-zA-Z0-9_\-./?=&]+$/.test(next)) ? next : "home";
           window.location.replace(safeNext);
         } catch (err) {
           showError(err && err.message ? err.message : "Er ging iets mis bij het inloggen.");
