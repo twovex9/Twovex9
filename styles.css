@@ -56,6 +56,105 @@
   --font-ui-badge: 10px;
 }
 
+/* ==========================================================================
+   THEME SWITCHER (toegevoegd 2026-05-19)
+   Light = de bestaande interface (ONGEWIJZIGD: alle bestaande :root-tokens
+   hierboven zijn niet aangeraakt). Onderstaande regels zijn 100% ADDITIEF:
+   - extra spec-token-aliassen (light-defaults op :root)
+   - één [data-theme="dark"] blok dat ALLEEN de kleur-tokens overschrijft
+   Layout/spacing/fonts/radii zijn in beide themes identiek.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+  /* Spec-token-aliassen (light). Bestaande componenten blijven de oude
+     tokens gebruiken; nieuwe code mag deze namen gebruiken. */
+  --bg-app: var(--bg-muted);
+  --bg-sidebar: var(--sidebar-bg);
+  --bg-card: var(--surface);
+  --bg-card-hover: var(--fill-hover);
+  --bg-elevated: var(--bg-muted);
+  --border: var(--line);
+  --border-hover: var(--line-strong);
+  --text-primary: var(--text);
+  --text-secondary-tk: var(--text-secondary);
+  --text-tertiary: var(--text-muted);
+  --text-quaternary: #9ca3af;
+  --accent-blue: var(--blue);
+  --accent-blue-light: #2563eb;
+  --accent-amber: var(--yellow);
+  --accent-amber-light: #b45309;
+  --accent-green: var(--green);
+  --accent-green-light: #15803d;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* --- Bestaande tokens overschreven met het dark-palet --- */
+  --bg: #0e1116;
+  --bg-muted: #0e1116;
+  --bg-detail: #141821;
+  --surface: #141821;
+  --text: #f5f6f8;
+  --text-secondary: #e6e8ec;
+  --text-muted: #8a92a1;
+  --line: #1f242d;
+  --line-strong: #2a313c;
+  --fill-hover: rgba(255, 255, 255, 0.06);
+  --fill-active: rgba(255, 255, 255, 0.10);
+
+  --blue: #3b82f6;
+  --blue-soft: rgba(59, 130, 246, 0.20);
+  --red: #f87171;
+  --red-soft: rgba(248, 113, 113, 0.18);
+  --green: #1d9e75;
+  --green-soft: rgba(29, 158, 117, 0.20);
+  --yellow: #f59e0b;
+  --yellow-soft: rgba(245, 158, 11, 0.20);
+
+  --sidebar-bg: #0a0d12;
+  --sidebar-active: #1a1f28;
+
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --page-shell-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  /* --- Spec-token-aliassen (dark) --- */
+  --bg-app: #0e1116;
+  --bg-sidebar: #0a0d12;
+  --bg-card: #141821;
+  --bg-card-hover: #1a1f28;
+  --bg-elevated: #1a1f28;
+  --border: #1f242d;
+  --border-hover: #2a313c;
+  --text-primary: #f5f6f8;
+  --text-secondary-tk: #e6e8ec;
+  --text-tertiary: #8a92a1;
+  --text-quaternary: #6b7280;
+  --accent-blue: #3b82f6;
+  --accent-blue-light: #7aa2f7;
+  --accent-amber: #f59e0b;
+  --accent-amber-light: #fcd34d;
+  --accent-green: #1d9e75;
+  --accent-green-light: #7fb893;
+}
+
+/* Zachte (≤0.15s) overgang bij het wisselen — geen layout-animatie. */
+body,
+.app-shell,
+.topbar,
+.sidebar,
+.table-card,
+.modal-card {
+  transition: background-color 0.15s linear, color 0.15s linear,
+    border-color 0.15s linear;
+}
+
+/* Zichtbare focus-ring op de theme-toggle (toegankelijkheid). */
+#besa-theme-toggle:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
 /* Hele interface 110% t.o.v. 100% (browser-zoom-equivalent) */
 html {
   zoom: 1.1;
