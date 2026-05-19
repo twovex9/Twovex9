@@ -92,6 +92,12 @@
     if (intentionalLogoutDone) return;
     intentionalLogoutDone = true;
     redirectInFlight = true; // onderdruk SIGNED_OUT/visibility-dubbeltrigger
+    // Marker in BEIDE stores: sessionStorage overleeft de same-tab redirect
+    // gegarandeerd en wordt NIET door clearLocalCaches of een brede
+    // localStorage-opruiming geraakt (live bleek de localStorage-marker in
+    // het signOut/redirect-venster soms verdwenen). De rehydratie-guard
+    // checkt beide → secundaire bescherming altijd betrouwbaar.
+    try { window.sessionStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
     try { window.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
     try { window.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
     clearLocalCaches(); // overige caches; marker + theme/locale blijven
