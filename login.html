@@ -267,6 +267,11 @@
             return;
           }
 
+          // Echte login geslaagd → de "bewuste logout"-marker mag weg, zodat
+          // de rehydratie-guard (supabase-client.js) op de volgende pagina's
+          // weer normaal werkt.
+          try { window.localStorage.removeItem("besa-logout"); } catch (e) { /* */ }
+
           // Lukt → bepaal redirect-doel. Was er een ?next=… meegegeven door
           // de auth-guard? Zo ja, daarheen. Anders home.
           var params = new URLSearchParams(window.location.search);

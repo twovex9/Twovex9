@@ -107,6 +107,14 @@
   }
   window.besaSupabaseReady = (async function () {
     if (!AUTH_ENABLED) return;
+    // Bewuste logout (idle-timeout / Uitloggen / bevestigd-verlopen) zet
+    // localStorage["besa-logout"]="1". Dan NIET rehydrateren — anders zet
+    // deze guard de zojuist opgeruimde sessie terug en bounce't login.html
+    // de gebruiker meteen weer de app in (idle-logout "plakte" niet). De
+    // marker wordt in login.html gewist ná een geslaagde echte login.
+    // Voor een VALSE/transiënte null (geen marker) blijft rehydratie aan
+    // → #289/#293-bescherming intact.
+    try { if (window.localStorage.getItem("besa-logout") === "1") return; } catch (e) { /* */ }
     try {
       var gs = await client.auth.getSession();
       if (gs && gs.data && gs.data.session) return; // client heeft 'm al
