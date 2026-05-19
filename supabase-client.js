@@ -66,6 +66,65 @@
 
   window.besaSupabase = client;
 
+  // ---------------------------------------------------------------------------
+  // Sessie-rehydratie-guard (root-cause fix 2026-05-19)
+  // ---------------------------------------------------------------------------
+  // Bewezen via Chrome-MCP: supabase-js herstelt de PERSISTENTE sessie niet
+  // altijd betrouwbaar op page-load. getSession()/getUser() gaven instant
+  // "Auth session missing!" (geen lock, geen hang) terwijl
+  // localStorage["sb-besa-auth"] een 100% geldige, NIET-verlopen sessie
+  // bevatte (JWT role=authenticated, exp ~40min vooruit). Gevolg:
+  // élke RLS-query (`to authenticated`) gaf 0 rijen terug → Rollen leeg,
+  // rol-detail kaatste terug, "willekeurig uitgelogd"-gevoel. Een enkele
+  // client.auth.setSession() met exact die opgeslagen tokens herstelde de
+  // sessie volledig (queries gaven daarna meteen 14 rollen).
+  //
+  // Daarom: vóór auth-guard.js en de data-lagen draaien, één keer de
+  // opgeslagen sessie expliciet in de client zetten als de client zelf
+  // (nog) geen sessie heeft. window.besaSupabaseReady resolve't ná deze
+  // poging zodat consumers er deterministisch op kunnen wachten.
+  //
+  // Hard verbod (eerdere pijnlijke les #284): NOOIT auth.refreshSession()
+  // hier — dat roteert de refresh-token en veroorzaakt "Invalid Refresh
+  // Token"-loops. setSession() met een NIET-verlopen access-token doet
+  // puur een lokale install (geen netwerk, geen rotatie).
+  function besaReadStoredSession() {
+    try {
+      var raw = window.localStorage.getItem("sb-besa-auth");
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      var s = (o && (o.currentSession || o.session)) || o;
+      if (!s || !s.access_token || !s.refresh_token) return null;
+      return s;
+    } catch (e) { return null; }
+  }
+  function besaSessionStillFresh(s) {
+    try {
+      if (!s.expires_at) return true; // onbekend → laat de client beslissen
+      var nowSec = Math.floor(Date.now() / 1000);
+      return (Number(s.expires_at) - nowSec) > 30; // ≥30s marge
+    } catch (e) { return false; }
+  }
+  window.besaSupabaseReady = (async function () {
+    if (!AUTH_ENABLED) return;
+    try {
+      var gs = await client.auth.getSession();
+      if (gs && gs.data && gs.data.session) return; // client heeft 'm al
+    } catch (e) { /* val door naar rehydratie */ }
+    var s = besaReadStoredSession();
+    if (!s || !besaSessionStillFresh(s)) return; // niets/te oud → niets doen
+    try {
+      await client.auth.setSession({
+        access_token: s.access_token,
+        refresh_token: s.refresh_token,
+      });
+    } catch (e) {
+      // Stil: geen logout, geen console-spam. Bij een echt ongeldige
+      // sessie handelt auth-guard.js de redirect netjes af.
+      try { console.warn("[besa-supabase] rehydratie overgeslagen:", e && e.message || e); } catch (e2) { /* */ }
+    }
+  })();
+
   window.besaAuth = {
     isEnabled: function () { return AUTH_ENABLED; },
     getCurrentUser: async function () {
