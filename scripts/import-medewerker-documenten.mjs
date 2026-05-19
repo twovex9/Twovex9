@@ -52,8 +52,17 @@ function readBs2Token() {
   let t = process.env.BS2_PROD_TOKEN || "";
   let src = "env BS2_PROD_TOKEN";
   if (!t) {
-    const f = path.join(os.homedir(), "Downloads", "bs2-token.txt");
-    if (fs.existsSync(f)) { t = fs.readFileSync(f, "utf8"); src = f; }
+    // Browser hernoemt herhaalde downloads naar "bs2-token (5).txt" e.d.
+    // Pak ALTIJD de NIEUWSTE bs2-token*.txt in Downloads (de verse), niet
+    // per ongeluk een oude verlopen (les: nieuwste bestand = de juiste).
+    const dl = path.join(os.homedir(), "Downloads");
+    try {
+      const cands = fs.readdirSync(dl)
+        .filter((f) => /^bs2-token.*\.txt$/i.test(f))
+        .map((f) => { const fp = path.join(dl, f); return { fp, m: fs.statSync(fp).mtimeMs }; })
+        .sort((a, b) => b.m - a.m);
+      if (cands.length) { t = fs.readFileSync(cands[0].fp, "utf8"); src = cands[0].fp; }
+    } catch (e) { /* */ }
   }
   t = String(t || "").replace(/^Bearer\s+/i, "").trim();
   return { t, src };
