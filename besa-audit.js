@@ -62,7 +62,7 @@
     [/^\/?(taken)/, "Taak.toewijzen"],
     [/^\/?(teams|organisatie)/, "Team.Fase"],
     [/^\/?(gemeente)/, "Gemeente"],
-    [/^\/?(rollen)/, "Rol"],
+    [/^\/?(rollen|rol-detail)/, "Rol"],
     [/^\/?(gebruikers|mijn-gegevens)/, "Gebruiker"],
     [/^\/?(planning|werkuren|urendeclaraties|kilometers|verlof|plus-minuren)/, "Dienst"],
     [/^\/?(nieuws|notifications)/, "Notitie"],
