@@ -141,13 +141,41 @@
     $("rd-page").setAttribute("aria-busy", "false");
   }
 
+  // TIJDELIJKE DIAGNOSE (zoals __ag_bc in #288): sessionStorage overleeft
+  // de same-origin redirect terug naar rollen.html, zodat we ná de bounce
+  // exact kunnen uitlezen WAAROM rol-detail terugkaatste. Wordt in de
+  // cleanup-PR weer verwijderd.
+  function rdBc(step, extra) {
+    try {
+      var o = { t: new Date().toISOString(), step: step,
+        href: location.href, search: location.search, roleId: roleId };
+      if (extra) Object.keys(extra).forEach(function (k) { o[k] = extra[k]; });
+      window.sessionStorage.setItem("__rd_bc", JSON.stringify(o));
+    } catch (e) { /* */ }
+  }
+
   async function load() {
     roleId = getRoleId();
-    if (!roleId) { backToRollen(); return; }
+    rdBc("enter");
+    if (!roleId) { rdBc("no-roleId"); backToRollen(); return; }
     try {
       await DB().ready;
       var r = role();
-      if (!r) { err("Rol niet gevonden."); backToRollen(); return; }
+      // Resilient: een transient lege data-laag (zelfde race-klasse als
+      // #289) mag NIET instant terugkaatsen. Forceer één refresh en
+      // her-check vóór we opgeven.
+      if (!r) {
+        rdBc("role-miss-1", { rolesLen: (DB().getRolesSync() || []).length });
+        try { await DB().refresh(); } catch (e0) { rdBc("refresh-err", { msg: String(e0 && e0.message || e0) }); }
+        r = role();
+      }
+      if (!r) {
+        rdBc("role-not-found", {
+          rolesLen: (DB().getRolesSync() || []).length,
+          sampleIds: (DB().getRolesSync() || []).slice(0, 3).map(function (x) { return String(x.id).slice(0, 8); }),
+        });
+        err("Rol niet gevonden."); backToRollen(); return;
+      }
       var d = await DB().loadRoleDetail(roleId);
       original = {}; pending = {};
       DB().getPermissionsSync().forEach(function (p) {
@@ -157,7 +185,11 @@
       });
       users = d.users || [];
       fillPage(r);
-    } catch (e) { err("Rol laden mislukt: " + (e && e.message || e)); }
+      rdBc("loaded-ok", { rolesLen: (DB().getRolesSync() || []).length });
+    } catch (e) {
+      rdBc("catch", { msg: String(e && e.message || e) });
+      err("Rol laden mislukt: " + (e && e.message || e));
+    }
   }
 
   async function saveRights() {
