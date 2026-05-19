@@ -318,7 +318,7 @@ body.page-medewerker-detail .content--emp-detail {
   height: 32px;
   border: none;
   border-radius: var(--r-pill);
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   margin-left: 3px;
   position: relative;
@@ -349,7 +349,7 @@ body.page-medewerker-detail .content--emp-detail {
   max-width: 280px;
   padding: 6px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   z-index: 300;
@@ -417,7 +417,7 @@ body.page-medewerker-detail .content--emp-detail {
   border-radius: var(--r-pill);
   white-space: nowrap;
   border: none;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -1268,7 +1268,7 @@ h1 {
   left: 3px;
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
@@ -2160,7 +2160,7 @@ h1 {
   overflow: auto;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   padding: 10px 12px;
 }
 
@@ -2276,7 +2276,7 @@ h1 {
 }
 .vz-medisch-warning strong { color: #991b1b; }
 .vz-medisch-warning code {
-  background: #fff;
+  background: var(--surface);
   padding: 1px 5px;
   border-radius: 3px;
   font-family: var(--font-mono, monospace);
@@ -2499,7 +2499,7 @@ h1 {
   font-size: 13px;
   font-weight: 700;
   color: #111827;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-pill);
   cursor: pointer;
@@ -2559,7 +2559,7 @@ h1 {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-color: #fff;
+  background-color: var(--surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -2798,7 +2798,7 @@ h1 {
   padding: 0 28px 0 12px;
   border: 1px solid #000;
   border-radius: var(--r-pill);
-  background: #fff;
+  background: var(--surface);
   font-family: inherit;
   font-size: var(--font-base);
   font-weight: 600;
@@ -3537,7 +3537,7 @@ select.modal-select.modal-select--chevron-right {
   height: 32px;
   border-radius: 9999px;
   border: 1px solid #d0d5dd;
-  background: #fff;
+  background: var(--surface);
   color: #344054;
   font-weight: 700;
 }
@@ -3667,7 +3667,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 10px 10px 9px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-card-section h4 {
@@ -3699,7 +3699,7 @@ select.modal-select.modal-select--chevron-right {
   height: 32px;
   border-radius: 10px;
   border: 1px solid var(--line-strong);
-  background: #fff;
+  background: var(--surface);
   font-size: 12px;
   font-weight: 700;
   color: #57a0d5;
@@ -3835,7 +3835,7 @@ select.modal-select.modal-select--chevron-right {
 
 .emp-tab.is-active {
   color: #111827;
-  background: #fff;
+  background: var(--surface);
   border-color: #e5e7eb;
   box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04);
 }
@@ -3894,7 +3894,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-prof-rate-box {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface);
   padding: 30px;
 }
 
@@ -3988,7 +3988,7 @@ select.modal-select.modal-select--chevron-right {
   min-height: 56px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   padding: 8px 14px;
   display: flex;
   align-items: center;
@@ -4047,7 +4047,7 @@ select.modal-select.modal-select--chevron-right {
   top: calc(100% + 6px);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 10px 24px rgba(0,0,0,0.1);
   z-index: 35;
   max-height: 340px;
@@ -4124,7 +4124,7 @@ select.modal-select.modal-select--chevron-right {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-kernteam-head {
@@ -4319,7 +4319,7 @@ select.modal-select.modal-select--chevron-right {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-opleiding-card-head {
@@ -4341,7 +4341,7 @@ select.modal-select.modal-select--chevron-right {
   height: 38px;
   border-radius: 10px;
   border: 1px solid #d0d5dd;
-  background: #fff;
+  background: var(--surface);
   color: #6b7280;
   font-size: 14px;
   font-weight: 600;
@@ -4464,7 +4464,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 14px;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   color: #374151;
   font-size: 14px;
   font-weight: 500;
@@ -4478,7 +4478,7 @@ select.modal-select.modal-select--chevron-right {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,.12);
@@ -4548,7 +4548,7 @@ select.modal-select.modal-select--chevron-right {
 
 .emp-verzuim-search:focus {
   border-color: #3b82f6;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-verzuim-table-wrap {
@@ -4558,7 +4558,7 @@ select.modal-select.modal-select--chevron-right {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-verzuim-table {
@@ -4767,7 +4767,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 14px;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   color: #374151;
   font-size: 14px;
   font-weight: 500;
@@ -4788,7 +4788,7 @@ select.modal-select.modal-select--chevron-right {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-verlof-saldi-table {
@@ -4836,7 +4836,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 12px;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   color: #374151;
   font-size: var(--font-base);
   font-weight: 500;
@@ -4858,7 +4858,7 @@ select.modal-select.modal-select--chevron-right {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,.12);
@@ -4980,7 +4980,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .emp-verzuim-modal {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   width: 680px;
   max-width: 90vw;
@@ -5111,7 +5111,7 @@ select.modal-select.modal-select--chevron-right {
   height: 44px;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   color: #374151;
   font-size: 15px;
   font-weight: 600;
@@ -6054,7 +6054,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-rooster-summary-card {
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface);
   padding: 14px 16px;
   margin-bottom: 18px;
 }
@@ -6163,7 +6163,7 @@ select.modal-select.modal-select--chevron-right {
 
 .emp-rooster-day-card {
   border-right: 1px solid #d1d5db;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-rooster-day-card:last-child {
@@ -6279,7 +6279,7 @@ select.modal-select.modal-select--chevron-right {
   left: 4px;
   top: 4px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease;
 }
@@ -6302,7 +6302,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-rooster-weekend-card {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface);
   padding: 14px;
 }
 
@@ -6352,7 +6352,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-rooster-weekend-mode {
   height: 42px;
   border: 1px solid #e5e7eb;
-  background: #fff;
+  background: var(--surface);
   color: #9ca3af;
   border-radius: 12px;
   font-size: 14px;
@@ -6383,7 +6383,7 @@ select.modal-select.modal-select--chevron-right {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-bedrijf-item + .emp-bedrijf-item {
@@ -6464,7 +6464,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 14px;
   font-size: 15px;
   color: #1f2937;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-bedrijf-note-input::placeholder {
@@ -6612,7 +6612,7 @@ select.modal-select.modal-select--chevron-right {
   border-radius: 7px;
   padding: 0 8px;
   font-size: 11px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-form-grid {
@@ -6675,14 +6675,14 @@ select.modal-select.modal-select--chevron-right {
 .emp-field input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-field textarea:focus,
 .emp-sidebar-input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
-  background: #fff;
+  background: var(--surface);
 }
 
 .emp-field--full {
@@ -6722,7 +6722,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-select:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
-  background-color: #fff;
+  background-color: var(--surface);
 }
 
 .emp-select--compact {
@@ -6756,7 +6756,7 @@ select.modal-select.modal-select--chevron-right {
 .emp-dropdown-btn:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
-  background: #fff;
+  background: var(--surface);
 }
 .emp-dropdown-chev {
   width: 10px;
@@ -6774,7 +6774,7 @@ select.modal-select.modal-select--chevron-right {
   left: 0;
   right: 0;
   z-index: 120;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.10);
@@ -6872,7 +6872,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 24px;
   border-radius: 10px;
   border: 1px solid #d6dae1;
-  background: #fff;
+  background: var(--surface);
   color: #4b5563;
   font-size: 15px;
   font-weight: 700;
@@ -7519,7 +7519,7 @@ select.modal-select.modal-select--chevron-right {
 .comp-detail-card {
   position: sticky;
   top: 68px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
@@ -7621,7 +7621,7 @@ select.modal-select.modal-select--chevron-right {
   font-size: var(--font-base);
   font-weight: 600;
   color: var(--text-secondary);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -7818,7 +7818,7 @@ select.modal-select.modal-select--chevron-right {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 14px 18px;
@@ -7847,7 +7847,7 @@ select.modal-select.modal-select--chevron-right {
   padding: 0 16px;
   border: 1px solid #d0d5dd;
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   font-size: var(--font-base);
   font-weight: 600;
   color: #344054;
@@ -7927,7 +7927,7 @@ select.modal-select.modal-select--chevron-right {
   left: 2px;
   width: 16px;
   height: 16px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 50%;
   transition: transform .2s;
 }
@@ -8114,7 +8114,7 @@ th.emp-doc-col-delete {
   gap: 10px;
   padding: 8px 16px 8px 10px;
   border-radius: var(--r-pill);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   font-size: var(--font-base);
   color: var(--text-secondary);
@@ -8165,7 +8165,7 @@ th.emp-doc-col-delete {
 }
 
 .fi-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   padding: 22px 24px;
@@ -8253,7 +8253,7 @@ th.emp-doc-col-delete {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 12px 14px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .fi-preview-title {
@@ -8418,7 +8418,7 @@ th.emp-doc-col-delete {
   height: 320px;
   border: none;
   border-radius: var(--r-sm);
-  background: #fff;
+  background: var(--surface);
 }
 
 .fi-thumb-generic {
@@ -8494,7 +8494,7 @@ th.emp-doc-col-delete {
   font-size: var(--font-base);
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   width: min(420px, 100%);
 }
@@ -8539,7 +8539,7 @@ th.emp-doc-col-delete {
   height: 360px;
   border: none;
   border-radius: var(--r-sm);
-  background: #fff;
+  background: var(--surface);
 }
 
 /* Fullscreen zoom-modal */
@@ -8562,7 +8562,7 @@ th.emp-doc-col-delete {
   width: 100%;
   max-width: 1100px;
   max-height: calc(100vh - 48px);
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--r-xl);
   display: flex;
   flex-direction: column;
@@ -8629,14 +8629,14 @@ th.emp-doc-col-delete {
   height: calc(100vh - 160px);
   border: none;
   border-radius: var(--r-sm);
-  background: #fff;
+  background: var(--surface);
 }
 
 .fi-zoom-pre {
   margin: 0;
   font-family: ui-monospace, Menlo, monospace;
   font-size: 13px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   padding: 14px 16px;
@@ -9123,7 +9123,7 @@ abbr.cf-req {
   border: 1px solid #d0d5dd;
   border-left: none;
   border-radius: 0 10px 10px 0;
-  background: #fff;
+  background: var(--surface);
 }
 
 .cf-date-native-input {
@@ -9391,7 +9391,7 @@ select.cd-config-select {
   appearance: none;
   cursor: pointer;
   padding-right: 36px;
-  background-color: #fff;
+  background-color: var(--surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -9428,7 +9428,7 @@ select.cd-config-select {
   font: inherit;
   color: inherit;
   padding-right: 36px;
-  background-color: #fff;
+  background-color: var(--surface);
   border: 1px solid #d0d5dd;
   border-radius: 10px;
   min-height: 44px;
@@ -9505,7 +9505,7 @@ select.cd-config-select {
   list-style: none;
   max-height: 260px;
   overflow-y: auto;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
@@ -10466,7 +10466,7 @@ select.cd-config-select {
 .plan-recurring-days { display: flex; gap: 4px; margin-top: 6px; }
 .plan-recurring-day-btn {
   width: 32px; height: 32px; border: 1px solid var(--line);
-  border-radius: var(--r-pill); background: #fff; font-size: 12px; font-weight: 600;
+  border-radius: var(--r-pill); background: var(--surface); font-size: 12px; font-weight: 600;
   color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease;
 }
 .plan-recurring-day-btn.is-active { background: var(--blue); color: #fff; border-color: var(--blue); }
@@ -10480,7 +10480,7 @@ select.cd-config-select {
   width: min(780px, 96vw);
   max-height: min(88vh, 900px);
   overflow-y: auto;
-  background: #fff;
+  background: var(--surface);
   border-radius: 20px;
   border: 1px solid #e5e7eb;
   padding: 20px 20px 24px;
@@ -10703,7 +10703,7 @@ select.cd-config-select {
 }
 
 .planning-erm-hero {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--page-shell-shadow);
@@ -10740,7 +10740,7 @@ select.cd-config-select {
   padding: 0 4px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  background: #fff;
+  background: var(--surface);
   font-size: 12px;
   font-weight: 800;
   color: #0f172a;
@@ -10888,7 +10888,7 @@ body.planning-dienst-open {
   max-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
   border-left: 1px solid #e2e8f0;
   box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12);
   box-sizing: border-box;
@@ -11017,7 +11017,7 @@ body.planning-dienst-open {
   color: #0f172a;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-dienst-input:focus {
@@ -11080,7 +11080,7 @@ body.planning-dienst-open {
   list-style: none;
   max-height: 280px;
   overflow-y: auto;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
@@ -11201,7 +11201,7 @@ body.planning-dienst-open {
   line-height: 1.5;
   border: 1px solid #d1d5db;
   border-radius: 0 0 8px 8px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-dienst-richtext:empty::before {
@@ -11274,7 +11274,7 @@ body.planning-dienst-open {
   font-size: 14px;
   border: 1px solid #2563eb;
   color: #0a0a0a;
-  background: #fff;
+  background: var(--surface);
   border-radius: 10px;
   cursor: pointer;
 }
@@ -11342,7 +11342,7 @@ body.planning-dienst-open {
 }
 
 .planning-erm-dwm-btn.is-active {
-  background: #fff;
+  background: var(--surface);
   color: #0a0a0a;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
@@ -11527,7 +11527,7 @@ button.planning-erm-new {
 
 .planning-erm-glabel {
   text-transform: none;
-  background: #fff;
+  background: var(--surface);
   font-size: 13px;
   font-weight: 700;
   color: #0f172a;
@@ -11856,7 +11856,7 @@ button.planning-erm-new {
 
 .planning-erm-icoact:hover,
 .planning-erm-icoact:focus {
-  background: #fff;
+  background: var(--surface);
   border-color: #0f172a;
   color: #000;
   outline: none;
@@ -11886,7 +11886,7 @@ button.planning-erm-new {
 .planning-erm-card--empty {
   border: 1px dashed #bfccdf;
   border-left: 3px solid #7fb0f8;
-  background: #ffffff;
+  background: var(--surface);
   color: #334155;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
@@ -11966,7 +11966,7 @@ button.planning-erm-new {
 .planning-erm-card.is-selected,
 .planning-erm-card:hover {
   box-shadow: 0 0 0 1px #2563eb, 0 1px 4px rgba(15, 23, 42, 0.1);
-  background: #fff;
+  background: var(--surface);
   z-index: 1;
 }
 
@@ -12134,7 +12134,7 @@ button.planning-erm-new {
   width: 28px;
   height: 26px;
   border: none;
-  background: #fff;
+  background: var(--surface);
   border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -12228,7 +12228,7 @@ button.planning-erm-new {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #dbe3ee;
   border-radius: 18px;
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.32);
@@ -12237,7 +12237,7 @@ button.planning-erm-new {
 .planning-add-dialog--erm .modal-header {
   padding: 22px 28px 16px;
   border-bottom: 1px solid #e5eaf2;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-add-dialog--erm .modal-title {
@@ -12265,7 +12265,7 @@ button.planning-erm-new {
   height: 48px;
   border-radius: 12px;
   border-color: #d7dee8;
-  background-color: #fff;
+  background-color: var(--surface);
   color: #0f172a;
   font-size: 15px;
   font-weight: 650;
@@ -12279,7 +12279,7 @@ button.planning-erm-new {
 .planning-add-dialog--erm .modal-footer {
   padding: 18px 28px 22px;
   border-top: 1px solid #e5eaf2;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-add-dialog--erm .btn-outline,
@@ -12363,7 +12363,7 @@ button.planning-erm-new {
 
 .planning-filters-card,
 .planning-main-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: var(--page-shell-shadow);
@@ -12598,7 +12598,7 @@ button.planning-erm-new {
 }
 
 .planning-view-btn.is-active {
-  background: #fff;
+  background: var(--surface);
   color: #000;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
@@ -12697,7 +12697,7 @@ button.planning-erm-new {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
+  background: var(--surface);
   font-weight: 700;
   font-size: 13px;
   color: var(--text);
@@ -12713,7 +12713,7 @@ button.planning-erm-new {
 }
 
 .planning-wg-cell--slot {
-  background: #fff;
+  background: var(--surface);
   vertical-align: top;
   min-height: 72px;
   padding: 6px 5px 8px;
@@ -12724,7 +12724,7 @@ button.planning-erm-new {
 }
 
 .planning-shift-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e2e8f0;
   border-left: 3px solid var(--blue, #2563eb);
   border-radius: 10px;
@@ -12768,7 +12768,7 @@ button.planning-erm-new {
 }
 
 .workspace-header-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 18px 20px;
@@ -12795,7 +12795,7 @@ button.planning-erm-new {
 }
 
 .workspace-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 14px;
@@ -13353,7 +13353,7 @@ button.planning-erm-new {
     #fff
     linear-gradient(135deg, #64748b 50%, transparent 50%) calc(100% - 11px) 50%/5px
       5px no-repeat;
-  background-color: #fff;
+  background-color: var(--surface);
   border-radius: 8px;
   padding: 7px 28px 7px 12px;
   font-size: 13px;
@@ -13373,7 +13373,7 @@ button.planning-erm-new {
   font-size: 12.5px;
   font-weight: 700;
   color: #0f172a;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #d8dee8;
   border-radius: 8px;
   padding: 7px 12px;
@@ -13391,7 +13391,7 @@ button.planning-erm-new {
   border: 1px solid #d8dee8;
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-erm-tb-navbtn {
@@ -13888,7 +13888,7 @@ button.planning-erm-new {
   border: 1px solid #c8d3e2;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .planning-month-head,
@@ -13918,7 +13918,7 @@ button.planning-erm-new {
   padding: 6px;
   border-right: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
-  background: #fff;
+  background: var(--surface);
   box-sizing: border-box;
 }
 
@@ -14464,7 +14464,7 @@ button.planning-erm-new {
   .inv-pdf-sheet, .inv-pdf-sheet * { visibility: visible !important; }
   .inv-pdf-sheet {
     position: absolute; left: 0; top: 0; width: 100%;
-    padding: 0; background: #fff; overflow: visible;
+    padding: 0; background: var(--surface); overflow: visible;
   }
   .inv-pdf-doc { border: none; box-shadow: none; }
 }
