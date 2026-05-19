@@ -22,12 +22,6 @@
       "permanent": false
     }
   ],
-  "rewrites": [
-    {
-      "source": "/hr",
-      "destination": "/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*\\.html)",
