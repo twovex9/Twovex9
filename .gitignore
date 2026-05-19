@@ -53,3 +53,7 @@ bs2-medewerkers*.json
 
 # BS2 rollen-scrape — rol-toewijzingen bevatten namen/e-mails (PII)
 bs2-roles*.json
+
+# BS2 PRODUCTIE medewerker-documenten — echte personeels-PDF's (PII)
+scripts/_bs2-mw-documents/
+bs2-medewerker-documenten*.json
