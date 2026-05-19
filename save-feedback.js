@@ -6,7 +6,7 @@
   // Hoe lang de bevestigings-popup zichtbaar is (in ms). Geldt voor alle
   // showSaveModal- en showActionFeedback-aanroepen overal in de app — zo
   // zijn alle korte bevestigingen op één centrale plek consistent.
-  var AUTO_MS = 500;
+  var AUTO_MS = 2000;
   var _autoCloseId = null;
 
   function clearAutoClose() {
@@ -399,7 +399,7 @@
     var t = title || "Er ging iets mis";
     var m = String(message == null ? "Onbekende fout" : message);
     // Reuse de bestaande save-modal infrastructuur, maar toon hem zonder auto-close.
-    // showSaveModal doet auto-close na 500ms; voor errors willen we dat niet.
+    // showSaveModal doet auto-close na AUTO_MS (2000ms); voor errors niet.
     // Kortste pad: render een eigen overlay vergelijkbaar met showPromptModal.
     var overlay = w.document.createElement("div");
     overlay.className = "modal-overlay";
