@@ -83,7 +83,7 @@
 
   async function write(row) {
     if (!global.besaSupabase) return;
-    if (inflight > 8) return; // burst-bescherming bij bulk-acties
+    if (inflight > 16) return; // burst-bescherming bij bulk-acties
     inflight++;
     try {
       var u = currentUser();
@@ -155,9 +155,163 @@
   // nooit meer aan.
   function wireAuth() { /* opzettelijk leeg — zie comment hierboven */ }
 
+  // ---------------------------------------------------------------------------
+  // Uitbreiding 2026-05-19: ALLES loggen (user-eis: elke navigatie, elke
+  // klik, elke wijziging — niet alleen CRUD via showActionFeedback).
+  // Centraal hier zodat we geen 67 pagina's hoeven te wijzigen. Alles
+  // fire-and-forget, deduped, en NOOIT in een auth-state-callback (de
+  // gedocumenteerde hang-valkuil) — enkel op DOMContentLoaded + DOM-events.
+  // ---------------------------------------------------------------------------
+
+  function profileReady() {
+    try {
+      var p = (global.profilesDB && global.profilesDB.getCurrentSync && global.profilesDB.getCurrentSync())
+        || global.besaCurrentProfile || null;
+      return !!(p && (p.id || p.email));
+    } catch (e) { return false; }
+  }
+  // Wacht tot het echte profiel geladen is zodat gebruiker_label "Jason
+  // Sonck" is i.p.v. "Onbekend"/e-mail. Logt na maxMs sowieso (liever een
+  // entry met minder mooie naam dan géén entry).
+  function whenProfileReady(cb, maxMs) {
+    var start = Date.now(), done = false;
+    function fin() { if (done) return; done = true; try { cb(); } catch (e) { /* */ } }
+    if (profileReady()) return fin();
+    try {
+      global.addEventListener("besa:profile-updated", function h() {
+        try { global.removeEventListener("besa:profile-updated", h); } catch (e) { /* */ }
+        fin();
+      });
+    } catch (e) { /* */ }
+    (function poll() {
+      if (done) return;
+      if (profileReady()) return fin();
+      if (Date.now() - start > (maxMs || 6000)) return fin();
+      setTimeout(poll, 300);
+    })();
+  }
+
+  function pageTitleClean() {
+    try {
+      return String(document.title || "")
+        .replace(/\s*[—|·-]\s*(Besa Suite|HR|Organisatie|ETF).*$/i, "").trim();
+    } catch (e) { return ""; }
+  }
+  function pageLabel() {
+    return pageTitleClean() || String((global.location.pathname || "")).replace(/^\//, "").replace(/\.html$/, "") || "pagina";
+  }
+
+  // ---- haak 3: navigatie / page-view (elke geopende pagina) ----
+  function logPageView() {
+    try {
+      var key = (global.location.pathname || "") + (global.location.search || "");
+      var now = Date.now();
+      var lastKey = global.sessionStorage.getItem("__besaAuditNavKey") || "";
+      var lastAt = Number(global.sessionStorage.getItem("__besaAuditNavAt") || 0);
+      if (lastKey === key && (now - lastAt) < 4000) return; // redirect/reload-dedupe
+      global.sessionStorage.setItem("__besaAuditNavKey", key);
+      global.sessionStorage.setItem("__besaAuditNavAt", String(now));
+    } catch (e) { /* */ }
+    whenProfileReady(function () {
+      log({ actie: "bekijken", details: ("Pagina geopend: " + pageLabel()) });
+    }, 6000);
+  }
+
+  // ---- haak 4: betekenisvolle klikken (elke klik op een interactief el.) ----
+  var INTERACTIVE_SEL = "a,button,[role=button],[role=menuitem],[role=menuitemcheckbox]," +
+    "summary,label,.top-link,.side-link,.top-dropdown-link,.rollen-card,.column-toggle," +
+    ".filter-chip,.btn-primary,.btn-outline,.hr-restore-btn,[data-id],[data-role-id]," +
+    "[onclick],tr[data-id],li[data-id]";
+  var lastSig = "", lastSigAt = 0;
+
+  function elText(el) {
+    if (!el || !el.getAttribute) return "";
+    var t = el.getAttribute("aria-label") || el.getAttribute("title") || "";
+    if (!t) t = (el.textContent || "").replace(/\s+/g, " ").trim();
+    if (!t && (el.tagName === "INPUT" || el.tagName === "SELECT")) {
+      t = el.getAttribute("name") || el.getAttribute("placeholder") || el.getAttribute("data-col") || el.id || "veld";
+    }
+    if (!t) t = el.getAttribute("name") || el.getAttribute("data-col") || el.id || "";
+    return String(t).slice(0, 80);
+  }
+  function onGlobalClick(ev) {
+    try {
+      var tgt = ev.target;
+      if (!tgt || tgt.nodeType !== 1) return;
+      var el = tgt.closest ? tgt.closest(INTERACTIVE_SEL) : null;
+      if (!el) return; // alleen betekenisvolle interactie, geen lege ruimte
+      // password-velden nooit: geen labels/inhoud loggen
+      if (el.tagName === "INPUT" && /password/i.test(el.getAttribute("type") || "")) return;
+      var label = elText(el);
+      if (!label) return;
+      var sig = (el.tagName || "") + "|" + label + "|" + (global.location.pathname || "");
+      var now = Date.now();
+      if (sig === lastSig && (now - lastSigAt) < 1200) return; // dubbel-fire/spam-dedupe
+      lastSig = sig; lastSigAt = now;
+      if (/^\s*(uitloggen|log\s*out)\s*$/i.test(label)) {
+        log({ resource: "Gebruiker", actie: "uitloggen", details: "Uitgelogd" });
+        return;
+      }
+      log({ actie: "klik", details: ("Klik: " + label + " — " + pageLabel()) });
+    } catch (e) { /* */ }
+  }
+
+  // ---- haak 5: control-wijzigingen (elke gewijzigde dropdown/checkbox) ----
+  function onGlobalChange(ev) {
+    try {
+      var el = ev.target;
+      if (!el || el.nodeType !== 1) return;
+      var tag = el.tagName;
+      if (tag !== "SELECT" && tag !== "INPUT" && tag !== "TEXTAREA") return;
+      var type = (el.getAttribute("type") || "").toLowerCase();
+      if (type === "password") return; // nooit wachtwoord-velden
+      var name = el.getAttribute("aria-label") || el.getAttribute("name") || el.id || el.getAttribute("data-col") || "veld";
+      var val = "";
+      if (tag === "SELECT") {
+        var op = el.options && el.options[el.selectedIndex];
+        val = op ? (op.textContent || op.value || "").trim() : "";
+      } else if (type === "checkbox" || type === "radio") {
+        val = el.checked ? "aan" : "uit";
+      } else {
+        // tekst/datum: alleen DAT het gewijzigd is, niet de inhoud (privacy)
+        val = el.value ? "(ingevuld)" : "(leeg)";
+      }
+      var sig = "chg|" + name + "|" + val + "|" + (global.location.pathname || "");
+      var now = Date.now();
+      if (sig === lastSig && (now - lastSigAt) < 1200) return;
+      lastSig = sig; lastSigAt = now;
+      log({ actie: "bijwerken", details: ("Veld gewijzigd: " + String(name).slice(0, 60) + " → " + String(val).slice(0, 60) + " — " + pageLabel()) });
+    } catch (e) { /* */ }
+  }
+
+  // ---- haak 6: login per browser-sessie (1×, BUITEN auth-callback) ----
+  function logSessionLoginOnce() {
+    try {
+      var hasSess = false;
+      try { hasSess = !!global.localStorage.getItem("sb-besa-auth"); } catch (e) { /* */ }
+      if (!hasSess) return; // login.html / uitgelogd → niet loggen
+      if (global.sessionStorage.getItem("__besaAuditLogin")) return; // al gelogd deze tab-sessie
+      global.sessionStorage.setItem("__besaAuditLogin", "1");
+      whenProfileReady(function () {
+        log({ resource: "Gebruiker", actie: "inloggen", details: "Ingelogd" });
+      }, 6000);
+    } catch (e) { /* */ }
+  }
+
+  function wireFullAudit() {
+    try { document.addEventListener("click", onGlobalClick, true); } catch (e) { /* */ }
+    try { document.addEventListener("change", onGlobalChange, true); } catch (e) { /* */ }
+    logSessionLoginOnce();
+    logPageView();
+  }
+
   global.besaAudit = { log: log };
 
-  function init() { wrapFeedback(); /* geen wireAuth — auth-flow niet aanraken */ }
+  function init() {
+    wrapFeedback();              // haak 1: alle CRUD via showActionFeedback
+    wireFullAudit();             // haak 3-6: nav + klik + change + login
+    /* geen wireAuth — auth-flow niet aanraken (hang-valkuil) */
+  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
   // Vangnet: als save-feedback.js later (defer) klaar is, alsnog wrappen.
