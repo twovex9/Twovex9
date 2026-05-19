@@ -79,7 +79,7 @@
     return storedSessionLooksValid();
   }
 
-  async function fetchAll() {
+  async function fetchAllOnce() {
     var r = sb();
     var out = await Promise.all([
       r.from("bs2_hierarchy_levels").select("id,name,hierarchy_order").order("hierarchy_order", { ascending: true }),
@@ -102,6 +102,23 @@
     _roles = roles;
   }
 
+  // bs2_roles / bs2_permissions zijn VASTE catalogi: voor een ingelogde
+  // user altijd niet-leeg (14 rollen / 146 permissies). Komt het leeg
+  // terug ZÓNDER error terwijl er een geldige sessie op schijf staat,
+  // dan vuurde de Supabase-client de query vóór de JWT gehydrateerd was
+  // (RLS `to authenticated` → 0 rijen, geen error). Dat is exact waarom
+  // rol-detail.html terugkaatste terwijl rollen.html (event-driven,
+  // geduldig) het overleefde. Self-healing: herhaal tot er data is of er
+  // aantoonbaar geen sessie is. Begrensd (~7s) zodat dit nooit hangt.
+  async function fetchAll() {
+    for (var attempt = 0; attempt < 24; attempt++) {
+      await fetchAllOnce();
+      var got = (_roles && _roles.length) && (_perms && _perms.length);
+      if (got || !storedSessionLooksValid()) return;
+      await new Promise(function (r) { setTimeout(r, 300); });
+    }
+  }
+
   function bootstrap() {
     if (readyPromise) return readyPromise;
     readyPromise = (async function () {
@@ -110,14 +127,7 @@
         // die /rollen naar login bouncete).
         var ok = await waitForSession(8000);
         if (!ok) { reportSilent("bootstrap", "geen sessie — overgeslagen"); return; }
-        await fetchAll();
-        // Zeldzaam: sessie geldig op schijf maar de Supabase-client net
-        // nog niet gehydrateerd → RLS (to authenticated) gaf 0 rijen terug
-        // zónder error. Eén korte retry herstelt dat zodra de JWT meegaat.
-        if ((!_roles || !_roles.length) && storedSessionLooksValid()) {
-          await new Promise(function (r) { setTimeout(r, 700); });
-          await fetchAll();
-        }
+        await fetchAll(); // self-healing: retryt intern bij 0-rijen-met-sessie
         dispatch("bootstrap");
       } catch (err) {
         // Fout met geldige sessie op schijf → één retry; pas daarna stil
