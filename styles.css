@@ -155,6 +155,33 @@ body,
   outline-offset: 2px;
 }
 
+/* ==========================================================================
+   PALETTE-INDIRECTIE (sweep, batch 1)
+   Per distinct hardcoded kleur één --p-* token. LIGHT-waarde = EXACT de
+   originele hex/rgba (→ light blijft byte-identiek, gegarandeerd).
+   [data-theme="dark"] geeft een leesbaar dark-equivalent.
+   ========================================================================== */
+:root {
+  --p-f1f5f9: #f1f5f9;
+  --p-f8fafc: #f8fafc;
+  --p-475569: #475569;
+  --p-374151: #374151;
+  --p-d1d5db: #d1d5db;
+  --p-e8e8ea: #e8e8ea;
+  --p-e0e0e5: #e0e0e5;
+  --p-arrow-chip: rgba(255, 255, 255, 0.92);
+}
+[data-theme="dark"] {
+  --p-f1f5f9: #1f242d;
+  --p-f8fafc: #1a1f28;
+  --p-475569: #8a92a1;
+  --p-374151: #c7ccd6;
+  --p-d1d5db: #2a313c;
+  --p-e8e8ea: #1f242d;
+  --p-e0e0e5: #1f242d;
+  --p-arrow-chip: rgba(20, 24, 33, 0.85);
+}
+
 /* Hele interface 110% t.o.v. 100% (browser-zoom-equivalent) */
 html {
   zoom: 1.1;
@@ -1615,7 +1642,7 @@ h1 {
 }
 
 .table-card .table-footer {
-  border-top: 1px solid #e0e0e5;
+  border-top: 1px solid var(--p-e0e0e5);
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
@@ -2714,8 +2741,8 @@ h1 {
 */
 
 .table-footer {
-  border-top: 1px solid #e8e8ea;
-  color: #374151;
+  border-top: 1px solid var(--p-e8e8ea);
+  color: var(--p-374151);
   font-size: var(--font-base);
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -10007,7 +10034,7 @@ select.cd-config-select {
   position: relative;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--surface);
   overflow: hidden;
   cursor: pointer;
   display: flex;
@@ -10026,7 +10053,7 @@ select.cd-config-select {
   width: 28px;
   height: 28px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--p-arrow-chip);
   color: var(--text-secondary);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: color 0.15s ease, background 0.15s ease;
@@ -10035,7 +10062,7 @@ select.cd-config-select {
 
 .home-news-card:hover .home-news-card-arrow {
   color: var(--blue);
-  background: #fff;
+  background: var(--surface);
 }
 
 .home-news-count-badge {
@@ -10045,7 +10072,7 @@ select.cd-config-select {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  background: var(--surface-alt, #f1f5f9);
+  background: var(--p-f1f5f9);
   border-radius: var(--r-pill);
 }
 
@@ -10078,8 +10105,8 @@ select.cd-config-select {
   width: 100%;
   height: 150px;
   object-fit: cover;
-  border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--p-f1f5f9);
+  background: var(--p-f8fafc);
 }
 
 .home-news-card-image--fallback {
@@ -10087,7 +10114,7 @@ select.cd-config-select {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #475569;
+  color: var(--p-475569);
 }
 
 .home-news-card-body {
@@ -10149,11 +10176,11 @@ select.cd-config-select {
 
 .home-news-empty {
   grid-column: 1 / -1;
-  background: #fff;
-  border: 1px dashed #d1d5db;
+  background: var(--surface);
+  border: 1px dashed var(--p-d1d5db);
   border-radius: 16px;
   padding: 28px;
-  color: #374151;
+  color: var(--p-374151);
   font-weight: 600;
 }
 
