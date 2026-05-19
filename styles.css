@@ -2729,7 +2729,7 @@ h1 {
 .sa-ort-dag-field .sa-ort-dag-label {
   font-size: 15px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--red);
 }
 
 .sa-ort-dag-select {
@@ -4916,7 +4916,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .emp-verlof-stat-value--green {
-  color: #16a34a;
+  color: var(--green);
 }
 
 .emp-verlof-stat-value--orange {
@@ -5068,7 +5068,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .emp-verlof-modal-subtitle--green {
-  color: #16a34a;
+  color: var(--green);
 }
 
 .emp-verlof-modal-hr {
@@ -5078,7 +5078,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .emp-verlof-modal-hr--green {
-  border-top-color: #16a34a;
+  border-top-color: var(--green);
 }
 
 .emp-verlof-modal-grid {
@@ -5393,7 +5393,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .opl-medewerker-link {
-  color: #2563eb;
+  color: var(--blue);
   text-decoration: none;
   font-size: 15px;
 }
@@ -5667,7 +5667,7 @@ select.modal-select.modal-select--chevron-right {
   border: none;
   border-radius: var(--r-xs);
   background: transparent;
-  color: #16a34a;
+  color: var(--green);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -5693,7 +5693,7 @@ select.modal-select.modal-select--chevron-right {
   border: none;
   border-radius: var(--r-xs);
   background: transparent;
-  color: #dc2626;
+  color: var(--red);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -5777,7 +5777,7 @@ select.modal-select.modal-select--chevron-right {
   border: none;
   border-radius: var(--r-xs);
   background: transparent;
-  color: #16a34a;
+  color: var(--green);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -5803,7 +5803,7 @@ select.modal-select.modal-select--chevron-right {
   border: none;
   border-radius: var(--r-xs);
   background: transparent;
-  color: #dc2626;
+  color: var(--red);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -6667,7 +6667,7 @@ select.modal-select.modal-select--chevron-right {
 }
 
 .emp-bedrijf-note-save {
-  color: #16a34a;
+  color: var(--green);
 }
 
 .emp-bedrijf-note-cancel {
@@ -9255,7 +9255,7 @@ select.emp-doc-modal-input {
 }
 
 abbr.cf-req {
-  color: #dc2626;
+  color: var(--red);
   text-decoration: none;
   font-weight: 700;
   cursor: help;
@@ -10376,9 +10376,9 @@ select.cd-config-select {
   border-bottom: 1px solid var(--line);
 }
 .planning-detail-actions { display: flex; gap: 8px; align-items: center; }
-.btn-outline--red { border-color: var(--red, #dc2626); color: var(--red, #dc2626); }
+.btn-outline--red { border-color: var(--red, var(--red)); color: var(--red, var(--red)); }
 .btn-outline--red:hover { background: rgba(220, 38, 38, 0.08); }
-.btn-primary--red { background: var(--red, #dc2626); }
+.btn-primary--red { background: var(--red, var(--red)); }
 .btn-primary--red:hover { filter: brightness(1.05); }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 /* Right-side slide-in panel voor planning dienst-detail (sub-task 2026-05-15)
@@ -10929,13 +10929,13 @@ select.cd-config-select {
 .planning-erm-monthstrip-day:hover,
 .planning-erm-monthstrip-day:focus {
   background: #eff6ff;
-  border-color: #2563eb;
+  border-color: var(--blue);
   color: #1e3a5f;
   outline: none;
 }
 
 .planning-erm-monthstrip-day.is-today {
-  box-shadow: inset 0 0 0 2px #2563eb;
+  box-shadow: inset 0 0 0 2px var(--blue);
   background: #eff6ff;
 }
 
@@ -11006,8 +11006,8 @@ button.btn-dienst-aanmaken {
   font-size: 13px;
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid #2563eb;
-  background: #2563eb;
+  border: 1px solid var(--blue);
+  background: var(--blue);
   color: #fff;
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
@@ -11449,7 +11449,7 @@ body.planning-dienst-open {
   font: inherit;
   font-weight: 600;
   font-size: 14px;
-  border: 1px solid #2563eb;
+  border: 1px solid var(--blue);
   color: var(--pt-0a0a0a);
   background: var(--surface);
   border-radius: 10px;
@@ -11467,9 +11467,9 @@ body.planning-dienst-open {
   font: inherit;
   font-weight: 700;
   font-size: 14px;
-  border: 1px solid #2563eb;
+  border: 1px solid var(--blue);
   color: #fff;
-  background: #2563eb;
+  background: var(--blue);
   border-radius: 10px;
   cursor: pointer;
 }
@@ -11761,7 +11761,7 @@ button.planning-erm-new {
 .planning-erm-cell--day.is-today,
 .planning-erm-cell--body.is-today {
   background: #eff6ff;
-  box-shadow: inset 0 3px 0 #2563eb;
+  box-shadow: inset 0 3px 0 var(--blue);
 }
 
 .planning-erm-cell--day.is-today::after {
@@ -11770,7 +11770,7 @@ button.planning-erm-new {
   width: 5px;
   height: 5px;
   border-radius: 99px;
-  background: #2563eb;
+  background: var(--blue);
   margin: 3px auto 0;
 }
 
@@ -12006,7 +12006,7 @@ button.planning-erm-new {
 
 .planning-erm-wg-row--foot .planning-erm-foot-col.is-today {
   background: #b8d0f0;
-  box-shadow: inset 0 2px 0 #2563eb;
+  box-shadow: inset 0 2px 0 var(--blue);
 }
 
 .planning-erm-foot-acts {
@@ -12096,7 +12096,7 @@ button.planning-erm-new {
   align-items: center;
   justify-content: center;
   background: #eaf2ff;
-  color: #2563eb;
+  color: var(--blue);
   font-weight: 800;
   line-height: 1;
   box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.15);
@@ -12142,7 +12142,7 @@ button.planning-erm-new {
 
 .planning-erm-card.is-selected,
 .planning-erm-card:hover {
-  box-shadow: 0 0 0 1px #2563eb, 0 1px 4px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 0 0 1px var(--blue), 0 1px 4px rgba(15, 23, 42, 0.1);
   background: var(--surface);
   z-index: 1;
 }
@@ -12154,7 +12154,7 @@ button.planning-erm-new {
 
 .planning-erm-card.is-selected {
   background: #dbeafe;
-  border-color: #2563eb;
+  border-color: var(--blue);
 }
 
 .planning-erm-card__top {
@@ -12294,7 +12294,7 @@ button.planning-erm-new {
   width: 4px;
   flex-shrink: 0;
   min-height: 100%;
-  background: #2563eb;
+  background: var(--blue);
 }
 
 .planning-erm-hoverbar-btns {
@@ -12332,15 +12332,15 @@ button.planning-erm-new {
 }
 
 .planning-erm-hic--view {
-  color: #2563eb;
+  color: var(--blue);
 }
 
 .planning-erm-hic--edit {
-  color: #16a34a;
+  color: var(--green);
 }
 
 .planning-erm-hic--del {
-  color: #dc2626;
+  color: var(--red);
 }
 
 #planning-week-grid.planning-erm--dense .planning-erm-hoverbar-inner {
@@ -12449,7 +12449,7 @@ button.planning-erm-new {
 }
 
 .planning-add-dialog--erm .modal-input:focus {
-  border-color: #2563eb;
+  border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
 }
 
@@ -12903,7 +12903,7 @@ button.planning-erm-new {
 .planning-shift-card {
   background: var(--surface);
   border: 1px solid var(--pb-e2e8f0);
-  border-left: 3px solid var(--blue, #2563eb);
+  border-left: 3px solid var(--blue, var(--blue));
   border-radius: 10px;
   padding: 6px 8px;
   font-size: 11px;
@@ -13189,7 +13189,7 @@ button.planning-erm-new {
   padding: 6px 0 0;
   background: transparent;
   border: 0;
-  color: #2563eb;
+  color: var(--blue);
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -13210,7 +13210,7 @@ button.planning-erm-new {
   height: 16px;
   border-radius: 999px;
   background: #eaf2ff;
-  color: #2563eb;
+  color: var(--blue);
   font-weight: 800;
   line-height: 1;
   font-size: 12px;
@@ -13431,7 +13431,7 @@ button.planning-erm-new {
 .planning-erm-radios--assign .planning-erm-radio input[type="radio"] {
   width: 14px;
   height: 14px;
-  accent-color: #2563eb;
+  accent-color: var(--blue);
 }
 
 .planning-erm-filters-foot--v3 {
@@ -13451,7 +13451,7 @@ button.planning-erm-new {
   font: inherit;
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--blue);
   cursor: pointer;
 }
 
@@ -13616,8 +13616,8 @@ button.planning-erm-new {
 }
 
 .planning-erm-tb-gen {
-  border: 1px solid #16a34a;
-  background: #16a34a;
+  border: 1px solid var(--green);
+  background: var(--green);
   color: #fff;
 }
 
@@ -13627,7 +13627,7 @@ button.planning-erm-new {
 }
 
 .planning-erm-tb-opt {
-  border: 1px solid #16a34a;
+  border: 1px solid var(--green);
   background: #f0fdf4;
   color: #166534;
   display: inline-flex;
@@ -13673,7 +13673,7 @@ button.planning-erm-new {
 }
 
 .planning-kpi--v3 .planning-kpi-ico {
-  background: #2563eb;
+  background: var(--blue);
   color: #fff;
   width: 34px;
   height: 34px;
@@ -13757,12 +13757,12 @@ button.planning-erm-new {
   justify-content: center;
   font-weight: 900;
   font-size: 11px;
-  color: #2563eb;
+  color: var(--blue);
 }
 
 .planning-erm-glabel-chip--zzp .planning-erm-glabel-chip-ico,
 .planning-erm-glabel-chip--km .planning-erm-glabel-chip-ico {
-  color: #2563eb;
+  color: var(--blue);
 }
 
 .planning-erm-glabel-chip--uren {
@@ -13771,7 +13771,7 @@ button.planning-erm-new {
 }
 
 .planning-erm-glabel-chip--uren .planning-erm-glabel-chip-ico {
-  color: #2563eb;
+  color: var(--blue);
   font-size: 10px;
 }
 
@@ -13789,7 +13789,7 @@ button.planning-erm-new {
   color: #14532d;
 }
 .planning-erm-glabel-chip--tarief .planning-erm-glabel-chip-ico {
-  color: #16a34a;
+  color: var(--green);
   font-size: 10px;
 }
 
@@ -13797,7 +13797,7 @@ button.planning-erm-new {
   font-size: 9.5px;
   font-weight: 800;
   color: #fff;
-  background: #2563eb;
+  background: var(--blue);
   border-radius: 999px;
   padding: 2px 7px;
   margin-left: 0;
@@ -14106,7 +14106,7 @@ button.planning-erm-new {
 
 .planning-month-cell.is-today {
   background: #eff6ff;
-  box-shadow: inset 0 2px 0 #2563eb;
+  box-shadow: inset 0 2px 0 var(--blue);
 }
 
 .planning-month-cell-head {
@@ -18488,10 +18488,10 @@ button.besc-dtl-tab:hover {
   background: var(--blue);
   opacity: 0.85;
 }
-.id-kpi--blue::before    { background: #2563eb; }
+.id-kpi--blue::before    { background: var(--blue); }
 .id-kpi--yellow::before  { background: #f59e0b; }
 .id-kpi--blue2::before   { background: #0ea5e9; }
-.id-kpi--green::before   { background: #16a34a; }
+.id-kpi--green::before   { background: var(--green); }
 .id-kpi--purple::before  { background: #7c3aed; }
 .id-kpi--orange::before  { background: #ea580c; }
 .id-kpi--teal::before    { background: #0d9488; }
@@ -18504,7 +18504,7 @@ button.besc-dtl-tab:hover {
   background: var(--bg-muted, #f3f4f6);
   color: var(--text-secondary, #475569);
 }
-.id-kpi--blue   .id-kpi-ico { background: rgba(37, 99, 235, 0.10); color: #2563eb; }
+.id-kpi--blue   .id-kpi-ico { background: rgba(37, 99, 235, 0.10); color: var(--blue); }
 .id-kpi--yellow .id-kpi-ico { background: rgba(245, 158, 11, 0.12); color: #b45309; }
 .id-kpi--blue2  .id-kpi-ico { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
 .id-kpi--green  .id-kpi-ico { background: rgba(22, 163, 74, 0.12); color: #15803d; }
@@ -18600,19 +18600,19 @@ button.besc-dtl-tab:hover {
 .id-line-svg { display: block; }
 .id-line-path {
   fill: none;
-  stroke: var(--blue, #2563eb);
+  stroke: var(--blue, var(--blue));
   stroke-width: 2.5;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 .id-line-pt {
   fill: var(--surface, #fff);
-  stroke: var(--blue, #2563eb);
+  stroke: var(--blue, var(--blue));
   stroke-width: 2;
   cursor: crosshair;
   transition: r 120ms ease;
 }
-.id-line-pt:hover { r: 5; fill: var(--blue, #2563eb); }
+.id-line-pt:hover { r: 5; fill: var(--blue, var(--blue)); }
 .id-grid-line { stroke: var(--line, #e5e7eb); stroke-width: 1; stroke-dasharray: 2 4; }
 .id-axis { font-size: 10px; fill: var(--text-muted); font-family: inherit; }
 
@@ -18635,7 +18635,7 @@ button.besc-dtl-tab:hover {
 .id-trend-tip-d { font-size: 11px; color: var(--text-muted); }
 .id-trend-tip-v { font-size: 13px; font-weight: 700; color: var(--text); }
 .id-trend-cursor-line { stroke: var(--line-strong, #cbd5e1); stroke-width: 1; stroke-dasharray: 3 3; }
-.id-trend-cursor-dot { fill: var(--blue, #2563eb); stroke: var(--surface, #fff); stroke-width: 2; }
+.id-trend-cursor-dot { fill: var(--blue, var(--blue)); stroke: var(--surface, #fff); stroke-width: 2; }
 
 /* Donut */
 .id-donut-wrap {
@@ -18756,7 +18756,7 @@ button.besc-dtl-tab:hover {
   width: 28px; height: 28px;
   border-radius: 50%;
   background: rgba(37, 99, 235, 0.10);
-  color: #2563eb;
+  color: var(--blue);
   font-size: 11px;
   font-weight: 700;
   display: flex; align-items: center; justify-content: center;
@@ -18780,7 +18780,7 @@ button.besc-dtl-tab:hover {
 }
 .id-toplist-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2563eb, #0ea5e9);
+  background: linear-gradient(90deg, var(--blue), #0ea5e9);
   border-radius: 2px;
   transition: width 320ms ease;
 }
@@ -18880,7 +18880,7 @@ button.besc-dtl-tab:hover {
   width: 32px; height: 32px;
   border-radius: 8px;
   background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
+  color: var(--blue);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -19109,8 +19109,8 @@ button.besc-dtl-tab:hover {
   width: 8px; height: 8px;
   border-radius: 50%;
 }
-.im-betrokken-dot--cli { background: #2563eb; }
-.im-betrokken-dot--med { background: #16a34a; }
+.im-betrokken-dot--cli { background: var(--blue); }
+.im-betrokken-dot--med { background: var(--green); }
 .im-betrokken-chip-type { color: var(--text-muted); font-size: 11px; font-weight: 600; }
 .im-betrokken-chip-name { font-weight: 500; }
 .im-betrokken-chip-x {
