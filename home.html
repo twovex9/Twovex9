@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
@@ -7,132 +7,101 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Home — HR</title>
   <link rel="stylesheet" href="styles.css?v=imcols9">
-  <link rel="stylesheet" href="home-besa.css?v=besa1">
 </head>
-<body class="besa-redesign">
+<body>
   <script src="save-feedback.js?v=sf500" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
-  <!-- Sidebar-iconen (Lucide-stijl outline, decoratief) -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9.5 21v-6h5v6"/></symbol>
-      <symbol id="i-planning" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></symbol>
-      <symbol id="i-uren" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-      <symbol id="i-hr" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
-      <symbol id="i-clienten" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
-      <symbol id="i-kilometers" viewBox="0 0 24 24"><path d="M3 13l2-6h14l2 6v4H3z"/><path d="M3 17h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></symbol>
-      <symbol id="i-facturen" viewBox="0 0 24 24"><path d="M15 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h5"/></symbol>
-      <symbol id="i-taken" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m8 12 3 3 5-6"/></symbol>
-      <symbol id="i-medewerkers" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16a3 3 0 0 1 6 0"/><path d="M14 10h4"/><path d="M14 14h3"/></symbol>
-      <symbol id="i-beleid" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
-      <symbol id="i-audit" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="m9 14 2 2 4-4"/></symbol>
-      <symbol id="i-organisatie" viewBox="0 0 24 24"><path d="M6 22V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v18"/><path d="M15 9h3a1 1 0 0 1 1 1v12"/><path d="M3 22h18"/><path d="M9 7h1"/><path d="M9 11h1"/><path d="M9 15h1"/></symbol>
-      <symbol id="i-instellingen" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
-    </defs>
-  </svg>
-
-  <div class="bsd-app">
-
-    <!-- ============ SIDEBAR — alle bestaande navigatie + sublinks behouden ============ -->
-    <aside class="bsd-sidebar">
-      <a href="home.html" class="bsd-logo" aria-label="Home">
-        <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
-      </a>
-
-      <a href="home.html" class="bsd-nav-item is-active"><svg class="bsd-ic"><use href="#i-home"/></svg>Home</a>
-
-      <a href="planning.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-planning"/></svg>Planning</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Planning opties">
-        <a href="planning.html" role="menuitem"><span class="bsd-ns-t">Overzicht planning</span><span class="bsd-ns-s">Bekijk planningsoverzicht</span></a>
-        <a href="planning-beheer.html" role="menuitem"><span class="bsd-ns-t">Beheer planningbeheer</span><span class="bsd-ns-s">Beheer planninginstellingen</span></a>
-      </div>
-
-      <a href="werkuren.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-uren"/></svg>Urenregistratie</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Urenregistratie opties">
-        <a href="werkuren.html" role="menuitem"><span class="bsd-ns-t">Geregistreerde uren</span><span class="bsd-ns-s">Overzicht geregistreerde uren</span></a>
-        <a href="werkuren-labels.html" role="menuitem"><span class="bsd-ns-t">Labels</span><span class="bsd-ns-s">Beheer labels voor urenregistraties</span></a>
-      </div>
-
-      <a href="index.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-hr"/></svg>HR</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="HR opties">
-        <a href="index.html" role="menuitem"><span class="bsd-ns-t">Medewerkers</span><span class="bsd-ns-s">Beheer je medewerkers</span></a>
-        <a href="competenties.html" role="menuitem"><span class="bsd-ns-t">Competenties</span><span class="bsd-ns-s">Beheer competenties</span></a>
-        <a href="locaties.html" role="menuitem"><span class="bsd-ns-t">Locaties</span><span class="bsd-ns-s">Beheer locaties</span></a>
-        <a href="salarishuis.html" role="menuitem"><span class="bsd-ns-t">Salarishuis</span><span class="bsd-ns-s">Beheer het salarishuis</span></a>
-        <a href="bureaus.html" role="menuitem"><span class="bsd-ns-t">Bureau's</span><span class="bsd-ns-s">Beheer bureau's</span></a>
-      </div>
-
-      <a href="clienten.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-clienten"/></svg>Cliënten</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Cliënten opties">
-        <a href="clienten.html" role="menuitem"><span class="bsd-ns-t">Cliënten</span><span class="bsd-ns-s">Cliëntbeheer</span></a>
-        <a href="zorgsoorten.html" role="menuitem"><span class="bsd-ns-t">Zorgsoorten</span><span class="bsd-ns-s">Beheer Zorgsoorten</span></a>
-        <a href="beschikkingen.html" role="menuitem"><span class="bsd-ns-t">Beschikkingen</span><span class="bsd-ns-s">Beschikkingen overzicht</span></a>
-        <a href="facturen.html" role="menuitem"><span class="bsd-ns-t">Facturen</span><span class="bsd-ns-s">Factuuroverzicht</span></a>
-        <a href="incidenten.html" role="menuitem"><span class="bsd-ns-t">Incidenten</span><span class="bsd-ns-s">Incidenten overzicht</span></a>
-      </div>
-
-      <a href="kilometers.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-kilometers"/></svg>Kilometers</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Kilometers opties">
-        <a href="kilometers.html" role="menuitem"><span class="bsd-ns-t">Kilometer declaraties</span><span class="bsd-ns-s">Bekijk alle kilometer declaraties</span></a>
-      </div>
-
-      <a href="facturen-te-beoordelen.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-facturen"/></svg>Facturen</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Facturen opties">
-        <a href="facturen-te-beoordelen.html" role="menuitem"><span class="bsd-ns-t">Te beoordelen</span><span class="bsd-ns-s">Bekijk en beheer facturen te beoordelen</span></a>
-        <a href="facturen.html" role="menuitem"><span class="bsd-ns-t">Alle facturen</span><span class="bsd-ns-s">Maandelijkse facturen bekijken en beheren</span></a>
-      </div>
-
-      <a href="taken.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-taken"/></svg>Taken</a>
-
-      <div class="bsd-nav-divider"></div>
-
-      <a href="medewerkers-overzicht.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-medewerkers"/></svg>Medewerkers</a>
-      <a href="beleid-documenten.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-beleid"/></svg>Beleid</a>
-      <a href="audit.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-audit"/></svg>Audit</a>
-
-      <a href="teams.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-organisatie"/></svg>Organisatie</a>
-      <div class="bsd-nav-sub" role="menu" aria-label="Organisatie opties">
-        <a href="rollen.html" role="menuitem"><span class="bsd-ns-t">Rollen</span><span class="bsd-ns-s">Beheer rollen en permissies</span></a>
-        <a href="teams.html" role="menuitem"><span class="bsd-ns-t">Teams</span><span class="bsd-ns-s">Team structuur beheer</span></a>
-        <a href="gebruikers.html" role="menuitem"><span class="bsd-ns-t">Gebruikers</span><span class="bsd-ns-s">Beheer login-accounts (admin-tier)</span></a>
-      </div>
-
-      <div class="bsd-nav-spacer"></div>
-
-      <a href="instellingen.html" class="bsd-nav-item"><svg class="bsd-ic"><use href="#i-instellingen"/></svg>Instellingen</a>
-    </aside>
-
-    <!-- ============ MAIN ============ -->
-    <main class="bsd-main">
-
-      <header class="bsd-topbar topbar">
-        <div class="bsd-greet-block">
-          <div class="bsd-greet-date" id="bsd-greet-date"></div>
-          <h1 id="home-greeting">Welkom</h1>
-        </div>
-        <div class="bsd-actions">
-          <button type="button" class="bsd-icon-btn" aria-label="Help">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+  <div class="app-shell app-shell--home">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home.html" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home.html" class="top-link">Home</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="planning.html" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
+                <a href="planning.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
+                <a href="planning-beheer.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="werkuren.html" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
+                <a href="werkuren.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
+                <a href="werkuren-labels.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Labels</span><span class="top-dropdown-subtitle">Beheer labels voor urenregistraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="index.html" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
+                <a href="index.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
+                <a href="competenties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
+                <a href="locaties.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
+                <a href="salarishuis.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
+                <a href="bureaus.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="clienten.html" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
+                <a href="clienten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
+                <a href="zorgsoorten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
+                <a href="beschikkingen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
+                <a href="incidenten.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="kilometers.html" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
+                <a href="kilometers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+              </div>
+            </div>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="facturen-te-beoordelen.html" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
+                <a href="facturen-te-beoordelen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
+                <a href="facturen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
+              </div>
+            </div>            <a href="taken.html" class="top-link">Taken</a>
+            <a href="medewerkers-overzicht.html" class="top-link">Medewerkers</a>
+            <a href="beleid-documenten.html" class="top-link">Beleid</a>
+            <a href="audit.html" class="top-link">Audit</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="teams.html" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
+                <a href="rollen.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
+                <a href="teams.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
+                <a href="gebruikers.html" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
+              </div>
+            </div>
+            <a href="instellingen.html" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
           </button>
         </div>
-      </header>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+      </div>
+    </header>
 
-      <section class="bsd-section" id="bsd-acties-section" hidden>
-        <div class="bsd-section-header">
-          <h2 class="bsd-section-title">acties vereist</h2>
-          <span class="bsd-section-meta" id="bsd-acties-meta"></span>
-        </div>
-        <div class="bsd-action-list" id="bsd-acties-list"></div>
-      </section>
-
-      <section class="bsd-section">
+    <main class="content content--home">
+      <section class="home-welcome">
+        <h1 id="home-greeting">Welkom</h1>
         <p class="home-subtitle">Nieuws &amp; Mededelingen</p>
-        <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
       </section>
 
+      <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
     </main>
-
   </div>
 
   <div class="modal-overlay modal-overlay--home-news" id="home-news-modal" hidden aria-hidden="true">
@@ -176,6 +145,5 @@
   <script src="nieuws-data.js?v=memfix1"></script>
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="home.js"></script>
-  <script src="home-besa.js?v=besa1" defer></script>
 </body>
 </html>
