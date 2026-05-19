@@ -114,7 +114,10 @@
     // marker wordt in login.html gewist ná een geslaagde echte login.
     // Voor een VALSE/transiënte null (geen marker) blijft rehydratie aan
     // → #289/#293-bescherming intact.
-    try { if (window.localStorage.getItem("besa-logout") === "1") return; } catch (e) { /* */ }
+    try {
+      if (window.sessionStorage.getItem("besa-logout") === "1"
+        || window.localStorage.getItem("besa-logout") === "1") return;
+    } catch (e) { /* */ }
     try {
       var gs = await client.auth.getSession();
       if (gs && gs.data && gs.data.session) return; // client heeft 'm al

@@ -140,6 +140,7 @@
           return;
         }
         // Fallback (auth-guard niet geladen): zelf marker + purge.
+        try { global.sessionStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
         try { global.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
         try { global.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
         try {
