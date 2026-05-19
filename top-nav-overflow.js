@@ -41,6 +41,7 @@
     const effectiveHash = currentFile === "werkruimte.html" && !currentHash ? "#urenregistratie" : currentHash;
     const hrPages = new Set([
       "index.html",
+      "hr.html",
       "nieuws.html",
       "competenties.html",
       "competentie-detail.html",
@@ -171,7 +172,7 @@
       Home: "home.html",
       Planning: "planning.html",
       Urenregistratie: "werkuren.html",
-      HR: "index.html",
+      HR: "hr.html",
       Cliënten: "clienten.html",
       Kilometers: "werkruimte.html#kilometers",
       Taken: "taken.html",
@@ -187,7 +188,7 @@
       "Beheer planningbeheer": "planning.html",
       "Geregistreerde uren": "werkuren.html",
       "Labels": "werkuren-labels.html",
-      "Medewerkers": "index.html",
+      "Medewerkers": "hr.html",
       Cliënten: "clienten.html",
       Zorgsoorten: "zorgsoorten.html",
       Beschikkingen: "beschikkingen.html",

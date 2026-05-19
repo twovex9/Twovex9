@@ -10,6 +10,22 @@
       "source": "/",
       "destination": "/home",
       "permanent": false
+    },
+    {
+      "source": "/index",
+      "destination": "/hr",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "destination": "/hr",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/hr",
+      "destination": "/index.html"
     }
   ],
   "headers": [
