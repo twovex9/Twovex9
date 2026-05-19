@@ -95,17 +95,6 @@
     // Stage 8d: auth-fouten gaan niet als generieke sync-toast — die zijn
     // verwarrend. Ze triggeren een nette redirect naar login.
     if (isAuthError(err)) {
-      try {
-        global.sessionStorage.setItem("__ag_bc2", JSON.stringify({
-          t: new Date().toISOString(),
-          path: global.location.pathname + global.location.search,
-          via: "besa-sync isAuthError",
-          domain: String(domain || "?"),
-          status: (err && (err.status || err.statusCode)) || "?",
-          code: (err && err.code) || "?",
-          msg: String((err && (err.message || err.msg || err.error)) || err || "").slice(0, 200),
-        }));
-      } catch (e) { /* */ }
       dispatchAuthFailure(err);
       return;
     }

@@ -80,17 +80,6 @@
     if (redirectInFlight) return;
     redirectInFlight = true;
     var options = opts || {};
-    // TIJDELIJKE DIAGNOSE: leg vast WAAROM + vanaf welk pad we uitloggen,
-    // zodat we het na de redirect (op login/home) kunnen uitlezen.
-    try {
-      window.sessionStorage.setItem("__ag_bc", JSON.stringify({
-        t: new Date().toISOString(),
-        path: window.location.pathname + window.location.search,
-        via: "performLogoutAndRedirect",
-        reason: options.reason || "?",
-        stack: String((new Error()).stack || "").split("\n").slice(1, 6).join(" | "),
-      }));
-    } catch (e) { /* */ }
     var loginUrl = options.preserveNext === false
       ? "login.html"
       : buildLoginUrl();

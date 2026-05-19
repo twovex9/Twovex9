@@ -41,18 +41,42 @@
     try { console.warn("[bs2RolesDB] " + action + " mislukt (geen logout):", err && err.message || err); } catch (e) { /* */ }
   }
 
-  // Wacht tot er een ingelogde sessie is vóór we queries vuren — anders
-  // 401's tijdens de load-race die de auth-flow verstoren.
+  // Leest de persistente Supabase-sessie rechtstreeks uit localStorage.
+  // getSession() loopt via de navigator-LockManager en geeft op zware
+  // pagina's (zoals /rollen) tijdens de client-hydratie een *transient
+  // null* terug, terwijl de sessie wél geldig op schijf staat én de
+  // Supabase-client de JWT gewoon meestuurt zodra de eerste query loopt.
+  // Dit is exact de #289-aanpak (storedSessionLooksValid in auth-guard.js):
+  // localStorage["sb-besa-auth"] is de betrouwbare bron-van-waarheid.
+  function storedSessionLooksValid() {
+    try {
+      var raw = global.localStorage.getItem("sb-besa-auth");
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      var sess = (o && (o.currentSession || o.session)) || o;
+      return !!(sess && sess.refresh_token);
+    } catch (e) { return false; }
+  }
+
+  // Wacht tot er een bruikbare sessie is vóór we queries vuren — anders
+  // 401's tijdens de load-race die de auth-flow verstoren. Resolve zodra
+  // óf getSession() een sessie geeft, óf de persistente sessie in
+  // localStorage geldig is (refresh_token aanwezig). Die laatste is de
+  // betrouwbare bron op zware pagina's waar getSession() transient null
+  // teruggeeft — vóór #289 leidde dat tot "geen sessie — overgeslagen"
+  // en een lege Rollen-pagina (0 rollen, 0 gebruikers).
   async function waitForSession(maxMs) {
+    if (storedSessionLooksValid()) return true;
     var deadline = Date.now() + (maxMs || 8000);
     while (Date.now() < deadline) {
       try {
         var s = await global.besaSupabase.auth.getSession();
         if (s && s.data && s.data.session && s.data.session.user) return true;
       } catch (e) { /* */ }
+      if (storedSessionLooksValid()) return true;
       await new Promise(function (r) { setTimeout(r, 250); });
     }
-    return false;
+    return storedSessionLooksValid();
   }
 
   async function fetchAll() {
@@ -87,8 +111,27 @@
         var ok = await waitForSession(8000);
         if (!ok) { reportSilent("bootstrap", "geen sessie — overgeslagen"); return; }
         await fetchAll();
+        // Zeldzaam: sessie geldig op schijf maar de Supabase-client net
+        // nog niet gehydrateerd → RLS (to authenticated) gaf 0 rijen terug
+        // zónder error. Eén korte retry herstelt dat zodra de JWT meegaat.
+        if ((!_roles || !_roles.length) && storedSessionLooksValid()) {
+          await new Promise(function (r) { setTimeout(r, 700); });
+          await fetchAll();
+        }
         dispatch("bootstrap");
-      } catch (err) { reportSilent("bootstrap", err); }
+      } catch (err) {
+        // Fout met geldige sessie op schijf → één retry; pas daarna stil
+        // rapporteren (geen logout — zie reportSilent).
+        if (storedSessionLooksValid()) {
+          try {
+            await new Promise(function (r) { setTimeout(r, 700); });
+            await fetchAll();
+            dispatch("bootstrap");
+            return;
+          } catch (err2) { reportSilent("bootstrap", err2); return; }
+        }
+        reportSilent("bootstrap", err);
+      }
     })();
     return readyPromise;
   }
