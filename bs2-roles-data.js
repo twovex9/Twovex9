@@ -123,6 +123,13 @@
     if (readyPromise) return readyPromise;
     readyPromise = (async function () {
       try {
+        // Wacht op de sessie-rehydratie-guard (supabase-client.js): die zet
+        // de persistente sessie deterministisch terug in de client vóór we
+        // queries vuren. Zonder dit gaf de client soms instant "Auth
+        // session missing" → 0 rijen → lege Rollen / rol-detail-bounce.
+        if (global.besaSupabaseReady) {
+          try { await global.besaSupabaseReady; } catch (e) { /* */ }
+        }
         // Niet vuren vóór er een sessie is (voorkomt 401-race op page-load
         // die /rollen naar login bouncete).
         var ok = await waitForSession(8000);
