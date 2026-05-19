@@ -42,14 +42,18 @@
   function currentPathFile() {
     var p = window.location.pathname || "";
     var idx = p.lastIndexOf("/");
-    return idx >= 0 ? p.slice(idx + 1).toLowerCase() : p.toLowerCase();
+    var f = (idx >= 0 ? p.slice(idx + 1) : p).toLowerCase();
+    // Clean-URL (vercel cleanUrls): /login -> login.html zodat de
+    // login-pagina-guard blijft werken (anders redirect-loop).
+    if (f && f.indexOf(".") === -1) f += ".html";
+    return f;
   }
 
   if (currentPathFile() === "login.html") return;
 
   function buildLoginUrl() {
     var here = window.location.pathname + window.location.search + window.location.hash;
-    return "login.html?next=" + encodeURIComponent(here);
+    return "login?next=" + encodeURIComponent(here);
   }
 
   // ---------------------------------------------------------------------------
@@ -125,7 +129,7 @@
     if (redirectInFlight) return;
     var options = opts || {};
     var loginUrl = options.preserveNext === false
-      ? "login.html"
+      ? "login"
       : buildLoginUrl();
 
     if (options.reason === "expired" && typeof window.showActionFeedback === "function") {
@@ -301,7 +305,7 @@
 
     // Mijn profiel link → instellingen.html (waar voornaam/achternaam beheerd worden)
     var profielLink = document.createElement("a");
-    profielLink.href = "instellingen.html";
+    profielLink.href = "instellingen";
     profielLink.setAttribute("role", "menuitem");
     profielLink.style.cssText = "display:block;padding:10px 16px;color:var(--text);text-decoration:none;font-size:13px;transition:background 0.15s ease";
     profielLink.textContent = "Mijn profiel";

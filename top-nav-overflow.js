@@ -12,7 +12,10 @@
   function normalizeFileName(pathname) {
     const cleaned = String(pathname || "").split("?")[0].split("#")[0];
     const parts = cleaned.split("/").filter(Boolean);
-    const last = (parts[parts.length - 1] || "index.html").toLowerCase();
+    let last = (parts[parts.length - 1] || "index.html").toLowerCase();
+    // Clean-URL (vercel cleanUrls): /taken -> taken.html zodat de
+    // actieve-nav-detectie blijft werken zonder .html in de URL.
+    if (last && last.indexOf(".") === -1) last += ".html";
     return last || "index.html";
   }
 
