@@ -109,6 +109,11 @@
       "overflow:hidden",
     ].join(";");
 
+    // Klikken binnen de dropdown niet laten doorbubbelen naar de bel-knop:
+    // de dropdown is een child van <button id="besa-notification-bell">, dus
+    // zonder dit sluit elke klik (bv. op de tab "Gelezen") de dropdown meteen.
+    dd.addEventListener("click", function (e) { e.stopPropagation(); });
+
     var items = window.notificationsDB ? window.notificationsDB.listSync() : [];
     var unread = items.filter(function (n) { return !n.is_read; });
     var read = items.filter(function (n) { return n.is_read; });
@@ -333,8 +338,12 @@
       var bell = document.getElementById("besa-notification-bell");
       var badge = document.getElementById("besa-auth-badge");
       if (bell && badge && badge.parentElement === bell.parentElement) {
+        // De bel houdt margin-left:auto en duwt het paar naar rechts.
+        // De badge MOET margin-left:0 krijgen — anders verdelen twee
+        // auto-marges de vrije ruimte en valt er een gat tussen de bel
+        // en de avatar. Altijd doen, ook als de volgorde al klopt.
+        badge.style.marginLeft = "0";
         if (bell.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_PRECEDING) {
-          badge.style.marginLeft = "0";
           badge.parentElement.insertBefore(bell, badge);
         }
         observer.disconnect();
