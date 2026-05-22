@@ -5,6 +5,7 @@
   --bg-muted: #f4f4f5;
   --bg-detail: #f7f8fa;
   --surface: #ffffff;
+  --surface-alt: #f7f8fa;
   --text: #000000;
   --text-secondary: #404040;
   --text-muted: #737373;
@@ -95,6 +96,7 @@
   --bg-muted: #0e1116;
   --bg-detail: #141821;
   --surface: #141821;
+  --surface-alt: #1a1f28;
   --text: #f5f6f8;
   --text-secondary: #e6e8ec;
   --text-muted: #8a92a1;
