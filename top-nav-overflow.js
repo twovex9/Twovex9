@@ -119,7 +119,9 @@
       currentFile === "uren-budgettering.html" ||
       currentFile === "incidenten.html" ||
       currentFile === "incidenten-dashboard.html" ||
-      currentFile === "incidenten-categorieen.html"
+      currentFile === "incidenten-categorieen.html" ||
+      currentFile === "incident-melden.html" ||
+      currentFile === "verbeteringsmaatregelen.html"
     )) {
       activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
     }
