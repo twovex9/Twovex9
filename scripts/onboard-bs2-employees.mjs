@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 /**
- * v3 Fase G.2 — Bulk-onboarding 102 medewerker-profielen
+ * Bulk-onboarding voor BS2-medewerkers (v3 Fase G.2 — herzien 2026-05-25).
  *
- * Gebruikt built-in fetch (geen npm install nodig).
+ * Doel: alle medewerkers uit `main_employees` (100 rijen, leidende waarheid uit BS2)
+ * krijgen een auth.users-account + profiles-rij + rol-koppeling.
  *
- * VEREIST:
- *   SUPABASE_SERVICE_ROLE_KEY env-var (uit Supabase Dashboard → API → service_role)
+ * Bronnen:
+ *   - `public.main_employees` voor wie er een account hoort te krijgen (op email)
+ *   - `public.bs2_role_users` (M2M user_email ↔ role_id) voor wie welke rol(len) krijgt
+ *   - `public.bs2_roles` voor admin-tier-detectie (slug = Eigenaar/Admin/Directeur)
+ *
+ * Schrijft naar profiles:
+ *   - rol = 'admin' indien admin-tier-rol, anders 'medewerker'
+ *   - must_change_password = true (first-login flow)
+ *   - must_setup_2fa = false (UIT voor testfase; vóór productie weer aan)
+ *   - rol_id wordt voor backward-compat op de "Medewerker" org_role gezet (legacy)
+ *
+ * Idempotent: bestaande auth.users worden niet opnieuw aangemaakt.
+ *
+ * VEREIST: SUPABASE_SERVICE_ROLE_KEY env-var.
  *
  * GEBRUIK:
  *   $env:SUPABASE_SERVICE_ROLE_KEY = 'eyJ...'
@@ -19,6 +32,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "https://boscwvojcggkbdxhlfys.s
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DRY_RUN = process.argv.includes("--dry-run");
 const DEFAULT_PASSWORD = "Welkom123";
+const ADMIN_TIER_SLUGS = ["Eigenaar", "Admin", "Directeur"];
 
 if (!SERVICE_KEY) {
   console.error("❌ SUPABASE_SERVICE_ROLE_KEY env-var ontbreekt.");
@@ -65,97 +79,105 @@ async function adminCreateUser(email, password, metadata) {
 }
 
 async function main() {
-  console.log("🔐 v3 Fase G.2 Bulk-onboarding script");
+  console.log("🔐 v3 Fase G.2 Bulk-onboarding script (herzien 2026-05-25)");
   console.log("URL:", SUPABASE_URL);
-  console.log("Mode:", DRY_RUN ? "DRY-RUN (no changes)" : "LIVE");
+  console.log("Mode:", DRY_RUN ? "DRY-RUN (geen wijzigingen)" : "LIVE");
   console.log("");
 
-  // 1. Get default Medewerker org_role
-  const roles = await restGet("org_roles?naam=eq.Medewerker&select=id,naam&limit=1");
-  if (!roles.length) {
-    console.error("❌ 'Medewerker' org_role niet gevonden");
-    process.exit(1);
+  // 1. Default org_role (legacy `rol_id` veld in profiles)
+  const orgRoles = await restGet("org_roles?naam=eq.Medewerker&select=id,naam&limit=1");
+  const defaultOrgRoleId = (orgRoles[0] && orgRoles[0].id) || null;
+  if (!defaultOrgRoleId) {
+    console.warn("⚠️  org_roles 'Medewerker' niet gevonden; rol_id wordt NULL gelaten.");
+  } else {
+    console.log(`✓ Default org_role 'Medewerker' = ${defaultOrgRoleId}`);
   }
-  const defaultRole = roles[0];
-  console.log(`✓ Default rol = ${defaultRole.naam} (${defaultRole.id})`);
 
-  // 2. Get actieve medewerkers
-  const medewerkers = await restGet("medewerkers?or=(archived.is.null,archived.eq.false)&select=id,voornaam,achternaam,data&limit=500");
+  // 2. Main_employees ophalen (BS2-leidende waarheid; 100 rijen)
+  const employees = await restGet("main_employees?select=id,email,first_name,last_name&order=email.asc&limit=500");
+  const withEmail = employees.filter((e) => !!(e.email && String(e.email).includes("@")));
+  console.log(`✓ ${employees.length} main_employees, ${withEmail.length} hebben geldig e-mailadres`);
 
-  const withEmail = medewerkers.filter((m) => {
-    if (m.id && typeof m.id === "string" && m.id.startsWith("ZZZ-CLAUDE-TEST")) return false;
-    const email = (m.data && (m.data.email || m.data.emailadres || m.data.e_mail || m.data["e-mail"])) || null;
-    return !!email;
-  });
-
-  console.log(`✓ ${medewerkers.length} actieve medewerkers, ${withEmail.length} hebben email`);
+  // 3. BS2-rolkoppeling per email (M2M): bs2_role_users join bs2_roles
+  const roleUsers = await restGet(
+    "bs2_role_users?select=user_email,bs2_roles!inner(slug,name)&limit=1000"
+  );
+  // Index op email-lowercase → array van { slug, name }
+  const roleByEmail = new Map();
+  for (const ru of roleUsers) {
+    const key = (ru.user_email || "").toLowerCase();
+    if (!key) continue;
+    const role = ru.bs2_roles || {};
+    const arr = roleByEmail.get(key) || [];
+    arr.push({ slug: role.slug, name: role.name });
+    roleByEmail.set(key, arr);
+  }
+  console.log(`✓ ${roleUsers.length} BS2-rol-toekenningen geladen (${roleByEmail.size} unieke emails)`);
   console.log("");
 
   if (withEmail.length === 0) {
-    console.log("⚠️  Geen medewerkers met email gevonden. Check medewerkers.data.email kolom.");
-    // Print sample voor debug
-    if (medewerkers.length > 0) {
-      console.log("Sample medewerker.data keys:", Object.keys(medewerkers[0].data || {}).slice(0, 15));
-    }
+    console.log("⚠️  Geen main_employees met e-mailadres. Stop.");
     process.exit(0);
   }
 
   const results = { created: 0, skipped: 0, errored: 0, details: [] };
 
-  // 3. Per medewerker
-  for (const med of withEmail) {
-    const email = med.data.email || med.data.emailadres || med.data.e_mail || med.data["e-mail"];
-    const naam = `${med.voornaam || ""} ${med.achternaam || ""}`.trim();
-    const bs2_rol = (med.data && (med.data.bs2_rol || med.data.rol)) || "Medewerker";
+  for (const me of withEmail) {
+    const email = String(me.email).trim();
+    const emailKey = email.toLowerCase();
+    const naam = `${me.first_name || ""} ${me.last_name || ""}`.trim() || email;
+    const userRoles = roleByEmail.get(emailKey) || [];
+    const userRoleNames = userRoles.map((r) => r.name).filter(Boolean);
+    const isAdminTier = userRoles.some((r) => ADMIN_TIER_SLUGS.includes(r.name));
+    const rolValue = isAdminTier ? "admin" : "medewerker";
 
     const pad = (s, n) => String(s || "").substring(0, n).padEnd(n);
-    process.stdout.write(`  ${pad(naam, 35)} ${pad(email, 38)} ... `);
+    process.stdout.write(`  ${pad(naam, 32)} ${pad(email, 36)} [${pad(rolValue, 10)}] [${userRoleNames.join(",") || "(geen)"}] ... `);
 
     if (DRY_RUN) {
       console.log("DRY-RUN ok");
-      results.details.push({ email, naam, status: "dry-run" });
+      results.details.push({ email, naam, status: "dry-run", rol: rolValue, bs2_rollen: userRoleNames.join(",") });
       results.created++;
       continue;
     }
 
-    // Resolve rol_id from bs2_rol naam
-    let rolId = defaultRole.id;
-    if (bs2_rol && bs2_rol !== "Medewerker") {
-      const r = await restGet(`org_roles?naam=eq.${encodeURIComponent(bs2_rol)}&select=id&limit=1`);
-      if (r.length) rolId = r[0].id;
-    }
-
     try {
-      const created = await adminCreateUser(email, DEFAULT_PASSWORD, { onboarded_via: "bulk-script", naam, bs2_rol });
-
-      // Profile auto-created by trigger; update with extras
-      await restPatch(`profiles?id=eq.${created.id}`, {
-        voornaam: med.voornaam || "",
-        achternaam: med.achternaam || "",
-        rol_id: rolId,
-        medewerker_id: med.id,
-        must_change_password: true,
-        must_setup_2fa: true,
+      const created = await adminCreateUser(email, DEFAULT_PASSWORD, {
+        onboarded_via: "bulk-script-v2",
+        naam,
+        bs2_rollen: userRoleNames,
       });
+
+      const profilePatch = {
+        voornaam: me.first_name || "",
+        achternaam: me.last_name || "",
+        rol: rolValue,
+        medewerker_id: null, // main_employees.id is geen FK-target voor profiles.medewerker_id (dat verwijst naar HR-medewerkers)
+        must_change_password: true,
+        must_setup_2fa: false,
+      };
+      if (defaultOrgRoleId) profilePatch.rol_id = defaultOrgRoleId;
+
+      await restPatch(`profiles?id=eq.${created.id}`, profilePatch);
 
       console.log("created");
       results.created++;
-      results.details.push({ email, naam, status: "created", rol: bs2_rol });
+      results.details.push({ email, naam, status: "created", rol: rolValue, bs2_rollen: userRoleNames.join(",") });
     } catch (e) {
       const msg = e.message || String(e);
-      if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("exists") || e.code === "email_exists") {
-        console.log("skipped (already exists)");
+      const lower = msg.toLowerCase();
+      if (lower.includes("already") || lower.includes("exists") || e.code === "email_exists") {
+        console.log("skipped (bestaat al)");
         results.skipped++;
-        results.details.push({ email, naam, status: "skipped" });
+        results.details.push({ email, naam, status: "skipped", rol: rolValue, bs2_rollen: userRoleNames.join(",") });
       } else {
         console.log("ERROR:", msg);
         results.errored++;
-        results.details.push({ email, naam, status: "error", err: msg });
+        results.details.push({ email, naam, status: "error", err: msg, rol: rolValue, bs2_rollen: userRoleNames.join(",") });
       }
     }
   }
 
-  // 4. Final report
   console.log("");
   console.log("=== EINDREPORT ===");
   console.log(`Created: ${results.created}`);
@@ -163,19 +185,23 @@ async function main() {
   console.log(`Errored: ${results.errored}`);
   console.log("");
 
-  // Write CSV
+  // CSV
   try {
     const dt = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
     if (!fs.existsSync("scripts/bs2-exports")) fs.mkdirSync("scripts/bs2-exports", { recursive: true });
     const csvPath = `scripts/bs2-exports/onboarding-result-${dt}.csv`;
-    const header = "email,naam,status,rol,err\n";
+    const header = "email,naam,status,rol,bs2_rollen,err\n";
     const rows = results.details
-      .map((d) => [d.email, d.naam, d.status, d.rol || "", d.err || ""].map((v) => `"${String(v || "").replace(/"/g, '""')}"`).join(","))
+      .map((d) =>
+        [d.email, d.naam, d.status, d.rol || "", d.bs2_rollen || "", d.err || ""]
+          .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
+          .join(","),
+      )
       .join("\n");
     fs.writeFileSync(csvPath, header + rows);
     console.log(`📋 Result CSV: ${csvPath}`);
   } catch (e) {
-    console.log("⚠️ Could not write CSV:", e.message);
+    console.log("⚠️ CSV-write mislukt:", e.message);
   }
 }
 
