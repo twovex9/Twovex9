@@ -2619,6 +2619,7 @@ function initSectionSave() {
     gegevens: "Medewerker gegevens",
     adres: "Adres",
     contact: "Contactpersoon",
+    "overige-info": "Status",
     dienstverband: "Dienstverband",
     inhuur: "Inhuur",
     professioneel: "Professioneel",
@@ -2819,7 +2820,7 @@ function initExtraSidebarActions() {
     showToast("Ingelogd als medewerker");
   });
 
-  ["emp-status-input", "emp-uitdienst-input", "emp-user-setting"].forEach((id) => {
+  ["emp-user-setting"].forEach((id) => {
     document.getElementById(id)?.addEventListener("change", () => {
       saveToSession();
       showToast("Zijbalkgegevens opgeslagen");
