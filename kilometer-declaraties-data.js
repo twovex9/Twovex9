@@ -299,6 +299,145 @@
     dispatchUpdated("deleteRecord");
   }
 
+  // ---------------------------------------------------------------------------
+  // Deadline-logica: indienen kan tot en met de 10e van de volgende maand.
+  // Vanaf de 11e van de volgende maand is de declaratie HARD gelockt (user-eis
+  // 2026-05-26: "te laat is te laat, geen ontgrendeling"). De client checkt de
+  // deadline en blokkeert; server-side wordt status pas op "locked" gezet wanneer
+  // submit-attempts buiten window komen.
+  // ---------------------------------------------------------------------------
+  function getDeadlineFor(year, month) {
+    var y = Number(year), m = Number(month);
+    if (!isFinite(y) || !isFinite(m)) return null;
+    // 10e van volgende maand, 23:59:59 lokaal
+    var nextMonth = m === 12 ? 1 : m + 1;
+    var nextYear = m === 12 ? y + 1 : y;
+    return new Date(nextYear, nextMonth - 1, 10, 23, 59, 59);
+  }
+  function isDeadlinePassed(year, month, now) {
+    var dl = getDeadlineFor(year, month);
+    if (!dl) return false;
+    return (now || new Date()) > dl;
+  }
+  function isSubmittable(decl, now) {
+    if (!decl) return false;
+    if (decl.status === "submitted" || decl.status === "locked") return false;
+    if (isDeadlinePassed(decl.jaar, decl.maand, now)) return false;
+    return true;
+  }
+
+  async function submitDecl(declId) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (declId == null) throw new Error("declaratie-id vereist");
+    var d = getByIdSync(declId);
+    if (!d) throw new Error("Declaratie niet gevonden");
+    if (!isSubmittable(d)) {
+      var dl = getDeadlineFor(d.jaar, d.maand);
+      if (dl && new Date() > dl) {
+        throw new Error("Deadline verstreken (10e van " + (d.maand === 12 ? "januari" : ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"][d.maand]) + " " + (d.maand === 12 ? d.jaar + 1 : d.jaar) + "). Te laat is te laat.");
+      }
+      throw new Error("Declaratie kan niet meer ingediend worden (status: " + d.status + ").");
+    }
+    var nowIso = new Date().toISOString();
+    var submissionStatus = {
+      status: "submitted",
+      message: "Ingediend",
+      color: "green",
+      icon: "checkmark",
+    };
+    var res = await global.besaSupabase.from(T_DECL).update({
+      status: "submitted",
+      submitted_at: nowIso,
+      submission_status: submissionStatus,
+      is_editable: false,
+      can_be_submitted: false,
+      laatst_gewijzigd: nowIso,
+    }).eq("id", declId).select().single();
+    if (res.error) throw res.error;
+    // Update in-memory
+    var arr = declList();
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && String(arr[i].id) === String(declId)) {
+        arr[i] = Object.assign({}, arr[i], {
+          status: "submitted",
+          submittedAt: nowIso,
+          submissionStatus: submissionStatus,
+          isEditable: false,
+          canBeSubmitted: false,
+        });
+        break;
+      }
+    }
+    setDecl(arr);
+    dispatchUpdated("submitDecl");
+    return arr.find(function (x) { return String(x.id) === String(declId); });
+  }
+
+  /**
+   * Maak (of fetch) een DRAFT-declaratie voor medewerker × jaar × maand.
+   * Wordt gebruikt door de dag-aanvink-UI: als een medewerker voor een maand
+   * nog geen declaratie heeft, maakt deze functie er een aan zodat records
+   * kunnen worden toegevoegd. Idempotent: bestaande declaratie wordt
+   * teruggegeven.
+   */
+  async function ensureDraftFor(medewerkerId, year, month) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!medewerkerId) throw new Error("medewerker-id vereist");
+    var y = Number(year), m = Number(month);
+    if (!isFinite(y) || !isFinite(m)) throw new Error("Ongeldige periode");
+    // Check eerst lokaal
+    var existing = declList().find(function (d) {
+      return d && String(d.medewerkerId) === String(medewerkerId)
+        && Number(d.jaar) === y && Number(d.maand) === m;
+    });
+    if (existing) return existing;
+    // Anders: query Supabase voor het geval cache stale is
+    var q = await global.besaSupabase.from(T_DECL).select("*")
+      .eq("medewerker_id", medewerkerId).eq("jaar", y).eq("maand", m).maybeSingle();
+    if (q.error) throw q.error;
+    if (q.data) {
+      var obj = declRowToObj(q.data);
+      var arr = declList(); arr.push(obj); setDecl(arr);
+      return obj;
+    }
+    // Maak nieuwe draft aan
+    function genDeclId() {
+      try {
+        if (global.crypto && typeof global.crypto.randomUUID === "function") return "kmd-" + global.crypto.randomUUID();
+      } catch (e) { /* */ }
+      return "kmd-" + Date.now() + "-" + Math.random().toString(16).slice(2, 10);
+    }
+    var nowIso = new Date().toISOString();
+    var deadlinePassed = isDeadlinePassed(y, m);
+    var row = {
+      id: genDeclId(),
+      medewerker_id: medewerkerId,
+      jaar: y,
+      maand: m,
+      status: "draft",
+      total_kilometers: 0,
+      total_reimbursement: 0,
+      is_editable: !deadlinePassed,
+      can_be_submitted: !deadlinePassed,
+      is_deadline_passed: deadlinePassed,
+      submission_status: {
+        status: "draft",
+        message: deadlinePassed ? "Vergrendeld (deadline verstreken)" : "Nog niet ingediend",
+        color: deadlinePassed ? "red" : "yellow",
+        icon: deadlinePassed ? "lock" : "warning",
+      },
+      data: {},
+      aanmaakdatum: nowIso,
+      laatst_gewijzigd: nowIso,
+    };
+    var res = await global.besaSupabase.from(T_DECL).insert(row).select().single();
+    if (res.error) throw res.error;
+    var obj2 = declRowToObj(res.data);
+    var arr2 = declList(); arr2.push(obj2); setDecl(arr2);
+    dispatchUpdated("ensureDraftFor");
+    return obj2;
+  }
+
   global.kilometerDeclaratiesDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -312,6 +451,12 @@
     addRecord: addRecord,
     updateRecord: updateRecord,
     deleteRecord: deleteRecord,
+    // Submit-flow + deadline (Fase 1)
+    submitDecl: submitDecl,
+    ensureDraftFor: ensureDraftFor,
+    getDeadlineFor: getDeadlineFor,
+    isDeadlinePassed: isDeadlinePassed,
+    isSubmittable: isSubmittable,
   };
 
   bootstrap();

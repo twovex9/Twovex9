@@ -796,6 +796,11 @@ function loadEmployeeIntoForm() {
   setValue("emp-loondienst-contracturen", emp.contracturen);
   setValue("emp-loondienst-36uur-salaris", emp.salaris36uur || "€ 0,00");
   setValue("emp-loondienst-salaris", emp.salaris || "€ 0,00");
+  // location_distance (Fase 2 woon-werk km — wordt ×2 in km-declaratie)
+  (function () {
+    var el = document.getElementById("emp-location-distance");
+    if (el) el.value = emp.location_distance != null ? emp.location_distance : "";
+  })();
   setValue("emp-periodieke-maand", emp.periodiekeMaand);
   setValue("emp-loondienst-periodieke-maand", emp.periodiekeMaand);
   setValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
@@ -2571,6 +2576,12 @@ function gatherFormData() {
     salarisschaal: val("emp-loondienst-salarisschaal"),
     salaristrede: val("emp-loondienst-salaristrede"),
     contracturen: val("emp-loondienst-contracturen"),
+    location_distance: (function () {
+      var v = val("emp-location-distance");
+      if (v == null || String(v).trim() === "") return null;
+      var n = parseFloat(String(v).replace(",", "."));
+      return Number.isFinite(n) ? n : null;
+    })(),
     salaris36uur: val("emp-loondienst-36uur-salaris") || "€ 0,00",
     salaris: val("emp-loondienst-salaris") || "€ 0,00",
     rooster,

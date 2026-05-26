@@ -312,8 +312,14 @@
           </div>
           <div class="header-actions">
             <span class="km-detail-status" id="km-detail-status">Nog niet ingediend</span>
+            <button class="btn-primary km-submit-btn" type="button" id="km-submit-btn" hidden>
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Indienen
+            </button>
           </div>
         </div>
+
+        <div class="km-deadline-banner" id="km-deadline-banner" hidden role="status" aria-live="polite"></div>
 
         <section class="table-card">
           <div class="table-wrapper">
@@ -438,6 +444,15 @@
             <span class="km-choice-desc">Voor standaard woon-werkverkeer van je huis naar het kantoor en terug</span>
           </span>
         </button>
+        <button type="button" class="km-choice-card" id="km-choice-woonwerk-dagen">
+          <span class="km-choice-icon km-choice-icon--purple" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+          </span>
+          <span class="km-choice-text">
+            <span class="km-choice-title">Woon-werk dagen aanvinken</span>
+            <span class="km-choice-desc">Vink in een keer alle dagen aan waarop je naar je vaste locatie reed; gebruikt de afstand uit je medewerker-profiel ×2 voor heen+terug</span>
+          </span>
+        </button>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-outline" id="km-add-choice-cancel">Annuleren</button>
@@ -506,6 +521,43 @@
       <div class="modal-footer">
         <button type="button" class="btn-outline" id="km-add-kantoor-cancel">Annuleren</button>
         <button type="submit" form="km-add-kantoor-form" class="btn-primary" id="km-add-kantoor-submit">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stap 2c: Woon-werk dagen aanvinken -->
+  <div class="modal-overlay" id="km-add-woonwerk-modal" hidden aria-hidden="true">
+    <div class="modal-card km-woonwerk-modal" role="dialog" aria-modal="true" aria-labelledby="km-add-woonwerk-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="km-add-woonwerk-title">Woon-werk dagen aanvinken</h2>
+        <button type="button" class="modal-close" id="km-add-woonwerk-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="km-woonwerk-summary" id="km-woonwerk-summary">
+          <div class="km-woonwerk-summary-row">
+            <span class="km-woonwerk-summary-label">Afstand thuisadres → vaste locatie</span>
+            <span class="km-woonwerk-summary-value" id="km-woonwerk-distance">— km</span>
+          </div>
+          <div class="km-woonwerk-summary-row">
+            <span class="km-woonwerk-summary-label">Per dag (heen + terug)</span>
+            <span class="km-woonwerk-summary-value" id="km-woonwerk-retour">— km</span>
+          </div>
+        </div>
+        <p class="km-woonwerk-hint" id="km-woonwerk-hint">Vink elke dag aan waarop je naar je vaste locatie bent gereisd. Voor elke aangevinkte dag wordt automatisch een woon-werk-rit toegevoegd met de afstand × 2.</p>
+        <div class="km-woonwerk-no-distance" id="km-woonwerk-no-distance" hidden>
+          <strong>Geen afstand bekend.</strong> Vraag HR om je woon-werk afstand in te vullen op je medewerker-profiel (sectie "Professioneel" → "Woon-werk afstand").
+        </div>
+        <div class="km-woonwerk-grid" id="km-woonwerk-grid" aria-label="Kalender van de maand"></div>
+        <div class="km-woonwerk-totals">
+          <span><strong id="km-woonwerk-days-count">0</strong> dagen geselecteerd</span>
+          <span><strong id="km-woonwerk-km-total">0,00 km</strong> totaal</span>
+          <span><strong id="km-woonwerk-eur-total">€ 0,00</strong> vergoeding</span>
+        </div>
+        <p class="im-error" id="km-add-woonwerk-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="km-add-woonwerk-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="km-add-woonwerk-submit" disabled>Toevoegen</button>
       </div>
     </div>
   </div>
