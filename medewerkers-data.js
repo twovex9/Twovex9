@@ -109,7 +109,43 @@
     return dbPatch;
   }
 
+  // DATA-SLIM patroon (bindende memory-les 2026-05-26 — 4e module met deze bug):
+  // - `_mem` in-memory cache is ALTIJD de canonieke bron na bootstrap (volledige data
+  //   incl. zware bs2_* velden).
+  // - localStorage is alleen een snelle eerste-render-cache (slim — zware bs2_* velden
+  //   gestript zodat 103 medewerkers ruim binnen het ~5MB quota passen).
+  // - writeCache mag NOOIT throwen als localStorage vol is (QuotaExceededError werd
+  //   eerder geslikt → fetchAll faalde stil → readCache viel terug op stale legacy data).
+  var _mem = null;
+
+  function isHeavyBs2Key(k) {
+    return typeof k === "string" && /^bs2_/.test(k);
+  }
+
+  function slimRowForLocalStorage(emp) {
+    if (!emp || typeof emp !== "object") return emp;
+    var copy = {};
+    Object.keys(emp).forEach(function (k) {
+      if (isHeavyBs2Key(k)) return; // zware blobs eruit
+      if (k === "data" && emp.data && typeof emp.data === "object") {
+        // data jsonb behouden, maar zonder bs2_scrape / andere zware sub-keys
+        var dataCopy = {};
+        Object.keys(emp.data).forEach(function (dk) {
+          if (isHeavyBs2Key(dk)) return;
+          if (dk === "bs2_scrape" || dk === "bs2_raw") return;
+          dataCopy[dk] = emp.data[dk];
+        });
+        copy.data = dataCopy;
+        return;
+      }
+      copy[k] = emp[k];
+    });
+    return copy;
+  }
+
   function readCache() {
+    // _mem wint altijd — heeft de volledige data (incl. bs2_*)
+    if (_mem !== null) return _mem;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
       var arr = raw ? JSON.parse(raw) : [];
@@ -124,10 +160,14 @@
 
   function writeCache(list) {
     var safe = Array.isArray(list) ? list : [];
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(safe)); }
-    catch (e) { /* best effort */ }
-    try { localStorage.setItem(LEGACY_CACHE_KEY, JSON.stringify(safe)); }
-    catch (e) { /* best effort */ }
+    // 1) IN-MEMORY: altijd volledig (geen quota-risico)
+    _mem = safe;
+    // 2) localStorage: stripped versie (zonder bs2_* zware velden) voor snelle volgende boot
+    var slim = safe.map(slimRowForLocalStorage);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(slim)); }
+    catch (e) { /* quota vol — _mem blijft canoniek, geen probleem */ }
+    try { localStorage.setItem(LEGACY_CACHE_KEY, JSON.stringify(slim)); }
+    catch (e) { /* quota vol — idem */ }
     dispatchUpdated();
   }
 
