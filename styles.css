@@ -4374,6 +4374,17 @@ select.modal-select.modal-select--chevron-right {
   gap: 8px;
 }
 
+.emp-card-section-footer {
+  display: flex;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.emp-card-section-footer .btn-primary {
+  width: 100%;
+}
+
 .emp-bday-countdown {
   display: flex;
   gap: 8px;
