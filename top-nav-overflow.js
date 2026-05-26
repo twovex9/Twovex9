@@ -134,14 +134,6 @@
       activeLink = links.find((link) => getTopLinkLabel(link) === "Facturen") || null;
     }
 
-    // TOP-BAR Medewerkers (BS2 /main-employee/employees) — APART van HR.
-    if (!activeLink && (
-      currentFile === "medewerkers-overzicht.html" ||
-      currentFile === "medewerker-detail.html"
-    )) {
-      activeLink = links.find((link) => getTopLinkLabel(link) === "Medewerkers") || null;
-    }
-
     // TOP-BAR Organisatie (Rollen / Teams / Gebruikers + rol-detail).
     // Zonder dit valt rol-detail.html terug op de Home-fallback hieronder
     // → de top-bar sprong van "Organisatie" naar "Home" bij het openen van
@@ -178,7 +170,6 @@
       Cliënten: "clienten.html",
       Kilometers: "werkruimte.html#kilometers",
       Taken: "taken.html",
-      Medewerkers: "medewerkers-overzicht.html",
       Verlof: "verlof.html",
       Beleid: "beleid-documenten.html",
       Audit: "audit.html",
