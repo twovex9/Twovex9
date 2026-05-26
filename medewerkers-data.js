@@ -299,13 +299,29 @@
     return true;
   }
 
-  function getAllSync() { return readCache(); }
+  // Defensive: garandeer dat consumers ALTIJD de data-jsonb top-level gespread krijgen.
+  // Idempotent — als de cache al unwrapped is (rowToObj heeft gedraaid) dan geeft dit
+  // hetzelfde resultaat. Als de cache uit een oudere session-store komt zonder unwrap,
+  // dan worden velden als straat/bsn/postcode/plaats hier alsnog top-level gemaakt.
+  function unwrapDataJsonb(row) {
+    if (!row || typeof row !== "object") return row;
+    var data = row.data && typeof row.data === "object" && !Array.isArray(row.data) ? row.data : null;
+    if (!data) return row;
+    // Spread data eerst (laag), row daarna (hoog: id/voornaam/email/archived overschrijven)
+    return Object.assign({}, data, row);
+  }
+
+  function getAllSync() {
+    var list = readCache();
+    if (!Array.isArray(list)) return [];
+    return list.map(unwrapDataJsonb);
+  }
 
   function getByIdSync(id) {
     if (!id) return null;
     var list = readCache();
     for (var i = 0; i < list.length; i++) {
-      if (list[i] && list[i].id === id) return list[i];
+      if (list[i] && list[i].id === id) return unwrapDataJsonb(list[i]);
     }
     return null;
   }
