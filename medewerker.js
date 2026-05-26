@@ -2426,6 +2426,21 @@ function initOpleidingSection() {
   initList("training");
 }
 
+// Notities zijn sinds Stage 4a verhuisd naar medewerkerNotitiesDB (eigen tabel).
+// Deze stub houdt legacy-aanroepen vanuit gatherFormData()/initSectionSave levend
+// (anders crasht elke "Wijzigingen opslaan"-knop op de pagina met ReferenceError).
+function getNotitiesState() {
+  try {
+    const emp = (typeof getSelectedEmployee === "function") ? getSelectedEmployee() : null;
+    const empId = emp && (emp.empId || emp.id);
+    if (!empId || !window.medewerkerNotitiesDB || typeof window.medewerkerNotitiesDB.getForMedewerkerSync !== "function") return [];
+    const rows = window.medewerkerNotitiesDB.getForMedewerkerSync(empId) || [];
+    return rows.map((r) => ({ html: r.bodyHtml || r.html || "", date: r.date || "" }));
+  } catch (e) {
+    return [];
+  }
+}
+
 function gatherFormData() {
   const val = (id) => document.getElementById(id)?.value || "";
   const bool = (id) => Boolean(document.getElementById(id)?.checked);
