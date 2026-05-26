@@ -91,23 +91,52 @@
     return issues;
   }
 
+  /**
+   * BS2-parity validatie voor de gekozen maand/jaar.
+   * Per Loondienst-medewerker (employment_type=permanent) wordt gecheckt:
+   *   - Kilometerdeclaratie niet ingediend (geen of status=draft voor die maand)
+   *   - Unapproved time registrations (werkuren in die maand met vergrendeld=false)
+   * Toont label "<naam> (<persnr>)" net als in BS2.
+   */
   function computeValidationList() {
-    var emps = getEmployees();
-    if (!emps.length) {
-      return [
-        { name: "Aniek Nieuwenhuis (9)", issues: ["Kilometerdeclaratie niet ingediend"] },
-        { name: "Justin van Loenen (25)", issues: ["Kilometerdeclaratie niet ingediend"] },
-        { name: "Naomi Buis (32)", issues: ["Kilometerdeclaratie niet ingediend"] },
-      ];
-    }
-    return emps
-      .map(function (e) {
-        return { name: employeeDisplayName(e), issues: getValidationIssuesForEmployee(e) };
-      })
-      .filter(function (x) {
-        return x.issues.length > 0;
-      })
-      .slice(0, 40);
+    var month = monthSel ? parseInt(monthSel.value, 10) : null;
+    var year = yearSel ? parseInt(yearSel.value, 10) : null;
+    if (!month || !year) return [];
+    var mws = (typeof getMedewerkers === "function" ? getMedewerkers() : getEmployees())
+      .filter(function (m) {
+        return m && !m.archived && (typeof isLoondienst === "function" ? isLoondienst(m) : true);
+      });
+    var out = [];
+    mws.forEach(function (mw) {
+      var issues = [];
+      // 1) Kilometerdeclaratie ingediend?
+      if (window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.getForMedewerkerSync) {
+        var decls = window.kilometerDeclaratiesDB.getForMedewerkerSync(mw.id) || [];
+        var decl = decls.filter(function (d) {
+          return d && Number(d.jaar) === Number(year) && Number(d.maand) === Number(month);
+        })[0];
+        if (!decl) {
+          issues.push("Kilometerdeclaratie niet ingediend");
+        } else {
+          var st = (decl.submissionStatus && decl.submissionStatus.status) || decl.status || "draft";
+          if (st === "draft") issues.push("Kilometerdeclaratie niet ingediend");
+        }
+      }
+      // 2) Unapproved time registrations?
+      if (window.werkurenDB && window.werkurenDB.getForMedewerkerMonthSync) {
+        var werkuren = window.werkurenDB.getForMedewerkerMonthSync(mw.id, year, month) || [];
+        var unapproved = werkuren.filter(function (w) { return w && !w.vergrendeld; });
+        if (unapproved.length > 0) issues.push("Unapproved time registrations");
+      }
+      if (issues.length > 0) {
+        var persnr = mw.personeelsnummer != null ? " (" + mw.personeelsnummer + ")" : "";
+        out.push({
+          name: ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim() + persnr,
+          issues: issues,
+        });
+      }
+    });
+    return out;
   }
 
   function readHistory() {
@@ -182,6 +211,274 @@
       );
     });
     return rows.join("\n");
+  }
+
+  // -----------------------------------------------------------------------
+  // Loket-XLSX-export (BS2-parity)
+  //
+  // Bouwt het exacte BS2-bestand "Payroll_Statement_<YYYY-MM>_<ts>.xlsx":
+  //   - 4 header-rijen ("Productie opgave …", periode, datum, auteur)
+  //   - 1 kolom-header-rij (A..P): Medewerker, Medewerkersnummer, ORT
+  //     100/125/130/145% (uren), Werk km, Woon km, Totaal KM vergoeding €,
+  //     Vakantieverlof, Totaal verlofuren, Vroege/Late/Geen ploegen/Waakdienst,
+  //     Totaal gewerkte uren.
+  //   - 1 rij per Loondienst-medewerker met aggregaties uit:
+  //       - besaOrtEngine.computeOrtForEmployee → ORT %/dienst/totaal
+  //       - kilometerDeclaratiesDB → Werk/Woon km + vergoeding
+  //       - verlofDB → vakantieverlof + totaal verlofuren
+  //   - 4 toelichting-rijen onderaan (rij 32-35 in BS2-mei-export)
+  //
+  // ORT-kolommen zijn dynamisch: alleen percentages die >0 voorkomen in deze
+  // maand krijgen een kolom. BS2 doet hetzelfde (mei 2026 had geen 200%).
+  // -----------------------------------------------------------------------
+
+  var LOET_HEADERS_FIXED = {
+    medewerker: "Medewerker",
+    medewerkersnummer: "Medewerkersnummer",
+    werkKm: "Werk kilometers - totaal",
+    woonKm: "Woon kilometers - totaal",
+    kmVergoeding: "Totaal KM vergoeding (€)",
+    vakantieverlof: "Vakantieverlof (uren) - 100% werkgever",
+    totaalVerlof: "Totaal verlofuren",
+    vroege: "Vroege dienst (uren)",
+    late: "Late dienst (uren)",
+    geen: "Geen ploegendiensttype (uren)",
+    waak: "Waakdienst (uren)",
+    totaalGewerkt: "Totaal gewerkte uren",
+  };
+
+  function isLoondienst(emp) {
+    if (!emp) return false;
+    var dv = String(emp.dienstverband || emp.employment_type || "").toLowerCase();
+    return dv === "loondienst" || dv === "permanent" || dv === "vast";
+  }
+
+  function getMedewerkers() {
+    if (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      return window.medewerkersDB.getAllSync() || [];
+    }
+    return getEmployees();
+  }
+
+  function nlNum2(v) {
+    var n = Number(v || 0);
+    if (!isFinite(n)) n = 0;
+    return n.toFixed(2).replace(".", ",");
+  }
+
+  // Aggregeer kilometers per medewerker × maand uit kilometer_declaraties +
+  // kilometer_records. type "office" = woon-werk (kolom H), type "manual" =
+  // werk-werk (kolom G). Totaal-vergoeding pakt total_reimbursement van de
+  // declaratie (verbatim BS2, met €0,39/km × cap 100 km/rit).
+  function aggregateKilometers(medewerkerId, year, month) {
+    var out = { werkKm: 0, woonKm: 0, vergoedingEur: 0 };
+    if (!window.kilometerDeclaratiesDB) return out;
+    var decls = window.kilometerDeclaratiesDB.getForMedewerkerSync
+      ? window.kilometerDeclaratiesDB.getForMedewerkerSync(medewerkerId)
+      : [];
+    var decl = (decls || []).filter(function (d) {
+      return d && Number(d.jaar) === Number(year) && Number(d.maand) === Number(month);
+    })[0];
+    if (!decl) return out;
+    out.vergoedingEur = Number(decl.totalReimbursement || 0);
+    var recs = window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync
+      ? window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(decl.id)
+      : [];
+    (recs || []).forEach(function (r) {
+      var km = Number(r.kilometers || 0);
+      if (r.type === "office") out.woonKm += km;
+      else out.werkKm += km;
+    });
+    return out;
+  }
+
+  // Verlof-aggregatie per medewerker × maand. Telt alleen goedgekeurde
+  // aanvragen waarvan periode overlapt met de maand. Conversie dagen → uren
+  // gebeurt via contracturen/5 (default 8u bij ontbrekend contract).
+  function aggregateVerlof(medewerker, year, month) {
+    var out = { vakantieverlofUren: 0, totaalVerlofUren: 0 };
+    if (!window.verlofDB || !medewerker) return out;
+    var list = window.verlofDB.getForMedewerkerSync
+      ? (window.verlofDB.getForMedewerkerSync(medewerker.id) || [])
+      : [];
+    var contracturen = Number(medewerker.contracturen || 36);
+    if (!isFinite(contracturen) || contracturen <= 0) contracturen = 36;
+    var urenPerDag = contracturen / 5;
+    var monthStart = new Date(year, month - 1, 1);
+    var monthEnd = new Date(year, month, 0, 23, 59, 59);
+    list.forEach(function (v) {
+      if (!v || v.status !== "goedgekeurd") return;
+      var s = v.startDatum ? new Date(v.startDatum) : null;
+      var e = v.eindDatum ? new Date(v.eindDatum) : null;
+      if (!s || !e || isNaN(s.getTime()) || isNaN(e.getTime())) return;
+      // overlap-check
+      if (e < monthStart || s > monthEnd) return;
+      // dagen die binnen deze maand vallen (proxy: aantalDagen × overlap-fraction)
+      var overlapStart = s < monthStart ? monthStart : s;
+      var overlapEnd = e > monthEnd ? monthEnd : e;
+      var overlapDagen = Math.max(1, Math.round((overlapEnd - overlapStart) / (24 * 3600 * 1000)) + 1);
+      var dagenTotaal = Number(v.aantalDagen || overlapDagen);
+      // pro-rata als verlof langer is dan de overlap met deze maand
+      var span = Math.max(1, Math.round((e - s) / (24 * 3600 * 1000)) + 1);
+      var dagenInMaand = dagenTotaal * (overlapDagen / span);
+      var uren = dagenInMaand * urenPerDag;
+      out.totaalVerlofUren += uren;
+      if (v.type === "wettelijk" || v.type === "bovenwettelijk") {
+        out.vakantieverlofUren += uren;
+      }
+    });
+    out.vakantieverlofUren = Math.round(out.vakantieverlofUren * 100) / 100;
+    out.totaalVerlofUren = Math.round(out.totaalVerlofUren * 100) / 100;
+    return out;
+  }
+
+  function getCurrentUserDisplayName() {
+    try {
+      if (window.besaCurrentProfile && (window.besaCurrentProfile.voornaam || window.besaCurrentProfile.achternaam)) {
+        return ((window.besaCurrentProfile.voornaam || "") + " " + (window.besaCurrentProfile.achternaam || "")).trim();
+      }
+    } catch (e) { /* */ }
+    return "Onbekend";
+  }
+
+  /**
+   * Genereer Loket-XLSX als SheetJS workbook + slim summary-object.
+   * Return: { workbook, summary, medewerkers: [naam, persnr, ...] }
+   */
+  function buildLoketWorkbookForPeriod(month, year) {
+    var monthInt = parseInt(month, 10) || (new Date().getMonth() + 1);
+    var yearInt = parseInt(year, 10) || new Date().getFullYear();
+    var periodLabel = fmtPeriod(monthInt, yearInt);
+    var monthStr = pad2(monthInt) + "-" + yearInt;
+    var firstDay = "01-" + monthStr.replace("-", "-");
+    var lastDay = pad2(new Date(yearInt, monthInt, 0).getDate()) + "-" + monthStr;
+    var now = new Date();
+    var nowLabel = pad2(now.getDate()) + "-" + pad2(now.getMonth() + 1) + "-" + now.getFullYear()
+      + " " + pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+
+    var allMw = getMedewerkers();
+    var loondienstMw = allMw.filter(function (m) {
+      return m && !m.archived && isLoondienst(m);
+    });
+
+    // Per medewerker aggregeren
+    var aggregates = loondienstMw.map(function (mw) {
+      var ort = window.besaOrtEngine
+        ? window.besaOrtEngine.computeOrtForEmployee(mw.id, yearInt, monthInt)
+        : { ortUren: {}, diensttypeUren: {}, totaalGewerkteUren: 0 };
+      var km = aggregateKilometers(mw.id, yearInt, monthInt);
+      var verlof = aggregateVerlof(mw, yearInt, monthInt);
+      return { mw: mw, ort: ort, km: km, verlof: verlof };
+    });
+
+    // Bepaal dynamische ORT-percentage-kolommen (alleen >0 in deze maand).
+    var pctSet = {};
+    aggregates.forEach(function (a) {
+      Object.keys(a.ort.ortUren || {}).forEach(function (p) {
+        if (Number(a.ort.ortUren[p]) > 0) pctSet[p] = true;
+      });
+    });
+    var pctList = Object.keys(pctSet).map(function (p) { return parseInt(p, 10); })
+      .filter(function (n) { return isFinite(n); })
+      .sort(function (a, b) { return a - b; });
+    // BS2 mei 2026 had 100/125/130/145 — als alle >0 nul opleveren, default
+    // alsnog de standaardset zodat de export consistent blijft.
+    if (pctList.length === 0) pctList = [100, 125, 130, 145];
+
+    // Bouw rijen
+    var rows = [];
+    rows.push(["Productie opgave van alle medewerkers"]);
+    rows.push(["Periode: van " + firstDay + " t/m " + lastDay]);
+    rows.push(["Gegenereerd op: " + nowLabel]);
+    rows.push(["Gemaakt door: " + getCurrentUserDisplayName()]);
+
+    // Kolom-header-rij (rij 5 in BS2). Volgorde:
+    //   Medewerker, Medewerkersnummer, ORT %..., Werk km, Woon km, KM €,
+    //   Vakantieverlof, Totaal verlof, Vroege, Late, Geen, Waak, Totaal gewerkt
+    var headerRow = [LOET_HEADERS_FIXED.medewerker, LOET_HEADERS_FIXED.medewerkersnummer];
+    pctList.forEach(function (p) { headerRow.push("ORT " + p + "% (uren)"); });
+    headerRow.push(LOET_HEADERS_FIXED.werkKm, LOET_HEADERS_FIXED.woonKm, LOET_HEADERS_FIXED.kmVergoeding);
+    headerRow.push(LOET_HEADERS_FIXED.vakantieverlof, LOET_HEADERS_FIXED.totaalVerlof);
+    headerRow.push(LOET_HEADERS_FIXED.vroege, LOET_HEADERS_FIXED.late, LOET_HEADERS_FIXED.geen, LOET_HEADERS_FIXED.waak);
+    headerRow.push(LOET_HEADERS_FIXED.totaalGewerkt);
+    rows.push(headerRow);
+
+    // Sort medewerkers op medewerkersnummer (asc), null laatst
+    aggregates.sort(function (a, b) {
+      var an = a.mw.personeelsnummer == null ? Infinity : Number(a.mw.personeelsnummer);
+      var bn = b.mw.personeelsnummer == null ? Infinity : Number(b.mw.personeelsnummer);
+      return an - bn;
+    });
+
+    aggregates.forEach(function (a) {
+      var mw = a.mw, ort = a.ort, km = a.km, vl = a.verlof;
+      var naam = ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim();
+      var persnr = mw.personeelsnummer != null ? Number(mw.personeelsnummer) : "";
+      var row = [naam, persnr];
+      pctList.forEach(function (p) {
+        var v = ort.ortUren ? Number(ort.ortUren[p] || 0) : 0;
+        row.push(v > 0 ? nlNum2(v) : "0,00");
+      });
+      row.push(km.werkKm > 0 ? nlNum2(km.werkKm) : "0,00");
+      row.push(km.woonKm > 0 ? nlNum2(km.woonKm) : "0,00");
+      row.push(km.vergoedingEur > 0 ? nlNum2(km.vergoedingEur) : "0,00");
+      row.push(vl.vakantieverlofUren > 0 ? nlNum2(vl.vakantieverlofUren) : "0,00");
+      row.push(vl.totaalVerlofUren > 0 ? nlNum2(vl.totaalVerlofUren) : "0,00");
+      var dt = ort.diensttypeUren || {};
+      row.push(dt["Vroege dienst"] ? nlNum2(dt["Vroege dienst"]) : "0,00");
+      row.push(dt["Late dienst"] ? nlNum2(dt["Late dienst"]) : "0,00");
+      row.push(dt["Geen ploegendiensttype"] ? nlNum2(dt["Geen ploegendiensttype"]) : "0,00");
+      row.push(dt["Waakdienst"] ? nlNum2(dt["Waakdienst"]) : "0,00");
+      row.push(ort.totaalGewerkteUren > 0 ? nlNum2(ort.totaalGewerkteUren) : "0,00");
+      rows.push(row);
+    });
+
+    // Lege rijen 30-31 (volgens BS2-pattern), daarna toelichting
+    rows.push([]);
+    rows.push([]);
+    rows.push(["TOELICHTING VERLOFTYPES EN SALARISVERWERKING"]);
+    rows.push([]);
+    rows.push(["100% Betaald door werkgever:"]);
+    rows.push(["  • Vakantieverlof"]);
+
+    // Build workbook via SheetJS
+    if (typeof window.XLSX === "undefined") {
+      throw new Error("SheetJS (XLSX) niet geladen — kan workbook niet bouwen.");
+    }
+    var ws = window.XLSX.utils.aoa_to_sheet(rows);
+    // Kolombreedtes (overgenomen uit BS2: A=57.7, B=21.1, C-F=18.7, G-I=29.4, J=45.8, ...)
+    ws["!cols"] = [
+      { wch: 32 }, // A: Medewerker
+      { wch: 18 }, // B: Medewerkersnummer
+    ];
+    pctList.forEach(function () { ws["!cols"].push({ wch: 18 }); });
+    ws["!cols"].push({ wch: 26 }, { wch: 26 }, { wch: 26 }); // werk km, woon km, vergoeding
+    ws["!cols"].push({ wch: 38 }, { wch: 18 }); // vakantie, totaal verlof
+    ws["!cols"].push({ wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 20 }, { wch: 20 }); // dienst-typen + totaal
+
+    var wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, "Payroll " + monthStr);
+
+    return {
+      workbook: wb,
+      summary: {
+        period: periodLabel,
+        monthInt: monthInt, yearInt: yearInt,
+        employeeCount: aggregates.length,
+        pctList: pctList,
+      },
+      filename: "Payroll_Statement_" + yearInt + "-" + pad2(monthInt) + "_"
+        + yearInt + pad2(monthInt) + pad2(now.getDate())
+        + "_" + pad2(now.getHours()) + pad2(now.getMinutes()) + pad2(now.getSeconds())
+        + ".xlsx",
+    };
+  }
+
+  function downloadXlsxWorkbook(filename, workbook) {
+    if (typeof window.XLSX === "undefined") {
+      throw new Error("SheetJS (XLSX) niet geladen.");
+    }
+    window.XLSX.writeFile(workbook, filename);
   }
 
   /**
@@ -386,6 +683,22 @@
       btn.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
+        // Loket-XLSX historische entries: opnieuw genereren uit live data
+        // (we slaan de blob niet op om quota-druk te voorkomen).
+        if (x.type === "loket-xlsx" && x.month && x.year && typeof window.XLSX !== "undefined") {
+          try {
+            var built = buildLoketWorkbookForPeriod(x.month, x.year);
+            downloadXlsxWorkbook(x.filename || built.filename, built.workbook);
+            if (typeof window.showActionFeedback === "function") {
+              window.showActionFeedback("downloaded", x.filename || built.filename);
+            }
+            return;
+          } catch (err) {
+            showToast("Re-download mislukt: " + (err && err.message ? err.message : err));
+            return;
+          }
+        }
+        // Legacy: CSV-fallback voor oudere history-entries
         var csv = x.csv || buildCsvForPeriod(x.period || "");
         var fname = "salarisadministratie_export_" + (x.period || "periode").replace(/\s+/g, "_") + ".csv";
         downloadText(fname, csv, "text/csv;charset=utf-8");
@@ -478,34 +791,61 @@
   wireSaColumnsPanel();
 
   function generateExport() {
-    var period = fmtPeriod(monthSel ? monthSel.value : "", yearSel ? yearSel.value : "");
-    var csv = buildCsvForPeriod(period);
-    var emps = getEmployees();
+    var month = monthSel ? monthSel.value : (new Date().getMonth() + 1);
+    var year = yearSel ? yearSel.value : new Date().getFullYear();
+    var period = fmtPeriod(month, year);
+
+    // Loket-XLSX (BS2-parity) — vereist medewerkersDB + ort-engine + km-decls.
+    var built;
+    try {
+      if (typeof window.XLSX === "undefined") {
+        throw new Error("SheetJS (XLSX) niet geladen. Vernieuw de pagina.");
+      }
+      built = buildLoketWorkbookForPeriod(month, year);
+    } catch (err) {
+      console.error("[salarisadministratie] export bouwen mislukt:", err);
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("error", "Export mislukt", err && err.message ? err.message : String(err));
+      } else {
+        showToast("Export mislukt: " + (err && err.message ? err.message : err));
+      }
+      return;
+    }
+
     var hist = readHistory();
     var entry = {
       id: "exp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
       createdAt: new Date().toISOString(),
       period: period,
-      employees: emps.length || 31,
-      by: "Vennie Küster",
-      csv: csv,
+      employees: built.summary.employeeCount,
+      by: getCurrentUserDisplayName(),
+      type: "loket-xlsx",
+      filename: built.filename,
+      month: built.summary.monthInt,
+      year: built.summary.yearInt,
+      // Geen blob in history; re-download bouwt opnieuw uit live data.
+      csv: null,
     };
     hist.unshift(entry);
     writeHistory(hist.slice(0, 50));
     renderHistory();
-    var willDownloadNow = !!(nowDl && nowDl.checked);
+
+    var willDownloadNow = !!(nowDl && nowDl.checked) || true; // Loket-export is altijd download-bedoeld
     if (willDownloadNow) {
-      var genFname = "salarisadministratie_export_" + period.replace(/\s+/g, "_") + ".csv";
-      downloadText(genFname, csv, "text/csv;charset=utf-8");
+      try { downloadXlsxWorkbook(built.filename, built.workbook); }
+      catch (err) {
+        console.error("[salarisadministratie] download mislukt:", err);
+        showToast("Download mislukt: " + (err && err.message ? err.message : err));
+        return;
+      }
       if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("info", "Export klaar", "“" + period + "” is opgeslagen en " + genFname + " is gedownload.");
+        window.showActionFeedback("info", "Loket-export klaar",
+          "“" + period + "” (" + built.summary.employeeCount + " medewerkers) is opgeslagen en " + built.filename + " is gedownload.");
       } else if (typeof showSaveModal === "function") {
-        showSaveModal("Export is opgeslagen en gedownload.");
+        showSaveModal("Loket-export gedownload.");
       }
     } else if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback("saved", "Export “" + period + "”");
-    } else if (typeof showSaveModal === "function") {
-      showSaveModal("Export is opgeslagen.");
+      window.showActionFeedback("saved", "Loket-export “" + period + "”");
     }
   }
 
