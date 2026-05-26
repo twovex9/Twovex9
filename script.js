@@ -217,8 +217,12 @@ function isoToNlDate(str) {
 }
 
 function createStatusPill(label) {
-  const txt = (label || "In dienst").trim() || "In dienst";
-  return `<span class="status-pill">${txt}</span>`;
+  const raw = (label || "In dienst").trim() || "In dienst";
+  const normalized = raw.replace(/[_-]/g, " ").trim().toLowerCase();
+  const isOut = normalized === "uit dienst";
+  const cls = isOut ? "status-pill status-pill--uit-dienst" : "status-pill status-pill--in-dienst";
+  const display = isOut ? "Uit dienst" : "In dienst";
+  return `<span class="${cls}">${display}</span>`;
 }
 
 function createEmployeeRow(item) {

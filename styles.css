@@ -3256,6 +3256,9 @@ h1 {
   line-height: 1.2;
 }
 
+.status-pill--in-dienst { background: var(--green); }
+.status-pill--uit-dienst { background: var(--red); }
+
 /* Lege/placeholder-tekst — gebruikt op detailpagina's bv. "Geen medewerkers gekoppeld..." */
 .text-empty {
   color: var(--text-muted);

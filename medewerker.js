@@ -2528,6 +2528,9 @@ function gatherFormData() {
     competentie: profFieldValues.competentie,
     fase: val("emp-status-input") || "In dienst",
     uitDienst: isoToDDMMYYYY(val("emp-uitdienst-input")),
+    // Auto-archive: medewerker met fase "Uit dienst" verhuist naar gearchiveerd,
+    // bij "In dienst" terug naar actieve lijst. User-eis 2026-05-26.
+    archived: (val("emp-status-input") || "In dienst").trim().toLowerCase().replace(/[_-]/g, " ") === "uit dienst",
     userSetting: val("emp-user-setting") || "Standaard",
     notities: getNotitiesState().map((n) => ({ html: n.html, date: n.date })),
     inhuurKvk: val("emp-inhuur-kvk"),
