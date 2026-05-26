@@ -104,8 +104,16 @@
   }
   // Bewerkbaar = 1-op-1 BS2: alleen een draft die NIET ingediend en NIET
   // vergrendeld is (deadline niet verstreken). submitted/locked = read-only.
+  // BS1-uitbreiding (user-eis 2026-05-26 "te laat is te laat"): client-side
+  // checken we ook of de 10e-deadline al gepasseerd is. Daarna geen mutaties.
   function isDeclEditable(d) {
-    return statusMeta(d).status === "draft";
+    if (!d) return false;
+    if (statusMeta(d).status !== "draft") return false;
+    var db = window.kilometerDeclaratiesDB;
+    if (db && typeof db.isDeadlinePassed === "function") {
+      if (db.isDeadlinePassed(d.jaar, d.maand)) return false;
+    }
+    return true;
   }
 
   function toast(kind, msg) {
@@ -361,7 +369,54 @@
       addBtn.classList.toggle("is-disabled", !editable);
     }
 
+    renderDeadlineAndSubmit(d, editable);
     applyDetailSortIndicators();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Indien-knop + deadline-banner (Fase 1).
+  // Deadline = 10e van de volgende maand. Hard: na deadline kan niet meer
+  // ingediend worden (user-eis 2026-05-26 "te laat is te laat").
+  // ---------------------------------------------------------------------------
+  function renderDeadlineAndSubmit(d, editable) {
+    var banner = $("km-deadline-banner");
+    var submitBtn = $("km-submit-btn");
+    if (!banner || !submitBtn || !d) return;
+
+    var db = window.kilometerDeclaratiesDB;
+    if (!db || typeof db.getDeadlineFor !== "function") {
+      banner.hidden = true; submitBtn.hidden = true; return;
+    }
+
+    var deadline = db.getDeadlineFor(d.jaar, d.maand);
+    var now = new Date();
+    var deadlinePassed = db.isDeadlinePassed(d.jaar, d.maand, now);
+    var isSubmitted = d.status === "submitted" || (d.submissionStatus && d.submissionStatus.status === "submitted");
+    var recs = (db.getRecordsForDeclaratieSync && db.getRecordsForDeclaratieSync(d.id)) || [];
+
+    banner.className = "km-deadline-banner";
+    if (isSubmitted) {
+      banner.classList.add("km-deadline-banner--info");
+      banner.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+        + ' Ingediend op ' + formatNlDate(d.submittedAt) + '. Verdere wijzigingen zijn niet meer mogelijk.';
+      banner.hidden = false;
+      submitBtn.hidden = true;
+    } else if (deadlinePassed) {
+      banner.classList.add("km-deadline-banner--locked");
+      banner.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+        + ' Deadline verstreken op ' + formatNlDate(deadline.toISOString()) + '. Te laat is te laat — deze maand-declaratie is definitief gesloten.';
+      banner.hidden = false;
+      submitBtn.hidden = true;
+    } else {
+      banner.classList.add("km-deadline-banner--warning");
+      banner.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        + ' Deze declaratie moet uiterlijk <strong>' + formatNlDate(deadline.toISOString()) + '</strong> worden ingediend. Daarna is wijzigen niet meer mogelijk.';
+      banner.hidden = false;
+      // Indien-knop tonen als er records zijn en editable
+      submitBtn.hidden = false;
+      submitBtn.disabled = !(editable && recs.length > 0);
+      submitBtn.title = recs.length === 0 ? "Voeg eerst minimaal 1 rit toe voor je kunt indienen" : "";
+    }
   }
 
   function applyDetailSortIndicators() {
@@ -522,6 +577,226 @@
       }).join("");
   }
 
+  // ---------------------------------------------------------------------------
+  // Indienen-flow (Fase 1)
+  // ---------------------------------------------------------------------------
+  function handleSubmitDeclaratie() {
+    var d = currentDecl();
+    if (!d) return;
+    var db = window.kilometerDeclaratiesDB;
+    if (!db || typeof db.submitDecl !== "function") {
+      toast("error", "Indienen niet beschikbaar — data-laag mist submitDecl");
+      return;
+    }
+    if (!db.isSubmittable(d)) {
+      toast("error", "Deze declaratie kan niet (meer) ingediend worden.");
+      return;
+    }
+    var recs = db.getRecordsForDeclaratieSync(d.id) || [];
+    var totalKm = recs.reduce(function (s, r) { return s + (Number(r.kilometers) || 0); }, 0);
+    var preview = recs.length + " rit(en) · " + formatKm(totalKm) + " · " + formatEur(d.totalReimbursement);
+    Promise.resolve(
+      typeof window.showSliderConfirmModal === "function"
+        ? window.showSliderConfirmModal({
+          title: "Declaratie indienen?",
+          message: "Na indienen kun je geen ritten meer wijzigen of toevoegen voor deze maand.",
+          preview: preview,
+          okLabel: "Indienen",
+          cancelLabel: "Annuleren",
+        })
+        : window.confirm("Declaratie indienen?")
+    ).then(function (ok) {
+      if (!ok) return;
+      return db.submitDecl(d.id).then(function () {
+        toast("info", "Declaratie ingediend");
+        renderDetail();
+        renderOverview();
+      });
+    }).catch(function (err) {
+      toast("error", "Indienen mislukt: " + (err && err.message ? err.message : err));
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Woon-werk dag-aanvink modal (Fase 2)
+  //
+  // Toont een kalender van de huidige declaratie-maand. Per aangevinkte dag
+  // wordt bij submit een woon-werk record toegevoegd met km =
+  // medewerker.location_distance × 2 (heen + terug). Dagen die al een
+  // bestaand record hebben (type=office of automatic) worden pre-checked en
+  // disabled (om dubbele invoer te voorkomen).
+  // ---------------------------------------------------------------------------
+  var _wwState = { selectedDates: {}, perDayKm: 0, distance: null, mw: null, locked: {} };
+
+  function openWoonwerkModal() {
+    var d = currentDecl();
+    if (!d) return;
+    var mw = window.medewerkersDB && window.medewerkersDB.getByIdSync
+      ? window.medewerkersDB.getByIdSync(d.medewerkerId)
+      : null;
+    var distance = mw && mw.location_distance != null ? Number(mw.location_distance) : null;
+    _wwState.mw = mw;
+    _wwState.distance = distance;
+    _wwState.perDayKm = distance != null ? distance * 2 : 0;
+    _wwState.selectedDates = {};
+    _wwState.locked = {};
+
+    // Reeds bestaande office-records → pre-selected + disabled
+    var existing = (window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(d.id) || [])
+      .filter(function (r) { return r && (r.type === "office" || r.isAutomatic); });
+    existing.forEach(function (r) {
+      if (r.datum) { _wwState.selectedDates[r.datum] = true; _wwState.locked[r.datum] = true; }
+    });
+
+    var distEl = $("km-woonwerk-distance");
+    var retEl = $("km-woonwerk-retour");
+    var hint = $("km-woonwerk-hint");
+    var noDist = $("km-woonwerk-no-distance");
+    if (distance == null) {
+      distEl.textContent = "Niet ingesteld";
+      retEl.textContent = "—";
+      noDist.hidden = false;
+      hint.style.opacity = "0.5";
+    } else {
+      distEl.textContent = nlNum(distance) + " km";
+      retEl.textContent = nlNum(_wwState.perDayKm) + " km";
+      noDist.hidden = true;
+      hint.style.opacity = "1";
+    }
+
+    buildWoonwerkGrid(d.jaar, d.maand);
+    refreshWoonwerkTotals();
+    setErr("km-add-woonwerk-error", "");
+    openModal("km-add-woonwerk-modal");
+  }
+
+  function buildWoonwerkGrid(jaar, maand) {
+    var grid = $("km-woonwerk-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    // Header-rij
+    ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].forEach(function (lbl) {
+      var h = document.createElement("div");
+      h.className = "km-woonwerk-grid-header";
+      h.textContent = lbl;
+      grid.appendChild(h);
+    });
+    var firstOfMonth = new Date(jaar, maand - 1, 1);
+    var daysInMonth = new Date(jaar, maand, 0).getDate();
+    // JS getDay: zo=0,ma=1,…,za=6 — wij willen ma=0,…,zo=6
+    var pad = (firstOfMonth.getDay() + 6) % 7;
+    for (var i = 0; i < pad; i++) {
+      var empty = document.createElement("button");
+      empty.type = "button";
+      empty.className = "km-woonwerk-day is-empty";
+      empty.tabIndex = -1;
+      grid.appendChild(empty);
+    }
+    var enabled = _wwState.distance != null;
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateObj = new Date(jaar, maand - 1, day);
+      var iso = dateObj.getFullYear() + "-" + ("0" + (dateObj.getMonth() + 1)).slice(-2) + "-" + ("0" + dateObj.getDate()).slice(-2);
+      var weekday = (dateObj.getDay() + 6) % 7; // 0=ma..6=zo
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "km-woonwerk-day";
+      btn.setAttribute("data-iso", iso);
+      if (weekday >= 5) btn.classList.add("is-weekend");
+      if (_wwState.selectedDates[iso]) btn.classList.add("is-selected");
+      if (_wwState.locked[iso]) {
+        btn.classList.add("is-disabled");
+        btn.title = "Reeds geregistreerd";
+      } else if (!enabled) {
+        btn.classList.add("is-disabled");
+      }
+      var num = document.createElement("span");
+      num.className = "km-woonwerk-day-num";
+      num.textContent = String(day);
+      btn.appendChild(num);
+      if (_wwState.locked[iso]) {
+        var lbl = document.createElement("span");
+        lbl.className = "km-woonwerk-day-label";
+        lbl.textContent = "✓ al";
+        btn.appendChild(lbl);
+      }
+      btn.addEventListener("click", function (e) {
+        var t = e.currentTarget;
+        var d = t.getAttribute("data-iso");
+        if (_wwState.locked[d] || _wwState.distance == null) return;
+        if (_wwState.selectedDates[d]) {
+          delete _wwState.selectedDates[d];
+          t.classList.remove("is-selected");
+        } else {
+          _wwState.selectedDates[d] = true;
+          t.classList.add("is-selected");
+        }
+        refreshWoonwerkTotals();
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  function refreshWoonwerkTotals() {
+    var newDates = Object.keys(_wwState.selectedDates).filter(function (d) { return !_wwState.locked[d]; });
+    var nDays = newDates.length;
+    var perDay = _wwState.perDayKm || 0;
+    var totalKm = nDays * perDay;
+    // Cap 100 km per rit voor vergoeding
+    var totalEur = nDays * Math.min(perDay, 100) * 0.39;
+    $("km-woonwerk-days-count").textContent = String(nDays);
+    $("km-woonwerk-km-total").textContent = nlNum(totalKm) + " km";
+    $("km-woonwerk-eur-total").textContent = formatEur(totalEur);
+    var btn = $("km-add-woonwerk-submit");
+    if (btn) btn.disabled = (nDays === 0 || _wwState.distance == null);
+  }
+
+  function submitWoonwerkSelection() {
+    var d = currentDecl();
+    if (!d) return;
+    var newDates = Object.keys(_wwState.selectedDates).filter(function (dd) { return !_wwState.locked[dd]; });
+    if (newDates.length === 0) return;
+    if (_wwState.distance == null) {
+      setErr("km-add-woonwerk-error", "Geen afstand bekend — vraag HR om je location_distance in te vullen.");
+      return;
+    }
+    var perDay = _wwState.perDayKm;
+    var btn = $("km-add-woonwerk-submit");
+    if (btn) btn.disabled = true;
+    newDates.sort();
+    // Sequentieel toevoegen om dubbele totaal-herrekening te voorkomen
+    var ok = 0, errs = 0;
+    var promise = Promise.resolve();
+    newDates.forEach(function (iso) {
+      promise = promise.then(function () {
+        return window.kilometerDeclaratiesDB.addRecord({
+          declaratieId: d.id, datum: iso,
+          beschrijving: "Woon-werk (auto, dag aangevinkt)",
+          kilometers: perDay, type: "office", typeDisplay: "Naar kantoor",
+          locatieNaam: "", locatieBs2Id: null,
+        }).then(function () { ok++; }, function (err) {
+          errs++;
+          console.error("[km-woonwerk] add fail " + iso, err);
+        });
+      });
+    });
+    promise.then(function () {
+      if (errs > 0) {
+        setErr("km-add-woonwerk-error", ok + " van " + newDates.length + " dagen toegevoegd; " + errs + " mislukt — zie console.");
+      } else {
+        closeModal("km-add-woonwerk-modal");
+        toast("saved", ok + " woon-werk dag(en) toegevoegd");
+      }
+    }).catch(function (err) {
+      setErr("km-add-woonwerk-error", "Toevoegen mislukt: " + (err && err.message ? err.message : err));
+    }).finally(function () { if (btn) btn.disabled = false; });
+  }
+
+  function nlNum(n) {
+    var v = Number(n) || 0;
+    if (v === Math.floor(v)) return v.toFixed(0);
+    return v.toFixed(2).replace(".", ",");
+  }
+
   function wireRecordCrud() {
     var addBtn = $("km-add-open-btn");
     if (addBtn) {
@@ -550,6 +825,21 @@
       fillLocatieSelect();
       openModal("km-add-kantoor-modal");
     });
+    // Woon-werk dagen aanvinken (Fase 2)
+    var cW = $("km-choice-woonwerk-dagen");
+    if (cW) cW.addEventListener("click", function () {
+      closeModal("km-add-choice-modal");
+      openWoonwerkModal();
+    });
+    [["km-add-woonwerk-close"], ["km-add-woonwerk-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-add-woonwerk-modal"); });
+    });
+    var wwSubmit = $("km-add-woonwerk-submit");
+    if (wwSubmit) wwSubmit.addEventListener("click", submitWoonwerkSelection);
+
+    // Indienen-knop (Fase 1)
+    var subBtn = $("km-submit-btn");
+    if (subBtn) subBtn.addEventListener("click", handleSubmitDeclaratie);
 
     // Handmatige invoer — opslaan
     [["km-add-manual-close"], ["km-add-manual-cancel"]].forEach(function (p) {

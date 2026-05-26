@@ -49,6 +49,7 @@
     "functie",
     "archived",
     "personeelsnummer",
+    "location_distance",
   ];
 
   function rowToObj(row) {
@@ -64,6 +65,7 @@
       dienstverband: row.dienstverband || data.dienstverband || "",
       functie: row.functie || data.functie || "",
       personeelsnummer: row.personeelsnummer != null ? row.personeelsnummer : (data.personeelsnummer != null ? data.personeelsnummer : null),
+      location_distance: row.location_distance != null ? Number(row.location_distance) : (data.location_distance != null ? Number(data.location_distance) : null),
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -87,6 +89,7 @@
       dienstverband: src.dienstverband != null ? String(src.dienstverband) : null,
       functie: src.functie != null ? String(src.functie) : null,
       personeelsnummer: src.personeelsnummer != null && src.personeelsnummer !== "" ? (Number.isFinite(+src.personeelsnummer) ? +src.personeelsnummer : null) : null,
+      location_distance: src.location_distance != null && src.location_distance !== "" ? (Number.isFinite(+src.location_distance) ? +src.location_distance : null) : null,
       archived: !!src.archived,
       data: data,
     };
@@ -105,6 +108,10 @@
         else if (k === "personeelsnummer") {
           if (src[k] == null || src[k] === "") dbPatch.personeelsnummer = null;
           else dbPatch.personeelsnummer = Number.isFinite(+src[k]) ? +src[k] : null;
+        }
+        else if (k === "location_distance") {
+          if (src[k] == null || src[k] === "") dbPatch.location_distance = null;
+          else dbPatch.location_distance = Number.isFinite(+src[k]) ? +src[k] : null;
         }
         else dbPatch[k] = src[k] == null ? null : String(src[k]);
       } else {

@@ -20617,6 +20617,7 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 }
 .km-choice-icon--blue { background: var(--blue-soft); color: var(--blue); }
 .km-choice-icon--green { background: var(--green-soft); color: var(--green); }
+.km-choice-icon--purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
 .km-choice-text {
   display: flex;
   flex-direction: column;
@@ -20638,6 +20639,106 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   .km-totals-card { flex-direction: column; align-items: flex-start; }
   .km-totals-right { align-items: flex-start; }
 }
+
+/* =============================================================================
+   Indien-knop + deadline-banner (Fase 1 — kilometers)
+   ============================================================================= */
+.km-submit-btn { display: inline-flex; align-items: center; gap: 6px; }
+.km-deadline-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--r-md);
+  font-size: var(--font-base);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.km-deadline-banner--info { border-color: var(--blue); background: var(--blue-soft); color: var(--text); }
+.km-deadline-banner--warning { border-color: var(--yellow); background: rgba(250, 204, 21, 0.12); color: var(--text); }
+.km-deadline-banner--locked { border-color: var(--red); background: rgba(239, 68, 68, 0.08); color: var(--text); }
+
+/* =============================================================================
+   Woon-werk dag-aanvink modal (Fase 2)
+   ============================================================================= */
+.km-woonwerk-modal { max-width: 640px; }
+.km-woonwerk-summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.km-woonwerk-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-base);
+  padding: 4px 0;
+}
+.km-woonwerk-summary-label { color: var(--text-secondary); }
+.km-woonwerk-summary-value { font-weight: 600; color: var(--text); }
+.km-woonwerk-hint {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+.km-woonwerk-no-distance {
+  border: 1px solid var(--red);
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: var(--font-base);
+  color: var(--text);
+}
+.km-woonwerk-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.km-woonwerk-grid-header {
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 4px 0;
+}
+.km-woonwerk-day {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 8px 4px;
+  cursor: pointer;
+  text-align: center;
+  font-size: var(--font-base);
+  color: var(--text);
+  transition: all 0.12s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.km-woonwerk-day:hover { border-color: var(--blue); }
+.km-woonwerk-day.is-empty { visibility: hidden; }
+.km-woonwerk-day.is-weekend { background: rgba(0, 0, 0, 0.02); color: var(--text-muted); }
+.km-woonwerk-day.is-selected { background: var(--blue); border-color: var(--blue); color: #fff; }
+.km-woonwerk-day.is-disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.km-woonwerk-day-num { font-weight: 600; font-size: 14px; }
+.km-woonwerk-day-label { font-size: 10px; opacity: 0.8; }
+.km-woonwerk-totals {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: var(--font-base);
+}
+.km-woonwerk-totals strong { color: var(--text); }
 
 /* =============================================================================
    Generieke export-keuzemodal (besa-export.js)
