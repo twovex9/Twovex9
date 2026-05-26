@@ -697,7 +697,13 @@ function loadEmployeeIntoForm() {
   setText("emp-email-display2", emp.email);
   setText("emp-nr", emp.overigeInfo || "—");
   const statusInput = document.getElementById("emp-status-input");
-  if (statusInput) statusInput.value = emp.fase || "In dienst";
+  if (statusInput) {
+    // Normaliseer fase-varianten ('in_dienst' uit legacy BS2-import, 'Uit dienst', etc.)
+    // zodat de waarde matcht met de <option value="In dienst"> / <option value="Uit dienst">.
+    const rawFase = (emp.fase || "").trim();
+    const normalized = rawFase.replace(/[_-]/g, " ").toLowerCase();
+    statusInput.value = normalized === "uit dienst" ? "Uit dienst" : "In dienst";
+  }
   setText("emp-bday-date", emp.verjaardag || "—");
 
   const cd = birthdayCountdown(emp.verjaardag);
