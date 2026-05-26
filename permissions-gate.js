@@ -25,13 +25,15 @@
       if (!path) return "";
       var parts = path.split("/").filter(Boolean);
       if (parts.length === 0) return "home.html";
-      var last = parts[parts.length - 1];
-      // Strip trailing slash already handled by filter(Boolean).
+      var last = parts[parts.length - 1].toLowerCase();
       // Strip query/hash (location.pathname doet dat al, maar voor zekerheid):
       var qIdx = last.indexOf("?");
       if (qIdx !== -1) last = last.substring(0, qIdx);
       var hIdx = last.indexOf("#");
       if (hIdx !== -1) last = last.substring(0, hIdx);
+      // Vercel clean URLs (/audit i.p.v. /audit.html) — voeg .html toe
+      // zodat de lookup in BESA_PAGE_PERMISSIONS werkt.
+      if (last && last.indexOf(".") === -1) last += ".html";
       return last;
     } catch (e) {
       return "";
