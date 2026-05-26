@@ -48,6 +48,7 @@
     "dienstverband",
     "functie",
     "archived",
+    "personeelsnummer",
   ];
 
   function rowToObj(row) {
@@ -62,6 +63,7 @@
       fase: row.fase || "In dienst",
       dienstverband: row.dienstverband || data.dienstverband || "",
       functie: row.functie || data.functie || "",
+      personeelsnummer: row.personeelsnummer != null ? row.personeelsnummer : (data.personeelsnummer != null ? data.personeelsnummer : null),
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -84,6 +86,7 @@
       fase: src.fase != null ? String(src.fase) : "In dienst",
       dienstverband: src.dienstverband != null ? String(src.dienstverband) : null,
       functie: src.functie != null ? String(src.functie) : null,
+      personeelsnummer: src.personeelsnummer != null && src.personeelsnummer !== "" ? (Number.isFinite(+src.personeelsnummer) ? +src.personeelsnummer : null) : null,
       archived: !!src.archived,
       data: data,
     };
@@ -99,6 +102,10 @@
       if (TOP_LEVEL_FIELDS.indexOf(k) !== -1) {
         if (k === "archived") dbPatch.archived = !!src[k];
         else if (k === "email") dbPatch.email = src[k] == null ? null : String(src[k]);
+        else if (k === "personeelsnummer") {
+          if (src[k] == null || src[k] === "") dbPatch.personeelsnummer = null;
+          else dbPatch.personeelsnummer = Number.isFinite(+src[k]) ? +src[k] : null;
+        }
         else dbPatch[k] = src[k] == null ? null : String(src[k]);
       } else {
         data[k] = src[k];

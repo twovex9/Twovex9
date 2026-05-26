@@ -695,7 +695,17 @@ function loadEmployeeIntoForm() {
   setText("emp-email-display", emp.email);
   setText("emp-tel-display", emp.tel);
   setText("emp-email-display2", emp.email);
-  setText("emp-nr", emp.overigeInfo || "—");
+  // emp-nr is sinds Loket-payroll-export Fase A een input (BS2-employee_number,
+  // = Loket-personeelsnummer in maand-export kolom B). Toon de waarde; legacy
+  // tekstveld 'overigeInfo' fungeert nog als fallback voor oudere data.
+  (function () {
+    var nrEl = document.getElementById("emp-nr");
+    if (!nrEl) return;
+    var v = emp.personeelsnummer;
+    if (v == null || v === "") v = emp.overigeInfo;
+    if (nrEl.tagName === "INPUT") nrEl.value = v != null && v !== "—" ? v : "";
+    else nrEl.textContent = v != null && v !== "" ? String(v) : "—";
+  })();
   const statusInput = document.getElementById("emp-status-input");
   if (statusInput) {
     // Normaliseer fase-varianten ('in_dienst' uit legacy BS2-import, 'Uit dienst', etc.)
@@ -2535,6 +2545,12 @@ function gatherFormData() {
     competentie: profFieldValues.competentie,
     fase: val("emp-status-input") || "In dienst",
     uitDienst: isoToDDMMYYYY(val("emp-uitdienst-input")),
+    personeelsnummer: (function () {
+      var v = val("emp-nr");
+      if (v == null || String(v).trim() === "") return null;
+      var n = parseInt(v, 10);
+      return Number.isFinite(n) ? n : null;
+    })(),
     // Auto-archive: medewerker met fase "Uit dienst" verhuist naar gearchiveerd,
     // bij "In dienst" terug naar actieve lijst. User-eis 2026-05-26.
     archived: (val("emp-status-input") || "In dienst").trim().toLowerCase().replace(/[_-]/g, " ") === "uit dienst",
@@ -2644,7 +2660,7 @@ function initSectionSave() {
     gegevens: "Medewerker gegevens",
     adres: "Adres",
     contact: "Contactpersoon",
-    "overige-info": "Status",
+    "overige-info": "Overige informatie",
     dienstverband: "Dienstverband",
     inhuur: "Inhuur",
     professioneel: "Professioneel",
