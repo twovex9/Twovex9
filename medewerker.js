@@ -703,6 +703,7 @@ function loadEmployeeIntoForm() {
     const rawFase = (emp.fase || "").trim();
     const normalized = rawFase.replace(/[_-]/g, " ").toLowerCase();
     statusInput.value = normalized === "uit dienst" ? "Uit dienst" : "In dienst";
+    updateStatusInputColor();
   }
   setText("emp-bday-date", emp.verjaardag || "—");
 
@@ -2838,6 +2839,16 @@ function initSectionSave() {
   });
 }
 
+// Zet de juiste kleurmodifier-class op de Status-dropdown in de zijbalk.
+// Groen voor 'In dienst', rood voor 'Uit dienst' — consistent met de pill in de HR-lijst.
+function updateStatusInputColor() {
+  const el = document.getElementById("emp-status-input");
+  if (!el) return;
+  el.classList.remove("emp-select--status-in-dienst", "emp-select--status-uit-dienst");
+  const normalized = (el.value || "").trim().toLowerCase().replace(/[_-]/g, " ");
+  el.classList.add(normalized === "uit dienst" ? "emp-select--status-uit-dienst" : "emp-select--status-in-dienst");
+}
+
 function initExtraSidebarActions() {
   const loginAsBtn = document.getElementById("emp-loginas-btn");
   loginAsBtn?.addEventListener("click", () => {
@@ -2850,6 +2861,9 @@ function initExtraSidebarActions() {
       showToast("Zijbalkgegevens opgeslagen");
     });
   });
+
+  // Update kleur live wanneer gebruiker een andere status kiest (vóór klik op opslaan).
+  document.getElementById("emp-status-input")?.addEventListener("change", updateStatusInputColor);
 }
 
 function initLiveContactMirror() {
