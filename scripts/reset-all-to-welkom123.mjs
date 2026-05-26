@@ -75,10 +75,23 @@ async function main() {
   console.log("Mode:", DRY_RUN ? "DRY-RUN (geen wijzigingen)" : "LIVE");
   console.log("");
 
-  // 1. Haal alle main_employees emails op — alleen zij mogen meedoen aan testfase
+  // 1. Doelgroep: alle medewerkers die op de testfase meedoen.
+  //    - main_employees (100 reguliere medewerkers uit BS2)
+  //    - bs2_role_users (127 rol-toewijzingen incl. admin-tier zoals Lionel/Jason die GEEN main_employee zijn)
+  //    Union van beide sets, want anders missen we admin-accounts en kunnen ze niet inloggen
+  //    (en blijft must_setup_2fa=true voor hen, wat 2FA-modal triggert).
   const employees = await restGet("main_employees?select=email&order=email.asc&limit=500");
-  const validEmails = new Set(employees.map((e) => (e.email || "").toLowerCase()).filter(Boolean));
-  console.log(`✓ ${employees.length} main_employees, ${validEmails.size} unieke emails`);
+  const roleUsers = await restGet("bs2_role_users?select=user_email&limit=500");
+  const validEmails = new Set();
+  for (const e of employees) {
+    const em = (e.email || "").toLowerCase().trim();
+    if (em) validEmails.add(em);
+  }
+  for (const r of roleUsers) {
+    const em = (r.user_email || "").toLowerCase().trim();
+    if (em) validEmails.add(em);
+  }
+  console.log(`✓ ${employees.length} main_employees + ${roleUsers.length} bs2_role_users → ${validEmails.size} unieke testfase-emails`);
 
   // 2. Haal alle auth.users op
   const usersResp = await adminListUsers(1, 1000);
