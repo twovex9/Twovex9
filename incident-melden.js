@@ -132,6 +132,143 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Per-veld validatie (F1, PR-1): rood markeren + scroll naar 1e fout + focus.
+  // BS2-gedrag: alle ontbrekende verplichte velden worden gelijktijdig rood;
+  // pagina scrollt naar het eerste rode veld; cursor komt erin te staan.
+  // ---------------------------------------------------------------------------
+  function getFieldValidators() {
+    return [
+      { id: "im-client", label: "Cliënt",
+        check: function () { return !!$("im-client").value; } },
+      { id: "im-datum", label: "Incident datum",
+        check: function () { return !!$("im-datum").value; } },
+      { id: "im-tijdstip", label: "Tijdstip van de dag",
+        check: function () { return !!$("im-tijdstip").value; } },
+      { wrapperId: "im-actor-field", label: "Actor type",
+        check: function () { return !!getSelectedActorType(); } },
+      { id: "im-categorie", label: "Type incident",
+        check: function () { return !!$("im-categorie").value; } },
+      { id: "im-omschrijving", label: "Beschrijving",
+        check: function () { return String($("im-omschrijving").value || "").trim().length > 0; } },
+      { wrapperId: "im-ouders-field", label: "Ouders/vertegenwoordigers geïnformeerd",
+        check: function () { return getOudersValue() !== null; } },
+      { id: "im-ouders-reden", label: "Reden waarom ouders niet geïnformeerd zijn",
+        conditional: function () { return getOudersValue() === false; },
+        check: function () { return String($("im-ouders-reden").value || "").trim().length > 0; } },
+    ];
+  }
+
+  function getWrapperForValidator(v) {
+    if (v.wrapperId) return $(v.wrapperId);
+    var input = v.id ? $(v.id) : null;
+    if (!input) return null;
+    return input.closest(".im-field");
+  }
+
+  function getInputForValidator(v) {
+    if (v.id) return $(v.id);
+    var wrapper = $(v.wrapperId);
+    if (!wrapper) return null;
+    return wrapper.querySelector("input,select,textarea,button");
+  }
+
+  function clearAllFieldErrors() {
+    document.querySelectorAll("#im-form .im-field--error").forEach(function (f) {
+      f.classList.remove("im-field--error");
+    });
+    document.querySelectorAll("#im-form .im-field-error").forEach(function (e) {
+      e.hidden = true; e.textContent = "";
+    });
+    document.querySelectorAll('#im-form [aria-invalid="true"]').forEach(function (n) {
+      n.removeAttribute("aria-invalid");
+    });
+  }
+
+  function clearFieldErrorByWrapper(wrapper) {
+    if (!wrapper) return;
+    wrapper.classList.remove("im-field--error");
+    var errEl = wrapper.querySelector(".im-field-error");
+    if (errEl) { errEl.hidden = true; errEl.textContent = ""; }
+    wrapper.querySelectorAll('[aria-invalid="true"]').forEach(function (n) {
+      n.removeAttribute("aria-invalid");
+    });
+  }
+
+  function showFieldErrors(errors) {
+    clearAllFieldErrors();
+    if (!errors || errors.length === 0) {
+      showError(null);
+      return null;
+    }
+    var firstWrapper = null;
+    errors.forEach(function (v) {
+      var wrapper = getWrapperForValidator(v);
+      if (!wrapper) return;
+      wrapper.classList.add("im-field--error");
+      var errEl = wrapper.querySelector(":scope > .im-field-error");
+      if (!errEl) {
+        errEl = document.createElement("p");
+        errEl.className = "im-field-error";
+        errEl.setAttribute("role", "alert");
+        wrapper.appendChild(errEl);
+      }
+      errEl.textContent = v.label + " is verplicht";
+      errEl.hidden = false;
+      var input = getInputForValidator(v);
+      if (input && input.setAttribute) input.setAttribute("aria-invalid", "true");
+      if (!firstWrapper) firstWrapper = wrapper;
+    });
+    if (firstWrapper) {
+      firstWrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+      var firstInput = getInputForValidator(errors[0]);
+      if (firstInput && firstInput.focus) {
+        setTimeout(function () {
+          try { firstInput.focus({ preventScroll: true }); } catch (e) {
+            try { firstInput.focus(); } catch (e2) { /* */ }
+          }
+        }, 300);
+      }
+    }
+    var banner = $("im-error");
+    if (banner) {
+      banner.textContent = errors.length === 1
+        ? errors[0].label + " is verplicht"
+        : "Controleer de " + errors.length + " rood gemarkeerde velden hieronder";
+      banner.hidden = false;
+    }
+    return errors;
+  }
+
+  function validateAll() {
+    var errors = [];
+    getFieldValidators().forEach(function (v) {
+      if (v.conditional && !v.conditional()) return;
+      if (!v.check()) errors.push(v);
+    });
+    return errors;
+  }
+
+  function wireInputClearErrors() {
+    ["im-client", "im-datum", "im-tijdstip", "im-categorie", "im-omschrijving", "im-ouders-reden"].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      var handler = function () { clearFieldErrorByWrapper(el.closest(".im-field")); };
+      el.addEventListener("input", handler);
+      el.addEventListener("change", handler);
+    });
+    document.querySelectorAll('input[name="im-actor-type"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        clearFieldErrorByWrapper($("im-actor-field"));
+      });
+    });
+    document.querySelectorAll('input[name="im-ouders"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        clearFieldErrorByWrapper($("im-ouders-field"));
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Dropdown population
   // ---------------------------------------------------------------------------
   function fillSelect(sel, items, placeholder, labelFn, current) {
@@ -946,23 +1083,6 @@
     return payload;
   }
 
-  function validate(payload) {
-    if (!payload.clientId) return "Selecteer een cliënt.";
-    if (!payload.incidentDatum) return "Vul een geldige incident-datum in.";
-    if (!payload.tijdstipVanDag) return "Selecteer een tijdstip van de dag.";
-    if (!payload.actorType) return "Selecteer een actor type.";
-    if (!payload.categorie) return "Selecteer een type incident.";
-    if (!String(payload.omschrijving).trim()) return "Vul een beschrijving in.";
-    if (payload.oudersGeinformeerd === null) return "Geef aan of ouders/vertegenwoordigers geïnformeerd zijn.";
-    // 1-op-1 BS2: als ouders/vertegenwoordigers NIET geïnformeerd zijn, is een
-    // reden verplicht (BS2-data: parents_not_notified_reason gevuld bij exact
-    // alle 53 incidenten met parents_notified=false).
-    if (payload.oudersGeinformeerd === false && !String(payload.oudersNietReden || "").trim()) {
-      return "Geef aan waarom ouders/vertegenwoordigers niet geïnformeerd zijn.";
-    }
-    return null;
-  }
-
   // ---------------------------------------------------------------------------
   // Submit
   // ---------------------------------------------------------------------------
@@ -990,10 +1110,14 @@
 
   async function onSubmit(ev) {
     ev.preventDefault();
+    var errors = validateAll();
+    if (errors.length > 0) {
+      showFieldErrors(errors);
+      return;
+    }
+    clearAllFieldErrors();
     showError(null);
     var payload = readForm();
-    var err = validate(payload);
-    if (err) { showError(err); return; }
 
     var btn = $("im-submit");
     btn.disabled = true;
@@ -1118,6 +1242,9 @@
     Array.prototype.forEach.call(document.querySelectorAll('input[name="im-ouders"]'), function (r) {
       r.addEventListener("change", toggleOudersReden);
     });
+
+    // F1: zodra user begint te corrigeren, verdwijnt de rode markering.
+    wireInputClearErrors();
     Array.prototype.forEach.call(document.querySelectorAll('input[name="im-past-profiel"]'), function (r) {
       r.addEventListener("change", toggleAfhandelConditional);
     });

@@ -19666,7 +19666,56 @@ button.besc-dtl-tab:hover {
   border-radius: 8px;
   font-size: 13px;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.im-error::before {
+  content: "⚠";
+  font-size: 16px;
+  line-height: 1;
+}
+.im-error[hidden] { display: none; }
+
+/* Per-veld validatie (PR-1, F1: rood markeren + scroll naar 1e fout) */
+.im-field--error .im-input,
+.im-field--error .im-select,
+.im-field--error .im-textarea {
+  border-color: var(--red);
+  background: rgba(192, 57, 43, 0.04);
+}
+.im-field--error .im-input:focus,
+.im-field--error .im-select:focus,
+.im-field--error .im-textarea:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.15);
+}
+.im-field--error > .im-label {
+  color: var(--red);
+}
+.im-field--error .im-stack-radio,
+.im-field--error .im-radio-list {
+  outline: 1px solid var(--red);
+  outline-offset: 4px;
+  border-radius: var(--r-md);
+}
+.im-field-error {
+  margin: 4px 0 0;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.im-field-error::before {
+  content: "⚠";
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.im-field-error[hidden] { display: none; }
 
 /* [hidden] moet winnen: .im-field (display:flex) / .im-card overschrijven
    anders het hidden-attribuut — zelfde patroon als .side-group__panel. */
