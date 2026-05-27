@@ -17371,6 +17371,47 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
   text-align: right;
 }
 
+/* ============================================================
+   PR #6 — Pauline Override (Ambulant intern only)
+   ============================================================ */
+.content--urendecl .cl-ud-th--actions { text-align: center; width: 90px; }
+.content--urendecl .cl-ud-td-actions { text-align: center; padding: 4px; }
+.ud-override-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 4px 10px; min-height: 28px;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--text);
+  cursor: pointer; font-size: var(--font-ui-badge); font-weight: 600;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+.ud-override-btn:hover { border-color: var(--blue); color: var(--blue); }
+.ud-override-btn--active { background: var(--yellow-soft); border-color: var(--yellow); color: var(--text); }
+.ud-override-btn--active:hover { background: var(--yellow-soft); border-color: var(--yellow); }
+.ud-override-badge { font-weight: 600; }
+.ud-override-na { color: var(--text-muted); font-size: var(--font-ui-badge); }
+.ud-override-hint-row { color: var(--yellow); font-weight: 600; font-size: var(--font-ui-badge); margin-left: 4px; }
+
+/* Modal */
+.ud-override-card { max-width: 520px; width: 92%; }
+.ud-override-msg { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 12px; line-height: 1.45; }
+.ud-override-info {
+  background: var(--surface-alt, rgba(37,99,235,0.04));
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 10px 12px; margin-bottom: 12px; font-size: var(--font-base);
+}
+.ud-override-info-row { margin: 2px 0; }
+.ud-override-info-lbl { display: inline-block; min-width: 96px; color: var(--text-secondary); }
+.ud-override-hint { font-weight: 400; color: var(--text-muted); font-size: var(--font-ui-badge); }
+.ud-override-req { color: var(--red); font-weight: 400; font-size: var(--font-ui-badge); }
+.ud-override-reden-input { min-height: 64px; resize: vertical; font-family: inherit; }
+.ud-override-meta {
+  margin-top: 10px; padding: 8px 10px;
+  background: var(--yellow-soft); border-radius: var(--r-sm);
+  font-size: var(--font-ui-badge); color: var(--text);
+}
+.ud-override-error { color: var(--red); font-size: var(--font-base); margin-top: 8px; font-weight: 600; }
+.ud-override-clear { color: var(--red); }
+
 .besc-ov-table .besc-ov-eur--tedecl,
 .besc-ov-th--eur {
   color: var(--yellow);

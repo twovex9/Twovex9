@@ -43,19 +43,40 @@
       .replace(/"/g, "&quot;");
   }
 
+  function isAmbulantIntern(zorgsoort) {
+    return String(zorgsoort || "").toLowerCase().indexOf("ambulant intern") !== -1;
+  }
+
   function renderRows() {
     if (!tbody) return;
     var items = [];
     if (window.urendeclaratiesDB && typeof window.urendeclaratiesDB.getAllSync === "function") {
       items = window.urendeclaratiesDB.getAllSync() || [];
     }
+    var EDIT_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
     var html = items.map(function (r) {
+      var canOverride = isAmbulantIntern(r.zorgsoort);
+      var hasOverride = (r.overrideUren != null);
+      var overrideCellHtml;
+      if (canOverride) {
+        var btnClass = hasOverride ? "ud-override-btn ud-override-btn--active" : "ud-override-btn";
+        var btnTitle = hasOverride
+          ? ("Override actief: " + r.overrideUren + " uur — klik om aan te passen")
+          : "Aantal uren overschrijven";
+        var btnLabel = hasOverride
+          ? ('<span class="ud-override-badge">' + fmtUren(r.overrideUren) + ' u</span>')
+          : ('<span class="ud-override-btn-lbl">' + EDIT_SVG + '</span>');
+        overrideCellHtml = '<button type="button" class="' + btnClass + '" data-ud-id="' + escapeHtml(String(r.id || "")) + '" title="' + escapeHtml(btnTitle) + '" aria-label="' + escapeHtml(btnTitle) + '">' + btnLabel + '</button>';
+      } else {
+        overrideCellHtml = '<span class="ud-override-na" title="Alleen voor Ambulant intern beschikkingen">—</span>';
+      }
       return (
         '<tr' +
         ' data-ud-client="' + escapeHtml(r.client) + '"' +
         ' data-ud-zorg="' + escapeHtml(r.zorgsoort) + '"' +
         ' data-ud-jaar="' + escapeHtml(String(r.jaar)) + '"' +
         ' data-ud-maand="' + escapeHtml(String(r.maand)) + '"' +
+        ' data-ud-id="' + escapeHtml(String(r.id || "")) + '"' +
         '>' +
         '<td data-col="sel"><input type="checkbox" class="table-checkbox" aria-label="Selecteer rij" /></td>' +
         '<td data-col="client">' + escapeHtml(r.client) + '</td>' +
@@ -65,12 +86,121 @@
         '<td data-col="tarif" class="cl-ud-td-money">' + fmtEuro(r.uurtarief) + '</td>' +
         '<td data-col="bedrag" class="cl-ud-td-money">' + fmtEuro(r.bedrag) + '</td>' +
         '<td data-col="deb" class="cl-num">' + fmtUren(r.gedebiteerdeUren) + '</td>' +
-        '<td data-col="ing" class="cl-num">' + fmtUren(r.ingediendeUren) + '</td>' +
+        '<td data-col="ing" class="cl-num">' + fmtUren(r.ingediendeUren) + (hasOverride ? ' <span class="ud-override-hint-row">(→ ' + fmtUren(r.overrideUren) + ')</span>' : '') + '</td>' +
+        '<td data-col="override" class="cl-ud-td-actions">' + overrideCellHtml + '</td>' +
         '</tr>'
       );
     }).join("");
     tbody.innerHTML = html;
+    wireOverrideButtons();
   }
+
+  // ============================================================
+  // PR #6 — Pauline Override modal (Ambulant Intern only)
+  // ============================================================
+  function wireOverrideButtons() {
+    if (!tbody) return;
+    var btns = tbody.querySelectorAll(".ud-override-btn");
+    for (var i = 0; i < btns.length; i++) btns[i].addEventListener("click", onOverrideClick);
+  }
+  function onOverrideClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var btn = e.currentTarget;
+    var id = btn.getAttribute("data-ud-id");
+    if (!id || !window.urendeclaratiesDB) return;
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    var row = null;
+    for (var i = 0; i < items.length; i++) { if (items[i] && String(items[i].id) === String(id)) { row = items[i]; break; } }
+    if (!row) { showToast("Rij niet gevonden"); return; }
+    openOverrideModal(row);
+  }
+  function openOverrideModal(row) {
+    var m = document.getElementById("ud-override-modal");
+    if (!m) return;
+    document.getElementById("ud-override-id").value = row.id;
+    document.getElementById("ud-override-info-client").textContent = row.client || "—";
+    document.getElementById("ud-override-info-periode").textContent = row.maandLabel || "—";
+    document.getElementById("ud-override-info-besc").textContent = row.beschikking || "—";
+    document.getElementById("ud-override-orig").value = fmtUren(row.ingediendeUren);
+    document.getElementById("ud-override-uren").value = (row.overrideUren == null ? "" : String(row.overrideUren));
+    document.getElementById("ud-override-reden").value = row.overrideReden || "";
+    var meta = document.getElementById("ud-override-meta");
+    if (row.overrideUren != null) {
+      document.getElementById("ud-override-meta-uren").textContent = fmtUren(row.overrideUren) + " uur";
+      document.getElementById("ud-override-meta-by").textContent = row.overrideByNaam || "(onbekend)";
+      var at = row.overrideAt ? new Date(row.overrideAt) : null;
+      document.getElementById("ud-override-meta-at").textContent = at && !isNaN(at.getTime())
+        ? (at.toLocaleDateString("nl-NL") + " " + at.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }))
+        : "—";
+      meta.hidden = false;
+      document.getElementById("ud-override-clear").hidden = false;
+    } else {
+      meta.hidden = true;
+      document.getElementById("ud-override-clear").hidden = true;
+    }
+    var err = document.getElementById("ud-override-error");
+    err.hidden = true; err.textContent = "";
+    m.removeAttribute("hidden");
+    m.setAttribute("aria-hidden", "false");
+    setTimeout(function () { try { document.getElementById("ud-override-uren").focus(); } catch (e) { /* */ } }, 10);
+  }
+  function closeOverrideModal() {
+    var m = document.getElementById("ud-override-modal");
+    if (m) { m.setAttribute("hidden", ""); m.setAttribute("aria-hidden", "true"); }
+  }
+  async function submitOverride(clearOnly) {
+    var id = document.getElementById("ud-override-id").value;
+    if (!id) return;
+    var saveBtn = document.getElementById("ud-override-save");
+    var clearBtn = document.getElementById("ud-override-clear");
+    var err = document.getElementById("ud-override-error");
+    var urenInput = document.getElementById("ud-override-uren");
+    var redenInput = document.getElementById("ud-override-reden");
+    var newUren = clearOnly ? null : (urenInput.value === "" ? null : parseFloat(String(urenInput.value).replace(",", ".")));
+    var newReden = clearOnly ? "" : (redenInput.value || "").trim();
+    if (!clearOnly && newUren != null && (!isFinite(newUren) || newUren < 0)) {
+      err.hidden = false; err.textContent = "Geef een geldig aantal uren ≥ 0 op.";
+      return;
+    }
+    if (!clearOnly && newUren != null && !newReden) {
+      err.hidden = false; err.textContent = "Reden is verplicht bij override.";
+      return;
+    }
+    saveBtn.disabled = true; if (clearBtn) clearBtn.disabled = true;
+    var origLbl = saveBtn.textContent; saveBtn.textContent = "Bezig…";
+    try {
+      await window.urendeclaratiesDB.setOverride(id, newUren, newReden);
+      if (window.showActionFeedback) window.showActionFeedback(clearOnly || newUren == null ? "restored" : "saved", "Override");
+      else showToast(clearOnly || newUren == null ? "Override weggehaald" : "Override opgeslagen");
+      closeOverrideModal();
+      renderRows();
+      filterRows();
+    } catch (e) {
+      err.hidden = false; err.textContent = "Opslaan mislukt: " + (e && e.message ? e.message : String(e));
+    } finally {
+      saveBtn.disabled = false; if (clearBtn) clearBtn.disabled = false;
+      saveBtn.textContent = origLbl;
+    }
+  }
+
+  // Modal-events (een keer wireen)
+  (function wireOverrideModalEvents() {
+    var m = document.getElementById("ud-override-modal");
+    if (!m) return;
+    var close = document.getElementById("ud-override-close");
+    var cancel = document.getElementById("ud-override-cancel");
+    var save = document.getElementById("ud-override-save");
+    var clear = document.getElementById("ud-override-clear");
+    if (close) close.addEventListener("click", closeOverrideModal);
+    if (cancel) cancel.addEventListener("click", closeOverrideModal);
+    if (save) save.addEventListener("click", function () { submitOverride(false); });
+    if (clear) clear.addEventListener("click", function () { submitOverride(true); });
+    m.addEventListener("click", function (e) { if (e.target === m) closeOverrideModal(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !m.hasAttribute("hidden")) { closeOverrideModal(); }
+    });
+  })();
 
   function showToast(msg) {
     if (!msg || !toastEl) return;
