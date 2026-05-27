@@ -50,6 +50,19 @@ interface NotifRow {
   related_entity_id: string;
 }
 
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResp(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { ...CORS_HEADERS, "content-type": "application/json" },
+  });
+}
+
 function fmtDagen(n: number): string {
   if (!isFinite(n)) return "0";
   if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));
@@ -57,6 +70,11 @@ function fmtDagen(n: number): string {
 }
 
 serve(async (req: Request) => {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   let body: RequestBody = {};
   if (req.method === "POST") {
     try {
@@ -70,7 +88,7 @@ serve(async (req: Request) => {
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) {
-    return new Response(JSON.stringify({ error: "Missing env" }), { status: 500 });
+    return jsonResp({ error: "Missing env" }, 500);
   }
   const supa = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -82,11 +100,11 @@ serve(async (req: Request) => {
     .select("id, medewerker_id, wet_beschikbaar, bovenwet_beschikbaar")
     .gt("wet_beschikbaar", 0);
   if (overdrachtResp.error) {
-    return new Response(JSON.stringify({ error: overdrachtResp.error.message }), { status: 500 });
+    return jsonResp({ error: overdrachtResp.error.message }, 500);
   }
   const overdrachten = (overdrachtResp.data || []) as OvergedragenRow[];
   if (overdrachten.length === 0) {
-    return new Response(JSON.stringify({ ok: true, processed: 0, message: "Geen openstaande wettelijke uren." }), { status: 200 });
+    return jsonResp({ ok: true, processed: 0, message: "Geen openstaande wettelijke uren." });
   }
 
   // 2) Medewerkers (HR-tabel) → email per medewerker_id
@@ -97,7 +115,7 @@ serve(async (req: Request) => {
     .in("id", empIds)
     .eq("archived", false);
   if (mwResp.error) {
-    return new Response(JSON.stringify({ error: mwResp.error.message }), { status: 500 });
+    return jsonResp({ error: mwResp.error.message }, 500);
   }
   const mwById = new Map<string, MedewerkerRow>();
   (mwResp.data || []).forEach((m) => mwById.set(String(m.id), m as MedewerkerRow));
@@ -115,7 +133,7 @@ serve(async (req: Request) => {
       .select("id, email")
       .in("email", emails);
     if (profResp.error) {
-      return new Response(JSON.stringify({ error: profResp.error.message }), { status: 500 });
+      return jsonResp({ error: profResp.error.message }, 500);
     }
     (profResp.data || []).forEach((p) => {
       const key = (p.email || "").trim().toLowerCase();
@@ -132,7 +150,7 @@ serve(async (req: Request) => {
     .eq("type", "verlof_vervalt_warning")
     .gte("created_at", yearStart);
   if (existResp.error) {
-    return new Response(JSON.stringify({ error: existResp.error.message }), { status: 500 });
+    return jsonResp({ error: existResp.error.message }, 500);
   }
   const existKey = new Set<string>(
     ((existResp.data || []) as NotifRow[]).map((n) => `${n.user_id}:${n.related_entity_id}`),
@@ -169,29 +187,29 @@ serve(async (req: Request) => {
   }
 
   if (dryRun) {
-    return new Response(JSON.stringify({
+    return jsonResp({
       ok: true,
       dry_run: true,
       would_insert: inserts.length,
       skipped: skipped.length,
       skipped_details: skipped.slice(0, 20),
       sample_insert: inserts[0] || null,
-    }, null, 2), { status: 200, headers: { "content-type": "application/json" } });
+    });
   }
 
   let inserted = 0;
   if (inserts.length > 0) {
     const insResp = await supa.from("notifications").insert(inserts);
     if (insResp.error) {
-      return new Response(JSON.stringify({ error: insResp.error.message }), { status: 500 });
+      return jsonResp({ error: insResp.error.message }, 500);
     }
     inserted = inserts.length;
   }
 
-  return new Response(JSON.stringify({
+  return jsonResp({
     ok: true,
     processed: overdrachten.length,
     inserted,
     skipped: skipped.length,
-  }, null, 2), { status: 200, headers: { "content-type": "application/json" } });
+  });
 });
