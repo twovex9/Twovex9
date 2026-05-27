@@ -1,0 +1,257 @@
+[
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/broadcasting/auth",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/x-www-form-urlencoded"
+      }
+    ],
+    "reqBody": "socket_id=308812436.378793000&channel_name=private-users.a9f332e4-11a8-4215-9279-a37a829c38f8",
+    "respBody": ""
+  },
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/broadcasting/auth",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/x-www-form-urlencoded"
+      }
+    ],
+    "reqBody": "socket_id=832361174.853109636&channel_name=private-users.a9f332e4-11a8-4215-9279-a37a829c38f8",
+    "respBody": ""
+  },
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/rpc",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"signature\":\"hour_declaration_details\",\"body\":{\"client_id\":\"c9a23424-3230-44f8-96e3-1b9d2c3b708c\",\"year\":2026,\"month\":5}}",
+    "respBody": ""
+  },
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/rpc",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"signature\":\"hour_declaration_details\",\"body\":{\"client_id\":\"c9a23424-3230-44f8-96e3-1b9d2c3b708c\",\"year\":2026,\"month\":5}}",
+    "respBody": ""
+  },
+  {
+    "method": "PATCH",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/clients/b03221bf-34d5-4e41-bda1-49026234d9aa/weekly-budgets/9a12f7b2-034a-4022-b625-ba7017a2eb26",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"planned_hours\":\"6.5\",\"year\":\"2026\"}",
+    "respBody": ""
+  },
+  {
+    "method": "PATCH",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/clients/b03221bf-34d5-4e41-bda1-49026234d9aa/weekly-budgets/671cf92b-ee1a-4cec-844b-3b0b68a6495a",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"planned_hours\":\"4\",\"year\":\"2026\"}",
+    "respBody": ""
+  },
+  {
+    "method": "DELETE",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "status": 204,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "DELETE",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels/bd94d0bb-1225-4026-ab03-8cbb9d8d943d",
+    "status": 204,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "PATCH",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/time/bulk-update",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"time_entries\":[{\"id\":\"7d24ee15-371e-4fda-ba9c-a5d915def8ff\",\"date\":\"2026-05-01\",\"time_from\":\"08:00\",\"time_to\":\"17:05\",\"description\":\"API trace edit\",\"label\":{},\"client\":{\"id\":\"c9a23424-3230-44f8-96e3-1b9d2c3b708c\"}}]}",
+    "respBody": ""
+  },
+  {
+    "method": "PATCH",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/time/bulk-update",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"time_entries\":[{\"id\":\"7d24ee15-371e-4fda-ba9c-a5d915def8ff\",\"date\":\"2026-05-01\",\"time_from\":\"08:00\",\"time_to\":\"17:05\",\"description\":\"Test\",\"label\":{},\"client\":{\"id\":\"c9a23424-3230-44f8-96e3-1b9d2c3b708c\"}}]}",
+    "respBody": ""
+  },
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels",
+    "status": 201,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"name\":\"API_TRACE_TMP\",\"description\":\"trace\"}",
+    "respBody": ""
+  },
+  {
+    "method": "PATCH",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "status": 200,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"name\":\"API_TRACE_TMP\",\"description\":\"trace edit\"}",
+    "respBody": ""
+  },
+  {
+    "method": "POST",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/locked-months",
+    "status": 201,
+    "reqHeaders": [
+      {
+        "name": "content-type",
+        "value": "application/json"
+      }
+    ],
+    "reqBody": "{\"year\":2026,\"month\":5}",
+    "respBody": ""
+  },
+  {
+    "method": "DELETE",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/locked-months?year=2026&month=5",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels?filter%5Bsearch%5D=",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels?page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions?with[]=client&with[]=care_type&filter%5Bphases%5D%5B0%5D=4d5bde08-2a9e-4509-bee5-e50feabf0340&filter%5Bphases%5D%5B1%5D=d2b9186d-8335-49f4-b030-5b5d76f12a69&page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions?with[]=client&with[]=care_type&filter%5Bphases%5D%5B0%5D=4d5bde08-2a9e-4509-bee5-e50feabf0340&filter%5Bphases%5D%5B1%5D=d2b9186d-8335-49f4-b030-5b5d76f12a69&filter%5Bcare_types%5D%5B0%5D=5826acd8-d5e5-4cdd-81ff-801850453b30&page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/02325774-9345-4778-b583-c94e97335d1a?with[]=client&with[]=care_type",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/1a8507a1-3d0b-48a8-b041-b59178eef522?with[]=client&with[]=care_type",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/disposition-payments?with[]=disposition&filter%5Bdisposition%5D=02325774-9345-4778-b583-c94e97335d1a&page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/disposition-payments?with[]=disposition&filter%5Bdisposition%5D=1a8507a1-3d0b-48a8-b041-b59178eef522&page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/02325774-9345-4778-b583-c94e97335d1a/rates?page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/1a8507a1-3d0b-48a8-b041-b59178eef522/rates?page=1&limit=15",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  },
+  {
+    "method": "GET",
+    "url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "status": 200,
+    "reqHeaders": [],
+    "reqBody": "",
+    "respBody": ""
+  }
+]

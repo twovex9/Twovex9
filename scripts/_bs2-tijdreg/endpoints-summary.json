@@ -1,0 +1,250 @@
+[
+  {
+    "endpoint": "GET /api/notifications",
+    "count": 16,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/notifications?filter%5Buser_id%5D=a9f332e4-11a8-4215-9279-a37a829c38f8",
+    "has_request_body": false,
+    "has_response_body": true
+  },
+  {
+    "endpoint": "GET /api/phases",
+    "count": 12,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/phases?filter%5Bentity_target%5D%5Btype%5D=disposition",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/time/summary",
+    "count": 11,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/time/summary?filter%5Bstart_date%5D=2026-05-01&filter%5Bend_date%5D=2026-05-31",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/care-types",
+    "count": 9,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/care-types?filter%5Bsearch%5D=&limit=200",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/users/current",
+    "count": 8,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/users/current?with%5B%5D=roles&with%5B%5D=roles.permissions&with%5B%5D=employee",
+    "has_request_body": false,
+    "has_response_body": true
+  },
+  {
+    "endpoint": "POST /api/broadcasting/auth",
+    "count": 8,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/broadcasting/auth",
+    "has_request_body": true,
+    "has_response_body": true
+  },
+  {
+    "endpoint": "GET /api/labels",
+    "count": 8,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/labels?filter%5Bsearch%5D=",
+    "has_request_body": false,
+    "has_response_body": true
+  },
+  {
+    "endpoint": "GET /api/notes",
+    "count": 8,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/notes?with[]=user&filter%5Btarget%5D%5Btype%5D=disposition&filter%5Btarget%5D%5Bid%5D=02325774-9345-4778-b…",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "POST /api/rpc",
+    "count": 7,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/rpc",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/dispositions",
+    "count": 7,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/dispositions?with[]=client&with[]=care_type&filter%5Bphases%5D%5B0%5D=4d5bde08-2a9e-4509-bee5-e50feabf0340…",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/locked-months/check",
+    "count": 6,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/locked-months/check?year=2026&month=5",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/clients",
+    "count": 5,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/clients?filter%5Bwith_trashed%5D=true&filter%5Bhourly_type%5D=0&filter%5Bsearch%5D=&limit=1000",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/clients/weekly-budgets/summary",
+    "count": 5,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/clients/weekly-budgets/summary?filter%5Byear%5D=2026",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/audit-logs",
+    "count": 5,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/audit-logs?with[]=causer&filter%5Bresource%5D%5Btype%5D=disposition&filter%5Bresource%5D%5Bid%5D=02325774-…",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "PATCH /api/clients/{uuid}/weekly-budgets/{uuid}",
+    "count": 4,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/clients/b03221bf-34d5-4e41-bda1-49026234d9aa/weekly-budgets/9a12f7b2-034a-4022-b625-ba7017a2eb26",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/dispositions/{uuid}",
+    "count": 4,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/02325774-9345-4778-b583-c94e97335d1a?with[]=client&with[]=care_type",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/disposition-payments",
+    "count": 4,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/disposition-payments?with[]=disposition&filter%5Bdisposition%5D=02325774-9345-4778-b583-c94e97335d1a&page=…",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/dispositions/{uuid}/rates",
+    "count": 4,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/dispositions/02325774-9345-4778-b583-c94e97335d1a/rates?page=1&limit=15",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "DELETE /api/labels/{uuid}",
+    "count": 3,
+    "statuses": "204",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/users",
+    "count": 2,
+    "statuses": "304,200",
+    "sample_full_url": "https://etf.acceptance.besasuite.nl/api/users?limit=1",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "PATCH /api/time/bulk-update",
+    "count": 2,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/time/bulk-update",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/weekly-budgets",
+    "count": 2,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/weekly-budgets?filter%5Bclient%5D=b03221bf-34d5-4e41-bda1-49026234d9aa&filter%5Byear%5D=2026",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/monthly-declarations",
+    "count": 2,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/monthly-declarations?page=1&limit=15",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/announcements",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/announcements?with[]=images&with[]=createdBy&filter%5Bstatus%5D=published",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "POST /api/labels",
+    "count": 1,
+    "statuses": "201",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/labels",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/labels/{uuid}",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "PATCH /api/labels/{uuid}",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/labels/a62aa43b-9b76-41da-8fd2-f81f22b1be75",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/incidents",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/incidents?filter%5Bmy_clients%5D=true&page=1&limit=15",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "GET /api/clients-for-employee",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/clients-for-employee?filter%5Bhourly_type%5D=1&filter%5Bsearch%5D=&limit=1000",
+    "has_request_body": false,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "POST /api/locked-months",
+    "count": 1,
+    "statuses": "201",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/locked-months",
+    "has_request_body": true,
+    "has_response_body": false
+  },
+  {
+    "endpoint": "DELETE /api/locked-months",
+    "count": 1,
+    "statuses": "200",
+    "sample_full_url": "https://api.etf.acceptance.besasuite.nl/api/locked-months?year=2026&month=5",
+    "has_request_body": false,
+    "has_response_body": false
+  }
+]
