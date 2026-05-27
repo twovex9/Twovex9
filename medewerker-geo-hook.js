@@ -135,7 +135,32 @@
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    showStatus("Berekend: " + result.km + " km (enkele reis, " + (locatie.naam || locName) + "). Klik 'Wijzigingen opslaan' om te bevestigen.", "ok");
+
+    // Multi-locatie cache: sla op in medewerkers.data.locatie_afstanden[naam]
+    // zodat woon-werk-aanvink per dag de juiste afstand kan kiezen op basis
+    // van de geplande shift-locatie van die dag.
+    var empId = (typeof window.__getSelectedEmployeeId === "function")
+      ? window.__getSelectedEmployeeId()
+      : (typeof window.getSelectedEmployeeId === "function" ? window.getSelectedEmployeeId() : null);
+    if (!empId && window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      // Fallback: laatst-geopende medewerker via URL ?id=
+      var m = /[?&]id=([^&]+)/.exec(String(window.location.search || ""));
+      if (m) empId = decodeURIComponent(m[1]);
+    }
+    if (empId && window.medewerkersDB && typeof window.medewerkersDB.getByIdSync === "function") {
+      try {
+        var emp = window.medewerkersDB.getByIdSync(empId);
+        var bestaand = (emp && emp.locatie_afstanden && typeof emp.locatie_afstanden === "object")
+          ? Object.assign({}, emp.locatie_afstanden)
+          : {};
+        bestaand[locatie.naam || locName] = result.km;
+        await window.medewerkersDB.update(empId, { locatie_afstanden: bestaand });
+      } catch (err) {
+        console.warn("[geo-hook] locatie_afstanden cache update mislukt:", err);
+      }
+    }
+
+    showStatus("Berekend: " + result.km + " km (enkele reis, " + (locatie.naam || locName) + "). Opgeslagen voor deze locatie. Klik 'Wijzigingen opslaan' om de default ook te updaten.", "ok");
   }
 
   function wire() {
