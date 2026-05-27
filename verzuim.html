@@ -337,6 +337,80 @@
     </div>
   </div>
 
+  <!-- Tijdlijn-modal: mijlpalen + contactmomenten per verzuimregel (PR-F) -->
+  <div class="modal-overlay vz-tl-overlay" id="vz-tl-modal" hidden aria-hidden="true">
+    <div class="modal-card vz-tl-card" role="dialog" aria-modal="true" aria-labelledby="vz-tl-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="vz-tl-title" class="modal-title">Tijdlijn</h2>
+        <button type="button" class="modal-close" id="vz-tl-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body vz-tl-body">
+        <p class="vz-tl-sub" id="vz-tl-sub">Mijlpalen en contactmomenten voor deze verzuimregistratie.</p>
+
+        <section class="vz-tl-section">
+          <header class="vz-tl-section-head">
+            <h3>Mijlpalen (Wet-Poortwachter)</h3>
+            <button type="button" class="btn-primary vz-tl-add-btn" data-vz-tl-add="mp">+ Mijlpaal</button>
+          </header>
+          <div class="vz-tl-empty" id="vz-tl-mp-empty">Nog geen mijlpalen toegevoegd.</div>
+          <ul class="vz-tl-list" id="vz-tl-mp-list" hidden></ul>
+          <form class="vz-tl-form" id="vz-tl-mp-form" hidden>
+            <label class="modal-label">Type
+              <select id="vz-tl-mp-type" class="modal-input" required>
+                <option value="notification">Ziekmelding</option>
+                <option value="action_plan">Probleemanalyse / Plan van Aanpak</option>
+                <option value="evaluation">Eerstejaarsevaluatie</option>
+                <option value="report">WIA-aanvraag</option>
+                <option value="assessment">Einde Loondoorbetalingsverplichting</option>
+              </select>
+            </label>
+            <label class="modal-label">Deadline
+              <input type="date" id="vz-tl-mp-deadline" class="modal-input" required />
+            </label>
+            <label class="modal-label">Voltooid op (optioneel)
+              <input type="date" id="vz-tl-mp-voltooid" class="modal-input" />
+            </label>
+            <input type="hidden" id="vz-tl-mp-id" />
+            <div class="vz-tl-form-actions">
+              <button type="button" class="btn-outline" id="vz-tl-mp-cancel">Annuleren</button>
+              <button type="submit" class="btn-primary">Opslaan</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="vz-tl-section">
+          <header class="vz-tl-section-head">
+            <h3>Contactmomenten</h3>
+            <button type="button" class="btn-primary vz-tl-add-btn" data-vz-tl-add="cm">+ Contactmoment</button>
+          </header>
+          <div class="vz-tl-empty" id="vz-tl-cm-empty">Nog geen contactmomenten toegevoegd.</div>
+          <ul class="vz-tl-list" id="vz-tl-cm-list" hidden></ul>
+          <form class="vz-tl-form" id="vz-tl-cm-form" hidden>
+            <label class="modal-label">Type
+              <select id="vz-tl-cm-type" class="modal-input" required>
+                <option value="contact_moment">Contactmoment</option>
+                <option value="company_doctor_visit">Bezoek bedrijfsarts</option>
+                <option value="company_doctor_feedback">Terugkoppeling bedrijfsarts</option>
+                <option value="other">Anders</option>
+              </select>
+            </label>
+            <label class="modal-label">Datum
+              <input type="date" id="vz-tl-cm-datum" class="modal-input" required />
+            </label>
+            <label class="modal-label">Notitie
+              <textarea id="vz-tl-cm-notitie" class="modal-input" rows="3"></textarea>
+            </label>
+            <input type="hidden" id="vz-tl-cm-id" />
+            <div class="vz-tl-form-actions">
+              <button type="button" class="btn-outline" id="vz-tl-cm-cancel">Annuleren</button>
+              <button type="submit" class="btn-primary">Opslaan</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
