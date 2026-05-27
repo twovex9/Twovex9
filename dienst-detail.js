@@ -473,6 +473,7 @@
     var supa = global.besaSupabase;
     var overlapByMid = {};
     var verzuimByMid = {};
+    var verlofByMid = {};
     var dienstDateStr = new Date(dienst.start_iso).toISOString().slice(0, 10);
     var dS = new Date(dienst.start_iso).getTime();
     var dE = new Date(dienst.einde_iso).getTime();
@@ -515,10 +516,43 @@
       } catch (e) {
         console.error("[uitnodigen-picker] verzuim-query mislukt:", e);
       }
+
+      try {
+        // F5: Query 3 — goedgekeurde verlofaanvragen die de dienst-datum dekken
+        var r3 = await supa
+          .from("verlof_aanvragen")
+          .select("medewerker_id, start_datum, eind_datum, status, type")
+          .eq("status", "goedgekeurd")
+          .lte("start_datum", dienstDateStr)
+          .gte("eind_datum", dienstDateStr);
+        if (r3.error) throw r3.error;
+        (r3.data || []).forEach(function (v) {
+          if (!verlofByMid[v.medewerker_id]) verlofByMid[v.medewerker_id] = [];
+          verlofByMid[v.medewerker_id].push(v);
+        });
+      } catch (e) {
+        console.error("[uitnodigen-picker] verlof-query mislukt:", e);
+      }
     }
 
-    pickerCache = { overlapByMid: overlapByMid, verzuimByMid: verzuimByMid, dienstId: dienst.id };
-    return { overlapByMid: overlapByMid, verzuimByMid: verzuimByMid };
+    pickerCache = {
+      overlapByMid: overlapByMid, verzuimByMid: verzuimByMid, verlofByMid: verlofByMid, dienstId: dienst.id,
+    };
+    return { overlapByMid: overlapByMid, verzuimByMid: verzuimByMid, verlofByMid: verlofByMid };
+  }
+
+  // F5: BS2-verbatim datum-format "DD mmm – DD mmm YYYY" (korte NL-maand, en-dash)
+  var NL_MAANDEN_KORT = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+  function formatVerlofPeriode(startIso, eindIso) {
+    if (!startIso || !eindIso) return "";
+    var s = new Date(String(startIso) + (String(startIso).length === 10 ? "T00:00:00" : ""));
+    var e = new Date(String(eindIso) + (String(eindIso).length === 10 ? "T00:00:00" : ""));
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) return "";
+    var sd = s.getDate(), sm = NL_MAANDEN_KORT[s.getMonth()];
+    var ed = e.getDate(), em = NL_MAANDEN_KORT[e.getMonth()];
+    var jaar = e.getFullYear();
+    // BS2-formaat: jaar alleen achteraan, en-dash tussen (geen jaar bij eerste datum).
+    return sd + " " + sm + " – " + ed + " " + em + " " + jaar;
   }
 
   function getAvailabilityWarnings(med, dienst, data) {
@@ -571,6 +605,17 @@
     if (verz && verz.length > 0) {
       var label = verz[0].type === "lang" ? "Langdurig verzuim" : "Verzuim / ziek";
       warnings.push({ type: "verzuim", text: label + " op deze datum" });
+    }
+
+    // 5. F5: Goedgekeurd verlof op deze datum (BS2-verbatim tekst)
+    var verlof = data.verlofByMid && data.verlofByMid[med.id];
+    if (verlof && verlof.length > 0) {
+      var v0 = verlof[0];
+      warnings.push({ type: "verlof", text: "Op verlof tijdens deze dienst" });
+      var periode = formatVerlofPeriode(v0.start_datum, v0.eind_datum);
+      if (periode) {
+        warnings.push({ type: "verlof_periode", text: periode });
+      }
     }
 
     return warnings;

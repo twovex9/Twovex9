@@ -219,33 +219,60 @@
     var diensten = planResp.data || [];
     if (diensten.length === 0) return;
 
-    // Markeer conflict=true op die diensten
+    // F5: AUTO-AFHALEN (BS1-only verbetering boven BS2 — user-eis 2026-05-27).
+    // Zet teamlid="" zodat de dienst openstaand wordt. conflict=true blijft als
+    // markering voor de planner. Alleen toekomstige diensten worden afgehaald —
+    // diensten in het verleden zijn al gewerkt en blijven onaangeroerd.
+    var nowIso = new Date().toISOString();
+    var toekomstDiensten = diensten.filter(function (d) {
+      return String(d.start_iso || "") >= nowIso;
+    });
     var dienstIds = diensten.map(function (d) { return d.id; });
+    var toekomstIds = toekomstDiensten.map(function (d) { return d.id; });
+
+    // Conflict-flag op ALLE overlappende (verleden + toekomst) — historisch nuttig.
     var updResp = await global.besaSupabase.from("planning").update({ conflict: true }).in("id", dienstIds);
     if (updResp.error) {
       console.warn("[verlofDB] planning conflict-flag zetten mislukt:", updResp.error);
     }
 
-    // Zoek Planner-rol
-    var roleResp = await global.besaSupabase.from("bs2_roles").select("id").eq("slug", "planner").maybeSingle();
-    if (roleResp.error || !roleResp.data) {
-      console.warn("[verlofDB] Planner-rol niet gevonden — geen notificaties verzonden.");
+    // Auto-afhaal ALLEEN op toekomstige diensten.
+    if (toekomstIds.length > 0) {
+      var removeResp = await global.besaSupabase
+        .from("planning")
+        .update({ teamlid: "" })
+        .in("id", toekomstIds);
+      if (removeResp.error) {
+        console.warn("[verlofDB] auto-afhaal mislukt:", removeResp.error);
+      }
+    }
+
+    // F5: Zoek Planner-rol ÉN Teamleider-rol (user-keuze: beide krijgen notif).
+    var rolesResp = await global.besaSupabase
+      .from("bs2_roles")
+      .select("id, slug")
+      .in("slug", ["planner", "teamleider"]);
+    if (rolesResp.error || !rolesResp.data || rolesResp.data.length === 0) {
+      console.warn("[verlofDB] Planner/Teamleider-rollen niet gevonden — geen notificaties verzonden.");
       return;
     }
-    var plannerRoleId = roleResp.data.id;
+    var roleIds = rolesResp.data.map(function (r) { return r.id; });
 
-    // Planner-emails
+    // Planner + Teamleider emails (gecombineerd, gededupliceerd)
     var pruResp = await global.besaSupabase
       .from("bs2_role_users")
       .select("user_email")
-      .eq("role_id", plannerRoleId);
+      .in("role_id", roleIds);
     if (pruResp.error) {
       console.warn("[verlofDB] bs2_role_users query mislukt:", pruResp.error);
       return;
     }
-    var emails = (pruResp.data || [])
-      .map(function (r) { return String(r.user_email || "").trim().toLowerCase(); })
-      .filter(Boolean);
+    var emailSet = {};
+    (pruResp.data || []).forEach(function (r) {
+      var e = String(r.user_email || "").trim().toLowerCase();
+      if (e) emailSet[e] = true;
+    });
+    var emails = Object.keys(emailSet);
     if (emails.length === 0) return;
 
     // Profiles match
@@ -260,18 +287,27 @@
     var userIds = (profResp.data || []).map(function (p) { return p.id; });
     if (userIds.length === 0) return;
 
-    // Bouw rows: 1 notificatie per planner per dienst
+    // F5: Bouw rows — 1 notificatie per planner/teamleider per dienst. Tekst
+    // hangt af of de dienst auto-afgehaald is (toekomst) of niet (verleden).
+    var toekomstIdSet = {};
+    toekomstIds.forEach(function (id) { toekomstIdSet[id] = true; });
     var rows = [];
     diensten.forEach(function (d) {
       var startD = String(d.start_iso || "").slice(0, 10);
       var dienstLabel = (d.diensttype || "Dienst") + (d.locatie ? " (" + d.locatie + ")" : "");
+      var auto = !!toekomstIdSet[d.id];
       userIds.forEach(function (uid) {
         rows.push({
           user_id: uid,
           type: "planning_conflict_vervanging",
-          title: "Vervanging nodig: " + naam + " heeft verlof",
-          body: naam + " heeft goedgekeurd verlof tijdens dienst '" + dienstLabel + "' op " + startD +
-            ". Wijs een vervanger toe of pas de planning aan.",
+          title: auto
+            ? "Dienst vrijgekomen: " + naam + " op verlof"
+            : "Vervanging nodig: " + naam + " heeft verlof",
+          body: auto
+            ? naam + " is wegens goedgekeurd verlof van dienst '" + dienstLabel +
+              "' op " + startD + " afgehaald. Wijs een vervanger toe."
+            : naam + " heeft goedgekeurd verlof tijdens dienst '" + dienstLabel + "' op " + startD +
+              ". Wijs een vervanger toe of pas de planning aan.",
           related_entity_type: "planning",
           related_entity_id: d.id,
         });
