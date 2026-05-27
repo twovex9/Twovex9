@@ -73,6 +73,34 @@
     if (!m) return "—";
     return ((m.voornaam || "") + " " + (m.achternaam || "")).trim() || "—";
   }
+
+  /**
+   * Indicatief: bereken voor een verlofaanvraag hoeveel dagen bovenwettelijk
+   * vallen. Bron: medewerker_verlof_overgedragen (wetBeschikbaar).
+   * - type 'bovenwettelijk' → 100% bovenwet
+   * - type 'wettelijk' → bovenwet = max(0, aantalDagen - wetBeschikbaar)
+   * - andere types → null (niet relevant)
+   * Returnt {bovenwet:number, isAllBovenwet:bool} of null.
+   */
+  function bovenwetSplit(v) {
+    if (!v || (v.type !== "wettelijk" && v.type !== "bovenwettelijk")) return null;
+    var dagen = Number(v.aantalDagen || 0);
+    if (!isFinite(dagen) || dagen <= 0) return null;
+    if (v.type === "bovenwettelijk") return { bovenwet: dagen, isAllBovenwet: true };
+    var overdracht = window.medewerkerVerlofOvergedragenDB
+      ? window.medewerkerVerlofOvergedragenDB.getForMedewerkerSync(v.medewerkerId)
+      : null;
+    var wetBeschikbaar = overdracht ? Number(overdracht.wetBeschikbaar || 0) : 0;
+    var bovenwet = Math.max(0, dagen - wetBeschikbaar);
+    if (bovenwet <= 0) return null;
+    return { bovenwet: bovenwet, isAllBovenwet: false };
+  }
+  function fmtBovenwetDagen(n) {
+    var num = Number(n || 0);
+    if (Math.abs(num - Math.round(num)) < 0.05) return String(Math.round(num));
+    return num.toFixed(1).replace(".", ",");
+  }
+
   function getCurrentMedewerkerId() {
     try {
       var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync());
@@ -131,11 +159,19 @@
     if (v.eindDatum && v.eindDatum !== v.startDatum) periode += " — " + fmtDate(v.eindDatum);
     var medewerker = '<button class="link-button" data-action="edit" data-id="' + escapeHtml(v.id) + '" style="background:none;border:0;padding:0;color:var(--blue);cursor:pointer;text-align:left;font:inherit;font-weight:600;">' +
       escapeHtml(medewerkerLabel(v.medewerkerId)) + '</button>';
+    var split = bovenwetSplit(v);
+    var dagenCell = escapeHtml(String(v.aantalDagen));
+    if (split) {
+      var sub = split.isAllBovenwet
+        ? "volledig bovenwettelijk"
+        : "waarvan " + fmtBovenwetDagen(split.bovenwet) + " bovenwet.";
+      dagenCell += '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(sub) + '</span>';
+    }
     return '<tr data-id="' + escapeHtml(v.id) + '">' +
       '<td>' + medewerker + (v.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(v.beschrijving.slice(0, 60)) + (v.beschrijving.length > 60 ? "…" : "") + '</span>' : '') + '</td>' +
       '<td>' + escapeHtml(TYPE_LABELS[v.type] || v.type) + '</td>' +
       '<td>' + escapeHtml(periode) + '</td>' +
-      '<td>' + escapeHtml(String(v.aantalDagen)) + '</td>' +
+      '<td>' + dagenCell + '</td>' +
       '<td>' + statusBadge(v.status) + '</td>' +
       '<td>' + escapeHtml(fmtDateTime(v.ingediendOp)) + '</td>' +
       '<td>' + escapeHtml(fmtDateTime(v.beoordeeldOp)) + (v.beoordelingOpmerking ? '<br><span style="color:var(--text-muted);font-size:12px;font-style:italic;">"' + escapeHtml(v.beoordelingOpmerking.slice(0, 50)) + '"</span>' : '') + '</td>' +
@@ -242,10 +278,28 @@
     state.beoordeleningId = item.id;
     document.getElementById("verlof-beoordeel-id").value = item.id;
     var periode = fmtDate(item.startDatum) + (item.eindDatum && item.eindDatum !== item.startDatum ? " — " + fmtDate(item.eindDatum) : "");
+    var split = bovenwetSplit(item);
+    var overdracht = window.medewerkerVerlofOvergedragenDB
+      ? window.medewerkerVerlofOvergedragenDB.getForMedewerkerSync(item.medewerkerId)
+      : null;
+    var bovenwetLine = "";
+    if (split) {
+      bovenwetLine = '<br><span style="color:var(--yellow);font-weight:600;">' +
+        (split.isAllBovenwet ? "Volledig bovenwettelijk verlof" : ("Indicatief " + fmtBovenwetDagen(split.bovenwet) + " dagen uit bovenwettelijk")) +
+        '</span>';
+    }
+    var saldoLine = "";
+    if (overdracht) {
+      saldoLine = '<br><span style="color:var(--text-muted);font-size:12px;">Saldo overdracht — wettelijk beschikbaar: ' +
+        escapeHtml(fmtBovenwetDagen(overdracht.wetBeschikbaar)) + ' · bovenwet. beschikbaar: ' +
+        escapeHtml(fmtBovenwetDagen(overdracht.bovenwetBeschikbaar)) + '</span>';
+    }
     document.getElementById("verlof-beoordeel-preview").innerHTML =
       '<strong>' + escapeHtml(medewerkerLabel(item.medewerkerId)) + '</strong> &middot; ' +
       escapeHtml(TYPE_LABELS[item.type] || item.type) + '<br>' +
       '<span style="color:var(--text-secondary);">Periode: ' + escapeHtml(periode) + ' (' + item.aantalDagen + ' dagen)</span>' +
+      bovenwetLine +
+      saldoLine +
       (item.beschrijving ? '<br><span style="color:var(--text-secondary);">"' + escapeHtml(item.beschrijving) + '"</span>' : '');
     document.getElementById("verlof-beoordeel-opmerking").value = "";
     document.getElementById("verlof-beoordeel-modal").style.display = "flex";

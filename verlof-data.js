@@ -157,9 +157,119 @@
   }
 
   async function indienen(id) { return update(id, { status: "ingediend" }); }
-  async function goedkeuren(id, opmerking) { return update(id, { status: "goedgekeurd", beoordelingOpmerking: opmerking || "" }); }
+  async function goedkeuren(id, opmerking) {
+    var res = await update(id, { status: "goedgekeurd", beoordelingOpmerking: opmerking || "" });
+    // Best-effort: notificeer planners + markeer planning-conflicten.
+    // Faalt nooit op de UI; logt alleen warn bij fouten.
+    notifyPlanningConflictsAfterApproval(res).catch(function (err) {
+      console.warn("[verlofDB] planning-conflict-notify failed:", err);
+    });
+    return res;
+  }
   async function afwijzen(id, opmerking) { return update(id, { status: "afgewezen", beoordelingOpmerking: opmerking || "" }); }
   async function annuleren(id) { return update(id, { status: "geannuleerd" }); }
+
+  /**
+   * Na goedkeuring: zoek planning-rijen die overlappen met de verlof-periode
+   * van de betreffende medewerker (match op `teamlid` = "Voornaam Achternaam").
+   * Zet `conflict=true` op die diensten en stuur in-app notificaties naar
+   * alle gebruikers met de Planner-rol (bs2_roles.slug='planner').
+   *
+   * Best-effort, fail-silent — een failure mag de goedkeuring zelf niet
+   * verstoren of de UI in een logout-loop trekken.
+   */
+  async function notifyPlanningConflictsAfterApproval(verlof) {
+    if (!global.besaSupabase || !verlof) return;
+    var mwDB = global.medewerkersDB;
+    if (!mwDB || typeof mwDB.getByIdSync !== "function") return;
+    var mw = mwDB.getByIdSync(verlof.medewerkerId);
+    if (!mw) return;
+    var naam = ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim();
+    if (!naam) return;
+    if (!verlof.startDatum || !verlof.eindDatum) return;
+
+    var startBoundary = String(verlof.startDatum) + "T00:00:00Z";
+    var endBoundary = String(verlof.eindDatum) + "T23:59:59Z";
+
+    var planResp = await global.besaSupabase
+      .from("planning")
+      .select("id, start_iso, einde_iso, teamlid, diensttype, locatie")
+      .eq("teamlid", naam)
+      .eq("archived", false)
+      .gte("start_iso", startBoundary)
+      .lte("start_iso", endBoundary);
+    if (planResp.error) {
+      console.warn("[verlofDB] planning-conflict query mislukt:", planResp.error);
+      return;
+    }
+    var diensten = planResp.data || [];
+    if (diensten.length === 0) return;
+
+    // Markeer conflict=true op die diensten
+    var dienstIds = diensten.map(function (d) { return d.id; });
+    var updResp = await global.besaSupabase.from("planning").update({ conflict: true }).in("id", dienstIds);
+    if (updResp.error) {
+      console.warn("[verlofDB] planning conflict-flag zetten mislukt:", updResp.error);
+    }
+
+    // Zoek Planner-rol
+    var roleResp = await global.besaSupabase.from("bs2_roles").select("id").eq("slug", "planner").maybeSingle();
+    if (roleResp.error || !roleResp.data) {
+      console.warn("[verlofDB] Planner-rol niet gevonden — geen notificaties verzonden.");
+      return;
+    }
+    var plannerRoleId = roleResp.data.id;
+
+    // Planner-emails
+    var pruResp = await global.besaSupabase
+      .from("bs2_role_users")
+      .select("user_email")
+      .eq("role_id", plannerRoleId);
+    if (pruResp.error) {
+      console.warn("[verlofDB] bs2_role_users query mislukt:", pruResp.error);
+      return;
+    }
+    var emails = (pruResp.data || [])
+      .map(function (r) { return String(r.user_email || "").trim().toLowerCase(); })
+      .filter(Boolean);
+    if (emails.length === 0) return;
+
+    // Profiles match
+    var profResp = await global.besaSupabase
+      .from("profiles")
+      .select("id, email")
+      .in("email", emails);
+    if (profResp.error) {
+      console.warn("[verlofDB] profiles query mislukt:", profResp.error);
+      return;
+    }
+    var userIds = (profResp.data || []).map(function (p) { return p.id; });
+    if (userIds.length === 0) return;
+
+    // Bouw rows: 1 notificatie per planner per dienst
+    var rows = [];
+    diensten.forEach(function (d) {
+      var startD = String(d.start_iso || "").slice(0, 10);
+      var dienstLabel = (d.diensttype || "Dienst") + (d.locatie ? " (" + d.locatie + ")" : "");
+      userIds.forEach(function (uid) {
+        rows.push({
+          user_id: uid,
+          type: "planning_conflict_vervanging",
+          title: "Vervanging nodig: " + naam + " heeft verlof",
+          body: naam + " heeft goedgekeurd verlof tijdens dienst '" + dienstLabel + "' op " + startD +
+            ". Wijs een vervanger toe of pas de planning aan.",
+          related_entity_type: "planning",
+          related_entity_id: d.id,
+        });
+      });
+    });
+    if (rows.length === 0) return;
+    var insResp = await global.besaSupabase.from("notifications").insert(rows);
+    if (insResp.error) {
+      console.warn("[verlofDB] planner-notifications insert mislukt:", insResp.error);
+    }
+  }
+
   async function archive(id) { return update(id, { archived: true }); }
   async function restore(id) { return update(id, { archived: false }); }
 
