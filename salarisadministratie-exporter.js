@@ -952,13 +952,13 @@
 
     function ortDefaultVvtRules() {
       return [
-        { id: "ort_vvt_feestdag", dag: "Feestdag", start: "00:00", end: "23:59", percentage: 200 },
-        { id: "ort_vvt_zat_avond", dag: "Zaterdag", start: "18:00", end: "23:59", percentage: 140 },
-        { id: "ort_vvt_zat_dag", dag: "Zaterdag", start: "06:00", end: "18:00", percentage: 120 },
-        { id: "ort_vvt_zat_nacht", dag: "Zaterdag", start: "00:00", end: "06:00", percentage: 140 },
-        { id: "ort_vvt_zon", dag: "Zondag", start: "00:00", end: "23:59", percentage: 160 },
-        { id: "ort_vvt_mdv_nacht", dag: "Maandag - Vrijdag", start: "22:00", end: "06:00", percentage: 140 },
-        { id: "ort_vvt_mdv_avond", dag: "Maandag - Vrijdag", start: "20:00", end: "22:00", percentage: 122 },
+        { id: "ort_vvt_feestdag", dag: "Feestdag", start: "00:00", end: "23:59", percentage: 200, priority: 10 },
+        { id: "ort_vvt_zat_avond", dag: "Zaterdag", start: "18:00", end: "23:59", percentage: 140, priority: 3 },
+        { id: "ort_vvt_zat_dag", dag: "Zaterdag", start: "06:00", end: "18:00", percentage: 120, priority: 2 },
+        { id: "ort_vvt_zat_nacht", dag: "Zaterdag", start: "00:00", end: "06:00", percentage: 140, priority: 1 },
+        { id: "ort_vvt_zon", dag: "Zondag", start: "00:00", end: "23:59", percentage: 160, priority: 1 },
+        { id: "ort_vvt_mdv_nacht", dag: "Maandag - Vrijdag", start: "22:00", end: "06:00", percentage: 140, priority: 2 },
+        { id: "ort_vvt_mdv_avond", dag: "Maandag - Vrijdag", start: "20:00", end: "22:00", percentage: 122, priority: 1 },
       ];
     }
 
@@ -966,23 +966,23 @@
 
     function ortDefaultJeugdzorgRules() {
       return [
-        { id: "ort_jz_zat_nacht", dag: "Zaterdag", start: "22:00", end: "06:00", percentage: 145 },
-        { id: "ort_jz_mdv_nacht", dag: MDV, start: "22:00", end: "06:00", percentage: 145 },
-        { id: "ort_jz_zon_nacht", dag: "Zondag", start: "22:00", end: "06:00", percentage: 145 },
-        { id: "ort_jz_zat_lang", dag: "Zaterdag", start: "20:00", end: "06:00", percentage: 145 },
-        { id: "ort_jz_feestdag", dag: "Feestdag", start: "00:00", end: "23:59", percentage: 145 },
-        { id: "ort_jz_zat_dag", dag: "Zaterdag", start: "06:00", end: "22:00", percentage: 130 },
-        { id: "ort_jz_zon_vol", dag: "Zondag", start: "00:00", end: "23:59", percentage: 145 },
-        { id: "ort_jz_mdv_vroeg", dag: MDV, start: "06:00", end: "07:00", percentage: 125 },
-        { id: "ort_jz_mdv_dag", dag: MDV, start: "07:00", end: "19:00", percentage: 100 },
-        { id: "ort_jz_mdv_avond", dag: MDV, start: "19:00", end: "22:00", percentage: 125 },
+        { id: "ort_jz_zat_nacht", dag: "Zaterdag", start: "22:00", end: "06:00", percentage: 145, priority: 0 },
+        { id: "ort_jz_mdv_nacht", dag: MDV, start: "22:00", end: "06:00", percentage: 145, priority: 0 },
+        { id: "ort_jz_zon_nacht", dag: "Zondag", start: "22:00", end: "06:00", percentage: 145, priority: 0 },
+        { id: "ort_jz_zat_lang", dag: "Zaterdag", start: "20:00", end: "06:00", percentage: 145, priority: 0 },
+        { id: "ort_jz_feestdag", dag: "Feestdag", start: "00:00", end: "23:59", percentage: 145, priority: 10 },
+        { id: "ort_jz_zat_dag", dag: "Zaterdag", start: "06:00", end: "22:00", percentage: 130, priority: 1 },
+        { id: "ort_jz_zon_vol", dag: "Zondag", start: "00:00", end: "23:59", percentage: 145, priority: 1 },
+        { id: "ort_jz_mdv_vroeg", dag: MDV, start: "06:00", end: "07:00", percentage: 125, priority: 3 },
+        { id: "ort_jz_mdv_dag", dag: MDV, start: "07:00", end: "19:00", percentage: 100, priority: 0 },
+        { id: "ort_jz_mdv_avond", dag: MDV, start: "19:00", end: "22:00", percentage: 125, priority: 0 },
       ];
     }
 
     function ortDefaultRules() {
       return {
-        _vvtPresetVersion: 2,
-        _jeugdzorgPresetVersion: 2,
+        _vvtPresetVersion: 3,
+        _jeugdzorgPresetVersion: 3,
         vvt: ortDefaultVvtRules(),
         jeugdzorg: ortDefaultJeugdzorgRules(),
       };
@@ -1007,14 +1007,14 @@
           data.jeugdzorg = def.jeugdzorg.slice();
           changed = true;
         }
-        if (!data._vvtPresetVersion || data._vvtPresetVersion < 2) {
+        if (!data._vvtPresetVersion || data._vvtPresetVersion < 3) {
           data.vvt = ortDefaultVvtRules();
-          data._vvtPresetVersion = 2;
+          data._vvtPresetVersion = 3;
           changed = true;
         }
-        if (!data._jeugdzorgPresetVersion || data._jeugdzorgPresetVersion < 2) {
+        if (!data._jeugdzorgPresetVersion || data._jeugdzorgPresetVersion < 3) {
           data.jeugdzorg = ortDefaultJeugdzorgRules();
-          data._jeugdzorgPresetVersion = 2;
+          data._jeugdzorgPresetVersion = 3;
           changed = true;
         }
         if (changed) localStorage.setItem(ORT_KEY, JSON.stringify(data));
