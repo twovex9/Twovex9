@@ -42,6 +42,7 @@
     "conflict", "archived",
     "open_voor_aanmelding", "pauze_uren", "vereist_aantal_medewerkers",
     "beschrijving", "parent_dienst_id",
+    "kilometers",
   ];
 
   function toIsoOrNull(s) {
@@ -79,6 +80,7 @@
       archived: !!row.archived,
       pauze_uren: row.pauze_uren != null ? Number(row.pauze_uren) : 0,
       vereist_aantal_medewerkers: row.vereist_aantal_medewerkers != null ? Number(row.vereist_aantal_medewerkers) : 1,
+      kilometers: row.kilometers != null ? Number(row.kilometers) : 0,
       beschrijving: row.beschrijving || "",
       open_voor_aanmelding: row.open_voor_aanmelding !== false,
       parent_dienst_id: row.parent_dienst_id || null,
@@ -109,6 +111,7 @@
       open_voor_aanmelding: safe.open_voor_aanmelding !== false,
       pauze_uren: safe.pauze_uren != null ? Number(safe.pauze_uren) : 0,
       vereist_aantal_medewerkers: safe.vereist_aantal_medewerkers != null ? Number(safe.vereist_aantal_medewerkers) : 1,
+      kilometers: safe.kilometers != null ? Number(safe.kilometers) : 0,
       beschrijving: safe.beschrijving || null,
       parent_dienst_id: safe.parent_dienst_id || null,
       data: data,

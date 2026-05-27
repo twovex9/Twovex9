@@ -11648,6 +11648,12 @@ body.planning-dienst-open {
   display: none;
 }
 
+.planning-dienst-hint.planning-dienst-hint--warn {
+  color: var(--yellow);
+  background: var(--yellow-soft);
+  border-color: var(--yellow);
+}
+
 .planning-dienst-label .req {
   color: var(--pt-b91c1c);
   font-weight: 800;

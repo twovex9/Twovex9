@@ -44,6 +44,7 @@
       overuren: Number(row.overuren) || 0,
       regels: row.regels || "full_time_only",
       teams: teams,
+      standaard_pauze_uren: Number(row.standaard_pauze_uren) || 0,
     };
   }
   function objToInsertPayload(o) {
@@ -59,6 +60,7 @@
       overuren: Number(safe.overuren) || 0,
       regels: safe.regels || "full_time_only",
       teams: Array.isArray(safe.teams) ? safe.teams : [],
+      standaard_pauze_uren: Number(safe.standaard_pauze_uren) || 0,
     };
   }
 

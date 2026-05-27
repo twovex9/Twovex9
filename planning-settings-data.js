@@ -22,7 +22,9 @@
     try {
       var r = await supa.from("planning_settings").select("*").maybeSingle();
       if (r.error) throw r.error;
-      cache = r.data || { min_compensatie_uren: -20, max_compensatie_uren: 20 };
+      cache = r.data || { min_compensatie_uren: -20, max_compensatie_uren: 20, km_tarief: 0.23 };
+      // Backfill: oude rijen zonder km_tarief defaulten op 0.23 voor UI
+      if (cache.km_tarief == null) cache.km_tarief = 0.23;
       emit();
       return cache;
     } catch (err) {
