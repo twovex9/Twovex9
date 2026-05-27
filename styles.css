@@ -22780,3 +22780,15 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .vs-col-bovenwet { background: rgba(250, 204, 21, 0.04); }
 .employees-table th.vs-col-wet,
 .employees-table th.vs-col-bovenwet { background-image: none; }
+
+/* === Verlof goedkeuringsroute (PR-B) — "wacht op" badge === */
+.verlof-wachten-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+}

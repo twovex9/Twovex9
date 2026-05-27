@@ -12,6 +12,7 @@
     search: "",
     showArchived: false,
     onlyMine: false,
+    onlyToBeoordelen: false,
     filterStatus: "",
     filterType: "",
     page: 1,
@@ -19,6 +20,23 @@
     editingId: null,
     beoordeleningId: null,
   };
+
+  /**
+   * PR-B: kan de huidige user deze ingediende aanvraag beoordelen?
+   *   - Admin-tier (Eigenaar/Admin/Directeur) altijd ja.
+   *   - Anders: heeft user de rol genoemd in v.huidigeGoedkeurderRol.
+   */
+  function currentUserKanBeoordelen(v) {
+    if (!v || v.status !== "ingediend") return false;
+    try {
+      if (window.besaIsAdminTier && window.besaIsAdminTier()) return true;
+      var rol = v.huidigeGoedkeurderRol || "HR";
+      if (window.besaPermissions && typeof window.besaPermissions.hasRole === "function") {
+        return window.besaPermissions.hasRole(rol);
+      }
+    } catch (e) { /* */ }
+    return false;
+  }
 
   var STATUS_LABELS = {
     concept: "Concept",
@@ -120,6 +138,9 @@
       if (state.onlyMine) {
         if (!myId || String(v.medewerkerId) !== String(myId)) return false;
       }
+      if (state.onlyToBeoordelen) {
+        if (!currentUserKanBeoordelen(v)) return false;
+      }
       if (!q) return true;
       var hay = medewerkerLabel(v.medewerkerId) + " " + (v.beschrijving || "") + " " + (v.type || "") + " " + (v.status || "");
       return hay.toLowerCase().indexOf(q) >= 0;
@@ -144,7 +165,12 @@
       acts.push('<button class="btn-primary" data-action="indienen" data-id="' + escapeHtml(v.id) + '" style="font-size:12px;padding:4px 10px;">Indienen</button>');
     }
     if (v.status === "ingediend") {
-      acts.push('<button class="btn-primary" data-action="beoordeel" data-id="' + escapeHtml(v.id) + '" style="font-size:12px;padding:4px 10px;">Beoordeel</button>');
+      if (currentUserKanBeoordelen(v)) {
+        acts.push('<button class="btn-primary" data-action="beoordeel" data-id="' + escapeHtml(v.id) + '" style="font-size:12px;padding:4px 10px;">Beoordeel</button>');
+      } else {
+        var wachtOp = escapeHtml(v.huidigeGoedkeurderRol || "HR");
+        acts.push('<span class="verlof-wachten-pill" title="Aanvraag is ingediend; wacht op goedkeuring door ' + wachtOp + '">Wacht op ' + wachtOp + '</span>');
+      }
     }
     if (v.status === "concept" || v.status === "ingediend") {
       acts.push('<button class="btn-outline" data-action="annuleer" data-id="' + escapeHtml(v.id) + '" style="font-size:12px;padding:4px 10px;">Annuleer</button>');
@@ -294,9 +320,10 @@
         escapeHtml(fmtBovenwetDagen(overdracht.wetBeschikbaar)) + ' · bovenwet. beschikbaar: ' +
         escapeHtml(fmtBovenwetDagen(overdracht.bovenwetBeschikbaar)) + '</span>';
     }
+    var rolBadge = '<span class="verlof-wachten-pill" style="margin-left:6px;">Goedkeuring door ' + escapeHtml(item.huidigeGoedkeurderRol || "HR") + '</span>';
     document.getElementById("verlof-beoordeel-preview").innerHTML =
       '<strong>' + escapeHtml(medewerkerLabel(item.medewerkerId)) + '</strong> &middot; ' +
-      escapeHtml(TYPE_LABELS[item.type] || item.type) + '<br>' +
+      escapeHtml(TYPE_LABELS[item.type] || item.type) + rolBadge + '<br>' +
       '<span style="color:var(--text-secondary);">Periode: ' + escapeHtml(periode) + ' (' + item.aantalDagen + ' dagen)</span>' +
       bovenwetLine +
       saldoLine +
@@ -337,16 +364,23 @@
 
     var tabMine = document.getElementById("verlof-tab-mine");
     var tabAll = document.getElementById("verlof-tab-all");
-    function setTab(mine) {
-      state.onlyMine = !!mine; state.page = 1;
-      tabMine.classList.toggle("filter-chip--active", mine);
-      tabAll.classList.toggle("filter-chip--active", !mine);
-      tabMine.setAttribute("aria-selected", mine ? "true" : "false");
-      tabAll.setAttribute("aria-selected", mine ? "false" : "true");
+    var tabToB = document.getElementById("verlof-tab-tobeoordeel");
+    function setTab(which) {
+      state.onlyMine = (which === "mine");
+      state.onlyToBeoordelen = (which === "tobeoordeel");
+      state.page = 1;
+      var map = { mine: tabMine, all: tabAll, tobeoordeel: tabToB };
+      Object.keys(map).forEach(function (k) {
+        if (!map[k]) return;
+        var active = (k === which);
+        map[k].classList.toggle("filter-chip--active", active);
+        map[k].setAttribute("aria-selected", active ? "true" : "false");
+      });
       render();
     }
-    tabMine.addEventListener("click", function () { setTab(true); });
-    tabAll.addEventListener("click", function () { setTab(false); });
+    tabMine.addEventListener("click", function () { setTab("mine"); });
+    tabAll.addEventListener("click", function () { setTab("all"); });
+    if (tabToB) tabToB.addEventListener("click", function () { setTab("tobeoordeel"); });
 
     document.getElementById("verlof-archived-toggle").addEventListener("change", function (e) { state.showArchived = !!e.target.checked; state.page = 1; render(); });
     document.getElementById("verlof-filter-status").addEventListener("change", function (e) { state.filterStatus = e.target.value || ""; state.page = 1; render(); });
