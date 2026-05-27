@@ -692,6 +692,7 @@ function loadEmployeeIntoForm() {
   setText("emp-fullname", fullName);
   document.title = `${fullName} — HR`;
   updateLoginAsButton(fullName);
+  renderPlanbaarPill(emp);
   setText("emp-email-display", emp.email);
   setText("emp-tel-display", emp.tel);
   setText("emp-email-display2", emp.email);
@@ -938,6 +939,91 @@ function loadEmployeeIntoForm() {
     window.__syncFunctieDropdown();
   }
 }
+
+// F4: Planbaarheid-pill rechtsboven in hero — klikbaar voor permissie
+// `manage-planning-employees` (Eigenaar/Admin/Directeur/Planner/Teamleider).
+function renderPlanbaarPill(emp) {
+  const pill = document.getElementById("emp-planbaar-pill");
+  const textEl = document.getElementById("emp-planbaar-text");
+  if (!pill || !textEl) return;
+  const stored = emp && emp.data && Object.prototype.hasOwnProperty.call(emp.data, "isPlannable")
+    ? emp.data.isPlannable
+    : true;
+  const planbaar = stored !== false;
+  pill.classList.toggle("emp-planbaar-pill--planbaar", planbaar);
+  pill.classList.toggle("emp-planbaar-pill--niet-planbaar", !planbaar);
+  textEl.textContent = planbaar ? "Planbaar" : "Niet planbaar";
+  pill.dataset.value = planbaar ? "true" : "false";
+}
+function openPlanbaarModal() {
+  const emp = getSelectedEmployee();
+  if (!emp || !emp.id) return;
+  if (typeof window.besaCan === "function" && !window.besaCan("manage-planning-employees")) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Geen rechten om planbaarheid te wijzigen.");
+    return;
+  }
+  const modal = document.getElementById("emp-planbaar-modal");
+  if (!modal) return;
+  const stored = emp.data && Object.prototype.hasOwnProperty.call(emp.data, "isPlannable")
+    ? emp.data.isPlannable
+    : true;
+  const cur = stored === false ? "false" : "true";
+  document.querySelectorAll('input[name="emp-planbaar-choice"]').forEach(function (r) {
+    r.checked = (r.value === cur);
+  });
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+}
+function closePlanbaarModal() {
+  const modal = document.getElementById("emp-planbaar-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+}
+async function savePlanbaarChoice() {
+  const emp = getSelectedEmployee();
+  if (!emp || !emp.id) return;
+  const checked = document.querySelector('input[name="emp-planbaar-choice"]:checked');
+  if (!checked) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Kies eerst een optie.");
+    return;
+  }
+  const newValue = checked.value === "true";
+  if (!window.medewerkersDB || typeof window.medewerkersDB.update !== "function") {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Data-laag medewerkersDB niet beschikbaar.");
+    return;
+  }
+  const saveBtn = document.getElementById("emp-planbaar-modal-save");
+  if (saveBtn) saveBtn.disabled = true;
+  try {
+    const currentData = (emp.data && typeof emp.data === "object") ? emp.data : {};
+    const newData = Object.assign({}, currentData, { isPlannable: newValue });
+    await window.medewerkersDB.update(emp.id, { data: newData });
+    emp.data = newData;
+    renderPlanbaarPill(emp);
+    closePlanbaarModal();
+    if (window.showActionFeedback) {
+      window.showActionFeedback("saved", newValue ? "Op 'Planbaar' gezet" : "Op 'Niet planbaar' gezet");
+    }
+  } catch (err) {
+    if (window.showActionFeedback) {
+      window.showActionFeedback("error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+    }
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+function initPlanbaarPill() {
+  const pill = document.getElementById("emp-planbaar-pill");
+  if (pill) pill.addEventListener("click", openPlanbaarModal);
+  const closeBtn = document.getElementById("emp-planbaar-modal-close");
+  if (closeBtn) closeBtn.addEventListener("click", closePlanbaarModal);
+  const cancelBtn = document.getElementById("emp-planbaar-modal-cancel");
+  if (cancelBtn) cancelBtn.addEventListener("click", closePlanbaarModal);
+  const saveBtn = document.getElementById("emp-planbaar-modal-save");
+  if (saveBtn) saveBtn.addEventListener("click", savePlanbaarChoice);
+}
+document.addEventListener("DOMContentLoaded", initPlanbaarPill);
 
 function initTabs() {
   const tabs = document.querySelectorAll(".emp-tab");
