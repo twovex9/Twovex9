@@ -447,7 +447,53 @@ function durationHours(startIso, endIso) {
   return Math.max(0, (b - a) / 3600000);
 }
 
+// F9: vaste diensttype-volgorde per user-eis (planning week/dag).
+// Eerst 5 verplichte types, dan 1-op-1 gegroepeerd per cliënt, dan rest
+// alfabetisch. Binnen elke groep: oplopend op start-tijd.
+const DIENSTTYPE_VASTE_VOLGORDE = [
+  "vroege dienst", "vroege",
+  "late dienst", "late",
+  "waakdienst", "waak", "wak-dienst",
+  "achterwacht",
+  // 1-op-1 = 5e groep maar wordt apart behandeld (groepering per cliënt).
+];
+function diensttypeRangIndex(dt) {
+  const s = String(dt || "").trim().toLowerCase();
+  if (!s) return DIENSTTYPE_VASTE_VOLGORDE.length + 2; // onbekend: na alles
+  // 1-op-1 expliciet check (groep 5)
+  if (s === "1 op 1" || s === "1-op-1" || s === "1op1" || s.indexOf("op 1") >= 0 || s === "een op een") {
+    return 4; // index 4 = "groep 5" (na achterwacht, vóór rest)
+  }
+  for (let i = 0; i < DIENSTTYPE_VASTE_VOLGORDE.length; i += 1) {
+    if (s === DIENSTTYPE_VASTE_VOLGORDE[i]) {
+      // Eerst alle varianten van Vroege → groep 0, Late → groep 1, etc.
+      if (i <= 1) return 0;
+      if (i <= 3) return 1;
+      if (i <= 6) return 2;
+      if (i === 7) return 3;
+    }
+  }
+  return DIENSTTYPE_VASTE_VOLGORDE.length + 1; // rest (Boventallig/Training/Tussendienst/Vergadering/MDO/...)
+}
+
 function comparePlanningItemsByTime(a, b) {
+  // Eerst groeperen op vaste diensttype-volgorde (F9 user-eis)
+  const ra = diensttypeRangIndex(a.diensttype || a.functie);
+  const rb = diensttypeRangIndex(b.diensttype || b.functie);
+  if (ra !== rb) return ra - rb;
+  // Binnen 1-op-1-groep: alfabetisch op cliënt-naam (gegroepeerd per cliënt)
+  if (ra === 4) {
+    const ca = String(a.client || a.clientNaam || a.cliënt || "").toLowerCase();
+    const cb = String(b.client || b.clientNaam || b.cliënt || "").toLowerCase();
+    if (ca !== cb) return ca.localeCompare(cb, "nl", { sensitivity: "base" });
+  }
+  // Binnen "rest"-groep: alfabetisch op diensttype-naam
+  if (ra === DIENSTTYPE_VASTE_VOLGORDE.length + 1) {
+    const da = String(a.diensttype || "").toLowerCase();
+    const db = String(b.diensttype || "").toLowerCase();
+    if (da !== db) return da.localeCompare(db, "nl", { sensitivity: "base" });
+  }
+  // Binnen elke groep: tijd-volgorde
   const sa = parseStartDate(a.start);
   const sb = parseStartDate(b.start);
   const ta = sa ? sa.getTime() : Number.POSITIVE_INFINITY;
@@ -458,9 +504,6 @@ function comparePlanningItemsByTime(a, b) {
   const tea = ea ? ea.getTime() : Number.POSITIVE_INFINITY;
   const teb = eb ? eb.getTime() : Number.POSITIVE_INFINITY;
   if (tea !== teb) return tea - teb;
-  const da = String(a.diensttype || "").toLowerCase();
-  const db = String(b.diensttype || "").toLowerCase();
-  if (da !== db) return da.localeCompare(db, "nl", { sensitivity: "base" });
   return String(a.id || "").localeCompare(String(b.id || ""));
 }
 
