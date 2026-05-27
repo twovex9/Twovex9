@@ -172,6 +172,16 @@
         <a class="bd2-card bd2-card--money table-card bd2-card--link" id="bd-card-out" href="beschikkingen?fng=1">
           <span class="bd2-card-lbl"><span class="bd2-eur" aria-hidden="true">€</span> Te declareren (totaal)</span>
           <span class="bd2-card-val bd2-val--red" id="bd-v-out">€ 0,00</span>
+          <span class="bd2-card-sub bd-card-split">
+            <span class="bd-card-split-item">
+              <span class="bd-card-split-lbl">Achterstand</span>
+              <span class="bd-card-split-val bd-card-split-val--red" id="bd-v-achterstand">€ 0,00</span>
+            </span>
+            <span class="bd-card-split-item">
+              <span class="bd-card-split-lbl">Lopende maand</span>
+              <span class="bd-card-split-val bd-card-split-val--warn" id="bd-v-lopend">€ 0,00</span>
+            </span>
+          </span>
         </a>
         <section class="bd2-card bd2-card--chart table-card" id="bd-card-monthly" aria-label="Maandelijkse Betalingen">
           <h2 class="bd-sec-t">Maandelijkse Betalingen</h2>
@@ -273,6 +283,7 @@
   <script src="besa-audit.js" defer></script>
   <script src="besa-daterange.js?v=dr2" defer></script>
   <script src="beschikkingen-dashboard-data.js?v=bd4snap" defer></script>
-  <script src="beschikkingen-dashboard.js?v=bd6tipfix" defer></script>
+  <script src="urendeclaraties-data.js" defer></script>
+  <script src="beschikkingen-dashboard.js?v=bd7splitlopend" defer></script>
 </body>
 </html>

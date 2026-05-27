@@ -91,9 +91,57 @@
   }
 
   /**
+   * PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren
+   * lopende maand. BS2 toont alleen 1 KPI "Nog niet gedeclareerd"; wij
+   * splitten dat op uit urendeclaraties.bedrag matched op beschikking-naam.
+   */
+  function computeAchterstandLopend(beschikking) {
+    var out = { achterstand: 0, lopend: 0 };
+    if (!beschikking || !window.urendeclaratiesDB || typeof window.urendeclaratiesDB.getAllSync !== "function") {
+      return out;
+    }
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    if (!items.length) return out;
+    var bnaam = String(beschikking.naam || "").toLowerCase().trim();
+    if (!bnaam) return out;
+
+    var clientNaam = "";
+    if (beschikking.clientId && typeof getClientenById === "function") {
+      var c = getClientenById(beschikking.clientId);
+      if (c) clientNaam = ((c.voornaam || "") + " " + (c.achternaam || "")).toLowerCase().trim();
+    }
+
+    var now = new Date();
+    var nowYear = now.getFullYear();
+    var nowMonth = now.getMonth(); // 0-indexed (jan=0)
+
+    items.forEach(function (u) {
+      if (!u) return;
+      var beschMatch = String(u.beschikking || "").toLowerCase().trim() === bnaam;
+      if (!beschMatch && clientNaam && beschikking.zorgsoortKey) {
+        var clMatch = String(u.client || "").toLowerCase().trim() === clientNaam;
+        var zsMatch = String(u.zorgsoort || "").toLowerCase().indexOf(String(beschikking.zorgsoortKey || "").toLowerCase()) !== -1;
+        beschMatch = clMatch && zsMatch;
+      }
+      if (!beschMatch) return;
+
+      var y = Number(u.jaar) || 0;
+      var mIdx = Number(u.maand); // 0-indexed
+      var bedrag = n2(u.bedrag);
+
+      if (y < nowYear || (y === nowYear && mIdx < nowMonth)) {
+        out.achterstand += bedrag;
+      } else if (y === nowYear && mIdx === nowMonth) {
+        out.lopend += bedrag;
+      }
+    });
+    return out;
+  }
+
+  /**
    * PR #7 — Budget-overschrijdings badge in de Bedragen-blok.
    * Telt aantal maanden waar ingediende_uren > gedebiteerde_uren voor deze
-   * beschikking, plus totaal-delta. Hidden als geen overschrijdingen.
+   * beschikking, plus totaal-delta.
    */
   function updateBudgetBadge(beschikking) {
     var badge = document.getElementById("bdtl-budget-badge");
@@ -138,12 +186,12 @@
     }
   }
 
-  // Re-render badge bij urendeclaraties-bootstrap
+  // Re-render badge + achterstand bij urendeclaraties-bootstrap
   window.addEventListener("besa:urendeclaraties-updated", function () {
     try {
-      var m = /[?&]id=([^&]+)/.exec(window.location.search);
-      if (!m) return;
-      var bid = decodeURIComponent(m[1]);
+      var mm = /[?&]id=([^&]+)/.exec(window.location.search);
+      if (!mm) return;
+      var bid = decodeURIComponent(mm[1]);
       var b = window.beschikkingenDB && window.beschikkingenDB.getByIdSync
         ? window.beschikkingenDB.getByIdSync(bid) : null;
       if (b) updateBudgetBadge(b);
@@ -723,6 +771,12 @@
         var el = document.getElementById(pair[0]);
         if (el) el.textContent = pair[1];
       });
+      // PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren lopende maand
+      var split = computeAchterstandLopend(b);
+      var elA = document.getElementById("bdtl-achterstand");
+      var elL = document.getElementById("bdtl-lopend");
+      if (elA) elA.textContent = fmtEur(split.achterstand);
+      if (elL) elL.textContent = fmtEur(split.lopend);
       // PR #7 — Budget-overschrijdings badge
       updateBudgetBadge(b);
     }());

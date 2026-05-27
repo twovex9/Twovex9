@@ -44,6 +44,12 @@
       bedrag: Number(row.bedrag) || 0,
       gedebiteerdeUren: Number(row.gedebiteerde_uren) || 0,
       ingediendeUren: Number(row.ingediende_uren) || 0,
+      // PR #6 — Pauline override velden (alleen Ambulant Intern)
+      overrideUren: row.override_uren == null ? null : Number(row.override_uren),
+      overrideReden: row.override_reden || "",
+      overrideBy: row.override_by || null,
+      overrideByNaam: row.override_by_naam || "",
+      overrideAt: row.override_at || null,
     };
   }
   function objToInsertPayload(o) {
@@ -117,6 +123,48 @@
     }
   }
 
+  /**
+   * PR #6 — Pauline override op (Ambulant Intern) urendeclaratie.
+   *   setOverride(id, uren, reden)  → uren=null + reden="" wist override
+   * Reden is verplicht wanneer uren wordt gezet.
+   */
+  async function setOverride(id, uren, reden) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) throw new Error("Geen id");
+    var clearOverride = (uren == null || uren === "");
+    if (!clearOverride && (!reden || !String(reden).trim())) {
+      throw new Error("Reden is verplicht bij override");
+    }
+    var profile = global.besaCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
+    var byId = profile ? (profile.id || null) : null;
+    var byName = "";
+    if (profile) {
+      byName = ((profile.voornaam || "") + " " + (profile.achternaam || "")).trim();
+      if (!byName && profile.email) byName = profile.email;
+    }
+    var payload;
+    if (clearOverride) {
+      payload = { override_uren: null, override_reden: null, override_by: null, override_by_naam: "", override_at: null };
+    } else {
+      payload = {
+        override_uren: Number(uren),
+        override_reden: String(reden).trim(),
+        override_by: byId,
+        override_by_naam: byName,
+        override_at: new Date().toISOString(),
+      };
+    }
+    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    var obj = rowToObj(res.data);
+    var cache = readCache();
+    var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
+    if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
+    writeCache(cache);
+    dispatchUpdated();
+    return obj;
+  }
+
   global.urendeclaratiesDB = {
     get ready() { return readyPromise || bootstrap(); },
     pushAll: pushAll,
@@ -126,6 +174,7 @@
       writeCache(items);
       dispatchUpdated();
     },
+    setOverride: setOverride,
   };
 
   bootstrap();

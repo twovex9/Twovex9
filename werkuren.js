@@ -348,12 +348,23 @@
     tbody.querySelectorAll(".wu-agenda-btn").forEach(function (b) {
       b.addEventListener("click", function () {
         var empId = b.getAttribute("data-emp");
-        // Open planning.html (agenda) gefilterd op deze medewerker — best-effort link.
-        var url = "planning.html?med=" + encodeURIComponent(empId)
-          + "&jaar=" + state.year + "&maand=" + state.month;
-        window.open(url, "_blank");
+        if (!empId || empId === "_unknown") return;
+        // Open de BS1 medewerker-agenda (PR #4 — vervangt kapotte BS2-route)
+        window.location.href = "medewerker-agenda.html?id=" + encodeURIComponent(empId);
       });
     });
+  }
+
+  function updateAgendaLink() {
+    var btn = document.getElementById("wu-open-agenda-btn");
+    if (!btn) return;
+    if (!state.filterUser) {
+      btn.hidden = true;
+      btn.removeAttribute("href");
+      return;
+    }
+    btn.hidden = false;
+    btn.setAttribute("href", "medewerker-agenda.html?id=" + encodeURIComponent(state.filterUser));
   }
 
   // ---------------------------------------------------------------------------
@@ -398,7 +409,7 @@
         button: userBtn, label: "Selecteer Gebruiker",
         options: buildUserOptions(),
         clearLabel: "Alle gebruikers tonen",
-        onChange: function (v) { state.filterUser = v; renderTable(); },
+        onChange: function (v) { state.filterUser = v; renderTable(); updateAgendaLink(); },
       });
       userBtn.dataset.chipInited = "1";
     }

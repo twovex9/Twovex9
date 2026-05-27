@@ -155,6 +155,8 @@
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="zorg" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Zorgsoort</button></li>
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="tarif" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Uurtarief</button></li>
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="bedrag" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Bedrag</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="spec" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Specificatie</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="override" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Override (Ambulant intern)</button></li>
               </ul>
             </div>
           </div>
@@ -250,6 +252,8 @@
                 <th data-col="bedrag" class="cl-ud-th cl-ud-th--num cl-ud-money">Bedrag</th>
                 <th data-col="deb" class="cl-ud-th cl-ud-th--num">Gebudgetteerde uren</th>
                 <th data-col="ing" class="cl-ud-th cl-ud-th--num">Geregistreerde uren</th>
+                <th data-col="spec" class="cl-ud-th cl-ud-th--actions" aria-label="Specificatie downloaden">Spec.</th>
+                <th data-col="override" class="cl-ud-th cl-ud-th--actions" aria-label="Aantal uren overschrijven (alleen Ambulant intern)">Override</th>
               </tr>
             </thead>
             <tbody id="ud-tbody">
@@ -287,6 +291,51 @@
 
   <div class="app-toast app-toast--clienten" id="ud-toast" role="status" aria-live="polite" hidden></div>
 
+  <!-- PR #6 — Pauline Override-modal (Ambulant Intern beschikkingen) -->
+  <div class="modal-overlay" id="ud-override-modal" hidden aria-hidden="true">
+    <div class="modal-card ud-override-card" role="dialog" aria-modal="true" aria-labelledby="ud-override-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="ud-override-title">Aantal uren aanpassen</h2>
+        <button type="button" class="modal-close" id="ud-override-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="ud-override-form" class="modal-body" novalidate>
+        <input type="hidden" id="ud-override-id" />
+        <p class="ud-override-msg">
+          Pas het aantal uren voor deze declaratie aan (alleen voor <strong>Ambulant Intern</strong> beschikkingen).
+          Het origineel blijft bewaard en de actie wordt in de audit-log vastgelegd.
+        </p>
+        <div class="ud-override-info">
+          <div class="ud-override-info-row"><span class="ud-override-info-lbl">Cliënt:</span> <span id="ud-override-info-client">—</span></div>
+          <div class="ud-override-info-row"><span class="ud-override-info-lbl">Periode:</span> <span id="ud-override-info-periode">—</span></div>
+          <div class="ud-override-info-row"><span class="ud-override-info-lbl">Beschikking:</span> <span id="ud-override-info-besc">—</span></div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="ud-override-orig">Oorspronkelijke uren (ingediend)</label>
+          <input class="modal-input" type="text" id="ud-override-orig" readonly />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="ud-override-uren">Nieuwe uren <span class="ud-override-hint">(leeg = override weghalen, terug naar oorspronkelijk)</span></label>
+          <input class="modal-input" type="number" inputmode="decimal" id="ud-override-uren" min="0" step="0.01" placeholder="Bijv. 12,5" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="ud-override-reden">Reden voor aanpassing <span class="ud-override-req">(verplicht bij override)</span></label>
+          <textarea class="modal-input ud-override-reden-input" id="ud-override-reden" rows="3" placeholder="Waarom wordt het aantal aangepast?"></textarea>
+        </div>
+        <div class="ud-override-meta" id="ud-override-meta" hidden>
+          Huidige override: <strong id="ud-override-meta-uren">—</strong> ·
+          door <span id="ud-override-meta-by">—</span> op
+          <span id="ud-override-meta-at">—</span>
+        </div>
+        <p class="ud-override-error" id="ud-override-error" hidden></p>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="ud-override-cancel">Annuleren</button>
+        <button type="button" class="btn-outline ud-override-clear" id="ud-override-clear" hidden>Override weghalen</button>
+        <button type="button" class="btn-primary" id="ud-override-save">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -308,8 +357,14 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
+  <script src="export-formats.js?v=ef1" defer></script>
+  <script src="werkuren-data.js?v=wu1" defer></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="clienten-data.js?v=memfix1" defer></script>
   <script src="locked-months-data.js?v=lm1" defer></script>
-  <script src="urendeclaraties-data.js" defer></script>
-  <script src="urendeclaraties.js?v=ud2" defer></script>
+  <script src="urendeclaraties-data.js?v=override1" defer></script>
+  <script src="urendeclaraties-spec-export.js?v=spec1" defer></script>
+  <script src="urendeclaraties.js?v=ud3specoverride" defer></script>
 </body>
 </html>

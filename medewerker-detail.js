@@ -137,6 +137,21 @@
     setText("me-bday", emp.dateOfBirth ? fmtBday(emp.dateOfBirth) : "—");
     renderBdayPills(emp);
     renderSickPanel(emp);
+    updateAgendaTab(emp);
+  }
+
+  function updateAgendaTab(emp) {
+    var tab = document.getElementById("me-tab-agenda");
+    if (!tab) return;
+    var url = "medewerker-agenda.html?id=" + encodeURIComponent(emp.id);
+    if (emp.email && window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function") {
+      var hr = (window.medewerkersDB.getAllSync() || []).find(function (m) {
+        return m && m.email && String(m.email).toLowerCase() === String(emp.email).toLowerCase();
+      });
+      if (hr && hr.id) url = "medewerker-agenda.html?id=" + encodeURIComponent(hr.id);
+    }
+    tab.setAttribute("href", url);
+    tab.removeAttribute("aria-disabled");
   }
 
   function load() {
