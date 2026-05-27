@@ -149,7 +149,60 @@
     updateLockButton();
     // Update period title + filter chip-options
     updatePeriodTitle();
+    // Update globale-lock banner (Pauline-eis: hele maand vergrendeld)
+    updateGlobalLockBanner();
   }
+
+  // ---------------------------------------------------------------------------
+  // Globale maand-vergrendeling (Pauline, urendeclaraties.html beheert dit)
+  // ---------------------------------------------------------------------------
+  function isCurrentMonthGloballyLocked() {
+    if (!window.lockedMonthsDB) return false;
+    return window.lockedMonthsDB.isLockedSync(state.year, state.month);
+  }
+  function ensureLockBannerEl() {
+    var el = document.getElementById("wu-global-lock-banner");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "wu-global-lock-banner";
+    el.className = "wu-global-lock-banner";
+    el.setAttribute("role", "status");
+    el.hidden = true;
+    var title = document.getElementById("wu-period-title");
+    if (title && title.parentNode) title.parentNode.insertBefore(el, title.nextSibling);
+    return el;
+  }
+  function updateGlobalLockBanner() {
+    var el = ensureLockBannerEl();
+    if (!el) return;
+    if (!isCurrentMonthGloballyLocked()) {
+      el.hidden = true;
+      el.innerHTML = "";
+      return;
+    }
+    var lock = window.lockedMonthsDB.getLockSync(state.year, state.month);
+    var monthNl = MONTHS_NL[state.month - 1];
+    var monthCap = monthNl.charAt(0).toUpperCase() + monthNl.slice(1);
+    var byName = lock && lock.vergrendeldDoorNaam ? lock.vergrendeldDoorNaam : "";
+    var dateStr = "";
+    if (lock && lock.vergrendeldOp) {
+      var d = new Date(lock.vergrendeldOp);
+      if (!isNaN(d.getTime())) dateStr = formatNlDate(d.toISOString().slice(0, 10));
+    }
+    var byPart = byName ? (" door " + escHtml(byName)) : "";
+    var datePart = dateStr ? (" op " + escHtml(dateStr)) : "";
+    el.innerHTML =
+      '<svg class="wu-glb-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">'
+      + '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+      + ' <strong>' + escHtml(monthCap) + ' ' + state.year + ' is vergrendeld</strong>'
+      + byPart + datePart + '. Werkuren kunnen niet gewijzigd, toegevoegd of verwijderd worden. Ontgrendel eerst via Urendeclaraties.';
+    el.hidden = false;
+  }
+  // Live-refresh banner bij lock/unlock vanuit andere tab
+  window.addEventListener("besa:locked-months-updated", function () {
+    updateGlobalLockBanner();
+    renderTable();
+  });
 
   function updatePeriodTitle() {
     var year = state.year, month = state.month;
@@ -220,6 +273,8 @@
     } else {
       var EDIT_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
       var TRASH_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+      var LOCK_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      var monthLocked = isCurrentMonthGloballyLocked();
 
       var html = sortedKeys.map(function (key) {
         var rows = groups.get(key);
@@ -252,8 +307,10 @@
             + '<td data-col="label">' + escHtml(r.label || "--") + '</td>'
             + '<td data-col="beschrijving">' + escHtml(r.beschrijving || "--") + '</td>'
             + '<td data-col="acties" class="wu-row-actions">'
-            +   '<button type="button" class="wu-row-edit" data-id="' + escHtml(r.id) + '" aria-label="Bewerken">' + EDIT_SVG + '</button>'
-            +   '<button type="button" class="employee-delete-btn wu-row-purge" data-id="' + escHtml(r.id) + '" aria-label="Verwijderen">' + TRASH_SVG + '</button>'
+            +   (monthLocked
+                  ? '<span class="wu-row-locked" title="Maand vergrendeld">' + LOCK_SVG + '</span>'
+                  : ('<button type="button" class="wu-row-edit" data-id="' + escHtml(r.id) + '" aria-label="Bewerken">' + EDIT_SVG + '</button>'
+                     + '<button type="button" class="employee-delete-btn wu-row-purge" data-id="' + escHtml(r.id) + '" aria-label="Verwijderen">' + TRASH_SVG + '</button>'))
             + '</td>'
             + '</tr>';
         }).join("");
@@ -397,6 +454,10 @@
   }
 
   function openEdit(id) {
+    if (isCurrentMonthGloballyLocked()) {
+      toast("error", "Deze maand is vergrendeld — wijzigen niet mogelijk");
+      return;
+    }
     var rec = window.werkurenDB.getByIdSync(id);
     if (!rec) return;
     state.editingId = id;
@@ -458,6 +519,10 @@
   }
 
   function openPurge(id) {
+    if (isCurrentMonthGloballyLocked()) {
+      toast("error", "Deze maand is vergrendeld — verwijderen niet mogelijk");
+      return;
+    }
     var rec = window.werkurenDB.getByIdSync(id);
     if (!rec) return;
     state.purgingId = id;
