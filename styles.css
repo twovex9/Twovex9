@@ -23156,3 +23156,51 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   text-align: right;
   white-space: nowrap;
 }
+
+/* === Auto-bereken woon-werk afstand (PR-D) === */
+.emp-geo-field .emp-geo-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.emp-geo-field .emp-geo-row input {
+  flex: 1;
+  min-width: 0;
+}
+.emp-geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-base);
+  padding: 7px 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.emp-geo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.emp-geo-status {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.emp-geo-status[hidden] { display: none; }
+.emp-geo-status--ok {
+  background: var(--green-soft, #e9f9ee);
+  color: var(--green, #16a34a);
+  border: 1px solid var(--green-soft, #cdebd4);
+}
+.emp-geo-status--err {
+  background: var(--red-soft, #fce8e8);
+  color: var(--red, #dc2626);
+  border: 1px solid var(--red-soft, #f5c6c6);
+}
+.emp-geo-status--info {
+  background: var(--blue-soft, #eef4ff);
+  color: var(--blue, #2563eb);
+  border: 1px solid var(--blue-soft, #c7d8ff);
+}
