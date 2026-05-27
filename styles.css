@@ -19742,6 +19742,40 @@ button.besc-dtl-tab:hover {
 .emp-planbaar-option-text strong { font-size: 14px; color: var(--text); }
 .emp-planbaar-option-sub { font-size: 12px; color: var(--text-muted); }
 
+/* F3 — Driehoek-systeem op medewerker-detail (errors rood, warnings oranje) */
+.emp-warnings-card { background: var(--surface); }
+.emp-warnings-card[hidden] { display: none !important; }
+.emp-warnings-group { padding: 8px 0; }
+.emp-warnings-group + .emp-warnings-group { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; }
+.emp-warnings-group[hidden] { display: none !important; }
+.emp-warnings-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.emp-warnings-group-title { font-weight: 600; font-size: 13px; }
+.emp-warnings-group--errors .emp-warnings-group-title { color: var(--red); }
+.emp-warnings-group--warnings .emp-warnings-group-title { color: var(--yellow); }
+.emp-warnings-tri--red { color: var(--red); flex-shrink: 0; }
+.emp-warnings-tri--orange { color: var(--yellow); flex-shrink: 0; }
+.emp-warnings-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.emp-warnings-item {
+  background: rgba(192, 57, 43, 0.04);
+  border-left: 3px solid var(--red);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.emp-warnings-group--warnings .emp-warnings-item {
+  background: rgba(202, 138, 4, 0.06);
+  border-left-color: var(--yellow);
+}
+.emp-warnings-item-title { font-weight: 600; color: var(--text); }
+.emp-warnings-item-sub { color: var(--text-secondary); font-size: 11px; margin-top: 1px; }
+.emp-warnings-item-reden { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+
 /* Per-veld validatie (PR-1, F1: rood markeren + scroll naar 1e fout) */
 .im-field--error .im-input,
 .im-field--error .im-select,

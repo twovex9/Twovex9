@@ -242,6 +242,25 @@
             <h4>Notities</h4>
             <p class="emp-card-note" id="emp-note-preview">Er zijn geen notities.</p>
           </div>
+
+          <!-- F3: Driehoek-systeem — errors (rood) + warnings (oranje) -->
+          <div class="emp-card-section emp-warnings-card rounded-lg border text-card-foreground shadow-sm" id="emp-warnings-section" hidden>
+            <h4>Waarschuwingen</h4>
+            <div class="emp-warnings-group emp-warnings-group--errors" id="emp-warnings-errors-group" hidden>
+              <div class="emp-warnings-group-head">
+                <svg class="emp-warnings-tri emp-warnings-tri--red" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span class="emp-warnings-group-title">Blokkeringen (<span id="emp-warnings-errors-count">0</span>)</span>
+              </div>
+              <ul class="emp-warnings-list" id="emp-warnings-errors-list"></ul>
+            </div>
+            <div class="emp-warnings-group emp-warnings-group--warnings" id="emp-warnings-warnings-group" hidden>
+              <div class="emp-warnings-group-head">
+                <svg class="emp-warnings-tri emp-warnings-tri--orange" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span class="emp-warnings-group-title">Waarschuwingen (<span id="emp-warnings-warnings-count">0</span>)</span>
+              </div>
+              <ul class="emp-warnings-list" id="emp-warnings-warnings-list"></ul>
+            </div>
+          </div>
           </div>
           </div>
           </div>
@@ -1810,6 +1829,7 @@
   <script src="medewerker-verlof-overgedragen-data.js"></script>
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
+  <script src="medewerker-warnings.js?v=mw1"></script>
   <script src="locaties-data.js?v=geo1" defer></script>
   <script src="geo-distance.js?v=geo1" defer></script>
   <script src="medewerker.js"></script>

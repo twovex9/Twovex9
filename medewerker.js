@@ -693,6 +693,7 @@ function loadEmployeeIntoForm() {
   document.title = `${fullName} — HR`;
   updateLoginAsButton(fullName);
   renderPlanbaarPill(emp);
+  renderEmployeeWarnings(emp.id);
   setText("emp-email-display", emp.email);
   setText("emp-tel-display", emp.tel);
   setText("emp-email-display2", emp.email);
@@ -1024,6 +1025,58 @@ function initPlanbaarPill() {
   if (saveBtn) saveBtn.addEventListener("click", savePlanbaarChoice);
 }
 document.addEventListener("DOMContentLoaded", initPlanbaarPill);
+
+// F3: render Waarschuwingen-sectie (errors + warnings) in de profielkaart
+function renderEmployeeWarnings(empId) {
+  const section = document.getElementById("emp-warnings-section");
+  if (!section) return;
+  if (!empId || !window.medewerkerWarnings) {
+    section.hidden = true;
+    return;
+  }
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function rowHtml(item) {
+    return '<li class="emp-warnings-item">'
+      + '<div class="emp-warnings-item-title">' + escHtml(item.naam || item.label) + '</div>'
+      + '<div class="emp-warnings-item-sub">' + escHtml(item.label) + '</div>'
+      + '<div class="emp-warnings-item-reden">' + escHtml(item.reden) + '</div>'
+      + '</li>';
+  }
+  function paint(result) {
+    const errors = (result && result.errors) || [];
+    const warnings = (result && result.warnings) || [];
+    const errGroup = document.getElementById("emp-warnings-errors-group");
+    const warnGroup = document.getElementById("emp-warnings-warnings-group");
+    const errCount = document.getElementById("emp-warnings-errors-count");
+    const warnCount = document.getElementById("emp-warnings-warnings-count");
+    const errList = document.getElementById("emp-warnings-errors-list");
+    const warnList = document.getElementById("emp-warnings-warnings-list");
+    if (errCount) errCount.textContent = errors.length;
+    if (warnCount) warnCount.textContent = warnings.length;
+    if (errList) errList.innerHTML = errors.map(rowHtml).join("");
+    if (warnList) warnList.innerHTML = warnings.map(rowHtml).join("");
+    if (errGroup) errGroup.hidden = errors.length === 0;
+    if (warnGroup) warnGroup.hidden = warnings.length === 0;
+    section.hidden = errors.length === 0 && warnings.length === 0;
+  }
+  // Eerst sync render uit cache/snelle data
+  try { paint(window.medewerkerWarnings.computeForIdSync(empId)); } catch (e) { /* */ }
+  // Daarna refresh uit Supabase (zorgt voor accurate vervaldata bij eerste laad)
+  try {
+    window.medewerkerWarnings.computeForId(empId).then(paint).catch(function () { /* */ });
+  } catch (e) { /* */ }
+}
+
+window.addEventListener("besa:medewerker-warnings-updated", function () {
+  try {
+    const emp = getSelectedEmployee();
+    if (emp && emp.id) renderEmployeeWarnings(emp.id);
+  } catch (e) { /* */ }
+});
 
 function initTabs() {
   const tabs = document.querySelectorAll(".emp-tab");
