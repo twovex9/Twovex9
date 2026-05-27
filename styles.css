@@ -22820,3 +22820,142 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .verzuim-deadline-icon.verzuim-deadline-warn { color: var(--yellow); }
 .verzuim-deadline-icon.verzuim-deadline-overdue { color: var(--red); }
 .verzuim-deadline-label { font-size: var(--font-table-cell, 13px); }
+
+/* === Mijn maandstaat (mijn-gegevens.html) === */
+.mm-section-wrap p {
+  color: var(--text-secondary);
+  margin: 6px 0 14px;
+  font-size: var(--font-base);
+}
+.mm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+.mm-label {
+  font-size: var(--font-table-head, 12px);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.mm-select {
+  font: inherit;
+  font-size: var(--font-base);
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 120px;
+}
+.mm-select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.mm-result { margin-top: 8px; }
+.mm-empty {
+  padding: 16px;
+  background: var(--surface-2, #f5f7fb);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+}
+.mm-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 20px 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.mm-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.mm-card-head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+.mm-sub {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-table-cell, 13px);
+}
+.mm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.mm-section h4 {
+  margin: 0 0 8px;
+  font-size: var(--font-table-head, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.mm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-table-cell, 13px);
+}
+.mm-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.mm-table tr:last-child td { border-bottom: 0; }
+.mm-table td.mm-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
+}
+.mm-table td.mm-cell-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+.mm-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--blue-soft, #eef4ff);
+  color: var(--blue);
+  border-radius: var(--r-md);
+  font-size: 16px;
+}
+.mm-total strong { font-size: 20px; font-variant-numeric: tabular-nums; }
+.mm-disclaimer {
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+@media (max-width: 720px) {
+  .mm-grid { grid-template-columns: 1fr; }
+  .mm-card-head { flex-direction: column; }
+}
+
+/* Print: verberg alles behalve de maandstaat-card */
+@media print {
+  body * { visibility: hidden !important; }
+  .mm-card, .mm-card * { visibility: visible !important; }
+  .mm-card {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+  .mm-card-head button { display: none !important; }
+  .mm-grid { grid-template-columns: repeat(2, 1fr); page-break-inside: avoid; }
+}

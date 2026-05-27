@@ -60,6 +60,21 @@
         </div>
       </section>
 
+      <section class="mijn-gegevens-section mm-section-wrap">
+        <h2>Mijn maandstaat</h2>
+        <p>Indicatief overzicht van je ORT-uren, gewerkte uren, kilometers en opgenomen verlof per maand. De officiële loonstrook ontvang je via Loket.</p>
+
+        <div class="mm-toolbar">
+          <label class="mm-label" for="mm-jaar">Jaar</label>
+          <select id="mm-jaar" class="mm-select" aria-label="Jaar"></select>
+          <label class="mm-label" for="mm-maand">Maand</label>
+          <select id="mm-maand" class="mm-select" aria-label="Maand"></select>
+          <button type="button" class="btn-primary" id="mm-toon-btn">Toon maandstaat</button>
+        </div>
+
+        <div id="mm-result" class="mm-result"></div>
+      </section>
+
       <section class="mijn-gegevens-section">
         <h2>Rechten onder de AVG</h2>
         <ul class="mijn-gegevens-rights">
@@ -103,7 +118,13 @@
   <script src="mfa-challenge.js?v=mfa1" defer></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
+  <script src="medewerkers-data.js?v=mm1" defer></script>
+  <script src="werkuren-data.js?v=mm1" defer></script>
+  <script src="kilometer-declaraties-data.js?v=mm1" defer></script>
+  <script src="verlof-data.js?v=mm1" defer></script>
+  <script src="ort-engine.js?v=mm1" defer></script>
   <script src="besa-audit.js" defer></script>
   <script src="mijn-gegevens.js" defer></script>
+  <script src="mijn-maandstaat.js?v=mm1" defer></script>
 </body>
 </html>
