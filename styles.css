@@ -17371,6 +17371,36 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
   text-align: right;
 }
 
+/* Specificatie-download knop per rij (PR #3 Tijdregistratie, 2026-05-27) */
+.content--urendecl .cl-ud-th--actions {
+  text-align: center;
+  width: 60px;
+}
+.content--urendecl .cl-ud-td-actions {
+  text-align: center;
+  padding: 4px;
+}
+.content--urendecl .ud-spec-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  min-width: 32px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  color: var(--blue);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.content--urendecl .ud-spec-btn:hover {
+  background: var(--surface-alt, rgba(37, 99, 235, 0.08));
+  color: var(--blue);
+}
+.content--urendecl .ud-spec-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .besc-ov-table .besc-ov-eur--tedecl,
 .besc-ov-th--eur {
   color: var(--yellow);

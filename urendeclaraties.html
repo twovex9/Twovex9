@@ -155,6 +155,7 @@
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="zorg" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Zorgsoort</button></li>
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="tarif" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Uurtarief</button></li>
                 <li role="none"><button type="button" class="column-toggle is-checked" data-col="bedrag" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Bedrag</button></li>
+                <li role="none"><button type="button" class="column-toggle is-checked" data-col="spec" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Specificatie</button></li>
               </ul>
             </div>
           </div>
@@ -250,6 +251,7 @@
                 <th data-col="bedrag" class="cl-ud-th cl-ud-th--num cl-ud-money">Bedrag</th>
                 <th data-col="deb" class="cl-ud-th cl-ud-th--num">Gebudgetteerde uren</th>
                 <th data-col="ing" class="cl-ud-th cl-ud-th--num">Geregistreerde uren</th>
+                <th data-col="spec" class="cl-ud-th cl-ud-th--actions" aria-label="Specificatie downloaden">Spec.</th>
               </tr>
             </thead>
             <tbody id="ud-tbody">
@@ -308,7 +310,13 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
+  <script src="export-formats.js?v=ef1" defer></script>
+  <script src="werkuren-data.js?v=wu1" defer></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="clienten-data.js?v=memfix1" defer></script>
   <script src="urendeclaraties-data.js" defer></script>
-  <script src="urendeclaraties.js" defer></script>
+  <script src="urendeclaraties-spec-export.js?v=spec1" defer></script>
+  <script src="urendeclaraties.js?v=ud3" defer></script>
 </body>
 </html>

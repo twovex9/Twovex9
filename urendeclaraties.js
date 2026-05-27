@@ -49,6 +49,7 @@
     if (window.urendeclaratiesDB && typeof window.urendeclaratiesDB.getAllSync === "function") {
       items = window.urendeclaratiesDB.getAllSync() || [];
     }
+    var DOWNLOAD_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     var html = items.map(function (r) {
       return (
         '<tr' +
@@ -56,6 +57,7 @@
         ' data-ud-zorg="' + escapeHtml(r.zorgsoort) + '"' +
         ' data-ud-jaar="' + escapeHtml(String(r.jaar)) + '"' +
         ' data-ud-maand="' + escapeHtml(String(r.maand)) + '"' +
+        ' data-ud-id="' + escapeHtml(String(r.id || "")) + '"' +
         '>' +
         '<td data-col="sel"><input type="checkbox" class="table-checkbox" aria-label="Selecteer rij" /></td>' +
         '<td data-col="client">' + escapeHtml(r.client) + '</td>' +
@@ -66,10 +68,46 @@
         '<td data-col="bedrag" class="cl-ud-td-money">' + fmtEuro(r.bedrag) + '</td>' +
         '<td data-col="deb" class="cl-num">' + fmtUren(r.gedebiteerdeUren) + '</td>' +
         '<td data-col="ing" class="cl-num">' + fmtUren(r.ingediendeUren) + '</td>' +
+        '<td data-col="spec" class="cl-ud-td-actions">' +
+          '<button type="button" class="ud-spec-btn btn-outline btn-icon" data-ud-id="' + escapeHtml(String(r.id || "")) + '" title="Specificatie downloaden (Excel)" aria-label="Specificatie downloaden voor ' + escapeHtml(r.client) + '">' + DOWNLOAD_SVG + '</button>' +
+        '</td>' +
         '</tr>'
       );
     }).join("");
     tbody.innerHTML = html;
+    wireSpecButtons();
+  }
+
+  function wireSpecButtons() {
+    if (!tbody) return;
+    var btns = tbody.querySelectorAll(".ud-spec-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", onSpecClick);
+    }
+  }
+
+  function onSpecClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var btn = e.currentTarget;
+    var id = btn.getAttribute("data-ud-id");
+    if (!id || !window.urendeclaratiesDB) return;
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    var row = null;
+    for (var i = 0; i < items.length; i++) { if (items[i] && String(items[i].id) === String(id)) { row = items[i]; break; } }
+    if (!row) { showToast("Rij niet gevonden"); return; }
+    if (!window.urendecSpecExport) { showToast("Export-laag niet geladen"); return; }
+    btn.disabled = true;
+    var res = window.urendecSpecExport.download(row);
+    btn.disabled = false;
+    if (res && res.ok) {
+      if (window.showActionFeedback) window.showActionFeedback("exported", "Specificatie");
+      else showToast("Specificatie geëxporteerd (" + res.rows + " werkuren)");
+    } else {
+      var msg = (res && res.error) ? res.error : "Export mislukt";
+      if (window.showError) window.showError(msg);
+      else showToast(msg);
+    }
   }
 
   function showToast(msg) {
