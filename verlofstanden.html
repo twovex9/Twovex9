@@ -149,6 +149,10 @@
       <div class="content-header">
         <h1>Verlofstanden</h1>
         <div class="header-actions">
+          <button type="button" class="btn-outline" id="vs-export-btn" data-permission-required="view-employee-leave-balances">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
           <a class="btn-outline" href="verlof-uitdienst" id="vs-uitdienst-link">Uitdiensttreding berekenen</a>
         </div>
       </div>
@@ -212,6 +216,27 @@
     </main>
   </div>
 
+  <!-- Export modal (F2): peildatum kiezen voor verlofstanden-XLSX -->
+  <div class="modal-overlay modal-overlay--confirm" id="vs-export-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vs-export-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="vs-export-title" class="modal-title">Verlofstanden exporteren</h2>
+        <button type="button" class="modal-close" id="vs-export-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Kies een peildatum. De export bevat per medewerker het Wettelijk, Bovenwettelijk, Compensatie en Totaal beschikbaar saldo voor deze datum.</p>
+        <label class="emp-verzuim-modal-field" style="display:block;margin-top:12px;">
+          <span>Peildatum</span>
+          <input type="date" id="vs-export-date" class="comp-modal-input" />
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="vs-export-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="vs-export-confirm-btn">Exporteer XLSX</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -236,6 +261,7 @@
   <script src="medewerkers-data.js"></script>
   <script src="medewerker-verlof-overgedragen-data.js"></script>
   <script src="verlof-data.js"></script>
-  <script src="verlofstanden.js?v=vs1"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="verlofstanden.js?v=vs2"></script>
 </body>
 </html>
