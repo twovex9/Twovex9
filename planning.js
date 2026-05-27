@@ -915,6 +915,22 @@ function getDienstverbandForName(name) {
   return "";
 }
 
+// F8: zoek ZZP-uurtarief per medewerker-naam uit medewerkers.data.uurAlgemeen
+function getZzpHourlyRateForName(name) {
+  if (!name) return 0;
+  const list = readEmployees();
+  const want = String(name).trim().toLowerCase();
+  if (!want) return 0;
+  const emp = list.find((e) => getEmployeeName(e).toLowerCase() === want);
+  if (!emp) return 0;
+  // BS2: hiring=ZZP. Alleen ZZP-tarief tellen.
+  const empType = String(emp.bs2_employment_type || emp.employmentType || emp.dienstverband || "").toLowerCase();
+  const isHiring = empType === "hiring" || /inhuur|zzp|agency/.test(empType);
+  if (!isHiring) return 0;
+  const r = Number(emp.uurAlgemeen != null ? emp.uurAlgemeen : (emp.uurTarief || 0));
+  return isFinite(r) && r > 0 ? r : 0;
+}
+
 function getMetrics(items) {
   let hours = 0;
   let zzpHours = 0;
@@ -923,6 +939,8 @@ function getMetrics(items) {
   let kmKosten = 0;
   let openHours = 0;
   let openCount = 0;
+  let zzpRateWeighted = 0;   // F8: som(uren × medewerker.uurAlgemeen) voor ZZP'ers
+  let zzpRateHours = 0;      // F8: som(uren waar medewerker-tarief bekend)
 
   // Diensttype-tarief lookup via comp_diensttypes.basis (per-type uurtarief).
   function tariefForDiensttype(dtNaam) {
@@ -949,6 +967,12 @@ function getMetrics(items) {
     if (isZzpEmployeeName(r.teamlid)) {
       zzpHours += net;
       zzpKostenAccum += net * tarief;
+      // F8: gemiddeld ZZP-uurtarief via persoonlijk uurAlgemeen
+      const zzpRate = getZzpHourlyRateForName(r.teamlid);
+      if (zzpRate > 0 && net > 0) {
+        zzpRateWeighted += net * zzpRate;
+        zzpRateHours += net;
+      }
     }
     if (!r.teamlid || !String(r.teamlid).trim()) {
       openHours += net;
@@ -966,6 +990,8 @@ function getMetrics(items) {
   const zzpKosten = zzpKostenAccum;
   const per = items.length > 0 ? kosten / items.length : 0;
   const gemTarief = hours > 0 ? kosten / hours : ui.tarief;
+  // F8: gemiddeld ZZP-uurtarief (null als geen ZZP-uren met bekend tarief)
+  const gemZzpTarief = zzpRateHours > 0 ? zzpRateWeighted / zzpRateHours : null;
   return {
     count: items.length,
     hours,
@@ -978,6 +1004,7 @@ function getMetrics(items) {
     kmKosten,
     per,
     gemTarief,
+    gemZzpTarief,
     tarief: ui.tarief,
   };
 }
@@ -1030,6 +1057,13 @@ function renderSummary(items) {
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">Gem. tarief</span>
         <strong class="planning-stat-value planning-stat-value--money">${formatEuro(m.gemTarief)}</strong>
+      </div>
+    </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--zzptarief">
+      <span class="planning-kpi-ico" aria-hidden="true">€/u</span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Gem. ZZP-tarief</span>
+        <strong class="planning-stat-value planning-stat-value--money">${m.gemZzpTarief != null ? formatEuro(m.gemZzpTarief) : "—"}</strong>
       </div>
     </div>
   `;
@@ -1535,6 +1569,10 @@ function renderWeekGrid() {
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--tarief" title="Gemiddeld tarief per uur in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
             <span>${formatEuro(m.gemTarief)}</span>
+          </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--zzptarief" title="Gemiddeld ZZP-uurtarief in deze locatie">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
+            <span>ZZP ${m.gemZzpTarief != null ? formatEuro(m.gemZzpTarief) : "—"}</span>
           </span>
         </div>
       `;
