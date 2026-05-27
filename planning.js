@@ -916,7 +916,9 @@ function getMetrics(items) {
       openCount += 1;
     }
     const km = Number(r.kilometers) || 0;
-    const kmTar = Number(r.kmTarief) || 0.23;
+    // PR-F: km-tarief uit planning_settings i.p.v. hardcoded 0.23
+    const settingsTar = (window.planningSettingsDB && window.planningSettingsDB.getSync && window.planningSettingsDB.getSync())?.km_tarief;
+    const kmTar = Number(r.kmTarief) || Number(settingsTar) || 0.23;
     if (km > 0) kmKosten += km * kmTar;
   });
   const uren = formatHoursShort(hours);
@@ -2081,6 +2083,74 @@ function applyDienstFormOneOnOneState() {
   }
 }
 
+/**
+ * PR-F: bij keuze van exact 1 diensttype dat een `standaard_pauze_uren > 0` heeft,
+ * autofillen we het pauze-veld — maar enkel als de gebruiker het zelf nog niet
+ * heeft aangepast (huidige waarde = 0). Niet handmatige waarden overschrijven.
+ */
+function maybeAutofillPauseFromDiensttype() {
+  const list = document.getElementById("dienst-diensttype-list");
+  if (!list || !window.compDiensttypesDB) return;
+  const checked = Array.from(list.querySelectorAll('input[type="checkbox"][data-dt-label]:checked'));
+  if (checked.length !== 1) return;
+  const dtLabel = checked[0].getAttribute("data-dt-label");
+  if (!dtLabel) return;
+  const all = window.compDiensttypesDB.getAllSync() || [];
+  const dt = all.find((d) => String(d.naam || d.diensttype || "").trim().toLowerCase() === String(dtLabel).trim().toLowerCase());
+  if (!dt) return;
+  const standaard = Number(dt.standaard_pauze_uren) || 0;
+  if (standaard <= 0) return;
+  const pauzeEl = document.getElementById("dienst-pauze");
+  if (!pauzeEl) return;
+  const huidig = Number(pauzeEl.value) || 0;
+  if (huidig > 0) return; // niet overschrijven
+  pauzeEl.value = standaard;
+  // Toon hint dat dit auto-gevuld is
+  const hint = document.getElementById("dienst-pauze-hint");
+  if (hint) {
+    hint.textContent = `Auto-gevuld vanuit diensttype \"${dtLabel}\".`;
+    hint.hidden = false;
+  }
+}
+
+/**
+ * PR-F: toon comp_saldi-saldo voor gekozen medewerker, met waarschuwing als saldo
+ * onder of boven de min/max-drempel uit planning_settings ligt.
+ */
+function updateCompensatieSaldoHint() {
+  const hintEl = document.getElementById("dienst-mw-saldo-hint");
+  if (!hintEl) return;
+  const sel = document.getElementById("dienst-mw");
+  if (!sel || !sel.value) { hintEl.hidden = true; return; }
+  const naam = String(sel.value).trim();
+  if (!naam) { hintEl.hidden = true; return; }
+  let saldo = null;
+  try {
+    if (window.compSaldiDB && typeof window.compSaldiDB.getAllSync === "function") {
+      const all = window.compSaldiDB.getAllSync() || [];
+      const row = all.find((r) => String(r.medewerker || "").trim().toLowerCase() === naam.toLowerCase());
+      if (row) saldo = Number(row.saldo) || 0;
+    }
+  } catch (e) { /* */ }
+  if (saldo == null) { hintEl.hidden = true; return; }
+  const settings = (window.planningSettingsDB && window.planningSettingsDB.getSync && window.planningSettingsDB.getSync()) || {};
+  const minDrempel = Number(settings.min_compensatie_uren);
+  const maxDrempel = Number(settings.max_compensatie_uren);
+  let cls = "planning-dienst-hint";
+  let prefix = "Compensatie-saldo: ";
+  let suffix = "";
+  if (isFinite(maxDrempel) && saldo > maxDrempel) {
+    cls += " planning-dienst-hint--warn";
+    suffix = ` — boven drempel (${maxDrempel} u), plan minder voor deze medewerker.`;
+  } else if (isFinite(minDrempel) && saldo < minDrempel) {
+    cls += " planning-dienst-hint--warn";
+    suffix = ` — onder drempel (${minDrempel} u), plan meer of bespreek.`;
+  }
+  hintEl.className = cls;
+  hintEl.innerHTML = `${prefix}<strong>${saldo} u</strong>${suffix}`;
+  hintEl.hidden = false;
+}
+
 function syncPlanningDiensttypeChips() {
   const el = document.getElementById("dienst-diensttype-trigger-text");
   const list = document.getElementById("dienst-diensttype-list");
@@ -2386,13 +2456,21 @@ function fillDienstPanelForItem(item) {
   }
   setVal("dienst-pauze", item.pauzeUren ?? 0);
   setVal("dienst-aantal", item.vereistAantalMedewerkers ?? 1);
+  setVal("dienst-kilometers", item.kilometers ?? 0);
   setVal("dienst-competentie", item.competenties || "");
   const rt = document.getElementById("dienst-beschrijving");
   if (rt) rt.innerHTML = item.beschrijving || "";
   const h = document.getElementById("dienst-herhaal");
   if (h) h.checked = Boolean(item.herhaal);
+  // Reset hints; daarna heroverwegen
+  const ph = document.getElementById("dienst-pauze-hint");
+  if (ph) ph.hidden = true;
+  const sh = document.getElementById("dienst-mw-saldo-hint");
+  if (sh) sh.hidden = true;
   syncDienstRepeatOptions();
   applyDienstFormOneOnOneState();
+  // Toon saldo voor huidige medewerker indien gekozen
+  if (typeof updateCompensatieSaldoHint === "function") updateCompensatieSaldoHint();
 }
 
 function openDienstPanel(editId = null) {
@@ -2473,8 +2551,13 @@ function initDienstPanel() {
     if (e.target?.matches?.('input[type="checkbox"]')) {
       syncPlanningDiensttypeChips();
       applyDienstFormOneOnOneState();
+      maybeAutofillPauseFromDiensttype();
     }
   });
+
+  // Compensatie-saldo badge bij medewerker-keuze
+  const mwSel = document.getElementById("dienst-mw");
+  mwSel?.addEventListener("change", () => updateCompensatieSaldoHint());
   openBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     openDienstPanel();
@@ -2530,6 +2613,7 @@ function initDienstPanel() {
     }
     const pauze = Math.max(0, parseFloat(document.getElementById("dienst-pauze")?.value) || 0);
     const aantal = Math.max(1, parseInt(document.getElementById("dienst-aantal")?.value, 10) || 1);
+    const kilometers = Math.max(0, parseFloat(document.getElementById("dienst-kilometers")?.value) || 0);
     const comp = document.getElementById("dienst-competentie")?.value || "";
     const besch = (richt && richt.innerHTML.trim()) || "";
     const her = Boolean(document.getElementById("dienst-herhaal")?.checked);
@@ -2551,6 +2635,7 @@ function initDienstPanel() {
       einde: endIso,
       pauzeUren: pauze,
       vereistAantalMedewerkers: aantal,
+      kilometers: kilometers,
       competenties: comp,
       beschrijving: besch,
       herhaal: her,

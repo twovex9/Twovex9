@@ -148,15 +148,17 @@
       .filter(function (r) { return !!r.archived === archived; })
       .filter(function (r) { return !search || (r.naam || "").toLowerCase().indexOf(search) >= 0; });
     if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="planning-detail-empty" style="text-align:center;padding:24px">Geen resultaten gevonden</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="planning-detail-empty" style="text-align:center;padding:24px">Geen resultaten gevonden</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function (r) {
       var kleur = r.kleur || "#5c73e6";
       var uurtarief = r.configureerbaar_uurtarief || (r.data && r.data.configureerbaar_uurtarief);
+      var pauzeStd = Number(r.standaard_pauze_uren) || 0;
       return '<tr data-id="' + escapeHtml(r.id) + '"><td>' + escapeHtml(r.naam || "") + '</td>'
         + '<td>' + escapeHtml(kleur) + ' <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:' + escapeHtml(kleur) + ';vertical-align:middle;margin-left:6px"></span></td>'
         + '<td>' + (uurtarief ? "Ja" : "Nee") + '</td>'
+        + '<td>' + (pauzeStd > 0 ? pauzeStd : "—") + '</td>'
         + '<td class="hr-row-actions">' + (r.archived
             ? '<button class="btn-outline hr-restore-btn" data-action="restore">Herstel</button><button class="employee-delete-btn" data-action="purge" aria-label="Definitief verwijderen">' + trashSvg() + '</button>'
             : '<button class="employee-delete-btn" data-action="archive" aria-label="Archiveren">' + trashSvg() + '</button>') + '</td></tr>';
@@ -186,10 +188,12 @@
     document.getElementById("pb-st-modal-close").addEventListener("click", closeSTModal);
     document.getElementById("pb-st-modal-cancel").addEventListener("click", closeSTModal);
     document.getElementById("pb-st-modal-save").addEventListener("click", async function () {
+      var pauzeRaw = document.getElementById("pb-st-pauze") ? document.getElementById("pb-st-pauze").value : "0";
       var payload = {
         naam: document.getElementById("pb-st-naam").value.trim(),
         kleur: document.getElementById("pb-st-kleur").value || "#5c73e6",
         configureerbaar_uurtarief: document.getElementById("pb-st-uurtarief").checked,
+        standaard_pauze_uren: Math.max(0, parseFloat(pauzeRaw) || 0),
       };
       if (!payload.naam) { window.showError && window.showError("Naam is verplicht"); return; }
       try {
@@ -206,6 +210,8 @@
     document.getElementById("pb-st-naam").value = row ? (row.naam || "") : "";
     document.getElementById("pb-st-kleur").value = row ? (row.kleur || "#5c73e6") : "#5c73e6";
     document.getElementById("pb-st-uurtarief").checked = row ? !!(row.configureerbaar_uurtarief || (row.data && row.data.configureerbaar_uurtarief)) : false;
+    var pauzeIn = document.getElementById("pb-st-pauze");
+    if (pauzeIn) pauzeIn.value = row ? (Number(row.standaard_pauze_uren) || 0) : 0;
     document.getElementById("pb-st-modal-save").textContent = row ? "Bijwerken" : "Toevoegen";
     var m = document.getElementById("pb-st-modal");
     m.removeAttribute("hidden");
@@ -304,15 +310,24 @@
     document.getElementById("pb-max-uren").value = s.max_compensatie_uren;
     document.getElementById("pb-preview-min").textContent = s.min_compensatie_uren;
     document.getElementById("pb-preview-max").textContent = s.max_compensatie_uren;
+    var kmIn = document.getElementById("pb-km-tarief");
+    if (kmIn) kmIn.value = (s.km_tarief != null ? s.km_tarief : 0.23);
   }
 
   function attachSettings() {
     document.getElementById("pb-settings-save").addEventListener("click", async function () {
       try {
-        await window.planningSettingsDB.update({
+        var kmIn = document.getElementById("pb-km-tarief");
+        var patch = {
           min_compensatie_uren: parseInt(document.getElementById("pb-min-uren").value, 10),
           max_compensatie_uren: parseInt(document.getElementById("pb-max-uren").value, 10),
-        });
+        };
+        if (kmIn) {
+          var kmVal = parseFloat(kmIn.value);
+          if (!isFinite(kmVal) || kmVal < 0) kmVal = 0.23;
+          patch.km_tarief = kmVal;
+        }
+        await window.planningSettingsDB.update(patch);
         window.showActionFeedback && window.showActionFeedback("saved", "Planning instellingen");
         renderSettings();
       } catch (err) { window.showError && window.showError("Opslaan mislukt: " + err.message); }

@@ -398,10 +398,15 @@
         <div class="planning-dienst-field planning-dienst-field--short">
           <label class="planning-dienst-label" for="dienst-pauze">Pauze (uren)</label>
           <input type="number" class="planning-dienst-input" id="dienst-pauze" name="pauze" min="0" max="8" step="0.25" value="0" />
+          <p class="planning-dienst-hint" id="dienst-pauze-hint" hidden></p>
         </div>
         <div class="planning-dienst-field planning-dienst-field--short">
           <label class="planning-dienst-label" for="dienst-aantal">Vereist aantal medewerkers</label>
           <input type="number" class="planning-dienst-input" id="dienst-aantal" name="aantal" min="1" max="999" value="1" />
+        </div>
+        <div class="planning-dienst-field planning-dienst-field--short">
+          <label class="planning-dienst-label" for="dienst-kilometers">Kilometers (per dienst)</label>
+          <input type="number" class="planning-dienst-input" id="dienst-kilometers" name="kilometers" min="0" step="0.1" value="0" />
         </div>
       </div>
       <div class="planning-dienst-field planning-dienst-field--full">
@@ -409,6 +414,7 @@
         <select id="dienst-mw" class="planning-dienst-input" name="teamlid" required>
           <option value="">Selecteer een teamlid</option>
         </select>
+        <p class="planning-dienst-hint" id="dienst-mw-saldo-hint" hidden></p>
       </div>
       <div class="planning-dienst-grid">
         <div class="planning-dienst-field" id="dienst-client-field">
@@ -694,9 +700,11 @@
   <script src="besa-audit.js" defer></script>
   <script src="notifications-data.js"></script>
   <script src="notification-bell.js?v=nb2" defer></script>
-  <script src="planning-data.js"></script>
+  <script src="planning-data.js?v=pdf1"></script>
   <script src="clienten-data.js?v=memfix1"></script>
-  <script src="comp-diensttypes-data.js"></script>
+  <script src="comp-diensttypes-data.js?v=cd2"></script>
+  <script src="comp-saldi-data.js"></script>
+  <script src="planning-settings-data.js?v=ps2"></script>
   <script src="planning-voorinstellingen-data.js"></script>
   <script src="dienst-uitnodigingen-data.js"></script>
   <script src="medewerker-verzuim-data.js"></script>
@@ -707,7 +715,7 @@
   <script src="dienst-detail.js"></script>
   <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="planning.js"></script>
+  <script src="planning.js?v=pjf1"></script>
 
   <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->
   <div id="planning-export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="planning-export-title" hidden>

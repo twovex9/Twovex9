@@ -86,7 +86,7 @@
         </div>
         <section class="table-card"><div class="table-wrapper">
           <table class="employees-table" id="pb-st-table">
-            <thead><tr><th>Naam</th><th>Kleur</th><th>Configureerbaar uurtarief</th><th></th></tr></thead>
+            <thead><tr><th>Naam</th><th>Kleur</th><th>Configureerbaar uurtarief</th><th>Standaard pauze (uren)</th><th></th></tr></thead>
             <tbody id="pb-st-tbody"></tbody>
           </table>
         </div></section>
@@ -149,6 +149,11 @@
             <input id="pb-max-uren" class="modal-input" type="number" value="20" style="width:120px" /> <span>uren</span>
             <p class="planning-detail-info-label" style="margin:6px 0 0">ℹ Waarschuwing tonen wanneer compensatie-uren boven deze waarde komen</p>
           </div>
+          <h3 style="margin:24px 0 12px">Kilometerkosten</h3>
+          <div class="modal-field"><label class="modal-label" for="pb-km-tarief">Vergoeding per kilometer (€)</label>
+            <input id="pb-km-tarief" class="modal-input" type="number" min="0" step="0.01" value="0.23" style="width:120px" /> <span>€/km</span>
+            <p class="planning-detail-info-label" style="margin:6px 0 0">ℹ Wordt gebruikt voor de kilometerkosten-KPI in de planning-overzichten.</p>
+          </div>
           <div style="margin-top:20px;display:flex;gap:8px">
             <button type="button" class="btn-outline" id="pb-settings-cancel">Annuleren</button>
             <button type="button" class="btn-primary" id="pb-settings-save">Opslaan</button>
@@ -189,6 +194,7 @@
         <div class="modal-field"><label class="modal-label" for="pb-st-naam">Naam</label><input id="pb-st-naam" class="modal-input" /></div>
         <div class="modal-field"><label class="modal-label" for="pb-st-kleur">Kleur (hex)</label><input id="pb-st-kleur" class="modal-input" type="color" value="#5c73e6" /></div>
         <div class="modal-field"><label class="modal-label planning-checkbox"><input type="checkbox" id="pb-st-uurtarief" /> Configureerbaar uurtarief</label></div>
+        <div class="modal-field"><label class="modal-label" for="pb-st-pauze">Standaard pauze (uren)</label><input id="pb-st-pauze" class="modal-input" type="number" min="0" max="8" step="0.25" value="0" /></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-outline" id="pb-st-modal-cancel">Annuleren</button>
@@ -219,9 +225,9 @@
   <script src="notification-bell.js?v=nb2" defer></script>
   <script src="medewerkers-data.js"></script>
   <script src="beschikbaarheidstypes-data.js"></script>
-  <script src="comp-diensttypes-data.js"></script>
+  <script src="comp-diensttypes-data.js?v=cd2"></script>
   <script src="dienstwissels-data.js"></script>
-  <script src="planning-settings-data.js"></script>
-  <script src="planning-beheer.js"></script>
+  <script src="planning-settings-data.js?v=ps2"></script>
+  <script src="planning-beheer.js?v=pbf1"></script>
 </body>
 </html>
