@@ -23099,3 +23099,60 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   gap: 8px;
   margin-top: 10px;
 }
+
+/* === HR Diensttypes (PR-G) === */
+.dt-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.dt-color-picker {
+  width: 40px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 2px;
+  cursor: pointer;
+  background: var(--surface);
+}
+.dt-color-hex {
+  flex: 1;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  text-transform: uppercase;
+}
+.dt-color-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.dt-color-hex-text {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.dt-naam {
+  font-weight: 500;
+  color: var(--text);
+}
+.dt-row {
+  cursor: pointer;
+}
+.dt-row:hover {
+  background: var(--surface-2, #f5f7fb);
+}
+.dt-row--archived {
+  cursor: default;
+}
+.dt-row--archived:hover {
+  background: transparent;
+}
+.dt-actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
