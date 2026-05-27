@@ -376,6 +376,57 @@
     if (editForm) editForm.reset();
   }
 
+  /**
+   * PR-E1: bepaal de "Volgende deadline" voor een verzuim-rij.
+   * Bronnen (in volgorde):
+   *   1. Eerstvolgende openstaande mijlpaal uit verzuim_mijlpalen (FK op verzuim.id)
+   *   2. Fallback: `verwachte_terug` zolang verzuim Actief is en geen werkelijke_terug
+   * Returnt { label, status, title } of null.
+   *   status = 'overdue' | 'warn' | 'ok'
+   */
+  function computeDeadlineInfoFor(r) {
+    if (!r) return null;
+    // Geen actie nodig als verzuim is afgesloten
+    var st = String(r.status || "Actief");
+    if (st === "Hersteld" || (r.werkelijkeTerug && r.werkelijkeTerug.length >= 8)) return null;
+
+    // 1) Mijlpalen-data
+    if (window.verzuimMijlpalenDB && typeof window.verzuimMijlpalenDB.getVolgendeDeadlineSync === "function") {
+      var m = window.verzuimMijlpalenDB.getVolgendeDeadlineSync(r.id);
+      if (m) {
+        var dagenLabel = m.dagen < 0 ? (Math.abs(m.dagen) + " dagen te laat") :
+                        (m.dagen === 0 ? "vandaag" :
+                        (m.dagen + " dagen"));
+        return {
+          label: (m.mijlpaalType ? m.mijlpaalType + " · " : "") + fmtDateNl(m.datum) + " (" + dagenLabel + ")",
+          status: m.status,
+          title: "Wet-Poortwachter mijlpaal: " + (m.mijlpaalType || "deadline") + " op " + fmtDateNl(m.datum),
+        };
+      }
+    }
+
+    // 2) Fallback: verwachte terugkeerdatum
+    if (r.verwachteTerug) {
+      var today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      var d = new Date(r.verwachteTerug + "T00:00:00Z");
+      if (!isFinite(d.getTime())) return null;
+      var dagen = Math.floor((d - today) / (1000 * 60 * 60 * 24));
+      var status = "ok";
+      if (dagen < 0) status = "overdue";
+      else if (dagen <= 30) status = "warn";
+      var lbl = dagen < 0 ? (Math.abs(dagen) + " dagen te laat") :
+                (dagen === 0 ? "vandaag" :
+                (dagen + " dagen"));
+      return {
+        label: "Verwachte terugkeer " + fmtDateNl(r.verwachteTerug) + " (" + lbl + ")",
+        status: status,
+        title: "Verwachte terugkeerdatum: " + fmtDateNl(r.verwachteTerug),
+      };
+    }
+    return null;
+  }
+
   function renderTable() {
     var items = getFiltered();
     var pageSize = getPageSize();
@@ -390,7 +441,7 @@
     if (!page.length) {
       var tr0 = document.createElement("tr");
       var td0 = document.createElement("td");
-      td0.colSpan = 7;
+      td0.colSpan = 8;
       td0.textContent = "Geen resultaten";
       td0.style.textAlign = "center";
       td0.style.padding = "24px";
@@ -432,6 +483,31 @@
         pill.textContent = r.status || "Actief";
         tdS.appendChild(pill);
         tr.appendChild(tdS);
+
+        // PR-E1: kolom "Volgende deadline" met driehoek-icoon
+        var tdD = document.createElement("td");
+        tdD.dataset.col = "deadline";
+        var deadlineInfo = computeDeadlineInfoFor(r);
+        if (deadlineInfo) {
+          var iconClass = deadlineInfo.status === "overdue" ? "verzuim-deadline-overdue" :
+                          deadlineInfo.status === "warn" ? "verzuim-deadline-warn" : "";
+          if (iconClass) {
+            var icon = document.createElement("span");
+            icon.className = "verzuim-deadline-icon " + iconClass;
+            icon.setAttribute("aria-hidden", "true");
+            icon.title = deadlineInfo.title;
+            icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 L22 20 L2 20 Z"/></svg>';
+            tdD.appendChild(icon);
+          }
+          var lbl = document.createElement("span");
+          lbl.className = "verzuim-deadline-label";
+          lbl.textContent = " " + deadlineInfo.label;
+          if (iconClass) tdD.appendChild(lbl); else tdD.textContent = deadlineInfo.label;
+        } else {
+          tdD.textContent = "—";
+          tdD.style.color = "var(--text-muted)";
+        }
+        tr.appendChild(tdD);
 
         var tdA = document.createElement("td");
         tdA.dataset.col = "acties";
@@ -820,5 +896,13 @@
       rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
       render();
     } catch (e) { /* */ }
+  });
+
+  // PR-E1: re-render bij mijlpalen-/contactmomenten-updates voor live driehoek-iconen
+  window.addEventListener("besa:verzuim-mijlpalen-updated", function () {
+    try { render(); } catch (e) { /* */ }
+  });
+  window.addEventListener("besa:verzuim-contactmomenten-updated", function () {
+    try { render(); } catch (e) { /* */ }
   });
 })();

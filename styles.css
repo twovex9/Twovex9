@@ -22806,3 +22806,17 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .km-inzittenden-warning[hidden] { display: none; }
 .km-inzittenden-warning strong { color: var(--yellow); }
+
+/* === Verzuim — Wet-Poortwachter deadline-icoon (PR-E1) === */
+.verzuim-deadline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 18px;
+  height: 18px;
+}
+.verzuim-deadline-icon svg { display: block; }
+.verzuim-deadline-icon.verzuim-deadline-warn { color: var(--yellow); }
+.verzuim-deadline-icon.verzuim-deadline-overdue { color: var(--red); }
+.verzuim-deadline-label { font-size: var(--font-table-cell, 13px); }
