@@ -750,6 +750,34 @@
     if (btn) btn.disabled = (nDays === 0 || _wwState.distance == null);
   }
 
+  // Multi-locatie-helper: voor een gegeven datum, zoek welke geplande shift de
+  // medewerker heeft en geef de bijbehorende woon-werk-afstand (enkele reis)
+  // terug uit medewerkers.data.locatie_afstanden[shift.locatie]. Fallback:
+  // mw.location_distance (default). Geen match → null.
+  function getDistanceForDay(mw, iso) {
+    if (!mw || !iso) return null;
+    var fallback = mw.location_distance != null ? Number(mw.location_distance) : null;
+    if (!window.planningDB || typeof window.planningDB.getAllSync !== "function") return fallback;
+    var fullName = ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim();
+    if (!fullName) return fallback;
+    var shifts = window.planningDB.getAllSync() || [];
+    var shift = null;
+    for (var i = 0; i < shifts.length; i++) {
+      var s = shifts[i];
+      if (!s || s.archived) continue;
+      var startIso = String(s.start || "").slice(0, 10);
+      if (startIso !== iso) continue;
+      if (s.teamlid === fullName || s.teamlead === fullName) { shift = s; break; }
+    }
+    if (!shift || !shift.locatie) return fallback;
+    var afstanden = mw.locatie_afstanden && typeof mw.locatie_afstanden === "object" ? mw.locatie_afstanden : null;
+    if (afstanden && afstanden[shift.locatie] != null) {
+      var v = Number(afstanden[shift.locatie]);
+      if (isFinite(v)) return v;
+    }
+    return fallback;
+  }
+
   function submitWoonwerkSelection() {
     var d = currentDecl();
     if (!d) return;
@@ -759,7 +787,6 @@
       setErr("km-add-woonwerk-error", "Geen afstand bekend — vraag HR om je location_distance in te vullen.");
       return;
     }
-    var perDay = _wwState.perDayKm;
     var btn = $("km-add-woonwerk-submit");
     if (btn) btn.disabled = true;
     newDates.sort();
@@ -767,6 +794,11 @@
     var ok = 0, errs = 0;
     var promise = Promise.resolve();
     newDates.forEach(function (iso) {
+      // Multi-locatie: per dag kijken of er een geplande shift is met andere
+      // locatie + cached afstand. Anders fallback naar de medewerker-default.
+      var enkeleReis = getDistanceForDay(_wwState.mw, iso);
+      if (enkeleReis == null) enkeleReis = _wwState.distance;
+      var perDay = enkeleReis * 2; // heen + terug
       promise = promise.then(function () {
         return window.kilometerDeclaratiesDB.addRecord({
           declaratieId: d.id, datum: iso,
