@@ -21085,6 +21085,39 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-weight: 600;
 }
 
+/* Globale maand-lock banner (PR #2 Tijdregistratie, 2026-05-27) */
+.wu-global-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  background: var(--yellow-soft);
+  border: 1px solid var(--yellow);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: var(--font-base);
+  line-height: 1.45;
+}
+.wu-global-lock-banner .wu-glb-ico {
+  color: var(--yellow);
+  flex-shrink: 0;
+}
+.wu-global-lock-banner strong {
+  font-weight: 600;
+}
+
+/* Vergrendelde rij — read-only icon in plaats van edit/delete */
+.wu-row-locked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
 /* Tabel */
 .wu-table-card {
   margin-bottom: 14px;
