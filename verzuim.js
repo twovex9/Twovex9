@@ -319,6 +319,15 @@
 
       var actions = document.createElement("div");
       actions.className = "vz-reg-card-actions";
+      var tlBtn = document.createElement("button");
+      tlBtn.type = "button";
+      tlBtn.className = "cs-view-btn vz-card-tl-btn";
+      tlBtn.setAttribute("aria-label", "Tijdlijn (mijlpalen en contactmomenten)");
+      tlBtn.setAttribute("data-row-id", r.id);
+      tlBtn.title = "Tijdlijn — mijlpalen en contactmomenten";
+      tlBtn.innerHTML =
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="2" x2="12" y2="22"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>';
+
       var editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "cs-view-btn vz-card-edit-btn";
@@ -333,6 +342,7 @@
       delBtn.setAttribute("data-row-id", r.id);
       delBtn.innerHTML =
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+      actions.appendChild(tlBtn);
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
 
@@ -885,6 +895,292 @@
       }
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // PR-F: tijdlijn-modal (mijlpalen + contactmomenten per verzuim-rij)
+  // ---------------------------------------------------------------------------
+  var tlState = { verzuimId: null };
+  var MP_LABELS = {
+    notification: "Ziekmelding",
+    action_plan: "Probleemanalyse / Plan van Aanpak",
+    evaluation: "Eerstejaarsevaluatie",
+    report: "WIA-aanvraag",
+    assessment: "Einde Loondoorbetalingsverplichting",
+  };
+  var CM_LABELS = {
+    contact_moment: "Contactmoment",
+    company_doctor_visit: "Bezoek bedrijfsarts",
+    company_doctor_feedback: "Terugkoppeling bedrijfsarts",
+    other: "Anders",
+  };
+
+  function tlEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function tlFmtDate(iso) {
+    if (!iso) return "—";
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    return m ? (m[3] + "-" + m[2] + "-" + m[1]) : String(iso);
+  }
+  function tlGetModal() { return document.getElementById("vz-tl-modal"); }
+
+  function tlOpen(verzuimId) {
+    var modal = tlGetModal();
+    if (!modal) return;
+    tlState.verzuimId = verzuimId;
+    var sub = document.getElementById("vz-tl-sub");
+    if (sub) {
+      var row = findRowById(verzuimId);
+      sub.textContent = "Mijlpalen en contactmomenten voor "
+        + ((row && row.medewerker) || "deze verzuimregistratie") + ".";
+    }
+    tlRenderMp();
+    tlRenderCm();
+    tlHideForm("mp");
+    tlHideForm("cm");
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    var card = modal.querySelector(".vz-tl-card");
+    if (card) card.focus();
+  }
+  function tlClose() {
+    var modal = tlGetModal();
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    tlState.verzuimId = null;
+  }
+
+  function tlHideForm(kind) {
+    var form = document.getElementById("vz-tl-" + kind + "-form");
+    if (form) form.hidden = true;
+    var idIn = document.getElementById("vz-tl-" + kind + "-id");
+    if (idIn) idIn.value = "";
+  }
+  function tlShowForm(kind, prefill) {
+    var form = document.getElementById("vz-tl-" + kind + "-form");
+    if (!form) return;
+    form.hidden = false;
+    var idIn = document.getElementById("vz-tl-" + kind + "-id");
+    if (idIn) idIn.value = (prefill && prefill.id) || "";
+    if (kind === "mp") {
+      document.getElementById("vz-tl-mp-type").value = (prefill && prefill.mijlpaalType) || "notification";
+      document.getElementById("vz-tl-mp-deadline").value = (prefill && prefill.deadlineDatum) || "";
+      document.getElementById("vz-tl-mp-voltooid").value = (prefill && prefill.voltooidOp) || "";
+    } else {
+      document.getElementById("vz-tl-cm-type").value = (prefill && prefill.type) || "contact_moment";
+      document.getElementById("vz-tl-cm-datum").value = (prefill && prefill.datum) || "";
+      document.getElementById("vz-tl-cm-notitie").value = (prefill && prefill.notitie) || "";
+    }
+  }
+
+  function tlRenderMp() {
+    var list = document.getElementById("vz-tl-mp-list");
+    var empty = document.getElementById("vz-tl-mp-empty");
+    if (!list || !empty || !tlState.verzuimId) return;
+    var items = window.verzuimMijlpalenDB
+      ? (window.verzuimMijlpalenDB.getForVerzuimSync(tlState.verzuimId) || [])
+      : [];
+    items.sort(function (a, b) {
+      return String(a.deadlineDatum || "").localeCompare(String(b.deadlineDatum || ""));
+    });
+    if (items.length === 0) {
+      list.hidden = true;
+      empty.hidden = false;
+      list.innerHTML = "";
+      return;
+    }
+    list.hidden = false;
+    empty.hidden = true;
+    list.innerHTML = items.map(function (it) {
+      var status = it.voltooidOp ? "voltooid" : "open";
+      var deadline = tlFmtDate(it.deadlineDatum);
+      var voltooid = it.voltooidOp ? "Voltooid op " + tlFmtDate(it.voltooidOp) : "Openstaand";
+      return ''
+        + '<li class="vz-tl-item vz-tl-item--' + status + '" data-mp-id="' + tlEsc(it.id) + '">'
+        + '  <div class="vz-tl-item-head">'
+        + '    <strong>' + tlEsc(MP_LABELS[it.mijlpaalType] || it.mijlpaalType) + '</strong>'
+        + '    <span class="vz-tl-item-meta">deadline: ' + tlEsc(deadline) + ' · ' + tlEsc(voltooid) + '</span>'
+        + '  </div>'
+        + '  <div class="vz-tl-item-actions">'
+        + '    <button type="button" class="btn-outline vz-tl-edit" data-kind="mp" data-id="' + tlEsc(it.id) + '">Bewerken</button>'
+        + '    <button type="button" class="btn-outline vz-tl-del" data-kind="mp" data-id="' + tlEsc(it.id) + '">Verwijderen</button>'
+        + '  </div>'
+        + '</li>';
+    }).join("");
+  }
+
+  function tlRenderCm() {
+    var list = document.getElementById("vz-tl-cm-list");
+    var empty = document.getElementById("vz-tl-cm-empty");
+    if (!list || !empty || !tlState.verzuimId) return;
+    var items = window.verzuimContactmomentenDB
+      ? (window.verzuimContactmomentenDB.getForVerzuimSync(tlState.verzuimId) || [])
+      : [];
+    items.sort(function (a, b) { return String(b.datum || "").localeCompare(String(a.datum || "")); });
+    if (items.length === 0) {
+      list.hidden = true;
+      empty.hidden = false;
+      list.innerHTML = "";
+      return;
+    }
+    list.hidden = false;
+    empty.hidden = true;
+    list.innerHTML = items.map(function (it) {
+      var notitie = it.notitie ? '<p class="vz-tl-item-note">' + tlEsc(it.notitie) + '</p>' : "";
+      return ''
+        + '<li class="vz-tl-item" data-cm-id="' + tlEsc(it.id) + '">'
+        + '  <div class="vz-tl-item-head">'
+        + '    <strong>' + tlEsc(CM_LABELS[it.type] || it.type) + '</strong>'
+        + '    <span class="vz-tl-item-meta">' + tlEsc(tlFmtDate(it.datum)) + '</span>'
+        + '  </div>'
+        + notitie
+        + '  <div class="vz-tl-item-actions">'
+        + '    <button type="button" class="btn-outline vz-tl-edit" data-kind="cm" data-id="' + tlEsc(it.id) + '">Bewerken</button>'
+        + '    <button type="button" class="btn-outline vz-tl-del" data-kind="cm" data-id="' + tlEsc(it.id) + '">Verwijderen</button>'
+        + '  </div>'
+        + '</li>';
+    }).join("");
+  }
+
+  async function tlSaveMp(e) {
+    e.preventDefault();
+    var vzId = tlState.verzuimId;
+    if (!vzId || !window.verzuimMijlpalenDB) return;
+    var id = document.getElementById("vz-tl-mp-id").value;
+    var payload = {
+      verzuimId: vzId,
+      mijlpaalType: document.getElementById("vz-tl-mp-type").value,
+      deadlineDatum: document.getElementById("vz-tl-mp-deadline").value,
+      voltooidOp: document.getElementById("vz-tl-mp-voltooid").value || null,
+    };
+    try {
+      if (id) {
+        await window.verzuimMijlpalenDB.update(id, payload);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Mijlpaal");
+      } else {
+        await window.verzuimMijlpalenDB.add(payload);
+        if (window.showActionFeedback) window.showActionFeedback("created", "Mijlpaal");
+      }
+      tlHideForm("mp");
+      tlRenderMp();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  async function tlSaveCm(e) {
+    e.preventDefault();
+    var vzId = tlState.verzuimId;
+    if (!vzId || !window.verzuimContactmomentenDB) return;
+    var id = document.getElementById("vz-tl-cm-id").value;
+    var payload = {
+      verzuimId: vzId,
+      type: document.getElementById("vz-tl-cm-type").value,
+      datum: document.getElementById("vz-tl-cm-datum").value,
+      notitie: document.getElementById("vz-tl-cm-notitie").value,
+    };
+    try {
+      if (id) {
+        await window.verzuimContactmomentenDB.update(id, payload);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Contactmoment");
+      } else {
+        await window.verzuimContactmomentenDB.add(payload);
+        if (window.showActionFeedback) window.showActionFeedback("created", "Contactmoment");
+      }
+      tlHideForm("cm");
+      tlRenderCm();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  async function tlDelete(kind, id) {
+    if (!id) return;
+    var db = kind === "mp" ? window.verzuimMijlpalenDB : window.verzuimContactmomentenDB;
+    if (!db) return;
+    var label = kind === "mp" ? "Mijlpaal" : "Contactmoment";
+    var ok = false;
+    if (typeof window.showSliderConfirmModal === "function") {
+      ok = await window.showSliderConfirmModal({
+        title: label + " verwijderen?",
+        preview: "Deze actie kan niet ongedaan worden gemaakt.",
+        okLabel: "Verwijderen",
+        cancelLabel: "Annuleren",
+      });
+    } else { ok = true; }
+    if (!ok) return;
+    try {
+      await db.delete(id);
+      if (window.showActionFeedback) window.showActionFeedback("deleted", label);
+      if (kind === "mp") tlRenderMp(); else tlRenderCm();
+    } catch (err) {
+      if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message || err));
+    }
+  }
+
+  function tlWire() {
+    var modal = tlGetModal();
+    if (!modal) return;
+
+    // Sluiten
+    var closeBtn = document.getElementById("vz-tl-close");
+    if (closeBtn) closeBtn.addEventListener("click", tlClose);
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) tlClose();
+    });
+
+    // Add-buttons
+    [].forEach.call(modal.querySelectorAll("[data-vz-tl-add]"), function (b) {
+      b.addEventListener("click", function () { tlShowForm(b.getAttribute("data-vz-tl-add"), null); });
+    });
+
+    // Cancel-knoppen in formulieren
+    var cancelMp = document.getElementById("vz-tl-mp-cancel");
+    if (cancelMp) cancelMp.addEventListener("click", function () { tlHideForm("mp"); });
+    var cancelCm = document.getElementById("vz-tl-cm-cancel");
+    if (cancelCm) cancelCm.addEventListener("click", function () { tlHideForm("cm"); });
+
+    // Submit-forms
+    var mpForm = document.getElementById("vz-tl-mp-form");
+    if (mpForm) mpForm.addEventListener("submit", tlSaveMp);
+    var cmForm = document.getElementById("vz-tl-cm-form");
+    if (cmForm) cmForm.addEventListener("submit", tlSaveCm);
+
+    // Edit/Delete-event-delegation in lijsten
+    modal.addEventListener("click", function (e) {
+      var t = e.target;
+      while (t && t !== modal && !t.classList) t = t.parentNode;
+      if (!t || t === modal) return;
+      var id = t.getAttribute && t.getAttribute("data-id");
+      var kind = t.getAttribute && t.getAttribute("data-kind");
+      if (t.classList.contains("vz-tl-edit") && id && kind) {
+        var db = kind === "mp" ? window.verzuimMijlpalenDB : window.verzuimContactmomentenDB;
+        var items = db ? (db.getForVerzuimSync(tlState.verzuimId) || []) : [];
+        var it = items.find(function (x) { return String(x.id) === String(id); });
+        if (it) tlShowForm(kind, it);
+      } else if (t.classList.contains("vz-tl-del") && id && kind) {
+        tlDelete(kind, id);
+      }
+    });
+
+    // Knop op vz-reg-card opent modal (event-delegation op detail-cards)
+    if (detailCards) {
+      detailCards.addEventListener("click", function (e) {
+        var btn = e.target;
+        while (btn && btn !== detailCards && !(btn.classList && btn.classList.contains("vz-card-tl-btn"))) {
+          btn = btn.parentNode;
+        }
+        if (btn && btn.classList && btn.classList.contains("vz-card-tl-btn")) {
+          var rid = btn.getAttribute("data-row-id");
+          if (rid) tlOpen(rid);
+        }
+      });
+    }
+  }
+  tlWire();
 
   render();
 
