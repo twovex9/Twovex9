@@ -17,6 +17,31 @@
   function pad2(n) { return n < 10 ? "0" + n : String(n); }
   function setText(id, t) { var n = $(id); if (n) n.textContent = t; }
   function clear(el) { while (el && el.firstChild) el.removeChild(el.firstChild); }
+
+  /**
+   * PR #5 — Som van urendeclaraties.bedrag opgesplitst in Achterstand
+   * (vorige maanden, jaar+maand < huidige) en Lopende maand (jaar+maand
+   * = huidige). public.urendeclaraties.maand is 0-indexed (jan=0).
+   */
+  function computeAchterstandLopendTotaal() {
+    var out = { achterstand: 0, lopend: 0 };
+    if (!window.urendeclaratiesDB || typeof window.urendeclaratiesDB.getAllSync !== "function") return out;
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    if (!items.length) return out;
+    var now = new Date();
+    var nowYear = now.getFullYear();
+    var nowMonth = now.getMonth(); // 0-indexed
+    items.forEach(function (u) {
+      if (!u) return;
+      var y = Number(u.jaar) || 0;
+      var m = Number(u.maand); // 0-indexed
+      var bedrag = Number(u.bedrag) || 0;
+      if (!bedrag) return;
+      if (y < nowYear || (y === nowYear && m < nowMonth)) out.achterstand += bedrag;
+      else if (y === nowYear && m === nowMonth) out.lopend += bedrag;
+    });
+    return out;
+  }
   function euTick(v) {
     if (v >= 1000) return "€ " + Math.round(v / 1000) + "k";
     return "€ " + Math.round(v);
@@ -285,6 +310,11 @@
     setText("bd-v-ib", fmtEuro(k.declared_pending_amount.amount));
     setText("bd-s-ib", k.declared_pending_amount.pending_invoices + (k.declared_pending_amount.pending_invoices === 1 ? " betaling te verwerken" : " betalingen te verwerken"));
     setText("bd-v-out", fmtEuro(k.outstanding_to_declare.amount));
+    // PR #5 — split "Te declareren totaal" in Achterstand (vorige maanden)
+    // vs Lopende maand, op basis van urendeclaraties (clientside-aggregatie).
+    var split = computeAchterstandLopendTotaal();
+    setText("bd-v-achterstand", fmtEuro(split.achterstand));
+    setText("bd-v-lopend", fmtEuro(split.lopend));
     setText("bd-v-betaald", fmtEuro(k.paid_amount.amount));
     setText("bd-s-betaald", k.paid_amount.paid_invoices + (k.paid_amount.paid_invoices === 1 ? " factuur" : " facturen"));
     setText("bd-v-actief", fmtInt(k.active_dispositions.count));
@@ -372,4 +402,6 @@
     if (document.visibilityState === "visible") render();
   });
   window.addEventListener("focus", render);
+  // PR #5: re-render zodra urendeclaraties geladen of gemuteerd zijn
+  window.addEventListener("besa:urendeclaraties-updated", render);
 })();

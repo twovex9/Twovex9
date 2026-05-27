@@ -16487,6 +16487,31 @@ button.planning-erm-new {
   color: var(--text-muted);
 }
 
+/* PR #5 — split-rij onder "Te declareren totaal": Achterstand + Lopende maand */
+.bd-card-split {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.bd-card-split-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.bd-card-split-lbl {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.bd-card-split-val {
+  font-size: var(--font-base);
+  font-weight: 600;
+}
+.bd-card-split-val--red  { color: var(--red); }
+.bd-card-split-val--warn { color: var(--yellow); }
+
 /* Counter-kaart (Verlopen binnen 60d / Openstaande Aanvragen) */
 .bd2-card--counter {
   display: flex;
@@ -17372,10 +17397,22 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 }
 
 /* ============================================================
-   PR #6 — Pauline Override (Ambulant intern only)
+   PR #3 — Specificatie-download knop per rij + PR #6 Override
    ============================================================ */
-.content--urendecl .cl-ud-th--actions { text-align: center; width: 90px; }
+.content--urendecl .cl-ud-th--actions { text-align: center; width: 80px; }
 .content--urendecl .cl-ud-td-actions { text-align: center; padding: 4px; }
+
+/* PR #3 — Excel-specificatie download */
+.content--urendecl .ud-spec-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 8px; min-width: 32px; height: 30px;
+  border-radius: var(--r-sm); color: var(--blue);
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.content--urendecl .ud-spec-btn:hover { background: var(--surface-alt, rgba(37, 99, 235, 0.08)); color: var(--blue); }
+.content--urendecl .ud-spec-btn:disabled { opacity: 0.5; cursor: wait; }
+
+/* PR #6 — Pauline Override (Ambulant intern only) */
 .ud-override-btn {
   display: inline-flex; align-items: center; justify-content: center;
   gap: 4px; padding: 4px 10px; min-height: 28px;
@@ -17391,7 +17428,7 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .ud-override-na { color: var(--text-muted); font-size: var(--font-ui-badge); }
 .ud-override-hint-row { color: var(--yellow); font-weight: 600; font-size: var(--font-ui-badge); margin-left: 4px; }
 
-/* Modal */
+/* PR #6 — Override-modal */
 .ud-override-card { max-width: 520px; width: 92%; }
 .ud-override-msg { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 12px; line-height: 1.45; }
 .ud-override-info {
@@ -17926,6 +17963,19 @@ button.besc-dtl-tab:hover {
   gap: var(--r-sm);
   margin: var(--r-xs) 0;
   font-size: var(--font-base);
+}
+
+/* PR #5 — sub-rij onder "Nog niet gedeclareerd": Achterstand + Lopend */
+.besc-dtl-kv--sub {
+  padding-left: 12px;
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 2px 0;
+}
+.besc-dtl-hint-sm {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 11px;
 }
 
 .besc-dtl-kk {
@@ -21099,6 +21149,14 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   flex-direction: column;
   gap: 6px;
 }
+.wu-open-agenda-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  text-decoration: none;
+}
 .wu-filter-label {
   font-size: var(--font-table-head);
   font-weight: 600;
@@ -21158,6 +21216,96 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   color: var(--text-muted);
   cursor: not-allowed;
 }
+
+/* ===========================================================================
+   Medewerker-agenda pagina (PR #4 Tijdregistratie, 2026-05-27)
+   ========================================================================= */
+.content--med-agenda { padding: 20px 24px; }
+.med-ag-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; margin-bottom: 16px;
+}
+.med-ag-header-left { display: flex; align-items: center; gap: 14px; }
+.med-ag-emp { display: flex; align-items: center; gap: 12px; }
+.med-ag-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  font-weight: 600; font-size: var(--font-base);
+}
+.med-ag-name { font-size: var(--font-h1); font-weight: 600; margin: 0; line-height: 1.1; }
+.med-ag-sub { margin: 2px 0 0; color: var(--text-secondary); font-size: var(--font-base); }
+.med-ag-actions { display: flex; align-items: center; gap: 8px; }
+.med-ag-nav {
+  padding: 6px 8px; display: inline-flex; align-items: center;
+  justify-content: center; min-width: 32px;
+}
+.med-ag-month { font-size: var(--font-base); font-weight: 600; min-width: 130px; text-align: center; }
+
+.med-ag-totals {
+  display: flex; flex-wrap: wrap; gap: 18px 24px;
+  padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  margin-bottom: 16px;
+}
+.med-ag-total { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-base); }
+.med-ag-total-ico--blue   { color: var(--blue); }
+.med-ag-total-ico--green  { color: var(--green); }
+.med-ag-total-ico--purple { color: var(--blue); }
+.med-ag-total-ico--yellow { color: var(--yellow); }
+
+.med-ag-grid-wrap {
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  overflow: hidden; margin-bottom: 16px; background: var(--surface);
+}
+.med-ag-grid-head, .med-ag-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.med-ag-grid-head { background: var(--surface); border-bottom: 1px solid var(--line); }
+.med-ag-dowh {
+  padding: 8px 6px; text-align: center; font-weight: 600;
+  font-size: var(--font-table-head); color: var(--text-secondary);
+  border-right: 1px solid var(--line);
+}
+.med-ag-dowh:last-child { border-right: none; }
+
+.med-ag-cell {
+  min-height: 90px; padding: 6px 8px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: var(--surface); text-align: left; cursor: pointer; font: inherit;
+  color: var(--text);
+  display: flex; flex-direction: column; gap: 4px;
+  transition: background 0.12s;
+}
+.med-ag-cell:nth-child(7n) { border-right: none; }
+.med-ag-cell:hover:not(.med-ag-cell--out) { background: var(--surface-alt, rgba(37,99,235,0.04)); }
+.med-ag-cell--out { color: var(--text-muted); background: var(--bg, #fafafa); cursor: default; }
+.med-ag-cell--today .med-ag-cell-day {
+  background: var(--blue); color: #fff; border-radius: 50%;
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 600;
+}
+.med-ag-cell--selected { outline: 2px solid var(--blue); outline-offset: -2px; }
+.med-ag-cell--empty .med-ag-cell-body { opacity: 0.5; }
+.med-ag-cell-day { font-size: var(--font-base); font-weight: 600; }
+.med-ag-cell-body { display: flex; flex-direction: column; gap: 3px; }
+.med-ag-badge {
+  display: inline-block; padding: 2px 6px; border-radius: var(--r-sm);
+  font-size: var(--font-ui-badge); font-weight: 600; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.med-ag-badge--wu { background: var(--green-soft, rgba(34, 197, 94, 0.15)); color: var(--green); }
+.med-ag-badge--pl { background: var(--yellow-soft); color: var(--text); }
+
+.med-ag-detail {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 16px 18px;
+}
+.med-ag-detail-title { font-size: var(--font-h1); font-weight: 600; margin: 0 0 12px; }
+.med-ag-type {
+  display: inline-block; padding: 2px 8px; border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge); font-weight: 600;
+}
+.med-ag-type--wu { background: var(--green-soft, rgba(34, 197, 94, 0.15)); color: var(--green); }
+.med-ag-type--pl { background: var(--yellow-soft); color: var(--text); }
 
 /* Tabel */
 .wu-table-card {
@@ -22574,6 +22722,16 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   cursor: pointer;
 }
 .me-tab.is-active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--surface);
+}
+.me-tab--link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.me-tab--link:hover {
   background: var(--blue);
   border-color: var(--blue);
   color: var(--surface);
