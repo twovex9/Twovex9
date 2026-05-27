@@ -19677,6 +19677,71 @@ button.besc-dtl-tab:hover {
 }
 .im-error[hidden] { display: none; }
 
+/* F4 — Planbaar-pill rechtsboven in medewerker-hero */
+.emp-planbaar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  margin-right: 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.emp-planbaar-pill:hover { background: var(--surface); }
+.emp-planbaar-pill:active { transform: scale(0.98); }
+.emp-planbaar-pill[disabled],
+.emp-planbaar-pill[data-permission-hidden] { cursor: default; opacity: 0.65; }
+.emp-planbaar-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+.emp-planbaar-pill--niet-planbaar .emp-planbaar-dot { background: var(--red); }
+.emp-planbaar-pill--niet-planbaar .emp-planbaar-text { color: var(--red); }
+
+/* Modal-opties voor planbaarheid */
+.emp-planbaar-options { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.emp-planbaar-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.emp-planbaar-option:hover { border-color: var(--blue); background: rgba(37, 99, 235, 0.03); }
+.emp-planbaar-option input[type="radio"] {
+  margin: 4px 0 0;
+  accent-color: var(--blue);
+  flex-shrink: 0;
+}
+.emp-planbaar-option:has(input:checked) {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.06);
+}
+.emp-planbaar-option-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.emp-planbaar-option-dot--green { background: var(--green); }
+.emp-planbaar-option-dot--red { background: var(--red); }
+.emp-planbaar-option-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.emp-planbaar-option-text strong { font-size: 14px; color: var(--text); }
+.emp-planbaar-option-sub { font-size: 12px; color: var(--text-muted); }
+
 /* F3 — Driehoek-systeem op medewerker-detail (errors rood, warnings oranje) */
 .emp-warnings-card { background: var(--surface); }
 .emp-warnings-card[hidden] { display: none !important; }
