@@ -480,6 +480,15 @@
           <label class="modal-label" for="km-add-manual-km">Kilometers <span class="im-req">*</span></label>
           <input class="modal-input" type="number" min="0" step="0.01" id="km-add-manual-km" required />
         </div>
+        <div class="modal-field">
+          <label class="modal-label planning-checkbox">
+            <input type="checkbox" id="km-add-manual-met-clienten" />
+            Met cliënt(en) in de auto?
+          </label>
+          <p class="km-inzittenden-warning" id="km-add-manual-inzittenden-warn" hidden>
+            <strong>Let op:</strong> bij ritten met cliënten is een inzittendenverzekering verplicht. Bevestig dat je deze hebt voor je deze rit indient.
+          </p>
+        </div>
         <p class="im-error" id="km-add-manual-error" role="alert" hidden></p>
       </form>
       <div class="modal-footer">
@@ -620,7 +629,7 @@
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js" defer></script>
   <script src="locaties-data.js" defer></script>
-  <script src="kilometer-declaraties-data.js?v=kmcrud" defer></script>
-  <script src="kilometers.js?v=kmcrud" defer></script>
+  <script src="kilometer-declaraties-data.js?v=kminz1" defer></script>
+  <script src="kilometers.js?v=kminz1" defer></script>
 </body>
 </html>

@@ -100,6 +100,8 @@
       isAutomatic: !!row.is_automatic,
       locatieNaam: row.locatie_naam || "",
       locatieBs2Id: row.locatie_bs2_id || null,
+      // PR-C: rit met cliënten → inzittendenverzekering-marker (data jsonb)
+      metClienten: !!(row.data && row.data.met_clienten),
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
     };
@@ -252,6 +254,8 @@
       is_automatic: false,
       locatie_naam: p.locatieNaam || "",
       locatie_bs2_id: p.locatieBs2Id || null,
+      // PR-C: met_clienten in data jsonb (geen schema-wijziging)
+      data: p.metClienten ? { met_clienten: true } : {},
       aanmaakdatum: nowIso,
       laatst_gewijzigd: nowIso,
     };
@@ -273,6 +277,17 @@
     if (patch && "kilometers" in patch) upd.kilometers = Number(patch.kilometers) || 0;
     if (patch && "locatieNaam" in patch) upd.locatie_naam = patch.locatieNaam || "";
     if (patch && "locatieBs2Id" in patch) upd.locatie_bs2_id = patch.locatieBs2Id || null;
+    // PR-C: met_clienten in data jsonb (merge zodat andere data-keys blijven)
+    if (patch && "metClienten" in patch) {
+      // Fetch huidige data zodat we niet andere keys overschrijven
+      try {
+        var cur = await global.besaSupabase.from(T_REC).select("data").eq("id", id).maybeSingle();
+        var existing = (cur && cur.data && cur.data.data) || {};
+        upd.data = Object.assign({}, existing, { met_clienten: !!patch.metClienten });
+      } catch (e) {
+        upd.data = { met_clienten: !!patch.metClienten };
+      }
+    }
     var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var rec = recRowToObj(res.data);
