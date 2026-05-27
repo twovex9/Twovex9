@@ -22687,3 +22687,90 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   .content-header > h1 { font-size: 20px; }
   .brand-logo-img { height: 26px; }
 }
+
+/* === Verlof bij uitdiensttreding (verlof-uitdienst.html) === */
+.vu-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(360px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .vu-grid { grid-template-columns: 1fr; }
+}
+.vu-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 20px;
+}
+.vu-card-title {
+  font-size: var(--font-h2, 18px);
+  margin: 0 0 16px;
+  color: var(--text);
+}
+.vu-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.vu-field > span:first-child {
+  font-size: var(--font-table-head, 12px);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.vu-field--half { flex: 1; }
+.vu-row { display: flex; gap: 12px; }
+.vu-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.vu-disclaimer {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--yellow-soft);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  color: var(--text);
+}
+.vu-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.vu-result-section {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.vu-result-section:last-of-type { border-bottom: none; }
+.vu-result-section h3 {
+  font-size: var(--font-table-head, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.vu-result-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.vu-result-row > span:last-child { font-weight: 600; }
+.vu-result-row--big { font-size: 16px; padding: 8px 0; }
+.vu-result-section--total {
+  background: var(--surface-secondary, #f8fafc);
+  border-radius: var(--r-sm);
+  padding: 12px;
+  margin-top: 12px;
+  border-bottom: none;
+}
+.vu-actions { margin-top: 16px; }
+
+/* === Verlofstanden — type-kolom-grouping (verlofstanden.html) === */
+.vs-col-wet { background: rgba(96, 165, 250, 0.04); }
+.vs-col-bovenwet { background: rgba(250, 204, 21, 0.04); }
+.employees-table th.vs-col-wet,
+.employees-table th.vs-col-bovenwet { background-image: none; }

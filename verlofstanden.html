@@ -147,24 +147,64 @@
     <main class="content">
       <div class="content-header">
         <h1>Verlofstanden</h1>
+        <div class="header-actions">
+          <a class="btn-outline" href="verlof-uitdienst" id="vs-uitdienst-link">Uitdiensttreding berekenen</a>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search" type="search" id="vs-search" placeholder="Zoeken op medewerker..." autocomplete="off" />
+        <div class="filter-chips" role="tablist" aria-label="Verlofstand filter">
+          <button type="button" class="filter-chip filter-chip--active" role="tab" id="vs-tab-alle" aria-selected="true">Alle uren</button>
+          <button type="button" class="filter-chip" role="tab" id="vs-tab-wet" aria-selected="false">Wettelijk</button>
+          <button type="button" class="filter-chip" role="tab" id="vs-tab-bovenwet" aria-selected="false">Bovenwettelijk</button>
+        </div>
+        <label class="switch switch--yellow" title="Alleen medewerkers met openstaande wettelijke uren (vervalt 1 juli)">
+          <input type="checkbox" id="vs-vervalt-toggle" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Vervalt binnen 3 maanden</span>
+        </label>
       </div>
 
       <section class="table-card">
-        <div style="padding:48px 24px;text-align:center;">
-          <div style="max-width:480px;margin:0 auto;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:0.55;">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <h2 style="font-size:18px;margin:0 0 12px;color:var(--text);">Verlofstanden — gereserveerd</h2>
-            <p style="font-size:14px;color:var(--text-secondary);margin:0 0 8px;">
-              Deze functionaliteit komt in een volgende module/fase.
-            </p>
-            <p style="font-size:13px;color:var(--text-muted);margin:0;">
-              De pagina is gereserveerd in de structuur conform BS2-pariteit.
-            </p>
+        <div class="table-wrapper">
+          <table class="employees-table" id="vs-table">
+            <thead>
+              <tr id="vs-thead-row">
+                <th><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="medewerker"><span class="th-label">Medewerker</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-wet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="wetTotaal"><span class="th-label">Wettelijk totaal</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-wet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="wetGebruikt"><span class="th-label">Wettelijk gebruikt</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-wet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="wetBeschikbaar"><span class="th-label">Wettelijk beschikbaar</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-bovenwet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="bovenwetTotaal"><span class="th-label">Bovenwet. totaal</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-bovenwet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="bovenwetGebruikt"><span class="th-label">Bovenwet. gebruikt</span><span class="th-sort-arrows"></span></button></div></th>
+                <th class="vs-col-bovenwet"><div class="th-sort-inner"><button type="button" class="th-sort-btn" data-sort="bovenwetBeschikbaar"><span class="th-label">Bovenwet. beschikbaar</span><span class="th-sort-arrows"></span></button></div></th>
+                <th><div class="th-sort-inner"><span class="th-label">Reden</span></div></th>
+              </tr>
+            </thead>
+            <tbody id="vs-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer table-footer--pagebar">
+          <div class="footer-left">
+            <span id="vs-pager-range" class="pager-range">0 van 0</span>
+          </div>
+          <div class="footer-right">
+            <label class="footer-rows-wrap" for="vs-rows-per-page">
+              <span class="footer-rows-label">Rijen per pagina</span>
+              <select id="vs-rows-per-page" class="footer-rows-select">
+                <option value="15">15</option>
+                <option value="30" selected>30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <span id="vs-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span class="pager" role="navigation" aria-label="Paginatie">
+              <button type="button" class="pager-btn" id="vs-pager-first" disabled>&laquo;</button>
+              <button type="button" class="pager-btn" id="vs-pager-prev" disabled>&lsaquo;</button>
+              <button type="button" class="pager-btn" id="vs-pager-next" disabled>&rsaquo;</button>
+              <button type="button" class="pager-btn" id="vs-pager-last" disabled>&raquo;</button>
+            </span>
           </div>
         </div>
       </section>
@@ -192,5 +232,9 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="medewerker-verlof-overgedragen-data.js"></script>
+  <script src="verlof-data.js"></script>
+  <script src="verlofstanden.js?v=vs1"></script>
 </body>
 </html>

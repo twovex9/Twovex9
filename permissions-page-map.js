@@ -57,6 +57,7 @@
     // ─── Verlof (leave-management) ────────────────────────────────────────────
     "verlof.html": { action: "view", entity: "leave-balances" },
     "verlofstanden.html": { action: "view", entity: "leave-balances" },
+    "verlof-uitdienst.html": { action: "view", entity: "leave-balances" },
     "verloftypes.html": { action: "manage", entity: "leave-types" },
 
     // ─── Cliënten + beschikkingen (clients-groep) ─────────────────────────────
