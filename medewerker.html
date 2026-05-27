@@ -531,10 +531,17 @@
                 <input id="emp-loondienst-salaris" type="text" value="€ 0,00" readonly>
               </label>
 
-              <label class="emp-field emp-field--full">
+              <label class="emp-field emp-field--full emp-geo-field">
                 <span>Woon-werk afstand (enkele reis, km)</span>
-                <input id="emp-location-distance" type="number" step="0.1" min="0" placeholder="0,0">
-                <small class="emp-field-hint">Wordt automatisch ×2 (heen + terug) genomen wanneer de medewerker woon-werk dagen aanvinkt in de kilometers-declaratie.</small>
+                <div class="emp-geo-row">
+                  <input id="emp-location-distance" type="number" step="0.1" min="0" placeholder="0,0">
+                  <button type="button" class="btn-outline emp-geo-btn" id="emp-geo-calc-btn" title="Bereken afstand via PDOK + OSRM">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 22s-8-7.5-8-13a8 8 0 0 1 16 0c0 5.5-8 13-8 13z"/></svg>
+                  Auto-bereken
+                  </button>
+                </div>
+                <small class="emp-field-hint">Wordt automatisch ×2 (heen + terug) genomen wanneer de medewerker woon-werk dagen aanvinkt in de kilometers-declaratie. <strong>Auto-bereken</strong> gebruikt postcode + huisnummer van het thuisadres en de eerste geselecteerde locatie via PDOK + OSRM (gratis, geen API-key).</small>
+                <small class="emp-geo-status" id="emp-geo-status" hidden></small>
               </label>
 
               <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-salaris">Wijzigingen opslaan</button></div>
@@ -1765,7 +1772,10 @@
   <script src="medewerker-verlof-overgedragen-data.js"></script>
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
+  <script src="locaties-data.js?v=geo1" defer></script>
+  <script src="geo-distance.js?v=geo1" defer></script>
   <script src="medewerker.js"></script>
+  <script src="medewerker-geo-hook.js?v=geo1" defer></script>
   <script src="read-audit.js?v=ra1" defer></script>
   <script>
     // Fase E.6 — log read-access voor GDPR Art. 15 audit-trail
