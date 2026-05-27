@@ -158,7 +158,10 @@
             <a href="hr" class="emp-back-btn inline-flex items-center justify-center whitespace-nowrap text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-solid bg-[transparent] hover:bg-accent hover:text-accent-foreground absolute top-4 left-4 w-8 h-8 p-1 rounded-md text-light border-light" aria-label="Terug">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </a>
-            <span class="emp-hero-chip inline-flex items-center justify-center whitespace-nowrap text-xs font-medium ring-offset-background transition-colors border border-solid bg-[transparent] h-8 px-4 py-1.5 rounded-md text-light border-light mr-3">Vrijgeven voor planning</span>
+            <button type="button" class="emp-planbaar-pill emp-planbaar-pill--planbaar" id="emp-planbaar-pill" aria-haspopup="menu" aria-expanded="false" data-permission-required="manage-planning-employees" title="Klik om planbaarheid te wijzigen">
+              <span class="emp-planbaar-dot" aria-hidden="true"></span>
+              <span class="emp-planbaar-text" id="emp-planbaar-text">Planbaar</span>
+            </button>
             <button type="button" class="emp-hero-menu outline-none cursor-pointer w-6 h-6 text-light" aria-label="Meer opties">•••</button>
           </div>
           <div class="emp-card-avatar" data-v-7241f4d3="">
@@ -1759,6 +1762,41 @@
       <div class="emp-verzuim-modal-footer">
         <button type="button" class="emp-verzuim-modal-cancel" id="emp-verlof-overd-cancel">Annuleren</button>
         <button type="button" class="emp-verzuim-modal-submit" id="emp-verlof-overd-save">Wijzigingen opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- F4: Planbaarheid wijzigen-modal -->
+  <div class="modal-overlay modal-overlay--confirm" id="emp-planbaar-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="emp-planbaar-modal-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="emp-planbaar-modal-title" class="modal-title">Planbaarheid wijzigen</h2>
+        <button type="button" class="modal-close" id="emp-planbaar-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Bepaal of deze medewerker beschikbaar is voor planning. Een handmatige keuze geldt ongeacht eventuele documentwaarschuwingen.</p>
+        <div class="emp-planbaar-options" role="radiogroup" aria-label="Planbaarheid">
+          <label class="emp-planbaar-option">
+            <input type="radio" name="emp-planbaar-choice" value="true" />
+            <span class="emp-planbaar-option-dot emp-planbaar-option-dot--green" aria-hidden="true"></span>
+            <span class="emp-planbaar-option-text">
+              <strong>Planbaar</strong>
+              <span class="emp-planbaar-option-sub">Medewerker is beschikbaar voor diensttoewijzing.</span>
+            </span>
+          </label>
+          <label class="emp-planbaar-option">
+            <input type="radio" name="emp-planbaar-choice" value="false" />
+            <span class="emp-planbaar-option-dot emp-planbaar-option-dot--red" aria-hidden="true"></span>
+            <span class="emp-planbaar-option-text">
+              <strong>Niet planbaar</strong>
+              <span class="emp-planbaar-option-sub">Medewerker wordt uitgesloten van planning.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="emp-planbaar-modal-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="emp-planbaar-modal-save">Opslaan</button>
       </div>
     </div>
   </div>

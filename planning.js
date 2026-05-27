@@ -447,6 +447,45 @@ function durationHours(startIso, endIso) {
   return Math.max(0, (b - a) / 3600000);
 }
 
+// F6: vliegtuig-icoon bovenaan dag-cel als ≥1 medewerker goedgekeurd verlof
+// heeft op die dag (week-, dag-, en maand-view). Hover-tooltip toont namen.
+function getApprovedLeavesOnDate(dateObj) {
+  if (!window.verlofDB || typeof window.verlofDB.getAllSync !== "function") return [];
+  let rows;
+  try { rows = window.verlofDB.getAllSync() || []; } catch (e) { return []; }
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  const iso = `${y}-${m}-${d}`;
+  return rows.filter((r) => {
+    if (!r || r.status !== "goedgekeurd") return false;
+    if (!r.startDatum || !r.eindDatum) return false;
+    return String(r.startDatum) <= iso && iso <= String(r.eindDatum);
+  });
+}
+function leaveTooltipText(leaves) {
+  if (!leaves || leaves.length === 0) return "";
+  const meds = (window.medewerkersDB && window.medewerkersDB.getAllSync()) || [];
+  function fmt(s) {
+    if (!s) return "";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : String(s);
+  }
+  function nameOf(empId) {
+    const e = meds.find((x) => String(x.id) === String(empId));
+    if (!e) return "Medewerker";
+    return `${e.voornaam || ""} ${e.achternaam || ""}`.trim() || "Medewerker";
+  }
+  return leaves.map((l) => `${nameOf(l.medewerkerId)} · ${fmt(l.startDatum)} t/m ${fmt(l.eindDatum)}`).join("\n");
+}
+function renderLeavePlaneHtml(dateObj) {
+  const leaves = getApprovedLeavesOnDate(dateObj);
+  if (leaves.length === 0) return "";
+  const tooltip = escapeHtml(leaveTooltipText(leaves));
+  // SVG vliegtuig (24x24 outline, kleur via stroke=currentColor) — past in dag-cel
+  return `<span class="planning-erm-leave-plane" title="${tooltip}" aria-label="${leaves.length} medewerker(s) op verlof"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.5 11.5-1.5-1.5-5 5-5-5-1.5 1.5 5 5-5 5 1.5 1.5 5-5 5 5 1.5-1.5-5-5z" style="display:none"/><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>${leaves.length > 1 ? `<span class="planning-erm-leave-count">${leaves.length}</span>` : ""}</span>`;
+}
+
 // F9: vaste diensttype-volgorde per user-eis (planning week/dag).
 // Eerst 5 verplichte types, dan 1-op-1 gegroepeerd per cliënt, dan rest
 // alfabetisch. Binnen elke groep: oplopend op start-tijd.
@@ -919,6 +958,22 @@ function getDienstverbandForName(name) {
   return "";
 }
 
+// F8: zoek ZZP-uurtarief per medewerker-naam uit medewerkers.data.uurAlgemeen
+function getZzpHourlyRateForName(name) {
+  if (!name) return 0;
+  const list = readEmployees();
+  const want = String(name).trim().toLowerCase();
+  if (!want) return 0;
+  const emp = list.find((e) => getEmployeeName(e).toLowerCase() === want);
+  if (!emp) return 0;
+  // BS2: hiring=ZZP. Alleen ZZP-tarief tellen.
+  const empType = String(emp.bs2_employment_type || emp.employmentType || emp.dienstverband || "").toLowerCase();
+  const isHiring = empType === "hiring" || /inhuur|zzp|agency/.test(empType);
+  if (!isHiring) return 0;
+  const r = Number(emp.uurAlgemeen != null ? emp.uurAlgemeen : (emp.uurTarief || 0));
+  return isFinite(r) && r > 0 ? r : 0;
+}
+
 function getMetrics(items) {
   let hours = 0;
   let zzpHours = 0;
@@ -927,6 +982,8 @@ function getMetrics(items) {
   let kmKosten = 0;
   let openHours = 0;
   let openCount = 0;
+  let zzpRateWeighted = 0;   // F8: som(uren × medewerker.uurAlgemeen) voor ZZP'ers
+  let zzpRateHours = 0;      // F8: som(uren waar medewerker-tarief bekend)
 
   // Diensttype-tarief lookup via comp_diensttypes.basis (per-type uurtarief).
   function tariefForDiensttype(dtNaam) {
@@ -953,6 +1010,12 @@ function getMetrics(items) {
     if (isZzpEmployeeName(r.teamlid)) {
       zzpHours += net;
       zzpKostenAccum += net * tarief;
+      // F8: gemiddeld ZZP-uurtarief via persoonlijk uurAlgemeen
+      const zzpRate = getZzpHourlyRateForName(r.teamlid);
+      if (zzpRate > 0 && net > 0) {
+        zzpRateWeighted += net * zzpRate;
+        zzpRateHours += net;
+      }
     }
     if (!r.teamlid || !String(r.teamlid).trim()) {
       openHours += net;
@@ -970,6 +1033,8 @@ function getMetrics(items) {
   const zzpKosten = zzpKostenAccum;
   const per = items.length > 0 ? kosten / items.length : 0;
   const gemTarief = hours > 0 ? kosten / hours : ui.tarief;
+  // F8: gemiddeld ZZP-uurtarief (null als geen ZZP-uren met bekend tarief)
+  const gemZzpTarief = zzpRateHours > 0 ? zzpRateWeighted / zzpRateHours : null;
   return {
     count: items.length,
     hours,
@@ -982,6 +1047,7 @@ function getMetrics(items) {
     kmKosten,
     per,
     gemTarief,
+    gemZzpTarief,
     tarief: ui.tarief,
   };
 }
@@ -1034,6 +1100,13 @@ function renderSummary(items) {
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">Gem. tarief</span>
         <strong class="planning-stat-value planning-stat-value--money">${formatEuro(m.gemTarief)}</strong>
+      </div>
+    </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--zzptarief">
+      <span class="planning-kpi-ico" aria-hidden="true">€/u</span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Gem. ZZP-tarief</span>
+        <strong class="planning-stat-value planning-stat-value--money">${m.gemZzpTarief != null ? formatEuro(m.gemZzpTarief) : "—"}</strong>
       </div>
     </div>
   `;
@@ -1170,7 +1243,7 @@ function renderMonthCalendar(host, items, overlapIds) {
 
       const head = document.createElement("div");
       head.className = "planning-month-cell-head";
-      head.innerHTML = `<span>${day.getDate()}</span>${inDay.length ? `<strong>${inDay.length}</strong>` : ""}`;
+      head.innerHTML = `<span>${day.getDate()}</span>${inDay.length ? `<strong>${inDay.length}</strong>` : ""}${renderLeavePlaneHtml(day)}`;
       cell.appendChild(head);
 
       const list = document.createElement("div");
@@ -1496,7 +1569,7 @@ function renderWeekGrid() {
     c.className = "planning-erm-cell planning-erm-cell--day";
     if (isToday(d)) c.classList.add("is-today");
     /* Board-stijl: korte dag + dagnummer, zowel week als maand. */
-    c.innerHTML = `<span class="planning-erm-dh-dow">${dayNames[d.getDay()]}</span><span class="planning-erm-dh-dom">${d.getDate()}</span>`;
+    c.innerHTML = `<span class="planning-erm-dh-dow">${dayNames[d.getDay()]}</span><span class="planning-erm-dh-dom">${d.getDate()}</span>${renderLeavePlaneHtml(d)}`;
     head.appendChild(c);
   });
   table.appendChild(head);
@@ -1539,6 +1612,10 @@ function renderWeekGrid() {
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--tarief" title="Gemiddeld tarief per uur in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
             <span>${formatEuro(m.gemTarief)}</span>
+          </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--zzptarief" title="Gemiddeld ZZP-uurtarief in deze locatie">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
+            <span>ZZP ${m.gemZzpTarief != null ? formatEuro(m.gemZzpTarief) : "—"}</span>
           </span>
         </div>
       `;
