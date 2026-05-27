@@ -90,6 +90,66 @@
     return p[2] + "/" + p[1] + "/" + p[0];
   }
 
+  /**
+   * PR #7 — Budget-overschrijdings badge in de Bedragen-blok.
+   * Telt aantal maanden waar ingediende_uren > gedebiteerde_uren voor deze
+   * beschikking, plus totaal-delta. Hidden als geen overschrijdingen.
+   */
+  function updateBudgetBadge(beschikking) {
+    var badge = document.getElementById("bdtl-budget-badge");
+    var detail = document.getElementById("bdtl-budget-detail");
+    if (!badge || !detail) return;
+    if (!beschikking || !window.urendeclaratiesDB || typeof window.urendeclaratiesDB.getAllSync !== "function") {
+      badge.hidden = true; return;
+    }
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    if (!items.length) { badge.hidden = true; return; }
+    var bnaam = String(beschikking.naam || "").toLowerCase().trim();
+    var clientNaam = "";
+    if (beschikking.clientId && typeof getClientenById === "function") {
+      var c = getClientenById(beschikking.clientId);
+      if (c) clientNaam = ((c.voornaam || "") + " " + (c.achternaam || "")).toLowerCase().trim();
+    }
+    var overMonths = 0;
+    var totalDelta = 0;
+    items.forEach(function (u) {
+      if (!u) return;
+      var beschMatch = bnaam && (String(u.beschikking || "").toLowerCase().trim() === bnaam);
+      if (!beschMatch && clientNaam && beschikking.zorgsoortKey) {
+        var clMatch = String(u.client || "").toLowerCase().trim() === clientNaam;
+        var zsMatch = String(u.zorgsoort || "").toLowerCase().indexOf(String(beschikking.zorgsoortKey || "").toLowerCase()) !== -1;
+        beschMatch = clMatch && zsMatch;
+      }
+      if (!beschMatch) return;
+      var bud = Number(u.gedebiteerdeUren) || 0;
+      var ing = Number(u.ingediendeUren) || 0;
+      if (bud > 0 && ing > bud) {
+        overMonths += 1;
+        totalDelta += (ing - bud);
+      }
+    });
+    if (overMonths > 0) {
+      var label = overMonths === 1 ? "1 maand" : (overMonths + " maanden");
+      var deltaStr = (Math.round(totalDelta * 100) / 100).toString().replace(".", ",");
+      detail.textContent = label + ", totaal +" + deltaStr + " uur boven budget";
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  // Re-render badge bij urendeclaraties-bootstrap
+  window.addEventListener("besa:urendeclaraties-updated", function () {
+    try {
+      var m = /[?&]id=([^&]+)/.exec(window.location.search);
+      if (!m) return;
+      var bid = decodeURIComponent(m[1]);
+      var b = window.beschikkingenDB && window.beschikkingenDB.getByIdSync
+        ? window.beschikkingenDB.getByIdSync(bid) : null;
+      if (b) updateBudgetBadge(b);
+    } catch (e) { /* */ }
+  });
+
   // Tarieven worden in Supabase opgeslagen via window.beschikkingTarievenDB
   // (zie beschikking-tarieven-data.js). De legacy localStorage-key
   // "beschikking_tarieven_supp_v1" wordt automatisch eenmalig gemigreerd
@@ -663,6 +723,8 @@
         var el = document.getElementById(pair[0]);
         if (el) el.textContent = pair[1];
       });
+      // PR #7 — Budget-overschrijdings badge
+      updateBudgetBadge(b);
     }());
     if (document.getElementById("bdtl-side-maandbedr")) document.getElementById("bdtl-side-maandbedr").textContent = fmtEur(b.teDeclarerenLM);
 

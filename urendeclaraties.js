@@ -49,9 +49,25 @@
     if (window.urendeclaratiesDB && typeof window.urendeclaratiesDB.getAllSync === "function") {
       items = window.urendeclaratiesDB.getAllSync() || [];
     }
+    var WARN_SVG = '<svg class="ud-budget-warn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.3 3.2 2 20h20L13.7 3.2a1 1 0 0 0-1.8 0Z"/><path d="M12 9v4M12 17h.01"/></svg>';
     var html = items.map(function (r) {
+      // PR #7 — budget-overschrijdings indicator
+      var budget = Number(r.gedebiteerdeUren) || 0;
+      var gebruikt = Number(r.ingediendeUren) || 0;
+      var overschreden = (budget > 0 && gebruikt > budget);
+      var verschil = overschreden ? (gebruikt - budget) : 0;
+      var rowCls = overschreden ? "ud-row--over" : "";
+      var ingCell;
+      if (overschreden) {
+        ingCell = '<td data-col="ing" class="cl-num ud-cell--over" title="Budget overschreden met ' + fmtUren(verschil) + ' uur (van ' + fmtUren(budget) + ' u naar ' + fmtUren(gebruikt) + ' u)">'
+          + WARN_SVG + ' <span class="ud-cell-over-val">' + fmtUren(gebruikt) + '</span>'
+          + ' <span class="ud-cell-over-delta">(+' + fmtUren(verschil) + ')</span>'
+          + '</td>';
+      } else {
+        ingCell = '<td data-col="ing" class="cl-num">' + fmtUren(gebruikt) + '</td>';
+      }
       return (
-        '<tr' +
+        '<tr class="' + rowCls + '"' +
         ' data-ud-client="' + escapeHtml(r.client) + '"' +
         ' data-ud-zorg="' + escapeHtml(r.zorgsoort) + '"' +
         ' data-ud-jaar="' + escapeHtml(String(r.jaar)) + '"' +
@@ -65,11 +81,44 @@
         '<td data-col="tarif" class="cl-ud-td-money">' + fmtEuro(r.uurtarief) + '</td>' +
         '<td data-col="bedrag" class="cl-ud-td-money">' + fmtEuro(r.bedrag) + '</td>' +
         '<td data-col="deb" class="cl-num">' + fmtUren(r.gedebiteerdeUren) + '</td>' +
-        '<td data-col="ing" class="cl-num">' + fmtUren(r.ingediendeUren) + '</td>' +
+        ingCell +
         '</tr>'
       );
     }).join("");
     tbody.innerHTML = html;
+    updateOverschrijdingBanner(items);
+  }
+
+  // PR #7 — banner bovenaan met aantal overschrijdingen (alle zichtbare items)
+  function updateOverschrijdingBanner(items) {
+    var bannerId = "ud-overschrijding-banner";
+    var existing = document.getElementById(bannerId);
+    var overItems = (items || []).filter(function (r) {
+      if (!r) return false;
+      var b = Number(r.gedebiteerdeUren) || 0;
+      var g = Number(r.ingediendeUren) || 0;
+      return b > 0 && g > b;
+    });
+    if (!overItems.length) {
+      if (existing) existing.hidden = true;
+      return;
+    }
+    if (!existing) {
+      existing = document.createElement("div");
+      existing.id = bannerId;
+      existing.className = "ud-overschrijding-banner";
+      existing.setAttribute("role", "status");
+      var anchor = document.querySelector(".cl-ud-stat-row");
+      if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(existing, anchor.nextSibling);
+    }
+    var totalDelta = overItems.reduce(function (acc, r) {
+      return acc + ((Number(r.ingediendeUren) || 0) - (Number(r.gedebiteerdeUren) || 0));
+    }, 0);
+    existing.innerHTML =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.3 3.2 2 20h20L13.7 3.2a1 1 0 0 0-1.8 0Z"/><path d="M12 9v4M12 17h.01"/></svg>'
+      + ' <strong>' + overItems.length + (overItems.length === 1 ? ' beschikking' : ' beschikkingen') + ' overschreden</strong>'
+      + ' — totaal ' + fmtUren(totalDelta) + ' uur boven het gebudgetteerde aantal.';
+    existing.hidden = false;
   }
 
   function showToast(msg) {
