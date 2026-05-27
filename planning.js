@@ -486,7 +486,53 @@ function renderLeavePlaneHtml(dateObj) {
   return `<span class="planning-erm-leave-plane" title="${tooltip}" aria-label="${leaves.length} medewerker(s) op verlof"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.5 11.5-1.5-1.5-5 5-5-5-1.5 1.5 5 5-5 5 1.5 1.5 5-5 5 5 1.5-1.5-5-5z" style="display:none"/><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>${leaves.length > 1 ? `<span class="planning-erm-leave-count">${leaves.length}</span>` : ""}</span>`;
 }
 
+// F9: vaste diensttype-volgorde per user-eis (planning week/dag).
+// Eerst 5 verplichte types, dan 1-op-1 gegroepeerd per cliënt, dan rest
+// alfabetisch. Binnen elke groep: oplopend op start-tijd.
+const DIENSTTYPE_VASTE_VOLGORDE = [
+  "vroege dienst", "vroege",
+  "late dienst", "late",
+  "waakdienst", "waak", "wak-dienst",
+  "achterwacht",
+  // 1-op-1 = 5e groep maar wordt apart behandeld (groepering per cliënt).
+];
+function diensttypeRangIndex(dt) {
+  const s = String(dt || "").trim().toLowerCase();
+  if (!s) return DIENSTTYPE_VASTE_VOLGORDE.length + 2; // onbekend: na alles
+  // 1-op-1 expliciet check (groep 5)
+  if (s === "1 op 1" || s === "1-op-1" || s === "1op1" || s.indexOf("op 1") >= 0 || s === "een op een") {
+    return 4; // index 4 = "groep 5" (na achterwacht, vóór rest)
+  }
+  for (let i = 0; i < DIENSTTYPE_VASTE_VOLGORDE.length; i += 1) {
+    if (s === DIENSTTYPE_VASTE_VOLGORDE[i]) {
+      // Eerst alle varianten van Vroege → groep 0, Late → groep 1, etc.
+      if (i <= 1) return 0;
+      if (i <= 3) return 1;
+      if (i <= 6) return 2;
+      if (i === 7) return 3;
+    }
+  }
+  return DIENSTTYPE_VASTE_VOLGORDE.length + 1; // rest (Boventallig/Training/Tussendienst/Vergadering/MDO/...)
+}
+
 function comparePlanningItemsByTime(a, b) {
+  // Eerst groeperen op vaste diensttype-volgorde (F9 user-eis)
+  const ra = diensttypeRangIndex(a.diensttype || a.functie);
+  const rb = diensttypeRangIndex(b.diensttype || b.functie);
+  if (ra !== rb) return ra - rb;
+  // Binnen 1-op-1-groep: alfabetisch op cliënt-naam (gegroepeerd per cliënt)
+  if (ra === 4) {
+    const ca = String(a.client || a.clientNaam || a.cliënt || "").toLowerCase();
+    const cb = String(b.client || b.clientNaam || b.cliënt || "").toLowerCase();
+    if (ca !== cb) return ca.localeCompare(cb, "nl", { sensitivity: "base" });
+  }
+  // Binnen "rest"-groep: alfabetisch op diensttype-naam
+  if (ra === DIENSTTYPE_VASTE_VOLGORDE.length + 1) {
+    const da = String(a.diensttype || "").toLowerCase();
+    const db = String(b.diensttype || "").toLowerCase();
+    if (da !== db) return da.localeCompare(db, "nl", { sensitivity: "base" });
+  }
+  // Binnen elke groep: tijd-volgorde
   const sa = parseStartDate(a.start);
   const sb = parseStartDate(b.start);
   const ta = sa ? sa.getTime() : Number.POSITIVE_INFINITY;
@@ -497,9 +543,6 @@ function comparePlanningItemsByTime(a, b) {
   const tea = ea ? ea.getTime() : Number.POSITIVE_INFINITY;
   const teb = eb ? eb.getTime() : Number.POSITIVE_INFINITY;
   if (tea !== teb) return tea - teb;
-  const da = String(a.diensttype || "").toLowerCase();
-  const db = String(b.diensttype || "").toLowerCase();
-  if (da !== db) return da.localeCompare(db, "nl", { sensitivity: "base" });
   return String(a.id || "").localeCompare(String(b.id || ""));
 }
 
