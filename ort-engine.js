@@ -147,7 +147,12 @@
       // gelijke tijd = lege regel; negeren
       return null;
     }
-    return { weekdays: weekdays, segments: segs, pct: pct, raw: rule };
+    // BS2-pariteit: priority bepaalt overlap-resolutie (hoogste wint; bij
+    // gelijke priority dan hoogste percentage). Default 0 voor regels die
+    // van vóór seed-versie 3 komen (geen priority-veld).
+    var prio = Number(rule.priority);
+    if (!isFinite(prio)) prio = 0;
+    return { weekdays: weekdays, segments: segs, pct: pct, priority: prio, raw: rule };
   }
 
   // ---------------------------------------------------------------------------
@@ -170,7 +175,8 @@
   // ---------------------------------------------------------------------------
   function pctForMoment(dateObj, weekday, minOfDay, compiledRules, feestdagSet) {
     var isFeestdag = !!feestdagSet[isoDateOnly(dateObj)];
-    var best = 100; // basisloon-percentage als geen regel matcht
+    var bestPct = 100;       // basisloon-percentage als geen regel matcht
+    var bestPriority = -1;   // sentinel: elke matchende regel wint hiervan
     for (var i = 0; i < compiledRules.length; i++) {
       var r = compiledRules[i];
       var isFeestdagRule = r.weekdays === "feestdag";
@@ -189,9 +195,15 @@
         if (minOfDay >= seg.startMin && minOfDay < seg.endMin) { inWindow = true; break; }
       }
       if (!inWindow) continue;
-      if (r.pct > best) best = r.pct;
+      // BS2-pariteit: hoogste priority wint; bij gelijke priority wint
+      // hoogste percentage. Eerste matchende regel zet de baseline.
+      var rPrio = r.priority != null ? r.priority : 0;
+      if (rPrio > bestPriority || (rPrio === bestPriority && r.pct > bestPct)) {
+        bestPriority = rPrio;
+        bestPct = r.pct;
+      }
     }
-    return best;
+    return bestPct;
   }
 
   // ---------------------------------------------------------------------------
