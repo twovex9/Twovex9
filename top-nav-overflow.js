@@ -58,6 +58,7 @@
       "compensatie-berekeningen.html",
       "compensatie-feestdagen.html",
       "compensatie-diensttypes.html",
+      "hr-diensttypes.html",
       "verzuim.html",
       "medewerker.html"
     ]);
