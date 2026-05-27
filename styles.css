@@ -23287,3 +23287,29 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   color: var(--blue, #2563eb);
   border: 1px solid var(--blue-soft, #c7d8ff);
 }
+
+/* F6 — Vliegtuig-icoon op dag-cellen voor goedgekeurd verlof (planning) */
+.planning-erm-leave-plane {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: var(--blue, #2563eb);
+  cursor: help;
+  line-height: 1;
+  white-space: nowrap;
+}
+.planning-erm-leave-plane svg { display: block; }
+.planning-erm-leave-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--blue, #2563eb);
+  background: rgba(37, 99, 235, 0.12);
+  padding: 0 4px;
+  border-radius: 8px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 14px;
+}
+.planning-month-cell-head .planning-erm-leave-plane { margin-left: auto; }
