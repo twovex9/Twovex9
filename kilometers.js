@@ -846,6 +846,19 @@
       var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-add-manual-modal"); });
     });
     var mForm = $("km-add-manual-form");
+    // Toggle inzittendenverzekering-waarschuwing zichtbaarheid (PR-C)
+    var metCliCb = $("km-add-manual-met-clienten");
+    var inzWarn = $("km-add-manual-inzittenden-warn");
+    if (metCliCb && inzWarn) {
+      metCliCb.addEventListener("change", function () { inzWarn.hidden = !metCliCb.checked; });
+    }
+    // Reset bij heropenen van de modal
+    function resetManualForm() {
+      if (metCliCb) metCliCb.checked = false;
+      if (inzWarn) inzWarn.hidden = true;
+    }
+    var manualOpenBtn = $("km-add-manual-choice-btn") || $("km-add-choice-manual");
+    if (manualOpenBtn) manualOpenBtn.addEventListener("click", resetManualForm);
     if (mForm) mForm.addEventListener("submit", function (e) {
       e.preventDefault();
       var d = currentDecl();
@@ -853,6 +866,7 @@
       var datum = ($("km-add-manual-datum").value || "").trim();
       var beschr = ($("km-add-manual-beschr").value || "").trim();
       var kmv = parseFloat(($("km-add-manual-km").value || "").replace(",", "."));
+      var metCli = !!(metCliCb && metCliCb.checked);
       if (!datum) { setErr("km-add-manual-error", "Datum is verplicht."); return; }
       if (!beschr) { setErr("km-add-manual-error", "Beschrijving is verplicht."); return; }
       if (!isFinite(kmv) || kmv < 0) { setErr("km-add-manual-error", "Vul een geldig aantal kilometers in."); return; }
@@ -860,9 +874,11 @@
       window.kilometerDeclaratiesDB.addRecord({
         declaratieId: d.id, datum: datum, beschrijving: beschr,
         kilometers: kmv, type: "manual", typeDisplay: "Handmatig",
+        metClienten: metCli,
       }).then(function () {
         closeModal("km-add-manual-modal");
-        toast("saved", "Rit toegevoegd");
+        toast("saved", metCli ? "Rit toegevoegd — let op inzittendenverzekering" : "Rit toegevoegd");
+        resetManualForm();
       }).catch(function (err) {
         setErr("km-add-manual-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
       }).finally(function () { if (btn) btn.disabled = false; });
