@@ -94,10 +94,6 @@
    * PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren
    * lopende maand. BS2 toont alleen 1 KPI "Nog niet gedeclareerd"; wij
    * splitten dat op uit urendeclaraties.bedrag matched op beschikking-naam.
-   *
-   * Maand-indexering: public.urendeclaraties.maand is 0-indexed (jan=0)
-   * conform de HTML-options in urendeclaraties.html. We vergelijken met
-   * new Date().getMonth() dat ook 0-indexed is.
    */
   function computeAchterstandLopend(beschikking) {
     var out = { achterstand: 0, lopend: 0 };
@@ -122,7 +118,6 @@
     items.forEach(function (u) {
       if (!u) return;
       var beschMatch = String(u.beschikking || "").toLowerCase().trim() === bnaam;
-      // Fallback-match op cliënt+zorgsoort indien beschikking-naam leeg of niet matched
       if (!beschMatch && clientNaam && beschikking.zorgsoortKey) {
         var clMatch = String(u.client || "").toLowerCase().trim() === clientNaam;
         var zsMatch = String(u.zorgsoort || "").toLowerCase().indexOf(String(beschikking.zorgsoortKey || "").toLowerCase()) !== -1;
@@ -131,18 +126,77 @@
       if (!beschMatch) return;
 
       var y = Number(u.jaar) || 0;
-      var m = Number(u.maand); // 0-indexed
+      var mIdx = Number(u.maand); // 0-indexed
       var bedrag = n2(u.bedrag);
 
-      if (y < nowYear || (y === nowYear && m < nowMonth)) {
+      if (y < nowYear || (y === nowYear && mIdx < nowMonth)) {
         out.achterstand += bedrag;
-      } else if (y === nowYear && m === nowMonth) {
+      } else if (y === nowYear && mIdx === nowMonth) {
         out.lopend += bedrag;
       }
-      // Toekomstige maanden: bewust niet meegerekend
     });
     return out;
   }
+
+  /**
+   * PR #7 — Budget-overschrijdings badge in de Bedragen-blok.
+   * Telt aantal maanden waar ingediende_uren > gedebiteerde_uren voor deze
+   * beschikking, plus totaal-delta.
+   */
+  function updateBudgetBadge(beschikking) {
+    var badge = document.getElementById("bdtl-budget-badge");
+    var detail = document.getElementById("bdtl-budget-detail");
+    if (!badge || !detail) return;
+    if (!beschikking || !window.urendeclaratiesDB || typeof window.urendeclaratiesDB.getAllSync !== "function") {
+      badge.hidden = true; return;
+    }
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    if (!items.length) { badge.hidden = true; return; }
+    var bnaam = String(beschikking.naam || "").toLowerCase().trim();
+    var clientNaam = "";
+    if (beschikking.clientId && typeof getClientenById === "function") {
+      var c = getClientenById(beschikking.clientId);
+      if (c) clientNaam = ((c.voornaam || "") + " " + (c.achternaam || "")).toLowerCase().trim();
+    }
+    var overMonths = 0;
+    var totalDelta = 0;
+    items.forEach(function (u) {
+      if (!u) return;
+      var beschMatch = bnaam && (String(u.beschikking || "").toLowerCase().trim() === bnaam);
+      if (!beschMatch && clientNaam && beschikking.zorgsoortKey) {
+        var clMatch = String(u.client || "").toLowerCase().trim() === clientNaam;
+        var zsMatch = String(u.zorgsoort || "").toLowerCase().indexOf(String(beschikking.zorgsoortKey || "").toLowerCase()) !== -1;
+        beschMatch = clMatch && zsMatch;
+      }
+      if (!beschMatch) return;
+      var bud = Number(u.gedebiteerdeUren) || 0;
+      var ing = Number(u.ingediendeUren) || 0;
+      if (bud > 0 && ing > bud) {
+        overMonths += 1;
+        totalDelta += (ing - bud);
+      }
+    });
+    if (overMonths > 0) {
+      var label = overMonths === 1 ? "1 maand" : (overMonths + " maanden");
+      var deltaStr = (Math.round(totalDelta * 100) / 100).toString().replace(".", ",");
+      detail.textContent = label + ", totaal +" + deltaStr + " uur boven budget";
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  // Re-render badge + achterstand bij urendeclaraties-bootstrap
+  window.addEventListener("besa:urendeclaraties-updated", function () {
+    try {
+      var mm = /[?&]id=([^&]+)/.exec(window.location.search);
+      if (!mm) return;
+      var bid = decodeURIComponent(mm[1]);
+      var b = window.beschikkingenDB && window.beschikkingenDB.getByIdSync
+        ? window.beschikkingenDB.getByIdSync(bid) : null;
+      if (b) updateBudgetBadge(b);
+    } catch (e) { /* */ }
+  });
 
   // Tarieven worden in Supabase opgeslagen via window.beschikkingTarievenDB
   // (zie beschikking-tarieven-data.js). De legacy localStorage-key
@@ -718,12 +772,13 @@
         if (el) el.textContent = pair[1];
       });
       // PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren lopende maand
-      // Bron: window.urendeclaratiesDB, match op beschikking.naam (urendeclaraties.beschikking = tekst).
       var split = computeAchterstandLopend(b);
       var elA = document.getElementById("bdtl-achterstand");
       var elL = document.getElementById("bdtl-lopend");
       if (elA) elA.textContent = fmtEur(split.achterstand);
       if (elL) elL.textContent = fmtEur(split.lopend);
+      // PR #7 — Budget-overschrijdings badge
+      updateBudgetBadge(b);
     }());
     if (document.getElementById("bdtl-side-maandbedr")) document.getElementById("bdtl-side-maandbedr").textContent = fmtEur(b.teDeclarerenLM);
 

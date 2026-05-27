@@ -17397,7 +17397,7 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 }
 
 /* ============================================================
-   PR #3 — Specificatie-download knop per rij + PR #6 Override
+   PR #3 — Spec-download + PR #6 Override + PR #7 Budget-warn
    ============================================================ */
 .content--urendecl .cl-ud-th--actions { text-align: center; width: 80px; }
 .content--urendecl .cl-ud-td-actions { text-align: center; padding: 4px; }
@@ -17448,6 +17448,32 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 }
 .ud-override-error { color: var(--red); font-size: var(--font-base); margin-top: 8px; font-weight: 600; }
 .ud-override-clear { color: var(--red); }
+
+/* PR #7 — Budget-overschrijdings indicator */
+.content--urendecl .ud-row--over { background: rgba(220, 38, 38, 0.05); }
+.content--urendecl .ud-cell--over { color: var(--red); font-weight: 700; white-space: nowrap; }
+.ud-budget-warn-ico { color: var(--red); vertical-align: -2px; margin-right: 4px; }
+.ud-cell-over-delta { color: var(--red); font-weight: 600; margin-left: 4px; font-size: var(--font-ui-badge); }
+.ud-overschrijding-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin: 0 0 14px;
+  background: var(--red-soft, rgba(220, 38, 38, 0.10));
+  border: 1px solid var(--red);
+  border-radius: var(--r-md);
+  color: var(--text); font-size: var(--font-base); line-height: 1.45;
+}
+.ud-overschrijding-banner svg { color: var(--red); flex-shrink: 0; }
+.ud-overschrijding-banner strong { font-weight: 600; }
+.bdtl-budget-badge {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px; padding: 6px 10px;
+  background: var(--red-soft, rgba(220, 38, 38, 0.10));
+  border: 1px solid var(--red);
+  border-radius: var(--r-sm);
+  color: var(--red); font-size: var(--font-ui-badge); line-height: 1.35;
+}
+.bdtl-budget-badge svg { flex-shrink: 0; color: var(--red); }
+.bdtl-budget-badge strong { color: var(--text); font-weight: 600; }
 
 .besc-ov-table .besc-ov-eur--tedecl,
 .besc-ov-th--eur {
