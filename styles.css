@@ -16487,6 +16487,31 @@ button.planning-erm-new {
   color: var(--text-muted);
 }
 
+/* PR #5 — split-rij onder "Te declareren totaal": Achterstand + Lopende maand */
+.bd-card-split {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.bd-card-split-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.bd-card-split-lbl {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.bd-card-split-val {
+  font-size: var(--font-base);
+  font-weight: 600;
+}
+.bd-card-split-val--red  { color: var(--red); }
+.bd-card-split-val--warn { color: var(--yellow); }
+
 /* Counter-kaart (Verlopen binnen 60d / Openstaande Aanvragen) */
 .bd2-card--counter {
   display: flex;
@@ -17885,6 +17910,19 @@ button.besc-dtl-tab:hover {
   gap: var(--r-sm);
   margin: var(--r-xs) 0;
   font-size: var(--font-base);
+}
+
+/* PR #5 — sub-rij onder "Nog niet gedeclareerd": Achterstand + Lopend */
+.besc-dtl-kv--sub {
+  padding-left: 12px;
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 2px 0;
+}
+.besc-dtl-hint-sm {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 11px;
 }
 
 .besc-dtl-kk {

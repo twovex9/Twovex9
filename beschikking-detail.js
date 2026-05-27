@@ -90,6 +90,60 @@
     return p[2] + "/" + p[1] + "/" + p[0];
   }
 
+  /**
+   * PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren
+   * lopende maand. BS2 toont alleen 1 KPI "Nog niet gedeclareerd"; wij
+   * splitten dat op uit urendeclaraties.bedrag matched op beschikking-naam.
+   *
+   * Maand-indexering: public.urendeclaraties.maand is 0-indexed (jan=0)
+   * conform de HTML-options in urendeclaraties.html. We vergelijken met
+   * new Date().getMonth() dat ook 0-indexed is.
+   */
+  function computeAchterstandLopend(beschikking) {
+    var out = { achterstand: 0, lopend: 0 };
+    if (!beschikking || !window.urendeclaratiesDB || typeof window.urendeclaratiesDB.getAllSync !== "function") {
+      return out;
+    }
+    var items = window.urendeclaratiesDB.getAllSync() || [];
+    if (!items.length) return out;
+    var bnaam = String(beschikking.naam || "").toLowerCase().trim();
+    if (!bnaam) return out;
+
+    var clientNaam = "";
+    if (beschikking.clientId && typeof getClientenById === "function") {
+      var c = getClientenById(beschikking.clientId);
+      if (c) clientNaam = ((c.voornaam || "") + " " + (c.achternaam || "")).toLowerCase().trim();
+    }
+
+    var now = new Date();
+    var nowYear = now.getFullYear();
+    var nowMonth = now.getMonth(); // 0-indexed (jan=0)
+
+    items.forEach(function (u) {
+      if (!u) return;
+      var beschMatch = String(u.beschikking || "").toLowerCase().trim() === bnaam;
+      // Fallback-match op cliënt+zorgsoort indien beschikking-naam leeg of niet matched
+      if (!beschMatch && clientNaam && beschikking.zorgsoortKey) {
+        var clMatch = String(u.client || "").toLowerCase().trim() === clientNaam;
+        var zsMatch = String(u.zorgsoort || "").toLowerCase().indexOf(String(beschikking.zorgsoortKey || "").toLowerCase()) !== -1;
+        beschMatch = clMatch && zsMatch;
+      }
+      if (!beschMatch) return;
+
+      var y = Number(u.jaar) || 0;
+      var m = Number(u.maand); // 0-indexed
+      var bedrag = n2(u.bedrag);
+
+      if (y < nowYear || (y === nowYear && m < nowMonth)) {
+        out.achterstand += bedrag;
+      } else if (y === nowYear && m === nowMonth) {
+        out.lopend += bedrag;
+      }
+      // Toekomstige maanden: bewust niet meegerekend
+    });
+    return out;
+  }
+
   // Tarieven worden in Supabase opgeslagen via window.beschikkingTarievenDB
   // (zie beschikking-tarieven-data.js). De legacy localStorage-key
   // "beschikking_tarieven_supp_v1" wordt automatisch eenmalig gemigreerd
@@ -663,6 +717,13 @@
         var el = document.getElementById(pair[0]);
         if (el) el.textContent = pair[1];
       });
+      // PR #5 — Onderscheid Achterstand (vorige maanden) vs Te declareren lopende maand
+      // Bron: window.urendeclaratiesDB, match op beschikking.naam (urendeclaraties.beschikking = tekst).
+      var split = computeAchterstandLopend(b);
+      var elA = document.getElementById("bdtl-achterstand");
+      var elL = document.getElementById("bdtl-lopend");
+      if (elA) elA.textContent = fmtEur(split.achterstand);
+      if (elL) elL.textContent = fmtEur(split.lopend);
     }());
     if (document.getElementById("bdtl-side-maandbedr")) document.getElementById("bdtl-side-maandbedr").textContent = fmtEur(b.teDeclarerenLM);
 

@@ -234,6 +234,14 @@
               <p class="besc-dtl-kv"><span class="besc-dtl-kk">Ontvangen</span> <span id="bdtl-ont" class="besc-dtl-eur besc-dtl-eur--ok">—</span></p>
               <p class="besc-dtl-kv"><span class="besc-dtl-kk">Te declareren</span> <span id="bdtl-ted" class="besc-dtl-eur besc-dtl-eur--warn">—</span></p>
               <p class="besc-dtl-kv"><span class="besc-dtl-kk">Nog niet gedeclareerd (t.o.v. vandaag)</span> <span id="bdtl-nng" class="besc-dtl-eur besc-dtl-eur--err">—</span></p>
+              <p class="besc-dtl-kv besc-dtl-kv--sub" title="Bedrag uit urendeclaraties van eerdere maanden die nog niet gedeclareerd zijn">
+                <span class="besc-dtl-kk">↳ Achterstand <span class="besc-dtl-hint-sm">(vorige maanden)</span></span>
+                <span id="bdtl-achterstand" class="besc-dtl-eur besc-dtl-eur--err">—</span>
+              </p>
+              <p class="besc-dtl-kv besc-dtl-kv--sub" title="Bedrag uit urendeclaraties van de huidige (lopende) maand">
+                <span class="besc-dtl-kk">↳ Te declareren lopende maand</span>
+                <span id="bdtl-lopend" class="besc-dtl-eur besc-dtl-eur--warn">—</span>
+              </p>
             </div>
             <div class="besc-dtl-aside-blk">
               <h2 class="besc-dtl-aside-h2">Cliënt</h2>
@@ -862,7 +870,8 @@
   <script src="beschikking-tarieven-data.js" defer></script>
   <script src="beschikking-notities-data.js" defer></script>
   <script src="beschikking-audit-data.js?v=audpag1" defer></script>
-  <script src="beschikking-detail.js" defer></script>
+  <script src="urendeclaraties-data.js" defer></script>
+  <script src="beschikking-detail.js?v=achterstand1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous" defer></script>
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
