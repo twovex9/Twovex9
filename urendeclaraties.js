@@ -201,13 +201,31 @@
   var icoOpen = document.querySelector("#ud-lock-btn .ud-lock-svg--open");
   var icoClosed = document.querySelector("#ud-lock-btn .ud-lock-svg--closed");
 
+  // NL-maand-labels voor confirm-modal
+  var MAAND_NL = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+
+  function currentYearMonth() {
+    var y = selJaar ? parseInt(selJaar.value, 10) : (new Date().getFullYear());
+    var m = selMaand && selMaand.value !== "" ? (parseInt(selMaand.value, 10) + 1) : (new Date().getMonth() + 1);
+    if (!y) y = new Date().getFullYear();
+    if (!m || m < 1 || m > 12) m = new Date().getMonth() + 1;
+    return { year: y, month: m };
+  }
+  function maandLabel(y, m) {
+    var mn = MAAND_NL[m - 1] || ("maand " + m);
+    return mn.charAt(0).toUpperCase() + mn.slice(1) + " " + y;
+  }
+
   function setLockUi(locked) {
     if (!lockBtn) return;
     lockBtn.setAttribute("aria-pressed", locked ? "true" : "false");
     lockBtn.classList.toggle("btn-primary", locked);
     lockBtn.classList.toggle("btn-outline", !locked);
     if (lockLbl) {
-      lockLbl.textContent = locked ? "Maand ontgrendelen" : "Maand vergrendelen";
+      var ym = currentYearMonth();
+      var mn = MAAND_NL[ym.month - 1] || "maand";
+      var monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
+      lockLbl.textContent = locked ? (monthCap + " ontgrendelen") : (monthCap + " vergrendelen");
     }
     if (icoOpen) {
       if (locked) icoOpen.setAttribute("hidden", "");
@@ -225,11 +243,72 @@
     );
   }
 
+  function refreshLockUiFromDb() {
+    if (!window.lockedMonthsDB) return;
+    var ym = currentYearMonth();
+    var isLocked = window.lockedMonthsDB.isLockedSync(ym.year, ym.month);
+    setLockUi(isLocked);
+  }
+
+  // Bij filterwissel jaar/maand: lock-status opnieuw uitlezen
+  if (selJaar) selJaar.addEventListener("change", refreshLockUiFromDb);
+  if (selMaand) selMaand.addEventListener("change", refreshLockUiFromDb);
+
+  // Live-refresh wanneer een andere tab een (un)lock doet
+  window.addEventListener("besa:locked-months-updated", refreshLockUiFromDb);
+
   if (lockBtn) {
-    lockBtn.addEventListener("click", function () {
-      var wasLocked = lockBtn.getAttribute("aria-pressed") === "true";
-      setLockUi(!wasLocked);
+    lockBtn.addEventListener("click", async function () {
+      if (!window.lockedMonthsDB) {
+        if (window.showError) window.showError("Maand-vergrendeling-laag niet geladen");
+        return;
+      }
+      var ym = currentYearMonth();
+      var label = maandLabel(ym.year, ym.month);
+      var wasLocked = window.lockedMonthsDB.isLockedSync(ym.year, ym.month);
+
+      var ok;
+      if (wasLocked) {
+        ok = await window.showSliderConfirmModal({
+          title: "Maand ontgrendelen?",
+          preview: label,
+          okLabel: "Ontgrendelen",
+          cancelLabel: "Annuleren",
+          message: "Na ontgrendelen kunnen werkuren in deze maand weer worden gewijzigd."
+        });
+      } else {
+        ok = await window.showSliderConfirmModal({
+          title: "Maand vergrendelen?",
+          preview: label,
+          okLabel: "Vergrendelen",
+          cancelLabel: "Annuleren",
+          message: "Na vergrendelen kunnen werkuren in deze maand NIET meer worden gewijzigd, toegevoegd of verwijderd. Pas weer mogelijk na ontgrendelen."
+        });
+      }
+      if (!ok) return;
+
+      try {
+        if (wasLocked) {
+          await window.lockedMonthsDB.unlock(ym.year, ym.month);
+          if (window.showActionFeedback) window.showActionFeedback("restored", "Maand");
+          else showToast(label + " ontgrendeld");
+        } else {
+          await window.lockedMonthsDB.lock(ym.year, ym.month);
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Maand vergrendeld");
+          else showToast(label + " vergrendeld");
+        }
+        refreshLockUiFromDb();
+      } catch (err) {
+        console.error("[urendecl] lock toggle mislukt:", err);
+        if (window.showError) window.showError("Vergrendelen mislukt: " + (err && err.message ? err.message : String(err)));
+        else showToast("Vergrendelen mislukt");
+      }
     });
+  }
+
+  // Initiële UI-status na bootstrap
+  if (window.lockedMonthsDB && window.lockedMonthsDB.ready) {
+    window.lockedMonthsDB.ready.then(refreshLockUiFromDb).catch(function () { /* */ });
   }
 
   if (checkAll && tbody) {
