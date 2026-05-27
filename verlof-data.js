@@ -22,6 +22,18 @@
   var STATUS_VALUES = ["concept", "ingediend", "goedgekeurd", "afgewezen", "geannuleerd"];
   var TYPE_VALUES = ["wettelijk", "bovenwettelijk", "ouderschap", "calamiteit", "doktersbezoek", "onbetaald", "anders"];
 
+  // PR-B: goedkeuringsroute per verloftype.
+  //   - Vakantie (wettelijk/bovenwettelijk) → naar Teamleider (manager).
+  //   - Zorg-/bijzonder verlof → direct HR.
+  //   - Onbetaald/anders → HR (conservatief).
+  // Voor v1 hardcoded; v2 = beheer-pagina verloftypes.html.
+  var ROL_TEAMLEIDER = "Teamleider";
+  var ROL_HR = "HR";
+  function routeForType(type) {
+    if (type === "wettelijk" || type === "bovenwettelijk") return ROL_TEAMLEIDER;
+    return ROL_HR;
+  }
+
   function isoNow() { return new Date().toISOString(); }
   function generateId() { return "v_" + String(Date.now()) + "_" + String(Math.random()).slice(2, 8); }
 
@@ -40,6 +52,7 @@
       beoordeeldOp: row.beoordeeld_op || null,
       beoordeeldDoor: row.beoordeeld_door || null,
       beoordelingOpmerking: row.beoordeling_opmerking || "",
+      huidigeGoedkeurderRol: row.huidige_goedkeurder_rol || routeForType(row.type || "wettelijk"),
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum || isoNow(),
       laatstGewijzigd: row.laatst_gewijzigd || row.aanmaakdatum || isoNow(),
@@ -60,6 +73,7 @@
       status: status,
       beschrijving: String(safe.beschrijving || ""),
       beoordeling_opmerking: String(safe.beoordelingOpmerking || ""),
+      huidige_goedkeurder_rol: safe.huidigeGoedkeurderRol || routeForType(type),
       archived: !!safe.archived,
     };
     if (safe.beoordeeldDoor) payload.beoordeeld_door = safe.beoordeeldDoor;
@@ -304,7 +318,9 @@
     indienen: indienen, goedkeuren: goedkeuren, afwijzen: afwijzen, annuleren: annuleren,
     archive: archive, restore: restore, delete: remove,
     getAllSync: getAllSync, getByIdSync: getByIdSync, getForMedewerkerSync: getForMedewerkerSync,
+    routeForType: routeForType,
     STATUS_VALUES: STATUS_VALUES, TYPE_VALUES: TYPE_VALUES,
+    ROL_TEAMLEIDER: ROL_TEAMLEIDER, ROL_HR: ROL_HR,
   };
 
   bootstrap();
