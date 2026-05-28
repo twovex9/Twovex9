@@ -6,14 +6,18 @@
  * BS2-bron: POST /api/rpc met signature "get:employee-document-status"
  *   → response { errors: [...], warnings: [...] }
  *
- * BS1 bouwt dit pure compute-only uit `medewerker_documenten`:
- *  - VOG ontbreekt of verlopen op NU → ERROR (rood)
- *  - VOG verloopt binnen 30 dagen → WARNING (oranje)
- *  - Contract / addendum met vervaldatum < NU → WARNING (was eerder error,
- *    per user-eis F3 niet meer blokkerend voor planbaarheid)
- *  - Contract / addendum met vervaldatum binnen 30 dagen → WARNING
- *  - Education (BHV/opleiding) verlopen → WARNING
- *  - ID verlopen → WARNING
+ * Document-statusregels (user-eis Lionel 2026-05-28 — driehoek-systeem):
+ *  - GROEN  = alle documenten compleet en geldig, niets vervalt binnen 3 maanden
+ *  - ORANJE = een document vervalt binnen 3 maanden (90 dagen) maar is nu nog
+ *             geldig → medewerker blijft planbaar, met aantekening
+ *  - ROOD   = documentatie MIST: document ontbreekt of is AL verlopen
+ *             (een verlopen document = geen geldig document meer = mist)
+ *
+ * Concreet uit `medewerker_documenten`:
+ *  - VOG ontbreekt of (alle) verlopen op NU → ERROR (rood)
+ *  - VOG verloopt binnen 90 dagen → WARNING (oranje)
+ *  - Contract / addendum / ID / opleiding (BHV) verlopen → ERROR (rood)
+ *  - Contract / addendum / ID / opleiding (BHV) verloopt binnen 90 dagen → WARNING (oranje)
  *
  * Geen DB-tabel, pure compute. Resultaat wordt per medewerker geheugen-
  * gecached zodat herhaalde renders snel zijn.
@@ -21,15 +25,18 @@
  * Public API:
  *  - window.medewerkerWarnings.compute(employee, docs) → { errors, warnings }
  *  - window.medewerkerWarnings.computeForId(employeeId) → Promise<{errors, warnings}>
+ *  - window.medewerkerWarnings.computeStatus(employee, docs) → { status, errors, warnings }
+ *  - window.medewerkerWarnings.computeStatusForIdSync(employeeId) → { status, errors, warnings }
  *  - window.medewerkerWarnings.hasErrors(employeeId) → bool
  *  - window.medewerkerWarnings.hasWarnings(employeeId) → bool
  *
+ * status = "green" | "orange" | "red"
  * Event "besa:medewerker-warnings-updated" met { medewerkerId } in detail.
  */
 (function (global) {
   "use strict";
 
-  var WARN_DAYS = 30; // verloopt binnen 30 dagen = warning (BS2-patroon)
+  var WARN_DAYS = 90; // vervalt binnen 3 maanden (90 dagen) = oranje (user-eis Lionel)
 
   var _cache = {}; // empId → { errors, warnings, ts }
 
@@ -125,7 +132,9 @@
       });
     }
 
-    // Contract / addendum / id / education met vervaldatum: alleen warnings
+    // Contract / addendum / id / education (BHV) met vervaldatum:
+    //  - verlopen op NU → ERROR (rood): geen geldig document meer = documentatie mist
+    //  - vervalt binnen 90 dagen → WARNING (oranje): nog geldig, met aantekening
     var WARN_TYPES = ["contract", "addendum", "id", "education", "employment_conditions"];
     list.forEach(function (d) {
       var t = String(d.type || "").toLowerCase();
@@ -134,7 +143,7 @@
       if (!vd) return;
       var dd = daysBetween(now, vd);
       if (dd < 0) {
-        warnings.push({
+        errors.push({
           id: d.id, type: t, kind: "expired",
           label: typeLabel(t), naam: d.naam || typeLabel(t),
           datum: d.vervaldatum, datumLabel: fmtDate(vd),
@@ -183,6 +192,23 @@
     return result;
   }
 
+  // Vertaal errors/warnings naar één driehoek-status: rood > oranje > groen.
+  function statusFromResult(result) {
+    if (result && result.errors && result.errors.length > 0) return "red";
+    if (result && result.warnings && result.warnings.length > 0) return "orange";
+    return "green";
+  }
+
+  function computeStatus(employee, docs) {
+    var r = compute(employee, docs);
+    return { status: statusFromResult(r), errors: r.errors, warnings: r.warnings };
+  }
+
+  function computeStatusForIdSync(employeeId) {
+    var r = computeForIdSync(employeeId);
+    return { status: statusFromResult(r), errors: r.errors, warnings: r.warnings };
+  }
+
   function hasErrors(employeeId) {
     var r = _cache[employeeId] || computeForIdSync(employeeId);
     return r.errors.length > 0;
@@ -217,6 +243,8 @@
     compute: compute,
     computeForId: computeForId,
     computeForIdSync: computeForIdSync,
+    computeStatus: computeStatus,
+    computeStatusForIdSync: computeStatusForIdSync,
     hasErrors: hasErrors,
     hasWarnings: hasWarnings,
     invalidate: invalidate,
