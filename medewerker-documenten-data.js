@@ -304,6 +304,71 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Bulk-load (voor lijsten die de status van álle medewerkers nodig hebben)
+  // ---------------------------------------------------------------------------
+
+  // Lichte metadata-query: alleen de velden die nodig zijn voor de document-
+  // status (type + vervaldatum + archived). Géén file_data → geen storage-
+  // calls en kleine cache. Volledige rijen (incl. bestand) blijven via
+  // list(medewerkerId) op de detailpagina lopen.
+  function fetchAllLight() {
+    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.besaSupabase
+      .from(TABLE)
+      .select("id,medewerker_id,naam,type,vervaldatum,archived,uploaddatum,laatst_gewijzigd")
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return (res.data || []).map(function (row) {
+          if (!row) return null;
+          return {
+            id: row.id,
+            medewerkerId: row.medewerker_id,
+            naam: row.naam || "",
+            type: row.type || "",
+            vervaldatum: row.vervaldatum || "",
+            uploaddatum: row.uploaddatum || isoNow(),
+            laatstGewijzigd: row.laatst_gewijzigd || isoNow(),
+            archived: !!row.archived,
+            fileName: "", fileMime: "", fileData: "", storagePath: "",
+            _light: true,
+          };
+        }).filter(Boolean);
+      });
+  }
+
+  // Vult de cache met alle documenten (metadata). Behoudt een eventueel reeds
+  // volledig geladen bestand (fileData) zodat de detailpagina niets verliest.
+  function fetchAll() {
+    return fetchAllLight().then(function (light) {
+      var byId = {};
+      readCache().forEach(function (d) { if (d && d.id) byId[d.id] = d; });
+      var merged = light.map(function (l) {
+        var ex = byId[l.id];
+        if (ex && ex.fileData) {
+          return Object.assign({}, l, { fileData: ex.fileData, storagePath: ex.storagePath, fileName: ex.fileName, fileMime: ex.fileMime, _light: false });
+        }
+        return l;
+      });
+      writeCache(merged);
+      dispatchUpdated(null);
+      return merged;
+    });
+  }
+
+  var allReadyPromise = null;
+  function ready() {
+    if (!allReadyPromise) {
+      allReadyPromise = fetchAll().catch(function (err) {
+        console.error("[medewerkerDocsDB] bulk-load mislukt:", err);
+        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medewerker-documenten — bulk-load", err);
+        allReadyPromise = null; // sta een nieuwe poging toe
+        return readCache();
+      });
+    }
+    return allReadyPromise;
+  }
+
+  // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
 
@@ -528,6 +593,8 @@
   global.medewerkerDocsDB = {
     list: list,
     listSync: listSync,
+    fetchAll: fetchAll,
+    ready: ready,
     add: add,
     update: update,
     archive: archive,

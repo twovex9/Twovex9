@@ -23306,6 +23306,24 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .verzuim-deadline-icon.verzuim-deadline-overdue { color: var(--red); }
 .verzuim-deadline-label { font-size: var(--font-table-cell, 13px); }
 
+/* Document-status indicator op de HR-medewerkerslijst (groen/oranje/rood) —
+   groen = compleet (cirkel), oranje = vervalt binnen 3 maanden (driehoek),
+   rood = documentatie mist/verlopen (driehoek). Zie medewerker-doc-status.js. */
+.doc-status-ind {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-left: 6px;
+  width: 16px;
+  height: 16px;
+  line-height: 0;
+}
+.doc-status-ind svg { display: block; }
+.doc-status-ind--green { color: var(--green); }
+.doc-status-ind--orange { color: var(--yellow); }
+.doc-status-ind--red { color: var(--red); }
+
 /* === Mijn maandstaat (mijn-gegevens.html) === */
 .mm-section-wrap p {
   color: var(--text-secondary);
