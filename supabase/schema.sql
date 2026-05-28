@@ -4010,3 +4010,50 @@ drop policy if exists "mdoc_delete_admin_of_hr" on public.medewerker_documenten;
 create policy "mdoc_delete_admin_of_hr" on public.medewerker_documenten
   for delete to authenticated
   using (is_admin(auth.uid()) or is_hr() or public.is_hr_admin_bs2());
+
+-- ============================================================================
+-- Onboarding — contract_sjablonen (release 3: contractsjablonen)
+-- ============================================================================
+-- Standaard blanco-contractsjablonen (arbeidsovereenkomst / overeenkomst van
+-- opdracht / stage / oproep / overig) met merge-velden {{...}}. Bij het opstellen
+-- van een contract (release 4) worden de velden ingevuld. 4 default-sjablonen
+-- worden geseed via migratie `contract_sjablonen_v1` (alleen als de tabel leeg is).
+
+create table if not exists public.contract_sjablonen (
+  id uuid primary key default gen_random_uuid(),
+  naam text not null default '',
+  type text not null default '',                 -- arbeidsovereenkomst | opdracht | stage | oproep | overig
+  beschrijving text default '',
+  body text not null default '',                 -- tekst met merge-velden {{...}}
+  volgorde integer not null default 0,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists contract_sjablonen_archived_idx on public.contract_sjablonen (archived);
+create index if not exists contract_sjablonen_volgorde_idx on public.contract_sjablonen (volgorde);
+
+drop trigger if exists set_contract_sjablonen_laatst_gewijzigd on public.contract_sjablonen;
+create trigger set_contract_sjablonen_laatst_gewijzigd
+  before update on public.contract_sjablonen
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.contract_sjablonen enable row level security;
+
+drop policy if exists "auth kan contract_sjablonen lezen" on public.contract_sjablonen;
+create policy "auth kan contract_sjablonen lezen"
+  on public.contract_sjablonen for select to authenticated using (true);
+
+drop policy if exists "auth kan contract_sjablonen toevoegen" on public.contract_sjablonen;
+create policy "auth kan contract_sjablonen toevoegen"
+  on public.contract_sjablonen for insert to authenticated with check (true);
+
+drop policy if exists "auth kan contract_sjablonen bewerken" on public.contract_sjablonen;
+create policy "auth kan contract_sjablonen bewerken"
+  on public.contract_sjablonen for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan contract_sjablonen verwijderen" on public.contract_sjablonen;
+create policy "auth kan contract_sjablonen verwijderen"
+  on public.contract_sjablonen for delete to authenticated using (true);

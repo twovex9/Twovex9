@@ -9,8 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Teams — Organisatie</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9">
+  <title>Contractsjablonen — HR</title>
+  <link rel="stylesheet" href="styles.css?v=cs1">
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -19,7 +19,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="home" class="brand-logo" aria-label="Home">
+        <a href="hr" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -29,7 +29,7 @@
               <a href="planning" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
                 <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
-                <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+                <a href="planning-beheer" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Planning beheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -40,13 +40,13 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="hr" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="hr" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
                 <a href="hr" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
                 <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
                 <a href="locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
                 <a href="hr-diensttypes" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Diensttypes</span><span class="top-dropdown-subtitle">Beheer eigen diensttypes</span></a>
-                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
+                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked is-active" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
                 <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
                 <a href="bureaus" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
               </div>
@@ -73,10 +73,12 @@
                 <a href="facturen-te-beoordelen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
                 <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
-            </div>            <a href="taken" class="top-link">Taken</a>            <a href="beleid-documenten" class="top-link">Beleid</a>
+            </div>
+            <a href="taken" class="top-link">Taken</a>
+            <a href="beleid-documenten" class="top-link">Beleid</a>
             <a href="audit" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="teams" class="top-link top-link--dropdown is-active">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="teams" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
                 <a href="rollen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
                 <a href="teams" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
@@ -98,38 +100,36 @@
       </div>
     </header>
 
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="hr" class="side-link">Medewerkers</a>
+        <a href="competenties" class="side-link">Competenties</a>
+        <a href="opleidingen" class="side-link">Opleidingen</a>
+        <a href="locaties" class="side-link">Locaties</a>
+        <a href="hr-diensttypes" class="side-link">Diensttypes</a>
+        <a href="contract-sjablonen" class="side-link is-active">Contractsjablonen</a>
+        <a href="salarishuis" class="side-link">Salarishuis</a>
+        <a href="salarisadministratie-exporter" class="side-link">Salarisadministratie</a>
+        <a href="bureaus" class="side-link">Bureau's</a>
+        <a href="verlof" class="side-link">Verlof</a>
+        <a href="verzuim" class="side-link">Verzuim</a>
+        <a href="nieuws" class="side-link">Nieuws</a>
+      </nav>
+      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
+    </aside>
+
     <main class="content">
       <div class="content-header">
-        <h1>Teams</h1>
+        <h1>Contractsjablonen</h1>
         <div class="header-actions">
-          <button class="btn-primary" type="button" id="teams-add-btn">+ Team toevoegen</button>
-        </div>
-      </div>
-
-      <!-- Fase E.2 — 4 stat-cards (BS2 mirror) -->
-      <div class="teams-stats-grid" id="teams-stats-grid">
-        <div class="teams-stat-card">
-          <div class="teams-stat-num" id="teams-stat-totaal">—</div>
-          <div class="teams-stat-label">Totaal teams</div>
-        </div>
-        <div class="teams-stat-card">
-          <div class="teams-stat-num" id="teams-stat-medewerkers">—</div>
-          <div class="teams-stat-label">Totaal medewerkers</div>
-        </div>
-        <div class="teams-stat-card">
-          <div class="teams-stat-num" id="teams-stat-teamleiders">—</div>
-          <div class="teams-stat-label">Teamleiders</div>
-        </div>
-        <div class="teams-stat-card">
-          <div class="teams-stat-num" id="teams-stat-locaties">—</div>
-          <div class="teams-stat-label">Locaties</div>
+          <button class="btn-primary" type="button" id="cs-add-btn">+ Sjabloon toevoegen</button>
         </div>
       </div>
 
       <div class="toolbar">
-        <input class="search" type="search" id="teams-search" placeholder="Zoeken..." autocomplete="off" />
+        <input class="search" type="search" id="cs-search" placeholder="Zoeken..." autocomplete="off" />
         <label class="switch switch--yellow">
-          <input type="checkbox" id="teams-archived-toggle" />
+          <input type="checkbox" id="cs-archived-toggle" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
@@ -137,41 +137,39 @@
 
       <section class="table-card">
         <div class="table-wrapper">
-          <table class="employees-table" id="teams-table">
+          <table class="employees-table" id="cs-table">
             <thead>
               <tr>
-                <th><div class="th-sort-inner"><span class="th-label">Team</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Beschrijving</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Teamleider</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Locatie</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Leden</span></div></th>
-                <th><div class="th-sort-inner"><span class="th-label">Aangemaakt</span></div></th>
-                <th></th>
+                <th data-col="naam"><span class="th-label">Naam</span></th>
+                <th data-col="type"><span class="th-label">Type</span></th>
+                <th data-col="beschrijving"><span class="th-label">Beschrijving</span></th>
+                <th data-col="aanmaakdatum"><span class="th-label">Aangemaakt</span></th>
+                <th data-col="acties"></th>
               </tr>
             </thead>
-            <tbody id="teams-tbody"></tbody>
+            <tbody id="cs-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="teams-pager-range" class="pager-range">0 van 0</span>
+            <span id="cs-pager-range" class="pager-range">0 of 0 total.</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="teams-rows-per-page">
+            <label class="footer-rows-wrap" for="cs-rows-per-page">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="teams-rows-per-page" class="footer-rows-select">
+              <select id="cs-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="30" selected>30</option>
+                <option value="15" selected>15</option>
+                <option value="30">30</option>
                 <option value="50">50</option>
               </select>
             </label>
-            <span id="teams-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="cs-pager-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="teams-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="teams-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="teams-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="teams-pager-last" disabled>&raquo;</button>
+              <button type="button" class="pager-btn" id="cs-pager-first" disabled>&laquo;</button>
+              <button type="button" class="pager-btn" id="cs-pager-prev" disabled>&lsaquo;</button>
+              <button type="button" class="pager-btn" id="cs-pager-next" disabled>&rsaquo;</button>
+              <button type="button" class="pager-btn" id="cs-pager-last" disabled>&raquo;</button>
             </span>
           </div>
         </div>
@@ -179,120 +177,44 @@
     </main>
   </div>
 
-  <div class="emp-verzuim-modal-overlay" id="teams-add-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:560px">
-      <div class="emp-verzuim-modal-head">
-        <h3 id="teams-add-title">Team toevoegen</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="teams-add-close-btn">&times;</button>
+  <!-- Add/Edit modal -->
+  <div class="modal-overlay" id="cs-edit-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--wide" role="dialog" aria-modal="true" aria-labelledby="cs-edit-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="cs-edit-title" class="modal-title">Sjabloon toevoegen</h2>
+        <button type="button" class="modal-close" id="cs-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <form id="teams-add-form" novalidate>
-        <input type="hidden" id="teams-edit-id" value="" />
-        <div class="emp-verzuim-modal-body">
-          <label class="emp-verzuim-modal-field">
-            <span>Teamnaam</span>
-            <input type="text" id="teams-add-naam" class="comp-modal-input" required placeholder="bv. Team Locatie Alkmaar">
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Beschrijving</span>
-            <textarea id="teams-add-beschrijving" class="comp-modal-input" rows="2"></textarea>
-          </label>
-          <div style="display:flex;gap:12px;">
-            <label class="emp-verzuim-modal-field" style="flex:1">
-              <span>Teamleider</span>
-              <select id="teams-add-leider" class="comp-modal-input">
-                <option value="">— Geen —</option>
-              </select>
-            </label>
-            <label class="emp-verzuim-modal-field" style="flex:1">
-              <span>Locatie</span>
-              <select id="teams-add-locatie" class="comp-modal-input">
-                <option value="">— Geen —</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="emp-verzuim-modal-footer">
-          <button type="button" class="emp-verzuim-modal-cancel" id="teams-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="emp-verzuim-modal-submit" id="teams-add-submit-btn">Opslaan</button>
+      <form id="cs-edit-form" class="modal-body">
+        <label class="modal-label" for="cs-edit-naam">Naam</label>
+        <input type="text" id="cs-edit-naam" class="modal-input" required maxlength="100" autocomplete="off" />
+
+        <label class="modal-label" for="cs-edit-type">Type</label>
+        <select id="cs-edit-type" class="modal-input">
+          <option value="arbeidsovereenkomst">Arbeidsovereenkomst (loondienst)</option>
+          <option value="opdracht">Overeenkomst van opdracht (ZZP)</option>
+          <option value="stage">Stageovereenkomst</option>
+          <option value="oproep">Oproepovereenkomst</option>
+          <option value="overig">Overig</option>
+        </select>
+
+        <label class="modal-label" for="cs-edit-beschrijving">Beschrijving</label>
+        <input type="text" id="cs-edit-beschrijving" class="modal-input" maxlength="200" autocomplete="off" />
+
+        <label class="modal-label" for="cs-edit-body">Contracttekst</label>
+        <textarea id="cs-edit-body" class="modal-input cs-body-textarea" rows="14" placeholder="Typ hier de contracttekst met invulvelden zoals {{volledige_naam}}…"></textarea>
+        <p class="cs-merge-hint">Invulvelden (worden bij het opstellen automatisch ingevuld): <code>{{volledige_naam}}</code> <code>{{voornaam}}</code> <code>{{achternaam}}</code> <code>{{functie}}</code> <code>{{werkzaamheden}}</code> <code>{{startdatum}}</code> <code>{{contractduur}}</code> <code>{{uren}}</code> <code>{{tarief}}</code> <code>{{schaal}}</code> <code>{{locatie}}</code> <code>{{datum_vandaag}}</code></p>
+
+        <input type="hidden" id="cs-edit-id" />
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="cs-edit-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary">Opslaan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="emp-verzuim-modal-overlay" id="teams-members-modal" style="display:none">
-    <div class="emp-verzuim-modal" style="width:640px;max-height:80vh;display:flex;flex-direction:column;">
-      <div class="emp-verzuim-modal-head">
-        <h3 id="teams-members-title">Teamleden</h3>
-        <button type="button" class="emp-verzuim-modal-close" id="teams-members-close-btn">&times;</button>
-      </div>
-      <div class="emp-verzuim-modal-body" style="overflow-y:auto;flex:1;">
-        <input type="hidden" id="teams-members-team-id" value="" />
-        <div style="margin-bottom:12px;display:flex;gap:8px;">
-          <select id="teams-members-add-medewerker" class="comp-modal-input" style="flex:1">
-            <option value="">— Kies medewerker —</option>
-          </select>
-          <select id="teams-members-add-rol" class="comp-modal-input" style="width:120px">
-            <option value="lid" selected>Lid</option>
-            <option value="leider">Leider</option>
-            <option value="assistent">Assistent</option>
-          </select>
-          <button type="button" class="btn-primary" id="teams-members-add-btn">+ Toevoegen</button>
-        </div>
-        <div id="teams-members-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-      </div>
-      <div class="emp-verzuim-modal-footer">
-        <button type="button" class="emp-verzuim-modal-cancel" id="teams-members-done-btn">Klaar</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="teams-archive-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title">Team archiveren</h2>
-        <button type="button" class="modal-close" id="teams-archive-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit team wordt gearchiveerd.</p>
-        <p class="employee-delete-preview" id="teams-archive-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="teams-archive-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="teams-archive-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="teams-archive-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="teams-archive-confirm-btn" disabled>Archiveren</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay modal-overlay--confirm" id="teams-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title">Definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="teams-purge-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit team wordt <strong>permanent</strong> verwijderd, inclusief alle lidmaatschappen.</p>
-        <p class="employee-delete-preview" id="teams-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="teams-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="teams-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="teams-purge-cancel-btn">Annuleren</button>
-        <button type="button" class="btn-primary" id="teams-purge-confirm-btn" disabled>Definitief verwijderen</button>
-      </div>
-    </div>
-  </div>
-
   <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="error-reporter.js?v=er1"></script>
@@ -309,12 +231,9 @@
   <script src="onboarding-flow.js?v=onb3" defer></script>
   <script src="mfa-challenge.js?v=mfa1" defer></script>
   <script src="auth-guard.js"></script>
-  <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
+  <script src="contract-sjablonen-data.js?v=cs1" defer></script>
   <script src="besa-audit.js" defer></script>
-  <script src="medewerkers-data.js"></script>
-  <script src="locaties-data.js"></script>
-  <script src="teams-data.js"></script>
-  <script src="teams.js"></script>
+  <script src="contract-sjablonen.js?v=cs1" defer></script>
 </body>
 </html>
