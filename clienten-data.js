@@ -34,6 +34,13 @@
     return "cl_" + String(Date.now()) + "_" + String(Math.random()).slice(2, 8);
   }
 
+  // Stille fire-and-forget fouten zichtbaar maken (werkpatronen §6c-bis):
+  // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
+  function reportSilent(action, err) {
+    console.error("[clientenDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Cliënten — " + action, err);
+  }
+
   // ---------------------------------------------------------------------------
   // Mapping tussen Supabase-rij en frontend-object
   // ---------------------------------------------------------------------------
@@ -414,7 +421,7 @@
       var prev = oldMap[c.id];
       if (!prev) {
         if (window.clientenDB) {
-          add(c).catch(function (err) { console.error("[clientenDB] add via setClientenItems mislukt:", err); });
+          add(c).catch(function (err) { reportSilent("toevoegen", err); });
         }
         return;
       }
@@ -427,7 +434,7 @@
         if (JSON.stringify(c[k]) !== JSON.stringify(prev[k])) { changed = true; break; }
       }
       if (changed) {
-        update(c.id, c).catch(function (err) { console.error("[clientenDB] update via setClientenItems mislukt:", err); });
+        update(c.id, c).catch(function (err) { reportSilent("bijwerken", err); });
       }
     });
   }
@@ -464,7 +471,7 @@
         ? update(client.id, merged)
         : add(merged);
       p.catch(function (err) {
-        console.error("[clientenDB] upsertClienten sync mislukt:", err);
+        reportSilent("opslaan", err);
       });
     }
     return true;
@@ -476,7 +483,7 @@
     setData(cache);
     dispatchUpdated();
     if (window.besaSupabase) {
-      remove(id).catch(function (err) { console.error("[clientenDB] delete sync mislukt:", err); });
+      remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     }
     return true;
   }

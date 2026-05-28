@@ -81,6 +81,13 @@
     return "b_" + Date.now().toString(36) + "_" + String(Math.random()).slice(2, 9);
   }
 
+  // Stille fire-and-forget fouten zichtbaar maken (werkpatronen §6c-bis):
+  // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
+  function reportSilent(action, err) {
+    console.error("[beschikkingenDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Beschikkingen — " + action, err);
+  }
+
   // ---------------------------------------------------------------------------
   // Mapping DB ⇄ frontend object
   // ---------------------------------------------------------------------------
@@ -446,7 +453,7 @@
       if (!r || !r.id) return;
       var prev = oldMap[r.id];
       if (!prev) {
-        add(r).catch(function (err) { console.error("[beschikkingenDB] add via setBeschikkingenItems:", err); });
+        add(r).catch(function (err) { reportSilent("toevoegen", err); });
         return;
       }
       // Bepaal of er iets gewijzigd is in de relevante velden.
@@ -458,14 +465,14 @@
         if (JSON.stringify(r[k]) !== JSON.stringify(prev[k])) { changed = true; break; }
       }
       if (changed) {
-        updateRow(r.id, r).catch(function (err) { console.error("[beschikkingenDB] update via setBeschikkingenItems:", err); });
+        updateRow(r.id, r).catch(function (err) { reportSilent("bijwerken", err); });
       }
       delete oldMap[r.id];
     });
 
     // Wat over is in oldMap is verwijderd.
     Object.keys(oldMap).forEach(function (id) {
-      remove(id).catch(function (err) { console.error("[beschikkingenDB] remove via setBeschikkingenItems:", err); });
+      remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     });
   }
 
@@ -483,7 +490,7 @@
     notifyChanged();
 
     if (global.besaSupabase) {
-      add(row).catch(function (err) { console.error("[beschikkingenDB] addBeschikkingRij sync mislukt:", err); });
+      add(row).catch(function (err) { reportSilent("toevoegen", err); });
     }
     return row;
   }
@@ -553,7 +560,7 @@
     writeCache(cache);
     notifyChanged();
     if (global.besaSupabase) {
-      remove(id).catch(function (err) { console.error("[beschikkingenDB] removeBeschikkingById sync mislukt:", err); });
+      remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     }
   }
 
@@ -567,7 +574,7 @@
         writeCache(cache);
         notifyChanged();
         if (global.besaSupabase) {
-          updateRow(id, cache[i]).catch(function (err) { console.error("[beschikkingenDB] setBeschikkingField sync mislukt:", err); });
+          updateRow(id, cache[i]).catch(function (err) { reportSilent("bijwerken", err); });
         }
         return cache[i];
       }
