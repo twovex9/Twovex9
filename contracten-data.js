@@ -53,6 +53,8 @@
       gegenereerdeTekst: row.gegenereerde_tekst || "",
       status: row.status || "opgesteld",
       pdfStoragePath: row.pdf_storage_path || null,
+      tekenTokenMedewerker: row.teken_token_medewerker || null,
+      tekenTokenWerkgever: row.teken_token_werkgever || null,
       aangemaaktDoor: row.aangemaakt_door || null,
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum || null,
@@ -71,6 +73,8 @@
     if (safe.gegenereerdeTekst !== undefined) p.gegenereerde_tekst = String(safe.gegenereerdeTekst || "");
     if (safe.status !== undefined) p.status = String(safe.status || "opgesteld");
     if (safe.pdfStoragePath !== undefined) p.pdf_storage_path = safe.pdfStoragePath || null;
+    if (safe.tekenTokenMedewerker !== undefined) p.teken_token_medewerker = safe.tekenTokenMedewerker || null;
+    if (safe.tekenTokenWerkgever !== undefined) p.teken_token_werkgever = safe.tekenTokenWerkgever || null;
     if (safe.aangemaaktDoor !== undefined) p.aangemaakt_door = safe.aangemaaktDoor || null;
     if (safe.archived !== undefined) p.archived = !!safe.archived;
     return p;
