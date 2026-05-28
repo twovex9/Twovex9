@@ -145,6 +145,16 @@
     return obj;
   }
 
+  // Merge een patch in de `data` jsonb zonder andere keys te overschrijven
+  // (gebruikt voor de toegang-checklist + vrijgave-vlag in release 7).
+  async function updateData(id, patch) {
+    if (!id) throw new Error("id verplicht");
+    var existing = readCache().find(function (r) { return r && String(r.id) === String(id); });
+    var curData = (existing && existing.data && typeof existing.data === "object") ? existing.data : {};
+    var merged = Object.assign({}, curData, patch || {});
+    return update(id, { data: merged });
+  }
+
   async function markAfgerond(id) {
     return update(id, { status: "afgerond", afgerond_op: isoNow() });
   }
@@ -168,6 +178,7 @@
     fetchAll: fetchAll,
     start: start,
     update: update,
+    updateData: updateData,
     markAfgerond: markAfgerond,
     markLopend: markLopend,
     getAllSync: getAllSync,

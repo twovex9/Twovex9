@@ -1255,6 +1255,50 @@ function onbComputeInwerken(emp, traject) {
   return { status: status, desc: desc, detailHtml: detail };
 }
 
+// Toegang-checklist (release 7): vaste set rechten die Donovan afvinkt. State in
+// traject.data.toegang (obj van booleans). Status klaar als alle items aangevinkt.
+var ONB_TOEGANG_ITEMS = [
+  { key: "ons", label: "ONS (zorgsysteem)" },
+  { key: "sharepoint", label: "SharePoint" },
+  { key: "outlook", label: "Outlook / e-mail" },
+  { key: "overig", label: "Overige rechten" },
+];
+
+function onbComputeToegang(traject) {
+  var state = (traject && traject.data && traject.data.toegang && typeof traject.data.toegang === "object") ? traject.data.toegang : {};
+  var done = ONB_TOEGANG_ITEMS.filter(function (it) { return state[it.key] === true; }).length;
+  var total = ONB_TOEGANG_ITEMS.length;
+  var status = done === total ? "klaar" : (done > 0 ? "bezig" : "open");
+  var detail = '<ul class="emp-onb-toegang">'
+    + ONB_TOEGANG_ITEMS.map(function (it) {
+      var on = state[it.key] === true;
+      return '<li class="emp-onb-toegang-item' + (on ? " emp-onb-toegang-item--done" : "") + '">'
+        + '<label class="emp-onb-toegang-label">'
+        + '<input type="checkbox" class="emp-onb-toegang-cb" data-toegang-key="' + onbEscHtml(it.key) + '"' + (on ? " checked" : "") + "> "
+        + onbEscHtml(it.label) + "</label></li>";
+    }).join("")
+    + "</ul>"
+    + '<p class="emp-onb-uploadlink-hint">Donovan vinkt aan welke toegang en rechten zijn geregeld.</p>';
+  return { status: status, desc: "Accounts en rechten toekennen (" + onbEscHtml(done + "/" + total) + " geregeld).", detailHtml: detail };
+}
+
+// Vrijgeven voor planning (release 7): zet traject.data.vrijgegevenVoorPlanning.
+// Mag al vóór de rest klaar is (vroege vrijgave). De planning toont een medewerker
+// pas als dit true is (of er geen lopend traject meer is) — zie planning.js.
+function onbComputeVrijgeven(traject) {
+  var vrij = !!(traject && traject.data && traject.data.vrijgegevenVoorPlanning === true);
+  var op = traject && traject.data ? traject.data.vrijgegevenOp : null;
+  var status = vrij ? "klaar" : "open";
+  var desc = vrij
+    ? "Vrijgegeven voor de planning" + (op ? " op " + onbEscHtml(onbFormatDate(op)) : "") + "."
+    : "Medewerker verschijnt pas in de planning na vrijgave. Je mag dit al doen vóór de rest klaar is.";
+  var detail = vrij
+    ? '<div class="emp-onb-contract-info"><span class="emp-onb-teken-hint">✓ Deze medewerker is vrijgegeven en verschijnt in de planning.</span>'
+      + '<button type="button" class="btn-outline" id="emp-onb-vrijgeven-undo">Terugtrekken uit planning</button></div>'
+    : '<button type="button" class="btn-primary" id="emp-onb-vrijgeven-btn">Vrijgeven voor planning</button>';
+  return { status: status, desc: desc, detailHtml: detail };
+}
+
 // status: 'open' | 'bezig' | 'klaar'. De documenten-stap leidt zijn status af
 // uit de geüploade documenten; overige stappen worden in latere releases gevuld.
 function onbComputeSteps(emp, traject) {
@@ -1328,14 +1372,16 @@ function onbComputeSteps(emp, traject) {
   }
 
   var inwerken = onbComputeInwerken(emp, traject);
+  var toegang = onbComputeToegang(traject);
+  var vrijgeven = onbComputeVrijgeven(traject);
 
   return [
     { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
     { key: "contract", titel: "Contract opgesteld", desc: contractDesc, status: contractStatus, detailHtml: contractDetail },
     { key: "tekenen", titel: "Contract getekend", desc: tekenDesc, status: tekenStatus, detailHtml: tekenDetail },
     { key: "inwerken", titel: "Inwerken afgerond", desc: inwerken.desc, status: inwerken.status, detailHtml: inwerken.detailHtml },
-    { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend.", status: "open" },
-    { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster.", status: "open" },
+    { key: "toegang", titel: "Toegang geregeld", desc: toegang.desc, status: toegang.status, detailHtml: toegang.detailHtml },
+    { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: vrijgeven.desc, status: vrijgeven.status, detailHtml: vrijgeven.detailHtml },
   ];
 }
 
@@ -1726,6 +1772,25 @@ function initOnboardingTab() {
       onbVerstuurTerTekening();
       return;
     }
+    // Vrijgeven voor planning (of terugtrekken) — release 7
+    if (e.target.closest("#emp-onb-vrijgeven-btn") || e.target.closest("#emp-onb-vrijgeven-undo")) {
+      var release = !!e.target.closest("#emp-onb-vrijgeven-btn");
+      var empV = getSelectedEmployee();
+      var tV = (empV && empV.id && window.onboardingDB) ? window.onboardingDB.getForMedewerkerSync(empV.id) : null;
+      if (tV && tV.id) {
+        try {
+          var profV = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : null;
+          await window.onboardingDB.updateData(tV.id, release
+            ? { vrijgegevenVoorPlanning: true, vrijgegevenOp: new Date().toISOString(), vrijgegevenDoor: (profV && profV.id) ? profV.id : null }
+            : { vrijgegevenVoorPlanning: false });
+          if (window.showActionFeedback) window.showActionFeedback("saved", release ? "Vrijgegeven voor planning" : "Teruggetrokken uit planning");
+        } catch (err) {
+          if (window.showActionFeedback) window.showActionFeedback("error", "Bijwerken mislukt: " + (err && err.message ? err.message : err));
+        }
+        renderOnboardingTab();
+      }
+      return;
+    }
     // Contract opstellen / opnieuw / bekijken
     if (e.target.closest("#emp-onb-contract-opstellen") || e.target.closest("#emp-onb-contract-opnieuw")) {
       openContractModal("new");
@@ -1789,6 +1854,29 @@ function initOnboardingTab() {
   window.addEventListener("besa:contract-sjablonen-updated", renderOnboardingTab);
   window.addEventListener("besa:inwerk-items-updated", renderOnboardingTab);
   window.addEventListener("besa:inwerk-voortgang-updated", renderOnboardingTab);
+
+  // Toegang-checklist: checkbox-toggle direct opslaan (release 7).
+  document.addEventListener("change", async function (e) {
+    var cb = (e.target && e.target.closest) ? e.target.closest(".emp-onb-toegang-cb") : null;
+    if (!cb) return;
+    var key = cb.getAttribute("data-toegang-key");
+    var empT = getSelectedEmployee();
+    var tT = (empT && empT.id && window.onboardingDB) ? window.onboardingDB.getForMedewerkerSync(empT.id) : null;
+    if (!tT || !tT.id || !key) return;
+    var cur = (tT.data && tT.data.toegang && typeof tT.data.toegang === "object") ? Object.assign({}, tT.data.toegang) : {};
+    cur[key] = cb.checked;
+    cb.disabled = true;
+    try {
+      await window.onboardingDB.updateData(tT.id, { toegang: cur });
+    } catch (err) {
+      cb.checked = !cb.checked;
+      if (window.showActionFeedback) window.showActionFeedback("error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+    } finally {
+      cb.disabled = false;
+    }
+    renderOnboardingTab();
+  });
+
   initContractModal();
 }
 
