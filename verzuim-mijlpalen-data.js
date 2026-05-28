@@ -114,7 +114,8 @@
     var status = "ok";
     if (dagen < 0) status = "overdue";
     else if (dagen <= 30) status = "warn";
-    return { datum: earliest.deadlineDatum, dagen: dagen, status: status, mijlpaalType: earliest.mijlpaalType };
+    var naam = (earliest.data && earliest.data.naam) ? String(earliest.data.naam) : "";
+    return { datum: earliest.deadlineDatum, dagen: dagen, status: status, mijlpaalType: earliest.mijlpaalType, naam: naam };
   }
 
   async function add(rec) {
@@ -122,7 +123,8 @@
     var payload = objToInsertPayload(rec);
     if (!payload.verzuim_id) throw new Error("verzuimId is verplicht");
     if (!payload.mijlpaal_type) throw new Error("mijlpaalType is verplicht");
-    if (!payload.deadline_datum) throw new Error("deadlineDatum is verplicht");
+    // deadline_datum mag leeg zijn: de Wet-Poortwachter-mijlpaal "Melding Beëindiging
+    // Ziekteverlof bij UWV" heeft geen vaste wettelijke week en dus geen deadline.
     var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
