@@ -50,6 +50,7 @@
     "fase",
     "gemeente",
     "organisatie",
+    "hoofdaannemer",
     "archived",
   ];
 
@@ -65,6 +66,7 @@
       fase: row.fase || "in zorg",
       gemeente: row.gemeente || "",
       organisatie: row.organisatie || "",
+      hoofdaannemer: row.hoofdaannemer || "",
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum || isoNow(),
       laatstGewijzigd: row.laatst_gewijzigd || isoNow(),
@@ -90,6 +92,7 @@
       fase: safe.fase || "in zorg",
       gemeente: safe.gemeente == null ? null : String(safe.gemeente),
       organisatie: safe.organisatie == null ? null : String(safe.organisatie),
+      hoofdaannemer: safe.hoofdaannemer == null || safe.hoofdaannemer === "" ? null : String(safe.hoofdaannemer),
       archived: !!safe.archived,
       data: data,
     };

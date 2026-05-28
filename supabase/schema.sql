@@ -680,11 +680,15 @@ create table if not exists public.clienten (
   fase text default 'in zorg',
   gemeente text,
   organisatie text,
+  hoofdaannemer text,
   archived boolean not null default false,
   aanmaakdatum timestamptz not null default now(),
   laatst_gewijzigd timestamptz not null default now(),
   data jsonb not null default '{}'::jsonb
 );
+
+-- Clientbeheer-sprint: optioneel veld Hoofdaannemer (additief voor bestaande DBs).
+alter table public.clienten add column if not exists hoofdaannemer text;
 
 create unique index if not exists clienten_clientnummer_unique_active
   on public.clienten (clientnummer)
@@ -3022,6 +3026,53 @@ create policy "anon kan beschikking_tarieven bewerken"
 drop policy if exists "anon kan beschikking_tarieven verwijderen" on public.beschikking_tarieven;
 create policy "anon kan beschikking_tarieven verwijderen"
   on public.beschikking_tarieven for delete to anon using (true);
+
+-- ============================================================================
+-- organisatie_notities (verwijzer-notities, sub-data per organisatie)
+-- ============================================================================
+--
+-- Vrije notities die medewerkers per verwijzer/organisatie kunnen toevoegen.
+-- organisatie_id is soft-FK naar organisaties.id (text) — geen FK-cascade
+-- (DIEHARD: nooit data meezuigen bij parent-delete), volgt het sub-tabel-
+-- patroon van beschikking_tarieven (indexed text-kolom).
+
+create table if not exists public.organisatie_notities (
+  id uuid primary key default gen_random_uuid(),
+  organisatie_id text not null,
+  tekst text not null default '',
+  auteur text,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists organisatie_notities_org_idx
+  on public.organisatie_notities (organisatie_id);
+create index if not exists organisatie_notities_archived_idx
+  on public.organisatie_notities (archived);
+
+drop trigger if exists trg_organisatie_notities_set_modified on public.organisatie_notities;
+create trigger trg_organisatie_notities_set_modified
+  before update on public.organisatie_notities
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.organisatie_notities enable row level security;
+
+drop policy if exists "auth kan organisatie_notities lezen" on public.organisatie_notities;
+create policy "auth kan organisatie_notities lezen"
+  on public.organisatie_notities for select to authenticated using (true);
+
+drop policy if exists "auth kan organisatie_notities toevoegen" on public.organisatie_notities;
+create policy "auth kan organisatie_notities toevoegen"
+  on public.organisatie_notities for insert to authenticated with check (true);
+
+drop policy if exists "auth kan organisatie_notities bewerken" on public.organisatie_notities;
+create policy "auth kan organisatie_notities bewerken"
+  on public.organisatie_notities for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan organisatie_notities verwijderen" on public.organisatie_notities;
+create policy "auth kan organisatie_notities verwijderen"
+  on public.organisatie_notities for delete to authenticated using (true);
 
 -- ============================================================================
 -- beschikking_notities (sub-data per beschikking)
