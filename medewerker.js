@@ -1440,7 +1440,11 @@ function initLoondienstSalaryDropdowns() {
 
     function syncValueText() {
       const selected = (hiddenInput.value || "").trim();
-      valueEl.textContent = selected || placeholder;
+      // Toon de placeholder bij een ongeldige/corrupte waarde (bv. historische
+      // "[object Object]" uit de import) i.p.v. die rommel te tonen. Een geldige
+      // optie wordt wel getoond. Dit raakt de opgeslagen waarde niet.
+      const valid = options.indexOf(selected) !== -1;
+      valueEl.textContent = valid ? selected : placeholder;
     }
 
     function renderList() {
