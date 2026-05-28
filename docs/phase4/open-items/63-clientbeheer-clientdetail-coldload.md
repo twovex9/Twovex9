@@ -1,8 +1,26 @@
 # 63 — Client-detail koude-direct-load (lesson #13 herhaling)
 
-**Status:** bekend issue (pre-existing), gevonden tijdens live-verificatie Clientbeheer-sprint 2026-05-28.
-**Niet** veroorzaakt door de Clientbeheer-sprint (PR #377-#385) — het is de bekende
-lesson #13 sessie-rehydratie/anonieme-RLS kwestie.
+**Status:** ✅ OPGELOST 2026-05-28 (PR #387 + #389), live geverifieerd met 2 clean runs.
+Oorspronkelijk gevonden tijdens live-verificatie Clientbeheer-sprint; pre-existing
+lesson #13 sessie-rehydratie/anonieme-RLS kwestie, niet veroorzaakt door de sprint.
+
+## Oplossing (toegepast)
+1. **PR #387** — `clienten-data.js fetchAll()` wacht nu op `window.besaSupabaseReady`
+   vóór de eerste SELECT → de query draait niet meer anoniem (0 rijen) bij een
+   koude load; de cliëntenset komt betrouwbaar binnen.
+2. **PR #388** — `?v=`-bump op alle 16 pagina's die `clienten-data.js` laden, zodat
+   browsers de gefixte versie ophalen (Vercel rewrite't `?v=` naar de deploy-hash).
+3. **PR #389** — loop-proof reload-vangrail in `client-detail.js`: reload hooguit
+   één keer per cliënt per sessie (sessionStorage-vlag), zodat een volle
+   localStorage-quota geen oneindige reload-lus meer kan veroorzaken.
+
+**Verificatie (Chrome MCP):** quota leeggemaakt + `clientenItems` gewist → koude
+directe navigatie naar `client-detail?id=...` laadt de cliënt correct
+(hoofdaannemer-dropdown, cache 86), 2× identiek, 0 app-console-errors.
+
+---
+
+## Oorspronkelijke bevinding (historie)
 
 ## Symptoom
 Een **directe** navigatie naar `client-detail?id=...` (zonder eerst de cliëntenlijst te
