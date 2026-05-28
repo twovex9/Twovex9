@@ -175,6 +175,12 @@
   // ---------------------------------------------------------------------------
   async function fetchAll() {
     if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    // Wacht op de sessie-rehydratie (supabase-client.js) vóór de eerste query.
+    // Zonder dit kan een koude direct-load (lege cache) de SELECT anoniem
+    // uitvoeren → 0 rijen ZONDER error (RLS authenticated-only, lesson #13) →
+    // client-detail toont onterecht "niet gevonden". De await is een no-op als
+    // de client al een sessie heeft.
+    if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
     var res = await window.besaSupabase
       .from(TABLE)
       .select("*")
