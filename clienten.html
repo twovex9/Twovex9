@@ -351,14 +351,19 @@
             </div>
             <div class="modal-field">
               <label class="modal-label" for="cl-add-loc">Locatie</label>
-              <input class="modal-input" type="text" id="cl-add-loc" name="locatie" autocomplete="off" />
+              <select class="modal-input modal-select" id="cl-add-loc" name="locatie">
+                <option value="">— Kies locatie —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cl-add-izd">In zorg (datum)</label>
+              <input class="modal-input" type="date" id="cl-add-izd" name="inZorgDatum" />
             </div>
             <div class="modal-field cl-add-fase-row">
               <label class="modal-label" for="cl-add-fase">Fase</label>
               <select class="modal-input modal-select" id="cl-add-fase" name="fase">
                 <option value="in zorg">In zorg</option>
                 <option value="in aanvraag">In aanvraag</option>
-                <option value="uit zorg">Uit zorg</option>
               </select>
             </div>
             <div class="modal-field">
@@ -369,6 +374,11 @@
               <label class="modal-label" for="cl-add-org">Organisatie</label>
               <input class="modal-input" type="text" id="cl-add-org" name="organisatie" list="cl-add-org-dl" autocomplete="off" />
               <datalist id="cl-add-org-dl"></datalist>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="cl-add-ha">Hoofdaannemer <span class="cl-add-opt">(optioneel)</span></label>
+              <input class="modal-input" type="text" id="cl-add-ha" name="hoofdaannemer" list="cl-add-ha-dl" autocomplete="off" />
+              <datalist id="cl-add-ha-dl"></datalist>
             </div>
           </div>
         </div>
@@ -449,9 +459,10 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="clienten-data.js?v=memfix1" defer></script>
+  <script src="clienten-data.js?v=hoofdaannemer1" defer></script>
   <script src="fase-ui.js" defer></script>
   <script src="organisatie-data.js" defer></script>
-  <script src="clienten.js" defer></script>
+  <script src="locaties-data.js" defer></script>
+  <script src="clienten.js?v=clbeheer1" defer></script>
 </body>
 </html>

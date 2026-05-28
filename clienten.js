@@ -428,15 +428,45 @@
   }
 
   function refreshClOrgDatalist() {
-    var dl = document.getElementById("cl-add-org-dl");
-    if (!dl || typeof getOrganisatieNamenVoorSelectie !== "function") return;
+    if (typeof getOrganisatieNamenVoorSelectie !== "function") return;
     var names = getOrganisatieNamenVoorSelectie();
-    dl.innerHTML = "";
-    names.forEach(function (n) {
-      var o = document.createElement("option");
-      o.value = n;
-      dl.appendChild(o);
+    // Zowel Organisatie als Hoofdaannemer kiezen uit dezelfde verwijzer-lijst.
+    ["cl-add-org-dl", "cl-add-ha-dl"].forEach(function (dlId) {
+      var dl = document.getElementById(dlId);
+      if (!dl) return;
+      dl.innerHTML = "";
+      names.forEach(function (n) {
+        var o = document.createElement("option");
+        o.value = n;
+        dl.appendChild(o);
+      });
     });
+  }
+
+  // Locatie-dropdown vullen uit de locaties-data-laag zodat een cliënt aan een
+  // bestaande locatie kan worden toegewezen (i.p.v. vrije tekst).
+  function refreshClLocatieDropdown() {
+    var sel = document.getElementById("cl-add-loc");
+    if (!sel) return;
+    var locs = [];
+    try {
+      if (window.locatiesDB && typeof window.locatiesDB.getAllSync === "function") {
+        locs = window.locatiesDB.getAllSync() || [];
+      } else if (typeof window.getLocaties === "function") {
+        locs = window.getLocaties() || [];
+      }
+    } catch (e) { locs = []; }
+    locs = locs.filter(function (l) { return l && !l.archived && l.naam; });
+    locs.sort(function (a, b) { return String(a.naam).localeCompare(String(b.naam), "nl"); });
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">— Kies locatie —</option>';
+    locs.forEach(function (l) {
+      var o = document.createElement("option");
+      o.value = l.naam;
+      o.textContent = l.naam;
+      sel.appendChild(o);
+    });
+    if (prev) sel.value = prev;
   }
 
   function openAdd() {
@@ -444,6 +474,7 @@
     var f = document.getElementById("cl-add-form");
     if (f) f.reset();
     refreshClOrgDatalist();
+    refreshClLocatieDropdown();
     if (m) {
       m.removeAttribute("hidden");
       m.setAttribute("aria-hidden", "false");
@@ -648,6 +679,8 @@
       var nr = parseInt(document.getElementById("cl-add-nr").value, 10);
       if (Number.isNaN(nr) || nr < 1) return;
       if (typeof upsertClienten !== "function") return;
+      var haEl = document.getElementById("cl-add-ha");
+      var izdEl = document.getElementById("cl-add-izd");
       var client = {
         id: "cl_" + String(nr),
         voornaam: document.getElementById("cl-add-vn").value.trim(),
@@ -657,9 +690,10 @@
         fase: document.getElementById("cl-add-fase").value,
         gemeente: document.getElementById("cl-add-gem").value.trim(),
         organisatie: document.getElementById("cl-add-org").value.trim(),
+        hoofdaannemer: haEl ? haEl.value.trim() : "",
         requiredForms: "",
         uitZorgDatum: "",
-        inZorgDatum: "",
+        inZorgDatum: izdEl ? izdEl.value : "",
         medewerkerZoek: "",
         gedragswetenschapperZoek: "",
         zijbalkNotities: "",
