@@ -1183,12 +1183,9 @@ function onbDocMatches(doc, req) {
 function onbComputeRequiredDocs(emp) {
   var key = onbRequiredDocsKey(emp);
   var reqs = ONB_REQUIRED_DOCS[key] || ONB_REQUIRED_DOCS.loondienst;
-  var docs = [];
-  try {
-    if (emp && emp.id && window.medewerkerDocsDB && typeof window.medewerkerDocsDB.listSync === "function") {
-      docs = (window.medewerkerDocsDB.listSync(emp.id) || []).filter(function (d) { return d && !d.archived; });
-    }
-  } catch (e) { /* */ }
+  // Lees uit onze eigen cache (gevuld door list()), niet listSync — die laatste
+  // kan leeg blijven als de localStorage-cache van de documenten-laag faalt.
+  var docs = (emp && emp.id && _onbDocsCache && _onbDocsCache[emp.id]) ? _onbDocsCache[emp.id] : [];
   return reqs.map(function (req) {
     return { label: req.label, found: docs.some(function (d) { return onbDocMatches(d, req); }) };
   });
@@ -1232,17 +1229,22 @@ function onbStatusPill(status) {
   return '<span class="emp-onb-status ' + m[1] + '">' + m[0] + "</span>";
 }
 
-// De documenten-laag laadt per medewerker lazy (pas bij list()). Zorg dat de
-// docs van deze medewerker geladen zijn zodat de detectie klopt — list() vuurt
-// besa:medewerker-documenten-updated → re-render. Guard voorkomt een loop.
-var _onbDocsRequested = {};
-function onbEnsureDocsLoaded(empId) {
-  if (!empId || _onbDocsRequested[empId]) return;
+// De documenten-laag laadt per medewerker lazy én cachet alleen in localStorage,
+// wat bij volle quota stil kan falen (listSync blijft dan 0). Daarom houden we
+// de docs die list() zélf teruggeeft bij in _onbDocsCache en renderen daaruit.
+var _onbDocsCache = {};   // empId -> docs[] (niet-gearchiveerd)
+var _onbDocsLoaded = {};  // empId -> bool (minstens 1× geladen)
+var _onbDocsBusy = false; // re-entrancy/loop-guard
+function onbLoadDocs(empId, force) {
+  if (!empId || _onbDocsBusy) return;
+  if (_onbDocsLoaded[empId] && !force) return;
   if (!window.medewerkerDocsDB || typeof window.medewerkerDocsDB.list !== "function") return;
-  _onbDocsRequested[empId] = true;
-  try {
-    window.medewerkerDocsDB.list(empId).catch(function () { _onbDocsRequested[empId] = false; });
-  } catch (e) { _onbDocsRequested[empId] = false; }
+  _onbDocsBusy = true;
+  window.medewerkerDocsDB.list(empId).then(function (docs) {
+    _onbDocsCache[empId] = (docs || []).filter(function (d) { return d && !d.archived; });
+    _onbDocsLoaded[empId] = true;
+  }).catch(function () { /* read-fout: laat cache leeg, geen logout-escalatie */ })
+    .then(function () { _onbDocsBusy = false; renderOnboardingTab(); });
 }
 
 function renderOnboardingTab() {
@@ -1278,7 +1280,7 @@ function renderOnboardingTab() {
         + '<button type="button" class="btn-outline" id="emp-onb-afrond-btn">Onboarding afronden</button>';
   }
 
-  onbEnsureDocsLoaded(emp.id);
+  onbLoadDocs(emp.id);
   const steps = onbComputeSteps(emp, traject);
   const stepsHtml = steps.map(function (s, i) {
     return '<li class="emp-onb-step">'
@@ -1349,7 +1351,13 @@ function initOnboardingTab() {
   }
   window.addEventListener("besa:onboarding-updated", renderOnboardingTab);
   window.addEventListener("besa:medewerkers-updated", renderOnboardingTab);
-  window.addEventListener("besa:medewerker-documenten-updated", renderOnboardingTab);
+  // Bij een documenten-wijziging (bv. HR uploadt in de Documenten-tab) onze
+  // eigen docs-cache verversen. De _onbDocsBusy-guard voorkomt een event-loop.
+  window.addEventListener("besa:medewerker-documenten-updated", function () {
+    var emp = getSelectedEmployee();
+    if (emp && emp.id) onbLoadDocs(emp.id, true);
+    else renderOnboardingTab();
+  });
 }
 
 function initTabs() {
