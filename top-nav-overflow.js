@@ -37,8 +37,6 @@
 
   function syncTopNavActiveState() {
     const currentFile = normalizeFileName(window.location.pathname);
-    const currentHash = normalizeHash(window.location.hash);
-    const effectiveHash = currentFile === "werkruimte.html" && !currentHash ? "#urenregistratie" : currentHash;
     const hrPages = new Set([
       "index.html",
       "hr.html",
@@ -74,9 +72,6 @@
       if (!href || href === "#") return false;
       const parsed = parseHrefParts(href);
       if (parsed.file !== currentFile) return false;
-      if (currentFile === "werkruimte.html" && parsed.hash) {
-        return parsed.hash === effectiveHash;
-      }
       return true;
     });
 
@@ -97,10 +92,6 @@
       }) || null;
     }
 
-    const clientenWorkspaceHashes = new Set(["#clienten", "#zorgsoorten", "#beschikkingen", "#incidenten"]);
-    if (!activeLink && currentFile === "werkruimte.html" && clientenWorkspaceHashes.has(effectiveHash)) {
-      activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
-    }
 
     if (!activeLink && (
       currentFile === "clienten.html" ||
@@ -169,7 +160,7 @@
       Urenregistratie: "werkuren.html",
       HR: "hr.html",
       Cliënten: "clienten.html",
-      Kilometers: "werkruimte.html#kilometers",
+      Kilometers: "kilometers.html",
       Taken: "taken.html",
       Verlof: "verlof.html",
       Beleid: "beleid-documenten.html",
@@ -187,11 +178,11 @@
       Zorgsoorten: "zorgsoorten.html",
       Beschikkingen: "beschikkingen.html",
       Facturen: "facturen.html",
-      Incidenten: "werkruimte.html#incidenten",
-      "Kilometer declaraties": "werkruimte.html#kilometers",
-      "Verlofaanvragen": "werkruimte.html#verlof",
-      "Rollen": "werkruimte.html#organisatie",
-      "Teams": "werkruimte.html#organisatie",
+      Incidenten: "incidenten.html",
+      "Kilometer declaraties": "kilometers.html",
+      "Verlofaanvragen": "verlof.html",
+      "Rollen": "rollen.html",
+      "Teams": "teams.html",
     };
 
   function resolveTopRoute(link) {
