@@ -71,7 +71,10 @@
   }
 
   function renderSign(info) {
-    var naam = (info.medewerkerNaam || "").trim();
+    // De medewerker-naam vooraf invullen; de werkgever (Lionel/Romy) vult zelf
+    // zijn/haar eigen naam in (anders zou de werkgever-handtekening de naam van
+    // de medewerker krijgen).
+    var naam = info.rol === "werkgever" ? "" : (info.medewerkerNaam || "").trim();
     var rolLabel = info.rol === "werkgever" ? "namens de werkgever (Embrace The Future)" : "als medewerker";
     var reedsHtml = (info.reedsGetekend && info.reedsGetekend.length)
       ? '<p class="tk-reeds">Reeds getekend: ' + info.reedsGetekend.map(function (s) { return esc((s.rol === "werkgever" ? "werkgever" : "medewerker") + " (" + (s.naam || "") + ")"); }).join(", ") + "</p>"
@@ -94,7 +97,7 @@
       + '<div class="tk-contract" id="tk-contract">' + esc(info.tekst || "") + "</div>"
       + '<div class="onbup-section">'
       + '<div class="onbup-section-title">Ondertekenen</div>'
-      + '<label class="onbup-field"><span>Naam</span><input type="text" id="tk-naam" value="' + esc(naam) + '" autocomplete="name"></label>'
+      + '<label class="onbup-field"><span>Naam</span><input type="text" id="tk-naam" value="' + esc(naam) + '" placeholder="Je volledige naam" autocomplete="name"></label>'
       + '<div class="tk-sign-label">Zet hier je handtekening (met muis of vinger):</div>'
       + '<div class="tk-canvas-wrap"><canvas id="tk-canvas" width="600" height="180"></canvas></div>'
       + '<button type="button" class="btn-outline tk-canvas-clear" id="tk-canvas-clear">Wissen</button>'
