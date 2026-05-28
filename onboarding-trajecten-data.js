@@ -56,6 +56,7 @@
       gestartOp: row.gestart_op || row.aanmaakdatum || null,
       afgerondOp: row.afgerond_op || null,
       aangemaaktDoor: row.aangemaakt_door || null,
+      uploadToken: row.upload_token || "",
       data: row.data && typeof row.data === "object" ? row.data : {},
       updatedAt: row.laatst_gewijzigd || row.aanmaakdatum || isoNow(),
     };
