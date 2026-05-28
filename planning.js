@@ -172,6 +172,28 @@ function readEmployees() {
   return readJsonArray("employees").filter((e) => !e.archived);
 }
 
+// Release 7 — "Vrijgeven voor planning": verberg ALLEEN medewerkers met een
+// lopend onboarding-traject dat nog niet is vrijgegeven. Iedereen zonder traject
+// (alle bestaande medewerkers) blijft altijd zichtbaar. Faalt veilig: als de
+// data nog niet geladen is of een naam niet matcht, blijft de persoon zichtbaar.
+function getHeldBackPlanningNames() {
+  const names = new Set();
+  if (!window.onboardingDB || typeof window.onboardingDB.getAllSync !== "function") return names;
+  if (!window.medewerkersDB || typeof window.medewerkersDB.getByIdSync !== "function") return names;
+  let trajecten = [];
+  try { trajecten = window.onboardingDB.getAllSync() || []; } catch (e) { return names; }
+  trajecten.forEach((t) => {
+    if (!t || t.status !== "lopend") return;
+    const vrijgegeven = t.data && t.data.vrijgegevenVoorPlanning === true;
+    if (vrijgegeven) return;
+    const mw = window.medewerkersDB.getByIdSync(t.medewerkerId);
+    if (!mw) return;
+    const full = `${String(mw.voornaam || "").trim()} ${String(mw.achternaam || "").trim()}`.trim();
+    if (full) names.add(full.toLowerCase());
+  });
+  return names;
+}
+
 function readDiensttypes() {
   const configs = readJsonArray(DIENSTTYPES_STORAGE_KEY);
   const labels = new Set();
@@ -684,7 +706,8 @@ function makePlanningId() {
 }
 
 function buildDataState() {
-  const employees = readEmployees();
+  const heldBack = getHeldBackPlanningNames();
+  const employees = readEmployees().filter((e) => !heldBack.has(getEmployeeName(e).toLowerCase()));
   const medewerkers = employees.map(getEmployeeName).filter(Boolean);
   const teamlead = employees
     .filter((emp) => /teamlead|teamleider/i.test(String(emp?.functie || "")))
@@ -3498,6 +3521,10 @@ function initPlanningPage() {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:medewerkers-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
+  // Release 7: vrijgave-status van onboarders kan de selecteerbare medewerkers wijzigen.
+  window.addEventListener("besa:onboarding-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   // Sprint 4 / S4: filter-voorinstellingen lijst rendert direct uit cache + live-refresh
