@@ -23715,3 +23715,82 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   line-height: 14px;
 }
 .planning-month-cell-head .planning-erm-leave-plane { margin-left: auto; }
+
+/* ============================================================
+   Onboarding-tab (medewerker-detail)
+   ============================================================ */
+.emp-onb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.emp-onb-head-actions { display: flex; align-items: center; gap: 10px; }
+.emp-onb-intro { color: var(--text-muted); font-size: var(--font-base); margin: 4px 0 0; }
+.emp-onb-body { margin-top: 18px; }
+.emp-onb-meta { color: var(--text-muted); font-size: var(--font-table-head); margin-bottom: 14px; }
+.emp-onb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 8px 0;
+}
+.emp-onb-empty-text { color: var(--text-secondary); font-size: var(--font-base); margin: 0; }
+.emp-onb-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.emp-onb-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.emp-onb-step-num {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-table-head);
+  font-weight: 600;
+}
+.emp-onb-step-main { flex: 1 1 auto; min-width: 0; }
+.emp-onb-step-title { font-size: var(--font-base); font-weight: 600; color: var(--text); }
+.emp-onb-step-desc { font-size: var(--font-table-head); color: var(--text-muted); margin-top: 2px; }
+.emp-onb-status {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+}
+.emp-onb-status--open { background: var(--line); color: var(--text-secondary); }
+.emp-onb-status--bezig { background: var(--yellow-soft); color: var(--yellow); }
+.emp-onb-status--klaar { background: var(--green-soft); color: var(--green); }
+.emp-onb-badge {
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+}
+.emp-onb-badge--lopend { background: var(--yellow-soft); color: var(--yellow); }
+.emp-onb-badge--klaar { background: var(--green-soft); color: var(--green); }

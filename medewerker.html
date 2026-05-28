@@ -276,6 +276,7 @@
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="documenten">Documenten</button>
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verzuim">Verzuim</button>
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verlof">Verlof</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="onboarding">Onboarding</button>
           </nav>
 
           <!-- Tab: Details -->
@@ -1689,6 +1690,18 @@
 
             <!-- Modal: Overgedragen uren bewerken -->
           </div>
+
+          <!-- Tab: Onboarding -->
+          <div class="emp-tab-panel" data-panel="onboarding">
+            <div class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div class="emp-onb-head">
+                <h3>Onboarding</h3>
+                <div class="emp-onb-head-actions" id="emp-onb-head-actions"></div>
+              </div>
+              <p class="emp-onb-intro">Het volledige traject van een nieuwe medewerker: van documenten tot vrijgeven voor de planning.</p>
+              <div id="emp-onb-body" class="emp-onb-body"></div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -1829,10 +1842,11 @@
   <script src="medewerker-verlof-overgedragen-data.js"></script>
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
+  <script src="onboarding-trajecten-data.js?v=onbtr1"></script>
   <script src="medewerker-warnings.js?v=mw1"></script>
   <script src="locaties-data.js?v=geo1" defer></script>
   <script src="geo-distance.js?v=geo1" defer></script>
-  <script src="medewerker.js?v=rt2"></script>
+  <script src="medewerker.js?v=onb1"></script>
   <script src="medewerker-geo-hook.js?v=geo1" defer></script>
   <script src="read-audit.js?v=ra1" defer></script>
   <script>

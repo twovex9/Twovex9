@@ -3916,3 +3916,51 @@ create policy "auth kan verbeteringsmaatregelen bewerken"
 drop policy if exists "auth kan verbeteringsmaatregelen verwijderen" on public.verbeteringsmaatregelen;
 create policy "auth kan verbeteringsmaatregelen verwijderen"
   on public.verbeteringsmaatregelen for delete to authenticated using (true);
+
+-- ============================================================================
+-- Onboarding/Offboarding — onboarding_trajecten (release 1: fundament)
+-- ============================================================================
+-- Eén traject per medewerker (UNIQUE op medewerker_id). De overkoepelende
+-- onboarding-status; afzonderlijke stappen (documenten/contract/tekenen/
+-- inwerken/toegang/vrijgeven) worden in latere releases in eigen tabellen
+-- bijgehouden en door de Onboarding-tab afgeleid.
+
+create table if not exists public.onboarding_trajecten (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id uuid not null references public.medewerkers(id),
+  status text not null default 'lopend',          -- 'lopend' | 'afgerond'
+  gestart_op timestamptz not null default now(),
+  afgerond_op timestamptz,
+  aangemaakt_door uuid,                            -- profiel dat de onboarding startte
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb          -- o.a. dienstverband_type-snapshot
+);
+
+create unique index if not exists onboarding_trajecten_medewerker_uidx
+  on public.onboarding_trajecten (medewerker_id);
+create index if not exists onboarding_trajecten_status_idx
+  on public.onboarding_trajecten (status);
+
+drop trigger if exists set_onboarding_trajecten_laatst_gewijzigd on public.onboarding_trajecten;
+create trigger set_onboarding_trajecten_laatst_gewijzigd
+  before update on public.onboarding_trajecten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.onboarding_trajecten enable row level security;
+
+drop policy if exists "auth kan onboarding_trajecten lezen" on public.onboarding_trajecten;
+create policy "auth kan onboarding_trajecten lezen"
+  on public.onboarding_trajecten for select to authenticated using (true);
+
+drop policy if exists "auth kan onboarding_trajecten toevoegen" on public.onboarding_trajecten;
+create policy "auth kan onboarding_trajecten toevoegen"
+  on public.onboarding_trajecten for insert to authenticated with check (true);
+
+drop policy if exists "auth kan onboarding_trajecten bewerken" on public.onboarding_trajecten;
+create policy "auth kan onboarding_trajecten bewerken"
+  on public.onboarding_trajecten for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan onboarding_trajecten verwijderen" on public.onboarding_trajecten;
+create policy "auth kan onboarding_trajecten verwijderen"
+  on public.onboarding_trajecten for delete to authenticated using (true);
