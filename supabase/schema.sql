@@ -3967,3 +3967,46 @@ create policy "auth kan onboarding_trajecten bewerken"
 drop policy if exists "auth kan onboarding_trajecten verwijderen" on public.onboarding_trajecten;
 create policy "auth kan onboarding_trajecten verwijderen"
   on public.onboarding_trajecten for delete to authenticated using (true);
+
+-- ============================================================================
+-- Fix: medewerker_documenten write-RLS herkent het live rollensysteem
+-- ============================================================================
+-- De bestaande write-policies (mdoc_insert/update/delete) gebruiken het oude
+-- profiles.rol-systeem (is_admin/is_hr). In de praktijk staat maar 1 account op
+-- rol='admin'; alle echte HR/admin-gebruikers staan op 'medewerker'. Daardoor
+-- konden zij géén medewerker-documenten uploaden/beheren via de UI. De live
+-- permissies zitten in bs2_role_users; daarom herkennen we die hier ook.
+-- Alleen uitbreidend (OR), alleen deze tabel.
+
+create or replace function public.is_hr_admin_bs2()
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select exists (
+    select 1
+    from public.profiles p
+    join public.bs2_role_users ru on lower(ru.user_email) = lower(p.email)
+    join public.bs2_roles r on r.id = ru.role_id
+    where p.id = auth.uid()
+      and r.name in ('Eigenaar','Admin','Directeur','HR','Salarisadministratie')
+  );
+$$;
+
+drop policy if exists "mdoc_insert_hr_of_eigen" on public.medewerker_documenten;
+create policy "mdoc_insert_hr_of_eigen" on public.medewerker_documenten
+  for insert to authenticated
+  with check (is_admin(auth.uid()) or is_hr() or is_eigen_medewerker(medewerker_id) or public.is_hr_admin_bs2());
+
+drop policy if exists "mdoc_update_hr" on public.medewerker_documenten;
+create policy "mdoc_update_hr" on public.medewerker_documenten
+  for update to authenticated
+  using (is_admin(auth.uid()) or is_hr() or public.is_hr_admin_bs2())
+  with check (is_admin(auth.uid()) or is_hr() or public.is_hr_admin_bs2());
+
+drop policy if exists "mdoc_delete_admin_of_hr" on public.medewerker_documenten;
+create policy "mdoc_delete_admin_of_hr" on public.medewerker_documenten
+  for delete to authenticated
+  using (is_admin(auth.uid()) or is_hr() or public.is_hr_admin_bs2());
