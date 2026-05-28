@@ -1117,17 +1117,102 @@ function onbFormatDate(iso) {
   } catch (e) { return ""; }
 }
 
-// status: 'open' | 'bezig' | 'klaar'. In release 1 zijn alle stappen 'open';
-// elke volgende release vult de echte status van zijn eigen stap.
-function onbComputeSteps(/* emp, traject */) {
+// Vereiste documenten per dienstverband. `type` = BS2 doc-type (Contract/
+// Opleiding/VOG/ID/Addendum/Overig); `keywords` = naam-match (optioneel).
+var ONB_REQUIRED_DOCS = {
+  loondienst: [
+    { label: "Identiteitsbewijs", type: "ID" },
+    { label: "VOG (max 3 mnd)", type: "VOG" },
+    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "CV", keywords: ["cv", "curriculum"] },
+    { label: "Geheimhoudingsverklaring", keywords: ["geheimhoud"] },
+    { label: "AVG-verklaring", keywords: ["avg"] },
+  ],
+  zzp: [
+    { label: "Uittreksel KvK", keywords: ["kvk", "kamer van koophandel", "uittreksel"] },
+    { label: "Identiteitsbewijs", type: "ID" },
+    { label: "VOG (max 3 mnd)", type: "VOG" },
+    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Bewijs aansprakelijkheidsverzekering", keywords: ["verzeker", "aansprakelijk"] },
+  ],
+  stagiair: [
+    { label: "Identiteitsbewijs", type: "ID" },
+    { label: "VOG (max 3 mnd)", type: "VOG" },
+    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Stageovereenkomst", keywords: ["stage"] },
+    { label: "CV", keywords: ["cv", "curriculum"] },
+  ],
+  inhuur: [
+    { label: "Identiteitsbewijs", type: "ID" },
+    { label: "VOG (max 3 mnd)", type: "VOG" },
+    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "CV", keywords: ["cv", "curriculum"] },
+  ],
+};
+
+function onbRequiredDocsKey(emp) {
+  var dv = String((emp && emp.dienstverband) || "").toLowerCase();
+  if (dv.indexOf("loondienst") !== -1) return "loondienst";
+  if (dv.indexOf("stagi") !== -1) return "stagiair";
+  if (dv.indexOf("inhuur") !== -1) {
+    var it = String((emp && emp.data && emp.data.inhuurtype) || (emp && emp.inhuurtype) || "").toLowerCase();
+    if (it.indexOf("zzp") !== -1) return "zzp";
+    return "inhuur";
+  }
+  return "loondienst";
+}
+
+function onbDocMatches(doc, req) {
+  if (!doc) return false;
+  var naam = String(doc.naam || "").toLowerCase();
+  var typeOk = req.type ? String(doc.type || "") === req.type : true;
+  var kwOk = true;
+  if (req.keywords && req.keywords.length) {
+    kwOk = req.keywords.some(function (k) { return naam.indexOf(k) !== -1; });
+  }
+  return typeOk && kwOk;
+}
+
+function onbComputeRequiredDocs(emp) {
+  var key = onbRequiredDocsKey(emp);
+  var reqs = ONB_REQUIRED_DOCS[key] || ONB_REQUIRED_DOCS.loondienst;
+  var docs = [];
+  try {
+    if (emp && emp.id && window.medewerkerDocsDB && typeof window.medewerkerDocsDB.listSync === "function") {
+      docs = (window.medewerkerDocsDB.listSync(emp.id) || []).filter(function (d) { return d && !d.archived; });
+    }
+  } catch (e) { /* */ }
+  return reqs.map(function (req) {
+    return { label: req.label, found: docs.some(function (d) { return onbDocMatches(d, req); }) };
+  });
+}
+
+// status: 'open' | 'bezig' | 'klaar'. De documenten-stap leidt zijn status af
+// uit de geüploade documenten; overige stappen worden in latere releases gevuld.
+function onbComputeSteps(emp /* , traject */) {
+  var reqDocs = onbComputeRequiredDocs(emp);
+  var foundCount = reqDocs.filter(function (r) { return r.found; }).length;
+  var docStatus = reqDocs.length === 0
+    ? "open"
+    : (foundCount === reqDocs.length ? "klaar" : (foundCount > 0 ? "bezig" : "open"));
+  var docDetail = '<ul class="emp-onb-doclist">'
+    + reqDocs.map(function (r) {
+      return '<li class="emp-onb-doc' + (r.found ? " emp-onb-doc--found" : "") + '">'
+        + '<span class="emp-onb-doc-icon" aria-hidden="true">' + (r.found ? "✓" : "○") + "</span>"
+        + '<span class="emp-onb-doc-label">' + onbEscHtml(r.label) + "</span>"
+        + '<span class="emp-onb-doc-state">' + (r.found ? "Aanwezig" : "Nog niet") + "</span>"
+        + "</li>";
+    }).join("")
+    + "</ul>";
+
   return [
-    { key: "documenten", titel: "Documenten verzameld", desc: "ID, VOG, diploma's en overige documenten zijn geüpload en gecontroleerd." },
-    { key: "contract", titel: "Contract opgesteld", desc: "Het juiste contract is gegenereerd uit een sjabloon." },
-    { key: "tekenen", titel: "Contract getekend", desc: "Medewerker en werkgever hebben digitaal ondertekend." },
-    { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord." },
-    { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend." },
-    { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster." },
-  ].map(function (s) { s.status = "open"; return s; });
+    { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
+    { key: "contract", titel: "Contract opgesteld", desc: "Het juiste contract is gegenereerd uit een sjabloon.", status: "open" },
+    { key: "tekenen", titel: "Contract getekend", desc: "Medewerker en werkgever hebben digitaal ondertekend.", status: "open" },
+    { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord.", status: "open" },
+    { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend.", status: "open" },
+    { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster.", status: "open" },
+  ];
 }
 
 function onbStatusPill(status) {
@@ -1176,12 +1261,15 @@ function renderOnboardingTab() {
   const steps = onbComputeSteps(emp, traject);
   const stepsHtml = steps.map(function (s, i) {
     return '<li class="emp-onb-step">'
+      + '<div class="emp-onb-step-row">'
       + '<span class="emp-onb-step-num">' + (i + 1) + "</span>"
       + '<div class="emp-onb-step-main">'
       + '<div class="emp-onb-step-title">' + onbEscHtml(s.titel) + "</div>"
       + '<div class="emp-onb-step-desc">' + onbEscHtml(s.desc) + "</div>"
       + "</div>"
       + onbStatusPill(s.status)
+      + "</div>"
+      + (s.detailHtml ? '<div class="emp-onb-step-detail">' + s.detailHtml + "</div>" : "")
       + "</li>";
   }).join("");
 
@@ -1240,6 +1328,7 @@ function initOnboardingTab() {
   }
   window.addEventListener("besa:onboarding-updated", renderOnboardingTab);
   window.addEventListener("besa:medewerkers-updated", renderOnboardingTab);
+  window.addEventListener("besa:medewerker-documenten-updated", renderOnboardingTab);
 }
 
 function initTabs() {
