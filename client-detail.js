@@ -223,23 +223,35 @@
 
   if (!qid || !c0) {
     // Mogelijk staat de cliënt nog niet in de cache omdat de Supabase-bootstrap
-    // niet klaar is. Eén keer wachten op de update-event en dan herladen.
+    // niet klaar is. Wachten op de update-event en dan herladen.
     if (qid && !c0) {
       var clientDetailReloaded = false;
       window.addEventListener("besa:clienten-updated", function onClientenUpdated() {
         if (clientDetailReloaded) return;
         var found = typeof getClientenById === "function" ? getClientenById(qid) : null;
-        if (found) {
-          clientDetailReloaded = true;
-          window.removeEventListener("besa:clienten-updated", onClientenUpdated);
-          window.location.reload();
-        }
+        if (!found) return;
+        clientDetailReloaded = true;
+        window.removeEventListener("besa:clienten-updated", onClientenUpdated);
+        // Loop-proof: reload hooguit ÉÉN keer per cliënt per sessie. Bij een
+        // volle localStorage-quota faalt writeCache → elke verse load is weer
+        // koud → onvoorwaardelijk reloaden zou een oneindige lus geven. De
+        // sessionStorage-vlag begrenst dit; lukt het na 1 reload nog niet, dan
+        // stopt de lus en blijft de (herstelbare) melding staan.
+        var rk = "cd_cold_reload_" + qid;
+        var already = false;
+        try { already = window.sessionStorage.getItem(rk) === "1"; } catch (e) { /* */ }
+        if (already) return;
+        try { window.sessionStorage.setItem(rk, "1"); } catch (e) { /* */ }
+        window.location.reload();
       });
     }
     if (missing) missing.removeAttribute("hidden");
     if (h1) h1.textContent = "Cliëntdossier";
     return;
   }
+  // Succesvol geladen → reset de cold-reload-vlag zodat een latere koude load
+  // van dezelfde cliënt opnieuw één reload mag doen.
+  try { window.sessionStorage.removeItem("cd_cold_reload_" + qid); } catch (e) { /* */ }
 
   var c = c0;
   if (root) root.removeAttribute("hidden");
