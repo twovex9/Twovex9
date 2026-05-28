@@ -407,10 +407,11 @@
         var dagenLabel = m.dagen < 0 ? (Math.abs(m.dagen) + " dagen te laat") :
                         (m.dagen === 0 ? "vandaag" :
                         (m.dagen + " dagen"));
+        var mpNaam = m.naam || MP_LABELS[m.mijlpaalType] || m.mijlpaalType || "";
         return {
-          label: (m.mijlpaalType ? m.mijlpaalType + " · " : "") + fmtDateNl(m.datum) + " (" + dagenLabel + ")",
+          label: (mpNaam ? mpNaam + " · " : "") + fmtDateNl(m.datum) + " (" + dagenLabel + ")",
           status: m.status,
-          title: "Wet-Poortwachter mijlpaal: " + (m.mijlpaalType || "deadline") + " op " + fmtDateNl(m.datum),
+          title: "Wet-Poortwachter mijlpaal: " + (mpNaam || "deadline") + " op " + fmtDateNl(m.datum),
         };
       }
     }
@@ -902,11 +903,50 @@
   var tlState = { verzuimId: null };
   var MP_LABELS = {
     notification: "Ziekmelding",
-    action_plan: "Probleemanalyse / Plan van Aanpak",
-    evaluation: "Eerstejaarsevaluatie",
-    report: "WIA-aanvraag",
-    assessment: "Einde Loondoorbetalingsverplichting",
+    action_plan: "Plan van Aanpak",
+    evaluation: "Evaluatie",
+    report: "Melding / rapportage",
+    assessment: "Beoordeling",
   };
+
+  // De vaste Wet-Poortwachter-mijlpalen (1-op-1 BS2: template_id 1..9). `week` =
+  // wettelijke week relatief tot de eerste ziektedag → deadline = eerste ziektedag
+  // + week*7 dagen. De UWV-melding (template 9) heeft geen vaste wettelijke week.
+  var WP_TEMPLATES = [
+    { templateId: 1, type: "notification", week: 0,    naam: "Ziekmelding" },
+    { templateId: 2, type: "action_plan",  week: 6,    naam: "Probleemanalyse" },
+    { templateId: 3, type: "action_plan",  week: 8,    naam: "Plan van Aanpak" },
+    { templateId: 4, type: "evaluation",   week: 42,   naam: "Eerstejaarsevaluatie" },
+    { templateId: 5, type: "evaluation",   week: 52,   naam: "Eindevaluatie Eerste Ziektejaar" },
+    { templateId: 6, type: "evaluation",   week: 88,   naam: "Tweedejaarsevaluatie" },
+    { templateId: 7, type: "report",       week: 93,   naam: "WIA-aanvraag" },
+    { templateId: 8, type: "assessment",   week: 104,  naam: "Einde Loondoorbetalingsverplichting" },
+    { templateId: 9, type: "report",       week: null, naam: "Melding Beëindiging Ziekteverlof bij UWV" },
+  ];
+
+  function wpTemplateById(id) {
+    var n = Number(id);
+    for (var i = 0; i < WP_TEMPLATES.length; i++) {
+      if (WP_TEMPLATES[i].templateId === n) return WP_TEMPLATES[i];
+    }
+    return null;
+  }
+
+  // Toon de echte mijlpaal-naam (uit data.naam, 1-op-1 BS2) met val-terug op het
+  // type-label voor oudere handmatige mijlpalen zonder naam.
+  function mpDisplayName(it) {
+    if (it && it.data && it.data.naam) return String(it.data.naam);
+    return MP_LABELS[it && it.mijlpaalType] || (it && it.mijlpaalType) || "Mijlpaal";
+  }
+
+  // deadline = eerste ziektedag + week*7 dagen (ISO yyyy-mm-dd), of "" als geen week/datum.
+  function wpDeadlineFor(eersteZiektedag, week) {
+    if (week == null || !eersteZiektedag) return "";
+    var base = new Date(String(eersteZiektedag) + "T00:00:00Z");
+    if (!isFinite(base.getTime())) return "";
+    base.setUTCDate(base.getUTCDate() + Number(week) * 7);
+    return base.toISOString().slice(0, 10);
+  }
   var CM_LABELS = {
     contact_moment: "Contactmoment",
     company_doctor_visit: "Bezoek bedrijfsarts",
@@ -966,9 +1006,19 @@
     var idIn = document.getElementById("vz-tl-" + kind + "-id");
     if (idIn) idIn.value = (prefill && prefill.id) || "";
     if (kind === "mp") {
-      document.getElementById("vz-tl-mp-type").value = (prefill && prefill.mijlpaalType) || "notification";
+      // Bepaal het Wet-Poortwachter-template van de mijlpaal (op template_id, of
+      // val terug op het eerste template met hetzelfde type voor oude mijlpalen).
+      var tmplId = (prefill && prefill.data && (prefill.data.template_id || prefill.data.templateId)) || "";
+      if (!tmplId && prefill && prefill.mijlpaalType) {
+        for (var ti = 0; ti < WP_TEMPLATES.length; ti++) {
+          if (WP_TEMPLATES[ti].type === prefill.mijlpaalType) { tmplId = WP_TEMPLATES[ti].templateId; break; }
+        }
+      }
+      document.getElementById("vz-tl-mp-type").value = String(tmplId || WP_TEMPLATES[0].templateId);
       document.getElementById("vz-tl-mp-deadline").value = (prefill && prefill.deadlineDatum) || "";
       document.getElementById("vz-tl-mp-voltooid").value = (prefill && prefill.voltooidOp) || "";
+      // Nieuwe mijlpaal zonder deadline → stel de wettelijke deadline voor.
+      if (!prefill) tlAutofillMpDeadline();
     } else {
       document.getElementById("vz-tl-cm-type").value = (prefill && prefill.type) || "contact_moment";
       document.getElementById("vz-tl-cm-datum").value = (prefill && prefill.datum) || "";
@@ -1001,7 +1051,7 @@
       return ''
         + '<li class="vz-tl-item vz-tl-item--' + status + '" data-mp-id="' + tlEsc(it.id) + '">'
         + '  <div class="vz-tl-item-head">'
-        + '    <strong>' + tlEsc(MP_LABELS[it.mijlpaalType] || it.mijlpaalType) + '</strong>'
+        + '    <strong>' + tlEsc(mpDisplayName(it)) + '</strong>'
         + '    <span class="vz-tl-item-meta">deadline: ' + tlEsc(deadline) + ' · ' + tlEsc(voltooid) + '</span>'
         + '  </div>'
         + '  <div class="vz-tl-item-actions">'
@@ -1045,16 +1095,42 @@
     }).join("");
   }
 
+  // Vul het deadline-veld met de wettelijke datum van het gekozen template
+  // (eerste ziektedag + week*7). Overschrijft alleen een leeg veld.
+  function tlAutofillMpDeadline() {
+    var sel = document.getElementById("vz-tl-mp-type");
+    var dl = document.getElementById("vz-tl-mp-deadline");
+    if (!sel || !dl) return;
+    var tmpl = wpTemplateById(sel.value);
+    if (!tmpl) return;
+    var row = findRowById(tlState.verzuimId);
+    var berekend = wpDeadlineFor(row && row.eerstZiektedag, tmpl.week);
+    if (berekend) dl.value = berekend;
+  }
+
   async function tlSaveMp(e) {
     e.preventDefault();
     var vzId = tlState.verzuimId;
     if (!vzId || !window.verzuimMijlpalenDB) return;
     var id = document.getElementById("vz-tl-mp-id").value;
+    var tmpl = wpTemplateById(document.getElementById("vz-tl-mp-type").value);
+    // Behoud bestaande data (bv. de 1-op-1 bewaarde BS2-raw) bij bewerken.
+    var bestaandeData = {};
+    if (id) {
+      var cur = (window.verzuimMijlpalenDB.getForVerzuimSync(vzId) || []).find(function (x) { return String(x.id) === String(id); });
+      if (cur && cur.data) bestaandeData = Object.assign({}, cur.data);
+    }
+    if (tmpl) {
+      bestaandeData.naam = tmpl.naam;
+      bestaandeData.week_number = tmpl.week;
+      bestaandeData.template_id = tmpl.templateId;
+    }
     var payload = {
       verzuimId: vzId,
-      mijlpaalType: document.getElementById("vz-tl-mp-type").value,
-      deadlineDatum: document.getElementById("vz-tl-mp-deadline").value,
+      mijlpaalType: tmpl ? tmpl.type : document.getElementById("vz-tl-mp-type").value,
+      deadlineDatum: document.getElementById("vz-tl-mp-deadline").value || null,
       voltooidOp: document.getElementById("vz-tl-mp-voltooid").value || null,
+      data: bestaandeData,
     };
     try {
       if (id) {
@@ -1094,6 +1170,56 @@
       tlRenderCm();
     } catch (err) {
       if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // Genereer het volledige Wet-Poortwachter-traject: voeg de ontbrekende
+  // wettelijke mijlpalen toe op deadline = eerste ziektedag + week*7.
+  async function tlGenerateTraject() {
+    var vzId = tlState.verzuimId;
+    if (!vzId || !window.verzuimMijlpalenDB) return;
+    var row = findRowById(vzId);
+    var eerste = row && row.eerstZiektedag;
+    if (!eerste) {
+      if (window.showError) window.showError("Geen eerste ziektedag bekend — vul die eerst in bij de verzuimregistratie.");
+      return;
+    }
+    var existing = window.verzuimMijlpalenDB.getForVerzuimSync(vzId) || [];
+    var haveTmpl = {};
+    existing.forEach(function (x) {
+      var t = x.data && (x.data.template_id || x.data.templateId);
+      if (t) haveTmpl[Number(t)] = true;
+    });
+    var toAdd = WP_TEMPLATES.filter(function (t) { return !haveTmpl[t.templateId]; });
+    if (!toAdd.length) {
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Traject is al compleet");
+      return;
+    }
+    var ok = true;
+    if (typeof window.showSliderConfirmModal === "function") {
+      ok = await window.showSliderConfirmModal({
+        title: "Wet-Poortwachter-traject genereren?",
+        preview: toAdd.length + " wettelijke mijlpa" + (toAdd.length === 1 ? "al wordt" : "len worden") + " toegevoegd op basis van de eerste ziektedag.",
+        okLabel: "Genereren",
+        cancelLabel: "Annuleren",
+      });
+    }
+    if (!ok) return;
+    try {
+      for (var i = 0; i < toAdd.length; i++) {
+        var t = toAdd[i];
+        await window.verzuimMijlpalenDB.add({
+          verzuimId: vzId,
+          mijlpaalType: t.type,
+          deadlineDatum: wpDeadlineFor(eerste, t.week) || null,
+          voltooidOp: null,
+          data: { naam: t.naam, week_number: t.week, template_id: t.templateId },
+        });
+      }
+      if (window.showActionFeedback) window.showActionFeedback("created", toAdd.length + " mijlpalen");
+      tlRenderMp();
+    } catch (err) {
+      if (window.showError) window.showError("Genereren mislukt: " + (err && err.message || err));
     }
   }
 
@@ -1148,6 +1274,18 @@
     if (mpForm) mpForm.addEventListener("submit", tlSaveMp);
     var cmForm = document.getElementById("vz-tl-cm-form");
     if (cmForm) cmForm.addEventListener("submit", tlSaveCm);
+
+    // Wet-Poortwachter: deadline auto-vullen bij template-keuze (alleen nieuwe mijlpaal)
+    var mpTypeSel = document.getElementById("vz-tl-mp-type");
+    if (mpTypeSel) mpTypeSel.addEventListener("change", function () {
+      var idIn = document.getElementById("vz-tl-mp-id");
+      if (idIn && idIn.value) return; // bestaande mijlpaal: deadline niet overschrijven
+      tlAutofillMpDeadline();
+    });
+
+    // "Genereer traject"-knop
+    var genBtn = document.getElementById("vz-tl-mp-generate");
+    if (genBtn) genBtn.addEventListener("click", tlGenerateTraject);
 
     // Edit/Delete-event-delegation in lijsten
     modal.addEventListener("click", function (e) {

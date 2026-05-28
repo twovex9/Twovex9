@@ -353,22 +353,29 @@
         <section class="vz-tl-section">
           <header class="vz-tl-section-head">
             <h3>Mijlpalen (Wet-Poortwachter)</h3>
-            <button type="button" class="btn-primary vz-tl-add-btn" data-vz-tl-add="mp">+ Mijlpaal</button>
+            <div class="vz-tl-head-actions">
+              <button type="button" class="btn-outline vz-tl-gen-btn" id="vz-tl-mp-generate">Genereer traject</button>
+              <button type="button" class="btn-primary vz-tl-add-btn" data-vz-tl-add="mp">+ Mijlpaal</button>
+            </div>
           </header>
           <div class="vz-tl-empty" id="vz-tl-mp-empty">Nog geen mijlpalen toegevoegd.</div>
           <ul class="vz-tl-list" id="vz-tl-mp-list" hidden></ul>
           <form class="vz-tl-form" id="vz-tl-mp-form" hidden>
-            <label class="modal-label">Type
+            <label class="modal-label">Mijlpaal
               <select id="vz-tl-mp-type" class="modal-input" required>
-                <option value="notification">Ziekmelding</option>
-                <option value="action_plan">Probleemanalyse / Plan van Aanpak</option>
-                <option value="evaluation">Eerstejaarsevaluatie</option>
-                <option value="report">WIA-aanvraag</option>
-                <option value="assessment">Einde Loondoorbetalingsverplichting</option>
+                <option value="1">Ziekmelding (week 0)</option>
+                <option value="2">Probleemanalyse (week 6)</option>
+                <option value="3">Plan van Aanpak (week 8)</option>
+                <option value="4">Eerstejaarsevaluatie (week 42)</option>
+                <option value="5">Eindevaluatie Eerste Ziektejaar (week 52)</option>
+                <option value="6">Tweedejaarsevaluatie (week 88)</option>
+                <option value="7">WIA-aanvraag (week 93)</option>
+                <option value="8">Einde Loondoorbetalingsverplichting (week 104)</option>
+                <option value="9">Melding Beëindiging Ziekteverlof bij UWV</option>
               </select>
             </label>
-            <label class="modal-label">Deadline
-              <input type="date" id="vz-tl-mp-deadline" class="modal-input" required />
+            <label class="modal-label">Deadline (optioneel)
+              <input type="date" id="vz-tl-mp-deadline" class="modal-input" />
             </label>
             <label class="modal-label">Voltooid op (optioneel)
               <input type="date" id="vz-tl-mp-voltooid" class="modal-input" />

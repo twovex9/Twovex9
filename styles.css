@@ -23499,6 +23499,15 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   font-size: var(--font-table-cell, 13px);
   padding: 6px 12px;
 }
+.vz-tl-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vz-tl-gen-btn {
+  font-size: var(--font-table-cell, 13px);
+  padding: 6px 12px;
+}
 .vz-tl-empty {
   font-size: var(--font-table-cell, 13px);
   color: var(--text-muted);
