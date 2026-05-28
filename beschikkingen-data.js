@@ -40,6 +40,7 @@
     "dagbesteding": "Dagbesteding",
     "verblijf-behandeling": "Verblijf en behandeling",
     "veb": "Verblijf en behandeling",
+    "crisisopvang": "Crisisopvang",
     "vlz": "VLZ",
     "wlz": "WLZ",
     "gecombineerd": "Gecombineerd",
