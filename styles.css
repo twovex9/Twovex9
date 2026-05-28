@@ -15226,6 +15226,11 @@ button.planning-erm-new {
   grid-column: 1 / -1;
 }
 
+.cl-add-opt {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .cl-trash-ico {
   display: block;
   vertical-align: middle;
