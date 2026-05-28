@@ -1251,11 +1251,19 @@
     var modal = tlGetModal();
     if (!modal) return;
 
-    // Sluiten
+    // Sluiten: X-knop, klik op overlay, of Escape (3 manieren, huisstijl)
     var closeBtn = document.getElementById("vz-tl-close");
     if (closeBtn) closeBtn.addEventListener("click", tlClose);
     modal.addEventListener("click", function (e) {
       if (e.target === modal) tlClose();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (modal.hidden) return;
+      // Laat een open slider-bevestiging (verwijderen/genereren) zijn eigen
+      // Escape afhandelen — sluit dan niet meteen de hele tijdlijn.
+      if (document.querySelector(".modal-overlay .employee-delete-slider")) return;
+      tlClose();
     });
 
     // Add-buttons

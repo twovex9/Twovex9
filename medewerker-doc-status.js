@@ -83,14 +83,18 @@
   }
 
   // Debounce zodat snelle opeenvolgende mutaties/events niet 100× herrekenen.
-  var rafPending = false;
+  // BELANGRIJK: setTimeout i.p.v. requestAnimationFrame — rAF wordt door de
+  // browser gepauzeerd in achtergrond-tabs (document.hidden), waardoor de
+  // indicators niet zouden verschijnen als de HR-lijst in een niet-actieve tab
+  // wordt geladen. setTimeout draait ook dan (zij het getthrottled).
+  var paintPending = false;
   function schedulePaint() {
-    if (rafPending) return;
-    rafPending = true;
-    (global.requestAnimationFrame || function (cb) { setTimeout(cb, 16); })(function () {
-      rafPending = false;
+    if (paintPending) return;
+    paintPending = true;
+    setTimeout(function () {
+      paintPending = false;
       paintAll();
-    });
+    }, 0);
   }
 
   function observeTable() {
