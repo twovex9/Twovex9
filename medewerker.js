@@ -1232,6 +1232,19 @@ function onbStatusPill(status) {
   return '<span class="emp-onb-status ' + m[1] + '">' + m[0] + "</span>";
 }
 
+// De documenten-laag laadt per medewerker lazy (pas bij list()). Zorg dat de
+// docs van deze medewerker geladen zijn zodat de detectie klopt — list() vuurt
+// besa:medewerker-documenten-updated → re-render. Guard voorkomt een loop.
+var _onbDocsRequested = {};
+function onbEnsureDocsLoaded(empId) {
+  if (!empId || _onbDocsRequested[empId]) return;
+  if (!window.medewerkerDocsDB || typeof window.medewerkerDocsDB.list !== "function") return;
+  _onbDocsRequested[empId] = true;
+  try {
+    window.medewerkerDocsDB.list(empId).catch(function () { _onbDocsRequested[empId] = false; });
+  } catch (e) { _onbDocsRequested[empId] = false; }
+}
+
 function renderOnboardingTab() {
   const body = document.getElementById("emp-onb-body");
   const headActions = document.getElementById("emp-onb-head-actions");
@@ -1265,6 +1278,7 @@ function renderOnboardingTab() {
         + '<button type="button" class="btn-outline" id="emp-onb-afrond-btn">Onboarding afronden</button>';
   }
 
+  onbEnsureDocsLoaded(emp.id);
   const steps = onbComputeSteps(emp, traject);
   const stepsHtml = steps.map(function (s, i) {
     return '<li class="emp-onb-step">'
