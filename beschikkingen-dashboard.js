@@ -300,7 +300,40 @@
     }
   }
 
-  var DM_LABEL = { ons: "ONS", manual: "Handmatig", wlz: "WLZ", svb: "SVB" };
+  // ---- PR #8: live bezetting per zorgsoort (actief) + openstaand per locatie ----
+  function liveBescList() {
+    if (!window.beschikkingenDB || typeof window.beschikkingenDB.getAllSync !== "function") return [];
+    return window.beschikkingenDB.getAllSync() || [];
+  }
+  function normFase(f) { return String(f || "").toLowerCase().replace(/\s+/g, "_"); }
+  function toSortedArr(m) {
+    return Object.keys(m).map(function (k) { return { name: k, count: m[k] }; })
+      .sort(function (a, b) { return b.count - a.count; });
+  }
+  // Bezetting = aantal ACTIEVE beschikkingen (fase actief/in zorg), per zorgsoort.
+  function computeZorgsoortBezetting() {
+    var m = {};
+    liveBescList().forEach(function (b) {
+      if (!b || b.gearchiveerd) return;
+      var nf = normFase(b.fase);
+      if (nf !== "actief" && nf !== "in_zorg") return;
+      var key = (b.zorgsoortLabel && String(b.zorgsoortLabel).trim()) || "Onbekend";
+      m[key] = (m[key] || 0) + 1;
+    });
+    return toSortedArr(m);
+  }
+  // Openstaande beschikkingen (betalingsstatus niet "betaald"), per locatie.
+  function computeLocatieOpenstaand() {
+    var m = {};
+    liveBescList().forEach(function (b) {
+      if (!b || b.gearchiveerd) return;
+      if (b.betalingsStatus === "betaald") return;
+      var key = (b.locatie && String(b.locatie).trim() && b.locatie !== "—")
+        ? String(b.locatie).trim() : "Onbekend";
+      m[key] = (m[key] || 0) + 1;
+    });
+    return toSortedArr(m);
+  }
 
   function render() {
     if (!window.bs2DashboardDB || typeof window.bs2DashboardDB.computeKpis !== "function") return;
@@ -333,15 +366,17 @@
       }),
     });
 
+    // Bezetting per zorgsoort = live aantal ACTIEVE beschikkingen (eigen tabel).
     renderVBars({
       barsId: "bd-zorg-bars", axisId: "bd-zorg-axis", yId: "bd-zorg-y",
-      rows: (k.care_types || []).map(function (c) {
+      rows: computeZorgsoortBezetting().map(function (c) {
         return { label: c.name, value: c.count };
       }),
     });
+    // Per locatie = live aantal OPENSTAANDE beschikkingen (eigen tabel).
     renderVBars({
       barsId: "bd-loc-bars", axisId: "bd-loc-axis", yId: "bd-loc-y",
-      rows: (k.locations || []).map(function (c) {
+      rows: computeLocatieOpenstaand().map(function (c) {
         return { label: c.name, value: c.count };
       }),
     });
@@ -351,9 +386,8 @@
         return { label: c.time_range, value: c.count };
       }),
     });
-    renderDonut((k.payment_methods || []).map(function (p) {
-      return { name: DM_LABEL[p.declaration_method] || p.declaration_method, count: p.count };
-    }));
+    // "Declaratie Methode" donut (ONS vs handmatig) verwijderd — ONS wordt
+    // uitgefaseerd, de vergelijking is niet meer relevant op het dashboard.
   }
 
   function wirePeriod() {
@@ -375,6 +409,10 @@
     try {
       if (window.bs2DashboardDB && window.bs2DashboardDB.ready) await window.bs2DashboardDB.ready;
     } catch (e) { /* reporter meldde al */ }
+    // PR #8 — live beschikkingen-data nodig voor bezetting/openstaand-charts.
+    try {
+      if (window.beschikkingenDB && window.beschikkingenDB.ready) await window.beschikkingenDB.ready;
+    } catch (e2) { /* reporter meldde al */ }
     var y = defaultYear();
     var s = $("bd-period-start"), e = $("bd-period-end");
     if (s && !s.value) s.value = y + "-01-01";
@@ -404,4 +442,7 @@
   window.addEventListener("focus", render);
   // PR #5: re-render zodra urendeclaraties geladen of gemuteerd zijn
   window.addEventListener("besa:urendeclaraties-updated", render);
+  // PR #8: re-render zodra beschikkingen (live) geladen of gemuteerd zijn
+  window.addEventListener("besa:beschikkingen-updated", render);
+  document.addEventListener("beschikkingen:changed", render);
 })();
