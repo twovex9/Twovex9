@@ -277,8 +277,11 @@
 
   var locSel = document.getElementById("cd-f-loc");
   var orgSel = document.getElementById("cd-f-org");
+  var haSel = document.getElementById("cd-f-ha");
   fillSelectWithStrings(locSel, locs, (c.locatie == null ? "" : String(c.locatie)).trim(), "(Leeg — later invullen)");
   fillSelectWithStrings(orgSel, orgs, (c.organisatie == null ? "" : String(c.organisatie)).trim(), "Selecteer Organisatie");
+  // Hoofdaannemer kiest uit dezelfde verwijzer-/organisatie-lijst (optioneel).
+  fillSelectWithStrings(haSel, orgs, (c.hoofdaannemer == null ? "" : String(c.hoofdaannemer)).trim(), "Geen hoofdaannemer");
 
   var heroName = document.getElementById("cd-hero-name");
   var heroNr = document.getElementById("cd-hero-nr");
@@ -314,6 +317,7 @@
   var locDot = document.getElementById("cd-f-loc-dot");
   var fasDot = document.getElementById("cd-f-fase-dot");
   var orgDot = document.getElementById("cd-f-org-dot");
+  var haDot = document.getElementById("cd-f-ha-dot");
   function syncDots() {
     if (locDot) locDot.className = "client-detail-sdot client-detail-sdot--loc";
     if (fasDot) fasDot.className = "client-detail-sdot " + faseDotClass(document.getElementById("cd-f-fase").value);
@@ -321,11 +325,16 @@
       var ov = (orgSel && orgSel.value) || "";
       orgDot.className = "client-detail-sdot " + (ov ? "client-detail-sdot--org" : "client-detail-sdot--neut");
     }
+    if (haDot) {
+      var hv = (haSel && haSel.value) || "";
+      haDot.className = "client-detail-sdot " + (hv ? "client-detail-sdot--org" : "client-detail-sdot--neut");
+    }
   }
   syncDots();
   document.getElementById("cd-f-fase").addEventListener("change", syncDots);
   if (orgSel) orgSel.addEventListener("change", syncDots);
   if (locSel) locSel.addEventListener("change", syncDots);
+  if (haSel) haSel.addEventListener("change", syncDots);
 
   var empHint = document.getElementById("cd-emp-hint");
   var gwHint = document.getElementById("cd-gw-hint");
@@ -1292,17 +1301,25 @@
     if (typeof getClientenById === "function") {
       c = getClientenById(id) || c;
     }
+    var faseVal = document.getElementById("cd-f-fase").value || "in zorg";
+    var uitZorgVal = isoFromDateInput(document.getElementById("cd-f-ui").value);
+    // Uitplaatsing: fase "uit zorg" zonder ingevulde datum → automatisch vandaag.
+    // Dit mag ook terwijl een beschikking nog loopt (geen blokkade).
+    if (faseVal === "uit zorg" && !uitZorgVal) {
+      uitZorgVal = isoFromDateInput(new Date().toISOString().slice(0, 10));
+    }
     var next = {
       id: c.id,
       voornaam: (document.getElementById("cd-f-vn").value || "").trim(),
       achternaam: (document.getElementById("cd-f-an").value || "").trim(),
       clientnummer: Math.max(1, parseInt(document.getElementById("cd-f-nr").value, 10) || 1),
       locatie: (locSel && locSel.value) ? locSel.value : "",
-      fase: document.getElementById("cd-f-fase").value || "in zorg",
+      fase: faseVal,
       inZorgDatum: isoFromDateInput(document.getElementById("cd-f-izd").value),
-      uitZorgDatum: isoFromDateInput(document.getElementById("cd-f-ui").value),
+      uitZorgDatum: uitZorgVal,
       gemeente: (document.getElementById("cd-f-gem").value || "").trim(),
       organisatie: (orgSel && orgSel.value) ? orgSel.value : "",
+      hoofdaannemer: (haSel && haSel.value) ? haSel.value : "",
       requiredForms: (document.getElementById("cd-f-req").value || "").trim(),
       medewerkerEmpId: (function () {
         var s = document.getElementById("cd-emp");

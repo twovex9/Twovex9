@@ -772,12 +772,18 @@
     if (!pendingArchiveId) return;
     var s = document.getElementById("cl-ar-slider");
     if (s && parseInt(s.value, 10) < 100) return;
+    // Archiveren van een cliënt = "uit zorg": zet fase op "uit zorg" en vul de
+    // uit-zorg-datum met vandaag indien die nog leeg is (mag ook terwijl een
+    // beschikking nog loopt — geen blokkade).
+    var vandaagISO = new Date().toISOString();
     var list = (getClientenItems() || []).map(function (x) {
       if (x.id !== pendingArchiveId) return x;
-      return Object.assign({}, x, { archived: true });
+      var patch = { archived: true, fase: "uit zorg" };
+      if (!x.uitZorgDatum || String(x.uitZorgDatum).length < 10) patch.uitZorgDatum = vandaagISO;
+      return Object.assign({}, x, patch);
     });
     if (typeof setClientenItems === "function") setClientenItems(list);
-    if (typeof showSaveModal === "function") showSaveModal("Cliënt is gearchiveerd.", "Gearchiveerd");
+    if (typeof showSaveModal === "function") showSaveModal("Cliënt is gearchiveerd (uit zorg).", "Gearchiveerd");
     else showToast("Cliënt gearchiveerd");
     closeArchive();
     render();
