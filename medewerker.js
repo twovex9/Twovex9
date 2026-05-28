@@ -1097,6 +1097,151 @@ window.addEventListener("besa:medewerker-warnings-updated", function () {
   } catch (e) { /* */ }
 });
 
+/* ============================================================
+   Onboarding-tab (release 1: fundament)
+   Toont het traject-overzicht met de stappen. De afzonderlijke
+   stap-statussen worden in latere releases per subsysteem afgeleid.
+   ============================================================ */
+function onbEscHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function onbFormatDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "long", year: "numeric" });
+  } catch (e) { return ""; }
+}
+
+// status: 'open' | 'bezig' | 'klaar'. In release 1 zijn alle stappen 'open';
+// elke volgende release vult de echte status van zijn eigen stap.
+function onbComputeSteps(/* emp, traject */) {
+  return [
+    { key: "documenten", titel: "Documenten verzameld", desc: "ID, VOG, diploma's en overige documenten zijn geüpload en gecontroleerd." },
+    { key: "contract", titel: "Contract opgesteld", desc: "Het juiste contract is gegenereerd uit een sjabloon." },
+    { key: "tekenen", titel: "Contract getekend", desc: "Medewerker en werkgever hebben digitaal ondertekend." },
+    { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord." },
+    { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend." },
+    { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster." },
+  ].map(function (s) { s.status = "open"; return s; });
+}
+
+function onbStatusPill(status) {
+  const map = {
+    open: ["Open", "emp-onb-status--open"],
+    bezig: ["Bezig", "emp-onb-status--bezig"],
+    klaar: ["Klaar", "emp-onb-status--klaar"],
+  };
+  const m = map[status] || map.open;
+  return '<span class="emp-onb-status ' + m[1] + '">' + m[0] + "</span>";
+}
+
+function renderOnboardingTab() {
+  const body = document.getElementById("emp-onb-body");
+  const headActions = document.getElementById("emp-onb-head-actions");
+  if (!body) return;
+  const emp = getSelectedEmployee();
+  if (!emp || !emp.id) {
+    body.innerHTML = '<p class="emp-onb-intro">Geen medewerker geselecteerd.</p>';
+    if (headActions) headActions.innerHTML = "";
+    return;
+  }
+  const traject = (window.onboardingDB && typeof window.onboardingDB.getForMedewerkerSync === "function")
+    ? window.onboardingDB.getForMedewerkerSync(emp.id)
+    : null;
+
+  if (!traject) {
+    if (headActions) headActions.innerHTML = "";
+    body.innerHTML =
+      '<div class="emp-onb-empty">'
+      + '<p class="emp-onb-empty-text">Er loopt nog geen onboarding voor deze medewerker.</p>'
+      + '<button type="button" class="btn-primary" id="emp-onb-start-btn">Onboarding starten</button>'
+      + "</div>";
+    return;
+  }
+
+  const afgerond = traject.status === "afgerond";
+  if (headActions) {
+    headActions.innerHTML = afgerond
+      ? '<span class="emp-onb-badge emp-onb-badge--klaar">Afgerond</span>'
+        + '<button type="button" class="btn-outline" id="emp-onb-heropen-btn">Heropenen</button>'
+      : '<span class="emp-onb-badge emp-onb-badge--lopend">Lopend</span>'
+        + '<button type="button" class="btn-outline" id="emp-onb-afrond-btn">Onboarding afronden</button>';
+  }
+
+  const steps = onbComputeSteps(emp, traject);
+  const stepsHtml = steps.map(function (s, i) {
+    return '<li class="emp-onb-step">'
+      + '<span class="emp-onb-step-num">' + (i + 1) + "</span>"
+      + '<div class="emp-onb-step-main">'
+      + '<div class="emp-onb-step-title">' + onbEscHtml(s.titel) + "</div>"
+      + '<div class="emp-onb-step-desc">' + onbEscHtml(s.desc) + "</div>"
+      + "</div>"
+      + onbStatusPill(s.status)
+      + "</li>";
+  }).join("");
+
+  const meta = '<div class="emp-onb-meta">Gestart op ' + onbEscHtml(onbFormatDate(traject.gestartOp))
+    + (afgerond && traject.afgerondOp ? " · afgerond op " + onbEscHtml(onbFormatDate(traject.afgerondOp)) : "")
+    + "</div>";
+
+  body.innerHTML = meta + '<ol class="emp-onb-steps">' + stepsHtml + "</ol>";
+}
+
+function initOnboardingTab() {
+  const panel = document.querySelector('.emp-tab-panel[data-panel="onboarding"]');
+  if (!panel) return;
+
+  // Gedelegeerde klikafhandeling (knoppen worden dynamisch (her)gerenderd).
+  document.addEventListener("click", async function (e) {
+    if (!e.target || !e.target.closest) return;
+    const startBtn = e.target.closest("#emp-onb-start-btn");
+    const afrondBtn = e.target.closest("#emp-onb-afrond-btn");
+    const heropenBtn = e.target.closest("#emp-onb-heropen-btn");
+    if (!startBtn && !afrondBtn && !heropenBtn) return;
+    const emp = getSelectedEmployee();
+    if (!emp || !emp.id || !window.onboardingDB) return;
+    try {
+      if (startBtn) {
+        startBtn.disabled = true;
+        const prof = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : null;
+        await window.onboardingDB.start(emp.id, {
+          dienstverbandType: emp.dienstverband || "",
+          aangemaaktDoor: prof && prof.id ? prof.id : null,
+        });
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Onboarding gestart");
+      } else if (afrondBtn) {
+        const t = window.onboardingDB.getForMedewerkerSync(emp.id);
+        if (t && t.id) {
+          await window.onboardingDB.markAfgerond(t.id);
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Onboarding afgerond");
+        }
+      } else if (heropenBtn) {
+        const t = window.onboardingDB.getForMedewerkerSync(emp.id);
+        if (t && t.id) {
+          await window.onboardingDB.markLopend(t.id);
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Onboarding heropend");
+        }
+      }
+    } catch (err) {
+      if (window.showActionFeedback) window.showActionFeedback("error", "Onboarding bijwerken mislukt: " + (err && err.message ? err.message : err));
+      console.error("[medewerker] onboarding-actie mislukt:", err);
+    }
+    renderOnboardingTab();
+  });
+
+  renderOnboardingTab();
+  if (window.onboardingDB && window.onboardingDB.ready && typeof window.onboardingDB.ready.then === "function") {
+    window.onboardingDB.ready.then(renderOnboardingTab).catch(function () { /* */ });
+  }
+  window.addEventListener("besa:onboarding-updated", renderOnboardingTab);
+  window.addEventListener("besa:medewerkers-updated", renderOnboardingTab);
+}
+
 function initTabs() {
   const tabs = document.querySelectorAll(".emp-tab");
   const panels = document.querySelectorAll(".emp-tab-panel");
@@ -4007,6 +4152,7 @@ if (typeof window.__setRoosterWeekendModes === "function") {
 }
 initBedrijfsvoorzieningenNotes();
 initDocumentenSection();
+initOnboardingTab();
 
 // Bug #61 fix: globale Escape close-way voor alle 4 emp-modals (defensieve fallback
 // die altijd werkt, ook als per-modal init bailout heeft gehad)
