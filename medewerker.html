@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Medewerker — HR</title>
-  <link rel="stylesheet" href="styles.css?v=onbr7">
+  <link rel="stylesheet" href="styles.css?v=onbr8">
 </head>
 <body class="page-medewerker-detail">
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -279,6 +279,7 @@
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verzuim">Verzuim</button>
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="verlof">Verlof</button>
             <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="onboarding">Onboarding</button>
+            <button class="emp-tab inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all" role="tab" data-tab="offboarding">Uit dienst</button>
           </nav>
 
           <!-- Tab: Details -->
@@ -1704,6 +1705,18 @@
               <div id="emp-onb-body" class="emp-onb-body"></div>
             </div>
           </div>
+
+          <!-- Tab: Uit dienst (offboarding) -->
+          <div class="emp-tab-panel" data-panel="offboarding">
+            <div class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div class="emp-onb-head">
+                <h3>Uit dienst</h3>
+                <div class="emp-onb-head-actions" id="emp-offb-head-actions"></div>
+              </div>
+              <p class="emp-onb-intro">Meld de medewerker uit dienst en loop de checklist af zodat er niets vergeten wordt. De medewerker blijft inzetbaar tot je de offboarding afrondt.</p>
+              <div id="emp-offb-body" class="emp-onb-body"></div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -1816,6 +1829,25 @@
     </div>
   </div>
 
+  <!-- Release 8: Uit dienst melden-modal -->
+  <div class="modal-overlay modal-overlay--confirm" id="emp-offb-melden-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="emp-offb-melden-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="emp-offb-melden-title" class="modal-title">Uit dienst melden</h2>
+        <button type="button" class="modal-close" id="emp-offb-melden-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="employee-delete-msg">Start het offboarding-traject voor deze medewerker. De medewerker blijft inzetbaar in de planning tot je de checklist afrondt.</p>
+        <label class="modal-label" for="emp-offb-einddatum">Laatste werkdag</label>
+        <input type="date" id="emp-offb-einddatum" class="modal-input" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="emp-offb-melden-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="emp-offb-melden-confirm">Uit dienst melden</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Contract opstellen / bekijken (release 4) -->
   <div class="modal-overlay" id="emp-contract-modal" hidden aria-hidden="true">
     <div class="modal-card modal-card--wide" role="dialog" aria-modal="true" aria-labelledby="emp-contract-title" tabindex="-1">
@@ -1881,6 +1913,7 @@
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
   <script src="onboarding-trajecten-data.js?v=onbtr3"></script>
+  <script src="offboarding-trajecten-data.js?v=offb1"></script>
   <script src="contract-sjablonen-data.js?v=cs1"></script>
   <script src="contracten-data.js?v=ct1"></script>
   <script src="inwerk-items-data.js?v=iw1"></script>
@@ -1888,7 +1921,7 @@
   <script src="medewerker-warnings.js?v=mw1"></script>
   <script src="locaties-data.js?v=geo1" defer></script>
   <script src="geo-distance.js?v=geo1" defer></script>
-  <script src="medewerker.js?v=onb10"></script>
+  <script src="medewerker.js?v=onb11"></script>
   <script src="medewerker-geo-hook.js?v=geo1" defer></script>
   <script src="read-audit.js?v=ra1" defer></script>
   <script>

@@ -1880,6 +1880,229 @@ function initOnboardingTab() {
   initContractModal();
 }
 
+// ===== Offboarding (release 8) =====
+var OFFB_CHECKLIST = [
+  { groep: "Bedrijfseigendommen inleveren", items: [
+    { key: "eig_laptop", label: "Laptop" },
+    { key: "eig_telefoon", label: "Telefoon" },
+    { key: "eig_pas", label: "Toegangspas" },
+    { key: "eig_sleutels", label: "Sleutels" },
+  ] },
+  { groep: "Administratief", items: [
+    { key: "bevestigingsmail", label: "Bevestigingsmail uit dienst verstuurd" },
+    { key: "salarisadmin", label: "Gemeld bij salarisadministratie" },
+  ] },
+  { groep: "Accounts opheffen", items: [
+    { key: "acc_ons", label: "ONS (zorgsysteem)" },
+    { key: "acc_sharepoint", label: "SharePoint" },
+    { key: "acc_outlook", label: "Outlook / e-mail" },
+    { key: "acc_rechten", label: "Overige rechten" },
+  ] },
+];
+
+var OFFB_WARN_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+function offbAllItems() {
+  var out = [];
+  OFFB_CHECKLIST.forEach(function (g) { g.items.forEach(function (it) { out.push(it); }); });
+  return out;
+}
+
+function renderOffboardingTab() {
+  var body = document.getElementById("emp-offb-body");
+  var headActions = document.getElementById("emp-offb-head-actions");
+  if (!body) return;
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id) {
+    body.innerHTML = '<p class="emp-onb-intro">Geen medewerker geselecteerd.</p>';
+    if (headActions) headActions.innerHTML = "";
+    return;
+  }
+  var traject = (window.offboardingDB && typeof window.offboardingDB.getForMedewerkerSync === "function")
+    ? window.offboardingDB.getForMedewerkerSync(emp.id) : null;
+
+  if (!traject) {
+    if (headActions) headActions.innerHTML = "";
+    body.innerHTML = '<div class="emp-onb-empty">'
+      + '<p class="emp-onb-empty-text">Er loopt nog geen offboarding voor deze medewerker.</p>'
+      + '<button type="button" class="btn-primary" id="emp-offb-melden-btn">Uit dienst melden</button>'
+      + "</div>";
+    return;
+  }
+
+  var afgerond = traject.status === "afgerond";
+  var state = (traject.data && typeof traject.data === "object") ? traject.data : {};
+  var allItems = offbAllItems();
+  var doneCount = allItems.filter(function (it) { return state[it.key] === true; }).length;
+  var total = allItems.length;
+  var openCount = total - doneCount;
+
+  if (headActions) {
+    headActions.innerHTML = afgerond
+      ? '<span class="emp-onb-badge emp-onb-badge--klaar">Afgerond</span>'
+        + '<button type="button" class="btn-outline" id="emp-offb-heropen-btn">Heropenen</button>'
+      : '<span class="emp-onb-badge emp-onb-badge--lopend">Lopend</span>';
+  }
+
+  var metaBits = ["Gemeld op " + onbEscHtml(onbFormatDate(traject.gestartOp))];
+  if (traject.einddatum) metaBits.push("laatste werkdag " + onbEscHtml(onbFormatDate(traject.einddatum)));
+  if (afgerond && traject.afgerondOp) metaBits.push("afgerond op " + onbEscHtml(onbFormatDate(traject.afgerondOp)));
+  var meta = '<div class="emp-onb-meta">' + metaBits.join(" · ") + "</div>";
+
+  var sectionsHtml = OFFB_CHECKLIST.map(function (g) {
+    var rows = g.items.map(function (it) {
+      var on = state[it.key] === true;
+      return '<li class="emp-offb-item' + (on ? " emp-offb-item--done" : "") + '">'
+        + '<label class="emp-offb-label">'
+        + '<input type="checkbox" class="emp-offb-cb" data-offb-key="' + onbEscHtml(it.key) + '"' + (afgerond ? " disabled" : "") + (on ? " checked" : "") + "> "
+        + onbEscHtml(it.label) + "</label>"
+        + (on
+          ? '<span class="emp-offb-state emp-offb-state--ok">Gedaan</span>'
+          : '<span class="emp-offb-state emp-offb-state--warn">' + OFFB_WARN_SVG + " Nog doen</span>")
+        + "</li>";
+    }).join("");
+    return '<div class="emp-offb-groep"><div class="emp-offb-groep-titel">' + onbEscHtml(g.groep) + '</div><ul class="emp-offb-list">' + rows + "</ul></div>";
+  }).join("");
+
+  var progressHtml = '<div class="inw-progress">' + (openCount === 0 ? "✓ " : "")
+    + onbEscHtml(doneCount + "/" + total) + " afgerond"
+    + (openCount > 0 ? " · " + onbEscHtml(String(openCount)) + " nog te doen" : "") + "</div>";
+
+  var actionHtml = afgerond
+    ? '<div class="onbup-alert onbup-alert--ok">Offboarding afgerond. De medewerker is op "Uit dienst" gezet en gearchiveerd.</div>'
+    : '<button type="button" class="btn-primary" id="emp-offb-afrond-btn">Offboarding afronden</button>'
+      + '<p class="emp-onb-uploadlink-hint">Bij afronden wordt de medewerker op "Uit dienst" gezet (met laatste werkdag) en gearchiveerd.</p>';
+
+  body.innerHTML = meta + progressHtml + sectionsHtml + '<div class="emp-offb-actions">' + actionHtml + "</div>";
+}
+
+function openOffbMeldenModal() {
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id) return;
+  var modal = document.getElementById("emp-offb-melden-modal");
+  if (!modal) return;
+  var dateEl = document.getElementById("emp-offb-einddatum");
+  if (dateEl) dateEl.value = "";
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+}
+function closeOffbMeldenModal() {
+  var modal = document.getElementById("emp-offb-melden-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function confirmOffbMelden() {
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id || !window.offboardingDB) return;
+  var einddatum = (document.getElementById("emp-offb-einddatum") || {}).value || "";
+  try {
+    var prof = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : null;
+    await window.offboardingDB.start(emp.id, { einddatum: einddatum || null, aangemaaktDoor: prof && prof.id ? prof.id : null });
+    if (window.showActionFeedback) window.showActionFeedback("saved", "Uit dienst gemeld");
+    closeOffbMeldenModal();
+    renderOffboardingTab();
+  } catch (err) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Melden mislukt: " + (err && err.message ? err.message : err));
+  }
+}
+
+async function offbAfronden() {
+  var emp = getSelectedEmployee();
+  var t = (emp && emp.id && window.offboardingDB) ? window.offboardingDB.getForMedewerkerSync(emp.id) : null;
+  if (!t || !t.id) return;
+  var state = (t.data && typeof t.data === "object") ? t.data : {};
+  var openCount = offbAllItems().filter(function (it) { return state[it.key] !== true; }).length;
+  var preview = ((emp.voornaam || "") + " " + (emp.achternaam || "")).trim();
+  var title = openCount > 0
+    ? "Offboarding afronden met " + openCount + " open punt(en)?"
+    : "Offboarding afronden?";
+  var ok = (typeof window.showSliderConfirmModal === "function")
+    ? await window.showSliderConfirmModal({ title: title, preview: preview, okLabel: "Afronden + uit dienst", cancelLabel: "Annuleren" })
+    : true;
+  if (!ok) return;
+  try {
+    await window.offboardingDB.markAfgerond(t.id);
+    var patch = { fase: "Uit dienst", archived: true };
+    if (t.einddatum && typeof isoToDDMMYYYY === "function") patch.uitDienst = isoToDDMMYYYY(t.einddatum);
+    if (window.medewerkersDB && typeof window.medewerkersDB.update === "function") {
+      await window.medewerkersDB.update(emp.id, patch);
+    }
+    if (window.showActionFeedback) window.showActionFeedback("saved", "Offboarding afgerond");
+    renderOffboardingTab();
+  } catch (err) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Afronden mislukt: " + (err && err.message ? err.message : err));
+  }
+}
+
+async function offbHeropenen() {
+  var emp = getSelectedEmployee();
+  var t = (emp && emp.id && window.offboardingDB) ? window.offboardingDB.getForMedewerkerSync(emp.id) : null;
+  if (!t || !t.id) return;
+  try {
+    await window.offboardingDB.markLopend(t.id);
+    // Afronden zette de medewerker op Uit dienst + gearchiveerd; heropenen draait dat terug.
+    if (window.medewerkersDB && typeof window.medewerkersDB.update === "function") {
+      await window.medewerkersDB.update(emp.id, { fase: "In dienst", archived: false });
+    }
+    if (window.showActionFeedback) window.showActionFeedback("restored", "Offboarding heropend");
+    renderOffboardingTab();
+  } catch (err) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Heropenen mislukt: " + (err && err.message ? err.message : err));
+  }
+}
+
+function initOffboardingTab() {
+  var panel = document.querySelector('.emp-tab-panel[data-panel="offboarding"]');
+  if (!panel) return;
+
+  // Gedelegeerde klikafhandeling (knoppen worden dynamisch (her)gerenderd).
+  document.addEventListener("click", function (e) {
+    if (!e.target || !e.target.closest) return;
+    if (e.target.closest("#emp-offb-melden-btn")) { openOffbMeldenModal(); return; }
+    if (e.target.closest("#emp-offb-melden-close") || e.target.closest("#emp-offb-melden-cancel")) { closeOffbMeldenModal(); return; }
+    if (e.target.closest("#emp-offb-melden-confirm")) { confirmOffbMelden(); return; }
+    if (e.target.closest("#emp-offb-afrond-btn")) { offbAfronden(); return; }
+    if (e.target.closest("#emp-offb-heropen-btn")) { offbHeropenen(); return; }
+  });
+
+  // Klik buiten de melden-modal sluit hem.
+  var modal = document.getElementById("emp-offb-melden-modal");
+  if (modal) {
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeOffbMeldenModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !modal.hidden) closeOffbMeldenModal(); });
+  }
+
+  // Checklist-toggle direct opslaan.
+  document.addEventListener("change", async function (e) {
+    var cb = (e.target && e.target.closest) ? e.target.closest(".emp-offb-cb") : null;
+    if (!cb) return;
+    var key = cb.getAttribute("data-offb-key");
+    var emp = getSelectedEmployee();
+    var t = (emp && emp.id && window.offboardingDB) ? window.offboardingDB.getForMedewerkerSync(emp.id) : null;
+    if (!t || !t.id || !key) return;
+    var p = {}; p[key] = cb.checked;
+    cb.disabled = true;
+    try {
+      await window.offboardingDB.updateData(t.id, p);
+    } catch (err) {
+      cb.checked = !cb.checked;
+      if (window.showActionFeedback) window.showActionFeedback("error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+    } finally {
+      cb.disabled = false;
+    }
+    renderOffboardingTab();
+  });
+
+  renderOffboardingTab();
+  if (window.offboardingDB && window.offboardingDB.ready && typeof window.offboardingDB.ready.then === "function") {
+    window.offboardingDB.ready.then(renderOffboardingTab).catch(function () { /* */ });
+  }
+  window.addEventListener("besa:offboarding-updated", renderOffboardingTab);
+  window.addEventListener("besa:medewerkers-updated", renderOffboardingTab);
+}
+
 function initTabs() {
   const tabs = document.querySelectorAll(".emp-tab");
   const panels = document.querySelectorAll(".emp-tab-panel");
@@ -4791,6 +5014,7 @@ if (typeof window.__setRoosterWeekendModes === "function") {
 initBedrijfsvoorzieningenNotes();
 initDocumentenSection();
 initOnboardingTab();
+initOffboardingTab();
 
 // Bug #61 fix: globale Escape close-way voor alle 4 emp-modals (defensieve fallback
 // die altijd werkt, ook als per-modal init bailout heeft gehad)

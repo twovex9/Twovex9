@@ -4246,3 +4246,53 @@ create policy "auth kan inwerk_voortgang bewerken"
 drop policy if exists "auth kan inwerk_voortgang verwijderen" on public.inwerk_voortgang;
 create policy "auth kan inwerk_voortgang verwijderen"
   on public.inwerk_voortgang for delete to authenticated using (true);
+
+-- ============================================================================
+-- Offboarding — offboarding_trajecten (release 8: uit-dienst-checklist)
+-- ============================================================================
+-- Eén traject per medewerker (UNIQUE). "Uit dienst melden" start het traject met
+-- de geplande laatste werkdag; de medewerker blijft In dienst/zichtbaar tot HR de
+-- checklist afrondt (dan zet de UI fase 'Uit dienst' + archived). data jsonb bevat
+-- de checklist-booleans (eigendommen/bevestigingsmail/salarisadmin/accounts).
+-- Migratie: offboarding_v1.
+
+create table if not exists public.offboarding_trajecten (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id uuid not null references public.medewerkers(id),
+  status text not null default 'lopend',     -- 'lopend' | 'afgerond'
+  einddatum date,                            -- laatste werkdag
+  gestart_op timestamptz not null default now(),
+  afgerond_op timestamptz,
+  aangemaakt_door uuid,
+  data jsonb not null default '{}'::jsonb,    -- checklist-booleans
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create unique index if not exists offboarding_trajecten_medewerker_uidx
+  on public.offboarding_trajecten (medewerker_id);
+create index if not exists offboarding_trajecten_status_idx
+  on public.offboarding_trajecten (status);
+
+drop trigger if exists set_offboarding_trajecten_laatst_gewijzigd on public.offboarding_trajecten;
+create trigger set_offboarding_trajecten_laatst_gewijzigd
+  before update on public.offboarding_trajecten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.offboarding_trajecten enable row level security;
+
+drop policy if exists "auth kan offboarding_trajecten lezen" on public.offboarding_trajecten;
+create policy "auth kan offboarding_trajecten lezen"
+  on public.offboarding_trajecten for select to authenticated using (true);
+
+drop policy if exists "auth kan offboarding_trajecten toevoegen" on public.offboarding_trajecten;
+create policy "auth kan offboarding_trajecten toevoegen"
+  on public.offboarding_trajecten for insert to authenticated with check (true);
+
+drop policy if exists "auth kan offboarding_trajecten bewerken" on public.offboarding_trajecten;
+create policy "auth kan offboarding_trajecten bewerken"
+  on public.offboarding_trajecten for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan offboarding_trajecten verwijderen" on public.offboarding_trajecten;
+create policy "auth kan offboarding_trajecten verwijderen"
+  on public.offboarding_trajecten for delete to authenticated using (true);
