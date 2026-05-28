@@ -1223,14 +1223,223 @@ function onbComputeSteps(emp, traject) {
       + "</div>";
   }
 
+  // Contract-stap: bestaat er een opgesteld contract voor deze medewerker?
+  var contract = (window.contractenDB && typeof window.contractenDB.getLatestForMedewerkerSync === "function")
+    ? window.contractenDB.getLatestForMedewerkerSync(emp && emp.id)
+    : null;
+  var contractStatus = contract ? "klaar" : "open";
+  var contractDesc = contract
+    ? "Contract opgesteld vanuit een sjabloon."
+    : "Het juiste contract genereren uit een sjabloon.";
+  var contractDetail = contract
+    ? '<div class="emp-onb-contract-info">'
+      + '<span class="emp-onb-contract-naam">' + onbEscHtml(contract.naam || "Contract") + "</span>"
+      + '<div class="emp-onb-contract-actions">'
+      + '<button type="button" class="btn-outline" id="emp-onb-contract-bekijk">Bekijken</button>'
+      + '<button type="button" class="btn-outline" id="emp-onb-contract-opnieuw">Opnieuw opstellen</button>'
+      + "</div></div>"
+    : '<button type="button" class="btn-primary" id="emp-onb-contract-opstellen">Contract opstellen</button>';
+
   return [
     { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
-    { key: "contract", titel: "Contract opgesteld", desc: "Het juiste contract is gegenereerd uit een sjabloon.", status: "open" },
+    { key: "contract", titel: "Contract opgesteld", desc: contractDesc, status: contractStatus, detailHtml: contractDetail },
     { key: "tekenen", titel: "Contract getekend", desc: "Medewerker en werkgever hebben digitaal ondertekend.", status: "open" },
     { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord.", status: "open" },
     { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend.", status: "open" },
     { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster.", status: "open" },
   ];
+}
+
+// ===== Contract opstellen (release 4) =====
+var ONB_CONTRACT_FORM_VARS = ["functie", "startdatum", "contractduur", "uren", "tarief", "schaal", "locatie", "werkzaamheden"];
+var _onbContractMode = "new"; // "new" | "view"
+
+function onbBuildContractAutoVars(emp) {
+  var d = (emp && emp.data) || {};
+  var voornaam = (emp && emp.voornaam) || d.voornaam || "";
+  var achternaam = (emp && emp.achternaam) || d.achternaam || "";
+  return {
+    voornaam: voornaam,
+    achternaam: achternaam,
+    volledige_naam: (voornaam + " " + achternaam).trim(),
+    datum_vandaag: onbFormatDate(new Date().toISOString()),
+    functie: (emp && emp.functie) || d.functie || "",
+    werkzaamheden: d.werkzaamheden || "",
+    startdatum: d.loondienst_startdatum || d.startdatum || "",
+    contractduur: d.contractduur || "",
+    uren: d.contracturen || d.uren || d.garantie_uren || "",
+    tarief: d.inhuur_tarief || d.uurtarief || d.tarief || "",
+    schaal: d.salarisschaal || d.schaal || "",
+    locatie: d.locatie || "",
+  };
+}
+
+function onbMergeContract(body, vars) {
+  return String(body || "").replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, function (m, key) {
+    var v = vars[key.toLowerCase()];
+    if (v === undefined || v === null || String(v).trim() === "") return "__________";
+    if (key.toLowerCase() === "startdatum" && /^\d{4}-\d{2}-\d{2}/.test(String(v))) return onbFormatDate(String(v));
+    return String(v);
+  });
+}
+
+function onbReadContractForm() {
+  var g = function (id) { var el = document.getElementById(id); return el ? el.value : ""; };
+  return {
+    functie: g("emp-contract-var-functie"),
+    startdatum: g("emp-contract-var-startdatum"),
+    contractduur: g("emp-contract-var-contractduur"),
+    uren: g("emp-contract-var-uren"),
+    tarief: g("emp-contract-var-tarief"),
+    schaal: g("emp-contract-var-schaal"),
+    locatie: g("emp-contract-var-locatie"),
+    werkzaamheden: g("emp-contract-var-werkzaamheden"),
+  };
+}
+
+function onbContractVarsFromForm(emp) {
+  var vars = onbBuildContractAutoVars(emp);
+  var form = onbReadContractForm();
+  ONB_CONTRACT_FORM_VARS.forEach(function (k) { vars[k] = form[k]; });
+  return vars;
+}
+
+function onbGetSjablonen() {
+  if (window.contractSjablonenDB && typeof window.contractSjablonenDB.getAllSync === "function") {
+    return (window.contractSjablonenDB.getAllSync() || []).filter(function (s) { return s && !s.archived; });
+  }
+  return [];
+}
+
+function onbUpdateContractPreview(emp) {
+  var preview = document.getElementById("emp-contract-preview");
+  if (!preview) return;
+  var sjId = (document.getElementById("emp-contract-sjabloon") || {}).value || "";
+  var sj = onbGetSjablonen().find(function (s) { return String(s.id) === String(sjId); });
+  preview.textContent = onbMergeContract(sj ? sj.body : "", onbContractVarsFromForm(emp));
+}
+
+function onbFillContractForm(vals) {
+  var set = function (id, v) { var el = document.getElementById(id); if (el) el.value = v == null ? "" : v; };
+  set("emp-contract-var-functie", vals.functie);
+  set("emp-contract-var-startdatum", /^\d{4}-\d{2}-\d{2}/.test(String(vals.startdatum || "")) ? String(vals.startdatum).slice(0, 10) : "");
+  set("emp-contract-var-contractduur", vals.contractduur);
+  set("emp-contract-var-uren", vals.uren);
+  set("emp-contract-var-tarief", vals.tarief);
+  set("emp-contract-var-schaal", vals.schaal);
+  set("emp-contract-var-locatie", vals.locatie);
+  set("emp-contract-var-werkzaamheden", vals.werkzaamheden);
+}
+
+function onbSetContractFormReadonly(ro) {
+  ["emp-contract-sjabloon", "emp-contract-var-functie", "emp-contract-var-startdatum", "emp-contract-var-contractduur", "emp-contract-var-uren", "emp-contract-var-tarief", "emp-contract-var-schaal", "emp-contract-var-locatie", "emp-contract-var-werkzaamheden"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === "SELECT") el.disabled = ro; else el.readOnly = ro;
+  });
+}
+
+function openContractModal(mode, existing) {
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id) return;
+  var modal = document.getElementById("emp-contract-modal");
+  if (!modal) return;
+  _onbContractMode = mode;
+  var title = document.getElementById("emp-contract-title");
+  var saveBtn = document.getElementById("emp-contract-save");
+  var sel = document.getElementById("emp-contract-sjabloon");
+  var sjablonen = onbGetSjablonen();
+  if (sel) {
+    sel.innerHTML = sjablonen.length
+      ? sjablonen.map(function (s) { return '<option value="' + onbEscHtml(s.id) + '">' + onbEscHtml(s.naam) + "</option>"; }).join("")
+      : '<option value="">Geen sjablonen — maak er eerst één aan bij Contractsjablonen</option>';
+  }
+
+  if (mode === "view" && existing) {
+    if (title) title.textContent = "Contract bekijken";
+    if (saveBtn) saveBtn.style.display = "none";
+    if (sel && existing.sjabloonId) sel.value = existing.sjabloonId;
+    onbFillContractForm(existing.variabelen || {});
+    onbSetContractFormReadonly(true);
+    var pv = document.getElementById("emp-contract-preview");
+    if (pv) pv.textContent = existing.gegenereerdeTekst || "";
+  } else {
+    if (title) title.textContent = "Contract opstellen";
+    if (saveBtn) { saveBtn.style.display = ""; saveBtn.disabled = false; }
+    onbSetContractFormReadonly(false);
+    onbFillContractForm(onbBuildContractAutoVars(emp));
+    if (sel && sjablonen.length) {
+      var dvKey = onbRequiredDocsKey(emp);
+      var prefType = dvKey === "zzp" ? "opdracht" : (dvKey === "stagiair" ? "stage" : "arbeidsovereenkomst");
+      var match = sjablonen.find(function (s) { return s.type === prefType; });
+      sel.value = match ? match.id : sjablonen[0].id;
+    }
+    onbUpdateContractPreview(emp);
+  }
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeContractModal() {
+  var modal = document.getElementById("emp-contract-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function saveContract() {
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id || !window.contractenDB) return;
+  var sjId = (document.getElementById("emp-contract-sjabloon") || {}).value || "";
+  var sj = onbGetSjablonen().find(function (s) { return String(s.id) === String(sjId); });
+  if (!sj) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Kies eerst een sjabloon.");
+    return;
+  }
+  var vars = onbContractVarsFromForm(emp);
+  var tekst = onbMergeContract(sj.body, vars);
+  var naam = sj.naam + " — " + (vars.volledige_naam || ((emp.voornaam || "") + " " + (emp.achternaam || "")).trim());
+  var saveBtn = document.getElementById("emp-contract-save");
+  if (saveBtn) saveBtn.disabled = true;
+  try {
+    var prof = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : null;
+    await window.contractenDB.add({
+      medewerkerId: emp.id,
+      sjabloonId: sj.id,
+      naam: naam,
+      type: sj.type,
+      variabelen: vars,
+      gegenereerdeTekst: tekst,
+      status: "opgesteld",
+      aangemaaktDoor: prof && prof.id ? prof.id : null,
+    });
+    if (window.showActionFeedback) window.showActionFeedback("created", "Contract opgesteld");
+    closeContractModal();
+    renderOnboardingTab();
+  } catch (err) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+
+function initContractModal() {
+  var modal = document.getElementById("emp-contract-modal");
+  if (!modal) return;
+  var close = document.getElementById("emp-contract-close");
+  var cancel = document.getElementById("emp-contract-cancel");
+  var save = document.getElementById("emp-contract-save");
+  if (close) close.addEventListener("click", closeContractModal);
+  if (cancel) cancel.addEventListener("click", closeContractModal);
+  if (save) save.addEventListener("click", saveContract);
+  modal.addEventListener("click", function (e) { if (e.target === modal) closeContractModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !modal.hidden) closeContractModal(); });
+  ["emp-contract-sjabloon", "emp-contract-var-functie", "emp-contract-var-startdatum", "emp-contract-var-contractduur", "emp-contract-var-uren", "emp-contract-var-tarief", "emp-contract-var-schaal", "emp-contract-var-locatie", "emp-contract-var-werkzaamheden"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var upd = function () { if (_onbContractMode !== "view") onbUpdateContractPreview(getSelectedEmployee()); };
+    el.addEventListener("input", upd);
+    el.addEventListener("change", upd);
+  });
 }
 
 function onbStatusPill(status) {
@@ -1341,6 +1550,17 @@ function initOnboardingTab() {
       }
       return;
     }
+    // Contract opstellen / opnieuw / bekijken
+    if (e.target.closest("#emp-onb-contract-opstellen") || e.target.closest("#emp-onb-contract-opnieuw")) {
+      openContractModal("new");
+      return;
+    }
+    if (e.target.closest("#emp-onb-contract-bekijk")) {
+      var empC = getSelectedEmployee();
+      var c = (window.contractenDB && empC && empC.id) ? window.contractenDB.getLatestForMedewerkerSync(empC.id) : null;
+      if (c) openContractModal("view", c);
+      return;
+    }
     const startBtn = e.target.closest("#emp-onb-start-btn");
     const afrondBtn = e.target.closest("#emp-onb-afrond-btn");
     const heropenBtn = e.target.closest("#emp-onb-heropen-btn");
@@ -1389,6 +1609,9 @@ function initOnboardingTab() {
     if (emp && emp.id) onbLoadDocs(emp.id, true);
     else renderOnboardingTab();
   });
+  window.addEventListener("besa:contracten-updated", renderOnboardingTab);
+  window.addEventListener("besa:contract-sjablonen-updated", renderOnboardingTab);
+  initContractModal();
 }
 
 function initTabs() {

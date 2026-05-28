@@ -1815,6 +1815,42 @@
     </div>
   </div>
 
+  <!-- Contract opstellen / bekijken (release 4) -->
+  <div class="modal-overlay" id="emp-contract-modal" hidden aria-hidden="true">
+    <div class="modal-card modal-card--wide" role="dialog" aria-modal="true" aria-labelledby="emp-contract-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="emp-contract-title" class="modal-title">Contract opstellen</h2>
+        <button type="button" class="modal-close" id="emp-contract-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body emp-contract-body">
+        <div class="emp-contract-form">
+          <label class="modal-label" for="emp-contract-sjabloon">Sjabloon</label>
+          <select id="emp-contract-sjabloon" class="modal-input"></select>
+
+          <div class="emp-contract-vargrid">
+            <label class="modal-label">Functie<input type="text" id="emp-contract-var-functie" class="modal-input" autocomplete="off"></label>
+            <label class="modal-label">Startdatum<input type="date" id="emp-contract-var-startdatum" class="modal-input"></label>
+            <label class="modal-label">Contractduur<input type="text" id="emp-contract-var-contractduur" class="modal-input" placeholder="Bijv. 12 maanden (bepaalde tijd)" autocomplete="off"></label>
+            <label class="modal-label">Uren per week<input type="text" id="emp-contract-var-uren" class="modal-input" autocomplete="off"></label>
+            <label class="modal-label">Tarief (&euro;/uur)<input type="text" id="emp-contract-var-tarief" class="modal-input" autocomplete="off"></label>
+            <label class="modal-label">Schaal<input type="text" id="emp-contract-var-schaal" class="modal-input" autocomplete="off"></label>
+            <label class="modal-label">Locatie<input type="text" id="emp-contract-var-locatie" class="modal-input" autocomplete="off"></label>
+          </div>
+          <label class="modal-label" for="emp-contract-var-werkzaamheden">Werkzaamheden</label>
+          <textarea id="emp-contract-var-werkzaamheden" class="modal-input emp-contract-werkz" rows="2"></textarea>
+        </div>
+        <div class="emp-contract-preview-wrap">
+          <div class="emp-contract-preview-label">Voorbeeld contract</div>
+          <pre class="emp-contract-preview" id="emp-contract-preview"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="emp-contract-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="emp-contract-save">Contract opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1844,10 +1880,12 @@
   <script src="medewerker-verzuim-data.js"></script>
   <script src="medewerker-documenten-data.js"></script>
   <script src="onboarding-trajecten-data.js?v=onbtr2"></script>
+  <script src="contract-sjablonen-data.js?v=cs1"></script>
+  <script src="contracten-data.js?v=ct1"></script>
   <script src="medewerker-warnings.js?v=mw1"></script>
   <script src="locaties-data.js?v=geo1" defer></script>
   <script src="geo-distance.js?v=geo1" defer></script>
-  <script src="medewerker.js?v=onb6"></script>
+  <script src="medewerker.js?v=onb7"></script>
   <script src="medewerker-geo-hook.js?v=geo1" defer></script>
   <script src="read-audit.js?v=ra1" defer></script>
   <script>

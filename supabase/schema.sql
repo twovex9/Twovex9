@@ -4057,3 +4057,54 @@ create policy "auth kan contract_sjablonen bewerken"
 drop policy if exists "auth kan contract_sjablonen verwijderen" on public.contract_sjablonen;
 create policy "auth kan contract_sjablonen verwijderen"
   on public.contract_sjablonen for delete to authenticated using (true);
+
+-- ============================================================================
+-- Onboarding — contracten (release 4: contract opstellen)
+-- ============================================================================
+-- Een opgesteld contract per medewerker, gegenereerd uit een contractsjabloon
+-- met ingevulde merge-velden. status: opgesteld | wacht_op_ondertekening |
+-- getekend (de laatste twee komen in release 5, digitaal tekenen).
+
+create table if not exists public.contracten (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id uuid not null references public.medewerkers(id),
+  sjabloon_id uuid references public.contract_sjablonen(id) on delete set null,
+  naam text not null default '',
+  type text not null default '',
+  variabelen jsonb not null default '{}'::jsonb,
+  gegenereerde_tekst text not null default '',
+  status text not null default 'opgesteld',
+  pdf_storage_path text,
+  aangemaakt_door uuid,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists contracten_medewerker_id_idx on public.contracten (medewerker_id);
+create index if not exists contracten_status_idx on public.contracten (status);
+create index if not exists contracten_archived_idx on public.contracten (archived);
+
+drop trigger if exists set_contracten_laatst_gewijzigd on public.contracten;
+create trigger set_contracten_laatst_gewijzigd
+  before update on public.contracten
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.contracten enable row level security;
+
+drop policy if exists "auth kan contracten lezen" on public.contracten;
+create policy "auth kan contracten lezen"
+  on public.contracten for select to authenticated using (true);
+
+drop policy if exists "auth kan contracten toevoegen" on public.contracten;
+create policy "auth kan contracten toevoegen"
+  on public.contracten for insert to authenticated with check (true);
+
+drop policy if exists "auth kan contracten bewerken" on public.contracten;
+create policy "auth kan contracten bewerken"
+  on public.contracten for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan contracten verwijderen" on public.contracten;
+create policy "auth kan contracten verwijderen"
+  on public.contracten for delete to authenticated using (true);

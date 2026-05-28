@@ -23978,3 +23978,52 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   vertical-align: bottom;
   color: var(--text-muted);
 }
+
+/* ============================================================
+   Contract opstellen (medewerker Onboarding-tab, release 4)
+   ============================================================ */
+.emp-onb-contract-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.emp-onb-contract-naam { font-size: var(--font-table-head); color: var(--text-secondary); }
+.emp-onb-contract-actions { display: flex; gap: 8px; }
+.emp-contract-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.emp-contract-form { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.emp-contract-vargrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin: 4px 0 8px;
+}
+.emp-contract-vargrid .modal-label { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.emp-contract-werkz { resize: vertical; min-height: 52px; font: inherit; font-size: var(--font-base); }
+.emp-contract-preview-wrap { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.emp-contract-preview-label {
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.emp-contract-preview {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  font-size: var(--font-table-head);
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg-muted);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+@media (max-width: 860px) {
+  .emp-contract-body { grid-template-columns: 1fr; }
+  .emp-contract-vargrid { grid-template-columns: 1fr; }
+}
