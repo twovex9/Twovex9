@@ -214,10 +214,10 @@
         </a>
       </div>
 
-      <div class="bd-bottom bd-bottom--4">
-        <section class="table-card bd-bar-card" aria-label="Beschikkingen per zorgsoort">
-          <h2 class="bd-sec-t">Beschikkingen per zorgsoort</h2>
-          <p class="bd-sec-s">Per zorgsoort</p>
+      <div class="bd-bottom bd-bottom--3">
+        <section class="table-card bd-bar-card" aria-label="Bezetting per zorgsoort">
+          <h2 class="bd-sec-t">Bezetting per zorgsoort</h2>
+          <p class="bd-sec-s">Aantal actieve beschikkingen</p>
           <div class="bd-vchart bd-vchart--sm">
             <div class="bd-vy" id="bd-zorg-y" aria-hidden="true"></div>
             <div class="bd-vplot">
@@ -226,8 +226,8 @@
             </div>
           </div>
         </section>
-        <section class="table-card bd-bar-card" aria-label="Locatie van de beschikkingen">
-          <h2 class="bd-sec-t">Locatie van de beschikkingen</h2>
+        <section class="table-card bd-bar-card" aria-label="Openstaande beschikkingen per locatie">
+          <h2 class="bd-sec-t">Openstaande beschikkingen per locatie</h2>
           <p class="bd-sec-s">Per locatie</p>
           <div class="bd-vchart bd-vchart--sm">
             <div class="bd-vy" id="bd-loc-y" aria-hidden="true"></div>
@@ -246,14 +246,6 @@
               <div class="bd-vbars" id="bd-proc-bars"></div>
               <div class="bd-vaxis" id="bd-proc-axis" aria-hidden="true"></div>
             </div>
-          </div>
-        </section>
-        <section class="table-card bd-bar-card" aria-label="Declaratie Methode">
-          <h2 class="bd-sec-t">Declaratie Methode</h2>
-          <p class="bd-sec-s">Verdeling per methode</p>
-          <div class="bd-donut-wrap">
-            <svg class="bd-donut" id="bd-decl-donut" viewBox="0 0 42 42" role="img" aria-label="Donut declaratiemethode"></svg>
-            <div class="bd-donut-legend" id="bd-decl-legend"></div>
           </div>
         </section>
       </div>
@@ -282,8 +274,10 @@
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
   <script src="besa-daterange.js?v=dr2" defer></script>
+  <script src="clienten-data.js?v=hoofdaannemer1" defer></script>
+  <script src="beschikkingen-data.js?v=clbeheer8" defer></script>
   <script src="beschikkingen-dashboard-data.js?v=bd4snap" defer></script>
   <script src="urendeclaraties-data.js" defer></script>
-  <script src="beschikkingen-dashboard.js?v=bd7splitlopend" defer></script>
+  <script src="beschikkingen-dashboard.js?v=bd8live" defer></script>
 </body>
 </html>

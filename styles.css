@@ -16750,6 +16750,9 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .bd-bottom--4 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.bd-bottom--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .bd-hrow-empty {
   font-size: var(--font-ui-badge);
   color: var(--text-muted);
