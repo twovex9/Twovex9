@@ -1876,6 +1876,19 @@
     window.addEventListener("besa:facturen-updated", function () {
       try { if (loadedBesc && loadedBesc.id) bdtlUpdateOpenstaand(loadedBesc); } catch (e) { /* */ }
     });
+    // Cold-start vangrail (lesson #13): run() draait 1× op DOMContentLoaded.
+    // Als de beschikkingen-cache dan nog koud is, toont de pagina "niet gevonden".
+    // Zodra de data-laag laadt (bootstrap/andere tab/sync), herstellen we alsnog.
+    function bdtlMaybeRerunOnData() {
+      try {
+        if (loadedBesc && loadedBesc.id) return;          // al geladen → niets doen
+        var rid = parseQueryId();
+        if (!rid) return;
+        if (getBeschikkingById(rid)) run();               // cache nu warm → toon beschikking
+      } catch (e) { /* */ }
+    }
+    window.addEventListener("besa:beschikkingen-updated", bdtlMaybeRerunOnData);
+    document.addEventListener("beschikkingen:changed", bdtlMaybeRerunOnData);
   }
 
   if (document.readyState === "loading") {
