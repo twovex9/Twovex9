@@ -35,8 +35,50 @@
     { key: "fasewonen", label: "Fase wonen" },
     { key: "ambulant-intern", label: "Ambulant intern" },
     { key: "verblijf-behandeling", label: "Verblijf en behandeling" },
+    { key: "crisisopvang", label: "Crisisopvang" },
     { key: "overig", label: "Overig" },
   ];
+
+  // Tarief-eenheid per zorgsoort (user-regel): ambulant + WLZ = uur (met uren/week),
+  // verblijf/fasewonen/crisisopvang = dag (alle dagen in periode), gecombineerd = week.
+  // Bron-van-waarheid = zorgsoorten-tabel (op naam-match via getBescZorgsoortLabel);
+  // deze map is de robuuste fallback wanneer namen niet exact matchen.
+  var BESC_DTL_ZORG_TARIEFTYPE = {
+    "ambulant-intern": "uur", "ambulant-extern": "uur", "ambulant-intens": "uur",
+    "ambulant": "uur", "amb": "uur", "wlz": "uur", "vlz": "uur",
+    "verblijf-behandeling": "dag", "veb": "dag", "fasewonen": "dag",
+    "woon-zorg": "dag", "crisisopvang": "dag", "dagbesteding": "dag",
+    "gecombineerd": "week", "geo": "week", "overig": "week",
+  };
+
+  function besDtlTariefType(key) {
+    if (!key) return "week";
+    var k = String(key).toLowerCase();
+    // 1) Bron-van-waarheid: zorgsoorten-tabel op naam-match.
+    try {
+      if (window.zorgsoortenDB && typeof window.zorgsoortenDB.getAllSync === "function") {
+        var label = (typeof getBescZorgsoortLabel === "function") ? getBescZorgsoortLabel(key) : "";
+        if (label) {
+          var rows = window.zorgsoortenDB.getAllSync() || [];
+          for (var i = 0; i < rows.length; i += 1) {
+            if (rows[i] && !rows[i].archived &&
+                String(rows[i].naam).toLowerCase() === String(label).toLowerCase() &&
+                rows[i].tarieftype) {
+              return String(rows[i].tarieftype).toLowerCase();
+            }
+          }
+        }
+      }
+    } catch (e) { /* fallback hieronder */ }
+    // 2) Robuuste fallback-map.
+    return BESC_DTL_ZORG_TARIEFTYPE[k] || "week";
+  }
+
+  function besDtlTariefUnitLabel(tt) {
+    if (tt === "uur") return "(€ / uur)";
+    if (tt === "dag") return "(€ / dag)";
+    return "(€ / week)";
+  }
   var BESC_DTL_FASE_OPTS = [
     { key: "in_aanvraag", label: "In aanvraag" },
     { key: "actief", label: "Actief" },
@@ -663,6 +705,19 @@
     if (currentKey && String(currentKey)) sel.value = String(currentKey);
   }
 
+  // Pas het tariefveld aan op basis van de gekozen zorgsoort:
+  //  - uur (ambulant/WLZ): eenheid "€ / uur" + toon "Uren per week"
+  //  - dag (verblijf/fasewonen/crisisopvang): eenheid "€ / dag"
+  //  - week (gecombineerd): eenheid "€ / week"
+  function syncTariefUiForZorg() {
+    var zSel = document.getElementById("bdtl-zorg");
+    var unitEl = document.getElementById("bdtl-tar-unit");
+    var urenField = document.getElementById("bdtl-uren-week-field");
+    var tt = besDtlTariefType(zSel && zSel.value);
+    if (unitEl) unitEl.textContent = besDtlTariefUnitLabel(tt);
+    if (urenField) urenField.hidden = (tt !== "uur");
+  }
+
   function setFaseSelectValue(current) {
     var sel = document.getElementById("bdtl-fase-besc");
     if (!sel) return;
@@ -795,17 +850,21 @@
     setFaseSelectValue(b.fase);
     var wt = document.getElementById("bdtl-weekt");
     if (wt) {
-      if (b.tariefEenheid === "week") {
-        var te = b.tariefEur;
-        if (te != null && n2(te) > 0) {
-          var s0 = String(te).indexOf(".") >= 0 ? n2(te).toFixed(2) : String(te);
-          if (s0.indexOf(".") >= 0) s0 = s0.replace(".", ",");
-          wt.value = s0;
-        } else { wt.value = ""; }
-      } else {
-        wt.value = "";
-      }
+      // Tarief geldt nu voor alle eenheden (uur/dag/week) — bedrag tonen indien > 0.
+      var te = b.tariefEur;
+      if (te != null && n2(te) > 0) {
+        var s0 = String(te).indexOf(".") >= 0 ? n2(te).toFixed(2) : String(te);
+        if (s0.indexOf(".") >= 0) s0 = s0.replace(".", ",");
+        wt.value = s0;
+      } else { wt.value = ""; }
     }
+    // Uren per week (uit data jsonb) — alleen relevant bij uur-zorgsoort.
+    var uw = document.getElementById("bdtl-uren-week");
+    if (uw) {
+      var upw = (b._data && b._data.urenPerWeek != null) ? b._data.urenPerWeek : "";
+      uw.value = (upw === "" || upw == null) ? "" : String(upw);
+    }
+    syncTariefUiForZorg();
     setFactViewContextForB(b);
     renderBdtlTarievenTable();
     updateBdtlSideNotesSummary();
@@ -825,6 +884,8 @@
     }
     if (typeof getClientenById !== "function") return;
     var wk = document.getElementById("bdtl-weekt") && document.getElementById("bdtl-weekt").value.trim();
+    var urenWkEl = document.getElementById("bdtl-uren-week");
+    var urenWkVal = urenWkEl && urenWkEl.value.trim() ? n2(urenWkEl.value.trim()) : 0;
     setBeschikkingField(loadedBesc.id, function (row) {
       var cl = getClientenById(cId) || null;
       row.clientId = cId;
@@ -838,12 +899,17 @@
       row.fase = (document.getElementById("bdtl-fase-besc") && document.getElementById("bdtl-fase-besc").value) || "actief";
       row.startISO = (document.getElementById("bdtl-start") && document.getElementById("bdtl-start").value) || "";
       row.eindISO = (document.getElementById("bdtl-eind") && document.getElementById("bdtl-eind").value) || "";
-      if (wk) {
-        row.tariefEenheid = "week";
-        row.tariefEur = n2(wk);
-      } else if (loadedBesc.tariefEenheid === "week") {
-        row.tariefEenheid = "uur";
-        row.tariefEur = 0;
+      // Tarief-eenheid volgt de gekozen zorgsoort (uur/dag/week). Het bedrag is
+      // het tarief in die eenheid; bij uur slaan we ook uren-per-week op (jsonb).
+      var tt = besDtlTariefType(row.zorgsoortKey);
+      row.tariefEenheid = tt;
+      row.tariefEur = wk ? n2(wk) : 0;
+      row._data = (row._data && typeof row._data === "object") ? row._data : {};
+      if (tt === "uur") {
+        row._data.urenPerWeek = urenWkVal;
+      } else if (row._data.urenPerWeek != null) {
+        // Niet-uur zorgsoort: uren-per-week niet relevant, maar bewaar bestaande
+        // waarde niet-destructief (geen verwijdering van eerder ingevoerde data).
       }
     });
     var fresh = getBeschikkingById(loadedBesc.id);
@@ -1479,6 +1545,8 @@
     if (fSel) fSel.addEventListener("change", syncBescFaseDot);
     var cSel = document.getElementById("bdtl-client");
     if (cSel) cSel.addEventListener("change", function () { updateClFasePill(cSel.value); });
+    var zSel = document.getElementById("bdtl-zorg");
+    if (zSel) zSel.addEventListener("change", syncTariefUiForZorg);
     var form = document.getElementById("bdtl-form");
     if (form) form.addEventListener("submit", onSave);
     var tD = document.getElementById("bdtl-tab-dtl");

@@ -766,7 +766,8 @@
     { key: "ambulant-extern", label: "Ambulant extern" },
     { key: "fasewonen", label: "Fase wonen" },
     { key: "ambulant-intern", label: "Ambulant intern" },
-    { key: "verblijf-behandeling", label: "Verblijf en behandeling" }
+    { key: "verblijf-behandeling", label: "Verblijf en behandeling" },
+    { key: "crisisopvang", label: "Crisisopvang" }
   ];
   var BESC_ADD_FASE_OPTS = [
     { key: "uit_zorg", label: "Uit zorg" },

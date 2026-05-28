@@ -305,8 +305,12 @@
                   </div>
                 </div>
                 <div class="modal-field">
-                  <label class="modal-label" for="bdtl-weekt">Weektarief <span class="bdtl-optional">(€, bij weektarief)</span></label>
+                  <label class="modal-label" for="bdtl-weekt">Tarief <span class="bdtl-optional" id="bdtl-tar-unit">(€ / week)</span></label>
                   <input class="modal-input" type="text" id="bdtl-weekt" name="weektarief" inputmode="decimal" autocomplete="off" placeholder="Bijv. 12,50" />
+                </div>
+                <div class="modal-field" id="bdtl-uren-week-field" hidden>
+                  <label class="modal-label" for="bdtl-uren-week">Uren per week</label>
+                  <input class="modal-input" type="number" id="bdtl-uren-week" name="urenPerWeek" min="0" step="0.5" inputmode="decimal" autocomplete="off" placeholder="Bijv. 8" />
                 </div>
               </div>
               <div class="besc-dtl-form-foot">
@@ -867,15 +871,16 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="clienten-data.js?v=memfix1" defer></script>
+  <script src="clienten-data.js?v=hoofdaannemer1" defer></script>
   <script src="fase-ui.js" defer></script>
+  <script src="zorgsoorten-data.js?v=besctar1" defer></script>
   <script src="beschikkingen-besc-bulk.js" defer></script>
   <script src="beschikkingen-data.js" defer></script>
   <script src="beschikking-tarieven-data.js" defer></script>
   <script src="beschikking-notities-data.js" defer></script>
   <script src="beschikking-audit-data.js?v=audpag1" defer></script>
   <script src="urendeclaraties-data.js" defer></script>
-  <script src="beschikking-detail.js?v=budget1achterstand1" defer></script>
+  <script src="beschikking-detail.js?v=besctar1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous" defer></script>
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
