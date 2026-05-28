@@ -800,6 +800,70 @@
     }
   }
 
+  // ---- PR #7: openstaand bedrag + maandbedrag op basis van dagen-in-de-maand ----
+  function bdtlParseISO(iso) {
+    if (!iso || String(iso).length < 10) return null;
+    var p = String(iso).slice(0, 10).split("-");
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Som van openstaande (niet-betaalde) facturen voor deze beschikking.
+  function computeOpenstaandForBesc(b) {
+    if (!b || !window.facturenDB || typeof window.facturenDB.getAllSync !== "function") return 0;
+    var all = window.facturenDB.getAllSync() || [];
+    var naam = String(b.naam || "").trim();
+    var sum = 0;
+    all.forEach(function (f) {
+      if (!f || f.archived) return;
+      var match = (f.bescId && b.id)
+        ? (String(f.bescId) === String(b.id))
+        : (String(f.besch == null ? "" : f.besch).trim() === naam && naam !== "");
+      if (!match) return;
+      var st = String(f.st || "").toLowerCase();
+      var isPaid = st === "betaald" || st === "paid";
+      if (!isPaid) sum += (Number(f.bedragNum) || 0);
+    });
+    return sum;
+  }
+
+  // Aantal dagen van de beschikking dat binnen de (huidige) maand valt.
+  function bdtlDaysInMonthForBesc(b, ref) {
+    ref = ref || new Date();
+    var y = ref.getFullYear(), m = ref.getMonth();
+    var monthStart = new Date(y, m, 1);
+    var monthEnd = new Date(y, m + 1, 0);
+    var ps = bdtlParseISO(b.startISO) || monthStart;
+    var pe = bdtlParseISO(b.eindISO) || monthEnd;
+    var from = ps > monthStart ? ps : monthStart;
+    var to = pe < monthEnd ? pe : monthEnd;
+    if (to < from) return 0;
+    return Math.round((to - from) / 86400000) + 1;
+  }
+
+  // Maandbedrag voor de huidige maand. Fluctueert met het aantal dagen:
+  //  - dag  : dagtarief × dagen-in-maand-binnen-periode
+  //  - week : weektarief × (dagen / 7)
+  //  - uur  : uurtarief × uren-per-week × (dagen / 7)
+  function bdtlComputeMaandbedrag(b, ref) {
+    var tar = n2(b.tariefEur);
+    if (!tar) return 0;
+    var days = bdtlDaysInMonthForBesc(b, ref);
+    if (days <= 0) return 0;
+    var tt = b.tariefEenheid || "week";
+    if (tt === "dag") return tar * days;
+    if (tt === "uur") {
+      var uren = (b._data && b._data.urenPerWeek != null) ? n2(b._data.urenPerWeek) : 0;
+      return tar * uren * (days / 7);
+    }
+    return tar * (days / 7); // week
+  }
+
+  function bdtlUpdateOpenstaand(b) {
+    var el = document.getElementById("bdtl-openstaand");
+    if (el) el.textContent = fmtEur(computeOpenstaandForBesc(b));
+  }
+
   function applyForm(b) {
     loadedBesc = b;
     if (document.getElementById("bdtl-id-hid")) document.getElementById("bdtl-id-hid").textContent = b.id || "";
@@ -835,7 +899,14 @@
       // PR #7 — Budget-overschrijdings badge
       updateBudgetBadge(b);
     }());
-    if (document.getElementById("bdtl-side-maandbedr")) document.getElementById("bdtl-side-maandbedr").textContent = fmtEur(b.teDeclarerenLM);
+    if (document.getElementById("bdtl-side-maandbedr")) {
+      // Maandbedrag huidige maand: tarief-gedreven (dagen-in-maand) wanneer een
+      // tarief is ingevuld; anders fallback op de bestaande te-declareren-waarde.
+      var mb = bdtlComputeMaandbedrag(b);
+      document.getElementById("bdtl-side-maandbedr").textContent =
+        mb > 0 ? fmtEur(mb) : fmtEur(b.teDeclarerenLM);
+    }
+    bdtlUpdateOpenstaand(b);
 
     if (document.getElementById("bdtl-side-s")) document.getElementById("bdtl-side-s").textContent = fmtDateDisplay(b.startISO);
     if (document.getElementById("bdtl-side-e")) document.getElementById("bdtl-side-e").textContent = fmtDateDisplay(b.eindISO);
@@ -1800,6 +1871,10 @@
     });
     window.addEventListener("besa:beschikking-audit-updated", function () {
       try { if (loadedBesc && loadedBesc.id) renderBdtlAuditTable(); } catch (e) { /* */ }
+    });
+    // PR #7 — herbereken openstaand bedrag wanneer facturen/betalingen wijzigen.
+    window.addEventListener("besa:facturen-updated", function () {
+      try { if (loadedBesc && loadedBesc.id) bdtlUpdateOpenstaand(loadedBesc); } catch (e) { /* */ }
     });
   }
 
