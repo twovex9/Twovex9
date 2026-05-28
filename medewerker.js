@@ -1117,35 +1117,38 @@ function onbFormatDate(iso) {
   } catch (e) { return ""; }
 }
 
-// Vereiste documenten per dienstverband. `type` = BS2 doc-type (Contract/
-// Opleiding/VOG/ID/Addendum/Overig); `keywords` = naam-match (optioneel).
+// Vereiste documenten per dienstverband. `types` = acceptabele doc-type-waarden.
+// BS1 heeft historisch TWEE representaties: Engelse slugs uit de BS2-import
+// (id/vog/education/contract/addendum/other) én NL-labels uit de upload-UI
+// (ID/VOG/Opleiding/Contract/Addendum/Overig). Daarom matchen we case-insensitief
+// op een set (education↔opleiding). `keywords` = naam-match (optioneel).
 var ONB_REQUIRED_DOCS = {
   loondienst: [
-    { label: "Identiteitsbewijs", type: "ID" },
-    { label: "VOG (max 3 mnd)", type: "VOG" },
-    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Identiteitsbewijs", types: ["id"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
     { label: "Geheimhoudingsverklaring", keywords: ["geheimhoud"] },
     { label: "AVG-verklaring", keywords: ["avg"] },
   ],
   zzp: [
     { label: "Uittreksel KvK", keywords: ["kvk", "kamer van koophandel", "uittreksel"] },
-    { label: "Identiteitsbewijs", type: "ID" },
-    { label: "VOG (max 3 mnd)", type: "VOG" },
-    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Identiteitsbewijs", types: ["id"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "Bewijs aansprakelijkheidsverzekering", keywords: ["verzeker", "aansprakelijk"] },
   ],
   stagiair: [
-    { label: "Identiteitsbewijs", type: "ID" },
-    { label: "VOG (max 3 mnd)", type: "VOG" },
-    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Identiteitsbewijs", types: ["id"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "Stageovereenkomst", keywords: ["stage"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
   ],
   inhuur: [
-    { label: "Identiteitsbewijs", type: "ID" },
-    { label: "VOG (max 3 mnd)", type: "VOG" },
-    { label: "Diploma's / certificaten", type: "Opleiding" },
+    { label: "Identiteitsbewijs", types: ["id"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
   ],
 };
@@ -1165,7 +1168,11 @@ function onbRequiredDocsKey(emp) {
 function onbDocMatches(doc, req) {
   if (!doc) return false;
   var naam = String(doc.naam || "").toLowerCase();
-  var typeOk = req.type ? String(doc.type || "") === req.type : true;
+  var dtype = String(doc.type || "").toLowerCase();
+  var typeOk = true;
+  if (req.types && req.types.length) {
+    typeOk = req.types.some(function (t) { return dtype === String(t).toLowerCase(); });
+  }
   var kwOk = true;
   if (req.keywords && req.keywords.length) {
     kwOk = req.keywords.some(function (k) { return naam.indexOf(k) !== -1; });
