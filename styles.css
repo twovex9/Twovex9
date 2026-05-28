@@ -24144,17 +24144,6 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .inw-item-title { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--text); }
 .inw-item-desc { margin: 8px 0 0; font-size: var(--font-table-head); color: var(--text-secondary); line-height: 1.5; }
-.inw-video {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  margin: 10px 0 0;
-  background: var(--bg-muted);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-.inw-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .inw-doc-link { display: inline-block; margin: 10px 0 0; }
 .inw-akkoord {
   display: flex;

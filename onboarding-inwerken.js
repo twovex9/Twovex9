@@ -55,31 +55,12 @@
     setContent('<div class="onbup-alert onbup-alert--error">' + esc(msg) + "</div>");
   }
 
-  // Alleen bekende video-hosts in een iframe embedden; veilige conversie van
-  // gewone YouTube/Vimeo-links. Onbekende/overige links → "open"-knop.
-  function toEmbed(url) {
-    var u = String(url || "").trim();
-    if (!/^https?:\/\//i.test(u)) return null;
-    var m = u.match(/(?:youtube\.com\/watch\?[^#]*\bv=|youtu\.be\/|youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{6,})/);
-    if (m) return "https://www.youtube.com/embed/" + m[1];
-    m = u.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d{4,})/);
-    if (m) return "https://player.vimeo.com/video/" + m[1];
-    return null;
-  }
-
+  // Video én document openen als veilige link in een nieuw tabblad (geen iframe-embed).
   function mediaHtml(item) {
     var url = String(item.url || "").trim();
-    if (item.type === "video") {
-      var embed = toEmbed(url);
-      if (embed) {
-        return '<div class="inw-video"><iframe src="' + esc(embed)
-          + '" title="' + esc(item.titel || "Inwerkvideo") + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
-      }
-    }
-    // Document of niet-embedbare video → veilige open-link.
     if (/^https?:\/\//i.test(url)) {
       return '<a class="btn-outline inw-doc-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">'
-        + (item.type === "video" ? "Video openen in nieuw tabblad" : "Document openen") + "</a>";
+        + (item.type === "video" ? "Video bekijken (opent in nieuw tabblad)" : "Document openen") + "</a>";
     }
     return '<p class="onbup-muted">Geen geldige link ingesteld.</p>';
   }
