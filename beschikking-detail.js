@@ -1540,9 +1540,73 @@
     }
   }
 
+  function bdtlPad2(n) { return n < 10 ? "0" + n : String(n); }
+  function bdtlYmdLocal(d) {
+    return d.getFullYear() + "-" + bdtlPad2(d.getMonth() + 1) + "-" + bdtlPad2(d.getDate());
+  }
+  function bdtlDayAfter(iso) {
+    if (!iso || String(iso).length < 10) return "";
+    var p = String(iso).slice(0, 10).split("-");
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + 1);
+    return bdtlYmdLocal(d);
+  }
+
+  // Vervolgbeschikking: maak een nieuwe beschikking met fase "in_aanvraag" als
+  // opvolger. Use-case: een beschikking verloopt (evt. halverwege de maand) →
+  // direct een aanvraag voor de volgende periode klaarzetten. Kopieert cliënt,
+  // zorgsoort, tarief en declaratiemethode; start = dag na de oude einddatum.
+  function onVervolgBeschikking() {
+    if (!loadedBesc || !loadedBesc.id) return;
+    if (!window.beschikkingenDB || typeof window.beschikkingenDB.add !== "function") {
+      showToast("Beschikkingen-laag niet geladen.");
+      return;
+    }
+    var b = loadedBesc;
+    var startNew = bdtlDayAfter(b.eindISO) || bdtlYmdLocal(new Date());
+    var newRow = {
+      clientId: b.clientId || "",
+      clientLabel: b.clientLabel || "—",
+      naam: b.naam || "Beschikking",
+      zorgsoortKey: b.zorgsoortKey || "gecombineerd",
+      fase: "in_aanvraag",
+      locatie: b.locatie || "—",
+      startISO: startNew,
+      eindISO: "",
+      declMeth: b.declMeth || "ONS",
+      tariefEur: n2(b.tariefEur),
+      tariefEenheid: b.tariefEenheid || "week",
+      betalingsStatus: "outstanding",
+      teDeclarerenLM: 0,
+      nogNietGedeclareerd: 0,
+      gedeclGemeenteInBehandeling: 0,
+      betaaldCumulatief: 0,
+      _data: (b._data && b._data.urenPerWeek != null) ? { urenPerWeek: b._data.urenPerWeek } : {},
+    };
+    var btn = document.getElementById("bdtl-vervolg-btn");
+    if (btn) btn.disabled = true;
+    window.beschikkingenDB.add(newRow).then(function (saved) {
+      if (loadedBesc && loadedBesc.id && typeof appendBescAudit === "function") {
+        appendBescAudit(loadedBesc.id, "aanmaken", "Vervolgbeschikking aangemaakt (In aanvraag).", "Beschikking");
+      }
+      var nid = saved && saved.id ? saved.id : "";
+      if (typeof showSaveModal === "function") showSaveModal("Vervolgbeschikking aangemaakt (In aanvraag).");
+      if (nid) {
+        window.location.href = "beschikking-detail.html?id=" + encodeURIComponent(nid);
+      } else if (btn) { btn.disabled = false; }
+    }).catch(function (err) {
+      if (btn) btn.disabled = false;
+      if (window.showError) window.showError("Vervolgbeschikking aanmaken mislukt: " + (err && err.message ? err.message : err));
+      else showToast("Aanmaken mislukt.");
+    });
+  }
+
   function wire() {
     var fSel = document.getElementById("bdtl-fase-besc");
     if (fSel) fSel.addEventListener("change", syncBescFaseDot);
+    var vervolgBtn = document.getElementById("bdtl-vervolg-btn");
+    if (vervolgBtn) vervolgBtn.addEventListener("click", onVervolgBeschikking);
     var cSel = document.getElementById("bdtl-client");
     if (cSel) cSel.addEventListener("change", function () { updateClFasePill(cSel.value); });
     var zSel = document.getElementById("bdtl-zorg");
