@@ -28,6 +28,13 @@
     return "org_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
   }
 
+  // Stille fire-and-forget fouten zichtbaar maken (werkpatronen §6c-bis):
+  // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
+  function reportSilent(action, err) {
+    console.error("[organisatieDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Organisaties — " + action, err);
+  }
+
   // ---------------------------------------------------------------------------
   // Mapping rij ⇄ object
   // ---------------------------------------------------------------------------
@@ -294,14 +301,14 @@
     out.forEach(function (o) {
       var prev = oldMap[o.id];
       if (!prev) {
-        add(o).catch(function (err) { console.error("[organisatiesDB] add via setOrganisatiesItems:", err); });
+        add(o).catch(function (err) { reportSilent("toevoegen", err); });
       } else if (JSON.stringify(prev) !== JSON.stringify(o)) {
-        update(o.id, o).catch(function (err) { console.error("[organisatiesDB] update via setOrganisatiesItems:", err); });
+        update(o.id, o).catch(function (err) { reportSilent("bijwerken", err); });
       }
       delete oldMap[o.id];
     });
     Object.keys(oldMap).forEach(function (id) {
-      remove(id).catch(function (err) { console.error("[organisatiesDB] remove via setOrganisatiesItems:", err); });
+      remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     });
   }
 
@@ -350,7 +357,7 @@
     writeCache(cache);
     dispatchUpdated();
     if (global.besaSupabase) {
-      add(row).catch(function (err) { console.error("[organisatiesDB] addOrganisatie sync mislukt:", err); });
+      add(row).catch(function (err) { reportSilent("toevoegen", err); });
     }
     return row;
   }
@@ -373,7 +380,7 @@
     dispatchUpdated();
     if (oud !== t) propagateOrganisatieNaamWijziging(oud, t);
     if (global.besaSupabase) {
-      update(id, cache[pos]).catch(function (err) { console.error("[organisatiesDB] updateOrganisatieById sync mislukt:", err); });
+      update(id, cache[pos]).catch(function (err) { reportSilent("bijwerken", err); });
     }
     return cache[pos];
   }
@@ -387,7 +394,7 @@
         writeCache(cache);
         dispatchUpdated();
         if (global.besaSupabase) {
-          update(id, cache[i]).catch(function (err) { console.error("[organisatiesDB] setArchivedById sync mislukt:", err); });
+          update(id, cache[i]).catch(function (err) { reportSilent("archiveren", err); });
         }
         return true;
       }
@@ -405,7 +412,7 @@
         dispatchUpdated();
         if (naam) propagateOrganisatieVerwijderd(naam);
         if (global.besaSupabase) {
-          remove(id).catch(function (err) { console.error("[organisatiesDB] deleteOrganisatieById sync mislukt:", err); });
+          remove(id).catch(function (err) { reportSilent("verwijderen", err); });
         }
         return true;
       }

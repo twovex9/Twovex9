@@ -42,6 +42,13 @@
     };
   }
 
+  // Stille fire-and-forget fouten zichtbaar maken (werkpatronen §6c-bis):
+  // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
+  function reportSilent(action, err) {
+    console.error("[gemeentenDB] " + action + " mislukt:", err);
+    if (window.besaReportSyncFailure) window.besaReportSyncFailure("Gemeenten — " + action, err);
+  }
+
   function readCache() {
     try {
       var raw = localStorage.getItem(CACHE_KEY);
@@ -179,22 +186,22 @@
   }
 
   function addGemeenteCompat(naam) {
-    add(naam).catch(function (err) { console.error("addGemeente:", err); });
+    add(naam).catch(function (err) { reportSilent("toevoegen", err); });
     return null;
   }
 
   function updateGemeenteByIdCompat(id, naam) {
-    update(id, { naam: naam }).catch(function (err) { console.error("updateGemeenteById:", err); });
+    update(id, { naam: naam }).catch(function (err) { reportSilent("bijwerken", err); });
     return null;
   }
 
   function setGemeenteArchivedByIdCompat(id, archived) {
-    update(id, { archived: !!archived }).catch(function (err) { console.error("setGemeenteArchivedById:", err); });
+    update(id, { archived: !!archived }).catch(function (err) { reportSilent("archiveren", err); });
     return true;
   }
 
   function deleteGemeenteByIdCompat(id) {
-    remove(id).catch(function (err) { console.error("deleteGemeenteById:", err); });
+    remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     return true;
   }
 
