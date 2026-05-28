@@ -23831,3 +23831,114 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .emp-onb-badge--lopend { background: var(--yellow-soft); color: var(--yellow); }
 .emp-onb-badge--klaar { background: var(--green-soft); color: var(--green); }
+
+/* ============================================================
+   Onboarding zelfservice-uploadpagina (onboarding-upload.html)
+   ============================================================ */
+.onbup-body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-muted);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+}
+.onbup-card {
+  width: min(560px, 94vw);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: 0 12px 40px rgba(20, 38, 80, 0.10);
+  padding: 32px 30px 24px;
+}
+.onbup-logo { display: block; margin: 0 auto 16px; max-width: 150px; height: auto; }
+.onbup-title { margin: 0 0 4px; font-size: var(--font-h1); color: var(--text); text-align: center; }
+.onbup-sub { margin: 0 0 20px; font-size: var(--font-base); color: var(--text-muted); text-align: center; }
+.onbup-muted { color: var(--text-muted); font-size: var(--font-base); }
+.onbup-welcome { margin: 0 0 6px; font-size: var(--font-base); font-weight: 600; color: var(--text); }
+.onbup-intro { margin: 0 0 18px; font-size: var(--font-base); color: var(--text-secondary); line-height: 1.5; }
+.onbup-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.onbup-section-title {
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.onbup-doclist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.onbup-docitem { display: flex; align-items: center; gap: 10px; font-size: var(--font-base); color: var(--text-secondary); }
+.onbup-doc-check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-ui-badge);
+}
+.onbup-doc-naam { flex: 1 1 auto; min-width: 0; }
+.onbup-doc-type {
+  flex: 0 0 auto;
+  font-size: var(--font-ui-badge);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--line);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+.onbup-form { display: flex; flex-direction: column; gap: 12px; }
+.onbup-field { display: flex; flex-direction: column; gap: 5px; font-size: var(--font-table-head); color: var(--text-secondary); }
+.onbup-field input,
+.onbup-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--font-base);
+  color: var(--text);
+  background: var(--surface);
+}
+.onbup-field input:focus,
+.onbup-field select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+.onbup-submit { margin-top: 4px; align-self: flex-start; }
+.onbup-alert { margin: 0; padding: 9px 12px; border-radius: var(--r-sm); font-size: var(--font-base); }
+.onbup-alert--error { background: var(--red-soft); color: var(--red); }
+.onbup-alert--ok { background: var(--green-soft); color: var(--green); }
+.onbup-foot { margin: 22px 0 0; font-size: var(--font-table-head); color: var(--text-muted); text-align: center; }
+
+/* Zelfservice-uploadlink in de Onboarding-tab (documenten-stap) */
+.emp-onb-uploadlink {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.emp-onb-uploadlink-label {
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.emp-onb-uploadlink-row { display: flex; align-items: center; gap: 8px; }
+.emp-onb-uploadlink-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  background: var(--bg-muted);
+}
+.emp-onb-uploadlink-hint { margin-top: 6px; font-size: var(--font-ui-badge); color: var(--text-muted); }

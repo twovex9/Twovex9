@@ -3932,6 +3932,7 @@ create table if not exists public.onboarding_trajecten (
   gestart_op timestamptz not null default now(),
   afgerond_op timestamptz,
   aangemaakt_door uuid,                            -- profiel dat de onboarding startte
+  upload_token uuid not null default gen_random_uuid(),  -- geheim voor de zelfservice-uploadlink
   aanmaakdatum timestamptz not null default now(),
   laatst_gewijzigd timestamptz not null default now(),
   data jsonb not null default '{}'::jsonb          -- o.a. dienstverband_type-snapshot
@@ -3939,6 +3940,8 @@ create table if not exists public.onboarding_trajecten (
 
 create unique index if not exists onboarding_trajecten_medewerker_uidx
   on public.onboarding_trajecten (medewerker_id);
+create unique index if not exists onboarding_trajecten_upload_token_uidx
+  on public.onboarding_trajecten (upload_token);
 create index if not exists onboarding_trajecten_status_idx
   on public.onboarding_trajecten (status);
 

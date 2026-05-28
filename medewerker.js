@@ -1193,7 +1193,7 @@ function onbComputeRequiredDocs(emp) {
 
 // status: 'open' | 'bezig' | 'klaar'. De documenten-stap leidt zijn status af
 // uit de geüploade documenten; overige stappen worden in latere releases gevuld.
-function onbComputeSteps(emp /* , traject */) {
+function onbComputeSteps(emp, traject) {
   var reqDocs = onbComputeRequiredDocs(emp);
   var foundCount = reqDocs.filter(function (r) { return r.found; }).length;
   var docStatus = reqDocs.length === 0
@@ -1208,6 +1208,20 @@ function onbComputeSteps(emp /* , traject */) {
         + "</li>";
     }).join("")
     + "</ul>";
+
+  var _uplink = (traject && traject.uploadToken)
+    ? (window.location.origin + "/onboarding-upload?token=" + traject.uploadToken)
+    : "";
+  if (_uplink) {
+    docDetail += '<div class="emp-onb-uploadlink">'
+      + '<div class="emp-onb-uploadlink-label">Zelfservice-uploadlink voor de medewerker</div>'
+      + '<div class="emp-onb-uploadlink-row">'
+      + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-uploadlink-input" readonly value="' + onbEscHtml(_uplink) + '">'
+      + '<button type="button" class="btn-outline" id="emp-onb-uploadlink-copy">Kopiëren</button>'
+      + "</div>"
+      + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de medewerker; daar kan hij/zij zelf documenten uploaden zonder in te loggen.</div>'
+      + "</div>";
+  }
 
   return [
     { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
@@ -1310,6 +1324,23 @@ function initOnboardingTab() {
   // Gedelegeerde klikafhandeling (knoppen worden dynamisch (her)gerenderd).
   document.addEventListener("click", async function (e) {
     if (!e.target || !e.target.closest) return;
+    const copyBtn = e.target.closest("#emp-onb-uploadlink-copy");
+    if (copyBtn) {
+      const inp = document.getElementById("emp-onb-uploadlink-input");
+      if (inp) {
+        try { inp.select(); } catch (e2) { /* */ }
+        var copied = false;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try { await navigator.clipboard.writeText(inp.value); copied = true; } catch (e3) { /* */ }
+        }
+        if (!copied) { try { copied = document.execCommand("copy"); } catch (e4) { /* */ }
+        }
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = copied ? "Gekopieerd!" : "Kopieer handmatig";
+        setTimeout(function () { copyBtn.textContent = orig || "Kopiëren"; }, 1600);
+      }
+      return;
+    }
     const startBtn = e.target.closest("#emp-onb-start-btn");
     const afrondBtn = e.target.closest("#emp-onb-afrond-btn");
     const heropenBtn = e.target.closest("#emp-onb-heropen-btn");
