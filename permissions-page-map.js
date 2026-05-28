@@ -25,7 +25,6 @@
     "login.html": null,
     "mijn-gegevens.html": null,
     "notifications.html": null,
-    "werkruimte.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 
     // ─── HR-domein (employees-groep) ──────────────────────────────────────────
