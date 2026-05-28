@@ -115,7 +115,18 @@
         }
         else dbPatch[k] = src[k] == null ? null : String(src[k]);
       } else {
-        data[k] = src[k];
+        // DIEHARD-vangnet tegen stille dataverlies: een lege waarde ("" / null /
+        // undefined) mag een bestaande NIET-lege opgeslagen string NOOIT
+        // overschrijven. Zo blijft data behouden als een veld door een form-bug
+        // (bv. datum-formaat of legacy select-waarde) niet correct geladen werd.
+        // Bewust legen is zeldzaam en minder erg dan onbedoeld wissen.
+        var newVal = src[k];
+        var oldVal = data[k];
+        var newEmpty = (newVal === undefined || newVal === null || newVal === "");
+        if (newEmpty && typeof oldVal === "string" && oldVal !== "") {
+          return; // behoud bestaande waarde
+        }
+        data[k] = newVal;
         dataChanged = true;
       }
     });
