@@ -191,6 +191,20 @@
                 </div>
               </form>
             </section>
+
+            <section class="gemeente-detail-pan is-active" aria-labelledby="od-section-notities">
+              <h3 class="gemeente-detail-section-title" id="od-section-notities">Notities</h3>
+              <p class="gemeente-detail-section-sub">Interne notities bij deze verwijzer.</p>
+              <form id="od-not-form" class="od-not-form" novalidate>
+                <label class="visually-hidden" for="od-not-text">Nieuwe notitie</label>
+                <textarea class="modal-input od-not-text" id="od-not-text" rows="3" placeholder="Schrijf een notitie over deze verwijzer…"></textarea>
+                <div class="od-not-form-actions">
+                  <button type="submit" class="btn-primary" id="od-not-add">+ Notitie toevoegen</button>
+                </div>
+              </form>
+              <ul class="od-not-list" id="od-not-list" aria-live="polite"></ul>
+              <p class="od-not-empty" id="od-not-empty" hidden>Nog geen notities voor deze verwijzer.</p>
+            </section>
           </div>
         </div>
       </div>
@@ -220,8 +234,9 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="clienten-data.js?v=memfix1" defer></script>
+  <script src="clienten-data.js?v=hoofdaannemer1" defer></script>
   <script src="organisatie-data.js" defer></script>
-  <script src="organisatie-detail.js" defer></script>
+  <script src="organisatie-notities-data.js?v=onot1" defer></script>
+  <script src="organisatie-detail.js?v=onot1" defer></script>
 </body>
 </html>

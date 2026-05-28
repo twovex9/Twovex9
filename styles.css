@@ -14891,6 +14891,77 @@ button.planning-erm-new {
   margin-top: 20px;
 }
 
+/* ——— Verwijzer-notities (organisatie-detail) ——— */
+.gemeente-detail-section-sub {
+  margin: -8px 0 14px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+}
+
+.od-not-form {
+  margin-bottom: 18px;
+}
+
+.od-not-text {
+  width: 100%;
+  resize: vertical;
+  min-height: 64px;
+}
+
+.od-not-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.od-not-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.od-not-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.od-not-item-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.od-not-item-text {
+  margin: 0 0 6px;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.od-not-item-meta {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+}
+
+.od-not-del-btn {
+  flex: 0 0 auto;
+}
+
+.od-not-empty {
+  margin: 8px 0 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
 @media (max-width: 900px) {
   .gemeente-detail-layout {
     grid-template-columns: 1fr;
