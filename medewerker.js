@@ -1191,6 +1191,70 @@ function onbComputeRequiredDocs(emp) {
   });
 }
 
+// Kopieerbaar inwerk-link-blok (generieke kopieer-knop via data-copy-target).
+function onbInwerkLinkBlok(label, url) {
+  return '<div class="emp-onb-uploadlink">'
+    + '<div class="emp-onb-uploadlink-label">' + onbEscHtml(label) + "</div>"
+    + '<div class="emp-onb-uploadlink-row">'
+    + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-inwerklink-input" readonly value="' + onbEscHtml(url) + '">'
+    + '<button type="button" class="btn-outline" data-copy-target="emp-onb-inwerklink-input">Kopiëren</button>'
+    + "</div>"
+    + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de medewerker; daar doorloopt hij/zij de inwerk-onderdelen en vinkt "gelezen en akkoord" aan.</div>'
+    + "</div>";
+}
+
+// Inwerken-stap: items uit `inwerk_items` voor de doelgroep van de medewerker
+// (zelfde sleutel als onbRequiredDocsKey) + voortgang uit `inwerk_voortgang`.
+function onbComputeInwerken(emp, traject) {
+  var key = onbRequiredDocsKey(emp);
+  var allItems = (window.inwerkItemsDB && typeof window.inwerkItemsDB.getAllSync === "function")
+    ? (window.inwerkItemsDB.getAllSync() || []) : [];
+  var items = allItems.filter(function (it) {
+    if (!it || it.archived) return false;
+    return it.doelgroep === "alle" || it.doelgroep === key;
+  }).sort(function (a, b) { return (a.volgorde || 0) - (b.volgorde || 0); });
+
+  var akkoordIds = (window.inwerkVoortgangDB && typeof window.inwerkVoortgangDB.akkoordItemIdsSync === "function")
+    ? window.inwerkVoortgangDB.akkoordItemIdsSync(emp && emp.id) : [];
+  var akkoordSet = {};
+  akkoordIds.forEach(function (id) { akkoordSet[String(id)] = true; });
+
+  var verplicht = items.filter(function (it) { return it.verplicht; });
+  var doneVerplicht = verplicht.filter(function (it) { return akkoordSet[String(it.id)]; }).length;
+  var requiredCount = verplicht.length;
+
+  var status = "open";
+  if (requiredCount > 0 && doneVerplicht === requiredCount) status = "klaar";
+  else if (doneVerplicht > 0) status = "bezig";
+
+  var desc = requiredCount > 0
+    ? ("Inwerkvideo's en verplichte documenten lezen en akkoord (" + onbEscHtml(doneVerplicht + "/" + requiredCount) + " afgerond).")
+    : "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord.";
+
+  var detail = "";
+  if (!items.length) {
+    detail = '<p class="emp-onb-teken-hint">Nog geen inwerk-onderdelen ingesteld voor dit dienstverband. Voeg ze toe bij <a href="inwerk-items">HR → Inwerken</a>.</p>';
+  } else {
+    detail += '<ul class="emp-onb-doclist">'
+      + items.map(function (it) {
+        var ok = !!akkoordSet[String(it.id)];
+        var tag = it.verplicht ? "" : ' <span class="emp-onb-doc-state">(optioneel)</span>';
+        return '<li class="emp-onb-doc' + (ok ? " emp-onb-doc--found" : "") + '">'
+          + '<span class="emp-onb-doc-icon" aria-hidden="true">' + (ok ? "✓" : "○") + "</span>"
+          + '<span class="emp-onb-doc-label">' + onbEscHtml(it.titel || "Onderdeel") + tag + "</span>"
+          + '<span class="emp-onb-doc-state">' + (ok ? "Akkoord" : "Nog niet") + "</span>"
+          + "</li>";
+      }).join("")
+      + "</ul>";
+    var _link = (traject && traject.uploadToken)
+      ? (window.location.origin + "/onboarding-inwerken?token=" + traject.uploadToken)
+      : "";
+    if (_link) detail += onbInwerkLinkBlok("Inwerk-link voor de medewerker", _link);
+  }
+
+  return { status: status, desc: desc, detailHtml: detail };
+}
+
 // status: 'open' | 'bezig' | 'klaar'. De documenten-stap leidt zijn status af
 // uit de geüploade documenten; overige stappen worden in latere releases gevuld.
 function onbComputeSteps(emp, traject) {
@@ -1263,11 +1327,13 @@ function onbComputeSteps(emp, traject) {
     tekenDetail = '<p class="emp-onb-teken-hint">✓ Getekend door medewerker en werkgever. Een getekende PDF staat bij de Documenten.</p>';
   }
 
+  var inwerken = onbComputeInwerken(emp, traject);
+
   return [
     { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
     { key: "contract", titel: "Contract opgesteld", desc: contractDesc, status: contractStatus, detailHtml: contractDetail },
     { key: "tekenen", titel: "Contract getekend", desc: tekenDesc, status: tekenStatus, detailHtml: tekenDetail },
-    { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord.", status: "open" },
+    { key: "inwerken", titel: "Inwerken afgerond", desc: inwerken.desc, status: inwerken.status, detailHtml: inwerken.detailHtml },
     { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend.", status: "open" },
     { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster.", status: "open" },
   ];
@@ -1529,6 +1595,19 @@ function onbLoadDocs(empId, force) {
     .then(function () { _onbDocsBusy = false; renderOnboardingTab(); });
 }
 
+// Inwerk-voortgang per medewerker laden (read-on-demand). Loaded-guard voorkomt
+// een re-render-loop: renderOnboardingTab roept dit aan, maar na de eerste load
+// is het een no-op tot een force (event).
+var _onbInwerkLoaded = {};
+function onbLoadInwerk(empId, force) {
+  if (!empId || !window.inwerkVoortgangDB || typeof window.inwerkVoortgangDB.listForMedewerker !== "function") return;
+  if (_onbInwerkLoaded[empId] && !force) return;
+  _onbInwerkLoaded[empId] = true;
+  window.inwerkVoortgangDB.listForMedewerker(empId, force)
+    .then(function () { renderOnboardingTab(); })
+    .catch(function () { /* read-fout: geen logout-escalatie */ });
+}
+
 function renderOnboardingTab() {
   const body = document.getElementById("emp-onb-body");
   const headActions = document.getElementById("emp-onb-head-actions");
@@ -1563,6 +1642,7 @@ function renderOnboardingTab() {
   }
 
   onbLoadDocs(emp.id);
+  onbLoadInwerk(emp.id);
   const steps = onbComputeSteps(emp, traject);
   const stepsHtml = steps.map(function (s, i) {
     return '<li class="emp-onb-step">'
@@ -1592,6 +1672,22 @@ function initOnboardingTab() {
   // Gedelegeerde klikafhandeling (knoppen worden dynamisch (her)gerenderd).
   document.addEventListener("click", async function (e) {
     if (!e.target || !e.target.closest) return;
+    // Generieke kopieer-knop (data-copy-target="<input-id>") — o.a. inwerk-link.
+    var copyTargetBtn = e.target.closest("[data-copy-target]");
+    if (copyTargetBtn) {
+      var tgtId = copyTargetBtn.getAttribute("data-copy-target");
+      var inpT = document.getElementById(tgtId);
+      if (inpT) {
+        try { inpT.select(); } catch (eA) { /* */ }
+        var okT = false;
+        if (navigator.clipboard && navigator.clipboard.writeText) { try { await navigator.clipboard.writeText(inpT.value); okT = true; } catch (eB) { /* */ } }
+        if (!okT) { try { okT = document.execCommand("copy"); } catch (eC) { /* */ } }
+        var origT = copyTargetBtn.textContent;
+        copyTargetBtn.textContent = okT ? "Gekopieerd!" : "Kopieer handmatig";
+        setTimeout(function () { copyTargetBtn.textContent = origT || "Kopiëren"; }, 1600);
+      }
+      return;
+    }
     const copyBtn = e.target.closest("#emp-onb-uploadlink-copy");
     if (copyBtn) {
       const inp = document.getElementById("emp-onb-uploadlink-input");
@@ -1691,6 +1787,8 @@ function initOnboardingTab() {
   });
   window.addEventListener("besa:contracten-updated", renderOnboardingTab);
   window.addEventListener("besa:contract-sjablonen-updated", renderOnboardingTab);
+  window.addEventListener("besa:inwerk-items-updated", renderOnboardingTab);
+  window.addEventListener("besa:inwerk-voortgang-updated", renderOnboardingTab);
   initContractModal();
 }
 

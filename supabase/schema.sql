@@ -4153,3 +4153,96 @@ create policy "auth kan contract_handtekeningen toevoegen"
 drop policy if exists "auth kan contract_handtekeningen bewerken" on public.contract_handtekeningen;
 create policy "auth kan contract_handtekeningen bewerken"
   on public.contract_handtekeningen for update to authenticated using (true) with check (true);
+
+-- ============================================================================
+-- Onboarding — inwerken + akkoord (release 6)
+-- ============================================================================
+-- inwerk_items: catalogus van inwerk-onderdelen die HR/Donovan beheert
+-- (inwerkvideo's via embed-link of document-links), per doelgroep + verplicht-vlag.
+-- inwerk_voortgang: per medewerker per item de "gelezen + akkoord"-status,
+-- geschreven door de edge function `onboarding-inwerken` (token-gevalideerd,
+-- service role, IP-audit). GEEN cascade op de FK's (DIEHARD nooit-verwijderen).
+-- Migratie: onboarding_inwerk_v1.
+
+create table if not exists public.inwerk_items (
+  id uuid primary key default gen_random_uuid(),
+  titel text not null default '',
+  type text not null default 'video',          -- 'video' | 'document'
+  url text not null default '',                 -- embed-link (YouTube/Vimeo) of document-link
+  beschrijving text not null default '',
+  doelgroep text not null default 'alle',       -- 'alle' | 'loondienst' | 'zzp' | 'stagiair' | 'inhuur'
+  verplicht boolean not null default true,
+  volgorde integer not null default 0,
+  archived boolean not null default false,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists inwerk_items_archived_idx on public.inwerk_items (archived);
+create index if not exists inwerk_items_volgorde_idx on public.inwerk_items (volgorde);
+create index if not exists inwerk_items_doelgroep_idx on public.inwerk_items (doelgroep);
+
+drop trigger if exists set_inwerk_items_laatst_gewijzigd on public.inwerk_items;
+create trigger set_inwerk_items_laatst_gewijzigd
+  before update on public.inwerk_items
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.inwerk_items enable row level security;
+
+drop policy if exists "auth kan inwerk_items lezen" on public.inwerk_items;
+create policy "auth kan inwerk_items lezen"
+  on public.inwerk_items for select to authenticated using (true);
+
+drop policy if exists "auth kan inwerk_items toevoegen" on public.inwerk_items;
+create policy "auth kan inwerk_items toevoegen"
+  on public.inwerk_items for insert to authenticated with check (true);
+
+drop policy if exists "auth kan inwerk_items bewerken" on public.inwerk_items;
+create policy "auth kan inwerk_items bewerken"
+  on public.inwerk_items for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan inwerk_items verwijderen" on public.inwerk_items;
+create policy "auth kan inwerk_items verwijderen"
+  on public.inwerk_items for delete to authenticated using (true);
+
+create table if not exists public.inwerk_voortgang (
+  id uuid primary key default gen_random_uuid(),
+  medewerker_id uuid not null references public.medewerkers(id),    -- GEEN cascade (DIEHARD)
+  inwerk_item_id uuid not null references public.inwerk_items(id),  -- GEEN cascade (DIEHARD)
+  gelezen_akkoord boolean not null default false,
+  akkoord_naam text not null default '',
+  akkoord_op timestamptz,
+  ip_adres text,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create unique index if not exists inwerk_voortgang_mw_item_uidx
+  on public.inwerk_voortgang (medewerker_id, inwerk_item_id);
+create index if not exists inwerk_voortgang_medewerker_idx
+  on public.inwerk_voortgang (medewerker_id);
+
+drop trigger if exists set_inwerk_voortgang_laatst_gewijzigd on public.inwerk_voortgang;
+create trigger set_inwerk_voortgang_laatst_gewijzigd
+  before update on public.inwerk_voortgang
+  for each row execute function public.set_laatst_gewijzigd();
+
+alter table public.inwerk_voortgang enable row level security;
+
+drop policy if exists "auth kan inwerk_voortgang lezen" on public.inwerk_voortgang;
+create policy "auth kan inwerk_voortgang lezen"
+  on public.inwerk_voortgang for select to authenticated using (true);
+
+drop policy if exists "auth kan inwerk_voortgang toevoegen" on public.inwerk_voortgang;
+create policy "auth kan inwerk_voortgang toevoegen"
+  on public.inwerk_voortgang for insert to authenticated with check (true);
+
+drop policy if exists "auth kan inwerk_voortgang bewerken" on public.inwerk_voortgang;
+create policy "auth kan inwerk_voortgang bewerken"
+  on public.inwerk_voortgang for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan inwerk_voortgang verwijderen" on public.inwerk_voortgang;
+create policy "auth kan inwerk_voortgang verwijderen"
+  on public.inwerk_voortgang for delete to authenticated using (true);
