@@ -237,6 +237,29 @@ function setChecked(id, value) {
   if (el) el.checked = Boolean(value);
 }
 
+// Zet een DD-MM-YYYY-waarde in een <input type="date"> (die YYYY-MM-DD eist).
+// Zonder deze conversie weigert de browser de waarde -> veld blijft leeg ->
+// de save schrijft 'm leeg weg (stille dataverlies van o.a. startdatum).
+function setDateValue(id, ddmmyyyy) {
+  const el = document.getElementById(id);
+  if (el) el.value = ddmmyyyyToISO(ddmmyyyy) || "";
+}
+
+// Selecteer de bestaande optie met deze waarde; staat de (legacy/geïmporteerde)
+// waarde niet in de lijst, voeg 'm dan toe en selecteer 'm. Zo blijft de waarde
+// zichtbaar EN wordt 'm niet bij de eerstvolgende save gewist.
+function selectOrAddOption(selectEl, value) {
+  if (!selectEl || value == null || value === "") return;
+  for (const opt of selectEl.options) {
+    if (opt.value === value) { opt.selected = true; return; }
+  }
+  const o = document.createElement("option");
+  o.value = value;
+  o.textContent = value;
+  selectEl.appendChild(o);
+  o.selected = true;
+}
+
 function getActiveUrenFieldIds() {
   const loondienstVariant = document.querySelector('.emp-prof-variant[data-prof-for="Loondienst"]');
   const isLoondienstVisible = Boolean(loondienstVariant && !loondienstVariant.hidden);
@@ -783,8 +806,8 @@ function loadEmployeeIntoForm() {
   setChecked("emp-training-bhv", emp.trainingBhv);
   setChecked("emp-training-gvvg", emp.trainingGvVg);
   setChecked("emp-training-medicatie", emp.trainingMedicatie);
-  setValue("emp-startdatum", emp.startdatum);
-  setValue("emp-loondienst-startdatum", emp.startdatum);
+  setDateValue("emp-startdatum", emp.startdatum);
+  setDateValue("emp-loondienst-startdatum", emp.startdatum);
   setValue("emp-prof-email", emp.profEmail || emp.email);
   setValue("emp-prof-tel", emp.profTel || emp.tel);
   setValue("emp-prof-iban", emp.profIban);
@@ -805,8 +828,8 @@ function loadEmployeeIntoForm() {
   })();
   setValue("emp-periodieke-maand", emp.periodiekeMaand);
   setValue("emp-loondienst-periodieke-maand", emp.periodiekeMaand);
-  setValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
-  setValue("emp-loondienst-beoordelingsdatum", emp.beoordelingsdatum);
+  setDateValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
+  setDateValue("emp-loondienst-beoordelingsdatum", emp.beoordelingsdatum);
   if (typeof window.__syncLoondienstPeriodiekeMaandDropdown === "function") {
     window.__syncLoondienstPeriodiekeMaandDropdown();
   }
@@ -835,7 +858,7 @@ function loadEmployeeIntoForm() {
   setValue("emp-uur-algemeen", emp.uurAlgemeen);
   setValue("emp-uur-diensttype", "Boventallig");
   setValue("emp-uur-tarief", emp.uurTarief);
-  setValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
+  setDateValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
   const selectedLocaties = normalizeLocatieNames(
     Array.isArray(emp.locatiesSelected)
       ? emp.locatiesSelected
@@ -859,18 +882,14 @@ function loadEmployeeIntoForm() {
 
   const dvEl = document.getElementById("emp-dienstverband");
   if (dvEl && emp.dienstverband) {
-    for (const opt of dvEl.options) {
-      if (opt.value === emp.dienstverband) { opt.selected = true; break; }
-    }
+    selectOrAddOption(dvEl, emp.dienstverband);
   }
   if (dvEl) {
     dvEl.dataset.persistedValue = dvEl.value || emp.dienstverband || "Loondienst";
   }
   const inhuurEl = document.getElementById("emp-inhuurtype");
   if (inhuurEl && emp.inhuurtype) {
-    for (const opt of inhuurEl.options) {
-      if (opt.value === emp.inhuurtype) { opt.selected = true; break; }
-    }
+    selectOrAddOption(inhuurEl, emp.inhuurtype);
   }
   setChecked("emp-uren-verleentzorg", emp.urenVerleentzorg);
   setChecked("emp-uren-handmatig", emp.urenHandmatigRegistreren);
@@ -2622,7 +2641,7 @@ function gatherFormData() {
       ? window.__getRoosterWeekendModes()
       : { za: "alle", zo: "alle" };
   const periodiekeMaand = getActivePeriodiekeMaandValue();
-  const beoordelingsdatum = getActiveBeoordelingsdatumValue();
+  const beoordelingsdatum = isoToDDMMYYYY(getActiveBeoordelingsdatumValue());
   const voorzieningenFieldIds = getActiveVoorzieningenFieldIds();
   const collectOplItems = (key) => (getOpleidingState(key).items || [])
     .map((x) => ({ naam: String(x?.naam || "").trim(), datum: String(x?.datum || "").trim() }))
@@ -2677,7 +2696,7 @@ function gatherFormData() {
     dienstverband: selText("emp-dienstverband"),
     inhuurtype: selText("emp-inhuurtype"),
     functie: profFieldValues.functie,
-    startdatum: profFieldValues.startdatum,
+    startdatum: isoToDDMMYYYY(profFieldValues.startdatum),
     opleiding,
     opleidingItems,
     opleidingItemsSkj,
