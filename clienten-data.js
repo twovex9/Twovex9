@@ -444,7 +444,12 @@
     var idx = cache.findIndex(function (c) { return c && String(c.id) === String(client.id); });
     var merged;
     if (idx >= 0) {
-      merged = Object.assign({}, cache[idx], client, { laatstGewijzigd: isoNow() });
+      // Behoud de oorspronkelijk geladen `laatstGewijzigd` zodat de optimistic-
+      // lock-check in update() de juiste (geladen) timestamp vergelijkt i.p.v.
+      // "nu". Anders ziet check_optimistic_lock altijd >1s drift t.o.v. de DB en
+      // blokkeert élke cliënt-bewerking met een conflictmodal. update() zet de
+      // cache na een geslaagde save alsnog op de echte DB-`laatst_gewijzigd`.
+      merged = Object.assign({}, cache[idx], client);
       cache[idx] = merged;
     } else {
       merged = Object.assign({ aanmaakdatum: isoNow(), laatstGewijzigd: isoNow() }, client);
