@@ -23942,3 +23942,39 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   background: var(--bg-muted);
 }
 .emp-onb-uploadlink-hint { margin-top: 6px; font-size: var(--font-ui-badge); color: var(--text-muted); }
+
+/* ============================================================
+   Contractsjablonen (contract-sjablonen.html)
+   ============================================================ */
+.modal-card--wide { max-width: 720px; width: min(720px, 94vw); }
+.cs-body-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 220px;
+  font: inherit;
+  font-size: var(--font-base);
+  line-height: 1.5;
+}
+.cs-merge-hint {
+  margin: 8px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  line-height: 1.9;
+}
+.cs-merge-hint code {
+  background: var(--bg-muted);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-size: var(--font-ui-badge);
+  color: var(--text-secondary);
+}
+.cs-besch {
+  display: inline-block;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  color: var(--text-muted);
+}
