@@ -64,6 +64,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 55 | [Sprint 13: CI integratie op release-tag (E2E)](55-sprint-13-ci-release-tag.md) | ✅ Voltooid PR #37 | 2026-05-13 |
 | 56 | [Sprint 14: GDPR retention + DSR flow](56-sprint-14-gdpr-retention-dsr.md) | 🟡 In review (PR open) | 2026-05-13 |
 | 62 | [v3 Fase 0.5 — errors.html admin-pagina](62-v3-errors-html-admin-pagina.md) | ⏳ TODO (deferred naar Fase E gap-fix) | 2026-05-13 |
+| 63 | [Client-detail koude-direct-load (lesson #13 herhaling)](63-clientbeheer-clientdetail-coldload.md) | ⏳ Bekend issue — pre-existing sessie-rehydratie, buiten Clientbeheer-scope | 2026-05-28 |
 
 ## Voor v3
 
