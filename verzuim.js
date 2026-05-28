@@ -1260,9 +1260,15 @@
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
       if (modal.hidden) return;
-      // Laat een open slider-bevestiging (verwijderen/genereren) zijn eigen
-      // Escape afhandelen — sluit dan niet meteen de hele tijdlijn.
-      if (document.querySelector(".modal-overlay .employee-delete-slider")) return;
+      // Laat een ZICHTBARE slider-bevestiging (verwijderen/genereren) zijn eigen
+      // Escape afhandelen — sluit dan niet meteen de hele tijdlijn. Let op: de
+      // verzuim-pagina heeft een vaste, verborgen delete-modal met dezelfde
+      // slider-class; daarom checken op zichtbaarheid (offsetParent), niet op
+      // loutere aanwezigheid in de DOM.
+      var sliders = document.querySelectorAll(".modal-overlay .employee-delete-slider");
+      for (var si = 0; si < sliders.length; si++) {
+        if (sliders[si].offsetParent !== null) return;
+      }
       tlClose();
     });
 
