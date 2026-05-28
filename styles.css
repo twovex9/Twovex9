@@ -24067,3 +24067,111 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .tk-akkoord input { margin-top: 2px; }
 .tk-submit { margin-top: 8px; }
+
+/* ============================================================
+   Inwerken — HR-beheer (inwerk-items.html) + onboarding-stap
+   ============================================================ */
+.iw-intro {
+  margin: -4px 0 16px;
+  max-width: 760px;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.iw-titel { font-weight: 600; color: var(--text); }
+.iw-row[data-row-id] { cursor: pointer; }
+.iw-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+}
+.iw-badge--ja { background: var(--blue-soft); color: var(--blue); }
+.iw-badge--nee { background: var(--bg-muted); color: var(--text-muted); }
+.iw-url-hint {
+  margin: 6px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.iw-url-hint code {
+  background: var(--bg-muted);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-size: var(--font-ui-badge);
+  color: var(--text-secondary);
+}
+.iw-row2 {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.iw-inline-field { display: flex; flex-direction: column; gap: 4px; margin: 0; max-width: 130px; }
+.iw-verplicht-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+  padding-bottom: 8px;
+}
+.iw-besch-textarea { resize: vertical; min-height: 60px; font: inherit; font-size: var(--font-base); }
+
+/* Medewerker-zijde: geïsoleerde inwerk-pagina (onboarding-inwerken.html) */
+.inw-list { display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+.inw-item {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.inw-item-head { display: flex; align-items: center; gap: 10px; }
+.inw-item-num {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+}
+.inw-item-title { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--text); }
+.inw-item-desc { margin: 8px 0 0; font-size: var(--font-table-head); color: var(--text-secondary); line-height: 1.5; }
+.inw-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 10px 0 0;
+  background: var(--bg-muted);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.inw-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.inw-doc-link { display: inline-block; margin: 10px 0 0; }
+.inw-akkoord {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+}
+.inw-akkoord input { margin-top: 2px; }
+.inw-akkoord-done { margin: 6px 0 0; font-size: var(--font-ui-badge); color: var(--green); }
+.inw-progress {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--bg-muted);
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+}

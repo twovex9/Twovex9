@@ -9,8 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Contractsjablonen — HR</title>
-  <link rel="stylesheet" href="styles.css?v=cs1">
+  <title>Inwerken — HR</title>
+  <link rel="stylesheet" href="styles.css?v=iw1">
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -46,8 +46,8 @@
                 <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
                 <a href="locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
                 <a href="hr-diensttypes" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Diensttypes</span><span class="top-dropdown-subtitle">Beheer eigen diensttypes</span></a>
-                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked is-active" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
-                <a href="inwerk-items" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Inwerken</span><span class="top-dropdown-subtitle">Beheer inwerk-onderdelen</span></a>
+                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
+                <a href="inwerk-items" class="top-dropdown-link top-dropdown-link--stacked is-active" role="menuitem"><span class="top-dropdown-title">Inwerken</span><span class="top-dropdown-subtitle">Beheer inwerk-onderdelen</span></a>
                 <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
                 <a href="bureaus" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
               </div>
@@ -108,8 +108,8 @@
         <a href="opleidingen" class="side-link">Opleidingen</a>
         <a href="locaties" class="side-link">Locaties</a>
         <a href="hr-diensttypes" class="side-link">Diensttypes</a>
-        <a href="contract-sjablonen" class="side-link is-active">Contractsjablonen</a>
-        <a href="inwerk-items" class="side-link">Inwerken</a>
+        <a href="contract-sjablonen" class="side-link">Contractsjablonen</a>
+        <a href="inwerk-items" class="side-link is-active">Inwerken</a>
         <a href="salarishuis" class="side-link">Salarishuis</a>
         <a href="salarisadministratie-exporter" class="side-link">Salarisadministratie</a>
         <a href="bureaus" class="side-link">Bureau's</a>
@@ -122,16 +122,18 @@
 
     <main class="content">
       <div class="content-header">
-        <h1>Contractsjablonen</h1>
+        <h1>Inwerken</h1>
         <div class="header-actions">
-          <button class="btn-primary" type="button" id="cs-add-btn">+ Sjabloon toevoegen</button>
+          <button class="btn-primary" type="button" id="iw-add-btn">+ Onderdeel toevoegen</button>
         </div>
       </div>
 
+      <p class="iw-intro">Beheer de inwerk-onderdelen die een nieuwe medewerker doorloopt: inwerkvideo's (YouTube/Vimeo) en verplichte documenten (bv. ziekte- en kledingvoorschriften). De medewerker bekijkt ze via een persoonlijke link en vinkt per onderdeel "gelezen en akkoord" aan.</p>
+
       <div class="toolbar">
-        <input class="search" type="search" id="cs-search" placeholder="Zoeken..." autocomplete="off" />
+        <input class="search" type="search" id="iw-search" placeholder="Zoeken..." autocomplete="off" />
         <label class="switch switch--yellow">
-          <input type="checkbox" id="cs-archived-toggle" />
+          <input type="checkbox" id="iw-archived-toggle" />
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
@@ -139,39 +141,40 @@
 
       <section class="table-card">
         <div class="table-wrapper">
-          <table class="employees-table" id="cs-table">
+          <table class="employees-table" id="iw-table">
             <thead>
               <tr>
-                <th data-col="naam"><span class="th-label">Naam</span></th>
+                <th data-col="titel"><span class="th-label">Titel</span></th>
                 <th data-col="type"><span class="th-label">Type</span></th>
-                <th data-col="beschrijving"><span class="th-label">Beschrijving</span></th>
+                <th data-col="doelgroep"><span class="th-label">Doelgroep</span></th>
+                <th data-col="verplicht"><span class="th-label">Verplicht</span></th>
                 <th data-col="aanmaakdatum"><span class="th-label">Aangemaakt</span></th>
                 <th data-col="acties"></th>
               </tr>
             </thead>
-            <tbody id="cs-tbody"></tbody>
+            <tbody id="iw-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="cs-pager-range" class="pager-range">0 of 0 total.</span>
+            <span id="iw-pager-range" class="pager-range">0 of 0 total.</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="cs-rows-per-page">
+            <label class="footer-rows-wrap" for="iw-rows-per-page">
               <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="cs-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
+              <select id="iw-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
                 <option value="10">10</option>
                 <option value="15" selected>15</option>
                 <option value="30">30</option>
                 <option value="50">50</option>
               </select>
             </label>
-            <span id="cs-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="iw-pager-page" class="pager-page-label">Pagina 1 van 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="cs-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="cs-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="cs-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="cs-pager-last" disabled>&raquo;</button>
+              <button type="button" class="pager-btn" id="iw-pager-first" disabled>&laquo;</button>
+              <button type="button" class="pager-btn" id="iw-pager-prev" disabled>&lsaquo;</button>
+              <button type="button" class="pager-btn" id="iw-pager-next" disabled>&rsaquo;</button>
+              <button type="button" class="pager-btn" id="iw-pager-last" disabled>&raquo;</button>
             </span>
           </div>
         </div>
@@ -180,35 +183,51 @@
   </div>
 
   <!-- Add/Edit modal -->
-  <div class="modal-overlay" id="cs-edit-modal" hidden aria-hidden="true">
-    <div class="modal-card modal-card--wide" role="dialog" aria-modal="true" aria-labelledby="cs-edit-title" tabindex="-1">
+  <div class="modal-overlay" id="iw-edit-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="iw-edit-title" tabindex="-1">
       <div class="modal-header">
-        <h2 id="cs-edit-title" class="modal-title">Sjabloon toevoegen</h2>
-        <button type="button" class="modal-close" id="cs-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+        <h2 id="iw-edit-title" class="modal-title">Onderdeel toevoegen</h2>
+        <button type="button" class="modal-close" id="iw-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
-      <form id="cs-edit-form" class="modal-body">
-        <label class="modal-label" for="cs-edit-naam">Naam</label>
-        <input type="text" id="cs-edit-naam" class="modal-input" required maxlength="100" autocomplete="off" />
+      <form id="iw-edit-form" class="modal-body">
+        <label class="modal-label" for="iw-edit-titel">Titel</label>
+        <input type="text" id="iw-edit-titel" class="modal-input" required maxlength="120" autocomplete="off" />
 
-        <label class="modal-label" for="cs-edit-type">Type</label>
-        <select id="cs-edit-type" class="modal-input">
-          <option value="arbeidsovereenkomst">Arbeidsovereenkomst (loondienst)</option>
-          <option value="opdracht">Overeenkomst van opdracht (ZZP)</option>
-          <option value="stage">Stageovereenkomst</option>
-          <option value="oproep">Oproepovereenkomst</option>
-          <option value="overig">Overig</option>
+        <label class="modal-label" for="iw-edit-type">Type</label>
+        <select id="iw-edit-type" class="modal-input">
+          <option value="video">Inwerkvideo (YouTube / Vimeo)</option>
+          <option value="document">Document / link</option>
         </select>
 
-        <label class="modal-label" for="cs-edit-beschrijving">Beschrijving</label>
-        <input type="text" id="cs-edit-beschrijving" class="modal-input" maxlength="200" autocomplete="off" />
+        <label class="modal-label" for="iw-edit-url">Link</label>
+        <input type="url" id="iw-edit-url" class="modal-input" maxlength="600" autocomplete="off" placeholder="https://www.youtube.com/embed/… of link naar het document" />
+        <p class="iw-url-hint">Bij een video: plak de embed-link (YouTube: <code>youtube.com/embed/…</code>, Vimeo: <code>player.vimeo.com/video/…</code>). Een gewone YouTube-link wordt automatisch omgezet. Bij een document: een link naar het bestand (bv. uit Beleid).</p>
 
-        <label class="modal-label" for="cs-edit-body">Contracttekst</label>
-        <textarea id="cs-edit-body" class="modal-input cs-body-textarea" rows="14" placeholder="Typ hier de contracttekst met invulvelden zoals {{volledige_naam}}…"></textarea>
-        <p class="cs-merge-hint">Invulvelden (worden bij het opstellen automatisch ingevuld): <code>{{volledige_naam}}</code> <code>{{voornaam}}</code> <code>{{achternaam}}</code> <code>{{functie}}</code> <code>{{werkzaamheden}}</code> <code>{{startdatum}}</code> <code>{{contractduur}}</code> <code>{{uren}}</code> <code>{{tarief}}</code> <code>{{schaal}}</code> <code>{{locatie}}</code> <code>{{datum_vandaag}}</code></p>
+        <label class="modal-label" for="iw-edit-doelgroep">Doelgroep</label>
+        <select id="iw-edit-doelgroep" class="modal-input">
+          <option value="alle">Alle medewerkers</option>
+          <option value="loondienst">Alleen loondienst</option>
+          <option value="zzp">Alleen ZZP</option>
+          <option value="stagiair">Alleen stagiairs</option>
+          <option value="inhuur">Alleen inhuur</option>
+        </select>
 
-        <input type="hidden" id="cs-edit-id" />
+        <div class="iw-row2">
+          <label class="modal-label iw-inline-field" for="iw-edit-volgorde">Volgorde
+            <input type="number" id="iw-edit-volgorde" class="modal-input" min="0" step="1" value="0" />
+          </label>
+          <label class="iw-verplicht-toggle">
+            <input type="checkbox" id="iw-edit-verplicht" checked />
+            <span>Verplicht (telt mee voor "inwerken afgerond")</span>
+          </label>
+        </div>
+
+        <label class="modal-label" for="iw-edit-beschrijving">Toelichting (optioneel)</label>
+        <textarea id="iw-edit-beschrijving" class="modal-input iw-besch-textarea" rows="3" placeholder="Korte toelichting die de medewerker bij dit onderdeel ziet…"></textarea>
+
+        <input type="hidden" id="iw-edit-id" />
         <div class="modal-footer">
-          <button type="button" class="btn-outline" id="cs-edit-cancel">Annuleren</button>
+          <button type="button" class="btn-outline" id="iw-edit-cancel">Annuleren</button>
           <button type="submit" class="btn-primary">Opslaan</button>
         </div>
       </form>
@@ -234,8 +253,8 @@
   <script src="mfa-challenge.js?v=mfa1" defer></script>
   <script src="auth-guard.js"></script>
   <script src="profiles-data.js"></script>
-  <script src="contract-sjablonen-data.js?v=cs1" defer></script>
+  <script src="inwerk-items-data.js?v=iw1" defer></script>
   <script src="besa-audit.js" defer></script>
-  <script src="contract-sjablonen.js?v=cs1" defer></script>
+  <script src="inwerk-items.js?v=iw1" defer></script>
 </body>
 </html>
