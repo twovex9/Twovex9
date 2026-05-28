@@ -1240,10 +1240,33 @@ function onbComputeSteps(emp, traject) {
       + "</div></div>"
     : '<button type="button" class="btn-primary" id="emp-onb-contract-opstellen">Contract opstellen</button>';
 
+  // Teken-stap: hangt af van de status van het opgestelde contract.
+  var tekenStatus = "open";
+  var tekenDesc = "Medewerker en werkgever ondertekenen digitaal.";
+  var tekenDetail = "";
+  var _origin = window.location.origin;
+  if (!contract) {
+    tekenDetail = '<p class="emp-onb-teken-hint">Stel eerst een contract op (stap hierboven).</p>';
+  } else if (contract.status === "opgesteld") {
+    tekenDetail = '<button type="button" class="btn-primary" id="emp-onb-teken-versturen">Naar medewerker sturen om te tekenen</button>';
+  } else if (contract.status === "wacht_op_ondertekening") {
+    tekenStatus = "bezig";
+    tekenDesc = "Verzonden naar de medewerker — wacht op handtekening.";
+    tekenDetail = onbTekenLinkBlok("Tekenlink voor de medewerker", _origin + "/contract-tekenen?token=" + (contract.tekenTokenMedewerker || ""), "mw");
+  } else if (contract.status === "wacht_op_werkgever") {
+    tekenStatus = "bezig";
+    tekenDesc = "Medewerker heeft getekend — wacht op werkgever (Lionel of Romy).";
+    tekenDetail = onbTekenLinkBlok("Tekenlink voor de werkgever (Lionel of Romy)", _origin + "/contract-tekenen?token=" + (contract.tekenTokenWerkgever || ""), "wg");
+  } else if (contract.status === "getekend") {
+    tekenStatus = "klaar";
+    tekenDesc = "Contract volledig digitaal ondertekend.";
+    tekenDetail = '<p class="emp-onb-teken-hint">✓ Getekend door medewerker en werkgever. Een getekende PDF staat bij de Documenten.</p>';
+  }
+
   return [
     { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
     { key: "contract", titel: "Contract opgesteld", desc: contractDesc, status: contractStatus, detailHtml: contractDetail },
-    { key: "tekenen", titel: "Contract getekend", desc: "Medewerker en werkgever hebben digitaal ondertekend.", status: "open" },
+    { key: "tekenen", titel: "Contract getekend", desc: tekenDesc, status: tekenStatus, detailHtml: tekenDetail },
     { key: "inwerken", titel: "Inwerken afgerond", desc: "Inwerkvideo's en verplichte documenten zijn gelezen en akkoord.", status: "open" },
     { key: "toegang", titel: "Toegang geregeld", desc: "Accounts en rechten (ONS, SharePoint, Outlook) zijn toegekend.", status: "open" },
     { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: "Medewerker is beschikbaar voor het rooster.", status: "open" },
@@ -1452,6 +1475,42 @@ function onbStatusPill(status) {
   return '<span class="emp-onb-status ' + m[1] + '">' + m[0] + "</span>";
 }
 
+// Kopieerbaar tekenlink-blok voor de teken-stap (kind: "mw" | "wg").
+function onbTekenLinkBlok(label, url, kind) {
+  return '<div class="emp-onb-uploadlink">'
+    + '<div class="emp-onb-uploadlink-label">' + onbEscHtml(label) + "</div>"
+    + '<div class="emp-onb-uploadlink-row">'
+    + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-teken-link-' + kind + '" readonly value="' + onbEscHtml(url) + '">'
+    + '<button type="button" class="btn-outline" data-teken-copy="' + kind + '">Kopiëren</button>'
+    + "</div>"
+    + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de tekenaar; daar kan hij/zij het contract lezen en ondertekenen.</div>'
+    + "</div>";
+}
+
+async function onbVerstuurTerTekening() {
+  var emp = getSelectedEmployee();
+  if (!emp || !emp.id || !window.contractenDB) return;
+  var c = window.contractenDB.getLatestForMedewerkerSync(emp.id);
+  if (!c || !c.id) return;
+  try {
+    var mkToken = function () {
+      if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (ch) {
+        var r = Math.random() * 16 | 0; var v = ch === "x" ? r : (r & 0x3 | 0x8); return v.toString(16);
+      });
+    };
+    await window.contractenDB.update(c.id, {
+      status: "wacht_op_ondertekening",
+      tekenTokenMedewerker: c.tekenTokenMedewerker || mkToken(),
+      tekenTokenWerkgever: c.tekenTokenWerkgever || mkToken(),
+    });
+    if (window.showActionFeedback) window.showActionFeedback("saved", "Contract verzonden ter ondertekening");
+  } catch (err) {
+    if (window.showActionFeedback) window.showActionFeedback("error", "Versturen mislukt: " + (err && err.message ? err.message : err));
+  }
+  renderOnboardingTab();
+}
+
 // De documenten-laag laadt per medewerker lazy én cachet alleen in localStorage,
 // wat bij volle quota stil kan falen (listSync blijft dan 0). Daarom houden we
 // de docs die list() zélf teruggeeft bij in _onbDocsCache en renderen daaruit.
@@ -1548,6 +1607,27 @@ function initOnboardingTab() {
         copyBtn.textContent = copied ? "Gekopieerd!" : "Kopieer handmatig";
         setTimeout(function () { copyBtn.textContent = orig || "Kopiëren"; }, 1600);
       }
+      return;
+    }
+    // Tekenlink kopiëren (medewerker/werkgever)
+    var tkCopy = e.target.closest("[data-teken-copy]");
+    if (tkCopy) {
+      var kind = tkCopy.getAttribute("data-teken-copy");
+      var inp2 = document.getElementById("emp-onb-teken-link-" + kind);
+      if (inp2) {
+        try { inp2.select(); } catch (e5) { /* */ }
+        var ok5 = false;
+        if (navigator.clipboard && navigator.clipboard.writeText) { try { await navigator.clipboard.writeText(inp2.value); ok5 = true; } catch (e6) { /* */ } }
+        if (!ok5) { try { ok5 = document.execCommand("copy"); } catch (e7) { /* */ } }
+        var o2 = tkCopy.textContent;
+        tkCopy.textContent = ok5 ? "Gekopieerd!" : "Kopieer handmatig";
+        setTimeout(function () { tkCopy.textContent = o2 || "Kopiëren"; }, 1600);
+      }
+      return;
+    }
+    // Contract naar medewerker sturen ter ondertekening
+    if (e.target.closest("#emp-onb-teken-versturen")) {
+      onbVerstuurTerTekening();
       return;
     }
     // Contract opstellen / opnieuw / bekijken

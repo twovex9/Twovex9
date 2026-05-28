@@ -4108,3 +4108,48 @@ create policy "auth kan contracten bewerken"
 drop policy if exists "auth kan contracten verwijderen" on public.contracten;
 create policy "auth kan contracten verwijderen"
   on public.contracten for delete to authenticated using (true);
+
+-- ============================================================================
+-- Onboarding — digitaal tekenen (release 5)
+-- ============================================================================
+-- Teken-tokens (privé-links) op contracten + handtekeningen-audit. Tekenen
+-- verloopt via de edge function `contract-sign` (token-gevalideerd, service role,
+-- legt IP vast); medewerker → werkgever (Lionel/Romy) → getekend + PDF in docs.
+
+alter table public.contracten
+  add column if not exists teken_token_medewerker uuid,
+  add column if not exists teken_token_werkgever uuid;
+
+create unique index if not exists contracten_teken_token_mw_uidx
+  on public.contracten (teken_token_medewerker) where teken_token_medewerker is not null;
+create unique index if not exists contracten_teken_token_wg_uidx
+  on public.contracten (teken_token_werkgever) where teken_token_werkgever is not null;
+
+create table if not exists public.contract_handtekeningen (
+  id uuid primary key default gen_random_uuid(),
+  contract_id uuid not null references public.contracten(id),  -- GEEN cascade (DIEHARD)
+  rol text not null,                          -- 'medewerker' | 'werkgever'
+  ondertekenaar_naam text not null default '',
+  ondertekenaar_email text default '',
+  methode text not null default 'akkoord',    -- 'getekend' (handtekening) | 'akkoord'
+  handtekening_png text,                      -- base64 PNG van het canvas (optioneel)
+  ip_adres text,
+  getekend_op timestamptz not null default now(),
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists contract_handtekeningen_contract_id_idx on public.contract_handtekeningen (contract_id);
+
+alter table public.contract_handtekeningen enable row level security;
+
+drop policy if exists "auth kan contract_handtekeningen lezen" on public.contract_handtekeningen;
+create policy "auth kan contract_handtekeningen lezen"
+  on public.contract_handtekeningen for select to authenticated using (true);
+
+drop policy if exists "auth kan contract_handtekeningen toevoegen" on public.contract_handtekeningen;
+create policy "auth kan contract_handtekeningen toevoegen"
+  on public.contract_handtekeningen for insert to authenticated with check (true);
+
+drop policy if exists "auth kan contract_handtekeningen bewerken" on public.contract_handtekeningen;
+create policy "auth kan contract_handtekeningen bewerken"
+  on public.contract_handtekeningen for update to authenticated using (true) with check (true);
