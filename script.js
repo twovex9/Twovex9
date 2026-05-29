@@ -1327,11 +1327,23 @@ function applyTableFilters() {
       : (data.competentie ? [data.competentie] : []);
     // Locatie/bureau: kan in jsonb 'data', oude '_data', of als losse velden zitten.
     const dataExt = data.data || data._data || {};
-    const empLoc = data.locatie || dataExt.locatie || (Array.isArray(dataExt.locaties) && dataExt.locaties[0]) || "";
     const empBur = data.bureau || dataExt.bureau || (Array.isArray(dataExt.bureaus) && dataExt.bureaus[0]) || "";
-    // Locaties/bureaus kan ook array zijn — accepteer ook array contains.
-    const locList = Array.isArray(dataExt.locaties) ? dataExt.locaties
-      : (Array.isArray(data.locaties) ? data.locaties : (empLoc ? [empLoc] : []));
+    // Locatie: medewerkers bewaren hun locaties in `locatiesSelected` (array) met
+    // `locatiesTags` (comma-string) als mirror. rowToObj spreidt de jsonb top-level,
+    // dus die velden staan op `data` zelf; `dataExt` dekt alleen oudere geneste
+    // cache-vormen. Vroeger las dit filter `data.locaties`/`data.locatie` — keys die
+    // niet bestaan — waardoor élk locatie-filter 0 medewerkers toonde (zie
+    // detail-medewerkers-tab.js voor hetzelfde, wél correcte leespatroon).
+    let locList = [];
+    if (Array.isArray(data.locatiesSelected)) locList = data.locatiesSelected;
+    else if (Array.isArray(dataExt.locatiesSelected)) locList = dataExt.locatiesSelected;
+    else if (typeof (data.locatiesTags || dataExt.locatiesTags) === "string" && (data.locatiesTags || dataExt.locatiesTags).trim())
+      locList = (data.locatiesTags || dataExt.locatiesTags).split(",");
+    else if (Array.isArray(dataExt.locaties)) locList = dataExt.locaties;
+    else if (Array.isArray(data.locaties)) locList = data.locaties;
+    else if (data.locatie || dataExt.locatie) locList = [data.locatie || dataExt.locatie];
+    locList = locList.map((s) => String(s).trim()).filter(Boolean);
+    // Bureaus kan ook array zijn — accepteer ook array contains.
     const burList = Array.isArray(dataExt.bureaus) ? dataExt.bureaus
       : (Array.isArray(data.bureaus) ? data.bureaus : (empBur ? [empBur] : []));
 
