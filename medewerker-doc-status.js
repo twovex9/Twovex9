@@ -1,17 +1,19 @@
 /* global window, document */
 /**
- * medewerker-doc-status.js — toont de document-status (groen/oranje/rood) per
- * medewerker op de HR-medewerkerslijst (hr.html), conform user-eis Lionel
- * 2026-05-28.
+ * medewerker-doc-status.js — kleurt het avatar-bolletje (het bolletje vóór de
+ * naam) per medewerker als een stoplicht op de HR-medewerkerslijst (hr.html),
+ * conform user-eis Lionel (2026-05-28) + 2026-05-29 (bolletje zélf kleuren
+ * i.p.v. een los driehoekje ernaast).
  *
  *   GROEN  = alle documenten compleet en geldig (niets vervalt binnen 3 maanden)
- *   ORANJE = een document vervalt binnen 3 maanden → driehoekje, blijft planbaar
+ *   ORANJE = een document vervalt binnen 3 maanden → bolletje oranje, blijft planbaar
  *   ROOD   = documentatie mist (document ontbreekt of is verlopen)
  *
  * De berekening komt uit window.medewerkerWarnings.computeStatusForIdSync (de
  * driehoek-statuslaag), op basis van window.medewerkerDocsDB (alle documenten).
- * Dit script raakt de bestaande lijst-render (script.js) niet aan: het injecteert
- * alleen een indicator in de avatar-cel en herberekent bij elke her-render.
+ * Dit script raakt de bestaande lijst-render (script.js) niet aan: het zet
+ * alleen een status-class + tooltip op het bestaande .avatar-bolletje en
+ * herberekent bij elke her-render.
  *
  * Vereist op de pagina (vóór dit script): medewerkers-data.js,
  * medewerker-documenten-data.js, medewerker-warnings.js.
@@ -19,21 +21,7 @@
 (function (global) {
   "use strict";
 
-  var IND_CLASS = "doc-status-ind";
-
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  // SVG: driehoek voor oranje/rood (waarschuwing), cirkel voor groen (compleet).
-  function indSvg(status) {
-    if (status === "green") {
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';
-    }
-    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 3 L22 20 L2 20 Z"/></svg>';
-  }
+  var STATUS_CLASSES = ["avatar--status-green", "avatar--status-orange", "avatar--status-red"];
 
   function statusLabel(status) {
     if (status === "red") return "Documentatie ontbreekt of is verlopen";
@@ -59,27 +47,33 @@
     if (!empId || !global.medewerkerWarnings || typeof global.medewerkerWarnings.computeStatusForIdSync !== "function") return;
     var cell = tr.querySelector('td[data-col="avatar"]');
     if (!cell) return;
+    var avatar = cell.querySelector(".avatar");
+    if (!avatar) return;
 
     var result;
     try { result = global.medewerkerWarnings.computeStatusForIdSync(empId); }
     catch (e) { return; }
     if (!result) return;
 
-    var ind = cell.querySelector("." + IND_CLASS);
-    if (!ind) {
-      ind = document.createElement("span");
-      ind.className = IND_CLASS;
-      cell.appendChild(ind);
-    }
-    ind.className = IND_CLASS + " " + IND_CLASS + "--" + result.status;
-    ind.setAttribute("title", buildTitle(result));
-    ind.setAttribute("aria-label", statusLabel(result.status));
-    ind.innerHTML = indSvg(result.status);
+    // Kleur het bolletje zelf als stoplicht (rood/oranje/groen) i.p.v. het
+    // vaste blauw. Eerst eventuele vorige status-class weghalen.
+    avatar.classList.remove("avatar--status-green", "avatar--status-orange", "avatar--status-red");
+    avatar.classList.add("avatar--status-" + result.status);
+    avatar.setAttribute("title", buildTitle(result));
+    avatar.setAttribute("aria-label", statusLabel(result.status));
+    // Markeer de rij met de status zodat andere logica (bv. de "Vereist
+    // actie"-filter in script.js) de status zonder herberekening kan lezen.
+    tr.dataset.docStatus = result.status;
   }
 
   function paintAll() {
     var rows = document.querySelectorAll("tr[data-emp-id]");
     for (var i = 0; i < rows.length; i++) paintRow(rows[i]);
+    // Laat de pagina weten dat de doc-statussen (her)berekend zijn, zodat een
+    // actieve "Vereist actie"-filter zich kan herevalueren.
+    try {
+      global.dispatchEvent(new CustomEvent("besa:doc-status-painted"));
+    } catch (e) { /* */ }
   }
 
   // Debounce zodat snelle opeenvolgende mutaties/events niet 100× herrekenen.
