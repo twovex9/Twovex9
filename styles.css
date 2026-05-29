@@ -55,6 +55,15 @@
   --font-table-head: 12px;
   --font-h1: 30px;
   --font-ui-badge: 10px;
+
+  /* Compacte lijst-dichtheid (.table-card--compact): kleinere cel-/koptekst +
+     minder rijhoogte zodat meer rijen tegelijk in beeld passen. Nu op
+     HR-medewerkers; bedoeld om later consistent over alle lijsten uit te rollen. */
+  --font-table-cell-compact: 12px;
+  --font-table-head-compact: 11px;
+  --row-pad-y-compact: 3px;
+  --row-pad-x-compact: 8px;
+  --row-line-compact: 1.25;
 }
 
 /* ==========================================================================
@@ -3886,6 +3895,51 @@ select.modal-select.modal-select--chevron-right {
 
 .table-card--employees .employees-table:not(.nieuws-table) tbody tr {
   cursor: pointer;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   COMPACTE LIJST-DICHTHEID — .table-card--compact
+   Kleinere cel-/koptekst + minder rijhoogte zodat er meer rijen tegelijk in
+   beeld passen (richting het vorige systeem). Nu toegepast op HR-medewerkers
+   (hr.html). Bewust scoped op .table-card--compact zodat dit later 1-op-1 over
+   de andere lijsten kan worden uitgerold met dezelfde class — zonder andere
+   pagina's nu te raken. Waarden via --*-compact tokens (huisstijl). */
+.table-card--compact .employees-table th,
+.table-card--compact .employees-table td {
+  font-size: var(--font-table-cell-compact);
+  line-height: var(--row-line-compact);
+  padding: var(--row-pad-y-compact) var(--row-pad-x-compact);
+}
+
+.table-card--compact .employees-table thead th {
+  font-size: var(--font-table-head-compact);
+}
+
+.table-card--compact .employees-table thead th.th-sort {
+  padding: 6px 5px 6px 7px;
+}
+
+.table-card--compact .employees-table thead th[data-col="avatar"] {
+  padding: var(--row-pad-y-compact) 4px;
+}
+
+.table-card--compact .employees-table th[data-col="avatar"],
+.table-card--compact .employees-table td[data-col="avatar"] {
+  padding: var(--row-pad-y-compact) 4px var(--row-pad-y-compact) 8px;
+}
+
+.table-card--compact .employees-table:not(.nieuws-table) td[data-col="acties"] {
+  padding: 4px 8px;
+}
+
+.table-card--compact .avatar {
+  width: 20px;
+  height: 20px;
+}
+
+/* Compactere rijen → meer zichtbare medewerkers: iets ruimere scroll-viewport. */
+.table-card--compact.table-card--employees .table-wrapper {
+  max-height: min(68vh, calc(100vh - 300px));
 }
 
 .th-acties-label {
