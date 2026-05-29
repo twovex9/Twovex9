@@ -935,6 +935,20 @@ function initEmployeesArchivedToggle(tbody) {
   });
 }
 
+// "Vereist actie"-toggle in de toolbar: filtert de lijst op medewerkers met een
+// rode of oranje documentstatus, zodat alle medewerkers die actie vereisen in
+// één blik onder elkaar staan. De documenten laden asynchroon, dus we
+// herevalueren de filter zodra de statussen (her)berekend zijn — anders zou een
+// aangezette filter onvolledig zijn.
+function initEmployeesActionToggle() {
+  const toggle = document.querySelector('.toolbar input[name="vereist-actie"]');
+  if (!toggle) return;
+  toggle.addEventListener("change", () => { applyTableFilters(); });
+  const reapply = () => { if (toggle.checked) applyTableFilters(); };
+  window.addEventListener("besa:doc-status-painted", reapply);
+  window.addEventListener("besa:medewerker-warnings-updated", reapply);
+}
+
 const tbody = document.querySelector("table.employees-table:not(.nieuws-table) tbody");
 if (tbody) {
   mergeBesuBulkEmployeesOnce();
@@ -955,6 +969,7 @@ if (tbody) {
   initEmployeeRestore(tbody);
   initEmployeeRowNavigation(tbody);
   initEmployeesArchivedToggle(tbody);
+  initEmployeesActionToggle();
 
   // Bij Supabase-bootstrap of mutatie elders: cache opnieuw inladen.
   window.addEventListener("besa:medewerkers-updated", () => {
@@ -1267,6 +1282,10 @@ function applyTableFilters() {
   // gebonden — typing deed niets.
   const searchInput = document.querySelector(".toolbar input.search, .toolbar input[type=search]");
   const searchQ = (searchInput && searchInput.value || "").trim().toLowerCase();
+  // "Vereist actie"-toggle: filter op medewerkers met een rode of oranje
+  // documentstatus (verlopen/ontbreekt of vervalt binnen 3 maanden).
+  const vereistActieInput = document.querySelector('.toolbar input[name="vereist-actie"]');
+  const vereistActie = !!(vereistActieInput && vereistActieInput.checked);
   document.querySelectorAll("table.employees-table:not(.nieuws-table) tbody tr").forEach((tr) => {
     const empId = tr.dataset && tr.dataset.empId;
     let emp = null;
@@ -1323,7 +1342,23 @@ function applyTableFilters() {
     const okDV = !filterDienstverband || data.dienstverband === filterDienstverband;
     const okCp = !filterCompetentie || empCompList.indexOf(filterCompetentie) !== -1;
 
-    tr.classList.toggle("tr-filter-hidden", !(okF && okO && okLoc && okBur && okCT && okFs && okDV && okCp));
+    // "Vereist actie": toon alleen rode (verlopen/ontbreekt) + oranje (vervalt
+    // binnen 3 maanden) documentstatussen. Status komt synchroon uit
+    // medewerker-warnings; val terug op de door medewerker-doc-status.js gezette
+    // data-doc-status als de warnings-laag (nog) niet beschikbaar is.
+    let okAct = true;
+    if (vereistActie) {
+      let docStatus = "";
+      if (empId && window.medewerkerWarnings && typeof window.medewerkerWarnings.computeStatusForIdSync === "function") {
+        try { docStatus = (window.medewerkerWarnings.computeStatusForIdSync(empId) || {}).status || ""; }
+        catch (e) { docStatus = (tr.dataset && tr.dataset.docStatus) || ""; }
+      } else {
+        docStatus = (tr.dataset && tr.dataset.docStatus) || "";
+      }
+      okAct = docStatus === "red" || docStatus === "orange";
+    }
+
+    tr.classList.toggle("tr-filter-hidden", !(okF && okO && okLoc && okBur && okCT && okFs && okDV && okCp && okAct));
   });
   refreshEmployeesPagination();
 }
