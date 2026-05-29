@@ -1301,11 +1301,22 @@ function applyTableFilters() {
     if (searchQ) {
       const data = emp || {};
       const dataExt = data.data || data._data || {};
+      // rowToObj spreidt de jsonb top-level, dus functie/dienstverband/locatie/etc.
+      // staan op `data` zelf — niet op `dataExt` (= data.data, leeg na unwrap).
+      // Vroeger las dit alleen `dataExt.*` → zoeken op functie/dienstverband/locatie
+      // matchte nooit (alleen naam/e-mail werkte). Lees top-level, met dataExt als
+      // vangnet voor oudere geneste cache-vormen. Locatie via de comma-string
+      // `locatiesTags` (of de `locatiesSelected`-array); telefoon staat in `tel`.
       const haystack = [
         data.voornaam, data.achternaam, data.email,
-        dataExt.functie, dataExt.locatie, dataExt.dienstverband,
-        dataExt.werktype, dataExt.contracttype, dataExt.fase,
-        dataExt.bureau, dataExt.telefoon
+        data.functie || dataExt.functie,
+        data.locatiesTags || dataExt.locatie || (Array.isArray(data.locatiesSelected) ? data.locatiesSelected.join(" ") : ""),
+        data.dienstverband || dataExt.dienstverband,
+        data.werktype || dataExt.werktype,
+        data.contracttype || dataExt.contracttype,
+        data.fase || dataExt.fase,
+        data.bureau || dataExt.bureau,
+        data.tel || data.telefoon || dataExt.telefoon
       ].filter(Boolean).join(" ").toLowerCase();
       if (haystack.indexOf(searchQ) === -1) {
         tr.classList.add("tr-filter-hidden");
