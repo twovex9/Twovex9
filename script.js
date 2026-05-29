@@ -970,6 +970,7 @@ if (tbody) {
   initEmployeeRowNavigation(tbody);
   initEmployeesArchivedToggle(tbody);
   initEmployeesActionToggle();
+  initEmployeesStatusSort();
 
   // Bij Supabase-bootstrap of mutatie elders: cache opnieuw inladen.
   window.addEventListener("besa:medewerkers-updated", () => {
@@ -1203,6 +1204,81 @@ function sortTableByColumn(colId, direction) {
   });
   rows.forEach((row) => tableBody.appendChild(row));
   applyEmployeesPaginationOnly();
+}
+
+// --- Stoplicht-sortering: medewerkers met actie bovenaan -------------------
+// User-eis (Lionel, 2026-05-29): de HR-lijst moet de medewerkers die actie
+// vereisen "in één blik onder elkaar" tonen, zoals BS2's rode/oranje
+// driehoekjes. We sorteren de tabel daarom op documentstatus:
+//   rood (verlopen/ontbreekt) → oranje (vervalt < 3 mnd) → groen (compleet),
+// met de achternaam als secundaire sleutel. Samen met de "Vereist actie"-
+// toggle (die groen verbergt) staan zo eerst álle rode, dan álle oranje
+// onder elkaar.
+//
+// De documentstatussen worden asynchroon berekend (medewerker-doc-status.js
+// + medewerker-warnings.js), dus we hersorteren telkens wanneer ze (her)-
+// berekend zijn (event "besa:doc-status-painted"). De sort is idempotent: hij
+// verplaatst alleen rijen als de volgorde echt wijzigt — dat voorkomt een
+// herhaal-loop met de MutationObserver in medewerker-doc-status.js (die op
+// tbody-childList let en bij elke verplaatsing opnieuw zou verven).
+
+function getRowDocStatusRank(tr) {
+  // Status komt bij voorkeur uit het door medewerker-doc-status.js gezette
+  // data-doc-status; val terug op een directe (synchrone) herberekening.
+  let status = (tr && tr.dataset && tr.dataset.docStatus) || "";
+  if (!status) {
+    const empId = tr && tr.dataset && tr.dataset.empId;
+    if (empId && window.medewerkerWarnings && typeof window.medewerkerWarnings.computeStatusForIdSync === "function") {
+      try { status = (window.medewerkerWarnings.computeStatusForIdSync(empId) || {}).status || ""; }
+      catch (e) { status = ""; }
+    }
+  }
+  if (status === "red") return 0;
+  if (status === "orange") return 1;
+  if (status === "green") return 2;
+  return 3; // nog niet berekend / onbekend → onderaan
+}
+
+function sortTableByDocStatus() {
+  const tableBody = document.querySelector("table.employees-table:not(.nieuws-table) tbody");
+  if (!tableBody) return;
+  // Respecteer een expliciete kolom-sortering: heeft de gebruiker zelf een
+  // kolom gesorteerd (pijl-indicator actief), dan die volgorde niet overrulen.
+  if (document.querySelector("thead th.th-sort--asc, thead th.th-sort--desc")) return;
+  const rows = Array.from(tableBody.querySelectorAll("tr"));
+  if (rows.length < 2) return;
+  const decorated = rows.map((tr, i) => ({
+    tr,
+    i,
+    rank: getRowDocStatusRank(tr),
+    last: getCellSortText("achternaam", tr).toLowerCase(),
+  }));
+  decorated.sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    const c = a.last.localeCompare(b.last, "nl", { sensitivity: "base" });
+    if (c !== 0) return c;
+    return a.i - b.i; // stabiel bij gelijke rang + achternaam
+  });
+  // Idempotent: alleen herordenen als de volgorde echt verandert.
+  let changed = false;
+  for (let k = 0; k < decorated.length; k++) {
+    if (decorated[k].tr !== rows[k]) { changed = true; break; }
+  }
+  if (!changed) return;
+  const frag = document.createDocumentFragment();
+  decorated.forEach((d) => frag.appendChild(d.tr));
+  tableBody.appendChild(frag);
+  if (typeof applyEmployeesPaginationOnly === "function") applyEmployeesPaginationOnly();
+}
+
+// Sorteer telkens als de statussen (her)berekend zijn. Alleen listeners — de
+// eerste paint van medewerker-doc-status.js firet "besa:doc-status-painted"
+// ná dat script.js is geladen, dus deze handler vangt 'm.
+function initEmployeesStatusSort() {
+  const tableBody = document.querySelector("table.employees-table:not(.nieuws-table) tbody");
+  if (!tableBody) return;
+  window.addEventListener("besa:doc-status-painted", sortTableByDocStatus);
+  window.addEventListener("besa:medewerker-warnings-updated", sortTableByDocStatus);
 }
 
 /** Toont één pijl (↑ asc / ↓ desc) bij de actieve kolom; andere kolommen tonen weer ⇅ */
