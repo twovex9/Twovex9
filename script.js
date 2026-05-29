@@ -1345,9 +1345,13 @@ function applyTableFilters() {
     // cache-vormen. Vroeger las dit filter `data.locaties`/`data.locatie` — keys die
     // niet bestaan — waardoor élk locatie-filter 0 medewerkers toonde (zie
     // detail-medewerkers-tab.js voor hetzelfde, wél correcte leespatroon).
+    // NB: een LEGE `locatiesSelected`-array ([]) mag de terugval naar
+    // `locatiesTags` niet blokkeren — anders zou een medewerker met alleen tags
+    // (een inconsistente staat) onterecht uit elk locatiefilter vallen. Daarom
+    // de `.length`-check vóór we de selected-array als bron accepteren.
     let locList = [];
-    if (Array.isArray(data.locatiesSelected)) locList = data.locatiesSelected;
-    else if (Array.isArray(dataExt.locatiesSelected)) locList = dataExt.locatiesSelected;
+    if (Array.isArray(data.locatiesSelected) && data.locatiesSelected.length) locList = data.locatiesSelected;
+    else if (Array.isArray(dataExt.locatiesSelected) && dataExt.locatiesSelected.length) locList = dataExt.locatiesSelected;
     else if (typeof (data.locatiesTags || dataExt.locatiesTags) === "string" && (data.locatiesTags || dataExt.locatiesTags).trim())
       locList = (data.locatiesTags || dataExt.locatiesTags).split(",");
     else if (Array.isArray(dataExt.locaties)) locList = dataExt.locaties;

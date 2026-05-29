@@ -88,7 +88,7 @@
 
   function empLocatieNamen(emp) {
     var names = [];
-    if (Array.isArray(emp.locatiesSelected)) {
+    if (Array.isArray(emp.locatiesSelected) && emp.locatiesSelected.length) {
       emp.locatiesSelected.forEach(function (x) { if (x) names.push(String(x)); });
     } else if (typeof emp.locatiesTags === "string" && emp.locatiesTags) {
       emp.locatiesTags.split(",").forEach(function (x) {
