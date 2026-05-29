@@ -157,7 +157,17 @@
   // Cache
   // ---------------------------------------------------------------------------
 
+  // In-memory bron-van-waarheid (DATA-SLIM). localStorage is een best-effort
+  // spiegel voor een snelle eerste render / offline, maar mag NOOIT de enige
+  // bron zijn: bij een volle localStorage (QuotaExceededError — o.a. door grote
+  // andere caches zoals clientenItems) faalt setItem stil, en zou listSync een
+  // lege lijst teruggeven → álle medewerkers zouden onterecht "rood"
+  // (documentatie ontbreekt) tonen. Daarom leest readCache _mem zodra die
+  // gevuld is.
+  var _mem = null;
+
   function readCache() {
+    if (Array.isArray(_mem)) return _mem;
     try {
       var raw = global.localStorage.getItem(CACHE_KEY);
       if (!raw) return [];
@@ -167,10 +177,13 @@
   }
 
   function writeCache(items) {
+    _mem = Array.isArray(items) ? items : [];
     try {
-      global.localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+      global.localStorage.setItem(CACHE_KEY, JSON.stringify(_mem));
     } catch (e) {
-      console.warn("[medewerkerDocsDB] cache write mislukt:", e && e.message);
+      // localStorage vol (QuotaExceededError) is niet fataal: _mem blijft de
+      // bron-van-waarheid voor deze sessie.
+      console.warn("[medewerkerDocsDB] cache write mislukt (in-memory blijft gelden):", e && e.message);
     }
   }
 
