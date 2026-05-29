@@ -3937,8 +3937,11 @@ select.modal-select.modal-select--chevron-right {
   height: 20px;
 }
 
-/* Compactere rijen → meer zichtbare medewerkers: iets ruimere scroll-viewport. */
-.table-card--compact.table-card--employees .table-wrapper {
+/* Compactere rijen → meer zichtbare regels: iets ruimere scroll-viewport.
+   Geldt voor ELKE compacte lijst (consistente dichtheid app-breed). De
+   speciale .table-card--sal wrapper (hogere specificiteit) blijft eigen hoogte
+   houden, dus salarishuis-schalen worden niet afgekapt. */
+.table-card--compact .table-wrapper {
   max-height: min(68vh, calc(100vh - 300px));
 }
 
