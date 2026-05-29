@@ -3250,6 +3250,23 @@ h1 {
   border: 2px solid var(--blue);
 }
 
+/* Document-status stoplicht op het avatar-bolletje (HR-medewerkerslijst).
+   Vervangt het vaste blauw door rood/oranje/groen o.b.v. medewerker-warnings:
+   rood = document verlopen/ontbreekt, oranje = vervalt binnen 3 maanden,
+   groen = compleet. Gezet door medewerker-doc-status.js. */
+.avatar--status-red {
+  background: var(--red);
+  border-color: var(--red);
+}
+.avatar--status-orange {
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+.avatar--status-green {
+  background: var(--green);
+  border-color: var(--green);
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
