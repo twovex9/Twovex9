@@ -194,7 +194,7 @@
   function pageTitleClean() {
     try {
       return String(document.title || "")
-        .replace(/\s*[—|·-]\s*(Besa Suite|HR|Organisatie|ETF).*$/i, "").trim();
+        .replace(/\s*[—|·-]\s*(Future Flow|Besa Suite|HR|Organisatie|ETF).*$/i, "").trim();
     } catch (e) { return ""; }
   }
   function pageLabel() {

@@ -1,5 +1,5 @@
 /**
- * Centrale Supabase-client voor de Besa Suite.
+ * Centrale Supabase-client voor Future Flow.
  *
  * Wat dit bestand doet:
  *  - Initialiseert de Supabase JS client met project URL + anon key.

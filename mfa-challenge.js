@@ -68,7 +68,7 @@
       '<div style="padding:22px 26px;border-bottom:1px solid var(--line,#e5e7eb);">' +
         '<h2 style="margin:0;font-size:19px;color:var(--text,#1a1a1a);">Voer 2FA-code in</h2>' +
         '<p style="margin:8px 0 0;color:var(--text-secondary,#444);font-size:13px;">' +
-          'Open je authenticator-app en voer de 6-cijferige code in voor BESA Suite ETF.' +
+          'Open je authenticator-app en voer de 6-cijferige code in voor Future Flow.' +
         '</p>' +
       '</div>' +
       '<div style="padding:22px 26px;display:flex;flex-direction:column;gap:14px;">' +

@@ -1,4 +1,4 @@
-/* theme.js — BESA Suite light/dark theme-switcher.
+/* theme.js — Future Flow light/dark theme-switcher.
  *
  * De FOUC-preventie (data-theme zetten vóór eerste paint) gebeurt door een
  * kleine inline <script> in de <head> van elke pagina. Dit bestand voegt
