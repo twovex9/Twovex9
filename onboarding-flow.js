@@ -145,8 +145,8 @@
       // friendlyName = interne label in Supabase admin (geen invloed op de authenticator).
       var en = await global.besaSupabase.auth.mfa.enroll({
         factorType: "totp",
-        issuer: "BESA Suite ETF",
-        friendlyName: "BESA Suite ETF",
+        issuer: "Future Flow",
+        friendlyName: "Future Flow",
       });
       if (en.error) throw en.error;
       enrollData = en.data;
