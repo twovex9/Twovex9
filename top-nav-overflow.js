@@ -61,7 +61,9 @@
       "medewerker.html"
     ]);
     const planningPages = new Set([
-      "planning.html"
+      "planning.html",
+      "planning-beheer.html",
+      "beschikbaarheid-overzicht.html"
     ]);
 
     const links = Array.from(nav.querySelectorAll(".top-link"));
