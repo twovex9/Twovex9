@@ -65,6 +65,8 @@
         if (m) naam = ((m.voornaam || "") + " " + (m.achternaam || "")).trim();
       }
     } catch (e) { /* */ }
+    // Val terug op de profielnaam (voornaam/achternaam direct), dan e-mail.
+    if (!naam && prof) naam = ((prof.voornaam || "") + " " + (prof.achternaam || "")).trim();
     if (!naam && prof) naam = prof.email || "";
     return { id: id, naam: naam };
   }
