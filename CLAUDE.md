@@ -36,16 +36,11 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
   1. `git switch -c feature/<naam> origin/main`
   2. Commit + `git push -u origin feature/<naam>`
   3. `gh pr create --base main --head feature/<naam>` met heldere summary + test plan
-  4. **Geef user de PR-URL** — user klikt "Merge pull request" op GitHub
+  4. **Zelf mergen ná eigen verificatie** (user-instructie 2026-05-31): verifieer eerst zelf (functioneel + visueel waar relevant; 2-clean-runs blijft), dan `gh pr merge <N> --merge --delete-branch`. De `gh pr merge`-API is niet geblokkeerd (alleen directe `git push` naar main is dat).
   5. Vercel deployed automatisch na merge
   Bij merge-conflicten: `git merge origin/main` in feature-branch, los conflict op, push opnieuw. Géén force-push, géén direct-to-main.
 
-  **PR-output format**: na `gh pr create` ALTIJD een korte, duidelijke merge-link geven:
-  ```
-  ## Klik om te mergen
-  **https://github.com/ETFalkmaar/besa-suite-/pull/N** → groene "Merge pull request" knop
-  ```
-  Niet vragen "mag ik mergen?"; user wil dit gewoon als output-format. Daarna direct door met volgende item.
+  **PR-output format**: na het mergen rapporteren als **"✅ gemerged (PR #N)"** + de link ter transparantie; user hoeft niet meer te klikken. **Uitzondering — eerst user-confirm:** onomkeerbare/risicovolle acties (data-`DELETE`/`DROP`/`TRUNCATE` per DIEHARD, security, grote/onzekere wijzigingen). Details: werkpatronen sectie 7 + memory `feedback_besa_self_merge`.
 
 - **🚨 04-open-items.md anti-conflict regel** (geüpdatet 2026-05-12 v2):
   - Items 1-28: blijven in `04-open-items.md` (geschiedenis).

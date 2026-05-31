@@ -471,12 +471,15 @@ Claude's sandbox blokkeert direct push naar `main` (Git Push to Default Branch b
    ```bash
    gh pr create --base main --head feature/<duidelijke-naam> --title "..." --body "..."
    ```
-5. **PR-URL aan user geven** in dit format (VERPLICHT):
-   ```
-   ## Klik om te mergen
-   **https://github.com/ETFalkmaar/besa-suite-/pull/N** → groene "Merge pull request" knop
-   ```
-   Niet vragen "mag ik mergen?"; user heeft op 2026-05-12 expliciet gezegd dat dit het standaard-format moet zijn ("geef me gewoon zoals nu gemakkelijk die link en dan klik ik op merge"). Daarna direct door met volgende item.
+5. **Zelf mergen ná eigen verificatie** (user-instructie 2026-05-31 — vervangt het oude "user klikt zelf"):
+   - Verifieer eerst zelf (functioneel + visueel via Chrome MCP waar relevant; de 2-clean-runs-eis blijft). Nooit blind mergen op groen CI.
+   - Dan mergen:
+     ```bash
+     gh pr merge <N> --merge --delete-branch
+     ```
+     De `gh pr merge`-API is NIET geblokkeerd door de sandbox (alleen directe `git push` naar `main` is dat).
+   - Rapporteer als **"✅ gemerged (PR #N)"** + de link ter transparantie; de user hoeft niet meer te klikken.
+   - **Uitzondering — eerst expliciet user-confirm:** onomkeerbare/risicovolle acties (data-`DELETE`/`DROP`/`TRUNCATE` per DIEHARD-regel, security-gevoelige of grote/onzekere wijzigingen).
 6. Vercel deployed automatisch na merge
 
 **🚨 Anti-conflict regel voor open items** (geüpdatet 2026-05-12 v2, structurele fix v2):
@@ -508,7 +511,8 @@ git push origin feature/<naam>
 **Verboden**:
 - ❌ `git push --force` of `git push -f` (deny rule in settings.json)
 - ❌ Direct push naar `main` (sandbox-block + bypasst code review)
-- ❌ Mergen via command line — user doet dat zelf in GitHub UI
+
+**Mergen** (sinds 2026-05-31): Claude merget **zelf** via `gh pr merge` ná eigen verificatie — zie stap 5 hierboven. Niet voor onomkeerbare/risicovolle wijzigingen zonder user-confirm.
 
 **Snelle commit pattern voor PowerShell** (HEREDOC werkt niet in PS):
 ```bash
