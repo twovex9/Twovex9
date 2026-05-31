@@ -77,6 +77,9 @@
     // ─── Planning + teams ─────────────────────────────────────────────────────
     "planning.html": { action: "view", entity: "planning" },
     "planning-beheer.html": { action: "manage", entity: "shifts" },
+    // ZZP-beschikbaarheid-overzicht: privacygevoelig (toont per medewerker of/wanneer
+    // ze beschikbaarheid doorgeven) → strikt kantoor/planning-rollen. Admin-tier wint sowieso.
+    "beschikbaarheid-overzicht.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Teamleider"] },
     "teams.html": { action: "browse", entity: "teams" },
 
     // ─── Taken ────────────────────────────────────────────────────────────────

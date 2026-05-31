@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Audit Logs — HR</title>
+  <title>Beschikbaarheid ZZP'ers</title>
   <link rel="stylesheet" href="styles.css?v=compact1">
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
@@ -34,11 +34,11 @@
           <nav class="top-nav" aria-label="Hoofdnavigatie">
             <a href="home" class="top-link">Home</a>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="planning" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="planning" class="top-link top-link--dropdown is-active">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
                 <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
                 <a href="beschikbaarheid-overzicht" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikbaarheid ZZP'ers</span><span class="top-dropdown-subtitle">Wie vulde zijn beschikbaarheid in</span></a>
-                <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+                <a href="planning-beheer" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -84,7 +84,7 @@
                 <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
             </div>            <a href="taken" class="top-link">Taken</a>            <a href="beleid-documenten" class="top-link">Beleid</a>
-            <a href="audit" class="top-link is-active">Audit</a>
+            <a href="audit" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="teams" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
@@ -110,99 +110,69 @@
 
     <main class="content">
       <div class="content-header">
-        <h1>Audit Logs</h1>
+        <h1>Beschikbaarheid ZZP'ers</h1>
         <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="audit-columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="audit-columns-panel" role="menu" aria-labelledby="audit-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="audit-columns-list" role="none"></ul>
-            </div>
-          </div>
-          <button class="btn-outline" type="button" id="audit-refresh-btn">
-            <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-            Vernieuwen
-          </button>
+          <button class="btn-outline" type="button" id="bz-refresh">Ververs</button>
         </div>
       </div>
 
+      <p class="bz-intro">
+        Wie van de ingehuurde ZZP'ers geeft zijn beschikbaarheid door in de Future Flow-app?
+        De kleur toont de stand voor de <strong>komende 4 weken</strong>; het strookje rechts
+        toont het <strong>patroon</strong> per week (6 weken terug — 6 weken vooruit), zodat je
+        ziet wie het structureel bijhoudt en wie niet.
+      </p>
+
       <div class="toolbar">
-        <input class="search" type="search" id="audit-search" placeholder="Zoeken in gebruiker / resource / details..." autocomplete="off" />
-        <select class="search" id="audit-filter-resource" style="max-width:200px">
-          <option value="">Alle resources</option>
-          <option value="Medewerker">Medewerker</option>
-          <option value="Cliënt">Cliënt</option>
-          <option value="Beschikking">Beschikking</option>
-          <option value="Factuur">Factuur</option>
-          <option value="Incident">Incident</option>
-          <option value="Taak">Taak</option>
-          <option value="Beleidsdocument">Beleidsdocument</option>
-          <option value="Verlofaanvraag">Verlofaanvraag</option>
-          <option value="Team">Team</option>
-          <option value="NotificatieType">NotificatieType</option>
-        </select>
-        <select class="search" id="audit-filter-veroorzaker" style="max-width:220px" aria-label="Filter op veroorzaker">
-          <option value="">Alle veroorzakers</option>
-        </select>
-        <select class="search" id="audit-filter-actie" style="max-width:200px">
-          <option value="">Alle actie-types</option>
-          <option value="aanmaken">Aanmaken</option>
-          <option value="bekijken">Bekijken</option>
-          <option value="bewerken">Bewerken</option>
-          <option value="verwijderen">Verwijderen</option>
-          <option value="archiveren">Archiveren</option>
-          <option value="herstellen">Herstellen</option>
-          <option value="status_wijziging">Status wijziging</option>
-        </select>
-        <button type="button" class="btn-outline taken-reset-btn" id="audit-filter-reset" title="Filters wissen">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Reset
-        </button>
+        <input class="search" type="search" id="bz-search" placeholder="Zoeken op naam..." autocomplete="off" />
+        <label class="switch switch--red">
+          <input type="checkbox" id="bz-actie-toggle" />
+          <span class="switch-slider"></span>
+          <span class="switch-label">Alleen wie actie nodig heeft</span>
+        </label>
+        <div class="bz-legend" aria-hidden="true">
+          <span class="bz-legend__item"><span class="bz-legend__dot bz-legend__dot--green"></span> Bijgewerkt</span>
+          <span class="bz-legend__item"><span class="bz-legend__dot bz-legend__dot--orange"></span> Deels</span>
+          <span class="bz-legend__item"><span class="bz-legend__dot bz-legend__dot--red"></span> Niets doorgegeven</span>
+        </div>
       </div>
 
       <section class="table-card table-card--compact">
         <div class="table-wrapper">
-          <table class="employees-table" id="audit-table">
+          <table class="employees-table bz-table" id="bz-table">
             <thead>
               <tr>
-                <th data-col="tijdstip"><div class="th-sort-inner"><span class="th-label">Tijdstip</span></div></th>
-                <th data-col="gebruiker"><div class="th-sort-inner"><span class="th-label">Gebruiker</span></div></th>
-                <th data-col="resource"><div class="th-sort-inner"><span class="th-label">Resource</span></div></th>
-                <th data-col="resource_id"><div class="th-sort-inner"><span class="th-label">Resource ID</span></div></th>
-                <th data-col="actie"><div class="th-sort-inner"><span class="th-label">Actie</span></div></th>
-                <th data-col="details"><div class="th-sort-inner"><span class="th-label">Details</span></div></th>
-                <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
+                <th data-col="avatar" style="width:44px"></th>
+                <th data-col="naam" class="bz-th-sort" data-sort="naam"><div class="th-sort-inner"><span class="th-label">Medewerker</span><span class="bz-sort-chev" aria-hidden="true"></span></div></th>
+                <th data-col="status" class="bz-th-sort" data-sort="status"><div class="th-sort-inner"><span class="th-label">Status</span><span class="bz-sort-chev" aria-hidden="true"></span></div></th>
+                <th data-col="komend" class="bz-th-sort" data-sort="komend"><div class="th-sort-inner"><span class="th-label">Komende 4 weken</span><span class="bz-sort-chev" aria-hidden="true"></span></div></th>
+                <th data-col="laatst" class="bz-th-sort" data-sort="laatst"><div class="th-sort-inner"><span class="th-label">Laatst doorgegeven</span><span class="bz-sort-chev" aria-hidden="true"></span></div></th>
+                <th data-col="patroon"><span class="th-label">Patroon · 12 weken</span></th>
               </tr>
             </thead>
-            <tbody id="audit-tbody"></tbody>
+            <tbody id="bz-tbody"></tbody>
           </table>
         </div>
         <div class="table-footer table-footer--pagebar">
           <div class="footer-left">
-            <span id="audit-pager-range" class="pager-range">0 van 0</span>
+            <span id="bz-pager-count" class="pager-range">0 of 0 total.</span>
           </div>
           <div class="footer-right">
-            <label class="footer-rows-wrap" for="audit-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="audit-rows-per-page" class="footer-rows-select">
+            <label class="footer-rows-wrap" for="bz-rows-per-page">
+              <span class="footer-rows-label">Rows per page</span>
+              <select id="bz-rows-per-page" class="footer-rows-select" aria-label="Rows per page">
                 <option value="15">15</option>
                 <option value="30" selected>30</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
               </select>
             </label>
-            <span id="audit-pager-page" class="pager-page-label">Pagina 1 van 1</span>
+            <span id="bz-pager-page" class="pager-page-label">Page 1 of 1</span>
             <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="audit-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="audit-pager-last" disabled>&raquo;</button>
+              <button type="button" class="pager-btn" id="bz-pager-first" disabled>&laquo;</button>
+              <button type="button" class="pager-btn" id="bz-pager-prev" disabled>&lsaquo;</button>
+              <button type="button" class="pager-btn" id="bz-pager-next" disabled>&rsaquo;</button>
+              <button type="button" class="pager-btn" id="bz-pager-last" disabled>&raquo;</button>
             </span>
           </div>
         </div>
@@ -210,28 +180,12 @@
     </main>
   </div>
 
-  <!-- Audit detail modal: klik op een rij → volledige info -->
-  <div class="modal-overlay" id="audit-detail-overlay" hidden>
-    <div class="modal-card audit-detail-modal" role="dialog" aria-modal="true" aria-labelledby="audit-detail-title">
-      <div class="modal-header">
-        <h2 id="audit-detail-title">Audit-event</h2>
-        <button type="button" class="modal-close" id="audit-detail-close" aria-label="Sluiten">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-body" id="audit-detail-body"></div>
-    </div>
-  </div>
-
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="error-reporter.js?v=er1"></script>
   <script src="besa-sync-reporter.js"></script>
-  <script src="optimistic-lock.js?v=ol1" defer></script>
   <script src="realtime-sync.js?v=rt1" defer></script>
-  <script src="bulk-actions.js?v=ba1" defer></script>
-  <script src="pdf-export.js?v=pdf1" defer></script>
   <script src="permissions.js?v=perm2" defer></script>
   <script src="permissions-page-map.js?v=permmap1" defer></script>
   <script src="permissions-gate.js?v=permgate1" defer></script>
@@ -243,7 +197,8 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="audit-data.js"></script>
-  <script src="audit.js"></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="medewerker-beschikbaarheid-data.js?v=bz1"></script>
+  <script src="beschikbaarheid-overzicht.js?v=bz1"></script>
 </body>
 </html>

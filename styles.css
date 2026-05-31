@@ -24292,3 +24292,84 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .emp-offb-state--ok { color: var(--green); }
 .emp-offb-state--warn { color: var(--yellow); }
 .emp-offb-actions { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* ============================================================================
+   Beschikbaarheid-overzicht ZZP'ers (beschikbaarheid-overzicht.html)
+   Wie houdt zijn mobiele beschikbaarheid bij? Stoplicht (komende 4 weken) +
+   patroon-strip per week. Alle kleuren/radii via tokens.
+   ========================================================================== */
+.bz-intro {
+  margin: 0 0 14px;
+  max-width: 880px;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.bz-intro strong { color: var(--text); font-weight: 700; }
+
+/* Legenda in de toolbar */
+.bz-legend { display: inline-flex; align-items: center; gap: 14px; margin-left: auto; }
+.bz-legend__item { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-ui-badge); color: var(--text-secondary); font-weight: 600; }
+.bz-legend__dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.bz-legend__dot--green { background: var(--green); }
+.bz-legend__dot--orange { background: var(--yellow); }
+.bz-legend__dot--red { background: var(--red); }
+
+/* Avatar met statusbolletje (zelfde geest als de HR-medewerkerslijst) */
+.bz-avatar { width: 26px; height: 26px; }
+.bz-avatar__init { font-size: var(--font-ui-badge); font-weight: 700; color: var(--text-muted); }
+.bz-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+.bz-dot--green { background: var(--green); }
+.bz-dot--orange { background: var(--yellow); }
+.bz-dot--red { background: var(--red); }
+
+/* Naam-cel met sub-regel (inhuurtype) */
+.bz-name { font-weight: 600; color: var(--text); }
+.bz-name__sub { font-size: var(--font-ui-badge); color: var(--text-muted); margin-top: 1px; }
+
+/* Status-pill kleur-modifiers (erft .status-pill: wit op gekleurde achtergrond) */
+.bz-pill--green { background: var(--green); }
+.bz-pill--orange { background: var(--yellow); }
+.bz-pill--red { background: var(--red); }
+
+/* Komende 4 weken: teller + voortgangsbalk */
+.bz-komend { display: flex; align-items: baseline; gap: 5px; }
+.bz-komend__num { font-weight: 700; color: var(--text); font-size: var(--font-table-cell); }
+.bz-komend__num--zero { color: var(--red); }
+.bz-komend__lbl { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.bz-bar { margin-top: 4px; width: 96px; max-width: 100%; height: 5px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.bz-bar__fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--blue); }
+.bz-bar__fill--green { background: var(--green); }
+.bz-bar__fill--orange { background: var(--yellow); }
+.bz-bar__fill--red { background: var(--red); }
+
+/* Patroon-strip: 12 weekblokjes, kleurintensiteit = aantal doorgegeven dagen */
+.bz-strip { display: inline-flex; gap: 2px; align-items: center; }
+.bz-cell { width: 11px; height: 18px; border-radius: var(--r-xs); background: var(--line); }
+.bz-cell--l0 { background: var(--line); }
+.bz-cell--l1 { background: color-mix(in srgb, var(--blue) 28%, var(--surface)); }
+.bz-cell--l2 { background: color-mix(in srgb, var(--blue) 58%, var(--surface)); }
+.bz-cell--l3 { background: var(--blue); }
+.bz-cell--now { box-shadow: 0 3px 0 0 var(--text-secondary); }
+
+/* Sorteerbare koppen */
+#bz-table th.bz-th-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.bz-sort-chev {
+  display: inline-block; width: 0; height: 0; margin-left: 6px;
+  border-left: 4px solid transparent; border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-muted); opacity: 0;
+}
+#bz-table th.bz-th-sort.is-sorted-asc .bz-sort-chev { opacity: 1; transform: rotate(180deg); }
+#bz-table th.bz-th-sort.is-sorted-desc .bz-sort-chev { opacity: 1; }
+
+.bz-row td { vertical-align: middle; }
+.bz-row:hover { background: var(--row-hover, rgba(0, 0, 0, 0.03)); }
+.bz-empty { text-align: center; color: var(--text-muted); padding: 40px 16px; font-size: var(--font-base); }
