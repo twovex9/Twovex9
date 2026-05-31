@@ -80,6 +80,9 @@
     // ZZP-beschikbaarheid-overzicht: privacygevoelig (toont per medewerker of/wanneer
     // ze beschikbaarheid doorgeven) → strikt kantoor/planning-rollen. Admin-tier wint sowieso.
     "beschikbaarheid-overzicht.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Teamleider"] },
+    // Open-diensten-overzicht: aanmeldingen op open diensten behandelen → zelfde
+    // planning/HR-rollen die ook de melding ontvangen. Admin-tier wint sowieso.
+    "open-diensten.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Teamleider"] },
     "teams.html": { action: "browse", entity: "teams" },
 
     // ─── Taken ────────────────────────────────────────────────────────────────

@@ -24373,3 +24373,60 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .bz-row td { vertical-align: middle; }
 .bz-row:hover { background: var(--row-hover, rgba(0, 0, 0, 0.03)); }
 .bz-empty { text-align: center; color: var(--text-muted); padding: 40px 16px; font-size: var(--font-base); }
+
+/* ===================== Open diensten — aanmeldingen-overzicht ===================== */
+.od-row { cursor: pointer; }
+.od-row td { vertical-align: middle; }
+.od-row:hover { background: var(--row-hover, rgba(0, 0, 0, 0.03)); }
+.od-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.od-datum { font-weight: 600; color: var(--text); }
+.od-tijd { font-size: var(--font-table-head); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+#od-table th.od-th-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+#od-table th.od-th-sort.is-sorted-asc .bz-sort-chev { opacity: 1; transform: rotate(180deg); }
+#od-table th.od-th-sort.is-sorted-desc .bz-sort-chev { opacity: 1; }
+
+.od-bez {
+  display: inline-flex; align-items: center;
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.od-bez--vol { background: var(--green-soft); color: var(--green); }
+.od-bez--open { background: var(--yellow-soft); color: var(--yellow); }
+
+.od-badge {
+  display: inline-flex; align-items: center;
+  border-radius: var(--r-pill);
+  padding: 3px 10px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.od-badge--leeg { color: var(--text-muted); }
+.od-badge--actie { background: var(--blue-soft); color: var(--blue); }
+
+/* Detail-modal: aanmelders accepteren/afwijzen */
+.od-modal-card { width: min(560px, 94vw); max-height: 88vh; display: flex; flex-direction: column; }
+.od-modal-meta {
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.od-modal-meta__row { display: flex; justify-content: space-between; gap: 14px; font-size: var(--font-base); }
+.od-modal-meta__lbl { color: var(--text-muted); }
+.od-modal-h3 { font-size: var(--font-base); font-weight: 700; margin: 16px 0 4px; color: var(--text); }
+.od-modal-empty { color: var(--text-muted); font-size: var(--font-base); margin: 4px 0; }
+
+.od-person { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+.od-person + .od-person { border-top: 1px solid var(--line); }
+.od-person__naam { font-weight: 600; color: var(--text); flex: 1; }
+.od-person__tag { font-size: var(--font-ui-badge); font-weight: 700; border-radius: var(--r-pill); padding: 2px 8px; white-space: nowrap; }
+.od-tag--vol { background: var(--green-soft); color: var(--green); }
+.od-tag--wacht { background: var(--yellow-soft); color: var(--yellow); }
+.od-person__acties { display: flex; gap: 8px; flex: none; }
+.btn-primary.od-mini, .btn-outline.od-mini { padding: 5px 12px; font-size: var(--font-table-head); min-height: 0; }

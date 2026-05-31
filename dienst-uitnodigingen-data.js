@@ -38,6 +38,34 @@
     }
   }
 
+  // Bulk-variant voor het Open-diensten-overzicht: haalt de uitnodigingen voor
+  // een set diensten in één keer op en vult de per-dienst cache (incl. lege
+  // lijsten, zodat getForDienstSync ook "0 aanmeldingen" correct teruggeeft).
+  async function fetchForDiensten(dienstIds) {
+    if (!dienstIds || !dienstIds.length) return [];
+    try {
+      var all = [];
+      var CH = 200; // PostgREST .in() niet te lang maken
+      for (var i = 0; i < dienstIds.length; i += CH) {
+        var chunk = dienstIds.slice(i, i + CH);
+        var r = await supa
+          .from("dienst_uitnodigingen")
+          .select("id, dienst_id, medewerker_id, status, uitgenodigd_door, notitie, created_at, updated_at")
+          .in("dienst_id", chunk);
+        if (r.error) throw r.error;
+        all = all.concat(r.data || []);
+      }
+      dienstIds.forEach(function (id) { cacheByDienst[id] = []; });
+      all.forEach(function (row) {
+        (cacheByDienst[row.dienst_id] = cacheByDienst[row.dienst_id] || []).push(row);
+      });
+      return all;
+    } catch (err) {
+      reportSilent("fetchForDiensten", err);
+      return [];
+    }
+  }
+
   function getForDienstSync(dienstId) {
     return cacheByDienst[dienstId] || [];
   }
@@ -77,6 +105,7 @@
 
   global.dienstUitnodigingenDB = {
     fetchForDienst: fetchForDienst,
+    fetchForDiensten: fetchForDiensten,
     getForDienstSync: getForDienstSync,
     add: add,
     updateStatus: updateStatus,
