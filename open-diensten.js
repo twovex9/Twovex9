@@ -56,7 +56,13 @@
     return ((m.voornaam || "") + " " + (m.achternaam || "")).trim() || "Onbekende medewerker";
   }
 
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
   // ── State ─────────────────────────────────────────────────────────────────
+  var openDienstenRaw = [];     // ruwe planning-rijen uit de directe fetch
   var model = [];               // rij-objecten per open dienst
   var state = {
     search: "",
@@ -71,16 +77,12 @@
   var todayMid = (function () { var d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
   // ── Model ─────────────────────────────────────────────────────────────────
+  // Bron = openDienstenRaw (directe Supabase-fetch). Bewust NIET de planningDB-
+  // localStorage-cache: die kan op een verse tab stale/leeg zijn (planning ~5000
+  // rijen > localStorage-quota, en planning-data.js heeft geen in-memory fallback)
+  // → dan zou de pagina ten onrechte 0 open diensten tonen.
   function buildModel() {
-    var diensten = (window.planningDB && window.planningDB.getAllSync)
-      ? window.planningDB.getAllSync() : [];
-    model = diensten
-      .filter(function (d) {
-        if (!d || d.archived) return false;
-        if (d.open_voor_aanmelding === false) return false;
-        var day = startDay(d.start);
-        return day && day >= todayMid;       // alleen vandaag + toekomst
-      })
+    model = openDienstenRaw
       .map(function (d) {
         var uitn = (window.dienstUitnodigingenDB && window.dienstUitnodigingenDB.getForDienstSync)
           ? window.dienstUitnodigingenDB.getForDienstSync(d.id) : [];
@@ -94,9 +96,9 @@
         if (toegewezenCount === 0 && legacyTeamlid) toegewezenCount = 1; // legacy directe toewijzing
         return {
           id: d.id,
-          start: d.start,
-          einde: d.einde,
-          dayTs: (startDay(d.start) || todayMid).getTime(),
+          start: d.start_iso,
+          einde: d.einde_iso,
+          dayTs: (startDay(d.start_iso) || todayMid).getTime(),
           diensttype: d.diensttype || "Dienst",
           locatie: d.locatie || "",
           client: d.client || "",
@@ -296,9 +298,16 @@
       await window.dienstUitnodigingenDB.updateStatus(uitId, "toegewezen", dienstId);
       // Vul planning.teamlid als die nog leeg is, zodat de naam ook in het
       // planning-rooster zichtbaar wordt (BS1 toont teamlid op de dienstkaart).
-      var d = window.planningDB.getByIdSync(dienstId);
-      if (d && !(d.teamlid || "").trim() && naam) {
-        try { await window.planningDB.update(dienstId, { teamlid: naam }); } catch (e) { /* niet kritiek */ }
+      // BELANGRIJK: alléén de teamlid-kolom updaten via een gerichte query —
+      // NIET via planningDB.update(), want dat leest de (mogelijk lege) cache en
+      // zou bij een cache-miss alle andere kolommen op null zetten en de dienst
+      // wissen.
+      var d = openDienstenRaw.find(function (x) { return String(x.id) === String(dienstId); });
+      if (d && !((d.teamlid || "").trim()) && naam && window.besaSupabase) {
+        try {
+          var up = await window.besaSupabase.from("planning").update({ teamlid: naam }).eq("id", dienstId);
+          if (!up.error) d.teamlid = naam; // lokaal bijwerken zodat de bezetting klopt
+        } catch (e) { /* niet kritiek */ }
       }
       buildModel();
       render();
@@ -387,7 +396,6 @@
       if (e.key === "Escape" && openModalDienstId != null) closeModal();
     });
 
-    window.addEventListener("besa:planning-updated", function () { buildModel(); render(); refreshModal(); });
     window.addEventListener("besa:dienst-uitnodigingen-updated", function () { buildModel(); render(); refreshModal(); });
     window.addEventListener("besa:medewerkers-updated", function () { render(); refreshModal(); });
   }
@@ -397,16 +405,29 @@
   }
 
   // ── Data laden ────────────────────────────────────────────────────────────
-  async function loadData() {
-    // Bepaal de open toekomstige diensten en haal hun uitnodigingen in bulk.
-    var diensten = (window.planningDB && window.planningDB.getAllSync)
-      ? window.planningDB.getAllSync() : [];
-    var openIds = diensten.filter(function (d) {
-      if (!d || d.archived || d.open_voor_aanmelding === false) return false;
-      var day = startDay(d.start);
-      return day && day >= todayMid;
-    }).map(function (d) { return d.id; });
+  // Directe, gerichte fetch op alleen de open toekomstige diensten (een paar
+  // rijen) — robuuster én sneller dan de hele planning-cache laden.
+  async function fetchOpenDiensten() {
+    if (!window.besaSupabase) return [];
+    var r = await window.besaSupabase
+      .from("planning")
+      .select("id, start_iso, einde_iso, diensttype, locatie, client, teamlid, vereist_aantal_medewerkers, open_voor_aanmelding, archived")
+      .eq("open_voor_aanmelding", true)
+      .eq("archived", false)
+      .gte("start_iso", todayStr())
+      .order("start_iso", { ascending: true });
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
 
+  async function loadData() {
+    try {
+      openDienstenRaw = await fetchOpenDiensten();
+    } catch (err) {
+      openDienstenRaw = [];
+      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Open diensten — laden", err);
+    }
+    var openIds = openDienstenRaw.map(function (d) { return d.id; });
     if (window.dienstUitnodigingenDB && window.dienstUitnodigingenDB.fetchForDiensten) {
       await window.dienstUitnodigingenDB.fetchForDiensten(openIds);
     }
@@ -418,7 +439,6 @@
     bindEvents();
     render(); // "laden"
     try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
-    try { if (window.planningDB && window.planningDB.ready) await window.planningDB.ready; } catch (e) { /* doorgaan */ }
     try { if (window.medewerkersDB && window.medewerkersDB.ready) await window.medewerkersDB.ready; } catch (e) { /* doorgaan */ }
     phase = "ready";
     await loadData();
