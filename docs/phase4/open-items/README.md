@@ -66,6 +66,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 62 | [v3 Fase 0.5 — errors.html admin-pagina](62-v3-errors-html-admin-pagina.md) | ⏳ TODO (deferred naar Fase E gap-fix) | 2026-05-13 |
 | 63 | [Client-detail koude-direct-load (lesson #13 herhaling)](63-clientbeheer-clientdetail-coldload.md) | ✅ Opgelost PR #387/#388/#389 — 2 clean runs live | 2026-05-28 |
 | 65 | [Taken-hiërarchie: mobiele app (vervolg)](65-taken-hierarchie-mobiel.md) | ✅ AF & LIVE — mobiel PR #5 (status/draad/bijlage), live getest | 2026-05-31 |
+| 66 | [Taak-deadline herinneringen (dagelijks signaal + push)](66-taken-deadline-herinneringen.md) | ✅ AF & LIVE — SQL+pg_cron (08:00 NL) + pg_net/push-edge-function | 2026-05-31 |
 
 ## Voor v3
 
