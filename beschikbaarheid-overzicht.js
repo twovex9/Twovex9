@@ -64,6 +64,7 @@
     perPage: 30,
   };
   var todayMid = atMidnight(new Date());
+  var phase = "loading";              // "loading" tot medewerkers binnen zijn, dan "ready"
 
   function getInitials(m) {
     var f = (m.voornaam || "").trim();
@@ -264,7 +265,10 @@
     var pageRows = all.slice(startIdx, startIdx + perPage);
 
     if (total === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="bz-empty">Geen ZZP\'ers gevonden voor deze weergave.</td></tr>';
+      var emptyMsg = phase === "loading"
+        ? "Beschikbaarheid laden…"
+        : "Geen ZZP\'ers gevonden voor deze weergave.";
+      tbody.innerHTML = '<tr><td colspan="6" class="bz-empty">' + emptyMsg + '</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(rowHtml).join("");
     }
@@ -334,7 +338,7 @@
     var refresh = document.getElementById("bz-refresh");
     if (refresh) refresh.addEventListener("click", function () { refresh.disabled = true; loadData().then(function () { refresh.disabled = false; }); });
 
-    window.addEventListener("besa:medewerkers-updated", function () { buildModel(); render(); });
+    window.addEventListener("besa:medewerkers-updated", function () { phase = "ready"; buildModel(); render(); });
     window.addEventListener("besa:beschikbaarheid-updated", function () { buildModel(); render(); });
   }
 
@@ -358,6 +362,7 @@
     render(); // lege staat / "laden"
     try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
     try { if (window.medewerkersDB && window.medewerkersDB.ready) await window.medewerkersDB.ready; } catch (e) { /* doorgaan */ }
+    phase = "ready";
     await loadData();
   }
 
