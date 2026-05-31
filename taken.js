@@ -26,6 +26,8 @@
     editingId: null,
     archivingId: null,
     purgingId: null,
+    threadTaakId: null,
+    threadFile: null,
   };
 
   // 1-op-1 BS2: verbatim status/priority-waarden.
@@ -87,6 +89,25 @@
     return (m.voornaam || "") + " " + (m.achternaam || "");
   }
 
+  // Maker = auth.users.id → via profiel naar medewerker-naam (fallback e-mail).
+  function makerLabel(authId, fallbackNaam) {
+    if (fallbackNaam) return fallbackNaam;
+    if (!authId) return "—";
+    try {
+      var profs = (window.profilesDB && window.profilesDB.getAllSync && window.profilesDB.getAllSync()) || [];
+      var p = profs.find(function (x) { return x && String(x.id) === String(authId); });
+      if (p) {
+        if (p.medewerker_id) {
+          var lbl = medewerkerLabel(p.medewerker_id);
+          if (lbl && lbl !== "—") return lbl;
+        }
+        if (p.voornaam || p.achternaam) return ((p.voornaam || "") + " " + (p.achternaam || "")).trim();
+        if (p.email) return p.email;
+      }
+    } catch (e) { /* */ }
+    return "—";
+  }
+
   function getCurrentMedewerkerId() {
     try {
       var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync());
@@ -119,7 +140,7 @@
         if (String(t.toegewezenAanId) !== String(myId)) return false;
       }
       if (!q) return true;
-      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + (t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId)) + " " + (t.aangemaaktDoorNaam || medewerkerLabel(t.aangemaaktDoorId));
+      var hay = (t.naam || "") + " " + (t.beschrijving || "") + " " + (t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId)) + " " + makerLabel(t.aangemaaktDoorId, t.aangemaaktDoorNaam);
       return hay.toLowerCase().indexOf(q) >= 0;
     });
   }
@@ -152,7 +173,7 @@
     return '<tr data-id="' + escapeHtml(t.id) + '" class="taken-row" style="cursor:pointer">' +
       '<td data-col="naam">' + nameButton + (t.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(t.beschrijving.slice(0, 80)) + (t.beschrijving.length > 80 ? "…" : "") + '</span>' : '') + '</td>' +
       '<td data-col="toegewezen">' + escapeHtml(t.toegewezenAanNaam || medewerkerLabel(t.toegewezenAanId) || "—") + '</td>' +
-      '<td data-col="aangemaakt_door">' + escapeHtml(t.aangemaaktDoorNaam || medewerkerLabel(t.aangemaaktDoorId) || "—") + '</td>' +
+      '<td data-col="aangemaakt_door">' + escapeHtml(makerLabel(t.aangemaaktDoorId, t.aangemaaktDoorNaam)) + '</td>' +
       '<td data-col="status">' + statusPill(t) + '</td>' +
       '<td data-col="deadline">' + escapeHtml(fmtNlDate(t.deadline)) + '</td>' +
       '<td data-col="prioriteit">' + prioriteitPill(t) + '</td>' +
@@ -289,14 +310,40 @@
     }
   }
 
-  function fillMedewerkerSelect() {
+  // Cache van wie ik mag toewijzen (gelijk niveau of lager) — uit RPC.
+  var _assignableIds = null;
+  async function loadAssignableIds() {
+    if (_assignableIds !== null) return _assignableIds;
+    try {
+      if (window.besaSupabase) {
+        var r = await window.besaSupabase.rpc("taken_toewijsbare_mw_ids");
+        if (!r.error && Array.isArray(r.data)) {
+          var map = {};
+          r.data.forEach(function (row) { if (row && row.id) map[row.id] = true; });
+          _assignableIds = map;
+          return _assignableIds;
+        }
+      }
+    } catch (e) { /* val terug op 'alles' bij fout */ }
+    _assignableIds = null; // onbekend → geen restrictie in de UI (RLS blijft de echte gate)
+    return _assignableIds;
+  }
+
+  async function fillMedewerkerSelect(keepCurrentId) {
     var sel = document.getElementById("taken-add-toegewezen");
     if (!sel || !window.medewerkersDB) return;
-    var items = (window.medewerkersDB.getAllSync() || []).filter(function (m) { return m && !m.archived; });
+    var allowed = await loadAssignableIds();
+    var keep = keepCurrentId != null ? keepCurrentId : sel.value;
+    var items = (window.medewerkersDB.getAllSync() || []).filter(function (m) {
+      if (!m || m.archived) return false;
+      // Toon altijd de reeds-toegewezene (ook als die hoger staat), zodat een
+      // bestaande taak correct getoond wordt; verder enkel gelijk-niveau-of-lager.
+      if (allowed && !allowed[m.id] && String(m.id) !== String(keep)) return false;
+      return true;
+    });
     items.sort(function (a, b) {
       return (a.voornaam + " " + a.achternaam).localeCompare(b.voornaam + " " + b.achternaam);
     });
-    var keep = sel.value;
     sel.innerHTML = '<option value="">— Niemand —</option>' + items.map(function (m) {
       return '<option value="' + escapeHtml(m.id) + '">' + escapeHtml((m.voornaam || "") + " " + (m.achternaam || "")) + '</option>';
     }).join("");
@@ -317,9 +364,8 @@
     var submit = document.getElementById("taken-add-submit-btn");
     if (!modal) return;
 
-    fillMedewerkerSelect();
-
     if (item) {
+      fillMedewerkerSelect(item.toegewezenAanId || "");
       title.textContent = "Taak bewerken";
       idInput.value = item.id;
       naam.value = item.naam || "";
@@ -329,7 +375,9 @@
       prioriteit.value = item.prioriteit || "Low";
       deadline.value = item.deadline ? String(item.deadline).slice(0, 10) : "";
       submit.textContent = "Opslaan";
+      showThread(item.id);
     } else {
+      fillMedewerkerSelect("");
       title.textContent = "Taak toevoegen";
       idInput.value = "";
       naam.value = "";
@@ -339,6 +387,7 @@
       prioriteit.value = "Low";
       deadline.value = "";
       submit.textContent = "Toevoegen";
+      hideThread();
     }
     modal.style.display = "flex";
     setTimeout(function () { naam.focus(); }, 50);
@@ -346,8 +395,145 @@
 
   function closeAddModal() {
     state.editingId = null;
+    state.threadTaakId = null;
+    state.threadFile = null;
     var modal = document.getElementById("taken-add-modal");
     if (modal) modal.style.display = "none";
+  }
+
+  // ─── Gespreksdraad + bijlagen ──────────────────────────────────────────────
+
+  function fileIsImage(mime) { return /^image\//.test(String(mime || "")); }
+
+  function bijlageChip(b) {
+    var icon = fileIsImage(b.fileMime)
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+    return '<a class="taak-bijlage-chip" href="' + escapeHtml(b.url || "#") + '" target="_blank" rel="noopener" title="' + escapeHtml(b.naam) + '">' +
+      icon + '<span>' + escapeHtml(b.naam) + '</span></a>';
+  }
+
+  function renderThread() {
+    var taakId = state.threadTaakId;
+    var list = document.getElementById("taken-thread-list");
+    var countEl = document.getElementById("taken-thread-count");
+    if (!list || !taakId) return;
+    var comments = (window.taakCommentsDB && window.taakCommentsDB.listSync(taakId)) || [];
+    var bijlagen = (window.taakBijlagenDB && window.taakBijlagenDB.listSync(taakId)) || [];
+    // Bijlagen zonder comment-koppeling tonen we als losse "bestand toegevoegd"-items.
+    var losseBijlagen = bijlagen.filter(function (b) { return !b.commentId; });
+
+    var totaal = comments.length + losseBijlagen.length;
+    if (countEl) countEl.textContent = totaal ? "(" + totaal + ")" : "";
+
+    if (!totaal) {
+      list.innerHTML = '<div class="taak-thread-empty">Nog geen opmerkingen. Schrijf de eerste hieronder.</div>';
+      return;
+    }
+
+    // Bouw een gecombineerde, chronologische lijst.
+    var items = [];
+    comments.forEach(function (c) {
+      var att = bijlagen.filter(function (b) { return b.commentId === c.id; });
+      items.push({ t: c.createdAt, kind: "comment", c: c, att: att });
+    });
+    losseBijlagen.forEach(function (b) {
+      items.push({ t: b.createdAt, kind: "bijlage", b: b });
+    });
+    items.sort(function (a, b) { return String(a.t || "").localeCompare(String(b.t || "")); });
+
+    list.innerHTML = items.map(function (it) {
+      if (it.kind === "comment") {
+        var attHtml = it.att.length
+          ? '<div class="taak-thread-att">' + it.att.map(bijlageChip).join("") + '</div>'
+          : "";
+        return '<div class="taak-thread-item">' +
+          '<div class="taak-thread-meta"><span class="taak-thread-auteur">' + escapeHtml(it.c.auteurNaam || "Onbekend") + '</span>' +
+          '<span class="taak-thread-time">' + escapeHtml(fmtNlDateTime(it.c.createdAt)) + '</span></div>' +
+          '<div class="taak-thread-tekst">' + escapeHtml(it.c.tekst).replace(/\n/g, "<br>") + '</div>' +
+          attHtml + '</div>';
+      }
+      return '<div class="taak-thread-item taak-thread-item--file">' +
+        '<div class="taak-thread-meta"><span class="taak-thread-auteur">' + escapeHtml(it.b.uploaderNaam || "Onbekend") + '</span>' +
+        '<span class="taak-thread-time">' + escapeHtml(fmtNlDateTime(it.b.createdAt)) + '</span></div>' +
+        '<div class="taak-thread-att">' + bijlageChip(it.b) + '</div></div>';
+    }).join("");
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function showThread(taakId) {
+    state.threadTaakId = taakId;
+    state.threadFile = null;
+    var section = document.getElementById("taken-thread");
+    if (section) section.removeAttribute("hidden");
+    var fnameEl = document.getElementById("taken-thread-file-name");
+    if (fnameEl) fnameEl.textContent = "";
+    var input = document.getElementById("taken-thread-input");
+    if (input) input.value = "";
+    renderThread();
+    if (window.taakThreadDB) {
+      window.taakThreadDB.load(taakId).then(function () {
+        if (state.threadTaakId === taakId) renderThread();
+      }).catch(function () { /* reporter doet zijn werk */ });
+    }
+  }
+
+  function hideThread() {
+    state.threadTaakId = null;
+    state.threadFile = null;
+    var section = document.getElementById("taken-thread");
+    if (section) section.setAttribute("hidden", "");
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(reader.error || new Error("Lezen mislukt")); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function submitThreadMessage() {
+    var taakId = state.threadTaakId;
+    if (!taakId) return;
+    var input = document.getElementById("taken-thread-input");
+    var sendBtn = document.getElementById("taken-thread-send");
+    var tekst = (input && input.value || "").trim();
+    var file = state.threadFile;
+    if (!tekst && !file) { if (input) input.focus(); return; }
+
+    if (sendBtn) sendBtn.disabled = true;
+    try {
+      var commentId = null;
+      if (tekst) {
+        var c = await window.taakCommentsDB.add({ taakId: taakId, tekst: tekst });
+        commentId = c && c.id;
+      }
+      if (file) {
+        var dataUrl = await readFileAsDataUrl(file);
+        await window.taakBijlagenDB.add({
+          taakId: taakId,
+          commentId: commentId,
+          fileData: dataUrl,
+          fileName: file.name,
+          fileMime: file.type,
+          fileSize: file.size,
+        });
+      }
+      if (input) input.value = "";
+      state.threadFile = null;
+      var fnameEl = document.getElementById("taken-thread-file-name");
+      if (fnameEl) fnameEl.textContent = "";
+      var fileInput = document.getElementById("taken-thread-file");
+      if (fileInput) fileInput.value = "";
+      renderThread();
+    } catch (err) {
+      if (window.showError) window.showError("Plaatsen mislukt: " + (err && err.message || err));
+      else console.error("[taken] thread send failed", err);
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
   }
 
   async function submitAddForm(evt) {
@@ -445,6 +631,34 @@
     document.getElementById("taken-add-close-btn").addEventListener("click", closeAddModal);
     document.getElementById("taken-add-cancel-btn").addEventListener("click", closeAddModal);
     document.getElementById("taken-add-form").addEventListener("submit", submitAddForm);
+
+    // Gespreksdraad: bestand kiezen, plaatsen, Enter-to-send, live update.
+    var threadFileBtn = document.getElementById("taken-thread-file-btn");
+    var threadFileInput = document.getElementById("taken-thread-file");
+    var threadFileName = document.getElementById("taken-thread-file-name");
+    var threadSend = document.getElementById("taken-thread-send");
+    var threadInput = document.getElementById("taken-thread-input");
+    if (threadFileBtn && threadFileInput) {
+      threadFileBtn.addEventListener("click", function () { threadFileInput.click(); });
+      threadFileInput.addEventListener("change", function () {
+        var f = threadFileInput.files && threadFileInput.files[0];
+        state.threadFile = f || null;
+        if (threadFileName) threadFileName.textContent = f ? f.name : "";
+      });
+    }
+    if (threadSend) threadSend.addEventListener("click", submitThreadMessage);
+    if (threadInput) {
+      threadInput.addEventListener("keydown", function (e) {
+        // Ctrl/Cmd+Enter = plaatsen (Enter alleen = nieuwe regel).
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitThreadMessage(); }
+      });
+    }
+    window.addEventListener("besa:taak-thread-updated", function (e) {
+      var d = e && e.detail;
+      if (d && d.taakId && state.threadTaakId && String(d.taakId) === String(state.threadTaakId)) {
+        renderThread();
+      }
+    });
 
     document.getElementById("taken-search").addEventListener("input", function (e) { state.search = e.target.value || ""; state.page = 1; render(); });
 

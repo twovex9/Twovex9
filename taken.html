@@ -260,6 +260,27 @@
           <button type="submit" class="emp-verzuim-modal-submit" id="taken-add-submit-btn">Opslaan</button>
         </div>
       </form>
+
+      <section class="taak-thread" id="taken-thread" hidden>
+        <div class="taak-thread-head">
+          <span class="taak-thread-title">Gesprek &amp; bijlagen</span>
+          <span class="taak-thread-count" id="taken-thread-count"></span>
+        </div>
+        <div class="taak-thread-list" id="taken-thread-list" aria-live="polite"></div>
+        <div class="taak-thread-compose">
+          <textarea id="taken-thread-input" class="comp-modal-input" rows="2" placeholder="Schrijf een opmerking…"></textarea>
+          <div class="taak-thread-compose-row">
+            <input type="file" id="taken-thread-file" hidden
+              accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" />
+            <button type="button" class="btn-outline taak-thread-file-btn" id="taken-thread-file-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Bestand
+            </button>
+            <span class="taak-thread-file-name" id="taken-thread-file-name"></span>
+            <button type="button" class="btn-primary taak-thread-send" id="taken-thread-send">Plaatsen</button>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -330,7 +351,8 @@
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js"></script>
-  <script src="taken-data.js?v=takenbs4"></script>
-  <script src="taken.js?v=takenbs4"></script>
+  <script src="taken-data.js?v=takenhier1"></script>
+  <script src="taak-thread-data.js?v=takenhier1"></script>
+  <script src="taken.js?v=takenhier1"></script>
 </body>
 </html>

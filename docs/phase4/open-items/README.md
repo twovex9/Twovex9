@@ -65,6 +65,7 @@ Item 28's "append-at-end" regel verminderde maar elimineerde dit niet (twee item
 | 56 | [Sprint 14: GDPR retention + DSR flow](56-sprint-14-gdpr-retention-dsr.md) | 🟡 In review (PR open) | 2026-05-13 |
 | 62 | [v3 Fase 0.5 — errors.html admin-pagina](62-v3-errors-html-admin-pagina.md) | ⏳ TODO (deferred naar Fase E gap-fix) | 2026-05-13 |
 | 63 | [Client-detail koude-direct-load (lesson #13 herhaling)](63-clientbeheer-clientdetail-coldload.md) | ✅ Opgelost PR #387/#388/#389 — 2 clean runs live | 2026-05-28 |
+| 65 | [Taken-hiërarchie: mobiele app (vervolg)](65-taken-hierarchie-mobiel.md) | ⏳ TODO — web af & live; mobiel volgt | 2026-05-31 |
 
 ## Voor v3
 
