@@ -24468,3 +24468,50 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 }
 .plgen-foot__sum { font-size: var(--font-base); color: var(--text-secondary); font-weight: 600; }
 .plgen-foot__btns { display: flex; gap: 10px; }
+
+/* ── Taken: gespreksdraad + bijlagen (hiërarchische taken) ─────────────────── */
+.taak-thread {
+  border-top: 1px solid var(--line);
+  padding: 14px 20px 4px;
+  margin-top: 4px;
+}
+.taak-thread-head {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;
+}
+.taak-thread-title { font-weight: 600; color: var(--text); font-size: var(--font-base); }
+.taak-thread-count { color: var(--text-muted); font-size: var(--font-table-head); }
+.taak-thread-list {
+  max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+  padding-right: 4px;
+}
+.taak-thread-empty { color: var(--text-muted); font-size: var(--font-base); padding: 6px 0 10px; }
+.taak-thread-item {
+  background: var(--surface-2, var(--line-soft, #f6f7f9));
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+}
+.taak-thread-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.taak-thread-auteur { font-weight: 600; color: var(--text); font-size: var(--font-table-head); }
+.taak-thread-time { color: var(--text-muted); font-size: var(--font-ui-badge); font-variant-numeric: tabular-nums; }
+.taak-thread-tekst { color: var(--text-secondary); font-size: var(--font-base); line-height: 1.4; word-break: break-word; }
+.taak-thread-att { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.taak-bijlage-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--blue-soft); color: var(--blue);
+  border-radius: var(--r-pill); padding: 3px 9px;
+  font-size: var(--font-ui-badge); font-weight: 600; text-decoration: none;
+  max-width: 220px;
+}
+.taak-bijlage-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.taak-bijlage-chip:hover { text-decoration: underline; }
+.taak-thread-compose { margin-top: 10px; }
+.taak-thread-compose-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap;
+}
+.taak-thread-file-btn { display: inline-flex; align-items: center; gap: 6px; }
+.taak-thread-file-name {
+  color: var(--text-muted); font-size: var(--font-ui-badge);
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.taak-thread-send { margin-left: auto; }

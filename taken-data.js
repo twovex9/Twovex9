@@ -91,6 +91,9 @@
       deadline: safe.deadline || null,
       is_private: !!safe.isPrivate,
       assignee: asg,
+      // Echte FK-kolom: hierop draaien de hiërarchie-RLS én de meldingen-trigger.
+      // toegewezenAanId is een medewerkers.id (uuid) of leeg → null.
+      toegewezen_aan_id: safe.toegewezenAanId || null,
       archived: !!safe.archived,
     };
   }
@@ -185,6 +188,9 @@
     if (!doc.id) doc.id = generateId();
     if (!doc.aangemaaktDoorId) doc.aangemaaktDoorId = await getCurrentUserId();
     var payload = objToPayload(doc);
+    // Maker vastleggen (auth.users.id): nodig voor de voltooid-melding én de
+    // INSERT-RLS-policy. Alleen bij aanmaken — update raakt dit nooit aan.
+    payload.aangemaakt_door_id = doc.aangemaaktDoorId || null;
     var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
@@ -200,6 +206,9 @@
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToPayload(merged);
     delete payload.id;
+    // Maker nooit overschrijven bij een update (objToPayload zet 'm niet, maar
+    // wees expliciet — zo blijft de voltooi-melding altijd naar de échte maker).
+    delete payload.aangemaakt_door_id;
     var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
