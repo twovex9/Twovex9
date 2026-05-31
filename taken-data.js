@@ -53,9 +53,14 @@
       naam: row.title || row.naam || "",
       beschrijving: stripHtml(html),
       beschrijvingHtml: html || "",
-      toegewezenAanId: (asg && asg.id) || row.toegewezen_aan_id || null,
+      // De ECHTE FK-kolommen winnen van de BS2-jsonb-snapshot. toegewezen_aan_id
+      // = medewerkers.id (waar RLS/hiërarchie, "Mijn taken" en de toewijs-dropdown
+      // op draaien); assignee.id is een legacy BS2-user-id en mag alleen fallback
+      // zijn voor de ~52 niet-gekoppelde oude taken. Idem aangemaakt_door_id
+      // (= auth.users.id) vóór creator.id.
+      toegewezenAanId: row.toegewezen_aan_id || (asg && asg.id) || null,
       toegewezenAanNaam: (asg && asg.name) || "",
-      aangemaaktDoorId: (crt && crt.id) || row.aangemaakt_door_id || null,
+      aangemaaktDoorId: row.aangemaakt_door_id || (crt && crt.id) || null,
       aangemaaktDoorNaam: (crt && crt.name) || "",
       collaborators: Array.isArray(row.collaborators) ? row.collaborators : [],
       incident: row.incident || null,
