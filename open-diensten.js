@@ -134,8 +134,8 @@
         case "datum":
         default: d = a.dayTs - b.dayTs; break;
       }
-      if (d === 0) d = a.dayTs - b.dayTs;          // secundair: chronologisch
-      return d * dir;
+      if (d !== 0) return d * dir;
+      return a.dayTs - b.dayTs;                     // secundair altijd chronologisch (eerstkomende eerst)
     });
     return out;
   }
