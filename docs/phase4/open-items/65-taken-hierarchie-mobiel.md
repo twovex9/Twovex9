@@ -1,6 +1,6 @@
 # 65 — Taken-hiërarchie: mobiele app (vervolg op web)
 
-**Status**: ⏳ TODO (web is af & live; user koos "eerst web, dan mobiel")
+**Status**: ✅ AF & LIVE (mobiel PR #5, 2026-05-31) — live getest op futureflow-mobile
 
 ## Context
 De web-Taken kreeg een hiërarchisch zichtbaarheidsmodel + gespreksdraad +
