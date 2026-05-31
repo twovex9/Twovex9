@@ -3194,13 +3194,20 @@ function initNav() {
 
   /* Toolbar: Genereren + Optimaliseren (placeholders, bevestigen + log) */
   document.getElementById("planning-gen-btn")?.addEventListener("click", () => {
-    if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback(
-        "info",
-        "Genereren",
-        "Pakt straks vrije diensten en wijst automatisch ZZP/medewerkers toe op basis van competenties en beschikbaarheid. (Nog niet actief)"
-      );
+    if (!window.planningGenerator || !window.planningGenerator.run) {
+      if (window.showError) window.showError("Generator nog niet geladen — herlaad de pagina.");
+      return;
     }
+    const r = getVisibleRange();
+    const toDay = (d) =>
+      d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    window.planningGenerator.run({
+      startIso: toDay(r.start),
+      eindIso: toDay(r.end),
+      periodeLabel: getPeriodLine(),
+      locatieFilter: filterState.locatieToolbar || "",
+      diensttypeSet: null,
+    });
   });
   document.getElementById("planning-opt-btn")?.addEventListener("click", () => {
     if (typeof window.showActionFeedback === "function") {

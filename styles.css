@@ -24430,3 +24430,41 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .od-tag--wacht { background: var(--yellow-soft); color: var(--yellow); }
 .od-person__acties { display: flex; gap: 8px; flex: none; }
 .btn-primary.od-mini, .btn-outline.od-mini { padding: 5px 12px; font-size: var(--font-table-head); min-height: 0; }
+
+/* ===================== Planning — Genereren (voorstel-modal) ===================== */
+.plgen-card { width: min(720px, 96vw); max-height: 88vh; display: flex; flex-direction: column; }
+.plgen-loading, .plgen-empty { padding: 24px 4px; text-align: center; color: var(--text-muted); font-size: var(--font-base); }
+.plgen-intro { margin: 0 0 12px; font-size: var(--font-base); color: var(--text-secondary); }
+.plgen-h3 { font-size: var(--font-base); font-weight: 700; color: var(--text); margin: 16px 0 4px; }
+.plgen-list { display: flex; flex-direction: column; }
+.plgen-row {
+  display: grid;
+  grid-template-columns: 20px 104px minmax(110px, 1fr) 16px minmax(150px, 1.25fr);
+  align-items: center; gap: 10px;
+  padding: 9px 2px; border-top: 1px solid var(--line);
+  cursor: pointer; font-size: var(--font-base);
+}
+.plgen-list .plgen-row:first-child { border-top: 0; }
+.plgen-cb { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+.plgen-row__when { display: flex; flex-direction: column; line-height: 1.2; }
+.plgen-row__date { font-weight: 600; color: var(--text); }
+.plgen-row__time { font-size: var(--font-table-head); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.plgen-row__dienst { color: var(--text); }
+.plgen-row__loc { color: var(--text-muted); }
+.plgen-row__arrow { color: var(--text-muted); text-align: center; }
+.plgen-row__mw { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.plgen-row__name { font-weight: 600; color: var(--text); }
+.plgen-row__mw--open { color: var(--text-secondary); }
+.plgen-row__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.plgen-row__rate { font-size: var(--font-table-head); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.plgen-row__alt { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.plgen-chip { font-size: var(--font-ui-badge); font-weight: 700; border-radius: var(--r-pill); padding: 1px 7px; }
+.plgen-chip--g0 { background: var(--green-soft); color: var(--green); }
+.plgen-chip--g1 { background: var(--blue-soft); color: var(--blue); }
+.plgen-chip--g2 { background: var(--yellow-soft); color: var(--yellow); }
+.plgen-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 20px; border-top: 1px solid var(--line); flex-wrap: wrap;
+}
+.plgen-foot__sum { font-size: var(--font-base); color: var(--text-secondary); font-weight: 600; }
+.plgen-foot__btns { display: flex; gap: 10px; }
