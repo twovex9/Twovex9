@@ -19977,6 +19977,7 @@ button.besc-dtl-tab:hover {
   gap: 8px;
 }
 .im-actor-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -19993,8 +19994,18 @@ button.besc-dtl-tab:hover {
   border-color: var(--blue);
   background: rgba(37, 99, 235, 0.06);
 }
+/* Visueel verborgen, maar bereikbaar + geankerd BINNEN de card.
+   Zonder top/left + position:relative op .im-actor-card viel deze absolute
+   radio terug op <body> als containing block (offsetTop ~1176px). Een echte
+   muisklik focust de radio → de browser scrollt naar die verre body-positie
+   en de layout klapte om → wit scherm. Ankeren binnen de card lost dit op. */
 .im-actor-card input[type="radio"] {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
