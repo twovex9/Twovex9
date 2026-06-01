@@ -23,6 +23,8 @@
   --green-soft: rgba(22, 163, 74, 0.12);
   --yellow: #ca8a04;
   --yellow-soft: rgba(202, 138, 4, 0.14);
+  --pink: #db2777;
+  --pink-soft: rgba(219, 39, 119, 0.12);
 
   --sidebar-bg: #fafafa;
   --sidebar-active: #f0f9ff;
@@ -122,6 +124,8 @@
   --green-soft: rgba(29, 158, 117, 0.20);
   --yellow: #f59e0b;
   --yellow-soft: rgba(245, 158, 11, 0.20);
+  --pink: #f472b6;
+  --pink-soft: rgba(244, 114, 182, 0.18);
 
   --sidebar-bg: #0a0d12;
   --sidebar-active: #1a1f28;
@@ -15149,6 +15153,7 @@ button.planning-erm-new {
 .fact-status-pill--green { background: var(--green-soft); color: var(--green); }
 .fact-status-pill--yellow { background: var(--yellow-soft); color: var(--yellow); }
 .fact-status-pill--red { background: var(--red-soft); color: var(--red); }
+.fact-status-pill--pink { background: var(--pink-soft); color: var(--pink); }
 
 /* Taken — deadline-groepering (1-op-1 BS2) */
 .taken-group-row td {
@@ -15215,6 +15220,56 @@ button.planning-erm-new {
   border-top: 2px solid var(--line-strong);
 }
 .inv-section-title { font-size: var(--font-table-cell); font-weight: 700; margin: 0 0 8px; color: var(--text); }
+
+/* Controle-kaart: ingediende factuur vs. systeemfactuur (rooster) */
+.inv-control-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-xl); padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.inv-control-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.inv-control-head .inv-section-title { margin: 0; }
+.inv-control-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge); font-weight: 700; white-space: nowrap;
+}
+.inv-control-badge--match { background: var(--green-soft); color: var(--green); }
+.inv-control-badge--mismatch { background: var(--pink-soft); color: var(--pink); }
+.inv-control-badge--geel { background: var(--yellow-soft); color: var(--yellow); }
+.inv-control-cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.inv-control-col {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2, var(--ps-f8fafc));
+}
+.inv-control-col--diff { border-color: transparent; background: var(--pink-soft); }
+.inv-control-col--diff.is-match { background: var(--green-soft); }
+.inv-control-col-lbl { font-size: var(--font-table-head); color: var(--text-secondary); }
+.inv-control-col-amt { font-size: var(--font-table-cell); font-weight: 700; color: var(--text); }
+.inv-control-col-sub { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.inv-control-warn {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; border-radius: var(--r-md);
+  background: var(--yellow-soft); color: var(--text); font-size: var(--font-table-head);
+}
+.inv-control-warn-ico { flex: 0 0 auto; color: var(--yellow); font-weight: 800; }
+.inv-control-warn-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.inv-control-warn-list { margin: 2px 0 0; padding: 0 0 0 2px; list-style: none; color: var(--text-secondary); }
+.inv-control-warn-list li { padding: 1px 0; }
+.inv-control-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.inv-control-hint { font-size: var(--font-table-head); color: var(--text-muted); }
+.inv-recalc-detail { display: flex; flex-direction: column; gap: 8px; }
+.inv-recalc-table { width: 100%; border-collapse: collapse; font-size: var(--font-table-cell); }
+.inv-recalc-table th, .inv-recalc-table td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; }
+.inv-recalc-table th { font-size: var(--font-table-head); color: var(--text-secondary); }
+.inv-recalc-table .td-num { text-align: right; }
+.inv-recalc-row--diff td { background: var(--pink-soft); }
+.inv-recalc-row--diff .inv-recalc-delta { color: var(--pink); font-weight: 700; }
+.inv-recalc-foot { font-weight: 700; color: var(--text); }
+.inv-recalc-ok { color: var(--green); font-size: var(--font-table-cell); font-weight: 600; }
+.inv-recalc-note { color: var(--text-muted); font-size: var(--font-table-head); }
+
 .inv-wf-card {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-xl); padding: 16px 20px;
