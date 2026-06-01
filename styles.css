@@ -15290,6 +15290,28 @@ button.planning-erm-new {
 .inv-reject-reason { color: var(--text); font-size: var(--font-table-cell); white-space: pre-wrap; }
 .inv-reject-diensten { color: var(--text-secondary); font-size: var(--font-table-head); }
 
+/* ===== Indiening per maand (top-bar Facturen → indiening) ===== */
+.content--fact-ind { display: flex; flex-direction: column; gap: 16px; }
+.fi-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-xl); padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.fi-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fi-card-head .inv-section-title { margin: 0; }
+.fi-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fi-note { color: var(--text-muted); font-size: var(--font-table-head); margin: 0; }
+.fi-legend { color: var(--text-secondary); font-size: var(--font-table-head); margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.fi-diff-bad { color: var(--pink); font-weight: 700; }
+.fi-diff-ok { color: var(--green); font-weight: 600; }
+.fi-cell-link { text-decoration: none; }
+.fi-cell-gap { color: var(--red); font-weight: 700; font-size: var(--font-ui-badge); }
+.fi-cell-none { color: var(--text-muted); }
+.fi-gap-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); vertical-align: middle; margin-left: 4px; }
+.fi-count { color: var(--text-secondary); font-weight: 600; }
+.fi-none-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.fi-none-chip { background: var(--surface-2, var(--ps-f8fafc)); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px 10px; font-size: var(--font-table-head); color: var(--text); }
+
 .inv-wf-card {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-xl); padding: 16px 20px;
