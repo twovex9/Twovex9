@@ -287,7 +287,7 @@
     var userIds = (profResp.data || []).map(function (p) { return p.id; });
     if (userIds.length === 0) return;
 
-    // F5: Bouw rows — 1 notificatie per planner/teamleider per dienst. Tekst
+    // F5: Bouw rows — 1 notificatie per planner/zorgcoördinator per dienst. Tekst
     // hangt af of de dienst auto-afgehaald is (toekomst) of niet (verleden).
     var toekomstIdSet = {};
     toekomstIds.forEach(function (id) { toekomstIdSet[id] = true; });
