@@ -87,6 +87,26 @@ insert into public.private_app_config (sleutel, waarde)
 select 'km_push_cron_secret', encode(extensions.gen_random_bytes(32), 'hex')
 where not exists (select 1 from public.private_app_config where sleutel = 'km_push_cron_secret');
 
+-- Herbruikbare ontvangersgroep voor km-meldingen: planning/HR-rollen (zelfde
+-- set als de dienst-aanmelden edge-function: bs2_roles/bs2_role_users).
+create or replace function public.besa_planner_hr_user_ids()
+returns setof uuid
+language sql stable security definer set search_path = public
+as $$
+  select distinct p.id
+  from public.profiles p
+  where p.archived = false
+    and lower(p.email) in (
+      select lower(btrim(ru.user_email))
+      from public.bs2_role_users ru
+      join public.bs2_roles r on r.id = ru.role_id
+      where r.slug in ('hr','planner','teamleider','eigenaar','admin','directeur')
+        and ru.user_email is not null
+    );
+$$;
+revoke all on function public.besa_planner_hr_user_ids() from public, anon, authenticated;
+grant execute on function public.besa_planner_hr_user_ids() to service_role;
+
 create or replace function public.km_genereer_vorige_maand(p_dry_run boolean default false)
 returns table (
   medewerkers_verwerkt   integer,
@@ -117,7 +137,7 @@ declare
 
   r_mw     record;
   r_day    record;
-  v_admin  record;
+  v_uid    uuid;
   v_decl_id      text;
   v_decl_status  text;
   v_loc_id       uuid;
@@ -274,16 +294,17 @@ begin
   end loop;
 
   -- HR-signaal: dagen die niet automatisch berekend konden worden (locatie/
-  -- afstand onbekend). Eén samenvattende melding naar admins, idempotent per maand.
+  -- afstand onbekend). Naar planning/HR (besa_planner_hr_user_ids), idempotent
+  -- per maand per ontvanger.
   if not p_dry_run and c_nodist > 0 then
-    for v_admin in select id from public.profiles where rol = 'admin' loop
+    for v_uid in select public.besa_planner_hr_user_ids() loop
       if not exists (
         select 1 from public.notifications n
-        where n.user_id = v_admin.id and n.type = 'km_generatie_signaal'
+        where n.user_id = v_uid and n.type = 'km_generatie_signaal'
           and n.related_entity_id = v_year::text || '-' || v_month::text
       ) then
         insert into public.notifications (user_id, type, title, body, related_entity_type, related_entity_id)
-        values (v_admin.id, 'km_generatie_signaal',
+        values (v_uid, 'km_generatie_signaal',
           'Kilometers ' || v_maand_nl || ': ' || c_nodist || ' dag(en) niet berekend',
           c_nodist || ' dienstdag(en) in ' || v_maand_nl || ' ' || v_year ||
           ' konden niet automatisch berekend worden (locatie of woon-werk afstand onbekend). '
@@ -335,7 +356,8 @@ select cron.schedule(
 -- PR3 — Afwijkingen: medewerker wijzigt/verwijdert een AUTOMATISCH berekende rit
 -- ----------------------------------------------------------------------------
 -- De frontend logt de afwijking (oud -> nieuw + reden); een trigger informeert
--- HR (admins) zodat die kan uitzoeken waarom de kilometers verschillen.
+-- planning/HR (besa_planner_hr_user_ids) zodat zij kunnen uitzoeken waarom de
+-- kilometers verschillen.
 create table if not exists public.kilometer_afwijkingen (
   id uuid primary key default gen_random_uuid(),
   record_id text,
@@ -367,16 +389,16 @@ create or replace function public.km_afwijking_notify()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
   v_naam   text;
-  v_admin  record;
+  v_uid    uuid;
   v_nieuw  text := case when new.actie = 'verwijderd' then 'verwijderd'
                         else coalesce(new.km_nieuw::text, '?') || ' km' end;
 begin
   select coalesce(nullif(btrim(voornaam || ' ' || achternaam), ''), 'Een medewerker')
     into v_naam from public.medewerkers where id = new.medewerker_id;
-  for v_admin in select id from public.profiles where rol = 'admin' loop
+  for v_uid in select public.besa_planner_hr_user_ids() loop
     insert into public.notifications (user_id, type, title, body, related_entity_type, related_entity_id)
     values (
-      v_admin.id, 'km_afwijking',
+      v_uid, 'km_afwijking',
       'Kilometer-afwijking: ' || v_naam,
       v_naam || ' heeft een automatisch berekende rit ' || new.actie || ' ('
         || to_char(new.datum, 'DD-MM-YYYY') || coalesce(', ' || nullif(new.locatie, ''), '') || '). '
