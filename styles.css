@@ -21021,6 +21021,44 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   background: var(--green-soft);
   color: var(--green);
 }
+.km-type-pill--werkwerk {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+
+/* Werk-werk goedkeur-status pills (detail-tabel) */
+.km-appr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-table-head);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.km-appr-pill--green { background: var(--green-soft); color: var(--green); }
+.km-appr-pill--yellow { background: var(--yellow-soft); color: var(--yellow); }
+.km-appr-pill--red { background: var(--red-soft); color: var(--red); }
+.km-appr-reason { color: var(--text-muted); font-size: var(--font-table-head); }
+
+/* Km-cel van werk-werk dat (nog) niet is goedgekeurd → telt niet mee */
+.km-not-counted { opacity: 0.5; text-decoration: line-through; }
+
+/* Info-melding bovenaan de werk-werk invoer-modal */
+.km-werkwerk-info {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: var(--blue-soft);
+  color: var(--text-secondary);
+  border-radius: var(--r-md);
+  font-size: var(--font-table-head);
+  line-height: 1.4;
+}
+.km-werkwerk-info svg { flex: 0 0 auto; margin-top: 1px; color: var(--blue); }
 
 /* Detail acties cel */
 .km-detail-actions {

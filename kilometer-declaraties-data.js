@@ -96,12 +96,23 @@
       beschrijving: row.beschrijving || "",
       kilometers: row.kilometers == null ? 0 : Number(row.kilometers),
       type: row.type || null,
-      typeDisplay: row.type_display || (row.type === "office" ? "Naar kantoor" : row.type || ""),
+      typeDisplay: row.type_display
+        || (row.type === "office" ? "Naar kantoor"
+          : row.type === "werkwerk" ? "Werk-werk"
+          : row.type || ""),
       isAutomatic: !!row.is_automatic,
+      isWerkwerk: row.type === "werkwerk",
       locatieNaam: row.locatie_naam || "",
       locatieBs2Id: row.locatie_bs2_id || null,
       // PR-C: rit met cliënten → inzittendenverzekering-marker (data jsonb)
       metClienten: !!(row.data && row.data.met_clienten),
+      // Werk-werk goedkeuring (zorgcoördinator). NULL = n.v.t. (woon-werk
+      // e.d.); voor werk-werk: pending | approved | rejected.
+      approvalStatus: row.approval_status || null,
+      approvedBy: row.approved_by || null,
+      approvedByNaam: row.approved_by_naam || "",
+      approvedAt: row.approved_at || null,
+      rejectionReason: row.rejection_reason || "",
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
     };
@@ -117,7 +128,7 @@
     if (dRes.error) throw dRes.error;
     var rRes = await global.besaSupabase
       .from(T_REC)
-      .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,aanmaakdatum,laatst_gewijzigd")
+      .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,approval_status,approved_by,approved_by_naam,approved_at,rejection_reason,aanmaakdatum,laatst_gewijzigd")
       .order("datum", { ascending: true });
     if (rRes.error) throw rRes.error;
     return {
@@ -196,9 +207,19 @@
   // ---------------------------------------------------------------------------
   var KM_RATE = 0.39, KM_RIT_CAP = 100;
   function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+  // Telt deze rit mee in maandtotaal + vergoeding? Werk-werk dat nog op
+  // goedkeuring wacht (pending) of is afgewezen (rejected) telt NIET mee —
+  // pas na goedkeuring (approved) wel. Woon-werk e.d. (approval_status NULL)
+  // telt altijd mee.
+  function recCountsTowardTotal(r) {
+    if (!r) return false;
+    var st = r.approvalStatus != null ? r.approvalStatus : (r.approval_status || null);
+    return st !== "pending" && st !== "rejected";
+  }
   function computeTotals(recs) {
     var km = 0, eur = 0;
     (recs || []).forEach(function (r) {
+      if (!recCountsTowardTotal(r)) return;
       var k = Number(r && r.kilometers) || 0;
       km += k;
       eur += Math.min(k, KM_RIT_CAP) * KM_RATE;
@@ -216,6 +237,10 @@
 
   async function persistDeclTotals(declId) {
     var s = String(declId);
+    // Ingediende/vergrendelde declaraties houden hun VERBATIM totalen (BS2 of
+    // ingediend) — nooit herrekenen. Alleen drafts worden bijgewerkt.
+    var dCur = getByIdSync(declId);
+    if (dCur && (dCur.status === "submitted" || dCur.status === "locked")) return null;
     var recs = recList().filter(function (r) { return r && String(r.declaratieId) === s; });
     var t = computeTotals(recs);
     var arr = declList();
@@ -243,6 +268,7 @@
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     if (!p || !p.declaratieId) throw new Error("declaratieId vereist");
     var nowIso = new Date().toISOString();
+    var isWerk = p.type === "werkwerk";
     var row = {
       id: genRecId(),
       declaratie_id: p.declaratieId,
@@ -250,10 +276,14 @@
       beschrijving: p.beschrijving || "",
       kilometers: Number(p.kilometers) || 0,
       type: p.type || "manual",
-      type_display: p.typeDisplay || (p.type === "office" ? "Naar kantoor" : "Handmatig"),
+      type_display: p.typeDisplay
+        || (isWerk ? "Werk-werk" : p.type === "office" ? "Naar kantoor" : "Handmatig"),
       is_automatic: false,
       locatie_naam: p.locatieNaam || "",
       locatie_bs2_id: p.locatieBs2Id || null,
+      // Werk-werk start altijd als 'pending' → wacht op goedkeuring door de
+      // zorgcoördinator. Overige rit-types hebben geen goedkeuring (NULL).
+      approval_status: isWerk ? "pending" : null,
       // PR-C: met_clienten in data jsonb (geen schema-wijziging)
       data: p.metClienten ? { met_clienten: true } : {},
       aanmaakdatum: nowIso,
@@ -288,6 +318,17 @@
         upd.data = { met_clienten: !!patch.metClienten };
       }
     }
+    // Werk-werk: een inhoudelijke wijziging vereist herbeoordeling → approval
+    // terug naar 'pending'. Zo kan een al goedgekeurde rit niet stilletjes
+    // worden opgehoogd zonder dat de zorgcoördinator er opnieuw naar kijkt.
+    var curRec = recList().find(function (r) { return r && String(r.id) === String(id); });
+    if (curRec && curRec.type === "werkwerk") {
+      upd.approval_status = "pending";
+      upd.approved_by = null;
+      upd.approved_by_naam = null;
+      upd.approved_at = null;
+      upd.rejection_reason = null;
+    }
     var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var rec = recRowToObj(res.data);
@@ -312,6 +353,40 @@
     setRec(rl.filter(function (r) { return r && String(r.id) !== String(id); }));
     if (declId) await persistDeclTotals(declId);
     dispatchUpdated("deleteRecord");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Werk-werk goedkeuring (zorgcoördinator). Zet approval_status op approved
+  // of rejected (+ wie/wanneer/reden) en herrekent de declaratie-totalen:
+  // approved telt voortaan mee, rejected/pending niet. Idempotent qua cache.
+  // ---------------------------------------------------------------------------
+  async function setApproval(recId, p) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (recId == null) throw new Error("record-id vereist");
+    var status = p && p.status;
+    if (status !== "approved" && status !== "rejected") {
+      throw new Error("Ongeldige goedkeur-status: " + status);
+    }
+    var nowIso = new Date().toISOString();
+    var upd = {
+      approval_status: status,
+      approved_by: (p && p.approverId) || null,
+      approved_by_naam: (p && p.approverNaam) || null,
+      approved_at: nowIso,
+      rejection_reason: status === "rejected" ? ((p && p.reason) || "") : null,
+      laatst_gewijzigd: nowIso,
+    };
+    var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", recId).select().single();
+    if (res.error) throw res.error;
+    var rec = recRowToObj(res.data);
+    var rl = recList();
+    for (var i = 0; i < rl.length; i++) {
+      if (rl[i] && String(rl[i].id) === String(recId)) { rl[i] = rec; break; }
+    }
+    setRec(rl);
+    if (rec && rec.declaratieId) await persistDeclTotals(rec.declaratieId);
+    dispatchUpdated("setApproval");
+    return rec;
   }
 
   // ---------------------------------------------------------------------------
@@ -466,6 +541,7 @@
     addRecord: addRecord,
     updateRecord: updateRecord,
     deleteRecord: deleteRecord,
+    setApproval: setApproval,
     // Submit-flow + deadline (Fase 1)
     submitDecl: submitDecl,
     ensureDraftFor: ensureDraftFor,
