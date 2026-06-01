@@ -105,6 +105,7 @@
     // ─── Facturen (top-bar = employee-invoices) ──────────────────────────────
     "facturen-alle.html": { action: "browse", entity: "invoices" },
     "facturen-te-beoordelen.html": { action: "view", entity: "invoices" },
+    "facturen-indiening.html": { action: "view", entity: "invoices" },
     "invoice-detail.html": { action: "view", entity: "invoices" },
     "facturen-importeren.html": { action: "import", entity: "invoices" },
 

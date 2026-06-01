@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
@@ -9,8 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Factuur — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9" />
+  <title>Indiening per maand — HR</title>
+  <link rel="stylesheet" href="styles.css?v=compact1" />
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -119,11 +119,11 @@
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Te beoordelen
         </a>
-        <a href="facturen-alle" class="side-link is-active" aria-current="page">
+        <a href="facturen-alle" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Alle facturen
         </a>
-        <a href="facturen-indiening" class="side-link">
+        <a href="facturen-indiening" class="side-link is-active" aria-current="page">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Indiening per maand
         </a>
@@ -134,80 +134,67 @@
       </div>
     </aside>
 
-    <main class="content content--inv-detail">
+    <main class="content content--fact-ind">
       <div class="content-header">
         <div>
-          <a href="facturen-alle" class="im-back" id="inv-back">‹ Terug naar facturen</a>
-          <h1 id="inv-title">Factuur</h1>
-          <p class="content-subtitle" id="inv-subtitle"></p>
+          <h1>Indiening per maand</h1>
+          <p class="content-subtitle">Per maand: ingediende facturen vs. systeemfactuur, en welke ZZP'er wel of niet heeft ingediend.</p>
         </div>
-        <div class="header-actions" id="inv-actions"></div>
       </div>
 
-      <div class="inv-detail-grid">
-        <section class="inv-detail-data">
-          <div id="inv-reject-banner" hidden></div>
-          <div class="inv-meta-card" id="inv-meta"></div>
+      <section class="fi-card">
+        <h2 class="inv-section-title">Reconciliatie per maand</h2>
+        <div class="table-wrapper">
+          <table class="employees-table fi-recon-table">
+            <thead>
+              <tr>
+                <th data-col="maand">Maand</th>
+                <th data-col="nfact" class="th-num"># facturen</th>
+                <th data-col="ingediend" class="th-num">Ingediend</th>
+                <th data-col="systeem" class="th-num">Systeemfactuur</th>
+                <th data-col="verschil" class="th-num">Verschil</th>
+                <th data-col="nzzp" class="th-num"># ZZP'ers</th>
+              </tr>
+            </thead>
+            <tbody id="fi-recon-tbody"></tbody>
+          </table>
+        </div>
+        <p class="fi-note">Vergelijkt de ingediende facturen met de systeemfactuur (rooster-berekening per factuur). Een verschil betekent dat ingediende facturen niet één-op-één matchen met het rooster.</p>
+      </section>
 
-          <section class="inv-control-card" id="inv-control" hidden></section>
-
-          <section class="table-card">
-            <div class="table-wrapper">
-              <table class="employees-table inv-lines-table" id="inv-lines-table">
-                <thead>
-                  <tr>
-                    <th data-col="oms">Omschrijving</th>
-                    <th data-col="unit">Eenheid</th>
-                    <th data-col="price" class="th-num">Prijs</th>
-                    <th data-col="amount" class="th-num">Aantal</th>
-                    <th data-col="total" class="th-num">Totaal</th>
-                  </tr>
-                </thead>
-                <tbody id="inv-lines-tbody"></tbody>
-                <tfoot id="inv-lines-foot"></tfoot>
-              </table>
-            </div>
-          </section>
-
-          <section class="inv-wf-card">
-            <h2 class="inv-section-title">Beoordelingshistorie</h2>
-            <ol class="inv-wf-list" id="inv-wf-list"></ol>
-          </section>
-        </section>
-
-        <aside class="inv-detail-pdf" aria-label="Factuur PDF-weergave">
-          <div class="inv-pdf-toolbar">
-            <span class="inv-pdf-label">Factuur — PDF-weergave</span>
-            <button type="button" class="btn-outline" id="inv-print-btn">Print / PDF</button>
+      <section class="fi-card">
+        <div class="fi-card-head">
+          <h2 class="inv-section-title">Indiening per ZZP'er</h2>
+          <div class="fi-controls">
+            <input class="search" type="search" id="fi-search" placeholder="Zoek ZZP'er..." autocomplete="off" aria-label="Zoek ZZP'er" />
+            <label class="switch switch--red">
+              <input type="checkbox" id="fi-only-gap" />
+              <span class="switch-slider"></span>
+              <span class="switch-label">Alleen met hiaat</span>
+            </label>
           </div>
-          <div class="inv-pdf-sheet" id="inv-pdf-sheet"></div>
-        </aside>
-      </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="employees-table fi-matrix-table" id="fi-matrix-table">
+            <thead id="fi-matrix-head"></thead>
+            <tbody id="fi-matrix-tbody"></tbody>
+          </table>
+        </div>
+        <p class="fi-legend">
+          <span class="fact-status-pill fact-status-pill--blue">€ bedrag</span> ingediend &amp; één-op-één ·
+          <span class="fact-status-pill fact-status-pill--pink">€ bedrag</span> wijkt af van systeemfactuur ·
+          <span class="fact-status-pill fact-status-pill--yellow">€ bedrag</span> geen systeemfactuur ·
+          <span class="fi-cell-gap">ontbreekt</span> geen factuur (maar wel eerder ingediend) ·
+          <span class="fi-cell-none">—</span> geen factuur
+        </p>
+      </section>
+
+      <section class="fi-card">
+        <h2 class="inv-section-title">Inhuur-ZZP'ers zonder enige factuur in het systeem <span id="fi-none-count" class="fi-count"></span></h2>
+        <p class="fi-note">Deze ZZP'ers hebben (nog) geen enkele factuur ingediend in het systeem — mogelijk factureren ze nog handmatig. Loop ze na zodat iedereen via het systeem indient.</p>
+        <div id="fi-none-list" class="fi-none-list"></div>
+      </section>
     </main>
-
-    <div class="modal-overlay" id="inv-review-modal" hidden aria-hidden="true">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inv-review-title" tabindex="-1">
-        <div class="modal-header">
-          <h2 class="modal-title" id="inv-review-title">Beoordelen</h2>
-          <button type="button" class="modal-close" id="inv-review-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-        </div>
-        <form id="inv-review-form" class="modal-body" novalidate>
-          <div class="modal-field" id="inv-review-lines-field" hidden>
-            <span class="modal-label">Welke dienst(en) kloppen niet?</span>
-            <div class="inv-review-lines" id="inv-review-lines"></div>
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="inv-review-comment" id="inv-review-comment-label">Opmerking</label>
-            <textarea class="modal-input" id="inv-review-comment" rows="3" placeholder="Optionele opmerking bij deze beoordeling"></textarea>
-          </div>
-          <p class="im-error" id="inv-review-error" role="alert" hidden></p>
-        </form>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="inv-review-cancel">Annuleren</button>
-          <button type="button" class="btn-primary" id="inv-review-confirm">Bevestigen</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="app-toast" id="fact-tb-toast" role="status" aria-live="polite" hidden></div>
@@ -220,8 +207,6 @@
   <script src="besa-sync-reporter.js"></script>
   <script src="optimistic-lock.js?v=ol1" defer></script>
   <script src="realtime-sync.js?v=rt1" defer></script>
-  <script src="bulk-actions.js?v=ba1" defer></script>
-  <script src="pdf-export.js?v=pdf1" defer></script>
   <script src="permissions.js?v=perm2" defer></script>
   <script src="permissions-page-map.js?v=permmap1" defer></script>
   <script src="permissions-gate.js?v=permgate1" defer></script>
@@ -234,8 +219,7 @@
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js" defer></script>
-  <script src="besa-daterange.js?v=bdr1" defer></script>
   <script src="invoices-data.js?v=inv1" defer></script>
-  <script src="invoice-detail.js?v=invd1" defer></script>
+  <script src="facturen-indiening.js?v=find1" defer></script>
 </body>
 </html>
