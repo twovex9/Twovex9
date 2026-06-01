@@ -616,6 +616,29 @@
 
   <!-- Verwijderen gaat via window.showSliderConfirmModal (save-feedback.js) -->
 
+  <!-- Reden-modal: bij wijzigen/verwijderen van een automatisch berekende rit -->
+  <div class="modal-overlay" id="km-reden-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="km-reden-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="km-reden-title">Reden van aanpassing</h2>
+        <button type="button" class="modal-close" id="km-reden-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p id="km-reden-intro">Deze rit is automatisch berekend. Geef kort aan waarom je ’m aanpast — HR krijgt hiervan een melding en zoekt uit waarom de kilometers verschillen.</p>
+        <p id="km-reden-preview" class="km-reden-preview"></p>
+        <div class="modal-field">
+          <label class="modal-label" for="km-reden-text">Reden <span class="im-req">*</span></label>
+          <textarea class="modal-input" id="km-reden-text" rows="3" required></textarea>
+        </div>
+        <p class="im-error" id="km-reden-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="km-reden-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="km-reden-confirm">Bevestigen &amp; HR informeren</button>
+      </div>
+    </div>
+  </div>
+
 
   <div class="app-toast" id="km-toast" role="status" aria-live="polite" hidden></div>
 
@@ -644,6 +667,7 @@
   <script src="locaties-data.js" defer></script>
   <script src="planning-data.js?v=mloc1" defer></script>
   <script src="kilometer-declaraties-data.js?v=kminz1" defer></script>
-  <script src="kilometers.js?v=mloc1" defer></script>
+  <script src="km-afwijkingen-data.js?v=kma1" defer></script>
+  <script src="kilometers.js?v=kmauto1" defer></script>
 </body>
 </html>
