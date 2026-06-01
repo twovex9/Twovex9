@@ -92,58 +92,15 @@
   }
 
   function defaultLangRows() {
-    return [
-      {
-        id: "vz_l_1",
-        medewerker: "Sophie de Vries",
-        eerstZiektedag: "2025-10-14",
-        verwachteTerug: "2026-04-01",
-        werkelijkeTerug: "",
-        beschrijving: "Langdurige ziekmelding — traject begeleiding",
-        status: "Actief"
-      },
-      {
-        id: "vz_l_2",
-        medewerker: "Thomas Bakker",
-        eerstZiektedag: "2025-12-02",
-        verwachteTerug: "2026-06-15",
-        werkelijkeTerug: "",
-        beschrijving: "Re-integratie in voorbereiding",
-        status: "Actief"
-      },
-      {
-        id: "vz_l_3",
-        medewerker: "Marieke Jansen",
-        eerstZiektedag: "2026-01-08",
-        verwachteTerug: "2026-03-20",
-        werkelijkeTerug: "2026-02-28",
-        beschrijving: "Hersteld na specialistisch consult",
-        status: "Hersteld"
-      }
-    ];
+    // Bron-van-waarheid is Supabase (verzuimDB). Geen hardcoded fictieve
+    // fallback meer: bij een lege cache tonen we niets tot de Supabase-
+    // bootstrap de echte data levert. Voorkomt dat nepdata kort flitst.
+    return [];
   }
 
   function defaultKortRows() {
-    return [
-      {
-        id: "vz_k_1",
-        medewerker: "Daan Visser",
-        eerstZiektedag: "2026-03-02",
-        verwachteTerug: "2026-03-09",
-        werkelijkeTerug: "2026-03-08",
-        beschrijving: "Griep",
-        status: "Hersteld"
-      },
-      {
-        id: "vz_k_2",
-        medewerker: "Emma Smit",
-        eerstZiektedag: "2026-03-18",
-        verwachteTerug: "2026-03-25",
-        werkelijkeTerug: "",
-        beschrijving: "Mag klachten",
-        status: "Actief"
-      }
-    ];
+    // Zie defaultLangRows: Supabase is de enige bron, geen fictieve fallback.
+    return [];
   }
 
   function loadRows(key, fallback) {
@@ -175,8 +132,13 @@
 
   var rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
   var rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
-  if (!localStorage.getItem(STORAGE_LANG)) saveRows(STORAGE_LANG, rowsLang);
-  if (!localStorage.getItem(STORAGE_KORT)) saveRows(STORAGE_KORT, rowsKort);
+  // GEEN seed-push bij load. Vroeger werd hier bij een lege localStorage de
+  // cache naar Supabase gepusht via saveRows -> pushType. Omdat de cache op dat
+  // moment nog niet door de bootstrap gevuld is, berekende pushType dan
+  // toDelete = (alle server-records) en probeerde die te VERWIJDEREN (werd
+  // enkel door RLS geblokkeerd → "[verzuimDB] delete mislukt"). De Supabase-
+  // bootstrap (verzuimDB.bootstrap → writeCache → "besa:verzuim-updated") vult
+  // de cache en triggert de render; seeden is niet nodig.
 
   function getActiveRows() {
     return vzType === "lang" ? rowsLang : rowsKort;
