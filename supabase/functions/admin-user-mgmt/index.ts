@@ -1,20 +1,20 @@
-// v3 Fase G.5 + G.6 + G.7 — Admin User Management Edge Function
+// Admin User Management Edge Function — geconsolideerd op bs2_role_users (2026-06-01)
 //
 // Endpoints (POST):
 //   { action: 'list-users' }
 //   { action: 'reset-password', target_id }
 //   { action: 'reset-2fa', target_id }
-//   { action: 'change-rol', target_id, payload: { rol_id } }
 //   { action: 'deactivate', target_id }
 //   { action: 'activate', target_id }
-//   { action: 'create-user', payload: { email, voornaam, achternaam, rol_id, medewerker_id? } }
+//   { action: 'create-user', payload: { email, voornaam, achternaam, role_ids: string[], medewerker_id? } }
 //
-// Authz: alleen admin-tier (Eigenaar / Admin / Directeur).
-// Audit: elke succesvolle actie -> public.audit_log row.
-// Geen e-mails: alle createUser/updateUserById calls gebruiken email_confirm:true
-// of password-only updates -> Supabase verstuurt geen mail.
+// Rollen van BESTAANDE gebruikers worden client-side beheerd via window.bs2RolesDB
+// (tabel bs2_role_users, RLS `authenticated`) — exact hetzelfde pad als rol-detail.html.
+// Eén code-pad voor rol-toewijzing; deze functie doet alleen auth-admin-zaken + creatie.
 //
-// Custom SMTP staat off (Fase 0.3) -> dubbele safeguard.
+// Authz: alleen admin-tier (Eigenaar / Admin / Directeur), bepaald via bs2_role_users
+//        (bs2_roles.slug) óf profiles.rol = 'admin' (superadmin-klep).
+// Audit: elke succesvolle actie -> public.audit_log. Geen e-mails (email_confirm:true).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -23,6 +23,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
 };
+
+const ADMIN_TIER_SLUGS = ['admin', 'eigenaar', 'directeur'];
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -49,22 +51,28 @@ Deno.serve(async (req) => {
   const { data: { user }, error: userErr } = await userClient.auth.getUser();
   if (userErr || !user) return json({ error: 'Not authenticated' }, 401);
 
-  // ---- 2. Verifieer admin-tier via profiles.rol_id -> org_roles.naam ----
+  // ---- 2. Verifieer admin-tier via bs2_role_users (slug) of profiles.rol='admin' ----
   const { data: actorProfile } = await admin
     .from('profiles')
-    .select('rol_id, voornaam, achternaam, email')
+    .select('rol, voornaam, achternaam, email')
     .eq('id', user.id)
     .maybeSingle();
   if (!actorProfile) return json({ error: 'Profile not found' }, 403);
 
-  let actorRolNaam: string | null = null;
-  if (actorProfile.rol_id) {
-    const { data: actorRol } = await admin.from('org_roles').select('naam').eq('id', actorProfile.rol_id).maybeSingle();
-    actorRolNaam = actorRol?.naam || null;
+  const actorEmail = String(actorProfile.email || user.email || '').toLowerCase();
+  let isAdminTier = actorProfile.rol === 'admin';
+  if (!isAdminTier && actorEmail) {
+    const { data: actorRoles } = await admin
+      .from('bs2_role_users')
+      .select('bs2_roles!inner(slug)')
+      .ilike('user_email', actorEmail);
+    isAdminTier = (actorRoles || []).some(
+      (r: { bs2_roles?: { slug?: string } }) => ADMIN_TIER_SLUGS.includes(r.bs2_roles?.slug || ''),
+    );
   }
-  const ADMIN_TIER = ['Eigenaar', 'Admin', 'Directeur'];
-  const isAdminTier = ADMIN_TIER.includes(actorRolNaam || '');
-  if (!isAdminTier) return json({ error: `Forbidden — alleen Eigenaar/Admin/Directeur (jouw rol: ${actorRolNaam || 'geen'})` }, 403);
+  if (!isAdminTier) {
+    return json({ error: 'Forbidden — alleen Eigenaar/Admin/Directeur kunnen gebruikers beheren.' }, 403);
+  }
 
   // ---- 3. Parse body ----
   let body: Record<string, unknown>;
@@ -106,15 +114,25 @@ Deno.serve(async (req) => {
     if (action === 'list-users') {
       const { data: profiles, error } = await admin
         .from('profiles')
-        .select('id, email, voornaam, achternaam, rol_id, medewerker_id, archived, must_change_password, must_setup_2fa, aanmaakdatum, laatst_gewijzigd')
+        .select('id, email, voornaam, achternaam, medewerker_id, archived, must_change_password, must_setup_2fa, aanmaakdatum, laatst_gewijzigd')
         .order('archived', { ascending: true })
         .order('voornaam', { ascending: true });
       if (error) throw error;
-      const rolIds = [...new Set((profiles || []).map((p: { rol_id: string | null }) => p.rol_id).filter(Boolean))];
-      const rollen = rolIds.length > 0
-        ? (await admin.from('org_roles').select('id, naam').in('id', rolIds as string[])).data || []
-        : [];
-      const rolMap = new Map((rollen as Array<{ id: string; naam: string }>).map((r) => [r.id, r.naam]));
+
+      // bs2-rollen per e-mail (M2M) — case-insensitief gegroepeerd
+      const { data: roleUsers } = await admin
+        .from('bs2_role_users')
+        .select('user_email, bs2_roles!inner(id, name, slug)');
+      const rolesByEmail = new Map<string, Array<{ id: string; name: string; slug: string | null }>>();
+      (roleUsers || []).forEach((row: { user_email: string; bs2_roles?: { id: string; name: string; slug: string | null } }) => {
+        const e = String(row.user_email || '').toLowerCase();
+        const r = row.bs2_roles;
+        if (!r) return;
+        if (!rolesByEmail.has(e)) rolesByEmail.set(e, []);
+        rolesByEmail.get(e)!.push({ id: r.id, name: r.name, slug: r.slug });
+      });
+
+      // 2FA-status
       const targetIds = (profiles || []).map((p: { id: string }) => p.id);
       const factors = targetIds.length > 0
         ? (await admin.schema('auth').from('mfa_factors').select('user_id, status').in('user_id', targetIds)).data || []
@@ -123,24 +141,23 @@ Deno.serve(async (req) => {
       (factors as Array<{ user_id: string; status: string }>).forEach((f) => {
         if (f.status === 'verified') factorMap.set(f.user_id, true);
       });
-      const enriched = (profiles || []).map((p: { id: string; rol_id: string | null }) => ({
-        ...p,
-        rol_naam: p.rol_id ? rolMap.get(p.rol_id) || null : null,
-        has_2fa: factorMap.get(p.id) === true,
-      }));
-      const { data: roles } = await admin.from('org_roles').select('id, naam').order('naam');
-      return json({ ok: true, users: enriched, roles: roles || [], actor_id: user.id });
+
+      const enriched = (profiles || []).map((p: { id: string; email: string | null }) => {
+        const rollen = (rolesByEmail.get(String(p.email || '').toLowerCase()) || [])
+          .sort((a, b) => a.name.localeCompare(b.name, 'nl'));
+        return { ...p, rollen, has_2fa: factorMap.get(p.id) === true };
+      });
+
+      const { data: allRoles } = await admin.from('bs2_roles').select('id, name, slug').order('name');
+      return json({ ok: true, users: enriched, roles: allRoles || [], actor_id: user.id });
     }
 
-    // Bug #81 fix: target_id is alleen verplicht voor acties die op een bestaande user werken.
-    // 'create-user' krijgt geen target_id (target is de nieuwe user die we gaan creëren).
-    const TARGET_REQUIRED = ['reset-password', 'reset-2fa', 'change-rol', 'deactivate', 'activate'];
+    const TARGET_REQUIRED = ['reset-password', 'reset-2fa', 'deactivate', 'activate'];
     if (TARGET_REQUIRED.includes(action) && !target_id) {
       return json({ error: 'target_id ontbreekt' }, 400);
     }
-
-    if (target_id && target_id === user.id && (action === 'deactivate' || action === 'change-rol')) {
-      return json({ error: 'Je kunt je eigen account niet ' + (action === 'deactivate' ? 'deactiveren' : 'van rol wijzigen') + '.' }, 400);
+    if (target_id && target_id === user.id && action === 'deactivate') {
+      return json({ error: 'Je kunt je eigen account niet deactiveren.' }, 400);
     }
 
     const targetLabel = target_id ? await getTargetLabel(target_id) : '';
@@ -170,17 +187,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, message: `2FA van ${targetLabel} gereset (${deleted} factor(s) verwijderd). User krijgt enrollment-wizard bij volgende login.` });
     }
 
-    if (action === 'change-rol') {
-      const newRolId = String(payload.rol_id || '');
-      if (!newRolId) return json({ error: 'payload.rol_id ontbreekt' }, 400);
-      const { data: oldP } = await admin.from('profiles').select('rol_id').eq('id', target_id).maybeSingle();
-      const { data: newRol } = await admin.from('org_roles').select('naam').eq('id', newRolId).maybeSingle();
-      if (!newRol) return json({ error: 'Onbekende rol_id' }, 400);
-      await admin.from('profiles').update({ rol_id: newRolId }).eq('id', target_id);
-      await writeAudit(target_id, 'RolGewijzigd', { target: targetLabel, old_rol_id: oldP?.rol_id, new_rol_id: newRolId, new_rol_naam: newRol.naam });
-      return json({ ok: true, message: `Rol van ${targetLabel} gewijzigd naar ${newRol.naam}.` });
-    }
-
     if (action === 'deactivate' || action === 'activate') {
       const archived = action === 'deactivate';
       await admin.from('profiles').update({ archived }).eq('id', target_id);
@@ -192,11 +198,16 @@ Deno.serve(async (req) => {
       const email = String(payload.email || '').trim().toLowerCase();
       const voornaam = String(payload.voornaam || '').trim();
       const achternaam = String(payload.achternaam || '').trim();
-      const rol_id = String(payload.rol_id || '').trim();
       const medewerker_id = payload.medewerker_id ? String(payload.medewerker_id) : null;
+      const roleIds = Array.isArray(payload.role_ids) ? (payload.role_ids as unknown[]).map(String).filter(Boolean) : [];
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Ongeldig emailadres' }, 400);
       if (!voornaam || !achternaam) return json({ error: 'Voor- en achternaam zijn verplicht' }, 400);
-      if (!rol_id) return json({ error: 'Rol is verplicht' }, 400);
+      if (roleIds.length === 0) return json({ error: 'Selecteer minstens één rol' }, 400);
+
+      // Valideer dat de rollen bestaan
+      const { data: validRoles, error: vErr } = await admin.from('bs2_roles').select('id, name').in('id', roleIds);
+      if (vErr) throw vErr;
+      if (!validRoles || validRoles.length === 0) return json({ error: 'Onbekende rol(len)' }, 400);
 
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -206,21 +217,33 @@ Deno.serve(async (req) => {
       });
       if (cErr) throw cErr;
       const newId = created.user.id;
+
       const updatePayload: Record<string, unknown> = {
         voornaam,
         achternaam,
-        rol_id,
         must_change_password: true,
         must_setup_2fa: true,
       };
       if (medewerker_id) updatePayload.medewerker_id = medewerker_id;
       await admin.from('profiles').update(updatePayload).eq('id', newId);
-      const { data: newRol } = await admin.from('org_roles').select('naam').eq('id', rol_id).maybeSingle();
-      await writeAudit(newId, 'Aangemaakt', { target: `${voornaam} ${achternaam}`, email, rol: newRol?.naam || rol_id });
+
+      // Koppel de gekozen rollen via bs2_role_users (nieuw e-mailadres -> geen conflicten)
+      const naam = `${voornaam} ${achternaam}`.trim();
+      const roleRows = (validRoles as Array<{ id: string; name: string }>).map((r) => ({
+        role_id: r.id,
+        user_email: email,
+        user_name: naam,
+        aanmaakdatum: new Date().toISOString(),
+      }));
+      const { error: rErr } = await admin.from('bs2_role_users').insert(roleRows);
+      if (rErr) throw rErr;
+
+      const rolNamen = (validRoles as Array<{ name: string }>).map((r) => r.name);
+      await writeAudit(newId, 'Aangemaakt', { target: naam, email, rollen: rolNamen });
       return json({
         ok: true,
         user_id: newId,
-        message: `${voornaam} ${achternaam} aangemaakt. Initieel wachtwoord: Welkom123. Geef dit mondeling door.`,
+        message: `${naam} aangemaakt met rol(len): ${rolNamen.join(', ')}. Initieel wachtwoord: Welkom123. Geef dit mondeling door.`,
       });
     }
 

@@ -129,7 +129,7 @@
               <tr>
                 <th>Naam</th>
                 <th>Email</th>
-                <th>Rol</th>
+                <th>Rollen</th>
                 <th>2FA</th>
                 <th>Wachtwoord</th>
                 <th>Status</th>
@@ -169,10 +169,10 @@
           E-mailadres
           <input type="email" id="gebr-add-email" required autocomplete="off" />
         </label>
-        <label class="gebr-add-label">
-          Rol
-          <select id="gebr-add-rol" required></select>
-        </label>
+        <div class="gebr-add-label">
+          <span>Rollen <small>(één of meer — de permissies zijn de optelsom)</small></span>
+          <div id="gebr-add-roles" class="gebr-roles-checklist"></div>
+        </div>
         <p id="gebr-add-err" class="gebr-add-err" hidden></p>
         <p class="gebr-add-info">Initieel wachtwoord wordt <strong>Welkom123</strong>. Bij eerste login moet de gebruiker dit wijzigen en 2FA instellen.</p>
         <div class="gebr-add-actions">
@@ -196,6 +196,22 @@
       <div class="gebr-add-actions">
         <button type="button" class="btn-outline" id="gebr-confirm-cancel">Annuleren</button>
         <button type="button" class="btn-primary" id="gebr-confirm-ok">Bevestigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rollen-editor modal (multi-rol per gebruiker) -->
+  <div id="gebr-roles-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-roles-modal-title" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="gebr-roles-modal-title">Rollen toewijzen</h2>
+        <button type="button" class="modal-close" id="gebr-roles-modal-close" aria-label="Sluiten">×</button>
+      </div>
+      <p class="gebr-roles-modal-sub" id="gebr-roles-modal-sub"></p>
+      <p class="gebr-roles-modal-help">Vink de rollen aan die deze gebruiker moet hebben. De permissies zijn automatisch de optelsom van alle aangevinkte rollen. Wijzigingen worden direct opgeslagen.</p>
+      <div id="gebr-roles-modal-list" class="gebr-roles-checklist"></div>
+      <div class="gebr-add-actions">
+        <button type="button" class="btn-primary" id="gebr-roles-modal-done">Klaar</button>
       </div>
     </div>
   </div>
@@ -236,7 +252,8 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="gebruikers-data.js?v=gd1" defer></script>
-  <script src="gebruikers.js?v=g1" defer></script>
+  <script src="bs2-roles-data.js?v=br-gebr1" defer></script>
+  <script src="gebruikers-data.js?v=gd2" defer></script>
+  <script src="gebruikers.js?v=g2" defer></script>
 </body>
 </html>

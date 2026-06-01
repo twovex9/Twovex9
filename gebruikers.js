@@ -1,22 +1,24 @@
 /* global window, document */
 /**
- * gebruikers.js — v3 Fase G.5 + G.6 + G.7
+ * gebruikers.js — Gebruikersbeheer (admin-tier), geconsolideerd op bs2_role_users.
  *
- * Pagina-logica voor `gebruikers.html`.
- * - Toegankelijk alleen voor admin-tier (Eigenaar/Admin/Directeur).
- * - Roept Edge Function `admin-user-mgmt` via window.gebruikersDB.
- * - Server-side audit-log per actie.
+ * - Toegankelijk voor admin-tier (Eigenaar/Admin/Directeur) — gecheckt via besaIsAdminTier()
+ *   (permissions.js, leest bs2_role_users) en server-side door de Edge Function.
+ * - listUsers/reset/deactivate/create gaan via window.gebruikersDB (Edge Function admin-user-mgmt).
+ * - MULTI-ROL: elke gebruiker kan meerdere rollen hebben. Toewijzen/verwijderen gebeurt
+ *   client-side via window.bs2RolesDB.addUser/removeUser (tabel bs2_role_users) — hetzelfde
+ *   pad als rol-detail.html. De optelsom van permissies volgt automatisch (permissions.js).
  */
 (function () {
   "use strict";
 
   var state = {
     users: [],
-    roles: [],
+    roles: [],        // [{id, name, slug}] — alle toewijsbare bs2-rollen
     actorId: null,
     search: "",
     showArchived: false,
-    rolFilter: "",
+    rolesModalUserId: null,
   };
 
   function el(id) { return document.getElementById(id); }
@@ -29,6 +31,7 @@
     var n = (u.voornaam || "") + " " + (u.achternaam || "");
     return n.trim() || u.email || u.id;
   }
+  function rolesOf(u) { return Array.isArray(u.rollen) ? u.rollen : []; }
 
   // ---- Access control: alleen admin-tier ----
   function ensureAdminTier() {
@@ -38,7 +41,6 @@
       var available = typeof window.besaIsAdminTier === "function" && typeof window.besaCurrentProfile !== "undefined";
       if (!available) {
         if (tries < 30) return setTimeout(check, 200);
-        // Profile niet geladen — fallback: blokkeer
         showNoAccess();
         return;
       }
@@ -46,7 +48,6 @@
         showNoAccess();
         return;
       }
-      // Admin-tier — laad gebruikers
       loadUsers();
     }
     check();
@@ -72,20 +73,24 @@
       if (!state.showArchived && u.archived) return false;
       if (state.showArchived && !u.archived) return false;
       if (q) {
-        var hay = (fmtNaam(u) + " " + (u.email || "") + " " + (u.rol_naam || "")).toLowerCase();
+        var rolStr = rolesOf(u).map(function (r) { return r.name; }).join(" ");
+        var hay = (fmtNaam(u) + " " + (u.email || "") + " " + rolStr).toLowerCase();
         if (hay.indexOf(q) < 0) return false;
       }
       return true;
     });
   }
 
-  function rolSelectHtml(currentRolId, userId, isSelf) {
-    var opts = state.roles.map(function (r) {
-      var sel = r.id === currentRolId ? " selected" : "";
-      return '<option value="' + escapeHtml(r.id) + '"' + sel + '>' + escapeHtml(r.naam) + '</option>';
-    }).join("");
-    var disabled = isSelf ? " disabled title=\"Je kunt je eigen rol niet wijzigen\"" : "";
-    return '<select class="gebr-rol-select" data-user="' + escapeHtml(userId) + '"' + disabled + '>' + opts + '</select>';
+  function rolesCellHtml(u, isSelf) {
+    var rollen = rolesOf(u);
+    var chips = rollen.length
+      ? rollen.map(function (r) { return '<span class="gebr-rol-chip">' + escapeHtml(r.name) + '</span>'; }).join("")
+      : '<span class="gebr-rol-none">— geen rol —</span>';
+    // Eigen account: rollen niet bewerkbaar (voorkomt self-lockout). Anders: "Wijzig"-knop.
+    var btn = isSelf
+      ? '<span class="gebr-self" title="Je kunt je eigen rollen niet wijzigen">(jij)</span>'
+      : '<button type="button" class="btn-outline gebr-roles-edit-btn" data-user="' + escapeHtml(u.id) + '">Wijzig</button>';
+    return '<div class="gebr-rollen-cell"><div class="gebr-rol-chips">' + chips + '</div>' + btn + '</div>';
   }
 
   function renderRow(u) {
@@ -103,7 +108,6 @@
     var status = u.archived
       ? '<span class="gebr-badge gebr-badge--archived">Gedeactiveerd</span>'
       : '<span class="gebr-badge gebr-badge--ok">Actief</span>';
-    var rolCell = rolSelectHtml(u.rol_id, u.id, isSelf);
 
     var acties;
     if (u.archived) {
@@ -124,7 +128,7 @@
     return '<tr data-user="' + escapeHtml(u.id) + '"' + (u.archived ? ' class="is-archived"' : '') + '>' +
       '<td>' + naam + (isSelf ? ' <span class="gebr-self">(jij)</span>' : '') + '</td>' +
       '<td>' + email + '</td>' +
-      '<td>' + rolCell + '</td>' +
+      '<td>' + rolesCellHtml(u, isSelf) + '</td>' +
       '<td>' + fa + '</td>' +
       '<td>' + pwBadge + '</td>' +
       '<td>' + status + '</td>' +
@@ -142,17 +146,7 @@
       tbody.innerHTML = rows.map(renderRow).join("");
     }
     setTotaal();
-    populateAddRolDropdown();
-  }
-
-  function populateAddRolDropdown() {
-    var select = el("gebr-add-rol");
-    if (!select) return;
-    if (select.options.length > 0 && select.options.length === state.roles.length + 1) return;
-    select.innerHTML = '<option value="">— kies rol —</option>' +
-      state.roles.map(function (r) {
-        return '<option value="' + escapeHtml(r.id) + '">' + escapeHtml(r.naam) + '</option>';
-      }).join("");
+    renderAddRolesCheckboxes();
   }
 
   // ---- Data load ----
@@ -217,7 +211,7 @@
     }
   }
 
-  // ---- Actions ----
+  // ---- Actions (auth-admin via Edge Function) ----
   async function onResetPassword(userId, naam) {
     var ok = await showConfirm(
       "Reset wachtwoord",
@@ -281,40 +275,105 @@
     }
   }
 
-  async function onChangeRol(userId, newRolId, oldRolId, naam, newRolNaam) {
-    var ok = await showConfirm(
-      "Rol wijzigen",
-      "Rol van " + naam + " wijzigen naar " + newRolNaam + "?",
-      "Wijzig rol"
-    );
-    if (!ok) {
-      // Revert select
-      var sel = document.querySelector('select.gebr-rol-select[data-user="' + userId + '"]');
-      if (sel) sel.value = oldRolId;
+  // ---- Multi-rol editor (per gebruiker) — client-side via bs2RolesDB ----
+  function openRolesModal(userId) {
+    var u = state.users.find(function (x) { return x.id === userId; });
+    if (!u) return;
+    if (u.id === state.actorId) return; // eigen rollen niet bewerkbaar
+    state.rolesModalUserId = userId;
+    el("gebr-roles-modal-sub").textContent = fmtNaam(u) + " · " + (u.email || "");
+    renderRolesModalList(u);
+    el("gebr-roles-modal").hidden = false;
+  }
+  function closeRolesModal() {
+    el("gebr-roles-modal").hidden = true;
+    state.rolesModalUserId = null;
+  }
+  function renderRolesModalList(u) {
+    var have = {};
+    rolesOf(u).forEach(function (r) { have[r.id] = true; });
+    var wrap = el("gebr-roles-modal-list");
+    if (!state.roles.length) {
+      wrap.innerHTML = '<p class="gebr-roles-empty">Geen rollen beschikbaar.</p>';
       return;
     }
+    wrap.innerHTML = state.roles.map(function (r) {
+      var on = !!have[r.id];
+      return '<label class="gebr-role-opt' + (on ? " is-on" : "") + '">' +
+        '<input type="checkbox" class="gebr-role-cb" data-role="' + escapeHtml(r.id) + '"' + (on ? " checked" : "") + ' />' +
+        '<span class="gebr-role-opt-name">' + escapeHtml(r.name) + '</span>' +
+        '</label>';
+    }).join("");
+  }
+
+  async function onToggleRole(roleId, checked, cb) {
+    var u = state.users.find(function (x) { return x.id === state.rolesModalUserId; });
+    if (!u || !u.email) return;
+    if (!window.bs2RolesDB) { toast("error", "Rollen-module niet geladen."); cb.checked = !checked; return; }
+    var role = state.roles.find(function (r) { return r.id === roleId; });
+    var roleNaam = role ? role.name : "rol";
+    cb.disabled = true;
     try {
-      var r = await window.gebruikersDB.changeRol(userId, newRolId);
-      toast("saved", r.message || "Rol gewijzigd.");
-      await loadUsers();
+      if (checked) {
+        await window.bs2RolesDB.addUser(roleId, u.email, fmtNaam(u));
+        if (!rolesOf(u).some(function (r) { return r.id === roleId; })) {
+          u.rollen = rolesOf(u).concat([{ id: roleId, name: roleNaam, slug: role ? role.slug : null }]);
+        }
+        toast("added", roleNaam + " toegekend aan " + fmtNaam(u));
+      } else {
+        await window.bs2RolesDB.removeUser(roleId, u.email);
+        u.rollen = rolesOf(u).filter(function (r) { return r.id !== roleId; });
+        toast("deleted", roleNaam + " verwijderd bij " + fmtNaam(u));
+      }
+      u.rollen.sort(function (a, b) { return String(a.name).localeCompare(String(b.name), "nl"); });
+      // live re-render rij + modal-markering
+      var lbl = cb.closest(".gebr-role-opt");
+      if (lbl) lbl.classList.toggle("is-on", checked);
+      updateRowChips(u);
     } catch (err) {
-      toast("error", "Rol wijzigen mislukt: " + (err.message || err));
-      var sel2 = document.querySelector('select.gebr-rol-select[data-user="' + userId + '"]');
-      if (sel2) sel2.value = oldRolId;
+      cb.checked = !checked; // revert
+      toast("error", "Rol wijzigen mislukt: " + (err && err.message || err));
+    } finally {
+      cb.disabled = false;
     }
   }
 
-  // ---- Add user modal ----
+  function updateRowChips(u) {
+    var row = document.querySelector('#gebr-tbody tr[data-user="' + (window.CSS && CSS.escape ? CSS.escape(u.id) : u.id) + '"]');
+    if (!row) return;
+    var cell = row.children[2];
+    if (cell) cell.innerHTML = rolesCellHtml(u, u.id === state.actorId);
+  }
+
+  // ---- Add user modal (multi-rol) ----
+  function renderAddRolesCheckboxes() {
+    var wrap = el("gebr-add-roles");
+    if (!wrap) return;
+    if (wrap.childElementCount && wrap.getAttribute("data-count") === String(state.roles.length)) return;
+    wrap.setAttribute("data-count", String(state.roles.length));
+    wrap.innerHTML = state.roles.map(function (r) {
+      var def = (r.slug === "medewerker") ? " checked" : "";
+      return '<label class="gebr-role-opt"><input type="checkbox" class="gebr-add-role-cb" value="' + escapeHtml(r.id) + '"' + def + ' />' +
+        '<span class="gebr-role-opt-name">' + escapeHtml(r.name) + '</span></label>';
+    }).join("");
+  }
+
   function openAddModal() {
     var modal = el("gebr-add-modal");
     modal.hidden = false;
     el("gebr-add-voornaam").value = "";
     el("gebr-add-achternaam").value = "";
     el("gebr-add-email").value = "";
-    el("gebr-add-rol").value = "";
     el("gebr-add-err").hidden = true;
     el("gebr-add-err").textContent = "";
+    wrap_resetAddRoles();
     setTimeout(function () { el("gebr-add-voornaam").focus(); }, 50);
+  }
+  function wrap_resetAddRoles() {
+    var wrap = el("gebr-add-roles");
+    if (!wrap) return;
+    wrap.removeAttribute("data-count");
+    renderAddRolesCheckboxes();
   }
   function closeAddModal() {
     el("gebr-add-modal").hidden = true;
@@ -325,17 +384,17 @@
     var voornaam = el("gebr-add-voornaam").value.trim();
     var achternaam = el("gebr-add-achternaam").value.trim();
     var email = el("gebr-add-email").value.trim();
-    var rol_id = el("gebr-add-rol").value;
+    var roleIds = Array.prototype.slice.call(document.querySelectorAll(".gebr-add-role-cb:checked")).map(function (cb) { return cb.value; });
     var errEl = el("gebr-add-err");
     errEl.hidden = true;
     if (!voornaam || !achternaam) { errEl.textContent = "Voor- en achternaam zijn verplicht."; errEl.hidden = false; return; }
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { errEl.textContent = "Ongeldig emailadres."; errEl.hidden = false; return; }
-    if (!rol_id) { errEl.textContent = "Selecteer een rol."; errEl.hidden = false; return; }
+    if (!roleIds.length) { errEl.textContent = "Selecteer minstens één rol."; errEl.hidden = false; return; }
 
     var btn = el("gebr-add-submit");
     btn.disabled = true; btn.textContent = "Bezig…";
     try {
-      var r = await window.gebruikersDB.createUser({ voornaam: voornaam, achternaam: achternaam, email: email, rol_id: rol_id });
+      var r = await window.gebruikersDB.createUser({ voornaam: voornaam, achternaam: achternaam, email: email, role_ids: roleIds });
       toast("saved", r.message || "Gebruiker aangemaakt.");
       closeAddModal();
       await loadUsers();
@@ -365,8 +424,22 @@
       if (e.target === el("gebr-add-modal")) closeAddModal();
     });
     el("gebr-add-form").addEventListener("submit", onAddSubmit);
+
+    // Rollen-modal
+    el("gebr-roles-modal-close").addEventListener("click", closeRolesModal);
+    el("gebr-roles-modal-done").addEventListener("click", closeRolesModal);
+    el("gebr-roles-modal").addEventListener("click", function (e) {
+      if (e.target === el("gebr-roles-modal")) closeRolesModal();
+    });
+    el("gebr-roles-modal-list").addEventListener("change", function (e) {
+      var cb = e.target.closest(".gebr-role-cb");
+      if (cb) onToggleRole(cb.getAttribute("data-role"), cb.checked, cb);
+    });
+
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && !el("gebr-add-modal").hidden) closeAddModal();
+      if (e.key !== "Escape") return;
+      if (!el("gebr-add-modal").hidden) closeAddModal();
+      else if (!el("gebr-roles-modal").hidden) closeRolesModal();
     });
 
     var tbody = el("gebr-tbody");
@@ -380,17 +453,8 @@
         onDeactivate(t.dataset.user, t.dataset.naam);
       } else if (t.classList.contains("gebr-activate-btn")) {
         onActivate(t.dataset.user);
-      }
-    });
-    tbody.addEventListener("change", function (e) {
-      var t = e.target;
-      if (t.classList.contains("gebr-rol-select")) {
-        var userId = t.dataset.user;
-        var newRolId = t.value;
-        var u = state.users.find(function (x) { return x.id === userId; });
-        if (!u) return;
-        var newRol = state.roles.find(function (r) { return r.id === newRolId; });
-        onChangeRol(userId, newRolId, u.rol_id, fmtNaam(u), newRol ? newRol.naam : newRolId);
+      } else if (t.classList.contains("gebr-roles-edit-btn")) {
+        openRolesModal(t.dataset.user);
       }
     });
   }
