@@ -6,18 +6,28 @@
  * BS2-bron: POST /api/rpc met signature "get:employee-document-status"
  *   → response { errors: [...], warnings: [...] }
  *
- * Document-statusregels (user-eis Lionel 2026-05-28 — driehoek-systeem):
- *  - GROEN  = alle documenten compleet en geldig, niets vervalt binnen 3 maanden
- *  - ORANJE = een document vervalt binnen 3 maanden (90 dagen) maar is nu nog
- *             geldig → medewerker blijft planbaar, met aantekening
- *  - ROOD   = documentatie MIST: document ontbreekt of is AL verlopen
- *             (een verlopen document = geen geldig document meer = mist)
+ * Document-statusregels (geijkt op BS2, geverifieerd 2026-06-01):
+ *  - GROEN  = geen blokkering en niets vervalt binnen 3 maanden
+ *  - ORANJE = WAARSCHUWING: iets vervalt binnen 3 maanden (90 dagen), OF een
+ *             niet-blokkerend document (opleiding/ID/addendum/arbeidsvoorwaarden)
+ *             is verlopen → medewerker blijft planbaar, met aantekening
+ *  - ROOD   = BLOKKERING: een kerndocument ontbreekt of is verlopen waardoor de
+ *             medewerker niet planbaar is
  *
- * Concreet uit `medewerker_documenten`:
- *  - VOG ontbreekt of (alle) verlopen op NU → ERROR (rood)
- *  - VOG verloopt binnen 90 dagen → WARNING (oranje)
- *  - Contract / addendum / ID / opleiding (BHV) verlopen → ERROR (rood)
- *  - Contract / addendum / ID / opleiding (BHV) verloopt binnen 90 dagen → WARNING (oranje)
+ * Welke documenten BLOKKEREN (rood) — exact zoals BS2:
+ *  - VOG ontbreekt of (alle exemplaren) verlopen → ERROR (rood)   [iedereen]
+ *  - Contract ontbreekt of (alle exemplaren) verlopen → ERROR (rood)
+ *      MAAR alléén als ETF zelf de contractpartij is (loondienst / rechtstreekse
+ *      inhuur). Bij inhuur "Via bureau" levert het bureau het contract → het
+ *      ETF-contract blokkeert NIET en geeft geen waarschuwing. Alleen het meest
+ *      recente/geldende contract telt: een oud verlopen contract dat al door een
+ *      geldig is vervangen, blokkeert niet.
+ *
+ * Welke documenten alleen WAARSCHUWEN (oranje), nooit blokkeren — exact zoals BS2:
+ *  - VOG / Contract verloopt binnen 90 dagen → WARNING (oranje)
+ *  - Opleiding (BHV) / ID / addendum / arbeidsvoorwaarden verlopen óf vervalt
+ *    binnen 90 dagen → WARNING (oranje). Een verlopen opleiding maakt iemand
+ *    dus NIET rood (dit week eerder af van BS2 en is nu gelijkgetrokken).
  *
  * Geen DB-tabel, pure compute. Resultaat wordt per medewerker geheugen-
  * gecached zodat herhaalde renders snel zijn.
@@ -44,6 +54,13 @@
     if (!v) return null;
     var s = String(v).trim();
     if (!s) return null;
+    // NL-formaat DD-MM-YYYY expliciet afhandelen — Date.parse interpreteert dat
+    // onbetrouwbaar (bv. "09-06-2027"). ISO (YYYY-MM-DD) en overige via Date.parse.
+    var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+    if (m) {
+      var nl = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      return isFinite(nl.getTime()) ? nl : null;
+    }
     var t = Date.parse(s);
     if (!isFinite(t)) return null;
     return new Date(t);
@@ -84,67 +101,83 @@
     var now = new Date();
     var list = (docs || []).filter(function (d) { return d && !d.archived; });
 
-    // VOG-check: bestaat er een geldige VOG?
-    var vogs = list.filter(function (d) { return String(d.type || "").toLowerCase() === "vog"; });
-    var hasValidVog = false;
-    vogs.forEach(function (v) {
-      var vd = parseDate(v.vervaldatum);
-      if (!vd) {
-        // VOG zonder datum = telt als aanwezig maar zonder warning
-        hasValidVog = true;
-        return;
-      }
-      var d = daysBetween(now, vd);
-      if (d < 0) {
-        // verlopen → kandidaat voor error, maar pas error als geen geldige VOG bestaat
-      } else {
-        hasValidVog = true;
-        if (d <= WARN_DAYS) {
+    // Inhuurtype bepalen. Bij inhuur "Via bureau" levert het uitzend-/
+    // detacheringsbureau het contract; een ontbrekend of verlopen ETF-contract
+    // is dan GEEN blokkering en geen waarschuwing — exact zoals BS2. (Het emp-
+    // object spreidt de jsonb `data` naar top-level, dus emp.inhuurtype; we
+    // checken voor de zekerheid ook emp.data.inhuurtype.)
+    var inhuurtype = String(
+      (employee && (employee.inhuurtype || (employee.data && employee.data.inhuurtype))) || ""
+    ).toLowerCase();
+    var viaBureau = inhuurtype.indexOf("bureau") !== -1; // "Via bureau"
+
+    // Hulpfunctie: bepaal of een verzameling documenten van één type een geldig
+    // exemplaar bevat (geen vervaldatum = geldig, toekomstige datum = geldig) en
+    // verzamel intussen een "vervalt binnenkort"-waarschuwing. Een verlopen
+    // exemplaar telt niet als geldig — alleen het meest recente/geldende telt,
+    // dus een oud verlopen document dat al door een geldig is vervangen, blokkeert niet.
+    function evalBlocking(typeKey, label, missingNaam, missingReden) {
+      var items = list.filter(function (d) { return String(d.type || "").toLowerCase() === typeKey; });
+      var hasValid = false;
+      items.forEach(function (it) {
+        var vd = parseDate(it.vervaldatum);
+        if (!vd) { hasValid = true; return; } // zonder datum = aanwezig & geldig
+        var dd = daysBetween(now, vd);
+        if (dd < 0) return; // verlopen exemplaar — telt niet als geldig
+        hasValid = true;
+        if (dd <= WARN_DAYS) {
           warnings.push({
-            id: v.id, type: v.type, kind: "vog-expiry-soon",
-            label: typeLabel(v.type), naam: v.naam || typeLabel(v.type),
-            datum: v.vervaldatum, datumLabel: fmtDate(vd),
-            reden: "Verloopt binnen " + d + " dagen",
+            id: it.id, type: typeKey, kind: "expiry-soon",
+            label: label, naam: it.naam || label,
+            datum: it.vervaldatum, datumLabel: fmtDate(vd),
+            reden: "Verloopt op " + fmtDate(vd) + " (over " + dd + " dagen)",
           });
         }
+      });
+      if (items.length === 0) {
+        errors.push({
+          id: null, type: typeKey, kind: typeKey + "-missing",
+          label: label, naam: missingNaam, datum: null, datumLabel: "",
+          reden: missingReden,
+        });
+      } else if (!hasValid) {
+        var laatste = items.reduce(function (best, it) {
+          var d = parseDate(it.vervaldatum);
+          return (!best || (d && best.d && d > best.d)) ? { it: it, d: d } : best;
+        }, null);
+        errors.push({
+          id: laatste && laatste.it.id, type: typeKey, kind: "expired",
+          label: label, naam: (laatste && laatste.it.naam) || label,
+          datum: laatste && laatste.it.vervaldatum,
+          datumLabel: laatste && laatste.d ? fmtDate(laatste.d) : "",
+          reden: "Verlopen op " + (laatste && laatste.d ? fmtDate(laatste.d) : "onbekende datum"),
+        });
       }
-    });
-
-    if (vogs.length === 0) {
-      errors.push({
-        id: null, type: "vog", kind: "vog-missing",
-        label: "VOG", naam: "VOG ontbreekt",
-        datum: null, datumLabel: "",
-        reden: "Er is geen VOG-document geüpload",
-      });
-    } else if (!hasValidVog) {
-      // alle aanwezige VOGs verlopen → pak de meest recente verloopdatum
-      var laatste = vogs.reduce(function (best, v) {
-        var d = parseDate(v.vervaldatum);
-        return (!best || (d && d > best.d)) ? { v: v, d: d } : best;
-      }, null);
-      errors.push({
-        id: laatste && laatste.v.id, type: "vog", kind: "vog-expired",
-        label: "VOG", naam: (laatste && laatste.v.naam) || "VOG",
-        datum: laatste && laatste.v.vervaldatum,
-        datumLabel: laatste && laatste.d ? fmtDate(laatste.d) : "",
-        reden: "Verlopen op " + (laatste && laatste.d ? fmtDate(laatste.d) : "onbekende datum"),
-      });
     }
 
-    // Contract / addendum / id / education (BHV) met vervaldatum:
-    //  - verlopen op NU → ERROR (rood): geen geldig document meer = documentatie mist
-    //  - vervalt binnen 90 dagen → WARNING (oranje): nog geldig, met aantekening
-    var WARN_TYPES = ["contract", "addendum", "id", "education", "employment_conditions"];
+    // ---- VOG: blokkerend kerndocument voor IEDEREEN ----
+    evalBlocking("vog", "VOG", "VOG ontbreekt", "Er is geen VOG-document geüpload");
+
+    // ---- Contract: blokkerend kerndocument, maar alléén als ETF zelf de
+    //      contractpartij is (loondienst / rechtstreekse inhuur). Bij "Via
+    //      bureau" volledig negeren (geen error, geen warning). ----
+    if (!viaBureau) {
+      evalBlocking("contract", "Contract", "Contract ontbreekt", "Er is geen geldig contract");
+    }
+
+    // ---- Opleiding (BHV) / ID / addendum / arbeidsvoorwaarden: NOOIT
+    //      blokkerend. Verlopen óf binnenkort vervallend = alleen WARNING
+    //      (oranje); medewerker blijft planbaar — exact zoals BS2. ----
+    var WARN_ONLY_TYPES = ["addendum", "id", "education", "employment_conditions"];
     list.forEach(function (d) {
       var t = String(d.type || "").toLowerCase();
-      if (WARN_TYPES.indexOf(t) < 0) return;
+      if (WARN_ONLY_TYPES.indexOf(t) < 0) return;
       var vd = parseDate(d.vervaldatum);
       if (!vd) return;
       var dd = daysBetween(now, vd);
       if (dd < 0) {
-        errors.push({
-          id: d.id, type: t, kind: "expired",
+        warnings.push({
+          id: d.id, type: t, kind: "expired-warn",
           label: typeLabel(t), naam: d.naam || typeLabel(t),
           datum: d.vervaldatum, datumLabel: fmtDate(vd),
           reden: "Verlopen op " + fmtDate(vd),
