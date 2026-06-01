@@ -79,6 +79,8 @@
   var INV_ID = getId();
   var pendingAction = null;
   var ctrlState = null;   // laatst berekende controle-staat (voor Herberekenen-knop)
+  var curLines = [];      // geladen factuurregels (voor de afwijs-dienst-picker)
+  var rejectOpts = [];    // regels in de afwijs-picker (index → regel)
 
   function renderActions(inv) {
     var host = $("inv-actions");
@@ -147,8 +149,31 @@
         + escHtml(STATUS_LABEL[w.status] || w.status) + '</span> '
         + '<span class="inv-wf-meta">' + escHtml(formatNlDate(w.created_at)) + ' · ' + escHtml(w.user_name || "—") + '</span>'
         + (w.comment ? '<div class="inv-wf-comment">' + escHtml(w.comment) + '</div>' : '')
+        + (w.data && w.data.diensten && w.data.diensten.length
+          ? '<div class="inv-wf-diensten">Betreft: ' + w.data.diensten.map(function (d) { return escHtml(lineFlat(d)); }).join("; ") + '</div>'
+          : "")
         + '</li>';
     }).join("");
+  }
+
+  // Rode banner met de laatste afwijzingsreden — direct zichtbaar voor
+  // controleur én planner (die het rooster moet aanpassen).
+  function renderRejectBanner(inv, wf) {
+    var host = $("inv-reject-banner");
+    if (!host) return;
+    if (inv.status !== "rejected") { host.hidden = true; host.innerHTML = ""; return; }
+    var last = null;
+    (wf || []).forEach(function (w) { if (w.status === "rejected") last = w; });
+    var reason = last && last.comment ? last.comment : "Geen reden vastgelegd.";
+    var diensten = last && last.data && last.data.diensten ? last.data.diensten : [];
+    host.hidden = false;
+    host.innerHTML = '<div class="inv-reject-card">'
+      + '<strong class="inv-reject-title">Afgewezen — reden voor de planner</strong>'
+      + '<div class="inv-reject-reason">' + escHtml(reason) + '</div>'
+      + (diensten.length
+        ? '<div class="inv-reject-diensten">Betreft: ' + diensten.map(function (d) { return escHtml(lineFlat(d)); }).join("; ") + '</div>'
+        : "")
+      + '</div>';
   }
 
   // Berekent de controle-staat: ingediend vs. systeemfactuur, per-regel
@@ -316,11 +341,41 @@
   // Beoordeel-modal
   function openReview(act) {
     pendingAction = act;
+    var isReject = act === "reject";
     $("inv-review-title").textContent =
-      act === "approve" ? "Factuur goedkeuren" : act === "reject" ? "Factuur afwijzen" : "In beoordeling nemen";
-    $("inv-review-comment").value = "";
+      act === "approve" ? "Factuur goedkeuren" : isReject ? "Factuur afwijzen" : "In beoordeling nemen";
+    var ta = $("inv-review-comment"); ta.value = "";
+    var lbl = $("inv-review-comment-label");
+    if (lbl) lbl.innerHTML = isReject ? 'Reden van afwijzing <span class="inv-req">*</span>' : "Opmerking";
+    ta.placeholder = isReject
+      ? "Welke regel/dienst klopt niet en waarom? (verplicht — de planner past hierop het rooster aan)"
+      : "Optionele opmerking bij deze beoordeling";
+    var lf = $("inv-review-lines-field");
+    if (lf) lf.hidden = !isReject;
+    if (isReject) populateRejectLines();
     var e = $("inv-review-error"); if (e) { e.hidden = true; e.textContent = ""; }
     var m = $("inv-review-modal"); m.hidden = false; m.setAttribute("aria-hidden", "false");
+    setTimeout(function () { try { ta.focus(); } catch (e2) { /* */ } }, 30);
+  }
+  // Vult de "welke dienst(en)"-picker met de factuurregels.
+  function populateRejectLines() {
+    var host = $("inv-review-lines");
+    if (!host) return;
+    rejectOpts = (curLines || []).filter(function (b) { return b && !b.isGroup && !b.isBlankRow; });
+    if (!rejectOpts.length) { host.innerHTML = '<span class="inv-review-lines-empty">Geen factuurregels beschikbaar</span>'; return; }
+    host.innerHTML = rejectOpts.map(function (b, i) {
+      return '<label class="inv-review-line"><input type="checkbox" class="inv-review-line-cb" value="' + i + '" />'
+        + '<span>' + escHtml(lineFlat(lineLabel(b))) + '</span></label>';
+    }).join("");
+  }
+  // Bouwt de gestructureerde afwijs-payload (gekozen dienst(en)) voor workflow.data.
+  function buildRejectMeta() {
+    var picked = [];
+    document.querySelectorAll("#inv-review-lines .inv-review-line-cb:checked").forEach(function (cb) {
+      var i = parseInt(cb.value, 10);
+      if (rejectOpts[i]) picked.push(lineFlat(lineLabel(rejectOpts[i])));
+    });
+    return picked.length ? { diensten: picked } : null;
   }
   function closeReview() {
     var m = $("inv-review-modal"); m.hidden = true; m.setAttribute("aria-hidden", "true");
@@ -329,17 +384,27 @@
   async function confirmReview() {
     if (!pendingAction || !INV_ID) return;
     var comment = ($("inv-review-comment").value || "").trim();
+    var errEl = $("inv-review-error");
+    // Afwijzingsreden is VERPLICHT (anders is achteraf niet terug te vinden
+    // waarom iets is afgekeurd — kernpunt uit het facturatie-document).
+    if (pendingAction === "reject" && !comment) {
+      if (errEl) {
+        errEl.textContent = "Geef een reden van afwijzing op — verplicht, zodat de planner weet wat er aangepast moet worden.";
+        errEl.hidden = false;
+      }
+      var taf = $("inv-review-comment"); if (taf) { try { taf.focus(); } catch (e3) { /* */ } }
+      return;
+    }
     var btn = $("inv-review-confirm"); btn.disabled = true;
     try {
       if (pendingAction === "approve") await window.invoicesDB.approve(INV_ID, comment || undefined);
-      else if (pendingAction === "reject") await window.invoicesDB.reject(INV_ID, comment || undefined);
+      else if (pendingAction === "reject") await window.invoicesDB.reject(INV_ID, comment, buildRejectMeta());
       else await window.invoicesDB.markUnderReview(INV_ID, comment || undefined);
       closeReview();
       if (typeof window.showActionFeedback === "function") window.showActionFeedback("saved", "Factuur");
       await load();
     } catch (err) {
-      var e = $("inv-review-error");
-      if (e) { e.textContent = "Mislukt: " + (err && err.message ? err.message : err); e.hidden = false; }
+      if (errEl) { errEl.textContent = "Mislukt: " + (err && err.message ? err.message : err); errEl.hidden = false; }
     } finally { btn.disabled = false; }
   }
 
@@ -356,8 +421,10 @@
     var lines = [], wf = [];
     try { lines = await window.invoicesDB.getBillingFields(INV_ID); } catch (e) { /* */ }
     try { wf = await window.invoicesDB.getWorkflow(INV_ID); } catch (e) { /* */ }
+    curLines = lines || [];
     renderLines(inv, lines);
     renderControl(inv, lines);
+    renderRejectBanner(inv, wf);
     renderWorkflow(wf);
     renderPdfSheet(inv, lines);
   }
