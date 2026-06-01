@@ -285,6 +285,8 @@
       ? window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(decl.id)
       : [];
     (recs || []).forEach(function (r) {
+      // Werk-werk telt pas mee na goedkeuring door de zorgcoördinator.
+      if (r.type === "werkwerk" && (r.approvalStatus || "pending") !== "approved") return;
       var km = Number(r.kilometers || 0);
       if (r.type === "office") out.woonKm += km;
       else out.werkKm += km;

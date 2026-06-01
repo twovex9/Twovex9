@@ -377,6 +377,7 @@
                       <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
                     </div>
                   </th>
+                  <th data-col="status">Goedkeuring</th>
                   <th data-col="acties" aria-label="Acties">Acties</th>
                 </tr>
               </thead>
@@ -440,12 +441,12 @@
       <div class="modal-body">
         <p class="km-choice-subtitle">Kies hoe je kilometers wilt toevoegen</p>
         <button type="button" class="km-choice-card" id="km-choice-handmatig">
-          <span class="km-choice-icon km-choice-icon--blue" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span class="km-choice-icon km-choice-icon--purple" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66a8 8 0 0 1 10 0"/></svg>
           </span>
           <span class="km-choice-text">
-            <span class="km-choice-title">Handmatige invoer</span>
-            <span class="km-choice-desc">Voor werk-werk reizen die geen standaard woon-werkverkeer zijn</span>
+            <span class="km-choice-title">Werk-werk (cliëntvervoer)</span>
+            <span class="km-choice-desc">Een cliënt tijdens werktijd ergens heen brengen (bv. naar de dokter of dagbesteding). Wordt ter goedkeuring voorgelegd aan de zorgcoördinator.</span>
           </span>
         </button>
         <button type="button" class="km-choice-card" id="km-choice-kantoor">
@@ -477,10 +478,14 @@
   <div class="modal-overlay" id="km-add-manual-modal" hidden aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="km-add-manual-title" tabindex="-1">
       <div class="modal-header">
-        <h2 class="modal-title" id="km-add-manual-title">Handmatige invoer</h2>
+        <h2 class="modal-title" id="km-add-manual-title">Werk-werk (cliëntvervoer)</h2>
         <button type="button" class="modal-close" id="km-add-manual-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <form id="km-add-manual-form" class="modal-body" novalidate>
+        <p class="km-werkwerk-info">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Werk-werk kilometers (een cliënt tijdens werktijd vervoeren) worden ter goedkeuring voorgelegd aan de zorgcoördinator. De rit telt pas mee in je vergoeding nadat die is goedgekeurd.</span>
+        </p>
         <div class="modal-field">
           <label class="modal-label" for="km-add-manual-datum">Datum <span class="im-req">*</span></label>
           <input class="modal-input" type="date" id="km-add-manual-datum" required />

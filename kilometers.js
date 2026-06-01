@@ -286,6 +286,55 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Werk-werk / loondienst-gating helpers
+  //
+  // Woon-werk (Naar kantoor + dagen aanvinken) is ALLEEN voor loondienst.
+  // ZZP/inhuur en overige dienstverbanden krijgen enkel werk-werk
+  // (cliëntvervoer). Werk-werk wordt door de zorgcoördinator goedgekeurd en
+  // telt pas daarna mee in de totalen.
+  // ---------------------------------------------------------------------------
+  function declIsLoondienst(d) {
+    if (!d || !d.medewerkerId || !window.medewerkersDB) return false;
+    var m = window.medewerkersDB.getByIdSync
+      ? window.medewerkersDB.getByIdSync(d.medewerkerId) : null;
+    var dv = (m && m.dienstverband) ? String(m.dienstverband).toLowerCase() : "";
+    return dv.indexOf("loondienst") !== -1;
+  }
+  function applyChoiceGating(d) {
+    var loon = declIsLoondienst(d);
+    var kantoor = $("km-choice-kantoor");
+    var dagen = $("km-choice-woonwerk-dagen");
+    if (kantoor) kantoor.hidden = !loon;
+    if (dagen) dagen.hidden = !loon;
+    var sub = document.querySelector("#km-add-choice-modal .km-choice-subtitle");
+    if (sub) {
+      sub.textContent = loon
+        ? "Kies hoe je kilometers wilt toevoegen"
+        : "Voer werk-werk kilometers in (cliëntvervoer tijdens werktijd)";
+    }
+  }
+  // Telt deze rit mee in het maandtotaal? Werk-werk telt pas mee na goedkeuring.
+  function recCounts(r) {
+    if (!r) return false;
+    return !(r.type === "werkwerk" && (r.approvalStatus || "pending") !== "approved");
+  }
+  // Goedkeur-status van een werk-werk rit als pill (read-only op web; het
+  // goedkeuren zelf gebeurt in de mobiele app door de zorgcoördinator).
+  function approvalCell(r) {
+    if (!r || r.type !== "werkwerk") return "—";
+    var st = r.approvalStatus || "pending";
+    if (st === "approved") {
+      return '<span class="km-appr-pill km-appr-pill--green">Goedgekeurd</span>';
+    }
+    if (st === "rejected") {
+      var reason = r.rejectionReason
+        ? ' <span class="km-appr-reason">' + escHtml(r.rejectionReason) + '</span>' : '';
+      return '<span class="km-appr-pill km-appr-pill--red" title="' + escAttr(r.rejectionReason || "Afgewezen") + '">Afgewezen</span>' + reason;
+    }
+    return '<span class="km-appr-pill km-appr-pill--yellow">Wacht op goedkeuring</span>';
+  }
+
+  // ---------------------------------------------------------------------------
   // Detail — per-dag records van één declaratie (verbatim BS2)
   // ---------------------------------------------------------------------------
   function renderDetail() {
@@ -324,19 +373,28 @@
     var editable = isDeclEditable(d);
     var tbody = $("km-detail-tbody");
     if (pageRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen ritten in deze maand-declaratie</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="incident-empty">Geen ritten in deze maand-declaratie</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(function (r) {
-        var typeLabel = (r.type === "office")
-          ? '<span class="km-type-pill km-type-pill--kantoor"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg> ' + escHtml(r.typeDisplay || "Naar kantoor") + '</span>'
-          : '<span class="km-type-pill km-type-pill--handmatig"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ' + escHtml(r.typeDisplay || r.type || "Rit") + '</span>';
+        var typeLabel;
+        if (r.type === "office") {
+          typeLabel = '<span class="km-type-pill km-type-pill--kantoor"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg> ' + escHtml(r.typeDisplay || "Naar kantoor") + '</span>';
+        } else if (r.type === "werkwerk") {
+          typeLabel = '<span class="km-type-pill km-type-pill--werkwerk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66a8 8 0 0 1 10 0"/></svg> ' + escHtml(r.typeDisplay || "Werk-werk") + '</span>';
+        } else {
+          typeLabel = '<span class="km-type-pill km-type-pill--handmatig"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ' + escHtml(r.typeDisplay || r.type || "Rit") + '</span>';
+        }
+        var counts = recCounts(r);
+        var kmCls = "td-num" + (counts ? "" : " km-not-counted");
+        var kmTitle = counts ? "" : ' title="Telt pas mee na goedkeuring door de zorgcoördinator"';
         return '<tr data-id="' + escAttr(r.id) + '">'
           + '<td data-col="datum">' + escHtml(formatNlDate(r.datum)) + '</td>'
           + '<td data-col="type">' + typeLabel + '</td>'
           + '<td data-col="beschrijving">' + escHtml(r.beschrijving || "—") + '</td>'
           + '<td data-col="locatie">' + escHtml(r.locatieNaam || "-") + '</td>'
           + '<td data-col="dienst">' + (r.isAutomatic ? "Automatisch" : "—") + '</td>'
-          + '<td data-col="kilometers" class="td-num">' + formatKm(r.kilometers) + '</td>'
+          + '<td data-col="kilometers" class="' + kmCls + '"' + kmTitle + '>' + formatKm(r.kilometers) + '</td>'
+          + '<td data-col="status">' + approvalCell(r) + '</td>'
           + '<td data-col="acties" class="km-detail-actions">'
           + (editable
             ? '<button type="button" class="km-row-edit" data-rec="' + escAttr(r.id) + '" aria-label="Bewerken" title="Bewerken"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
@@ -593,7 +651,20 @@
       return;
     }
     var recs = db.getRecordsForDeclaratieSync(d.id) || [];
-    var totalKm = recs.reduce(function (s, r) { return s + (Number(r.kilometers) || 0); }, 0);
+    // "Pas na goedkeuring": een declaratie kan niet ingediend worden zolang er
+    // nog werk-werk ritten op goedkeuring van de zorgcoördinator wachten.
+    var pendingWerk = recs.filter(function (r) {
+      return r && r.type === "werkwerk" && (r.approvalStatus || "pending") === "pending";
+    });
+    if (pendingWerk.length > 0) {
+      toast("error", pendingWerk.length + " werk-werk rit(ten) wachten nog op goedkeuring door de zorgcoördinator. Indienen kan zodra die zijn beoordeeld.");
+      return;
+    }
+    // Preview-totaal telt alleen ritten die meetellen (excl. afgewezen werk-werk).
+    var totalKm = recs.reduce(function (s, r) {
+      if (r && r.type === "werkwerk" && (r.approvalStatus || "pending") !== "approved") return s;
+      return s + (Number(r.kilometers) || 0);
+    }, 0);
     var preview = recs.length + " rit(en) · " + formatKm(totalKm) + " · " + formatEur(d.totalReimbursement);
     Promise.resolve(
       typeof window.showSliderConfirmModal === "function"
@@ -835,6 +906,7 @@
       addBtn.addEventListener("click", function () {
         var d = currentDecl();
         if (!d || !isDeclEditable(d)) return;
+        applyChoiceGating(d);
         openModal("km-add-choice-modal");
       });
     }
@@ -905,11 +977,11 @@
       var btn = $("km-add-manual-submit"); if (btn) btn.disabled = true;
       window.kilometerDeclaratiesDB.addRecord({
         declaratieId: d.id, datum: datum, beschrijving: beschr,
-        kilometers: kmv, type: "manual", typeDisplay: "Handmatig",
+        kilometers: kmv, type: "werkwerk", typeDisplay: "Werk-werk",
         metClienten: metCli,
       }).then(function () {
         closeModal("km-add-manual-modal");
-        toast("saved", metCli ? "Rit toegevoegd — let op inzittendenverzekering" : "Rit toegevoegd");
+        toast("saved", "Werk-werk rit toegevoegd — wacht op goedkeuring zorgcoördinator");
         resetManualForm();
       }).catch(function (err) {
         setErr("km-add-manual-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
