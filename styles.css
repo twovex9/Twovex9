@@ -15270,6 +15270,26 @@ button.planning-erm-new {
 .inv-recalc-ok { color: var(--green); font-size: var(--font-table-cell); font-weight: 600; }
 .inv-recalc-note { color: var(--text-muted); font-size: var(--font-table-head); }
 
+/* Afwijzen — verplichte reden, dienst-picker en zichtbare reden */
+.inv-req { color: var(--red); }
+.inv-review-lines {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 180px; overflow: auto;
+  border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 10px;
+}
+.inv-review-line { display: flex; align-items: flex-start; gap: 8px; font-size: var(--font-table-cell); color: var(--text); cursor: pointer; }
+.inv-review-line input { margin-top: 2px; flex: 0 0 auto; }
+.inv-review-lines-empty { color: var(--text-muted); font-size: var(--font-table-head); }
+.inv-wf-diensten { color: var(--text-secondary); font-size: var(--font-table-head); margin-top: 2px; }
+.inv-reject-card {
+  background: var(--red-soft); border-left: 4px solid var(--red);
+  border-radius: var(--r-md); padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.inv-reject-title { color: var(--red); font-size: var(--font-table-cell); }
+.inv-reject-reason { color: var(--text); font-size: var(--font-table-cell); white-space: pre-wrap; }
+.inv-reject-diensten { color: var(--text-secondary); font-size: var(--font-table-head); }
+
 .inv-wf-card {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-xl); padding: 16px 20px;

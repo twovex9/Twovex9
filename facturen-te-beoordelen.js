@@ -79,7 +79,7 @@
       var k = state.sortKey, av, bv;
       if (k === "bedrag") { av = a.total; bv = b.total; return (av - bv) * dir; }
       if (k === "factuurnr") { av = a.number || ""; bv = b.number || ""; return av.localeCompare(bv, "nl") * dir; }
-      if (k === "status") { av = a.status || ""; bv = b.status || ""; return av.localeCompare(bv) * dir; }
+      if (k === "status") { av = controlRank(a); bv = controlRank(b); return (av - bv) * dir; }
       if (k === "maand") { av = (a.jaar || 0) * 100 + (a.maand || 0); bv = (b.jaar || 0) * 100 + (b.maand || 0); return (av - bv) * dir; }
       av = a.submittedAt || a.aanmaakdatum || ""; bv = b.submittedAt || b.aanmaakdatum || "";
       return String(av).localeCompare(String(bv)) * dir;
@@ -102,6 +102,33 @@
     return '<span class="cl-fase-pill fact-status-pill fact-status-pill--' + (STATUS_CLR[st] || "yellow") + '">'
       + escHtml(STATUS_LABEL[st] || st) + '</span>';
   }
+  function pill(clr, label, title) {
+    return '<span class="cl-fase-pill fact-status-pill fact-status-pill--' + clr + '"'
+      + (title ? ' title="' + escAttr(title) + '"' : "") + '>' + escHtml(label) + '</span>';
+  }
+  // Controle-status (4-kleurenschema uit het facturatie-document):
+  // blauw = ingediend & één-op-één met systeemfactuur; roze = wijkt af van
+  // systeemfactuur; geel = niet in systeemfactuur; rood = afgewezen.
+  function sysTotalOf(r) {
+    var s = r && r.systemGeneratedSummary;
+    var t = s && s.totals && s.totals.total != null ? Number(s.totals.total) : null;
+    return (t != null && isFinite(t)) ? t : null;
+  }
+  function controlPill(r) {
+    if (r.status && r.status !== "submitted") return statusPill(r.status);
+    var sysTotal = sysTotalOf(r);
+    if (sysTotal == null) return pill("yellow", "Niet in systeem", "Geen systeemfactuur aanwezig");
+    var diff = Math.round(((Number(r.total) || 0) - sysTotal) * 100) / 100;
+    if (Math.abs(diff) >= 0.01) return pill("pink", "Wijkt af", "Verschil met systeemfactuur: " + formatEur(diff));
+    return pill("blue", "Ingediend", "Eén-op-één met systeemfactuur");
+  }
+  // Sorteer-/aandacht-rang: geel (0) en roze (1) eerst, blauw (2) daarna.
+  function controlRank(r) {
+    if (r.status && r.status !== "submitted") return 3;
+    var sysTotal = sysTotalOf(r);
+    if (sysTotal == null) return 0;
+    return (Math.abs((Number(r.total) || 0) - sysTotal) >= 0.01) ? 1 : 2;
+  }
 
   function render() {
     renderStats();
@@ -122,7 +149,7 @@
           + '<td data-col="maand">' + escHtml(r.periodFormatted || "—") + '</td>'
           + '<td data-col="medewerker">' + escHtml(invNaam(r)) + '</td>'
           + '<td data-col="factuurnr">' + escHtml(r.number || "—") + '</td>'
-          + '<td data-col="status">' + statusPill(r.status) + '</td>'
+          + '<td data-col="status">' + controlPill(r) + '</td>'
           + '<td data-col="datum">' + escHtml(formatNlDate(r.submittedAt || r.aanmaakdatum)) + '</td>'
           + '<td data-col="bedrag" class="td-num">' + formatEur(r.total) + '</td>'
           + '</tr>';

@@ -141,6 +141,7 @@
 
       <div class="inv-detail-grid">
         <section class="inv-detail-data">
+          <div id="inv-reject-banner" hidden></div>
           <div class="inv-meta-card" id="inv-meta"></div>
 
           <section class="inv-control-card" id="inv-control" hidden></section>
@@ -186,8 +187,12 @@
           <button type="button" class="modal-close" id="inv-review-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
         </div>
         <form id="inv-review-form" class="modal-body" novalidate>
+          <div class="modal-field" id="inv-review-lines-field" hidden>
+            <span class="modal-label">Welke dienst(en) kloppen niet?</span>
+            <div class="inv-review-lines" id="inv-review-lines"></div>
+          </div>
           <div class="modal-field">
-            <label class="modal-label" for="inv-review-comment">Opmerking</label>
+            <label class="modal-label" for="inv-review-comment" id="inv-review-comment-label">Opmerking</label>
             <textarea class="modal-input" id="inv-review-comment" rows="3" placeholder="Optionele opmerking bij deze beoordeling"></textarea>
           </div>
           <p class="im-error" id="inv-review-error" role="alert" hidden></p>

@@ -162,7 +162,7 @@
     if (_wf[s]) return _wf[s];
     if (!global.besaSupabase) return [];
     var res = await global.besaSupabase.from(T_WF)
-      .select("id,invoice_id,status,comment,user_id,user_name,created_at")
+      .select("id,invoice_id,status,comment,user_id,user_name,created_at,data")
       .eq("invoice_id", invId)
       .order("created_at", { ascending: true });
     if (res.error) { reportSilent("Workflow laden", res.error); return []; }
@@ -192,7 +192,9 @@
   }
 
   // Status-overgang + workflow-log (1-op-1 BS2 can_be_*-matrix).
-  async function transition(id, newStatus, comment, flagPatch, stampField) {
+  // dataPayload (optioneel) = gestructureerde context bij de overgang
+  // (bv. welke dienst(en) niet kloppen bij een afwijzing) → workflow.data jsonb.
+  async function transition(id, newStatus, comment, flagPatch, stampField, dataPayload) {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     var nowIso = new Date().toISOString();
     var patch = Object.assign({
@@ -208,6 +210,7 @@
     var wfRow = {
       id: genId(), invoice_id: id, status: newStatus,
       comment: comment || null, user_id: u.id, user_name: u.name, created_at: nowIso,
+      data: dataPayload || null,
     };
     var ins = await global.besaSupabase.from(T_WF).insert(wfRow);
     if (ins.error) throw ins.error;
@@ -237,9 +240,9 @@
   function approve(id, comment) {
     return transition(id, "approved", comment || "Invoice approved", {}, "approved_at");
   }
-  function reject(id, comment) {
+  function reject(id, comment, meta) {
     return transition(id, "rejected", comment || "Invoice rejected",
-      { can_be_submitted: true, can_be_edited: true }, "rejected_at");
+      { can_be_submitted: true, can_be_edited: true }, "rejected_at", meta || null);
   }
   function markUnderReview(id, comment) {
     return transition(id, "under_review", comment || "Marked under review",
