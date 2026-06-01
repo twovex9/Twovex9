@@ -1,10 +1,13 @@
 // Supabase Edge Function: taken-herinnering-push
-// Gerichte Web Push voor taak-deadline-herinneringen. Wordt server-side
-// getriggerd door public.taken_deadline_herinneringen() via pg_net met een
-// gedeelde cron-secret (GEEN user-JWT -> verify_jwt = false). Pusht per
-// notificatie naar de push_subscriptions van DIE ene gebruiker (de toegewezen
-// medewerker). De in-app notificatie bestaat dan al; dit is enkel het
-// telefoon-signaal er bovenop. Patroon gekopieerd van `send-push`.
+// Algemene gerichte Web Push voor ALLE taak-meldingen (toewijzing, voltooid,
+// goedgekeurd, afgekeurd én deadline-herinnering). Wordt server-side getriggerd:
+//   - door de trigger public.taken_notify() bij elke taak-mutatie, en
+//   - door public.taken_deadline_herinneringen() (pg_cron),
+// telkens via pg_net met een gedeelde cron-secret (GEEN user-JWT -> verify_jwt = false).
+// Pusht per notificatie naar de push_subscriptions van DIE ene gebruiker. De in-app
+// notificatie bestaat dan al; dit is enkel het telefoon-signaal er bovenop. De url
+// is een deep-link naar de taak (/taken/<id>) zodat tikken de juiste taak opent.
+// Patroon gekopieerd van `send-push`.
 
 // @ts-expect-error Deno-only import
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
@@ -14,6 +17,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
 declare const Deno: { env: { get(k: string): string | undefined } };
+
+// Alle meldingstypes die deze functie mag pushen. Andere types worden genegeerd
+// (defensief: er komen alleen taak-ids binnen, maar zo pusht hij nooit per ongeluk
+// een onbedoeld type).
+const TAAK_PUSH_TYPES = [
+  "taak_toegewezen",
+  "taak_voltooid",
+  "taak_goedgekeurd",
+  "taak_afgekeurd",
+  "taak_deadline_herinnering",
+];
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +40,7 @@ function jsonResp(body: unknown, status = 200): Response {
 }
 
 interface RequestBody { notification_ids?: string[]; dry_run?: boolean; }
-interface NotifRow { id: string; user_id: string; title: string; body: string | null; related_entity_id: string | null; }
+interface NotifRow { id: string; user_id: string; title: string; body: string | null; related_entity_id: string | null; type: string; }
 interface SubRow { user_id: string; endpoint: string; p256dh: string; auth: string; }
 
 serve(async (req: Request) => {
@@ -52,8 +66,8 @@ serve(async (req: Request) => {
   const ids = Array.isArray(body.notification_ids) ? body.notification_ids.filter((x) => typeof x === "string") : [];
   if (ids.length === 0) return jsonResp({ ok: true, push_verstuurd: 0, message: "Geen notification_ids meegegeven" });
 
-  // 3. De betreffende notificaties (alleen taak-deadline-herinneringen).
-  const nResp = await supa.from("notifications").select("id, user_id, title, body, related_entity_id, type").in("id", ids).eq("type", "taak_deadline_herinnering");
+  // 3. De betreffende notificaties (alle taak-meldingstypes).
+  const nResp = await supa.from("notifications").select("id, user_id, title, body, related_entity_id, type").in("id", ids).in("type", TAAK_PUSH_TYPES);
   if (nResp.error) return jsonResp({ error: nResp.error.message }, 500);
   const notifs = (nResp.data || []) as NotifRow[];
   if (notifs.length === 0) return jsonResp({ ok: true, push_verstuurd: 0, message: "Geen passende notificaties" });
@@ -83,13 +97,15 @@ serve(async (req: Request) => {
   if (!cfg.vapid_public_key || !cfg.vapid_private_key) return jsonResp({ error: "VAPID niet geconfigureerd" }, 500);
   webpush.setVapidDetails(cfg.vapid_subject || "mailto:info@embracethefuture.nl", cfg.vapid_public_key, cfg.vapid_private_key);
 
-  // 6. Versturen: per notificatie naar de subs van die ene gebruiker.
+  // 6. Versturen: per notificatie naar de subs van die ene gebruiker. De url is een
+  //    deep-link naar de taak zodat tikken op de push de juiste taak opent.
   let verstuurd = 0;
   let mislukt = 0;
   for (const n of notifs) {
     const subs = subsByUser.get(n.user_id) || [];
     if (subs.length === 0) continue;
-    const payload = JSON.stringify({ title: n.title, body: n.body || "", url: "/taken", tag: "taak-" + (n.related_entity_id || n.id) });
+    const deepUrl = n.related_entity_id ? `/taken/${n.related_entity_id}` : "/taken";
+    const payload = JSON.stringify({ title: n.title, body: n.body || "", url: deepUrl, tag: "taak-" + (n.related_entity_id || n.id) });
     for (const s of subs) {
       try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload); verstuurd++; }
       catch (_e) { mislukt++; }
