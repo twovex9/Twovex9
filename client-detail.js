@@ -1,5 +1,5 @@
 /* global getClientenById, getClientenItems, upsertClienten, ensureClientDetailFields, FASEN_CLIËNT, addBeschikkingVanuitFormulier, showSaveModal */
-(function () {
+(async function () {
   "use strict";
 
   var toastEl = document.getElementById("cd-toast");
@@ -218,33 +218,36 @@
   }
 
   var qid = getQueryId();
+  // Cold-load robuust: de cliënten-cache kan nog leeg zijn (de Supabase-bootstrap
+  // is async) en bij een volle localStorage-quota persisteert hij niet over een
+  // reload. Wacht daarom kort op de bootstrap-update vóór we oordelen dat de
+  // cliënt niet bestaat. Zo rendert de pagina IN-PLACE uit de in-memory cache
+  // (_mem) — zonder afhankelijk te zijn van window.location.reload() en dus van
+  // localStorage-persistentie. Vervangt de oude reload-vangrail die bij een
+  // volle quota faalde en de melding "Cliënt niet gevonden" liet hangen.
+  if (qid && !getClientenById(qid)) {
+    try { if (typeof getClientenItems === "function") getClientenItems(); } catch (e) { /* triggert bootstrap */ }
+    if (!getClientenById(qid)) {
+      await new Promise(function (resolve) {
+        var settled = false;
+        function finish() {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("besa:clienten-updated", onClientenUpdated);
+          resolve();
+        }
+        function onClientenUpdated() { if (getClientenById(qid)) finish(); }
+        window.addEventListener("besa:clienten-updated", onClientenUpdated);
+        window.setTimeout(finish, 6000);
+      });
+    }
+  }
   var c0 = getClientenById(qid);
   if (typeof ensureClientDetailFields === "function" && c0) ensureClientDetailFields(c0);
 
   if (!qid || !c0) {
-    // Mogelijk staat de cliënt nog niet in de cache omdat de Supabase-bootstrap
-    // niet klaar is. Wachten op de update-event en dan herladen.
-    if (qid && !c0) {
-      var clientDetailReloaded = false;
-      window.addEventListener("besa:clienten-updated", function onClientenUpdated() {
-        if (clientDetailReloaded) return;
-        var found = typeof getClientenById === "function" ? getClientenById(qid) : null;
-        if (!found) return;
-        clientDetailReloaded = true;
-        window.removeEventListener("besa:clienten-updated", onClientenUpdated);
-        // Loop-proof: reload hooguit ÉÉN keer per cliënt per sessie. Bij een
-        // volle localStorage-quota faalt writeCache → elke verse load is weer
-        // koud → onvoorwaardelijk reloaden zou een oneindige lus geven. De
-        // sessionStorage-vlag begrenst dit; lukt het na 1 reload nog niet, dan
-        // stopt de lus en blijft de (herstelbare) melding staan.
-        var rk = "cd_cold_reload_" + qid;
-        var already = false;
-        try { already = window.sessionStorage.getItem(rk) === "1"; } catch (e) { /* */ }
-        if (already) return;
-        try { window.sessionStorage.setItem(rk, "1"); } catch (e) { /* */ }
-        window.location.reload();
-      });
-    }
+    // Na de wachttijd hierboven is de cliënt nog steeds onbekend: hij bestaat
+    // echt niet (of de data kon niet laden). Toon de herstelbare melding.
     if (missing) missing.removeAttribute("hidden");
     if (h1) h1.textContent = "Cliëntdossier";
     return;
