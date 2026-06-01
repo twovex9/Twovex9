@@ -460,7 +460,7 @@ const FUNCTIE_OPTIONS = [
   "Medewerker Financiële administratie",
   "Hoofd facilitair",
   "Planner",
-  "Teamleider",
+  "Zorgcoördinator",
   "Financieel Directeur",
   "Operationeel Directeur",
   "Gedragswetenschapper",
@@ -961,7 +961,7 @@ function loadEmployeeIntoForm() {
 }
 
 // F4: Planbaarheid-pill rechtsboven in hero — klikbaar voor permissie
-// `manage-planning-employees` (Eigenaar/Admin/Directeur/Planner/Teamleider).
+// `manage-planning-employees` (Eigenaar/Admin/Directeur/Planner/Zorgcoördinator).
 function renderPlanbaarPill(emp) {
   const pill = document.getElementById("emp-planbaar-pill");
   const textEl = document.getElementById("emp-planbaar-text");
