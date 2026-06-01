@@ -318,13 +318,14 @@ revoke all on function public.km_genereer_vorige_maand(boolean) from public, ano
 grant execute on function public.km_genereer_vorige_maand(boolean) to service_role;
 
 -- pg_cron: 1e van elke maand om 02:30 NL (00:30 UTC). cron.schedule is
--- idempotent. NB: pas activeren wanneer de feature af + geverifieerd is en de
--- afstandsmatrix gevuld is (anders worden dagen massaal overgeslagen).
--- select cron.schedule(
---   'km-genereer-vorige-maand',
---   '30 0 1 * *',
---   $cron$select public.km_genereer_vorige_maand();$cron$
--- );
+-- idempotent. ACTIEF sinds 2026-06-01 (feature live; afstandsmatrix gevuld via
+-- de km-afstanden-pagina; mei-2026 generatie geverifieerd). Voorwaarde blijft:
+-- afstandsmatrix gevuld, anders worden dagen overgeslagen + HR-signaal.
+select cron.schedule(
+  'km-genereer-vorige-maand',
+  '30 0 1 * *',
+  $cron$select public.km_genereer_vorige_maand();$cron$
+);
 --
 -- Verify:    select * from cron.job where jobname = 'km-genereer-vorige-maand';
 -- Dry-run:   select * from public.km_genereer_vorige_maand(true);
@@ -391,6 +392,10 @@ drop trigger if exists trg_km_afw_notify on public.kilometer_afwijkingen;
 create trigger trg_km_afw_notify
   after insert on public.kilometer_afwijkingen
   for each row execute function public.km_afwijking_notify();
+
+-- Hardening (security advisor): trigger-functie hoeft niet via /rest/v1/rpc
+-- aanroepbaar te zijn. De trigger blijft werken (checkt geen EXECUTE-grant).
+revoke execute on function public.km_afwijking_notify() from anon, authenticated, public;
 
 alter table public.kilometer_afwijkingen enable row level security;
 
