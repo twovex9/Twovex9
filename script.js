@@ -1358,8 +1358,10 @@ function applyTableFilters() {
   // gebonden — typing deed niets.
   const searchInput = document.querySelector(".toolbar input.search, .toolbar input[type=search]");
   const searchQ = (searchInput && searchInput.value || "").trim().toLowerCase();
-  // "Vereist actie"-toggle: filter op medewerkers met een rode of oranje
-  // documentstatus (verlopen/ontbreekt of vervalt binnen 3 maanden).
+  // "Vereist actie"-toggle: filter op medewerkers met een BLOKKERING (rode
+  // documentstatus = geen geldige VOG / geen geldig contract). Exact zoals BS2:
+  // "vereist actie" = de medewerkers die niet planbaar zijn. Oranje
+  // waarschuwingen (vervalt binnenkort / verlopen opleiding) vallen er buiten.
   const vereistActieInput = document.querySelector('.toolbar input[name="vereist-actie"]');
   const vereistActie = !!(vereistActieInput && vereistActieInput.checked);
   document.querySelectorAll("table.employees-table:not(.nieuws-table) tbody tr").forEach((tr) => {
@@ -1445,10 +1447,11 @@ function applyTableFilters() {
     const okDV = !filterDienstverband || data.dienstverband === filterDienstverband;
     const okCp = !filterCompetentie || empCompList.indexOf(filterCompetentie) !== -1;
 
-    // "Vereist actie": toon alleen rode (verlopen/ontbreekt) + oranje (vervalt
-    // binnen 3 maanden) documentstatussen. Status komt synchroon uit
-    // medewerker-warnings; val terug op de door medewerker-doc-status.js gezette
-    // data-doc-status als de warnings-laag (nog) niet beschikbaar is.
+    // "Vereist actie": toon alleen medewerkers met een BLOKKERING (rode
+    // documentstatus), net als BS2. Oranje waarschuwingen (vervalt binnenkort /
+    // verlopen opleiding) blijven planbaar en vallen dus buiten "vereist actie".
+    // Status komt synchroon uit medewerker-warnings; val terug op de door
+    // medewerker-doc-status.js gezette data-doc-status indien (nog) niet beschikbaar.
     let okAct = true;
     if (vereistActie) {
       let docStatus = "";
@@ -1458,7 +1461,7 @@ function applyTableFilters() {
       } else {
         docStatus = (tr.dataset && tr.dataset.docStatus) || "";
       }
-      okAct = docStatus === "red" || docStatus === "orange";
+      okAct = docStatus === "red";
     }
 
     tr.classList.toggle("tr-filter-hidden", !(okF && okO && okLoc && okBur && okCT && okFs && okDV && okCp && okAct));
