@@ -953,6 +953,63 @@
     [["km-edit-close"], ["km-edit-cancel"]].forEach(function (p) {
       var b = $(p[0]); if (b) b.addEventListener("click", function () { closeModal("km-edit-modal"); });
     });
+
+    // --- Afwijking-flow: wijzigen/verwijderen van een AUTOMATISCH berekende rit
+    //     vraagt een reden en informeert HR (DB-trigger op kilometer_afwijkingen).
+    var _afwState = null; // {actie:'gewijzigd'|'verwijderd', rec, patch}
+    function autoRitGewijzigd(rec, datum, kmv) {
+      var origDatum = rec && rec.datum ? String(rec.datum).slice(0, 10) : "";
+      var origKm = Number(rec && rec.kilometers) || 0;
+      return (datum !== origDatum) || (Number(kmv) !== origKm);
+    }
+    function openRedenModal() {
+      var s = _afwState; var rec = s && s.rec;
+      var prev = $("km-reden-preview");
+      if (prev && rec) {
+        var naar = s.actie === "verwijderd" ? "verwijderd" : formatKm(s.patch.kilometers);
+        prev.textContent = formatNlDate(rec.datum) + " · " + (rec.locatieNaam || rec.beschrijving || "Rit")
+          + " · " + formatKm(rec.kilometers) + " → " + naar;
+      }
+      setErr("km-reden-error", "");
+      var t = $("km-reden-text"); if (t) t.value = "";
+      openModal("km-reden-modal");
+      if (t) { try { t.focus(); } catch (e) { /* */ } }
+    }
+    function closeRedenModal() { _afwState = null; closeModal("km-reden-modal"); }
+    function confirmReden() {
+      var s = _afwState; if (!s) return;
+      var reden = ($("km-reden-text").value || "").trim();
+      if (!reden) { setErr("km-reden-error", "Geef een reden op."); return; }
+      var btn = $("km-reden-confirm"); if (btn) btn.disabled = true;
+      var d = currentDecl(); var mwId = d ? d.medewerkerId : null;
+      var actie = s.actie, rec = s.rec, patch = s.patch;
+      var mut = actie === "verwijderd"
+        ? window.kilometerDeclaratiesDB.deleteRecord(rec.id)
+        : window.kilometerDeclaratiesDB.updateRecord(rec.id, patch);
+      Promise.resolve(mut).then(function () {
+        if (window.kmAfwijkingenDB && window.kmAfwijkingenDB.add) {
+          return window.kmAfwijkingenDB.add({
+            recordId: rec.id, declaratieId: rec.declaratieId, medewerkerId: mwId,
+            datum: rec.datum ? String(rec.datum).slice(0, 10) : null,
+            locatie: rec.locatieNaam || "", actie: actie,
+            kmBerekend: rec.kilometers,
+            kmNieuw: actie === "verwijderd" ? null : patch.kilometers,
+            reden: reden,
+          });
+        }
+      }).then(function () {
+        closeRedenModal();
+        toast("saved", actie === "verwijderd" ? "Rit verwijderd · HR geïnformeerd" : "Rit bijgewerkt · HR geïnformeerd");
+      }).catch(function (err) {
+        setErr("km-reden-error", "Mislukt: " + (err && err.message ? err.message : err));
+      }).finally(function () { if (btn) btn.disabled = false; });
+    }
+    [["km-reden-close"], ["km-reden-cancel"]].forEach(function (p) {
+      var b = $(p[0]); if (b) b.addEventListener("click", closeRedenModal);
+    });
+    var redenConfirmBtn = $("km-reden-confirm");
+    if (redenConfirmBtn) redenConfirmBtn.addEventListener("click", confirmReden);
+
     var eForm = $("km-edit-form");
     if (eForm) eForm.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -963,6 +1020,14 @@
       if (!datum) { setErr("km-edit-error", "Datum is verplicht."); return; }
       if (!beschr) { setErr("km-edit-error", "Beschrijving is verplicht."); return; }
       if (!isFinite(kmv) || kmv < 0) { setErr("km-edit-error", "Vul een geldig aantal kilometers in."); return; }
+      var rec = recordById(id);
+      // Automatisch berekende rit met gewijzigde datum/km -> reden vragen + HR informeren.
+      if (rec && rec.isAutomatic && autoRitGewijzigd(rec, datum, kmv)) {
+        _afwState = { actie: "gewijzigd", rec: rec, patch: { datum: datum, beschrijving: beschr, kilometers: kmv } };
+        closeModal("km-edit-modal");
+        openRedenModal();
+        return;
+      }
       var btn = $("km-edit-submit"); if (btn) btn.disabled = true;
       window.kilometerDeclaratiesDB.updateRecord(id, {
         datum: datum, beschrijving: beschr, kilometers: kmv,
@@ -1003,6 +1068,12 @@
             : window.confirm("Rit verwijderen?")
         ).then(function (ok) {
           if (!ok) return;
+          // Automatisch berekende rit -> reden vragen + HR informeren vóór verwijderen.
+          if (r.isAutomatic) {
+            _afwState = { actie: "verwijderd", rec: r, patch: null };
+            openRedenModal();
+            return;
+          }
           return window.kilometerDeclaratiesDB.deleteRecord(r.id).then(function () {
             toast("deleted", "Rit verwijderd");
           });

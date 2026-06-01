@@ -117,6 +117,7 @@ declare
 
   r_mw     record;
   r_day    record;
+  v_admin  record;
   v_decl_id      text;
   v_decl_status  text;
   v_loc_id       uuid;
@@ -272,6 +273,26 @@ begin
     v_decl_id := null; v_decl_status := null;  -- reset voor volgende medewerker
   end loop;
 
+  -- HR-signaal: dagen die niet automatisch berekend konden worden (locatie/
+  -- afstand onbekend). Eén samenvattende melding naar admins, idempotent per maand.
+  if not p_dry_run and c_nodist > 0 then
+    for v_admin in select id from public.profiles where rol = 'admin' loop
+      if not exists (
+        select 1 from public.notifications n
+        where n.user_id = v_admin.id and n.type = 'km_generatie_signaal'
+          and n.related_entity_id = v_year::text || '-' || v_month::text
+      ) then
+        insert into public.notifications (user_id, type, title, body, related_entity_type, related_entity_id)
+        values (v_admin.id, 'km_generatie_signaal',
+          'Kilometers ' || v_maand_nl || ': ' || c_nodist || ' dag(en) niet berekend',
+          c_nodist || ' dienstdag(en) in ' || v_maand_nl || ' ' || v_year ||
+          ' konden niet automatisch berekend worden (locatie of woon-werk afstand onbekend). '
+          || 'Controleer de Woon-werk afstanden.',
+          'km_generatie', v_year::text || '-' || v_month::text);
+      end if;
+    end loop;
+  end if;
+
   -- Best-effort telefoon-push voor de zojuist aangemaakte meldingen. Mag de
   -- in-app meldingen NOOIT raken -> alles in een exception-block.
   if not p_dry_run and array_length(v_notif_ids, 1) > 0 then
@@ -308,4 +329,84 @@ grant execute on function public.km_genereer_vorige_maand(boolean) to service_ro
 -- Verify:    select * from cron.job where jobname = 'km-genereer-vorige-maand';
 -- Dry-run:   select * from public.km_genereer_vorige_maand(true);
 -- Stoppen:   select cron.unschedule('km-genereer-vorige-maand');
+
+-- ----------------------------------------------------------------------------
+-- PR3 — Afwijkingen: medewerker wijzigt/verwijdert een AUTOMATISCH berekende rit
+-- ----------------------------------------------------------------------------
+-- De frontend logt de afwijking (oud -> nieuw + reden); een trigger informeert
+-- HR (admins) zodat die kan uitzoeken waarom de kilometers verschillen.
+create table if not exists public.kilometer_afwijkingen (
+  id uuid primary key default gen_random_uuid(),
+  record_id text,
+  declaratie_id text,
+  medewerker_id uuid references public.medewerkers(id) on delete cascade,
+  datum date,
+  locatie text,
+  actie text not null default 'gewijzigd',     -- 'gewijzigd' | 'verwijderd'
+  km_berekend numeric,
+  km_nieuw numeric,
+  reden text,
+  status text not null default 'open',          -- 'open' | 'afgehandeld'
+  behandeld_door uuid references public.profiles(id) on delete set null,
+  behandeld_op timestamptz,
+  aanmaakdatum timestamptz not null default now(),
+  laatst_gewijzigd timestamptz not null default now()
+);
+
+create index if not exists km_afw_status_idx on public.kilometer_afwijkingen (status);
+create index if not exists km_afw_mw_idx on public.kilometer_afwijkingen (medewerker_id);
+create index if not exists km_afw_datum_idx on public.kilometer_afwijkingen (datum);
+
+drop trigger if exists trg_km_afw_set_modified on public.kilometer_afwijkingen;
+create trigger trg_km_afw_set_modified
+  before update on public.kilometer_afwijkingen
+  for each row execute function public.set_laatst_gewijzigd();
+
+create or replace function public.km_afwijking_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_naam   text;
+  v_admin  record;
+  v_nieuw  text := case when new.actie = 'verwijderd' then 'verwijderd'
+                        else coalesce(new.km_nieuw::text, '?') || ' km' end;
+begin
+  select coalesce(nullif(btrim(voornaam || ' ' || achternaam), ''), 'Een medewerker')
+    into v_naam from public.medewerkers where id = new.medewerker_id;
+  for v_admin in select id from public.profiles where rol = 'admin' loop
+    insert into public.notifications (user_id, type, title, body, related_entity_type, related_entity_id)
+    values (
+      v_admin.id, 'km_afwijking',
+      'Kilometer-afwijking: ' || v_naam,
+      v_naam || ' heeft een automatisch berekende rit ' || new.actie || ' ('
+        || to_char(new.datum, 'DD-MM-YYYY') || coalesce(', ' || nullif(new.locatie, ''), '') || '). '
+        || 'Berekend: ' || coalesce(new.km_berekend::text, '?') || ' km -> ' || v_nieuw || '. '
+        || 'Reden: ' || coalesce(nullif(btrim(new.reden), ''), '(geen opgegeven)'),
+      'kilometer_afwijkingen', new.id::text
+    );
+  end loop;
+  return new;
+end; $$;
+
+drop trigger if exists trg_km_afw_notify on public.kilometer_afwijkingen;
+create trigger trg_km_afw_notify
+  after insert on public.kilometer_afwijkingen
+  for each row execute function public.km_afwijking_notify();
+
+alter table public.kilometer_afwijkingen enable row level security;
+
+drop policy if exists "auth kan km_afw lezen" on public.kilometer_afwijkingen;
+create policy "auth kan km_afw lezen"
+  on public.kilometer_afwijkingen for select to authenticated using (true);
+
+drop policy if exists "auth kan km_afw toevoegen" on public.kilometer_afwijkingen;
+create policy "auth kan km_afw toevoegen"
+  on public.kilometer_afwijkingen for insert to authenticated with check (true);
+
+drop policy if exists "auth kan km_afw bewerken" on public.kilometer_afwijkingen;
+create policy "auth kan km_afw bewerken"
+  on public.kilometer_afwijkingen for update to authenticated using (true) with check (true);
+
+drop policy if exists "auth kan km_afw verwijderen" on public.kilometer_afwijkingen;
+create policy "auth kan km_afw verwijderen"
+  on public.kilometer_afwijkingen for delete to authenticated using (true);
 
