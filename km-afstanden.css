@@ -1,0 +1,121 @@
+/* Woon-werk afstanden — pagina-specifieke layout.
+   Kleuren/radii/fontsizes via bestaande :root-tokens uit styles.css. */
+
+.kma-intro {
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+  line-height: 1.5;
+  max-width: 70ch;
+  margin: 0 0 14px;
+}
+
+/* Voortgangsbalk bij het batch-berekenen */
+.kma-progress { margin: 0 0 14px; }
+.kma-progress-bar {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+.kma-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--blue);
+  border-radius: var(--r-pill);
+  transition: width 120ms linear;
+}
+.kma-progress-text {
+  margin-top: 6px;
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+}
+
+/* Matrix-tabel */
+.kma-table th.kma-col-loc,
+.kma-table td.kma-col-loc { text-align: center; white-space: nowrap; }
+.kma-table th.kma-col-mw { position: sticky; left: 0; z-index: 2; background: var(--surface); }
+.kma-table td.kma-col-mw {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--surface);
+  font-weight: 600;
+}
+.kma-mw-name { color: var(--text); }
+
+.kma-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  vertical-align: middle;
+}
+.kma-badge--warn {
+  background: var(--yellow-soft, var(--yellow));
+  color: var(--text);
+}
+
+/* Cel = klikbare button die als tabelcel oogt */
+.kma-cell {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-table-cell);
+  border-radius: var(--r-sm);
+  padding: 3px 10px;
+  min-width: 56px;
+  cursor: pointer;
+  position: relative;
+}
+.kma-cell:hover { border-color: var(--line-strong); background: var(--line); }
+.kma-cell:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.kma-cell--empty { color: var(--text-muted); }
+.kma-cell--manual { font-weight: 700; }
+.kma-cell-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+  vertical-align: middle;
+}
+
+.kma-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+/* Bewerk-modal */
+.kma-edit-card { max-width: 420px; }
+.kma-edit-sub { font-weight: 600; color: var(--text); margin: 0 0 12px; }
+.kma-field { display: block; margin: 0 0 8px; }
+.kma-field-label {
+  display: block;
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.kma-field input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--font-base);
+  color: var(--text);
+  background: var(--surface);
+}
+.kma-edit-hint { font-size: var(--font-table-head); color: var(--text-secondary); margin: 4px 0 0; }
+.kma-edit-error {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--red-soft, var(--red));
+  color: var(--text);
+  font-size: var(--font-table-head);
+}
+.kma-edit-spacer { flex: 1 1 auto; }
