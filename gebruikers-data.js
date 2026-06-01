@@ -61,9 +61,9 @@
     return callEdge("reset-2fa", { target_id: targetId });
   }
 
-  async function changeRol(targetId, newRolId) {
-    return callEdge("change-rol", { target_id: targetId, payload: { rol_id: newRolId } });
-  }
+  // Rol-toewijzing (multi-rol) gaat NIET meer via deze Edge Function, maar
+  // client-side via window.bs2RolesDB.addUser/removeUser (tabel bs2_role_users) —
+  // hetzelfde pad als rol-detail.html. Eén code-pad voor rol-beheer.
 
   async function deactivate(targetId) {
     return callEdge("deactivate", { target_id: targetId });
@@ -81,7 +81,6 @@
     listUsers: listUsers,
     resetPassword: resetPassword,
     reset2fa: reset2fa,
-    changeRol: changeRol,
     deactivate: deactivate,
     activate: activate,
     createUser: createUser,
