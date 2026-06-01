@@ -69,6 +69,8 @@
       prioriteit: row.priority_bs2 || row.prioriteit || "Low",
       deadline: row.due_date || row.deadline || null,
       voltooidOp: row.voltooid_op || null,
+      goedgekeurdOp: row.goedgekeurd_op || null,
+      goedgekeurdDoor: row.goedgekeurd_door || null,
       archived: !!row.archived,
       aanmaakdatum: row.bs2_created_at || row.aanmaakdatum || isoNow(),
       laatstGewijzigd: row.bs2_updated_at || row.laatst_gewijzigd || row.aanmaakdatum || isoNow(),
@@ -100,6 +102,10 @@
       // toegewezenAanId is een medewerkers.id (uuid) of leeg → null.
       toegewezen_aan_id: safe.toegewezenAanId || null,
       archived: !!safe.archived,
+      // Goedkeuring door de aanmaker (NULL = nog niet goedgekeurd). Bij een gewone
+      // update worden de geladen waarden ongewijzigd teruggeschreven (idempotent).
+      goedgekeurd_op: safe.goedgekeurdOp || null,
+      goedgekeurd_door: safe.goedgekeurdDoor || null,
     };
   }
 
@@ -229,6 +235,20 @@
   async function archive(id) { return update(id, { archived: true }); }
   async function restore(id) { return update(id, { archived: false }); }
 
+  // Goedkeuren door de aanmaker = de voltooide taak afronden: archiveren + de
+  // audit-velden zetten. De server-trigger C stuurt dan een melding (+ push)
+  // naar de toegewezen medewerker dat zijn taak is goedgekeurd.
+  async function approve(id) {
+    var uid = await getCurrentUserId();
+    return update(id, { archived: true, goedgekeurdOp: isoNow(), goedgekeurdDoor: uid || null });
+  }
+  // Afkeuren = terug naar "In behandeling" (trigger D meldt de medewerker). De
+  // goedkeur-velden worden defensief gereset; een eventuele reden zet de UI als
+  // opmerking in de gespreksdraad.
+  async function reject(id) {
+    return update(id, { status: "In behandeling", goedgekeurdOp: null, goedgekeurdDoor: null });
+  }
+
   async function remove(id) {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
@@ -264,6 +284,8 @@
     setStatus: setStatus,
     archive: archive,
     restore: restore,
+    approve: approve,
+    reject: reject,
     delete: remove,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,

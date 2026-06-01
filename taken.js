@@ -13,7 +13,7 @@
   var state = {
     search: "",
     showArchived: false,
-    hideDone: true,
+    hideDone: false,
     onlyMine: false,
     filterStatus: "",
     filterPrioriteit: "",
@@ -42,7 +42,7 @@
     "In behandeling": "color:var(--yellow);background:var(--yellow-soft);",
     "Voltooid": "color:var(--green);background:var(--green-soft);",
   };
-  var PRIORITEIT_LABELS = { Low: "Low", Medium: "Medium", High: "High" };
+  var PRIORITEIT_LABELS = { Low: "Laag", Medium: "Middel", High: "Hoog" };
   var PRIORITEIT_CLASS = {
     Low: "color:var(--text-muted);",
     Medium: "color:var(--blue);",
@@ -115,6 +115,30 @@
     } catch (e) { return null; }
   }
 
+  // auth.users.id van de ingelogde gebruiker (= profiles.id) — om de maker te herkennen.
+  function getCurrentAuthUserId() {
+    try {
+      var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync());
+      return p && p.id ? p.id : null;
+    } catch (e) { return null; }
+  }
+
+  // Mag de huidige gebruiker de goedkeuring doen? = de aanmaker zelf, of een admin.
+  // (De RLS staat ook hiërarchisch-hogeren toe; de knop tonen we aan maker + admin —
+  //  in de praktijk keurt de aanmaker goed.)
+  function magGoedkeuren(t) {
+    if (!t) return false;
+    var uid = getCurrentAuthUserId();
+    if (uid && t.aangemaaktDoorId && String(uid) === String(t.aangemaaktDoorId)) return true;
+    try { if (window.profilesDB && window.profilesDB.isAdmin && window.profilesDB.isAdmin()) return true; } catch (e) { /* */ }
+    return false;
+  }
+
+  // Een voltooide, niet-gearchiveerde taak wacht op goedkeuring van de aanmaker.
+  function wachtOpGoedkeuring(t) {
+    return !!t && t.status === "Voltooid" && !t.archived && !t.goedgekeurdOp;
+  }
+
   function getVisible() {
     var items = (window.takenDB && window.takenDB.getAllSync()) || [];
     var q = state.search.trim().toLowerCase();
@@ -149,9 +173,14 @@
     var label = STATUS_LABELS[t.status] || t.status;
     var style = STATUS_CLASS[t.status] || "";
     // Niet klikbaar: status wijzig je enkel via de taak openen → Opslaan.
-    return '<span class="badge" ' +
+    var html = '<span class="badge" ' +
            'style="display:inline-block;padding:4px 10px;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:600;' + style + '">' +
            escapeHtml(label) + '</span>';
+    // Voltooid maar nog niet goedgekeurd → de aanmaker moet nog controleren.
+    if (wachtOpGoedkeuring(t)) {
+      html += ' <span class="taak-wacht-badge" title="Wacht op goedkeuring van de aanmaker">Wacht op goedkeuring</span>';
+    }
+    return html;
   }
 
   function prioriteitPill(t) {
@@ -286,7 +315,7 @@
     state.filterDeadline = "";
     state.filterAanmaakdatum = "";
     state.showArchived = false;
-    state.hideDone = true;
+    state.hideDone = false;
     state.page = 1;
     var ids = [
       "taken-search",
@@ -303,7 +332,7 @@
     var arch = document.getElementById("taken-archived-toggle");
     if (arch) arch.checked = false;
     var hide = document.getElementById("taken-hide-done-toggle");
-    if (hide) hide.checked = true;
+    if (hide) hide.checked = false;
     render();
     if (window.showActionFeedback) {
       window.showActionFeedback("info", "Filters gewist", "Alle taken-filters zijn teruggezet.");
@@ -389,6 +418,7 @@
       submit.textContent = "Toevoegen";
       hideThread();
     }
+    renderApproveBlock(item);
     modal.style.display = "flex";
     setTimeout(function () { naam.focus(); }, 50);
   }
@@ -399,6 +429,83 @@
     state.threadFile = null;
     var modal = document.getElementById("taken-add-modal");
     if (modal) modal.style.display = "none";
+    var block = document.getElementById("taken-approve-block");
+    if (block) block.setAttribute("hidden", "");
+  }
+
+  // ─── Goedkeuren / afkeuren door de aanmaker ────────────────────────────────
+
+  // Toon het goedkeur-blok alleen bij een voltooide, niet-gearchiveerde taak die
+  // de huidige gebruiker mag goedkeuren (aanmaker of admin). Reset het reden-veld.
+  function renderApproveBlock(item) {
+    var block = document.getElementById("taken-approve-block");
+    if (!block) return;
+    var reasonWrap = document.getElementById("taken-reject-reason-wrap");
+    var reason = document.getElementById("taken-reject-reason");
+    if (reason) reason.value = "";
+    if (reasonWrap) reasonWrap.setAttribute("hidden", "");
+    if (item && wachtOpGoedkeuring(item) && magGoedkeuren(item)) {
+      block.removeAttribute("hidden");
+    } else {
+      block.setAttribute("hidden", "");
+    }
+  }
+
+  // Akkoord → goedkeuren + archiveren (slider-bevestiging conform huisstijl).
+  // Server-trigger C stuurt dan een melding (+ push) naar de medewerker.
+  function approveCurrentTaak() {
+    var id = state.editingId;
+    if (!id) return;
+    var item = window.takenDB.getByIdSync(id);
+    if (!item) return;
+    window.showSliderConfirmModal({
+      title: "Taak goedkeuren en afronden?",
+      message: "De taak wordt goedgekeurd en gearchiveerd. De medewerker krijgt hiervan een melding.",
+      preview: item.naam || "",
+      okLabel: "Akkoord",
+      cancelLabel: "Annuleren",
+    }).then(function (ok) {
+      if (!ok) return;
+      return window.takenDB.approve(id).then(function () {
+        if (window.showActionFeedback) window.showActionFeedback("info", "Goedgekeurd", (item.naam || "Taak") + " is afgerond en gearchiveerd.");
+        closeAddModal();
+      });
+    }).catch(function (err) {
+      if (window.showError) window.showError("Goedkeuren mislukt: " + (err && err.message || err));
+    });
+  }
+
+  // Afkeuren → toon het (optionele) reden-veld en de bevestigknop.
+  function showRejectReason() {
+    var wrap = document.getElementById("taken-reject-reason-wrap");
+    if (wrap) wrap.removeAttribute("hidden");
+    var reason = document.getElementById("taken-reject-reason");
+    if (reason) { try { reason.focus(); } catch (e) { /* */ } }
+  }
+
+  // Afkeuren bevestigen → status terug naar "In behandeling" (trigger D meldt de
+  // medewerker); een ingevulde reden komt als opmerking in de gespreksdraad.
+  async function submitReject() {
+    var id = state.editingId;
+    if (!id) return;
+    var item = window.takenDB.getByIdSync(id);
+    if (!item) return;
+    var reasonEl = document.getElementById("taken-reject-reason");
+    var reden = (reasonEl && reasonEl.value || "").trim();
+    var btn = document.getElementById("taken-reject-confirm-btn");
+    if (btn) btn.disabled = true;
+    try {
+      await window.takenDB.reject(id);
+      if (reden && window.taakCommentsDB && typeof window.taakCommentsDB.add === "function") {
+        try { await window.taakCommentsDB.add({ taakId: id, tekst: "Afgekeurd: " + reden }); } catch (e) { /* opmerking is best-effort */ }
+      }
+      if (window.showActionFeedback) window.showActionFeedback("info", "Teruggestuurd", "De medewerker krijgt een melding om de taak opnieuw te bekijken.");
+      closeAddModal();
+    } catch (err) {
+      if (window.showError) window.showError("Afkeuren mislukt: " + (err && err.message || err));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   // ─── Gespreksdraad + bijlagen ──────────────────────────────────────────────
@@ -631,6 +738,14 @@
     document.getElementById("taken-add-close-btn").addEventListener("click", closeAddModal);
     document.getElementById("taken-add-cancel-btn").addEventListener("click", closeAddModal);
     document.getElementById("taken-add-form").addEventListener("submit", submitAddForm);
+
+    // Goedkeuren / afkeuren door de aanmaker (knoppen in het goedkeur-blok).
+    var approveBtn = document.getElementById("taken-approve-btn");
+    if (approveBtn) approveBtn.addEventListener("click", approveCurrentTaak);
+    var rejectBtn = document.getElementById("taken-reject-btn");
+    if (rejectBtn) rejectBtn.addEventListener("click", showRejectReason);
+    var rejectConfirmBtn = document.getElementById("taken-reject-confirm-btn");
+    if (rejectConfirmBtn) rejectConfirmBtn.addEventListener("click", submitReject);
 
     // Gespreksdraad: bestand kiezen, plaatsen, Enter-to-send, live update.
     var threadFileBtn = document.getElementById("taken-thread-file-btn");

@@ -129,7 +129,7 @@
           <span class="switch-label">Gearchiveerd</span>
         </label>
         <label class="switch">
-          <input type="checkbox" id="taken-hide-done-toggle" checked />
+          <input type="checkbox" id="taken-hide-done-toggle" />
           <span class="switch-slider"></span>
           <span class="switch-label">Voltooide verbergen</span>
         </label>
@@ -141,9 +141,9 @@
         </select>
         <select class="search" id="taken-filter-prioriteit" style="max-width:180px">
           <option value="">Alle prioriteiten</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="High">Hoog</option>
+          <option value="Medium">Middel</option>
+          <option value="Low">Laag</option>
         </select>
         <select class="search" id="taken-filter-teamlid" style="max-width:200px" aria-label="Filter op teamlid">
           <option value="">Alle teamleden</option>
@@ -244,9 +244,9 @@
             <label class="emp-verzuim-modal-field" style="flex:1">
               <span>Prioriteit</span>
               <select id="taken-add-prioriteit" class="comp-modal-input">
-                <option value="Low" selected>Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
+                <option value="Low" selected>Laag</option>
+                <option value="Medium">Middel</option>
+                <option value="High">Hoog</option>
               </select>
             </label>
             <label class="emp-verzuim-modal-field" style="flex:1">
@@ -260,6 +260,25 @@
           <button type="submit" class="emp-verzuim-modal-submit" id="taken-add-submit-btn">Opslaan</button>
         </div>
       </form>
+
+      <section class="taken-approve-block" id="taken-approve-block" hidden>
+        <div class="taken-approve-head">
+          <span class="taken-approve-icon" aria-hidden="true">✓</span>
+          <span>Deze taak is voltooid en wacht op jouw goedkeuring.</span>
+        </div>
+        <p class="taken-approve-hint">Keur goed om de taak af te ronden en te archiveren, of stuur 'm terug naar de medewerker om opnieuw te bekijken.</p>
+        <div class="taken-approve-actions">
+          <button type="button" class="btn-primary" id="taken-approve-btn">Akkoord &amp; archiveren</button>
+          <button type="button" class="btn-outline" id="taken-reject-btn">Afkeuren</button>
+        </div>
+        <div class="taken-reject-reason-wrap" id="taken-reject-reason-wrap" hidden>
+          <label class="emp-verzuim-modal-field">
+            <span>Reden van afkeuring (optioneel — komt als opmerking in de draad)</span>
+            <textarea id="taken-reject-reason" class="comp-modal-input" rows="2" placeholder="Wat moet er nog gebeuren?"></textarea>
+          </label>
+          <button type="button" class="btn-outline taken-reject-confirm" id="taken-reject-confirm-btn">Bevestig afkeuren</button>
+        </div>
+      </section>
 
       <section class="taak-thread" id="taken-thread" hidden>
         <div class="taak-thread-head">
@@ -351,8 +370,8 @@
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js"></script>
-  <script src="taken-data.js?v=takenhier1"></script>
-  <script src="taak-thread-data.js?v=takenhier1"></script>
-  <script src="taken.js?v=takenhier1"></script>
+  <script src="taken-data.js?v=takenhier2"></script>
+  <script src="taak-thread-data.js?v=takenhier2"></script>
+  <script src="taken.js?v=takenhier2"></script>
 </body>
 </html>
