@@ -40,7 +40,7 @@ const FUNCTIE_OPTIONS = [
   "Medewerker Financiële administratie",
   "Hoofd facilitair",
   "Planner",
-  "Teamleider",
+  "Zorgcoördinator",
   "Financieel Directeur",
   "Operationeel Directeur",
   "Gedragswetenschapper",

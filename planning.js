@@ -710,11 +710,11 @@ function buildDataState() {
   const employees = readEmployees().filter((e) => !heldBack.has(getEmployeeName(e).toLowerCase()));
   const medewerkers = employees.map(getEmployeeName).filter(Boolean);
   const teamlead = employees
-    .filter((emp) => /teamlead|teamleider/i.test(String(emp?.functie || "")))
+    .filter((emp) => /teamlead|teamleider|zorgco.?rdinator/i.test(String(emp?.functie || "")))
     .map(getEmployeeName)
     .filter(Boolean);
   const teamleden = employees
-    .filter((emp) => !/teamlead|teamleider/i.test(String(emp?.functie || "")))
+    .filter((emp) => !/teamlead|teamleider|zorgco.?rdinator/i.test(String(emp?.functie || "")))
     .map(getEmployeeName)
     .filter(Boolean);
   const mSorted = [...new Set(medewerkers)].sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));

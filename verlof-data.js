@@ -23,14 +23,14 @@
   var TYPE_VALUES = ["wettelijk", "bovenwettelijk", "ouderschap", "calamiteit", "doktersbezoek", "onbetaald", "anders"];
 
   // PR-B: goedkeuringsroute per verloftype.
-  //   - Vakantie (wettelijk/bovenwettelijk) → naar Teamleider (manager).
+  //   - Vakantie (wettelijk/bovenwettelijk) → naar Zorgcoördinator (manager).
   //   - Zorg-/bijzonder verlof → direct HR.
   //   - Onbetaald/anders → HR (conservatief).
   // Voor v1 hardcoded; v2 = beheer-pagina verloftypes.html.
-  var ROL_TEAMLEIDER = "Teamleider";
+  var ROL_ZORGCOORDINATOR = "Zorgcoördinator";
   var ROL_HR = "HR";
   function routeForType(type) {
-    if (type === "wettelijk" || type === "bovenwettelijk") return ROL_TEAMLEIDER;
+    if (type === "wettelijk" || type === "bovenwettelijk") return ROL_ZORGCOORDINATOR;
     return ROL_HR;
   }
 
@@ -247,18 +247,18 @@
       }
     }
 
-    // F5: Zoek Planner-rol ÉN Teamleider-rol (user-keuze: beide krijgen notif).
+    // F5: Zoek Planner-rol ÉN Zorgcoördinator-rol (slug 'teamleider'; user-keuze: beide krijgen notif).
     var rolesResp = await global.besaSupabase
       .from("bs2_roles")
       .select("id, slug")
       .in("slug", ["planner", "teamleider"]);
     if (rolesResp.error || !rolesResp.data || rolesResp.data.length === 0) {
-      console.warn("[verlofDB] Planner/Teamleider-rollen niet gevonden — geen notificaties verzonden.");
+      console.warn("[verlofDB] Planner/Zorgcoördinator-rollen niet gevonden — geen notificaties verzonden.");
       return;
     }
     var roleIds = rolesResp.data.map(function (r) { return r.id; });
 
-    // Planner + Teamleider emails (gecombineerd, gededupliceerd)
+    // Planner + Zorgcoördinator emails (gecombineerd, gededupliceerd)
     var pruResp = await global.besaSupabase
       .from("bs2_role_users")
       .select("user_email")
@@ -356,7 +356,7 @@
     getAllSync: getAllSync, getByIdSync: getByIdSync, getForMedewerkerSync: getForMedewerkerSync,
     routeForType: routeForType,
     STATUS_VALUES: STATUS_VALUES, TYPE_VALUES: TYPE_VALUES,
-    ROL_TEAMLEIDER: ROL_TEAMLEIDER, ROL_HR: ROL_HR,
+    ROL_ZORGCOORDINATOR: ROL_ZORGCOORDINATOR, ROL_HR: ROL_HR,
   };
 
   bootstrap();
