@@ -38,7 +38,7 @@
     const fields = [
       { label: "Naam", value: ((profile.voornaam || "") + " " + (profile.achternaam || med.achternaam || "")).trim() || "—" },
       { label: "E-mail", value: profile.email || med.email || "—" },
-      { label: "Rol", value: profile.rol || "—" },
+      { label: "Rollen", value: (Array.isArray(data.rollen) && data.rollen.length) ? data.rollen.join(", ") : (profile.rol || "—") },
       { label: "Medewerker-ID", value: profile.medewerker_id || "(geen koppeling)" },
       { label: "Functie", value: med.functie || "—" },
       { label: "Fase", value: med.fase || "—" },

@@ -142,6 +142,30 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
+  // bs2-rollen per e-mail (read-only overzicht) — éénmalig ophalen + cachen.
+  var _rolesByEmail = null;
+  async function loadRolesByEmail() {
+    if (_rolesByEmail) return _rolesByEmail;
+    var map = {};
+    try {
+      if (window.besaSupabase) {
+        var res = await window.besaSupabase.from("bs2_role_users").select("user_email, bs2_roles!inner(name)");
+        if (!res.error && Array.isArray(res.data)) {
+          res.data.forEach(function (row) {
+            var e = String(row.user_email || "").toLowerCase();
+            var nm = row.bs2_roles && row.bs2_roles.name;
+            if (!e || !nm) return;
+            (map[e] = map[e] || []).push(nm);
+          });
+          Object.keys(map).forEach(function (e) {
+            map[e].sort(function (a, b) { return a.localeCompare(b, "nl"); });
+          });
+        }
+      }
+    } catch (e) { /* read-only overzicht — geen blokkade */ }
+    _rolesByEmail = map;
+    return map;
+  }
   async function renderGebruikers() {
     var tbody = document.getElementById("inst-usr-tbody");
     var countEl = document.getElementById("inst-usr-count");
@@ -156,10 +180,12 @@
         await window.profilesDB.refresh();
         profiles = window.profilesDB.getAllSync();
       }
+      var rolesByEmail = await loadRolesByEmail();
       var filtered = (profiles || []).filter(function (p) {
         if (!p) return false;
         if (!q) return true;
-        var hay = ((p.voornaam || "") + " " + (p.achternaam || "") + " " + (p.email || "") + " " + (p.rol || "")).toLowerCase();
+        var rolStr = (rolesByEmail[String(p.email || "").toLowerCase()] || []).join(" ");
+        var hay = ((p.voornaam || "") + " " + (p.achternaam || "") + " " + (p.email || "") + " " + rolStr).toLowerCase();
         return hay.indexOf(q) >= 0;
       });
       filtered.sort(function (a, b) {
@@ -173,10 +199,14 @@
           var naam = ((p.voornaam || "") + " " + (p.achternaam || "")).trim() || "(geen naam)";
           var status = '<span style="padding:2px 8px;border-radius:var(--r-pill);background:var(--green-soft);color:var(--green);font-size:var(--font-ui-badge);font-weight:600;">Actief</span>';
           var dt = p.aanmaakdatum ? new Date(p.aanmaakdatum).toLocaleDateString("nl-NL") : "—";
+          var rollen = rolesByEmail[String(p.email || "").toLowerCase()] || [];
+          var rolHtml = rollen.length
+            ? rollen.map(function (n) { return '<span class="gebr-rol-chip">' + escUsr(n) + '</span>'; }).join(" ")
+            : "—";
           return '<tr>' +
             '<td data-col="naam">' + escUsr(naam) + '</td>' +
             '<td data-col="email">' + escUsr(p.email || "—") + '</td>' +
-            '<td data-col="rollen">' + escUsr(p.rol || "—") + '</td>' +
+            '<td data-col="rollen">' + rolHtml + '</td>' +
             '<td data-col="status">' + status + '</td>' +
             '<td data-col="aanmaakdatum">' + escUsr(dt) + '</td>' +
           '</tr>';
@@ -358,7 +388,22 @@
     document.getElementById("inst-profiel-voornaam").value = profile.voornaam || "";
     document.getElementById("inst-profiel-achternaam").value = profile.achternaam || "";
     document.getElementById("inst-profiel-email").value = profile.email || "";
-    document.getElementById("inst-profiel-rol").value = profile.rol || "";
+    setProfielRolVeld(profile);
+  }
+
+  // Toon de echte rollen (bs2_role_users via permissions.js), niet de grove profiles.rol-tekst.
+  function setProfielRolVeld(profile) {
+    var el = document.getElementById("inst-profiel-rol");
+    if (!el) return;
+    function paint() {
+      var rollen = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
+        ? window.besaPermissions.getRoleNames() : [];
+      el.value = rollen.length ? rollen.join(", ") : ((profile && profile.rol) || "");
+    }
+    paint();
+    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+      window.besaPermissionsReady.then(paint).catch(function () { /* */ });
+    }
   }
 
   async function submitProfielForm(evt) {
