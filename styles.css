@@ -20444,6 +20444,7 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   gap: 8px;
 }
 .im-stack-radio-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -20455,8 +20456,17 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-size: 13px;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
+/* Zelfde fix als .im-actor-card: zonder top/left + position:relative op de
+   parent viel deze absolute radio terug op <body> (offsetTop ~2555px). Een
+   echte muisklik focust de radio → scroll naar die verre positie → wit scherm.
+   Ankeren binnen het item lost het op. */
 .im-stack-radio-item input[type="radio"] {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
