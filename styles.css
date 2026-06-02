@@ -22140,7 +22140,12 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   background: var(--surface);
   margin: 0 0 14px;
   overflow: hidden;
+  /* .content--wu is een flex-column; overflow:hidden zet min-height:auto→0,
+     waardoor flex-shrink dit paneel tot ~1px zou persen. Voorkom dat. */
+  flex-shrink: 0;
 }
+/* hidden-attribuut moet winnen van .wu-global-lock-banner{display:flex} */
+.wu-global-lock-banner[hidden] { display: none; }
 .wu-contract-head {
   display: flex;
   align-items: center;
@@ -22161,6 +22166,8 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-contract-body {
   padding: 0 16px 14px;
   border-top: 1px solid var(--line);
+  max-height: 46vh;
+  overflow-y: auto;
 }
 .wu-cm-scroll { overflow-x: auto; padding-top: 12px; }
 .wu-cm-table {
