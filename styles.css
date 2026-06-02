@@ -15382,6 +15382,78 @@ button.planning-erm-new {
   color: var(--surface);
 }
 
+/* ── Cliënten-overzicht: schermvullende layout, telstrip en nummerkolom ──── */
+
+/* De pagina past altijd binnen het scherm. Voorheen scrollden zowel
+   main.content als de table-wrapper (geneste scroll) en stond de pager-footer
+   ná de wrapper → op kortere schermen viel die onder de vouw ("onderaan niet
+   leesbaar"). Nu vult de tabelkaart de resterende hoogte, scrollt alléén de
+   wrapper intern en blijft de footer altijd in beeld: één scroll-container.
+   Scoped op .content--clienten zodat geen enkele andere lijst wijzigt. */
+.content--clienten {
+  overflow: hidden;
+}
+.content--clienten .toolbar--clienten,
+.content--clienten .cl-stats {
+  flex: 0 0 auto;
+}
+.content--clienten .table-card--clienten {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.content--clienten .table-card--clienten .table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Telstrip bovenaan: aantal "in zorg" (groen) en "in aanvraag" (geel), of in
+   de archief-weergave "uit zorg" (rood). Stippen gebruiken dezelfde kleuren
+   als de fase-pills in de tabel. */
+.cl-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin: 0 0 12px;
+  min-height: 20px;
+}
+.cl-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.cl-stat-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+.cl-stat-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.cl-stat--inzorg .cl-stat-dot { background: var(--green); }
+.cl-stat--aanvraag .cl-stat-dot { background: var(--yellow); }
+.cl-stat--uit .cl-stat-dot { background: var(--red); }
+.cl-stat--totaal { opacity: 0.7; }
+
+/* Nummerkolom (#): smal, rechts uitgelijnd, ingetogen. */
+.clienten-table th[data-col="rownum"],
+.clienten-table td[data-col="rownum"] {
+  width: 46px;
+  min-width: 46px;
+  text-align: right;
+  padding-right: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.clienten-table td.cl-rownum {
+  opacity: 0.55;
+}
+
 .clienten-table [data-col].col-hidden {
   display: none;
 }

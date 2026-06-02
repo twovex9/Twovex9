@@ -310,7 +310,12 @@
   document.getElementById("cd-f-vn").value = c.voornaam != null ? String(c.voornaam) : "";
   document.getElementById("cd-f-an").value = c.achternaam != null ? String(c.achternaam) : "";
   document.getElementById("cd-f-nr").value = c.clientnummer != null ? String(c.clientnummer) : "";
-  document.getElementById("cd-f-fase").value = c.fase || "in zorg";
+  // De fase-dropdown heeft lowercase option-values ("in zorg"/"in aanvraag"/
+  // "uit zorg"), terwijl de opgeslagen data gemengde casing kan hebben
+  // ("Uit zorg"/"In zorg"). Zonder normalisatie matcht de waarde niet, valt de
+  // select terug op leeg en zou een save de fase per ongeluk wijzigen. We lezen
+  // case-insensitief in (de opgeslagen data zelf wordt niet aangetast).
+  document.getElementById("cd-f-fase").value = String(c.fase || "in zorg").trim().toLowerCase();
   if (c.inZorgDatum && String(c.inZorgDatum).length >= 10) {
     document.getElementById("cd-f-izd").value = String(c.inZorgDatum).slice(0, 10);
   } else {

@@ -97,6 +97,7 @@
 
   var COLUMN_CONFIG = [
     { id: "select", label: "Selectie", defaultOn: true, skipToggle: true },
+    { id: "rownum", label: "#", defaultOn: true, skipToggle: true },
     { id: "voornaam", label: "Voornaam", defaultOn: true },
     { id: "achternaam", label: "Achternaam", defaultOn: true },
     { id: "clientnummer", label: "Cliëntnummer", defaultOn: true },
@@ -157,6 +158,24 @@
     return disp(f);
   }
 
+  // Fase-normalisatie. De DB bevat gemengde casing ("Uit zorg" / "uit zorg" /
+  // "In zorg" / "In aanvraag"); alle filtering en telling gebeurt daarom
+  // case-insensitief zodat geen enkele cliënt tussen wal en schip valt. We
+  // wijzigen de opgeslagen waarde NIET (DIEHARD) — er wordt alleen gelezen.
+  function clFaseNorm(c) {
+    return String(c && c.fase != null ? c.fase : "").trim().toLowerCase();
+  }
+  function clIsUitZorg(c) {
+    return clFaseNorm(c) === "uit zorg";
+  }
+  // "Archief" = cliënt is uit zorg OF expliciet gearchiveerd. Hierdoor verdwijnt
+  // een cliënt automatisch uit het hoofdoverzicht zodra de fase op "uit zorg"
+  // wordt gezet — ook vanuit de detailpagina. Dat is de bug die de gebruiker
+  // meldde ("uit zorg gezet maar blijft in het overzicht staan").
+  function clInArchief(c) {
+    return !!(c && (c.archived === true || clIsUitZorg(c)));
+  }
+
   function getPageSize() {
     return Math.max(5, parseInt(rowsSelect && rowsSelect.value ? rowsSelect.value : "50", 10) || 50);
   }
@@ -167,7 +186,9 @@
     var showArch = archivedToggle && archivedToggle.checked;
     items = items.filter(function (c) {
       if (!c) return false;
-      return showArch ? c.archived === true : !c.archived;
+      // Hoofdoverzicht = alleen "in zorg" + "in aanvraag". Archief = "uit zorg"
+      // (of expliciet gearchiveerd). Zie clInArchief().
+      return showArch ? clInArchief(c) : !clInArchief(c);
     });
     var q = (searchInput && searchInput.value ? searchInput.value : "").trim().toLowerCase();
     if (q) {
@@ -238,8 +259,37 @@
     });
   }
 
+  // Telstrip bovenaan: in het hoofdoverzicht het aantal "in zorg" (groen) en
+  // "in aanvraag"; in de archief-weergave het aantal "uit zorg / gearchiveerd".
+  // Geteld over de huidige (gefilterde) lijst, zodat de cijfers met zoeken
+  // meebewegen en aansluiten op de doorlopende nummering (1 .. totaal).
+  function renderStats(items, showArch) {
+    var el = document.getElementById("cl-stats");
+    if (!el) return;
+    var inzorg = 0, aanvraag = 0, uit = 0;
+    (items || []).forEach(function (c) {
+      if (clInArchief(c)) { uit++; return; }
+      if (clFaseNorm(c) === "in aanvraag") aanvraag++;
+      else inzorg++;
+    });
+    if (showArch) {
+      el.innerHTML =
+        '<span class="cl-stat cl-stat--uit"><span class="cl-stat-dot" aria-hidden="true"></span>' +
+        '<span class="cl-stat-num">' + uit + '</span> uit zorg / gearchiveerd</span>';
+    } else {
+      el.innerHTML =
+        '<span class="cl-stat cl-stat--inzorg"><span class="cl-stat-dot" aria-hidden="true"></span>' +
+        '<span class="cl-stat-num">' + inzorg + '</span> in zorg</span>' +
+        '<span class="cl-stat cl-stat--aanvraag"><span class="cl-stat-dot" aria-hidden="true"></span>' +
+        '<span class="cl-stat-num">' + aanvraag + '</span> in aanvraag</span>' +
+        '<span class="cl-stat cl-stat--totaal"><span class="cl-stat-num">' + (inzorg + aanvraag) + '</span> totaal</span>';
+    }
+  }
+
   function render() {
     var items = getFiltered();
+    var showArch = archivedToggle && archivedToggle.checked;
+    renderStats(items, showArch);
     var pageSize = getPageSize();
     var total = items.length;
     var totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -253,14 +303,13 @@
     if (!page.length) {
       var trE = document.createElement("tr");
       var tdE = document.createElement("td");
-      tdE.colSpan = 11;
+      tdE.colSpan = 12;
       trE.appendChild(tdE);
       tdE.className = "cl-empty-cell";
       tdE.textContent = "Geen cliënten gevonden.";
       tbody.appendChild(trE);
     } else {
-      var showArch = archivedToggle && archivedToggle.checked;
-      page.forEach(function (c) {
+      page.forEach(function (c, i) {
         var tr = document.createElement("tr");
         tr.setAttribute("data-id", c.id);
         tr.className = "cl-table-row--client";
@@ -269,6 +318,12 @@
         cbTd.setAttribute("data-col", "select");
         cbTd.innerHTML = '<input type="checkbox" class="table-checkbox cl-row-check" aria-label="Selecteer rij" data-id="' + c.id + '" />';
         tr.appendChild(cbTd);
+        // Doorlopend volgnummer (1 .. totaal) over alle pagina's heen.
+        var numTd = document.createElement("td");
+        numTd.setAttribute("data-col", "rownum");
+        numTd.className = "cl-rownum";
+        numTd.textContent = String(start + i + 1);
+        tr.appendChild(numTd);
         var tdVn = document.createElement("td");
         tdVn.setAttribute("data-col", "voornaam");
         tdVn.className = "cl-name";
@@ -729,10 +784,15 @@
       var id = t.closest(".cl-restore-btn").getAttribute("data-id");
       var list = (getClientenItems() || []).map(function (x) {
         if (x.id !== id) return x;
-        return Object.assign({}, x, { archived: false });
+        // Herstellen = terug naar het hoofdoverzicht. Omdat archief nu op fase
+        // "uit zorg" berust, moet de fase mee terug naar "in zorg"; anders blijft
+        // de cliënt in het archief. De uit-zorg-datum laten we bewust staan
+        // (DIEHARD — geen gegevens wissen); de gebruiker kan die in het detail
+        // aanpassen indien gewenst.
+        return Object.assign({}, x, { archived: false, fase: "in zorg" });
       });
       if (typeof setClientenItems === "function") setClientenItems(list);
-      if (typeof showSaveModal === "function") showSaveModal("Cliënt is hersteld.", "Hersteld");
+      if (typeof showSaveModal === "function") showSaveModal("Cliënt is hersteld (terug in zorg).", "Hersteld");
       else showToast("Cliënt hersteld");
       render();
       return;

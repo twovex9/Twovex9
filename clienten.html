@@ -149,7 +149,7 @@
       </div>
     </aside>
 
-    <main class="content">
+    <main class="content content--clienten">
       <div class="content-header">
         <h1>Cliënten</h1>
         <div class="header-actions">
@@ -176,7 +176,7 @@
         <label class="switch switch--yellow">
           <input type="checkbox" id="cl-archived-toggle" name="cl-arch" />
           <span class="switch-slider"></span>
-          <span class="switch-label">Gearchiveerd</span>
+          <span class="switch-label">Uit zorg / archief</span>
         </label>
         <div class="cl-inzorg-filter-wrap" role="group" aria-label="In zorg datum">
           <span class="cl-inzorg-filter-label">In zorg datum</span>
@@ -184,12 +184,15 @@
         </div>
       </div>
 
+      <div class="cl-stats" id="cl-stats" role="status" aria-live="polite"></div>
+
       <section class="table-card table-card--clienten table-card--compact">
         <div class="table-wrapper">
           <table class="employees-table clienten-table" id="cl-table" data-page-size="50">
             <thead>
               <tr>
                 <th class="th-check" data-col="select"><input type="checkbox" id="cl-check-all" class="table-checkbox" aria-label="Selecteer alles" /></th>
+                <th class="cl-rownum-th" data-col="rownum" aria-label="Volgnummer">#</th>
                 <th data-col="voornaam" class="th-sort">
                   <div class="th-sort-inner">
                     <span class="th-label">Voornaam</span>
