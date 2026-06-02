@@ -801,7 +801,11 @@
 
     $("id-filter-reset").addEventListener("click", function () {
       state.filterClient = state.filterMedewerker = state.filterLocatie = state.filterCategorie = "";
-      applyPreset("30");
+      // Reset = terug naar de openings-default (lopende maand). renderAll past
+      // dezelfde slimme fallback toe: is die maand leeg, dan 'Alles'. Zo toont
+      // Reset nooit een leeg overzicht — ook niet wanneer de lopende maand (nog)
+      // geen incidenten bevat (vroeger sprong dit hard naar '30d').
+      applyPreset("month");
       renderAll();
     });
 
