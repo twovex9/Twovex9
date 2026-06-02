@@ -303,21 +303,38 @@
   function renderTrend() {
     var rows = getFilteredIncidenten();
     // 1-op-1 BS2 last_7_days: exact één bucket per dag van start t/m eind
-    // (inclusief, GEEN minimum van 7). Zonder datumbereik = laatste 7 dagen
-    // t/m vandaag (precies wat BS2 dan teruggeeft).
-    var bucketDays;
+    // (inclusief, GEEN minimum van 7). Met een datumbereik (alle presets
+    // behalve 'Alles', plus custom) loopt de trend over precies dat bereik.
+    var bucketDays, endDay, spanAll = false;
     if (state.dateFrom && state.dateTo) {
       bucketDays = Math.round(
         (startOfDay(state.dateTo) - startOfDay(state.dateFrom)) / 86400000
       ) + 1;
+      endDay = startOfDay(state.dateTo);
     } else {
-      bucketDays = 7;
+      // 'Alles' (geen datumbereik): span de trend over álle aanwezige
+      // incidenten (oudste t/m nieuwste aanmaakdatum) i.p.v. een vaste week,
+      // zodat het totaal-trendbeeld klopt i.p.v. een lege grafiek wanneer de
+      // recentste incidenten ouder dan 7 dagen zijn. Geen data → laatste 7
+      // dagen t/m vandaag (zoals voorheen).
+      var stamps = [];
+      rows.forEach(function (r) {
+        var t = Date.parse(r.aanmaakdatum || 0);
+        if (isFinite(t)) stamps.push(t);
+      });
+      if (stamps.length) {
+        var minDay = startOfDay(new Date(Math.min.apply(null, stamps)));
+        endDay = startOfDay(new Date(Math.max.apply(null, stamps)));
+        bucketDays = Math.round((endDay - minDay) / 86400000) + 1;
+        spanAll = true;
+      } else {
+        endDay = startOfDay(new Date());
+        bucketDays = 7;
+      }
     }
     if (bucketDays < 1) bucketDays = 1;
     if (bucketDays > 366) bucketDays = 366;
 
-    var now = state.dateTo || new Date();
-    var endDay = startOfDay(now);
     var labels = [];
     var counts = [];
     for (var i = bucketDays - 1; i >= 0; i--) {
@@ -335,7 +352,9 @@
     });
 
     var sub = $("id-trend-sub");
-    if (sub) sub.textContent = "Laatste " + bucketDays + " dagen";
+    if (sub) sub.textContent = spanAll
+      ? ("Alle incidenten · " + formatNlDate(labels[0]) + " — " + formatNlDate(labels[labels.length - 1]))
+      : ("Laatste " + bucketDays + " dagen");
 
     var summary = $("id-trend-summary");
     var total = counts.reduce(function (a, b) { return a + b; }, 0);
@@ -702,9 +721,27 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Slimme default-periode
+  // ---------------------------------------------------------------------------
+  // De default is de lopende maand (user-keuze, zie init). Bevat die maand nog
+  // geen incidenten terwijl er wél data bestaat, schakel dan automatisch naar
+  // 'Alles' — anders toont het dashboard een leeg totaaloverzicht (de
+  // BS2-import loopt t/m mei en de lopende maand is doorgaans nog leeg). Zelf-
+  // stoppend: na het schakelen is rangePreset !== 'month', dus latere renders
+  // (én de data-load die async binnenkomt) laten de keuze ongemoeid en
+  // overschrijven nooit een handmatig gekozen periode.
+  function fallbackToAllIfMonthEmpty() {
+    if (state.rangePreset !== "month") return;
+    var all = getAllIncidenten().filter(function (i) { return i && !i.archived; });
+    if (all.length === 0) return;                 // data nog niet geladen → later opnieuw
+    if (getFilteredIncidenten().length === 0) applyPreset("all");
+  }
+
+  // ---------------------------------------------------------------------------
   // Master render
   // ---------------------------------------------------------------------------
   function renderAll() {
+    fallbackToAllIfMonthEmpty();
     populateDropdowns();
     renderKpis();
     renderTrend();
