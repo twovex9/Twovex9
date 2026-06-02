@@ -16872,6 +16872,7 @@ button.planning-erm-new {
 .bd-seg-btn + .bd-seg-btn { border-left: 1px solid var(--line); }
 .bd-seg-btn.is-active { background: var(--blue); color: #fff; }
 .bd-pick { display: inline-flex; align-items: center; gap: 6px; }
+.bd-pick[hidden] { display: none; }  /* [hidden] verliest het anders van display:inline-flex */
 .bd-nav {
   width: 30px; height: 30px; border: 1px solid var(--line); background: var(--card, #fff);
   border-radius: var(--r-sm, 8px); cursor: pointer; font-size: 18px; line-height: 1;
@@ -16904,6 +16905,7 @@ button.planning-erm-new {
 .bd-money-lbl { font-size: var(--font-table-cell); font-weight: 600; color: var(--text-secondary); }
 .bd-money-period { color: var(--text-muted); font-weight: 600; }
 .bd-money-period::before { content: "· "; }
+.bd-money-period:empty { display: none; }
 .bd-money-val { font-size: var(--font-h1); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
 .bd-money--red .bd-money-val { color: var(--red); }
 .bd-money--orange .bd-money-val { color: var(--yellow); }
