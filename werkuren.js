@@ -26,6 +26,16 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function pad2(n) { return ("0" + n).slice(-2); }
+  // Sommige beschrijvingen bevatten HTML (bv "<p>inwerk dienst</p>") — strip tags
+  // + decodeer entities zodat de tekst leesbaar toont (en daarna pas escHtml).
+  function stripHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"').replace(/&#0?39;/gi, "'").replace(/&apos;/gi, "'")
+      .replace(/\s+/g, " ").trim();
+  }
 
   var MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni",
     "juli", "augustus", "september", "oktober", "november", "december"];
@@ -192,7 +202,7 @@
       var l = clientLocatie(r.client_id);
       if (l) return l;
     }
-    var hay = (String(r.beschrijving || "") + " " + String(r.dienst || "")).toLowerCase();
+    var hay = (stripHtml(r.beschrijving) + " " + String(r.dienst || "")).toLowerCase();
     for (var i = 0; i < locMatchers.length; i += 1) {
       if (hay.indexOf(locMatchers[i].needle) >= 0) return locMatchers[i].naam;
     }
@@ -448,6 +458,7 @@
     var clientLabel = r.client_label || getClientNaam(r.client_id, "—");
     var medNaam = getMedewerkerNaam(r.medewerker_id);
     var loc = deriveLocatie(r);
+    var beschr = stripHtml(r.beschrijving);
     var tijd = (r.starttijd || r.eindtijd) ? (formatTime(r.starttijd) + " - " + formatTime(r.eindtijd)) : "—";
     return '<tr class="wu-entry-row" data-id="' + escHtml(r.id) + '">'
       + '<td data-col="datum">' + escHtml(formatNlDate(r.datum)) + '</td>'
@@ -458,7 +469,7 @@
       + '<td data-col="dienst">' + escHtml(r.dienst || "—") + '</td>'
       + '<td data-col="locatie">' + (loc ? escHtml(loc) : '<span class="wu-loc-none">—</span>') + '</td>'
       + '<td data-col="label">' + escHtml(r.label || "—") + '</td>'
-      + '<td data-col="beschrijving">' + escHtml(r.beschrijving || "—") + '</td>'
+      + '<td data-col="beschrijving">' + escHtml(beschr || "—") + '</td>'
       + '<td data-col="acties" class="wu-row-actions">'
       +   (monthLocked
             ? '<span class="wu-row-locked" title="Maand vergrendeld">' + LOCK_SVG + '</span>'
@@ -923,7 +934,7 @@
         "Locatie": deriveLocatie(r) || "",
         "Zorgsoort": deriveZorg(r).join(", "),
         "Label": r.label || "",
-        "Beschrijving": r.beschrijving || "",
+        "Beschrijving": stripHtml(r.beschrijving),
       };
     });
     window.besaExport({
