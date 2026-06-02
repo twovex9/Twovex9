@@ -142,11 +142,30 @@
     }
   }
 
+  // DATA-SLIM (zelfde patroon als medewerkers-data.js): de ruwe BS2-scrape
+  // (data.bs2_scrape, ~37 KB/cliënt = ~3,1 MB totaal) wordt NERGENS in de UI
+  // gelezen, maar vulde wel de gedeelde ~5 MB localStorage-quota en blokkeerde
+  // zo de caches van andere modules (o.a. werkuren → lege tabel). Strip 'm uit
+  // de localStorage-KOPIE. _mem en Supabase houden alles 100% (niets verloren).
+  var HEAVY_CACHE_KEYS = ["bs2_scrape", "bs2_raw"];
+  function slimForCache(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map(function (c) {
+      if (!c || typeof c !== "object") return c;
+      var copy = {};
+      Object.keys(c).forEach(function (k) {
+        if (HEAVY_CACHE_KEYS.indexOf(k) !== -1) return; // zware blob niet naar localStorage
+        copy[k] = c[k];
+      });
+      return copy;
+    });
+  }
+
   function writeCache(items) {
     try {
       window.localStorage.setItem(
         CACHE_KEY,
-        JSON.stringify(Array.isArray(items) ? items : [])
+        JSON.stringify(slimForCache(items))
       );
     } catch (e) {
       /* localStorage kan vol zijn (gedeelde quota) — _mem is de bron */
@@ -157,9 +176,9 @@
   // (~5 MB) wordt door zware module-caches volgemaakt; zodra writeCache
   // faalt zou getAllSync()/getClientenItems() anders [] teruggeven en de
   // hele cliëntenlijst "verdwijnen" terwijl de data veilig in Supabase
-  // staat. _mem houdt de volledige set in RAM (geen quota) zodat de UI
-  // ALTIJD alles toont; localStorage blijft een best-effort sneller-laden-
-  // cache. Niets wordt gestript — alle clientvelden blijven 100% behouden.
+  // staat. _mem houdt de VOLLEDIGE set (incl. bs2_scrape) in RAM (geen quota)
+  // zodat de UI ALTIJD alles toont; localStorage is een best-effort, geslankte
+  // sneller-laden-cache.
   var _mem = null;
   function setData(items) {
     _mem = Array.isArray(items) ? items : [];
