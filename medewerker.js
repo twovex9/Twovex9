@@ -4360,6 +4360,67 @@ function initDocumentenSection() {
     return parts[2] + "-" + parts[1] + "-" + parts[0];
   }
 
+  // Documenttype-normalisatie. De DB (BS2-import) bewaart lowercase Engelse
+  // codes (contract/education/vog/id/addendum/employment_conditions/other),
+  // terwijl de UI Nederlandse labels toont. Zonder deze koppeling matcht
+  // doc.type geen <select>-optie in de bewerk-modal → de dropdown staat leeg
+  // → bij opslaan wordt het type met "" overschreven (data-verlies).
+  // Labels gelijk aan medewerker-warnings.js / de upload-dropdown.
+  var DOC_TYPE_LABELS = {
+    contract: "Contract",
+    education: "Opleiding",
+    vog: "VOG",
+    id: "ID",
+    addendum: "Addendum",
+    employment_conditions: "Arbeidsvoorwaarden",
+    other: "Overig",
+  };
+
+  function docTypeLabel(type) {
+    if (!type) return "";
+    var key = String(type).toLowerCase();
+    return DOC_TYPE_LABELS[key] || String(type);
+  }
+
+  // Zet een type-waarde in de bewerk-/upload-dropdown. Matcht de waarde geen
+  // bestaande optie (bv. een onverwachte legacy-code), dan voegen we de optie
+  // dynamisch toe i.p.v. de selectie leeg te laten — zo blijft het type
+  // zichtbaar én behouden bij opslaan. [[rule_never_delete_user_data]]
+  function applyTypeToSelect(rawType) {
+    if (!modalType) return;
+    var val = rawType == null ? "" : String(rawType);
+    modalType.value = val;
+    if (val && modalType.value !== val) {
+      var opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = docTypeLabel(val);
+      modalType.appendChild(opt);
+      modalType.value = val;
+    }
+  }
+
+  // Opent een document in een nieuw tabblad. Bewust via een synthetische
+  // link-klik i.p.v. window.open(""): een lege-URL popup wordt door
+  // popup-blockers/extensies stil geblokkeerd (de knop "doet dan niets"),
+  // terwijl een door de klik geïnitieerde <a target="_blank"> dat niet wordt.
+  // De browser toont PDF's/afbeeldingen inline en biedt overige typen als
+  // download aan. Zelfde patroon als performDownloadAll().
+  function openDocument(doc) {
+    if (!doc || !doc.fileData) {
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
+      }
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = doc.fileData;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   function buildPills() {
     var docs = getDocumentenState();
     var counts = {};
@@ -4375,7 +4436,7 @@ function initDocumentenSection() {
       pill.type = "button";
       pill.className = "emp-doc-pill emp-doc-pill--" + type;
       if (activePillType === type) pill.classList.add("is-active");
-      pill.textContent = type + " (" + counts[type] + ")";
+      pill.textContent = docTypeLabel(type) + " (" + counts[type] + ")";
       pill.addEventListener("click", function () {
         if (activePillType === type) {
           activePillType = null;
@@ -4461,26 +4522,7 @@ function initDocumentenSection() {
         viewBtn.title = "Bekijken";
         viewBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
         viewBtn.addEventListener("click", function () {
-          if (doc.fileData) {
-            var w = window.open("");
-            if (w) {
-              if (doc.fileMime && doc.fileMime.startsWith("image/")) {
-                w.document.write('<html><head><title>' + (doc.fileName || doc.naam) + '</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5"><img src="' + doc.fileData + '" style="max-width:100%;max-height:100vh" /></body></html>');
-              } else if (doc.fileMime === "application/pdf") {
-                w.document.write('<html><head><title>' + (doc.fileName || doc.naam) + '</title></head><body style="margin:0"><iframe src="' + doc.fileData + '" style="width:100%;height:100vh;border:none"></iframe></body></html>');
-              } else {
-                var a = w.document.createElement("a");
-                a.href = doc.fileData;
-                a.download = doc.fileName || doc.naam;
-                a.click();
-                w.close();
-              }
-            }
-          } else {
-            if (typeof window.showActionFeedback === "function") {
-              window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
-            }
-          }
+          openDocument(doc);
         });
 
         var editBtn = document.createElement("button");
@@ -4726,7 +4768,7 @@ function initDocumentenSection() {
     editingDocId = docId;
     if (modalTitle) modalTitle.textContent = "Document bewerken";
     if (modalNaam) modalNaam.value = doc.naam || "";
-    if (modalType) modalType.value = doc.type || "";
+    applyTypeToSelect(doc.type || "");
     if (modalVerval) modalVerval.value = doc.vervaldatum ? doc.vervaldatum.split("T")[0] : "";
     clearDropzone();
     if (dropzone) dropzone.style.display = "none";
