@@ -348,19 +348,24 @@
   }
 
   // Laad RPC voor de huidige selectie + render kaarten/grafiek; tabel direct.
+  // loadSeq voorkomt dat een trager binnenkomende, oudere RPC-respons een
+  // nieuwere overschrijft (race bij snel door maanden bladeren).
+  var loadSeq = 0;
   function loadAndRender() {
     syncSelectorUI();
     state.page = 1;
     render();                       // tabel is lokaal → meteen
     if (!window.facturenZzpDB) return;
+    var mySeq = ++loadSeq;
     state.loading = true;
     window.facturenZzpDB.load(ymToISO(state.startYm), ymToISO(state.endYm)).then(function (data) {
+      if (mySeq !== loadSeq) return;   // nieuwere selectie geladen → negeer verouderde respons
       state.loading = false;
       if (!data) return;
       if (data.months) state.months = data.months;
       renderOverview(data.selected);
       renderChart(state.months);
-    }).catch(function () { state.loading = false; });
+    }).catch(function () { if (mySeq === loadSeq) state.loading = false; });
   }
 
   function selectMonth(ym) {
