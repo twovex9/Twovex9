@@ -138,18 +138,75 @@
       <div class="content-header">
         <div>
           <h1>Facturen te beoordelen</h1>
-          <p class="content-subtitle">Beheer uw facturering, volg de status en behandel afwijzingen.</p>
+          <p class="content-subtitle">Per maand: wat we o.b.v. de planning aan ZZP'ers moeten betalen, en hoeveel daarvan al gefactureerd en goedgekeurd is.</p>
+        </div>
+        <div class="header-actions">
+          <div class="bd-periode" id="fzz-periode">
+            <div class="bd-seg" role="tablist" aria-label="Periodekeuze">
+              <button type="button" class="bd-seg-btn is-active" id="fzz-mode-maand" role="tab" aria-selected="true">Per maand</button>
+              <button type="button" class="bd-seg-btn" id="fzz-mode-periode" role="tab" aria-selected="false">Periode</button>
+            </div>
+            <div class="bd-pick" id="fzz-pick-maand">
+              <button type="button" class="bd-nav" id="fzz-prev" aria-label="Vorige maand">‹</button>
+              <select id="fzz-maand" class="bd-select" aria-label="Kies maand"></select>
+              <button type="button" class="bd-nav" id="fzz-next" aria-label="Volgende maand">›</button>
+            </div>
+            <div class="bd-pick" id="fzz-pick-periode" hidden>
+              <select id="fzz-van" class="bd-select" aria-label="Van maand"></select>
+              <span class="bd-pick-sep">t/m</span>
+              <select id="fzz-tot" class="bd-select" aria-label="Tot en met maand"></select>
+            </div>
+          </div>
         </div>
       </div>
 
-      <section class="fact-tb-stats" aria-label="Facturen statistieken">
-        <div class="fact-tb-stat-card fact-tb-stat-card--blue">
-          <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-todo">€ 0,00</div>
-          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-todo">0</span> Totaal te beoordelen</div>
+      <!-- ZZP-uitgaven voor de geselecteerde maand: planning (verwacht) vs facturen -->
+      <section class="fzz-overview" aria-label="ZZP-uitgaven voor de geselecteerde periode">
+        <div class="fzz-card fzz-card--hero" id="fzz-card-verwacht" role="button" tabindex="0" aria-label="Verwacht o.b.v. planning — uitsplitsing per ZZP'er">
+          <span class="fzz-card-lbl">Verwacht o.b.v. planning <span class="fzz-period" id="fzz-lbl-verwacht"></span></span>
+          <span class="fzz-card-val" id="fzz-v-verwacht">€ 0,00</span>
+          <span class="fzz-card-sub" id="fzz-sub-verwacht">te betalen aan ZZP'ers</span>
+          <div class="fzz-prog" role="img" aria-label="Aandeel binnengekomen t.o.v. verwacht">
+            <div class="fzz-prog-fill" id="fzz-prog-fill"></div>
+          </div>
+          <span class="fzz-card-sub fzz-prog-lbl" id="fzz-prog-lbl">€ 0,00 binnengekomen</span>
         </div>
-        <div class="fact-tb-stat-card fact-tb-stat-card--green">
-          <div class="fact-tb-stat-amount" id="fact-tb-stat-amount-ok">€ 0,00</div>
-          <div class="fact-tb-stat-label"><span id="fact-tb-stat-count-ok">0</span> Totaal goedgekeurd</div>
+        <div class="fzz-card fzz-card--blue" id="fzz-card-todo" role="button" tabindex="0" aria-label="Te beoordelen — bekijk facturen">
+          <span class="fzz-card-lbl">Te beoordelen</span>
+          <span class="fzz-card-val" id="fzz-v-todo">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="fzz-c-todo">0</span> facturen wachten op beoordeling</span>
+        </div>
+        <div class="fzz-card fzz-card--green" id="fzz-card-ok" role="button" tabindex="0" aria-label="Goedgekeurd — bekijk facturen">
+          <span class="fzz-card-lbl">Goedgekeurd</span>
+          <span class="fzz-card-val" id="fzz-v-ok">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="fzz-c-ok">0</span> facturen goedgekeurd</span>
+        </div>
+        <div class="fzz-card fzz-card--orange" id="fzz-card-rest" role="button" tabindex="0" aria-label="Nog te verwachten — uitsplitsing per ZZP'er">
+          <span class="fzz-card-lbl">Nog te verwachten</span>
+          <span class="fzz-card-val" id="fzz-v-rest">€ 0,00</span>
+          <span class="fzz-card-sub" id="fzz-sub-rest">verwacht − binnengekomen</span>
+        </div>
+      </section>
+
+      <!-- Per maand terugkijken: verwacht vs binnengekomen -->
+      <section class="table-card fzz-chart-card" aria-label="Per maand: verwacht vs binnengekomen">
+        <div class="fzz-chart-head">
+          <div>
+            <h2 class="fzz-sec-t">Per maand: verwacht vs. gefactureerd</h2>
+            <p class="fzz-sec-s">Klik op een maand om die te selecteren</p>
+          </div>
+          <div class="fzz-legend" role="list" aria-label="Legenda">
+            <span class="fzz-leg fzz-leg--exp" role="listitem"><span class="fzz-leg-s" aria-hidden="true"></span>Verwacht (planning)</span>
+            <span class="fzz-leg fzz-leg--ok" role="listitem"><span class="fzz-leg-s" aria-hidden="true"></span>Goedgekeurd</span>
+            <span class="fzz-leg fzz-leg--in" role="listitem"><span class="fzz-leg-s" aria-hidden="true"></span>Te beoordelen</span>
+          </div>
+        </div>
+        <div class="bd-vchart">
+          <div class="bd-vy" id="fzz-y-labels" aria-hidden="true"></div>
+          <div class="bd-vplot">
+            <div class="bd-vbars" id="fzz-bars" role="img" aria-label="Staafgrafiek per maand"></div>
+            <div class="bd-vaxis" id="fzz-bar-labels" aria-hidden="true"></div>
+          </div>
         </div>
       </section>
 
@@ -173,9 +230,7 @@
           <span class="switch-slider"></span>
           <span class="switch-label">Gearchiveerd</span>
         </label>
-        <div id="fact-tb-period" class="besa-daterange"></div>
-        <input type="hidden" id="fact-tb-period-start" />
-        <input type="hidden" id="fact-tb-period-end" />
+        <span class="fzz-table-hint" id="fzz-table-hint"></span>
       </div>
 
       <section class="table-card table-card--compact">
@@ -259,6 +314,18 @@
           </div>
         </div>
       </section>
+      <!-- Drill-down: per ZZP'er verwacht vs gefactureerd (klik op Verwacht/Nog te verwachten) -->
+      <div class="bd-modal" id="fzz-modal" hidden>
+        <div class="bd-modal-backdrop" id="fzz-modal-backdrop"></div>
+        <div class="bd-modal-box" role="dialog" aria-modal="true" aria-labelledby="fzz-modal-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="fzz-modal-title">Details</h2>
+            <button type="button" class="bd-modal-x" id="fzz-modal-x" aria-label="Sluiten">×</button>
+          </div>
+          <p class="bd-modal-sub" id="fzz-modal-sub"></p>
+          <div class="bd-modal-body" id="fzz-modal-body"></div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -288,6 +355,7 @@
   <script src="medewerkers-data.js" defer></script>
   <script src="besa-daterange.js?v=bdr1" defer></script>
   <script src="invoices-data.js?v=inv1" defer></script>
-  <script src="facturen-te-beoordelen.js?v=ftbinv1" defer></script>
+  <script src="facturen-zzp-dashboard-data.js?v=fzz1" defer></script>
+  <script src="facturen-te-beoordelen.js?v=ftbzzp1" defer></script>
 </body>
 </html>

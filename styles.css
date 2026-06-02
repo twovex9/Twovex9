@@ -21151,6 +21151,75 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   .fact-tb-stats { grid-template-columns: 1fr; }
 }
 
+/* === Facturen → ZZP-maandoverzicht (planning vs facturen) =============== */
+/* Kaartenrij: groot "Verwacht" + Te beoordelen / Goedgekeurd / Nog te verw. */
+.fzz-overview {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.fzz-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-left-width: 4px;
+  border-radius: var(--r-md, 12px); padding: 16px 18px 18px;
+  box-shadow: var(--page-shell-shadow, 0 1px 3px rgba(0,0,0,0.08));
+  cursor: pointer; transition: box-shadow .15s ease, transform .15s ease;
+  font: inherit; color: inherit; text-align: left; min-width: 0; width: 100%;
+}
+.fzz-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-1px); }
+.fzz-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.fzz-card--hero { border-left-color: var(--blue); }
+.fzz-card--blue { border-left-color: var(--blue); }
+.fzz-card--green { border-left-color: var(--green); }
+.fzz-card--orange { border-left-color: var(--yellow); }
+.fzz-card-lbl { font-size: var(--font-table-cell); font-weight: 600; color: var(--text-secondary); }
+.fzz-period { color: var(--text-muted); font-weight: 600; }
+.fzz-period::before { content: "· "; }
+.fzz-period:empty { display: none; }
+.fzz-card-val { font-size: var(--font-h1); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--text); }
+.fzz-card--hero .fzz-card-val { color: var(--blue); }
+.fzz-card--green .fzz-card-val { color: var(--green); }
+.fzz-card--orange .fzz-card-val { color: var(--yellow); }
+.fzz-card-sub { font-size: var(--font-ui-badge); color: var(--text-muted); }
+/* Progressiebalk binnengekomen t.o.v. verwacht (in de hero-kaart) */
+.fzz-prog { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 10px; }
+.fzz-prog-fill { height: 100%; width: 0; background: var(--blue); border-radius: 999px; transition: width .35s ease; }
+.fzz-prog-lbl { margin-top: 2px; }
+
+/* Maandgrafiek: verwacht (blauw) vs binnengekomen (goedgekeurd + te beoordelen) */
+.fzz-chart-card { padding: 18px 20px 20px; margin-bottom: 20px; }
+.fzz-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.fzz-sec-t { font-size: var(--font-h3, 18px); font-weight: 700; margin: 0; color: var(--text); }
+.fzz-sec-s { font-size: var(--font-ui-badge); color: var(--text-muted); margin: 2px 0 0; }
+.fzz-legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.fzz-leg { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-ui-badge); color: var(--text-secondary); }
+.fzz-leg-s { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.fzz-leg--exp .fzz-leg-s { background: var(--blue); }
+.fzz-leg--ok .fzz-leg-s { background: var(--green); }
+.fzz-leg--in .fzz-leg-s { background: var(--yellow); }
+.fzz-col { height: 230px; display: flex; flex-direction: column; justify-content: flex-end; flex: 1 1 0; min-width: 0; border: 0; background: transparent; cursor: pointer; padding: 0; }
+.fzz-pair { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 100%; }
+.fzz-stick { width: 16px; max-width: 18px; border-radius: var(--r-xs) var(--r-xs) 0 0; overflow: hidden; }
+.fzz-stick--exp { background: var(--blue); }
+.fzz-stick--in { display: flex; flex-direction: column; }
+.fzz-seg { width: 100%; display: block; }
+.fzz-seg--in { background: var(--yellow); }
+.fzz-seg--ok { background: var(--green); }
+.fzz-col:hover .fzz-stick { filter: brightness(0.92); }
+.fzz-col--active .fzz-pair { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: var(--r-xs); }
+.fzz-chart-empty { color: var(--text-muted); font-size: var(--font-base); padding: 24px 0; text-align: center; width: 100%; }
+
+/* Toolbar-hint + modal-totaalregel */
+.fzz-table-hint { color: var(--text-muted); font-size: var(--font-ui-badge); margin-left: auto; align-self: center; }
+.fzz-modal-foot td { border-top: 2px solid var(--line); }
+
+@media (max-width: 1100px) { .fzz-overview { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) {
+  .fzz-overview { grid-template-columns: 1fr; }
+  .fzz-table-hint { display: none; }
+}
+
 /* Status pills overzicht */
 .km-status-pill {
   display: inline-flex;
