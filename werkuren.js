@@ -713,8 +713,12 @@
     return Object.keys(set).sort().map(function (d) { return { value: d, label: d }; });
   }
   function buildZorgOptions() {
+    // Alleen zorgsoorten tonen die daadwerkelijk bij cliënten-met-werkuren horen,
+    // anders verschijnen "dode" opties (bv WLZ) die altijd 0 resultaten geven.
+    var clientIds = {};
+    allEntries().forEach(function (e) { if (e.client_id) clientIds[String(e.client_id)] = true; });
     var set = {};
-    Object.keys(clientZorg).forEach(function (cid) { (clientZorg[cid] || []).forEach(function (z) { set[z] = true; }); });
+    Object.keys(clientIds).forEach(function (cid) { (clientZorg[cid] || []).forEach(function (z) { set[z] = true; }); });
     return Object.keys(set).sort().map(function (z) { return { value: z, label: z }; });
   }
   function buildLabelOptions() {

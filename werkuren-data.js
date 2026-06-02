@@ -51,6 +51,10 @@
   (function () {
     var TABLE = "werkuren";
     var CACHE_KEY = "werkuren_v1";
+    // In-memory canonieke cache. localStorage is op deze suite vaak vol
+    // (clientenItems ~3,4MB) → writeCache van de ~4000+ werkuren faalt stil.
+    // _mem is dan de enige betrouwbare bron (quota-proof). Zie HR-doc-fix #421.
+    var _mem = null;
 
     function generateId() { return "wu_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
 
@@ -107,7 +111,9 @@
 
     async function fetchAll() {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false });
+      // .range() omzeilt de PostgREST default-limiet van 1000 rijen — anders
+      // missen oudere maanden (er zijn 4000+ werkuren-registraties).
+      var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false }).range(0, 99999);
       if (res.error) throw res.error;
       return (res.data || []).map(rowToObj).filter(Boolean);
     }
@@ -117,13 +123,13 @@
       var c = readCache(CACHE_KEY);
       if (c.length) dispatchEvt("besa:werkuren-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "refresh"); return items; }
-    function getAllSync() { return readCache(CACHE_KEY); }
+    async function refresh() { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "refresh"); return items; }
+    function getAllSync() { return _mem != null ? _mem : readCache(CACHE_KEY); }
     function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
     function getForMonthSync(year, month) {
       return getAllSync().filter(function (r) {
@@ -144,10 +150,10 @@
       var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
-      var cache = readCache(CACHE_KEY);
+      var cache = getAllSync().slice();
       var idx = cache.findIndex(function (r) { return r && String(r.id) === String(obj.id); });
       if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-      writeCache(CACHE_KEY, cache);
+      _mem = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-updated", "add");
       return obj;
     }
@@ -158,10 +164,10 @@
       var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
-      var cache = readCache(CACHE_KEY);
+      var cache = getAllSync().slice();
       var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
       if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
-      writeCache(CACHE_KEY, cache);
+      _mem = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-updated", "update");
       return obj;
     }
@@ -170,8 +176,8 @@
       if (!id) return false;
       var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
       if (res.error) throw res.error;
-      var cache = readCache(CACHE_KEY).filter(function (r) { return r && String(r.id) !== String(id); });
-      writeCache(CACHE_KEY, cache);
+      var cache = getAllSync().filter(function (r) { return r && String(r.id) !== String(id); });
+      _mem = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-updated", "remove");
       return true;
     }
