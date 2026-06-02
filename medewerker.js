@@ -4467,7 +4467,7 @@ function initDocumentenSection() {
     var q = (searchInput?.value || "").trim().toLowerCase();
     if (q) {
       items = items.filter(function (d) {
-        return [d.naam, d.type, d.vervaldatum, d.uploaddatum, d.laatstGewijzigd].join(" ").toLowerCase().includes(q);
+        return [d.naam, d.type, docTypeLabel(d.type), d.vervaldatum, d.uploaddatum, d.laatstGewijzigd].join(" ").toLowerCase().includes(q);
       });
     }
 
@@ -4567,7 +4567,7 @@ function initDocumentenSection() {
 
         var colDefs = [
           { key: "naam", format: function (v) { return v || ""; } },
-          { key: "type", format: function (v) { return v || ""; } },
+          { key: "type", format: function (v) { return docTypeLabel(v); } },
           { key: "vervaldatum", format: function (v) { return formatDate(v); } },
           { key: "uploaddatum", format: function (v) { return formatDateTime(v); } },
           { key: "laatstGewijzigd", format: function (v) { return formatDateTime(v); } },
