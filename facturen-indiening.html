@@ -149,6 +149,7 @@
             <thead>
               <tr>
                 <th data-col="maand">Maand</th>
+                <th data-col="verwacht" class="th-num">Verwacht (planning)</th>
                 <th data-col="nfact" class="th-num"># facturen</th>
                 <th data-col="ingediend" class="th-num">Ingediend</th>
                 <th data-col="systeem" class="th-num">Systeemfactuur</th>
@@ -159,7 +160,7 @@
             <tbody id="fi-recon-tbody"></tbody>
           </table>
         </div>
-        <p class="fi-note">Vergelijkt de ingediende facturen met de systeemfactuur (rooster-berekening per factuur). Een verschil betekent dat ingediende facturen niet één-op-één matchen met het rooster.</p>
+        <p class="fi-note"><strong>Verwacht (planning)</strong> = wat we volgens het rooster aan ZZP'ers moeten betalen die maand (geplande netto-uren × persoonlijk uurtarief), oftewel het totaal dat aan facturen binnen zou moeten komen. <strong>Ingediend</strong> en <strong>Systeemfactuur</strong> tonen wat er daadwerkelijk is ingediend en wat het systeem per factuur berekende; het <strong>Verschil</strong> is ingediend − systeemfactuur.</p>
       </section>
 
       <section class="fi-card">
@@ -220,6 +221,7 @@
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js" defer></script>
   <script src="invoices-data.js?v=inv1" defer></script>
-  <script src="facturen-indiening.js?v=find1" defer></script>
+  <script src="facturen-zzp-dashboard-data.js?v=fzz1" defer></script>
+  <script src="facturen-indiening.js?v=find2" defer></script>
 </body>
 </html>

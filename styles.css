@@ -15304,6 +15304,7 @@ button.planning-erm-new {
 .fi-legend { color: var(--text-secondary); font-size: var(--font-table-head); margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .fi-diff-bad { color: var(--pink); font-weight: 700; }
 .fi-diff-ok { color: var(--green); font-weight: 600; }
+.fi-verw { color: var(--blue); font-weight: 700; }
 .fi-cell-link { text-decoration: none; }
 .fi-cell-gap { color: var(--red); font-weight: 700; font-size: var(--font-ui-badge); }
 .fi-cell-none { color: var(--text-muted); }

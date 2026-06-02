@@ -9,9 +9,11 @@
  *
  * Bronnen (betrouwbaar): public.invoices (employee.id = BS2-id, total,
  * systemGeneratedSummary) + public.medewerkers (inhuur-ZZP'ers, gekoppeld via
- * data.bs2_id). De planning bevat geen ZZP-tarieven, dus een €-"planningstotaal"
- * uit het rooster wordt hier (nog) niet getoond — de reconciliatie vergelijkt
- * ingediend met de systeemfactuur (de rooster-berekening per factuur).
+ * data.bs2_id). De kolom "Verwacht (planning)" komt uit de read-only RPC
+ * facturen_zzp_dashboard (window.facturenZzpDB): per maand de som van de
+ * geplande ZZP-diensten × persoonlijk uurtarief = wat aan facturen binnen
+ * zou moeten komen. De reconciliatie zet verwacht/ingediend/systeemfactuur
+ * naast elkaar.
  */
 (function () {
   "use strict";
@@ -33,6 +35,8 @@
   function maandKort(j, m) { return (MAAND_KORT[m] || m) + " '" + String(j).slice(2); }
 
   var state = { search: "", onlyGap: false };
+  var planByYm = {};   // "YYYY-MM" → verwacht ZZP-bedrag o.b.v. planning (uit RPC)
+  function ymKey(jaar, maand) { return jaar + "-" + ("0" + maand).slice(-2); }
 
   function getInvoices() {
     try {
@@ -64,7 +68,7 @@
   function renderRecon(invs, months) {
     var tb = $("fi-recon-tbody");
     if (!tb) return;
-    if (!months.length) { tb.innerHTML = '<tr><td colspan="6" class="incident-empty">Nog geen facturen</td></tr>'; return; }
+    if (!months.length) { tb.innerHTML = '<tr><td colspan="7" class="incident-empty">Nog geen facturen</td></tr>'; return; }
     var rows = months.slice().reverse().map(function (m) {
       var ms = invs.filter(function (r) { return r.jaar === m.jaar && r.maand === m.maand; });
       var ingediend = ms.reduce(function (s, r) { return s + (Number(r.total) || 0); }, 0);
@@ -73,8 +77,17 @@
       var verschil = hasSys ? Math.round((ingediend - systeem) * 100) / 100 : null;
       var zzp = {}; ms.forEach(function (r) { if (r.employee && r.employee.id) zzp[r.employee.id] = 1; });
       var vCls = (verschil != null && Math.abs(verschil) >= 0.01) ? "fi-diff-bad" : "fi-diff-ok";
+      // Verwacht o.b.v. planning (roostertarieven) + "nog te verwachten" t.o.v. ingediend.
+      var verw = planByYm[ymKey(m.jaar, m.maand)];
+      var heeftVerw = verw != null;
+      var nogTe = heeftVerw ? Math.round((verw - ingediend) * 100) / 100 : null;
+      var verwTitle = heeftVerw
+        ? ("Volgens rooster te betalen: " + formatEur(verw)
+           + (nogTe > 0 ? " · nog ~" + formatEur(nogTe) + " te factureren" : " · volledig gefactureerd"))
+        : "Geen planning gevonden voor deze maand";
       return '<tr>'
         + '<td>' + escHtml(maandLabel(m.jaar, m.maand)) + '</td>'
+        + '<td class="td-num fi-verw" title="' + escAttr(verwTitle) + '">' + (heeftVerw ? formatEur(verw) : "—") + '</td>'
         + '<td class="td-num">' + ms.length + '</td>'
         + '<td class="td-num">' + formatEur(ingediend) + '</td>'
         + '<td class="td-num">' + (hasSys ? formatEur(systeem) : "—") + '</td>'
@@ -189,9 +202,29 @@
     window.addEventListener("besa:medewerkers-updated", render);
   }
 
+  // Planning-verwacht per maand uit de read-only RPC (window.facturenZzpDB).
+  function loadPlanning() {
+    if (!window.facturenZzpDB) return;
+    function apply(data) {
+      if (!data || !Array.isArray(data.months)) return;
+      planByYm = {};
+      data.months.forEach(function (mo) {
+        if (mo && mo.ym != null) planByYm[mo.ym] = Number(mo.planning_verwacht) || 0;
+      });
+      render();
+    }
+    try { apply(window.facturenZzpDB.getData && window.facturenZzpDB.getData()); } catch (e) { /* */ }
+    try {
+      if (window.facturenZzpDB.ready) {
+        window.facturenZzpDB.ready.then(function () { apply(window.facturenZzpDB.getData()); }).catch(function () {});
+      }
+    } catch (e) { /* ready kan getter zijn */ }
+  }
+
   function init() {
     render();
     wire();
+    loadPlanning();
     if (window.invoicesDB && window.invoicesDB.ready) window.invoicesDB.ready.then(render).catch(function () {});
     if (window.medewerkersDB && window.medewerkersDB.ready) {
       try { window.medewerkersDB.ready.then(render).catch(function () {}); }
