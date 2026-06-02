@@ -16864,7 +16864,7 @@ button.planning-erm-new {
 
 /* --- periode-selector --- */
 .bd-periode { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.bd-seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); overflow: hidden; background: var(--card, #fff); }
+.bd-seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); overflow: hidden; background: var(--surface); }
 .bd-seg-btn {
   border: 0; background: transparent; cursor: pointer; padding: 7px 14px;
   font-size: var(--font-ui-badge); font-weight: 600; color: var(--text-secondary);
@@ -16874,14 +16874,14 @@ button.planning-erm-new {
 .bd-pick { display: inline-flex; align-items: center; gap: 6px; }
 .bd-pick[hidden] { display: none; }  /* [hidden] verliest het anders van display:inline-flex */
 .bd-nav {
-  width: 30px; height: 30px; border: 1px solid var(--line); background: var(--card, #fff);
+  width: 30px; height: 30px; border: 1px solid var(--line); background: var(--surface);
   border-radius: var(--r-sm, 8px); cursor: pointer; font-size: 18px; line-height: 1;
   color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center;
 }
 .bd-nav:disabled { opacity: 0.4; cursor: default; }
 .bd-select {
   height: 32px; border: 1px solid var(--line); border-radius: var(--r-sm, 8px);
-  background: var(--card, #fff); color: var(--text); padding: 0 8px; font-size: var(--font-base); font-weight: 600;
+  background: var(--surface); color: var(--text); padding: 0 8px; font-size: var(--font-base); font-weight: 600;
 }
 .bd-pick-sep { color: var(--text-muted); font-size: var(--font-ui-badge); }
 
@@ -16891,7 +16891,7 @@ button.planning-erm-new {
 }
 .bd-money {
   display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 6px;
-  background: var(--card, #fff); border: 1px solid var(--line); border-left-width: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-left-width: 4px;
   border-radius: var(--r-md, 12px); padding: 16px 18px 18px;
   box-shadow: var(--page-shell-shadow, 0 1px 3px rgba(0,0,0,0.08));
   cursor: pointer; transition: box-shadow .15s ease, transform .15s ease; font: inherit; color: inherit;
@@ -16928,7 +16928,7 @@ button.planning-erm-new {
 .bd-count-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
 .bd-count {
   display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; font: inherit;
-  background: var(--card, #fff); border: 1px solid var(--line); border-radius: var(--r-md, 12px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md, 12px);
   padding: 16px 18px; box-shadow: var(--page-shell-shadow, 0 1px 3px rgba(0,0,0,0.08));
   cursor: pointer; transition: box-shadow .15s ease, transform .15s ease; text-align: left;
 }
@@ -16958,7 +16958,7 @@ button.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .bd-modal[hidden] { display: none; }
 .bd-modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,0.45); }
 .bd-modal-box {
-  position: relative; background: var(--card, #fff); border-radius: var(--r-md, 12px);
+  position: relative; background: var(--surface); border-radius: var(--r-md, 12px);
   width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 64px); display: flex; flex-direction: column;
   box-shadow: 0 12px 48px rgba(0,0,0,0.28); overflow: hidden;
 }
