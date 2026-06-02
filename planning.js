@@ -1558,13 +1558,16 @@ function renderWeekGrid() {
   /* Korte dagcodes voor board-weergave ("ma 20", "di 21", …). */
   const dayShort = ["zo", "ma", "di", "wo", "do", "vr", "za"];
   const dayNames = dayShort;
+  /* Week-weergave: kolommen krimpen volledig mee (min 0) zodat alle 7 dagen
+     samen exact in het paneel passen — geen horizontale schuif nodig. Dag- en
+     maandweergave behouden hun leesbare minimumbreedte. */
   const colMin =
-    ui.rowAxis === "vestiging"
-      ? 168
-      : ui.calMode === "month"
-        ? 104
-        : ui.calMode === "week"
-          ? 92
+    ui.calMode === "week"
+      ? 0
+      : ui.rowAxis === "vestiging"
+        ? 168
+        : ui.calMode === "month"
+          ? 104
           : 168;
   const table = document.createElement("div");
   table.className = "planning-erm-wg";
