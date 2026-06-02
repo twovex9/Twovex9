@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Beschikkingen dashboard — HR</title>
-  <link rel="stylesheet" href="styles.css?v=bd3bs2" />
+  <link rel="stylesheet" href="styles.css?v=bdv2live" />
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -152,79 +152,87 @@
       <div class="content-header">
         <h1>Beschikkingen dashboard</h1>
         <div class="header-actions">
-          <div class="bd-daterange-wrap">
-            <div id="bd-period-range"></div>
-            <input type="hidden" id="bd-period-start" />
-            <input type="hidden" id="bd-period-end" />
+          <div class="bd-periode" id="bd-periode">
+            <div class="bd-seg" role="tablist" aria-label="Periodekeuze">
+              <button type="button" class="bd-seg-btn is-active" id="bd-mode-maand" role="tab" aria-selected="true">Per maand</button>
+              <button type="button" class="bd-seg-btn" id="bd-mode-periode" role="tab" aria-selected="false">Periode</button>
+            </div>
+            <div class="bd-pick" id="bd-pick-maand">
+              <button type="button" class="bd-nav" id="bd-prev" aria-label="Vorige maand">‹</button>
+              <select id="bd-maand" class="bd-select" aria-label="Kies maand"></select>
+              <button type="button" class="bd-nav" id="bd-next" aria-label="Volgende maand">›</button>
+            </div>
+            <div class="bd-pick" id="bd-pick-periode" hidden>
+              <select id="bd-van" class="bd-select" aria-label="Van maand"></select>
+              <span class="bd-pick-sep">t/m</span>
+              <select id="bd-tot" class="bd-select" aria-label="Tot en met maand"></select>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="bd2-grid">
-        <a class="bd2-card bd2-card--money table-card bd2-card--link" id="bd-card-ib" href="beschikkingen?betaling=outstanding">
-          <span class="bd2-card-lbl"><span class="bd2-eur" aria-hidden="true">€</span> Gedeclareerd – wacht op betaling</span>
-          <span class="bd2-card-val bd2-val--orange" id="bd-v-ib">€ 0,00</span>
-          <span class="bd2-card-sub" id="bd-s-ib">0 betalingen te verwerken</span>
-        </a>
-        <a class="bd2-card bd2-card--counter table-card bd2-card--link" id="bd-card-60" href="beschikkingen?f60=1">
-          <span class="bd2-counter-lbl">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            Verlopen binnen 60d
+      <!-- Drie geldkaarten voor de GESELECTEERDE maand/periode -->
+      <div class="bd-money-row">
+        <div class="bd-money bd-money--red" id="bd-card-todecl" role="button" tabindex="0" aria-label="Nog te declareren — details">
+          <span class="bd-money-lbl">Nog te declareren <span class="bd-money-period" id="bd-lbl-todecl"></span></span>
+          <span class="bd-money-val" id="bd-v-todecl">€ 0,00</span>
+          <span class="bd-money-sub" id="bd-todecl-cnt">0 beschikkingen</span>
+          <span class="bd-splits">
+            <button type="button" class="bd-split bd-split--red" id="bd-split-achter" aria-label="Achterstand eerdere maanden — details">
+              <span class="bd-split-lbl">Achterstand <small>eerdere maanden</small></span>
+              <span class="bd-split-val" id="bd-v-achter">€ 0,00</span>
+            </button>
+            <button type="button" class="bd-split bd-split--orange" id="bd-split-voor" aria-label="Onbetaald in eerdere maanden — details">
+              <span class="bd-split-lbl">Onbetaald <small>eerdere maanden</small></span>
+              <span class="bd-split-val" id="bd-v-voor">€ 0,00</span>
+            </button>
           </span>
-          <span class="bd2-counter-val" id="bd-v-60">0</span>
-        </a>
-        <a class="bd2-card bd2-card--counter table-card bd2-card--link" id="bd-card-open" href="beschikkingen?fase=In%20aanvraag">
-          <span class="bd2-counter-lbl">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.3 3.2 2 20h20L13.7 3.2a1 1 0 0 0-1.8 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-            Openstaande Aanvragen
-          </span>
-          <span class="bd2-counter-val" id="bd-v-open">0</span>
-        </a>
-
-        <a class="bd2-card bd2-card--money table-card bd2-card--link" id="bd-card-out" href="beschikkingen?fng=1">
-          <span class="bd2-card-lbl"><span class="bd2-eur" aria-hidden="true">€</span> Te declareren (totaal)</span>
-          <span class="bd2-card-val bd2-val--red" id="bd-v-out">€ 0,00</span>
-          <span class="bd2-card-sub bd-card-split">
-            <span class="bd-card-split-item">
-              <span class="bd-card-split-lbl">Achterstand</span>
-              <span class="bd-card-split-val bd-card-split-val--red" id="bd-v-achterstand">€ 0,00</span>
-            </span>
-            <span class="bd-card-split-item">
-              <span class="bd-card-split-lbl">Lopende maand</span>
-              <span class="bd-card-split-val bd-card-split-val--warn" id="bd-v-lopend">€ 0,00</span>
-            </span>
-          </span>
-        </a>
-        <section class="bd2-card bd2-card--chart table-card" id="bd-card-monthly" aria-label="Maandelijkse Betalingen">
-          <h2 class="bd-sec-t">Maandelijkse Betalingen</h2>
-          <p class="bd-sec-s">Per status in de afgelopen 12 maanden</p>
-          <div class="bd-legend" role="list" aria-label="Legenda">
-            <span class="bd-leg bd-leg--g" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Betaald</span>
-            <span class="bd-leg bd-leg--o" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Wacht op betaling</span>
-          </div>
-          <div class="bd-vchart">
-            <div class="bd-vy" id="bd-y-labels" aria-hidden="true"></div>
-            <div class="bd-vplot">
-              <div class="bd-vbars" id="bd-monthly-stack" role="img" aria-label="Staafgrafiek maandtotalen"></div>
-              <div class="bd-vaxis" id="bd-stack-labels" aria-hidden="true"></div>
-            </div>
-          </div>
-        </section>
-
-        <a class="bd2-card bd2-card--money table-card bd2-card--link" id="bd-card-betaald" href="beschikkingen?betaling=betaald">
-          <span class="bd2-card-lbl"><span class="bd2-eur" aria-hidden="true">€</span> Betaald</span>
-          <span class="bd2-card-val bd2-val--green" id="bd-v-betaald">€ 0,00</span>
-          <span class="bd2-card-sub" id="bd-s-betaald">0 facturen</span>
-        </a>
-
-        <a class="bd2-card bd2-card--money table-card bd2-card--link" id="bd-card-actief" href="beschikkingen?fase=Actief">
-          <span class="bd2-card-lbl">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M2 20v-1a6 6 0 0 1 5.5-6"/><path d="M22 20v-1a6 6 0 0 0-3.2-4.2"/><circle cx="8.5" cy="7" r="3.5"/></svg>
-            Actieve Beschikkingen
-          </span>
-          <span class="bd2-card-val bd2-val--ink" id="bd-v-actief">0</span>
-        </a>
+        </div>
+        <div class="bd-money bd-money--orange" id="bd-card-pending" role="button" tabindex="0" aria-label="Gedeclareerd, wacht op betaling — details">
+          <span class="bd-money-lbl">Gedeclareerd – wacht op betaling <span class="bd-money-period" id="bd-lbl-pending"></span></span>
+          <span class="bd-money-val" id="bd-v-pending">€ 0,00</span>
+          <span class="bd-money-sub" id="bd-pending-cnt">0 facturen</span>
+        </div>
+        <div class="bd-money bd-money--green" id="bd-card-paid" role="button" tabindex="0" aria-label="Betaald — details">
+          <span class="bd-money-lbl">Betaald <span class="bd-money-period" id="bd-lbl-paid"></span></span>
+          <span class="bd-money-val" id="bd-v-paid">€ 0,00</span>
+          <span class="bd-money-sub" id="bd-paid-cnt">0 facturen</span>
+        </div>
       </div>
+
+      <!-- Drie tellers (periode-onafhankelijk) -->
+      <div class="bd-count-row">
+        <button type="button" class="bd-count bd-count--btn" id="bd-card-actief">
+          <span class="bd-count-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M2 20v-1a6 6 0 0 1 5.5-6"/><path d="M22 20v-1a6 6 0 0 0-3.2-4.2"/><circle cx="8.5" cy="7" r="3.5"/></svg></span>
+          <span class="bd-count-txt"><span class="bd-count-val" id="bd-v-actief">0</span><span class="bd-count-lbl">Actieve beschikkingen</span><span class="bd-count-sub">cliënt in zorg &amp; lopend</span></span>
+        </button>
+        <button type="button" class="bd-count bd-count--btn" id="bd-card-60">
+          <span class="bd-count-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+          <span class="bd-count-txt"><span class="bd-count-val" id="bd-v-60">0</span><span class="bd-count-lbl">Verloopt binnen 60 dagen</span><span class="bd-count-sub">klik voor overzicht</span></span>
+        </button>
+        <button type="button" class="bd-count bd-count--btn" id="bd-card-open">
+          <span class="bd-count-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.2 2 20h20L13.7 3.2a1 1 0 0 0-1.8 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+          <span class="bd-count-txt"><span class="bd-count-val" id="bd-v-open">0</span><span class="bd-count-lbl">Openstaande aanvragen</span><span class="bd-count-sub">klik voor overzicht</span></span>
+        </button>
+      </div>
+
+      <!-- Maandgrafiek: betaald / gedeclareerd / te declareren per maand -->
+      <section class="table-card bd-chart-card" id="bd-card-monthly" aria-label="Per maand">
+        <h2 class="bd-sec-t">Per maand: betaald, gedeclareerd en nog te declareren</h2>
+        <p class="bd-sec-s">Klik op een staaf om die maand te selecteren</p>
+        <div class="bd-legend" role="list" aria-label="Legenda">
+          <span class="bd-leg bd-leg--g" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Betaald</span>
+          <span class="bd-leg bd-leg--o" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Gedeclareerd, wacht op betaling</span>
+          <span class="bd-leg bd-leg--r" role="listitem"><span class="bd-leg-s" aria-hidden="true"></span>Nog te declareren</span>
+        </div>
+        <div class="bd-vchart">
+          <div class="bd-vy" id="bd-y-labels" aria-hidden="true"></div>
+          <div class="bd-vplot">
+            <div class="bd-vbars" id="bd-monthly-stack" role="img" aria-label="Staafgrafiek maandtotalen"></div>
+            <div class="bd-vaxis" id="bd-stack-labels" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
 
       <div class="bd-bottom bd-bottom--3">
         <section class="table-card bd-bar-card" aria-label="Bezetting per zorgsoort">
@@ -261,6 +269,19 @@
           </div>
         </section>
       </div>
+
+      <!-- Drill-down modal (60d / aanvragen / achterstand-per-maand / maanddetail) -->
+      <div class="bd-modal" id="bd-modal" hidden>
+        <div class="bd-modal-backdrop" id="bd-modal-backdrop"></div>
+        <div class="bd-modal-box" role="dialog" aria-modal="true" aria-labelledby="bd-modal-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="bd-modal-title">Details</h2>
+            <button type="button" class="bd-modal-x" id="bd-modal-x" aria-label="Sluiten">×</button>
+          </div>
+          <p class="bd-modal-sub" id="bd-modal-sub"></p>
+          <div class="bd-modal-body" id="bd-modal-body"></div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -286,10 +307,7 @@
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
   <script src="besa-daterange.js?v=dr2" defer></script>
-  <script src="clienten-data.js?v=lockfix1" defer></script>
-  <script src="beschikkingen-data.js?v=clbeheer8" defer></script>
-  <script src="beschikkingen-dashboard-data.js?v=bd4snap" defer></script>
-  <script src="urendeclaraties-data.js" defer></script>
-  <script src="beschikkingen-dashboard.js?v=bd8live" defer></script>
+  <script src="beschikkingen-dashboard-data.js?v=bdv2live" defer></script>
+  <script src="beschikkingen-dashboard.js?v=bdv2live" defer></script>
 </body>
 </html>
