@@ -22144,8 +22144,11 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
      waardoor flex-shrink dit paneel tot ~1px zou persen. Voorkom dat. */
   flex-shrink: 0;
 }
-/* hidden-attribuut moet winnen van .wu-global-lock-banner{display:flex} */
-.wu-global-lock-banner[hidden] { display: none; }
+/* hidden-attribuut moet winnen van een expliciete display-regel (anders blijven
+   deze elementen zichtbaar terwijl JS ze met [hidden] verbergt) */
+.wu-global-lock-banner[hidden],
+.wu-open-agenda-btn[hidden],
+.btn-text.wu-filters-clear[hidden] { display: none; }
 .wu-contract-head {
   display: flex;
   align-items: center;
