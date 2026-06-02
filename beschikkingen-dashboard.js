@@ -483,7 +483,7 @@
     if (sV) sV.addEventListener("click", function (e) {
       e.stopPropagation();
       var d = curData() || {};
-      showMonthsModal("Onbetaald in eerdere maanden", "Gedeclareerd maar nog niet betaald, vóór " + periodeLabel() + " · klik op een maand voor de facturen", ((d.achterstand || {}).declared_pending_by_month) || [], "pending", true);
+      showMonthsModal("Lopende voorafgaande maanden", "Gedeclareerd maar nog niet betaald, vóór " + periodeLabel() + " · klik op een maand voor de facturen", ((d.achterstand || {}).declared_pending_by_month) || [], "pending", true);
     });
     var cAct = $("bd-card-actief"); if (cAct) cAct.addEventListener("click", showActiveModal);
     var c60 = $("bd-card-60"); if (c60) c60.addEventListener("click", showOverdueModal);
