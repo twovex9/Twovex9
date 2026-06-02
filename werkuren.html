@@ -136,9 +136,24 @@
       </div>
 
       <div class="wu-filter-block">
+        <label class="wu-filter-label" for="wu-filter-dienst-btn">Filter op dienst-type</label>
+        <button type="button" class="filter-chip wu-filter-chip" id="wu-filter-dienst-btn">Selecteer Dienst</button>
+      </div>
+
+      <div class="wu-filter-block">
+        <label class="wu-filter-label" for="wu-filter-zorg-btn">Filter op zorgsoort</label>
+        <button type="button" class="filter-chip wu-filter-chip" id="wu-filter-zorg-btn">Selecteer Zorgsoort</button>
+      </div>
+
+      <div class="wu-filter-block">
         <label class="wu-filter-label" for="wu-filter-label-btn">Filter op label</label>
         <button type="button" class="filter-chip wu-filter-chip" id="wu-filter-label-btn">Selecteer Label</button>
       </div>
+
+      <button type="button" class="btn-text wu-filters-clear" id="wu-filters-clear" hidden>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Filters wissen
+      </button>
 
       <a class="btn-outline wu-open-agenda-btn" id="wu-open-agenda-btn" href="#" hidden>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -162,7 +177,35 @@
         </div>
       </div>
 
+      <div class="wu-controls">
+        <div class="wu-seg" role="group" aria-label="Groeperen op">
+          <button type="button" class="wu-seg-btn is-active" id="wu-group-medewerker" data-group="medewerker">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Per medewerker
+          </button>
+          <button type="button" class="wu-seg-btn" id="wu-group-client" data-group="client">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Per cliënt
+          </button>
+        </div>
+        <div class="wu-seg" role="group" aria-label="Periode">
+          <button type="button" class="wu-seg-btn is-active" id="wu-mode-month" data-mode="month">Maand</button>
+          <button type="button" class="wu-seg-btn" id="wu-mode-week" data-mode="week">Week</button>
+          <button type="button" class="wu-seg-btn" id="wu-mode-day" data-mode="day">Dag</button>
+        </div>
+      </div>
+
       <p class="wu-period-title" id="wu-period-title">— mei – — mei</p>
+
+      <section class="wu-contract-panel" id="wu-contract-panel" hidden aria-label="Contracturen loondienst">
+        <button type="button" class="wu-contract-head" id="wu-contract-toggle" aria-expanded="false">
+          <span class="wu-contract-chev" aria-hidden="true">▸</span>
+          <svg class="wu-contract-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="wu-contract-title">Contracturen loondienst</span>
+          <span class="wu-contract-sub" id="wu-contract-sub"></span>
+        </button>
+        <div class="wu-contract-body" id="wu-contract-body" hidden></div>
+      </section>
 
       <section class="table-card wu-table-card table-card--compact">
         <div class="table-wrapper">
@@ -172,8 +215,10 @@
                 <th data-col="datum">Datum</th>
                 <th data-col="tijd">Tijd</th>
                 <th data-col="duur">Duur</th>
+                <th data-col="medewerker">Medewerker</th>
                 <th data-col="client">Cliënt</th>
                 <th data-col="dienst">Dienst</th>
+                <th data-col="locatie">Locatie</th>
                 <th data-col="label">Label</th>
                 <th data-col="beschrijving">Beschrijving</th>
                 <th data-col="acties">Acties</th>
@@ -191,7 +236,7 @@
         </div>
         <div class="wu-total-item">
           <svg class="wu-total-ico wu-total-ico--green" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span><strong>Totaal medewerkers:</strong> <span id="wu-total-meds">0</span></span>
+          <span><strong id="wu-total-meds-label">Totaal medewerkers:</strong> <span id="wu-total-meds">0</span></span>
         </div>
         <div class="wu-total-item">
           <svg class="wu-total-ico wu-total-ico--purple" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -306,8 +351,10 @@
   <script src="besa-audit.js" defer></script>
   <script src="medewerkers-data.js" defer></script>
   <script src="clienten-data.js?v=lockfix1" defer></script>
+  <script src="beschikkingen-data.js" defer></script>
+  <script src="locaties-data.js" defer></script>
   <script src="locked-months-data.js?v=lm1" defer></script>
   <script src="werkuren-data.js?v=wu1" defer></script>
-  <script src="werkuren.js?v=wu2" defer></script>
+  <script src="werkuren.js?v=wu3" defer></script>
 </body>
 </html>

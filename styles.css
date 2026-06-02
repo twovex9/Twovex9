@@ -21590,8 +21590,9 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-cal {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  padding: 10px 10px 12px;
+  padding: 10px 8px 12px;
   background: var(--surface);
+  overflow: hidden;
 }
 .wu-cal-head {
   display: flex;
@@ -21621,18 +21622,26 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-cal-nav:hover { background: var(--blue-soft); color: var(--blue); }
 .wu-cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* smalle weeknummer-kolom + 7 dag-kolommen die altijd krimpen om te passen */
+  grid-template-columns: 18px repeat(7, minmax(0, 1fr));
   gap: 2px;
+  width: 100%;
 }
-.wu-cal-dowh {
+.wu-cal-dowh,
+.wu-cal-wkh {
   text-align: center;
-  font-size: var(--font-table-head);
+  font-size: var(--font-ui-badge, 10px);
   font-weight: 600;
   color: var(--text-muted);
   padding: 4px 0;
+  min-width: 0;
+  overflow: hidden;
 }
+.wu-cal-wkh { font-size: 9px; opacity: 0.7; }
 .wu-cal-day {
-  height: 28px;
+  height: 26px;
+  min-width: 0;
+  padding: 0;
   border: 1px solid transparent;
   border-radius: var(--r-sm);
   background: transparent;
@@ -21642,6 +21651,7 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 .wu-cal-day:hover {
   background: var(--blue-soft);
@@ -21650,16 +21660,35 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-cal-day--out {
   color: var(--text-muted);
   opacity: 0.45;
-  cursor: default;
 }
-.wu-cal-day--out:hover { background: transparent; color: var(--text-muted); }
-.wu-cal-day--sel {
+.wu-cal-day--out:hover { background: var(--blue-soft); }
+.wu-cal-day--wsel { background: var(--blue-soft); color: var(--blue); }
+.wu-cal-day--sel,
+.wu-cal-day--sel.wu-cal-day--wsel {
   background: var(--blue);
   color: #fff;
   border-color: var(--blue);
   font-weight: 600;
 }
 .wu-cal-day--sel:hover { background: var(--blue); color: #fff; }
+/* Weeknummer-cel (klikbaar = hele week selecteren) */
+.wu-cal-wk {
+  min-width: 0;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wu-cal-wk:hover { background: var(--blue-soft); color: var(--blue); }
+.wu-cal-wk--sel { background: var(--blue); color: #fff; }
 
 /* Lock-knop */
 .wu-lock-btn {
@@ -21964,6 +21993,228 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-total-ico--blue { color: var(--blue); }
 .wu-total-ico--green { color: var(--green); }
 .wu-total-ico--purple { color: var(--pt-7c3aed); }
+
+/* ===========================================================================
+   Urenregistratie — controls, groepering, locatie, contracturen (2026-06-02)
+   ========================================================================= */
+
+/* Controls-rij: groeperen + periode-modus (segmented controls) */
+.wu-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 10px;
+}
+.wu-seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.wu-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wu-seg-btn:last-child { border-right: none; }
+.wu-seg-btn:hover { background: var(--blue-soft); color: var(--blue); }
+.wu-seg-btn.is-active { background: var(--blue); color: #fff; }
+.wu-seg-btn.is-active:hover { background: var(--blue); color: #fff; }
+.wu-seg-btn svg { flex-shrink: 0; }
+
+/* Filters wissen (zijbalk) */
+.btn-text.wu-filters-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-text.wu-filters-clear:hover { text-decoration: underline; }
+
+/* Group-header: flex met subtotaal rechts */
+.wu-group-cell { width: 100%; }
+.wu-group-row { cursor: pointer; }
+.wu-group-row:hover { background: var(--blue-soft); }
+.wu-group-spacer { flex: 1 1 auto; }
+.wu-group-hours {
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.wu-group-hours strong { color: var(--text); font-weight: 700; }
+.wu-group-loon {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  font-size: var(--font-ui-badge, 10px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wu-group-avatar--client {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+/* Subtotaal-rij */
+.wu-subtotal-row td {
+  padding: 8px 12px;
+  background: var(--surface-alt);
+  border-bottom: 2px solid var(--line);
+}
+.wu-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+}
+.wu-subtotal strong { color: var(--text); font-weight: 700; }
+.wu-subtotal span:first-child { margin-right: auto; font-weight: 600; color: var(--text); }
+
+/* Weekstaat-rij in medewerker-groep (contracturen) */
+.wu-weekstaat-row td {
+  padding: 8px 12px;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+}
+.wu-weekstaat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wu-ws-label { font-size: var(--font-table-head); color: var(--text-secondary); font-weight: 600; }
+.wu-ws-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-table-head);
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+.wu-ws-cell strong { font-weight: 700; }
+.wu-ws-cell--ok   { background: var(--green-soft); color: var(--green); border-color: var(--green-soft); }
+.wu-ws-cell--warn { background: var(--yellow-soft); color: var(--text); border-color: var(--yellow-soft); }
+.wu-ws-cell--low  { background: var(--red-soft); color: var(--red); border-color: var(--red-soft); }
+
+/* Kolom-zichtbaarheid afhankelijk van groeperingsmodus */
+.wu-table th[data-col="medewerker"],
+.wu-table td[data-col="medewerker"] { display: none; }
+.wu-table.wu-table--by-client th[data-col="medewerker"],
+.wu-table.wu-table--by-client td[data-col="medewerker"] { display: table-cell; }
+.wu-table.wu-table--by-client th[data-col="client"],
+.wu-table.wu-table--by-client td[data-col="client"] { display: none; }
+.wu-loc-none { color: var(--text-muted); }
+
+/* Contracturen-paneel (loondienst) */
+.wu-contract-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  margin: 0 0 14px;
+  overflow: hidden;
+}
+.wu-contract-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+.wu-contract-head:hover { background: var(--blue-soft); }
+.wu-contract-chev { color: var(--text-secondary); font-size: 13px; width: 12px; }
+.wu-contract-ico { color: var(--blue); flex-shrink: 0; }
+.wu-contract-title { font-weight: 600; font-size: var(--font-base); }
+.wu-contract-sub { color: var(--text-muted); font-size: var(--font-table-head); font-weight: 500; }
+.wu-contract-body {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--line);
+}
+.wu-cm-scroll { overflow-x: auto; padding-top: 12px; }
+.wu-cm-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--font-table-cell);
+}
+.wu-cm-table th, .wu-cm-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.wu-cm-table thead th {
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+  font-weight: 600;
+  background: var(--surface-alt);
+}
+.wu-cm-table .wu-cm-name {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  font-weight: 600;
+  color: var(--text);
+}
+.wu-cm-table thead .wu-cm-name { background: var(--surface-alt); }
+.wu-cm-norm { color: var(--text-secondary); }
+.wu-cm-cell { font-weight: 600; }
+.wu-cm-norm-s { color: var(--text-muted); font-weight: 400; font-size: var(--font-ui-badge, 10px); }
+.wu-cm-cell--ok   { background: var(--green-soft); color: var(--green); }
+.wu-cm-cell--warn { background: var(--yellow-soft); color: var(--text); }
+.wu-cm-cell--low  { background: var(--red-soft); color: var(--red); }
+.wu-cm-tot { font-weight: 700; }
+.wu-cm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+}
+.wu-cm-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.wu-cm-dot--ok { background: var(--green); }
+.wu-cm-dot--warn { background: var(--yellow); }
+.wu-cm-dot--low { background: var(--red); }
 
 /* Edit-modal */
 .wu-edit-card {
