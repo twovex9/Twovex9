@@ -491,7 +491,9 @@
     // Maand-selector
     var mB = $("fzz-mode-maand"), pB = $("fzz-mode-periode");
     if (mB) mB.addEventListener("click", function () {
-      if (state.mode === "maand") return;
+      // Altijd terug naar een consistente één-maand-staat (ook als de selectie
+      // ooit een range zou bevatten terwijl de modus al "maand" is).
+      if (state.mode === "maand" && state.startYm === state.endYm) return;
       state.mode = "maand"; state.endYm = state.startYm; loadAndRender();
     });
     if (pB) pB.addEventListener("click", function () {
@@ -502,11 +504,13 @@
     if ($("fzz-prev")) $("fzz-prev").addEventListener("click", function () { shiftMonth(-1); });
     if ($("fzz-next")) $("fzz-next").addEventListener("click", function () { shiftMonth(1); });
     if ($("fzz-van")) $("fzz-van").addEventListener("change", function () {
+      state.mode = "periode";   // van/tot horen bij de periode-modus → houd state consistent
       state.startYm = this.value;
       if (state.endYm < state.startYm) { var t = state.startYm; state.startYm = state.endYm; state.endYm = t; }
       loadAndRender();
     });
     if ($("fzz-tot")) $("fzz-tot").addEventListener("change", function () {
+      state.mode = "periode";
       state.endYm = this.value;
       if (state.endYm < state.startYm) { var t = state.startYm; state.startYm = state.endYm; state.endYm = t; }
       loadAndRender();
