@@ -391,10 +391,39 @@
     });
   }
 
+  // Vergelijkt twee documentenlijsten op hun UI-relevante velden (bewust NIET
+  // fileData: dat is groot en bepaalt de getoonde status niet). Gebruikt om te
+  // beslissen of list() het update-event moet dispatchen.
+  function docsContentEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    function sig(d) {
+      return [
+        d.id, d.medewerkerId, d.naam, d.type, d.vervaldatum, d.uploaddatum,
+        d.laatstGewijzigd, d.archived ? 1 : 0, d.fileName, d.fileMime, d.storagePath,
+      ].join("");
+    }
+    var sa = a.map(sig).sort();
+    var sb = b.map(sig).sort();
+    for (var i = 0; i < sa.length; i++) {
+      if (sa[i] !== sb[i]) return false;
+    }
+    return true;
+  }
+
   function list(medewerkerId) {
     return fetchByEmployeeId(medewerkerId).then(function (docs) {
+      // Dispatch "besa:medewerker-documenten-updated" ALLEEN als de server-
+      // documenten echt afwijken van wat al in de cache staat. Een onvoorwaardelijke
+      // dispatch bij élke (ook ongewijzigde) read voedt refetch/re-render-loops bij
+      // consumenten die op dit event opnieuw list()/renderen — de oorzaak van de
+      // onboarding/warnings scroll-jump. PR #480 dichtte de consument-kant met een
+      // guard; dit dicht de bron, zodat het anti-patroon niet via een toekomstige
+      // consument kan terugkeren. Mutaties (add/update/remove) dispatchen bewust
+      // wél onvoorwaardelijk — daar is er altijd een echte wijziging.
+      var before = listSync(medewerkerId);
+      var changed = !docsContentEqual(before, docs);
       cacheReplaceForEmployee(medewerkerId, docs);
-      dispatchUpdated(medewerkerId);
+      if (changed) dispatchUpdated(medewerkerId);
       docs.forEach(function (d) {
         if (d._legacyBase64) {
           migrateRowToStorageIfNeeded(d);
