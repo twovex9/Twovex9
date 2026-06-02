@@ -1046,6 +1046,9 @@ function initPlanbaarPill() {
 document.addEventListener("DOMContentLoaded", initPlanbaarPill);
 
 // F3: render Waarschuwingen-sectie (errors + warnings) in de profielkaart
+// Per medewerker onthouden of we al één netwerk-refresh deden — voorkomt de
+// refetch-loop (zie comment bij de refresh hieronder).
+var _warnNetFetched = {};
 function renderEmployeeWarnings(empId) {
   const section = document.getElementById("emp-warnings-section");
   if (!section) return;
@@ -1084,10 +1087,23 @@ function renderEmployeeWarnings(empId) {
   }
   // Eerst sync render uit cache/snelle data
   try { paint(window.medewerkerWarnings.computeForIdSync(empId)); } catch (e) { /* */ }
-  // Daarna refresh uit Supabase (zorgt voor accurate vervaldata bij eerste laad)
-  try {
-    window.medewerkerWarnings.computeForId(empId).then(paint).catch(function () { /* */ });
-  } catch (e) { /* */ }
+  // Daarna ÉÉN KEER per medewerker refreshen uit Supabase (accurate vervaldata bij
+  // eerste laad). Bewust NIET bij elke render: computeForId() roept
+  // medewerkerDocsDB.list() aan, dat "besa:medewerker-documenten-updated" dispatcht
+  // → medewerkerWarnings.invalidate() → "besa:medewerker-warnings-updated" → deze
+  // render opnieuw → computeForId() → … Dat is een ongeguarde refetch-loop (~130×/s)
+  // die de hele detailpagina liet herrenderen en o.a. de onboarding-tab telkens
+  // naar boven terugscrolde. Na de eerste netwerk-load is de documenten-cache vers;
+  // event-getriggerde re-renders painten uit de sync-cache, die accuraat blijft
+  // omdat add/update/remove de cache lokaal bijwerken.
+  if (!_warnNetFetched[empId]) {
+    _warnNetFetched[empId] = true;
+    try {
+      window.medewerkerWarnings.computeForId(empId)
+        .then(paint)
+        .catch(function () { _warnNetFetched[empId] = false; });
+    } catch (e) { _warnNetFetched[empId] = false; }
+  }
 }
 
 window.addEventListener("besa:medewerker-warnings-updated", function () {
