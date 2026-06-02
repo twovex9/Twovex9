@@ -111,11 +111,19 @@
 
     async function fetchAll() {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      // .range() omzeilt de PostgREST default-limiet van 1000 rijen — anders
-      // missen oudere maanden (er zijn 4000+ werkuren-registraties).
-      var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false }).range(0, 99999);
-      if (res.error) throw res.error;
-      return (res.data || []).map(rowToObj).filter(Boolean);
+      // PostgREST cap't elke request op max 1000 rijen — pagineer om ALLE
+      // werkuren op te halen (4000+), anders missen oudere maanden data.
+      var PAGE = 1000, from = 0, all = [];
+      for (;;) {
+        var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false }).range(from, from + PAGE - 1);
+        if (res.error) throw res.error;
+        var batch = res.data || [];
+        all = all.concat(batch);
+        if (batch.length < PAGE) break;
+        from += PAGE;
+        if (from > 100000) break; // veiligheidsstop tegen oneindige lus
+      }
+      return all.map(rowToObj).filter(Boolean);
     }
     var readyPromise = null;
     function bootstrap() {
