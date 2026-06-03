@@ -290,6 +290,25 @@
       (global.besaCan && global.besaCan("view", "invoices")));
   }
 
+  // Fase 4 — teamleider: openstaande uren-wijzigingen + goed-/afkeuren (planning-bijwerking).
+  async function getOpenOveruren() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_overuren_open");
+    if (res.error) throw res.error;
+    return res.data || {};
+  }
+  async function overurenBeoordelen(regelId, actie, reden) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_overuren_beoordelen", {
+      p_regel_id: regelId, p_actie: actie, p_reden: reden || null,
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    return res.data;
+  }
+
   global.zzpFacturenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -304,6 +323,8 @@
     uploadLogo: uploadLogo,
     opslaan: opslaan,
     beoordelen: beoordelen,
+    getOpenOveruren: getOpenOveruren,
+    overurenBeoordelen: overurenBeoordelen,
   };
 
   bootstrap();

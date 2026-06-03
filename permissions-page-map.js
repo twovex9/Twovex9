@@ -107,6 +107,8 @@
     // FF-native ZZP-proforma-facturatie (zzp_facturen) — zelfde invoices-permissie.
     "zzp-facturen.html": { action: "view", entity: "invoices" },
     "zzp-factuur-detail.html": { action: "view", entity: "invoices" },
+    // Overuren-goedkeuring → teamleider (Zorgcoördinator) + admin-tier/HR/Finance. RPC gate't ook server-side.
+    "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "HR", "Finance"] },
     "facturen-alle.html": { action: "browse", entity: "invoices" },
     "facturen-te-beoordelen.html": { action: "view", entity: "invoices" },
     "facturen-indiening.html": { action: "view", entity: "invoices" },
