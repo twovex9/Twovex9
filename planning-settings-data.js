@@ -25,6 +25,11 @@
       cache = r.data || { min_compensatie_uren: -20, max_compensatie_uren: 20, km_tarief: 0.23 };
       // Backfill: oude rijen zonder km_tarief defaulten op 0.23 voor UI
       if (cache.km_tarief == null) cache.km_tarief = 0.23;
+      // Backfill AI-planregels (kolommen toegevoegd 2026-06): regels standaard aan.
+      if (cache.ai_weekend_consistentie == null) cache.ai_weekend_consistentie = true;
+      if (cache.ai_geen_avond_naar_dag == null) cache.ai_geen_avond_naar_dag = true;
+      if (cache.ai_avond_grens_uur == null) cache.ai_avond_grens_uur = 15;
+      if (cache.ai_overlap_waarschuwing == null) cache.ai_overlap_waarschuwing = true;
       emit();
       return cache;
     } catch (err) {

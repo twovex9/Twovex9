@@ -140,10 +140,37 @@
   }
 
   // ── Context laden (alles direct uit Supabase, per periode) ──────────────────
+  // Standaard AI-planregels (gebruikt als planning_settings (nog) niet geladen is).
+  var REGELS_DEFAULT = {
+    weekendConsistentie: true,   // weekend za+zo zelfde dagdeel (loondienst)
+    geenAvondNaarDag: true,      // geen avonddienst → dagdienst de volgende dag (loondienst)
+    avondGrensUur: 15,           // dienst start ≥ dit lokale uur = avonddienst
+    overlapWaarschuwing: true,
+  };
+
   async function loadContext(startIso, eindIso) {
     var s = supa();
-    var ctx = { bezetByNaam: {}, verzuimByMid: {}, verlofByMid: {}, beschikbaarheidByMid: {} };
+    var ctx = {
+      bezetByNaam: {}, naamDisplay: {}, verzuimByMid: {}, verlofByMid: {}, beschikbaarheidByMid: {},
+      regels: REGELS_DEFAULT,
+    };
     if (!s) return ctx;
+
+    // 0) AI-planregels (singleton planning_settings).
+    try {
+      var rS = await s.from("planning_settings")
+        .select("ai_weekend_consistentie, ai_geen_avond_naar_dag, ai_avond_grens_uur, ai_overlap_waarschuwing")
+        .limit(1).maybeSingle();
+      if (rS.error) throw rS.error;
+      if (rS.data) {
+        ctx.regels = {
+          weekendConsistentie: rS.data.ai_weekend_consistentie !== false,
+          geenAvondNaarDag: rS.data.ai_geen_avond_naar_dag !== false,
+          avondGrensUur: (rS.data.ai_avond_grens_uur != null ? +rS.data.ai_avond_grens_uur : 15),
+          overlapWaarschuwing: rS.data.ai_overlap_waarschuwing !== false,
+        };
+      }
+    } catch (e) { console.error("[planningGenerator] planregels-query mislukt:", e); }
 
     var startDag = dagVan(startIso), eindDag = dagVan(eindIso);
     // Voor de contracturen-cap moeten we de VOLLEDIGE ISO-weken rond de periode kennen,
@@ -171,6 +198,7 @@
         var a = ms(d.start_iso), b = ms(d.einde_iso);
         if (a == null || b == null) return;
         (ctx.bezetByNaam[naam] = ctx.bezetByNaam[naam] || []).push({ s: a, e: b });
+        ctx.naamDisplay[naam] = String(d.teamlid || "").trim();
       });
     } catch (e) { console.error("[planningGenerator] gevulde-diensten-query mislukt:", e); }
 
@@ -267,6 +295,41 @@
     return sum / 3600000;
   }
 
+  // Dagdeel van een dienst op basis van de LOKALE starttijd: 'avond' als de dienst
+  // op of na het grens-uur start (default 15:00), anders 'dag'. (Grid toont lokale tijd.)
+  function dagdeelVanStartMs(msVal, grensUur) {
+    var d = new Date(msVal);
+    if (isNaN(d.getTime())) return null;
+    return d.getHours() >= grensUur ? "avond" : "dag";
+  }
+  // Dagdelen van alle diensten (bestaand + deze ronde) van een medewerker op
+  // kalenderdag `dagIso`. Voor weekend-consistentie en de avond→dag-rustregel.
+  function dagdelenOpDag(ctx, runAssign, mw, dagIso, grensUur) {
+    var out = [];
+    var naam = normNaam(volledigeNaam(mw));
+    (ctx.bezetByNaam[naam] || []).forEach(function (iv) {
+      if (isoDay(new Date(iv.s)) === dagIso) out.push(dagdeelVanStartMs(iv.s, grensUur));
+    });
+    (runAssign[mw.id] || []).forEach(function (iv) {
+      if (isoDay(new Date(iv.s)) === dagIso) out.push(dagdeelVanStartMs(iv.s, grensUur));
+    });
+    return out;
+  }
+
+  // Medewerkers die in de periode AL dubbel geboekt staan (overlappende diensten).
+  // Voor een waarschuwing in het voorstel — de motor maakt zelf geen overlap.
+  function bestaandeOverlapNamen(ctx) {
+    var out = [];
+    var byNaam = ctx.bezetByNaam || {};
+    Object.keys(byNaam).forEach(function (naam) {
+      var iv = byNaam[naam].slice().sort(function (x, y) { return x.s - y.s; });
+      for (var i = 1; i < iv.length; i++) {
+        if (iv[i].s < iv[i - 1].e) { out.push(ctx.naamDisplay[naam] || naam); break; }
+      }
+    });
+    return out.sort(function (a, b) { return String(a).localeCompare(String(b), "nl"); });
+  }
+
   // Geeft null als geschikt, anders een korte reden waarom niet.
   function ongeschiktReden(mw, dienst, ctx, runAssign) {
     var st = localDate(dienst.start_iso), et = localDate(dienst.einde_iso);
@@ -332,6 +395,49 @@
         var have = weekUren(ctx, volledigeNaam(mw), runAssign, mw.id, mondayKey(st));
         var deze = (b - a) / 3600000;
         if (have + deze > cu + 0.001) return "contracturen vol (" + cu + "u)";
+      }
+    }
+
+    // ── Weekend- en rustregels ────────────────────────────────────────────────
+    var regels = (ctx && ctx.regels) || REGELS_DEFAULT;
+    var grens = (regels.avondGrensUur != null ? regels.avondGrensUur : 15);
+    var dow = st.getDay();                       // 0=zo … 6=za
+    var isWeekend = (dow === 0 || dow === 6);
+    var ditDagdeel = dagdeelVanStartMs(st.getTime(), grens); // 'dag' | 'avond'
+
+    // Uitzondering = medewerker-afspraak in het rooster. Geldt ALTIJD en voor
+    // iedereen die het aanvinkte (de AI maakt hierop een uitzondering).
+    var vk = (mw.weekendVoorkeur && typeof mw.weekendVoorkeur === "object") ? mw.weekendVoorkeur : null;
+    if (isWeekend && vk) {
+      if (vk.nooitWeekend === true) return "werkt niet in het weekend";
+      if (vk.nooitOverdag === true && ditDagdeel === "dag") return "weekend: alleen avonddiensten";
+    }
+
+    // De consistentie-/rustregels gelden voor loondienst (vaste medewerkers).
+    if (dienstverbandGroep(mw) === 0) {
+      // Geen avonddienst → dagdienst de volgende dag (te weinig rust). In beide
+      // richtingen checken zodat de toewijsvolgorde niet uitmaakt.
+      if (regels.geenAvondNaarDag) {
+        if (ditDagdeel === "dag") {
+          if (dagdelenOpDag(ctx, runAssign, mw, isoDay(addDays(st, -1)), grens).indexOf("avond") !== -1) {
+            return "te vroeg na avonddienst";
+          }
+        } else if (ditDagdeel === "avond") {
+          if (dagdelenOpDag(ctx, runAssign, mw, isoDay(addDays(st, 1)), grens).indexOf("dag") !== -1) {
+            return "dagdienst volgt te snel";
+          }
+        }
+      }
+      // Weekend-consistentie: za en zo van hetzelfde weekend zelfde dagdeel —
+      // of twee dagdiensten of twee avonddiensten.
+      if (isWeekend && regels.weekendConsistentie) {
+        var andereDag = isoDay(addDays(st, dow === 6 ? 1 : -1)); // za→zo (+1), zo→za (−1)
+        var delen = dagdelenOpDag(ctx, runAssign, mw, andereDag, grens);
+        for (var wi = 0; wi < delen.length; wi++) {
+          if (delen[wi] && delen[wi] !== ditDagdeel) {
+            return "weekend: " + (dow === 6 ? "zondag" : "zaterdag") + " is " + delen[wi] + "dienst";
+          }
+        }
       }
     }
 
@@ -481,6 +587,14 @@
     voorstel.items.forEach(function (t, i) { (t.actie === "invite" ? invites : assigns).push({ t: t, i: i }); });
 
     var parts = [];
+    // Waarschuwing als er AL medewerkers dubbel geboekt staan in de periode.
+    var ovNamen = Array.isArray(meta.overlapNamen) ? meta.overlapNamen : [];
+    if (ovNamen.length) {
+      parts.push('<div class="plgen-warn"><span class="plgen-warn__ico" aria-hidden="true">!</span><span>' +
+        '<strong>Let op — ' + ovNamen.length + ' medewerker' + (ovNamen.length === 1 ? '' : 's') +
+        ' al dubbel ingeroosterd</strong> in deze periode (overlappende diensten): ' +
+        escapeHtml(ovNamen.join(", ")) + '. De motor plant deze persoon niet extra in, maar controleer de bestaande dubbele dienst.</span></div>');
+    }
     parts.push('<p class="plgen-intro">' + meta.totaalLeeg + (meta.mode === "reintegreren" ? " open/lege" : " lege") +
       ' dienst' + (meta.totaalLeeg === 1 ? '' : 'en') + ' in deze periode. Vink uit wat je niet wilt; klik dan op Toepassen.</p>');
 
@@ -617,7 +731,10 @@
       var diensten = await fetchLegeDiensten(startIso, eindIso, opts.locatieFilter || "", opts.diensttypeSet || null, mode === "reintegreren");
       var ctx = await loadContext(startIso, eindIso);
       var voorstel = berekenVoorstel(diensten, medewerkers, ctx);
-      renderVoorstel(voorstel, { periodeLabel: opts.periodeLabel || "", totaalLeeg: diensten.length, mode: mode });
+      renderVoorstel(voorstel, {
+        periodeLabel: opts.periodeLabel || "", totaalLeeg: diensten.length, mode: mode,
+        overlapNamen: (ctx.regels.overlapWaarschuwing ? bestaandeOverlapNamen(ctx) : []),
+      });
     } catch (err) {
       console.error("[planningGenerator] run mislukt:", err);
       body.innerHTML = '<p class="plgen-empty">Genereren mislukt: ' + escapeHtml(err && err.message ? err.message : String(err)) + '</p>';

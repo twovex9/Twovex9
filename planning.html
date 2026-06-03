@@ -19,6 +19,48 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style id="planning-ai-styles">
+    /* ── Overlap-waarschuwing: medewerker dubbel ingeroosterd ── */
+    .planning-overlap-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:9px;color:#991b1b;font-size:13px;line-height:1.45;}
+    .planning-overlap-banner[hidden]{display:none;}
+    .planning-overlap-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#dc2626;color:#fff;font-weight:700;font-size:13px;}
+    .planning-overlap-banner__body{flex:1;min-width:0;}
+    .planning-overlap-banner__title{font-weight:700;}
+    .planning-overlap-banner__names{opacity:.92;}
+    .planning-overlap-banner__btn{flex:none;align-self:center;background:#dc2626;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+    .planning-overlap-banner__btn:hover{background:#b91c1c;}
+    [data-theme="dark"] .planning-overlap-banner{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
+
+    /* ── AI-instellingen knop in de toolbar ── */
+    .planning-erm-tb-ai{display:inline-flex;align-items:center;gap:6px;}
+    .planning-erm-tb-ai svg{width:15px;height:15px;}
+
+    /* ── Generator-voorstel: waarschuwing in de modal ── */
+    .plgen-warn{display:flex;align-items:flex-start;gap:10px;margin:0 0 12px;padding:10px 13px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:8px;color:#991b1b;font-size:12.5px;line-height:1.4;}
+    .plgen-warn__ico{flex:none;font-weight:700;}
+    [data-theme="dark"] .plgen-warn{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
+
+    /* ── AI-instellingen modal (hergebruikt .modal-overlay/.modal-card) ── */
+    .plai-intro{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--text-muted,#64748b);}
+    .plai-group{display:flex;flex-direction:column;gap:14px;}
+    .plai-row{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--border,#e2e8f0);border-radius:10px;background:var(--surface,#fff);}
+    .plai-row__main{flex:1;min-width:0;}
+    .plai-row__title{font-weight:600;font-size:13.5px;line-height:1.35;}
+    .plai-row__sub{font-size:12px;line-height:1.45;color:var(--text-muted,#64748b);margin-top:3px;}
+    .plai-row__ctrl{flex:none;align-self:center;}
+    .plai-num{width:74px;padding:7px 9px;border:1px solid var(--border,#cbd5e1);border-radius:8px;background:var(--surface,#fff);color:inherit;font-size:13px;}
+    .plai-num-wrap{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted,#64748b);}
+    /* Toggle-switch */
+    .plai-switch{position:relative;display:inline-block;width:40px;height:22px;flex:none;}
+    .plai-switch input{position:absolute;opacity:0;width:0;height:0;}
+    .plai-switch__slider{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:background .15s;cursor:pointer;}
+    .plai-switch__slider::before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25);}
+    .plai-switch input:checked + .plai-switch__slider{background:#2563eb;}
+    .plai-switch input:checked + .plai-switch__slider::before{transform:translateX(18px);}
+    [data-theme="dark"] .plai-row{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12);}
+    [data-theme="dark"] .plai-switch__slider{background:#475569;}
+    [data-theme="dark"] .plai-num{background:#1e293b;border-color:#475569;}
+  </style>
 </head>
 <body class="page--planning-erm">
   <script src="save-feedback.js?v=sf500" defer></script>
@@ -269,11 +311,24 @@
               <button type="button" class="planning-erm-tb-opt" id="planning-opt-btn" title="Vrijgekomen en open diensten opnieuw verdelen / ZZP-suggesties geven">
                 <span class="planning-erm-tb-opt-plus" aria-hidden="true">↻</span> Reïntegreren
               </button>
+              <button type="button" class="btn-outline planning-erm-tb-ai" id="planning-ai-btn" title="Instellingen voor de AI-planning: weekend-regels, rust tussen diensten en overlap-waarschuwing">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                AI-regels
+              </button>
               <button type="button" class="btn-dienst-aanmaken" id="planning-dienst-aanmaken-btn">+ Dienst aanmaken</button>
             </div>
           </div>
 
           <div class="planning-erm-kpis planning-erm-kpis--v3" id="planning-summary" aria-label="Kerngetallen"></div>
+
+          <div class="planning-overlap-banner" id="planning-overlap-banner" role="alert" hidden>
+            <span class="planning-overlap-banner__ico" aria-hidden="true">!</span>
+            <div class="planning-overlap-banner__body">
+              <div class="planning-overlap-banner__title" id="planning-overlap-banner-title"></div>
+              <div class="planning-overlap-banner__names" id="planning-overlap-banner-names"></div>
+            </div>
+            <button type="button" class="planning-overlap-banner__btn" id="planning-overlap-banner-btn">Toon in lijst</button>
+          </div>
 
           <div class="planning-main-head planning-main-head--sub planning-main-head--hidden" hidden>
             <div>
@@ -763,6 +818,56 @@
       <div class="planning-export-actions">
         <button type="button" class="btn-outline" id="planning-export-cancel">Annuleren</button>
         <button type="button" class="btn-primary" id="planning-export-go">Exporteren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI-planning regels -->
+  <div id="planning-ai-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="planning-ai-title" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="planning-ai-title">AI-planning · regels</h2>
+        <button type="button" class="modal-close" id="planning-ai-close" aria-label="Sluiten">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="plai-intro">De AI-planning kijkt automatisch naar deze regels bij Genereren en Reïntegreren. De weekend- en rustregels gelden voor loondienstmedewerkers; een medewerker kan op het eigen profiel een uitzondering krijgen (nooit weekend / nooit overdag).</p>
+        <div class="plai-group">
+          <div class="plai-row">
+            <div class="plai-row__main">
+              <div class="plai-row__title">Waarschuw bij dubbele inroostering</div>
+              <div class="plai-row__sub">Toon een melding zodra een medewerker overlappende diensten heeft. De generator plant sowieso nooit iemand dubbel in.</div>
+            </div>
+            <label class="plai-switch plai-row__ctrl"><input type="checkbox" id="plai-overlap"><span class="plai-switch__slider"></span></label>
+          </div>
+          <div class="plai-row">
+            <div class="plai-row__main">
+              <div class="plai-row__title">Weekend: twee dag- óf twee avonddiensten</div>
+              <div class="plai-row__sub">Loondienst krijgt in het weekend op zaterdag en zondag hetzelfde dagdeel — niet door elkaar.</div>
+            </div>
+            <label class="plai-switch plai-row__ctrl"><input type="checkbox" id="plai-weekend"><span class="plai-switch__slider"></span></label>
+          </div>
+          <div class="plai-row">
+            <div class="plai-row__main">
+              <div class="plai-row__title">Geen dagdienst direct na een avonddienst</div>
+              <div class="plai-row__sub">Na een avonddienst plant de AI de volgende dag geen vroege dagdienst — dat is te weinig rust.</div>
+            </div>
+            <label class="plai-switch plai-row__ctrl"><input type="checkbox" id="plai-avonddag"><span class="plai-switch__slider"></span></label>
+          </div>
+          <div class="plai-row">
+            <div class="plai-row__main">
+              <div class="plai-row__title">Grens dag- / avonddienst</div>
+              <div class="plai-row__sub">Een dienst telt als avonddienst als hij op of na dit uur begint.</div>
+            </div>
+            <div class="plai-row__ctrl plai-num-wrap">
+              <input type="number" id="plai-grens" class="plai-num" min="10" max="23" step="1"> : 00 uur
+            </div>
+          </div>
+        </div>
+        <p id="planning-ai-err" class="planning-export-err" hidden></p>
+      </div>
+      <div class="planning-export-actions">
+        <button type="button" class="btn-outline" id="planning-ai-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="planning-ai-save">Opslaan</button>
       </div>
     </div>
   </div>
