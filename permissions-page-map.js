@@ -116,6 +116,11 @@
     "beleid-documenten.html": { action: "manage", entity: "admins-documents" },
     "beleid.html": { action: "manage", entity: "admins-documents" },
 
+    // ─── Financiën — STRIKT alleen Eigenaar + Directeur ───────────────────────
+    // `strict:true` schakelt de admin-tier-bypass UIT (zie permissions-gate.js /
+    // permissions-nav-hide.js): Admin krijgt hier GEEN toegang, alleen Eigenaar/Directeur.
+    "financien-locaties.html": { allowedRoles: ["Eigenaar", "Directeur"], strict: true },
+
     // ─── Audit (admin-tier) ───────────────────────────────────────────────────
     "audit.html": { action: "view", entity: "audit-logs" },
 
