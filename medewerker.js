@@ -846,6 +846,10 @@ function loadEmployeeIntoForm() {
   if (typeof window.__setRoosterWeekendModes === "function") {
     window.__setRoosterWeekendModes(emp.roosterWeekend);
   }
+  const weekendVoorkeur =
+    emp.weekendVoorkeur && typeof emp.weekendVoorkeur === "object" ? emp.weekendVoorkeur : {};
+  setChecked("emp-rooster-nooit-weekend", weekendVoorkeur.nooitWeekend === true);
+  setChecked("emp-rooster-nooit-overdag", weekendVoorkeur.nooitOverdag === true);
   if (typeof window.__syncLoondienstSalaryDropdowns === "function") {
     window.__syncLoondienstSalaryDropdowns();
   }
@@ -3666,6 +3670,10 @@ function gatherFormData() {
     typeof window.__getRoosterWeekendModes === "function"
       ? window.__getRoosterWeekendModes()
       : { za: "alle", zo: "alle" };
+  const weekendVoorkeur = {
+    nooitWeekend: Boolean(document.getElementById("emp-rooster-nooit-weekend")?.checked),
+    nooitOverdag: Boolean(document.getElementById("emp-rooster-nooit-overdag")?.checked),
+  };
   const periodiekeMaand = getActivePeriodiekeMaandValue();
   const beoordelingsdatum = isoToDDMMYYYY(getActiveBeoordelingsdatumValue());
   const voorzieningenFieldIds = getActiveVoorzieningenFieldIds();
@@ -3770,6 +3778,7 @@ function gatherFormData() {
     salaris: val("emp-loondienst-salaris") || "€ 0,00",
     rooster,
     roosterWeekend,
+    weekendVoorkeur,
     periodiekeMaand,
     uurAlgemeen: val("emp-uur-algemeen"),
     uurDiensttype: "Boventallig",

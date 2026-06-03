@@ -1870,6 +1870,44 @@ function countOverlapInView(items) {
   return buildOverlapConflictIds(items).size;
 }
 
+/** Namen van medewerkers met overlappende (dubbel geboekte) diensten in de view. */
+function overlapMedewerkersInView(items) {
+  const norm = (s) => String(s || "").trim().toLowerCase();
+  const rows = items
+    .map((it) => ({ s: parseStartDate(it.start), e: parseStartDate(it.einde), who: String(it.teamlid || "").trim() }))
+    .filter((r) => r.s && r.e && r.who);
+  const namen = new Map(); // norm → weergavenaam
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      if (norm(rows[i].who) !== norm(rows[j].who)) continue;
+      if (rows[i].s < rows[j].e && rows[j].s < rows[i].e) namen.set(norm(rows[i].who), rows[i].who);
+    }
+  }
+  return Array.from(namen.values()).sort((a, b) => a.localeCompare(b, "nl"));
+}
+
+/** Toon/verberg de prominente overlap-waarschuwing (respecteert de AI-instelling). */
+function updateOverlapBanner(items) {
+  const banner = document.getElementById("planning-overlap-banner");
+  if (!banner) return;
+  let aan = true;
+  try {
+    const cfg = window.planningSettingsDB?.getSync?.();
+    if (cfg && cfg.ai_overlap_waarschuwing === false) aan = false;
+  } catch (e) { /* default aan */ }
+  const namen = aan ? overlapMedewerkersInView(items) : [];
+  if (!namen.length) { banner.hidden = true; return; }
+  const n = namen.length;
+  const titleEl = document.getElementById("planning-overlap-banner-title");
+  const namesEl = document.getElementById("planning-overlap-banner-names");
+  if (titleEl) {
+    titleEl.textContent =
+      `${n} medewerker${n === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — controleer de overlappende diensten`;
+  }
+  if (namesEl) namesEl.textContent = namen.join("  ·  ");
+  banner.hidden = false;
+}
+
 function setListMode(isList) {
   ui.isList = isList;
   const pCal = document.getElementById("planning-view-calendar-panel");
@@ -1967,6 +2005,7 @@ function renderAllViews() {
     if (ov > 0) t += ` — ${ov} betrokken bij overlappende tijd (zelfde medewerker)`;
     meta.textContent = t;
   }
+  updateOverlapBanner(items);
   renderMonthStrip();
   return dataState;
 }
@@ -2917,6 +2956,56 @@ function closeExportPlanningModal() {
   if (modal) modal.hidden = true;
 }
 
+/* ── AI-planning regels modal ────────────────────────────────────────────── */
+function closeAiSettingsModal() {
+  const modal = document.getElementById("planning-ai-modal");
+  if (modal) modal.hidden = true;
+}
+function openAiSettingsModal() {
+  const modal = document.getElementById("planning-ai-modal");
+  if (!modal) return;
+  const cfg = (window.planningSettingsDB?.getSync?.()) || {};
+  const setCb = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v !== false; };
+  setCb("plai-overlap", cfg.ai_overlap_waarschuwing);
+  setCb("plai-weekend", cfg.ai_weekend_consistentie);
+  setCb("plai-avonddag", cfg.ai_geen_avond_naar_dag);
+  const grens = document.getElementById("plai-grens");
+  if (grens) grens.value = (cfg.ai_avond_grens_uur != null ? cfg.ai_avond_grens_uur : 15);
+  const err = document.getElementById("planning-ai-err");
+  if (err) err.hidden = true;
+  modal.hidden = false;
+}
+async function saveAiSettings() {
+  const err = document.getElementById("planning-ai-err");
+  const grens = parseInt(document.getElementById("plai-grens")?.value, 10);
+  if (isNaN(grens) || grens < 10 || grens > 23) {
+    if (err) { err.textContent = "Vul een grens-uur in tussen 10 en 23."; err.hidden = false; }
+    return;
+  }
+  const patch = {
+    ai_overlap_waarschuwing: !!document.getElementById("plai-overlap")?.checked,
+    ai_weekend_consistentie: !!document.getElementById("plai-weekend")?.checked,
+    ai_geen_avond_naar_dag: !!document.getElementById("plai-avonddag")?.checked,
+    ai_avond_grens_uur: grens,
+  };
+  const saveBtn = document.getElementById("planning-ai-save");
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Bezig…"; }
+  try {
+    if (!window.planningSettingsDB?.update) throw new Error("Instellingen-data-laag niet beschikbaar.");
+    await window.planningSettingsDB.update(patch);
+    closeAiSettingsModal();
+    if (window.showActionFeedback) {
+      window.showActionFeedback("saved", "AI-planregels opgeslagen", "De generator gebruikt deze regels direct.");
+    }
+    if (typeof renderAllViews === "function") renderAllViews(); // overlap-banner volgt de nieuwe instelling
+  } catch (e) {
+    console.error("[planning] AI-instellingen opslaan mislukt:", e);
+    if (err) { err.textContent = "Opslaan mislukt: " + (e?.message || e); err.hidden = false; }
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Opslaan"; }
+  }
+}
+
 function buildExportRow(r) {
   const fmtDT = (iso) => {
     if (!iso) return "";
@@ -3195,6 +3284,12 @@ function initNav() {
     else if (ev.key === "Escape") { ev.preventDefault(); hidePresetNameInput(); }
   });
 
+  /* Overlap-waarschuwing: "Toon in lijst" → naar lijstweergave (overlaps rood gemarkeerd) */
+  document.getElementById("planning-overlap-banner-btn")?.addEventListener("click", () => {
+    setListMode(true);
+    renderAllViews();
+  });
+
   /* Toolbar: Genereren + Optimaliseren (placeholders, bevestigen + log) */
   document.getElementById("planning-gen-btn")?.addEventListener("click", () => {
     if (!window.planningGenerator || !window.planningGenerator.run) {
@@ -3276,6 +3371,19 @@ function initNav() {
     closeExportPlanningModal();
     doExportPlanningXlsx(items, !!split);
   });
+
+  /* AI-planning regels modal */
+  document.getElementById("planning-ai-btn")?.addEventListener("click", openAiSettingsModal);
+  document.getElementById("planning-ai-close")?.addEventListener("click", closeAiSettingsModal);
+  document.getElementById("planning-ai-cancel")?.addEventListener("click", closeAiSettingsModal);
+  document.getElementById("planning-ai-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "planning-ai-modal") closeAiSettingsModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    const m = document.getElementById("planning-ai-modal");
+    if (e.key === "Escape" && m && !m.hidden) closeAiSettingsModal();
+  });
+  document.getElementById("planning-ai-save")?.addEventListener("click", saveAiSettings);
   document.addEventListener("click", (ev) => {
     if (ev.target.closest?.(".planning-erm-card")) return;
     if (ui.selectedId) {
