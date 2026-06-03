@@ -27,11 +27,14 @@
   //   - Zorg-/bijzonder verlof → direct HR.
   //   - Onbetaald/anders → HR (conservatief).
   // Voor v1 hardcoded; v2 = beheer-pagina verloftypes.html.
-  var ROL_ZORGCOORDINATOR = "Zorgcoördinator";
+  var ROL_ZORGCOORDINATOR = "Zorgcoördinator";   // = de "teamleider" (bs2-rol-slug 'teamleider')
   var ROL_HR = "HR";
-  function routeForType(type) {
-    if (type === "wettelijk" || type === "bovenwettelijk") return ROL_ZORGCOORDINATOR;
-    return ROL_HR;
+  var ROL_TEAMLEIDER = ROL_ZORGCOORDINATOR;
+  // 2-STAPS goedkeuring (user-eis 2026-06-04): ELKE aanvraag eerst naar de
+  // teamleider (Zorgcoördinator) → na groen licht naar HR die het verwerkt.
+  // routeForType geeft de EERSTE goedkeurder; goedkeuren() schuift door naar HR.
+  function routeForType(/* type */) {
+    return ROL_TEAMLEIDER;
   }
 
   function isoNow() { return new Date().toISOString(); }
@@ -170,15 +173,67 @@
     return obj;
   }
 
-  async function indienen(id) { return update(id, { status: "ingediend" }); }
+  function medewerkerNaam(mid) {
+    try {
+      var mw = global.medewerkersDB && global.medewerkersDB.getByIdSync && global.medewerkersDB.getByIdSync(mid);
+      if (mw) return ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim() || "Een medewerker";
+    } catch (e) { /* */ }
+    return "Een medewerker";
+  }
+  function periodeLabel(v) {
+    var s = v && v.startDatum ? String(v.startDatum) : "";
+    var e = v && v.eindDatum ? String(v.eindDatum) : "";
+    return e && e !== s ? (s + " t/m " + e) : s;
+  }
+  // Best-effort in-app melding naar een rol-groep (zelfde role-lookup-patroon als
+  // de planner-conflict-melding). Fail-silent — mag de flow nooit breken.
+  async function notifyRolGroep(slugs, title, body, verlofId) {
+    try {
+      if (!global.besaSupabase) return;
+      var rr = await global.besaSupabase.from("bs2_roles").select("id").in("slug", slugs);
+      if (rr.error || !rr.data || !rr.data.length) return;
+      var roleIds = rr.data.map(function (r) { return r.id; });
+      var ru = await global.besaSupabase.from("bs2_role_users").select("user_email").in("role_id", roleIds);
+      if (ru.error) return;
+      var set = {};
+      (ru.data || []).forEach(function (r) { var e = String(r.user_email || "").trim().toLowerCase(); if (e) set[e] = true; });
+      var emails = Object.keys(set);
+      if (!emails.length) return;
+      var pr = await global.besaSupabase.from("profiles").select("id").in("email", emails);
+      if (pr.error || !pr.data || !pr.data.length) return;
+      var rows = pr.data.map(function (p) {
+        return { user_id: p.id, type: "verlof_workflow", title: title, body: body, related_entity_type: "verlof", related_entity_id: verlofId || null };
+      });
+      await global.besaSupabase.from("notifications").insert(rows);
+    } catch (e) { console.warn("[verlofDB] notifyRolGroep mislukt:", e); }
+  }
+
+  async function indienen(id) {
+    // Stap 1: bij indienen gaat de aanvraag naar de TEAMLEIDER (Zorgcoördinator).
+    var res = await update(id, { status: "ingediend", huidigeGoedkeurderRol: ROL_TEAMLEIDER });
+    notifyRolGroep(["teamleider"], "Verlofaanvraag ter goedkeuring",
+      medewerkerNaam(res.medewerkerId) + " heeft verlof aangevraagd (" + periodeLabel(res) + "). Beoordeel als teamleider.",
+      res.id).catch(function () { /* */ });
+    return res;
+  }
+
   async function goedkeuren(id, opmerking) {
-    var res = await update(id, { status: "goedgekeurd", beoordelingOpmerking: opmerking || "" });
-    // Best-effort: notificeer planners + markeer planning-conflicten.
-    // Faalt nooit op de UI; logt alleen warn bij fouten.
-    notifyPlanningConflictsAfterApproval(res).catch(function (err) {
+    var cur = getByIdSync(id) || {};
+    var rol = cur.huidigeGoedkeurderRol || ROL_TEAMLEIDER;
+    if (rol !== ROL_HR) {
+      // Stap 2: teamleider akkoord → door naar HR (status blijft 'ingediend').
+      var res1 = await update(id, { huidigeGoedkeurderRol: ROL_HR, beoordelingOpmerking: opmerking || "" });
+      notifyRolGroep(["hr", "salarisadministratie"], "Verlof ter verwerking",
+        medewerkerNaam(res1.medewerkerId) + " heeft groen licht van de teamleider voor verlof (" + periodeLabel(res1) + "). Verwerk de aanvraag.",
+        res1.id).catch(function () { /* */ });
+      return res1;
+    }
+    // Stap 3: HR verwerkt → definitief goedgekeurd + diensten vrijmaken + planners melden.
+    var res2 = await update(id, { status: "goedgekeurd", beoordelingOpmerking: opmerking || "" });
+    notifyPlanningConflictsAfterApproval(res2).catch(function (err) {
       console.warn("[verlofDB] planning-conflict-notify failed:", err);
     });
-    return res;
+    return res2;
   }
   async function afwijzen(id, opmerking) { return update(id, { status: "afgewezen", beoordelingOpmerking: opmerking || "" }); }
   async function annuleren(id) { return update(id, { status: "geannuleerd" }); }

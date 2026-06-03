@@ -321,13 +321,21 @@
         escapeHtml(fmtBovenwetDagen(overdracht.bovenwetBeschikbaar)) + '</span>';
     }
     var rolBadge = '<span class="verlof-wachten-pill" style="margin-left:6px;">Goedkeuring door ' + escapeHtml(item.huidigeGoedkeurderRol || "HR") + '</span>';
+    // 2-staps: toon welke stap dit is + zet de goedkeur-knoptekst passend.
+    var isHrFase = (item.huidigeGoedkeurderRol || "HR") === "HR";
+    var faseNote = isHrFase
+      ? '<br><span style="color:var(--text-muted);font-size:12px;">HR-verwerking — bij goedkeuren wordt de medewerker automatisch uit conflicterende diensten gehaald.</span>'
+      : '<br><span style="color:var(--text-muted);font-size:12px;">Stap 1 van 2 (teamleider) — na jouw goedkeuring gaat de aanvraag naar HR ter verwerking.</span>';
     document.getElementById("verlof-beoordeel-preview").innerHTML =
       '<strong>' + escapeHtml(medewerkerLabel(item.medewerkerId)) + '</strong> &middot; ' +
       escapeHtml(TYPE_LABELS[item.type] || item.type) + rolBadge + '<br>' +
       '<span style="color:var(--text-secondary);">Periode: ' + escapeHtml(periode) + ' (' + item.aantalDagen + ' dagen)</span>' +
       bovenwetLine +
       saldoLine +
-      (item.beschrijving ? '<br><span style="color:var(--text-secondary);">"' + escapeHtml(item.beschrijving) + '"</span>' : '');
+      (item.beschrijving ? '<br><span style="color:var(--text-secondary);">"' + escapeHtml(item.beschrijving) + '"</span>' : '') +
+      faseNote;
+    var gkBtn = document.getElementById("verlof-beoordeel-goedkeuren-btn");
+    if (gkBtn) gkBtn.textContent = isHrFase ? "Definitief goedkeuren" : "Goedkeuren → naar HR";
     document.getElementById("verlof-beoordeel-opmerking").value = "";
     document.getElementById("verlof-beoordeel-modal").style.display = "flex";
   }
