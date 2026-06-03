@@ -116,10 +116,11 @@
     "beleid-documenten.html": { action: "manage", entity: "admins-documents" },
     "beleid.html": { action: "manage", entity: "admins-documents" },
 
-    // ─── Financiën — STRIKT alleen Eigenaar + Directeur ───────────────────────
+    // ─── Financiën — STRIKT Eigenaar + Directeur + Finance ────────────────────
     // `strict:true` schakelt de admin-tier-bypass UIT (zie permissions-gate.js /
-    // permissions-nav-hide.js): Admin krijgt hier GEEN toegang, alleen Eigenaar/Directeur.
-    "financien-locaties.html": { allowedRoles: ["Eigenaar", "Directeur"], strict: true },
+    // permissions-nav-hide.js): Admin krijgt hier GEEN toegang. Finance (degene die
+    // de financiën/declaraties regelt) mag de onkosten invoeren/aanpassen.
+    "financien-locaties.html": { allowedRoles: ["Eigenaar", "Directeur", "Finance"], strict: true },
 
     // ─── Audit (admin-tier) ───────────────────────────────────────────────────
     "audit.html": { action: "view", entity: "audit-logs" },

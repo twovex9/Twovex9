@@ -64,10 +64,19 @@
     return out;
   }
 
+  function addMonthsYm(ym, n) {
+    if (!ym || ym.length < 7) return ym;
+    var y = parseInt(ym.slice(0, 4), 10), m = parseInt(ym.slice(5, 7), 10) - 1 + n;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return y + "-" + (m + 1 < 10 ? "0" + (m + 1) : String(m + 1));
+  }
+
   /* ---- state ---- */
   var mode = "maand";
   var selStart = null, selEnd = null;
   var winMin = null, winMax = null;
+  var openLoc = null;          // naam van de locatie waarvan de drill-down open is (voor refresh)
+  var onkEditId = null;        // id van de onkost die bewerkt wordt (null = nieuwe)
 
   function curData() { return (window.financienLocatiesDB && window.financienLocatiesDB.getData()) || null; }
   function periodeLabel() {
@@ -142,12 +151,13 @@
     if (!locations.length) {
       var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 8;
       td0.textContent = "Geen kosten of opbrengst in deze periode."; tr0.appendChild(td0); tb.appendChild(tr0);
-      setText("fin-foot-omzet", ""); setText("fin-foot-kosten", ""); setText("fin-foot-result", "");
+      ["fin-foot-zzp", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result"].forEach(function (id) { setText(id, ""); });
       return;
     }
-    var tOmzet = 0, tKosten = 0;
+    var tOmzet = 0, tKosten = 0, tZzp = 0, tOnk = 0;
     locations.forEach(function (l) {
       tOmzet += Number(l.omzet) || 0; tKosten += Number(l.kosten) || 0;
+      tZzp += Number(l.kosten_zzp) || 0; tOnk += Number(l.onkosten) || 0;
       var res = Number(l.resultaat) || 0;
       var tr = el("tr", "fin-loc-row"); tr.tabIndex = 0; tr.setAttribute("role", "button");
       tr.setAttribute("aria-label", l.name + " — details");
@@ -158,24 +168,33 @@
       tr.appendChild(tdN);
 
       tr.appendChild(el("td", "fin-num", fmtInt(l.zzpers)));
-      tr.appendChild(el("td", "fin-num", fmtInt(l.diensten)));
-      tr.appendChild(el("td", "fin-num", fmtUur(l.uren)));
+      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten_zzp)));
+      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.onkosten)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.omzet)));
       tr.appendChild(el("td", "fin-num fin-eur " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtEuro(res)));
       tr.appendChild(el("td", "fin-num " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtPct(l.marge_pct)));
 
-      (function (loc) {
-        tr.addEventListener("click", function () { openDetail(loc); });
-        tr.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(loc); } });
-      })(l);
+      (function (naam) {
+        tr.addEventListener("click", function () { openDetail(naam); });
+        tr.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(naam); } });
+      })(l.name);
       tb.appendChild(tr);
     });
-    setText("fin-foot-omzet", fmtEuro(tOmzet));
+    setText("fin-foot-zzp", fmtEuro(tZzp));
+    setText("fin-foot-onk", fmtEuro(tOnk));
     setText("fin-foot-kosten", fmtEuro(tKosten));
+    setText("fin-foot-omzet", fmtEuro(tOmzet));
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
     if (foot) { foot.textContent = fmtEuro(tRes); foot.className = "fin-num fin-eur " + (tRes >= 0 ? "fin-pos" : "fin-neg"); }
+  }
+
+  function curLoc(name) {
+    var d = curData();
+    if (!d || !d.locations) return null;
+    for (var i = 0; i < d.locations.length; i++) if (d.locations[i].name === name) return d.locations[i];
+    return null;
   }
 
   /* ---- modal ---- */
@@ -189,6 +208,7 @@
   }
   function closeModal() {
     var m = $("bd-modal"); if (m) m.hidden = true;
+    openLoc = null;
     document.body.classList.remove("bd-modal-open");
   }
   function emptyRow(body, txt) { body.appendChild(el("p", "bd-modal-empty", txt || "Geen gegevens.")); }
@@ -206,7 +226,10 @@
     return fmtEuro(v) + " /" + (c.tarief_eenheid || "?");
   }
 
-  function openDetail(loc) {
+  function openDetail(locName) {
+    var loc = curLoc(locName);
+    if (!loc) return;
+    openLoc = locName;
     var res0 = Number(loc.resultaat) || 0;
     var body = openModal(loc.name, periodeLabel());
     if (!body) return;
@@ -222,8 +245,8 @@
     }
     sum.appendChild(stat("Opbrengst", fmtEuro(loc.omzet), "",
       "Betaald " + fmtEuro(loc.paid) + " · Open " + fmtEuro(loc.pending) + " · Nog te declareren " + fmtEuro(loc.to_declare)));
-    sum.appendChild(stat("Kosten (ZZP)", fmtEuro(loc.kosten), "",
-      fmtInt(loc.zzpers) + " ZZP'ers · " + fmtInt(loc.diensten) + " diensten · " + fmtUur(loc.uren) + " uur"));
+    sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "",
+      "ZZP " + fmtEuro(loc.kosten_zzp) + " · Onkosten " + fmtEuro(loc.onkosten) + " · " + fmtInt(loc.zzpers) + " ZZP'ers · " + fmtUur(loc.uren) + " uur"));
     sum.appendChild(stat("Resultaat", fmtEuro(res0), (res0 >= 0 ? "fin-pos" : "fin-neg"),
       (res0 >= 0 ? "Winst" : "Verlies") + (loc.marge_pct != null ? " · marge " + fmtPct(loc.marge_pct) : "")));
     body.appendChild(sum);
@@ -234,6 +257,9 @@
       // verwijder loader (laatste element)
       if (body.lastChild) body.removeChild(body.lastChild);
       if (!d || d.unauthorized) { emptyRow(body, "Geen toegang tot deze gegevens."); return; }
+
+      // Overige onkosten (bewerkbaar)
+      renderOnkSection(body, loc.name, d.onkosten || []);
 
       // ZZP'ers
       body.appendChild(el("h3", "fin-sec-h", "Ingezette ZZP'ers"));
@@ -288,6 +314,143 @@
         body.appendChild(el("p", "bd-mrow-note", "Opbrengst = betaald + gedeclareerd-open + nog-te-declareren (schatting o.b.v. eigen factuurhistorie van de beschikking). Beweeg over een bedrag voor de uitsplitsing."));
       }
     });
+  }
+
+  /* ---- overige onkosten ---- */
+  function onkPeriodeLabel(o) {
+    if (!o.tot_ym) return "vanaf " + ymShort(o.van_ym) + " (doorlopend)";
+    if (o.tot_ym === o.van_ym) return ymLabel(o.van_ym, false);
+    return ymShort(o.van_ym) + " – " + ymShort(o.tot_ym);
+  }
+  function renderOnkSection(body, locName, rows) {
+    var head = el("div", "fin-sec-head");
+    head.appendChild(el("h3", "fin-sec-h", "Overige onkosten"));
+    var addBtn = el("button", "btn-outline fin-sec-add", "+ Toevoegen"); addBtn.type = "button";
+    addBtn.addEventListener("click", function () { openOnkForm({ mode: "add", loc: locName }); });
+    head.appendChild(addBtn);
+    body.appendChild(head);
+    if (!rows.length) { emptyRow(body, "Nog geen onkosten voor deze locatie in deze periode."); return; }
+    var t = buildTable([{ label: "Categorie" }, { label: "Omschrijving" }, { label: "Periode" }, { label: "€/maand", num: true }, { label: "In periode", num: true }, { label: "" }]);
+    var sum = 0;
+    rows.forEach(function (o) {
+      sum += Number(o.bedrag_periode) || 0;
+      var tr = el("tr");
+      tr.appendChild(el("td", "bd-td-strong", o.categorie || "—"));
+      tr.appendChild(el("td", null, o.omschrijving || "—"));
+      tr.appendChild(el("td", null, onkPeriodeLabel(o)));
+      tr.appendChild(el("td", "fin-num", fmtEuro(o.bedrag)));
+      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(o.bedrag_periode)));
+      var tdA = el("td", "fin-onk-acties");
+      var eb = el("button", "fin-icon-btn", "Bewerk"); eb.type = "button";
+      eb.addEventListener("click", function () { openOnkForm({ mode: "edit", loc: locName, row: o }); });
+      var db = el("button", "fin-icon-btn fin-icon-btn--danger", "Verwijder"); db.type = "button";
+      db.addEventListener("click", function () { deleteOnk(o); });
+      tdA.appendChild(eb); tdA.appendChild(db); tr.appendChild(tdA);
+      t.tb.appendChild(tr);
+    });
+    var tf = el("tfoot"), trf = el("tr");
+    trf.appendChild(el("td", "bd-td-strong", "Totaal onkosten"));
+    trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, ""));
+    trf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sum)));
+    trf.appendChild(el("td", null, ""));
+    tf.appendChild(trf); t.tbl.appendChild(tf);
+    body.appendChild(t.tbl);
+  }
+
+  function fillSelectOptions(sel, arr, selectedVal) {
+    if (!sel) return; clear(sel);
+    arr.forEach(function (v) { var o = el("option", null, v); o.value = v; if (v === selectedVal) o.selected = true; sel.appendChild(o); });
+  }
+  function fillOnkMonthSelects(selVan, selTot) {
+    var maxYm = winMax ? addMonthsYm(winMax, 12) : (selStart || selVan);
+    var months = monthsBetween(winMin || selVan, maxYm);
+    fillMonthSelect($("fin-onk-van"), months, selVan || selStart);
+    fillMonthSelect($("fin-onk-tot"), months, selTot || selStart);
+  }
+  function applyDoorlopend() {
+    var doorl = $("fin-onk-doorlopend") && $("fin-onk-doorlopend").checked;
+    var tot = $("fin-onk-tot"), totWrap = $("fin-onk-totwrap");
+    if (tot) tot.disabled = !!doorl;
+    if (totWrap) totWrap.style.opacity = doorl ? "0.45" : "";
+  }
+  function openOnkForm(opts) {
+    opts = opts || {};
+    var row = opts.row || {};
+    onkEditId = (opts.mode === "edit" && row.id) ? row.id : null;
+    setText("fin-onk-title", onkEditId ? "Onkost bewerken" : "Onkost toevoegen");
+    var errEl = $("fin-onk-err"); if (errEl) errEl.hidden = true;
+    var locSel = $("fin-onk-loc"), locWrap = $("fin-onk-locwrap");
+    if (opts.loc) {
+      clear(locSel); var o = el("option", null, opts.loc); o.value = opts.loc; o.selected = true; locSel.appendChild(o);
+      if (locWrap) locWrap.style.display = "none";
+    } else {
+      if (locWrap) locWrap.style.display = "";
+      window.financienLocatiesDB.locatieNamen().then(function (names) { fillSelectOptions(locSel, names, names[0]); });
+    }
+    $("fin-onk-cat").value = row.categorie || "Huur";
+    $("fin-onk-oms").value = row.omschrijving || "";
+    $("fin-onk-bedrag").value = (row.bedrag != null) ? row.bedrag : "";
+    $("fin-onk-doorlopend").checked = onkEditId ? (row.tot_ym == null) : false;
+    fillOnkMonthSelects(row.van_ym || selStart, row.tot_ym || row.van_ym || selStart);
+    applyDoorlopend();
+    var m = $("fin-onk-modal"); if (m) m.hidden = false;
+    document.body.classList.add("bd-modal-open");
+    setTimeout(function () { var b = $("fin-onk-bedrag"); if (b) b.focus(); }, 60);
+  }
+  function closeOnkForm() {
+    var m = $("fin-onk-modal"); if (m) m.hidden = true;
+    var bd = $("bd-modal");
+    if (!bd || bd.hidden) document.body.classList.remove("bd-modal-open");
+  }
+  function afterOnkChange() {
+    window.financienLocatiesDB.load(selStart ? selStart + "-01" : null, selEnd ? selEnd + "-01" : null).then(function () {
+      render();
+      var bd = $("bd-modal");
+      if (openLoc && bd && !bd.hidden) openDetail(openLoc);
+    });
+  }
+  function saveOnk(e) {
+    if (e) e.preventDefault();
+    var errEl = $("fin-onk-err");
+    function showErr(msg) { if (errEl) { errEl.textContent = msg; errEl.hidden = false; } }
+    var loc = $("fin-onk-loc").value;
+    var cat = $("fin-onk-cat").value;
+    var oms = ($("fin-onk-oms").value || "").trim();
+    var bedrag = parseFloat($("fin-onk-bedrag").value);
+    var van = $("fin-onk-van").value;
+    var doorl = $("fin-onk-doorlopend").checked;
+    var tot = doorl ? null : $("fin-onk-tot").value;
+    if (!loc) return showErr("Kies een locatie.");
+    if (!(bedrag > 0)) return showErr("Vul een bedrag groter dan € 0 in.");
+    if (!van) return showErr("Kies een 'vanaf'-maand.");
+    if (tot && tot < van) return showErr("'T/m'-maand mag niet vóór de 'vanaf'-maand liggen.");
+    var payload = { locatie: loc, categorie: cat, omschrijving: oms || null, bedrag: bedrag, van_ym: van, tot_ym: tot };
+    var saveBtn = $("fin-onk-save"); if (saveBtn) saveBtn.disabled = true;
+    var p = onkEditId ? window.financienLocatiesDB.updateOnkost(onkEditId, payload) : window.financienLocatiesDB.addOnkost(payload);
+    p.then(function () {
+      if (saveBtn) saveBtn.disabled = false;
+      closeOnkForm();
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Onkost");
+      afterOnkChange();
+    }).catch(function (err) {
+      if (saveBtn) saveBtn.disabled = false;
+      showErr("Opslaan mislukt: " + (err && err.message ? err.message : err));
+    });
+  }
+  function deleteOnk(o) {
+    function doDel() {
+      window.financienLocatiesDB.archiveOnkost(o.id).then(function () {
+        if (window.showActionFeedback) window.showActionFeedback("deleted", "Onkost");
+        afterOnkChange();
+      }).catch(function (err) { if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message ? err.message : err)); });
+    }
+    if (window.showSliderConfirmModal) {
+      window.showSliderConfirmModal({
+        title: "Onkost verwijderen",
+        preview: (o.categorie || "") + (o.omschrijving ? (" — " + o.omschrijving) : ""),
+        okLabel: "Verwijderen", cancelLabel: "Annuleren"
+      }).then(function (ok) { if (ok) doDel(); });
+    } else { doDel(); }
   }
 
   /* ---- periode-selector ---- */
@@ -352,8 +515,21 @@
 
     var x = $("bd-modal-x"); if (x) x.addEventListener("click", closeModal);
     var bd = $("bd-modal-backdrop"); if (bd) bd.addEventListener("click", closeModal);
+
+    // Onkosten: toevoegen op paginaniveau + formulier-acties
+    var addBtn = $("fin-add-onk");
+    if (addBtn) addBtn.addEventListener("click", function () { openOnkForm({ mode: "add", loc: null }); });
+    var onkX = $("fin-onk-x"); if (onkX) onkX.addEventListener("click", closeOnkForm);
+    var onkCancel = $("fin-onk-cancel"); if (onkCancel) onkCancel.addEventListener("click", closeOnkForm);
+    var onkBack = $("fin-onk-backdrop"); if (onkBack) onkBack.addEventListener("click", closeOnkForm);
+    var onkForm = $("fin-onk-form"); if (onkForm) onkForm.addEventListener("submit", saveOnk);
+    var onkDoorl = $("fin-onk-doorlopend"); if (onkDoorl) onkDoorl.addEventListener("change", applyDoorlopend);
+
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") { var m = $("bd-modal"); if (m && !m.hidden) closeModal(); }
+      if (e.key !== "Escape") return;
+      var onkM = $("fin-onk-modal");
+      if (onkM && !onkM.hidden) { closeOnkForm(); return; }   // sluit eerst het formulier
+      var m = $("bd-modal"); if (m && !m.hidden) closeModal();
     });
   }
 
@@ -386,7 +562,7 @@
     setHTML("fin-omzet-sub", "Betaald " + esc(fmtEuro(t.paid)) + " · Open " + esc(fmtEuro(t.pending)) + " · Nog te declareren " + esc(fmtEuro(t.to_declare)));
 
     setText("fin-v-kosten", fmtEuro(t.kosten));
-    setText("fin-kosten-sub", fmtInt(t.zzpers) + " ZZP'ers · " + fmtInt(t.diensten) + " diensten · " + fmtUur(t.uren) + " uur");
+    setText("fin-kosten-sub", "ZZP " + fmtEuro(t.kosten_zzp) + " · Onkosten " + fmtEuro(t.onkosten) + " · " + fmtInt(t.zzpers) + " ZZP'ers");
 
     setText("fin-v-result", fmtEuro(t.resultaat));
     var pos = (Number(t.resultaat) || 0) >= 0;

@@ -64,6 +64,57 @@
     }
   }
 
+  // ─── Onkosten-CRUD (handmatige kosten per locatie) ───────────────────────
+  async function currentUserEmail() {
+    try {
+      var u = await global.besaSupabase.auth.getUser();
+      return (u && u.data && u.data.user && u.data.user.email) || null;
+    } catch (e) { return null; }
+  }
+  async function addOnkost(row) {
+    await ensureSupabase();
+    var payload = {
+      locatie: row.locatie, categorie: row.categorie, omschrijving: row.omschrijving || null,
+      bedrag: row.bedrag, van_ym: row.van_ym, tot_ym: row.tot_ym || null,
+      aangemaakt_door: await currentUserEmail(),
+    };
+    var res = await global.besaSupabase.from("financien_locatie_onkosten").insert(payload);
+    if (res.error) throw res.error;
+  }
+  async function updateOnkost(id, fields) {
+    await ensureSupabase();
+    var patch = {};
+    ["locatie", "categorie", "omschrijving", "bedrag", "van_ym", "tot_ym"].forEach(function (k) {
+      if (k in fields) patch[k] = fields[k];
+    });
+    patch.laatst_gewijzigd = new Date().toISOString();
+    var res = await global.besaSupabase.from("financien_locatie_onkosten").update(patch).eq("id", id);
+    if (res.error) throw res.error;
+  }
+  async function archiveOnkost(id) {
+    await ensureSupabase();
+    var res = await global.besaSupabase.from("financien_locatie_onkosten")
+      .update({ archived: true, laatst_gewijzigd: new Date().toISOString() }).eq("id", id);
+    if (res.error) throw res.error;
+  }
+  var _locNames = null;
+  async function locatieNamen() {
+    if (_locNames) return _locNames;
+    await ensureSupabase();
+    try {
+      var res = await global.besaSupabase.from("locaties").select("naam,archived");
+      if (res.error) throw res.error;
+      var seen = {}, out = [];
+      (res.data || []).forEach(function (r) {
+        if (r && !r.archived && r.naam && !seen[r.naam]) { seen[r.naam] = 1; out.push(r.naam); }
+      });
+      out.sort(function (a, b) { return a.localeCompare(b, "nl"); });
+      out.push("Overig");
+      _locNames = out;
+      return out;
+    } catch (e) { reportSilent("locaties laden", e); return ["Overig"]; }
+  }
+
   function bootstrap() {
     if (readyPromise) return readyPromise;
     readyPromise = load(null, null);
@@ -77,6 +128,10 @@
     getData: function () { return _data; },
     getPeriod: function () { return _period; },
     refresh: function () { return load(_period.start, _period.end); },
+    addOnkost: addOnkost,
+    updateOnkost: updateOnkost,
+    archiveOnkost: archiveOnkost,
+    locatieNamen: locatieNamen,
   };
 
   if (global.besaSupabase) bootstrap();
