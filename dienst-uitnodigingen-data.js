@@ -90,6 +90,42 @@
     return resp.data;
   }
 
+  // Eigen uitnodigingen van een medewerker (ZZP self-service "Mijn uitnodigingen").
+  async function fetchVoorMedewerker(mwId, statussen) {
+    if (!mwId) return [];
+    try {
+      var q = supa
+        .from("dienst_uitnodigingen")
+        .select("id, dienst_id, medewerker_id, status, uitgenodigd_door, notitie, created_at, updated_at")
+        .eq("medewerker_id", mwId)
+        .order("created_at", { ascending: false });
+      if (statussen && statussen.length) q = q.in("status", statussen);
+      var r = await q;
+      if (r.error) throw r.error;
+      return r.data || [];
+    } catch (err) {
+      reportSilent("fetchVoorMedewerker", err);
+      return [];
+    }
+  }
+
+  // Planner/HR nodigt een ZZP'er uit (SECURITY DEFINER RPC: meldt de ZZP'er ook in-app).
+  async function stuur(dienstId, medewerkerId, notitie) {
+    var r = await supa.rpc("dienst_uitnodiging_sturen", {
+      p_dienst_id: dienstId, p_medewerker_id: medewerkerId, p_notitie: notitie || null,
+    });
+    if (r.error) throw r.error;
+    if (dienstId) await fetchForDienst(dienstId);
+    return r.data;
+  }
+
+  // ZZP'er accepteert ('toegewezen') of weigert ('geweigerd') een eigen uitnodiging.
+  async function antwoord(dienstId, keuze) {
+    var r = await supa.rpc("dienst_uitnodiging_antwoord", { p_dienst_id: dienstId, p_antwoord: keuze });
+    if (r.error) throw r.error;
+    return r.data;
+  }
+
   async function updateStatus(id, status, dienstId) {
     var resp = await supa.from("dienst_uitnodigingen").update({ status: status }).eq("id", id).select().single();
     if (resp.error) throw resp.error;
@@ -107,6 +143,9 @@
     fetchForDienst: fetchForDienst,
     fetchForDiensten: fetchForDiensten,
     getForDienstSync: getForDienstSync,
+    fetchVoorMedewerker: fetchVoorMedewerker,
+    stuur: stuur,
+    antwoord: antwoord,
     add: add,
     updateStatus: updateStatus,
     remove: remove,

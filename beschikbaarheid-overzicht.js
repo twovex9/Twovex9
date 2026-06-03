@@ -235,7 +235,7 @@
     var laatst = r.laatstTs ? formatNlDate(new Date(r.laatstTs)) : "Nog nooit";
     var komendCls = r.ingevuldKomend === 0 ? " bz-komend__num--zero" : "";
     return ''
-      + '<tr class="bz-row">'
+      + '<tr class="bz-row" data-mid="' + escapeHtml(r.id) + '" title="Klik om beschikbaarheid in te voeren">'
         + '<td data-col="avatar">'
           + '<span class="me-avatar bz-avatar"><span class="bz-avatar__init">' + escapeHtml(r.initialen) + '</span>'
           + '<span class="bz-dot bz-dot--' + sm.cls + '" aria-hidden="true"></span></span>'
@@ -305,6 +305,87 @@
     });
   }
 
+  // ── Office-invoer modal (planner zet beschikbaarheid + tijden namens ZZP) ─
+  function populateMwSelect(prefillMid) {
+    var sel = document.getElementById("bz-invoer-mw");
+    if (!sel) return;
+    var list = (window.medewerkersDB && window.medewerkersDB.getAllSync)
+      ? window.medewerkersDB.getAllSync().filter(isZzp) : [];
+    list.sort(function (a, b) { return (a.achternaam || "").localeCompare(b.achternaam || "", "nl", { sensitivity: "base" }); });
+    sel.innerHTML = list.map(function (m) {
+      var naam = ((m.voornaam || "") + " " + (m.achternaam || "")).trim() || "Onbekend";
+      return '<option value="' + escapeHtml(m.id) + '">' + escapeHtml(naam) + "</option>";
+    }).join("");
+    if (prefillMid) sel.value = prefillMid;
+  }
+  function syncTijdenVisibility() {
+    var st = (document.querySelector('input[name="bz-invoer-status"]:checked') || {}).value;
+    var t = document.getElementById("bz-invoer-tijden");
+    if (t) t.style.display = st === "niet_beschikbaar" ? "none" : "";
+  }
+  function prefillFromExisting() {
+    var mid = (document.getElementById("bz-invoer-mw") || {}).value;
+    var datum = (document.getElementById("bz-invoer-datum") || {}).value;
+    var begin = document.getElementById("bz-invoer-begin");
+    var eind = document.getElementById("bz-invoer-eind");
+    var rBesch = document.querySelector('input[name="bz-invoer-status"][value="beschikbaar"]');
+    var rNiet = document.querySelector('input[name="bz-invoer-status"][value="niet_beschikbaar"]');
+    var match = null;
+    if (mid && datum && window.beschikbaarheidDB && window.beschikbaarheidDB.getRowsSync) {
+      var rows = window.beschikbaarheidDB.getRowsSync();
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].datum === datum && rows[i].medewerker_id === mid) { match = rows[i]; break; }
+      }
+    }
+    if (match) {
+      if (match.status === "niet_beschikbaar") { if (rNiet) rNiet.checked = true; }
+      else if (rBesch) rBesch.checked = true;
+      if (begin) begin.value = match.begin_tijd ? String(match.begin_tijd).slice(0, 5) : "";
+      if (eind) eind.value = match.eind_tijd ? String(match.eind_tijd).slice(0, 5) : "";
+    } else {
+      if (rBesch) rBesch.checked = true;
+      if (begin) begin.value = "";
+      if (eind) eind.value = "";
+    }
+    syncTijdenVisibility();
+  }
+  function openInvoer(prefillMid) {
+    populateMwSelect(prefillMid);
+    var datum = document.getElementById("bz-invoer-datum");
+    if (datum && !datum.value) datum.value = isoLocal(todayMid);
+    prefillFromExisting();
+    var ov = document.getElementById("bz-invoer-modal");
+    if (ov) ov.hidden = false;
+  }
+  function closeInvoer() {
+    var ov = document.getElementById("bz-invoer-modal");
+    if (ov) ov.hidden = true;
+  }
+  async function saveInvoer() {
+    var mid = (document.getElementById("bz-invoer-mw") || {}).value;
+    var datum = (document.getElementById("bz-invoer-datum") || {}).value;
+    var status = (document.querySelector('input[name="bz-invoer-status"]:checked') || {}).value;
+    var begin = (document.getElementById("bz-invoer-begin") || {}).value || null;
+    var eind = (document.getElementById("bz-invoer-eind") || {}).value || null;
+    if (!mid || !datum || !status) { if (window.showError) window.showError("Kies medewerker, datum en status."); return; }
+    if (status === "beschikbaar" && begin && eind && eind <= begin) {
+      if (window.showError) window.showError("De eindtijd moet ná de begintijd liggen.");
+      return;
+    }
+    var btn = document.getElementById("bz-invoer-save");
+    if (btn) { btn.disabled = true; btn.textContent = "Opslaan…"; }
+    try {
+      await window.beschikbaarheidDB.zet(mid, datum, status,
+        status === "beschikbaar" ? begin : null, status === "beschikbaar" ? eind : null);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Beschikbaarheid opgeslagen", "");
+      closeInvoer();
+    } catch (e) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (e && e.message ? e.message : e));
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Opslaan"; }
+    }
+  }
+
   // ── Events ──────────────────────────────────────────────────────────────
   function bindEvents() {
     var search = document.getElementById("bz-search");
@@ -337,6 +418,31 @@
 
     var refresh = document.getElementById("bz-refresh");
     if (refresh) refresh.addEventListener("click", function () { refresh.disabled = true; loadData().then(function () { refresh.disabled = false; }); });
+
+    // Office-invoer modal
+    var invoerBtn = document.getElementById("bz-invoer-btn");
+    if (invoerBtn) invoerBtn.addEventListener("click", function () { openInvoer(null); });
+    var ic = document.getElementById("bz-invoer-close");
+    if (ic) ic.addEventListener("click", closeInvoer);
+    var icc = document.getElementById("bz-invoer-cancel");
+    if (icc) icc.addEventListener("click", closeInvoer);
+    var iov = document.getElementById("bz-invoer-modal");
+    if (iov) iov.addEventListener("click", function (e) { if (e.target === iov) closeInvoer(); });
+    document.querySelectorAll('input[name="bz-invoer-status"]').forEach(function (r) { r.addEventListener("change", syncTijdenVisibility); });
+    var mwSel = document.getElementById("bz-invoer-mw");
+    if (mwSel) mwSel.addEventListener("change", prefillFromExisting);
+    var datumInp = document.getElementById("bz-invoer-datum");
+    if (datumInp) datumInp.addEventListener("change", prefillFromExisting);
+    var isave = document.getElementById("bz-invoer-save");
+    if (isave) isave.addEventListener("click", saveInvoer);
+    var tbodyEl = document.getElementById("bz-tbody");
+    if (tbodyEl) tbodyEl.addEventListener("click", function (e) {
+      var tr = e.target.closest(".bz-row");
+      if (tr && tr.getAttribute("data-mid")) openInvoer(tr.getAttribute("data-mid"));
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { var m = document.getElementById("bz-invoer-modal"); if (m && !m.hidden) closeInvoer(); }
+    });
 
     window.addEventListener("besa:medewerkers-updated", function () { phase = "ready"; buildModel(); render(); });
     window.addEventListener("besa:beschikbaarheid-updated", function () { buildModel(); render(); });

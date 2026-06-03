@@ -25258,6 +25258,19 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .plgen-chip--g0 { background: var(--green-soft); color: var(--green); }
 .plgen-chip--g1 { background: var(--blue-soft); color: var(--blue); }
 .plgen-chip--g2 { background: var(--yellow-soft); color: var(--yellow); }
+/* Tier-chips (AI-planning): loondienst / kernteam-ZZP / losse ZZP / overig */
+.plgen-chip--t0 { background: var(--green-soft); color: var(--green); }
+.plgen-chip--t1 { background: rgba(139, 92, 246, .14); color: #7c3aed; }
+.plgen-chip--t2 { background: var(--blue-soft); color: var(--blue); }
+.plgen-chip--t3 { background: var(--yellow-soft); color: var(--yellow); }
+[data-theme="dark"] .plgen-chip--t1 { background: rgba(167, 139, 250, .22); color: #c4b5fd; }
+.plgen-row__meta--invite { gap: 6px; }
+.plgen-row--invite .plgen-row__mw { gap: 3px; }
+.plgen-invite-select {
+  font-size: var(--font-table-head); padding: 2px 6px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  max-width: 100%; cursor: pointer;
+}
 .plgen-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 14px 20px; border-top: 1px solid var(--line); flex-wrap: wrap;

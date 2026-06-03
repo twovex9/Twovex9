@@ -25,6 +25,7 @@
     "login.html": null,
     "mijn-gegevens.html": null,
     "mijn-proforma-facturen.html": null,          // ZZP self-service: eigen proforma's (RLS-gescoped)
+    "mijn-uitnodigingen.html": null,              // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 

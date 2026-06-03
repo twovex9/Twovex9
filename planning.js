@@ -3213,13 +3213,23 @@ function initNav() {
     });
   });
   document.getElementById("planning-opt-btn")?.addEventListener("click", () => {
-    if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback(
-        "info",
-        "Optimaliseren",
-        "Schuift bestaande planning zodat overlap, kosten en uren beter verdeeld worden. (Nog niet actief)"
-      );
+    if (!window.planningGenerator || !window.planningGenerator.run) {
+      if (window.showError) window.showError("Generator nog niet geladen — herlaad de pagina.");
+      return;
     }
+    const r = getVisibleRange();
+    const toDay = (d) =>
+      d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    // Reïntegreren = vrijgekomen diensten (bv. na goedgekeurd verlof) én reeds
+    // opengezette diensten opnieuw verdelen / ZZP-suggesties geven.
+    window.planningGenerator.run({
+      mode: "reintegreren",
+      startIso: toDay(r.start),
+      eindIso: toDay(r.end),
+      periodeLabel: getPeriodLine(),
+      locatieFilter: filterState.locatieToolbar || "",
+      diensttypeSet: null,
+    });
   });
 
   document.getElementById("planning-clear-filters")?.addEventListener("click", () => {
