@@ -25422,6 +25422,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-icon-btn:hover { background: var(--row-hover, rgba(0,0,0,0.05)); }
 .fin-icon-btn--danger { color: var(--red); }
 .fin-icon-btn--danger:hover { background: rgba(220,38,38,0.10); }
+.fin-onk-confirm { font-size: 12px; color: var(--red); margin-right: 6px; font-weight: 600; }
 
 /* Onkosten-formulier (modal bovenop de drill-down) */
 .fin-onk-modal { z-index: 1300; }

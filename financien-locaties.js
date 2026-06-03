@@ -344,7 +344,15 @@
       var eb = el("button", "fin-icon-btn", "Bewerk"); eb.type = "button";
       eb.addEventListener("click", function () { openOnkForm({ mode: "edit", loc: locName, row: o }); });
       var db = el("button", "fin-icon-btn fin-icon-btn--danger", "Verwijder"); db.type = "button";
-      db.addEventListener("click", function () { deleteOnk(o); });
+      db.addEventListener("click", function () {
+        clear(tdA);
+        tdA.appendChild(el("span", "fin-onk-confirm", "Verwijderen?"));
+        var yes = el("button", "fin-icon-btn fin-icon-btn--danger", "Ja"); yes.type = "button";
+        var no = el("button", "fin-icon-btn", "Nee"); no.type = "button";
+        yes.addEventListener("click", function () { doDeleteOnk(o); });
+        no.addEventListener("click", function () { if (openLoc) openDetail(openLoc); });
+        tdA.appendChild(yes); tdA.appendChild(no);
+      });
       tdA.appendChild(eb); tdA.appendChild(db); tr.appendChild(tdA);
       t.tb.appendChild(tr);
     });
@@ -437,20 +445,11 @@
       showErr("Opslaan mislukt: " + (err && err.message ? err.message : err));
     });
   }
-  function deleteOnk(o) {
-    function doDel() {
-      window.financienLocatiesDB.archiveOnkost(o.id).then(function () {
-        if (window.showActionFeedback) window.showActionFeedback("deleted", "Onkost");
-        afterOnkChange();
-      }).catch(function (err) { if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message ? err.message : err)); });
-    }
-    if (window.showSliderConfirmModal) {
-      window.showSliderConfirmModal({
-        title: "Onkost verwijderen",
-        preview: (o.categorie || "") + (o.omschrijving ? (" — " + o.omschrijving) : ""),
-        okLabel: "Verwijderen", cancelLabel: "Annuleren"
-      }).then(function (ok) { if (ok) doDel(); });
-    } else { doDel(); }
+  function doDeleteOnk(o) {
+    window.financienLocatiesDB.archiveOnkost(o.id).then(function () {
+      if (window.showActionFeedback) window.showActionFeedback("deleted", "Onkost");
+      afterOnkChange();
+    }).catch(function (err) { if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message ? err.message : err)); });
   }
 
   /* ---- periode-selector ---- */
