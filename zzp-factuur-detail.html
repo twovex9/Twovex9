@@ -34,8 +34,32 @@
     [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
     [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
     .zd-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zd-foot{display:flex;justify-content:flex-end;gap:24px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--text);}
+    .zd-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px 24px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--text);}
     .zd-foot .zd-foot-lbl{color:var(--text-muted,#64748b);font-weight:600;}
+    .zd-afw{color:#b45309;}
+    [data-theme="dark"] .zd-afw{color:#fbbf24;}
+    /* ZZP-invoer-kaart */
+    .zd-zzpcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;}
+    .zd-zzpcard h2{grid-column:1/-1;font-size:13px;font-weight:700;margin:0 0 2px;color:var(--text);}
+    .zd-field{display:flex;flex-direction:column;gap:4px;}
+    .zd-field--full{grid-column:1/-1;}
+    .zd-field label{font-size:11.5px;font-weight:600;color:var(--text-muted,#64748b);}
+    .zd-field input[type=text],.zd-field textarea{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card,var(--surface));color:var(--text);}
+    .zd-field textarea{min-height:54px;resize:vertical;}
+    .zd-field .zd-readonly{font-size:13px;color:var(--text);padding:6px 0;}
+    .zd-logo-prev{max-height:54px;max-width:160px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:3px;}
+    /* edit-inputs in regels */
+    .zd-inp{width:74px;font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;text-align:right;background:var(--card,var(--surface));color:var(--text);font-variant-numeric:tabular-nums;}
+    tr.zd-removed{opacity:.5;}
+    tr.zd-removed .zd-omschrijving{text-decoration:line-through;}
+    tr.zd-changed td{background:rgba(220,38,38,.05);}
+    .zd-del-btn{font:inherit;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card,var(--surface));color:#b91c1c;cursor:pointer;}
+    .zd-del-btn.is-removed{color:#15803d;}
+    .zd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .zd-sig-note{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
+    .zd-sig{display:inline-block;width:10px;height:10px;border-radius:50%;}
+    .zd-sig--rood{background:#dc2626;} .zd-sig--oranje{background:#f59e0b;}
+    .zd-hint{font-size:11.5px;color:var(--text-muted,#64748b);grid-column:1/-1;}
   </style>
 </head>
 <body>
@@ -97,14 +121,35 @@
     </aside>
 
     <main class="content content--fact-tb">
-      <a class="zf-back" href="zzp-facturen">‹ Terug naar proforma-facturen</a>
+      <a class="zf-back" id="zd-back" href="zzp-facturen">‹ Terug</a>
       <div class="content-header">
         <div>
           <h1 id="zd-titel">Proforma-factuur</h1>
           <div class="zd-meta" id="zd-meta"></div>
         </div>
-        <div class="header-actions" id="zd-status-wrap"></div>
+        <div class="header-actions zd-actions" id="zd-actions"></div>
       </div>
+
+      <!-- ZZP-invoer (eigen factuurnummer / logo / extra) -->
+      <section class="zd-zzpcard" id="zd-zzpcard" hidden>
+        <h2>Mijn factuurgegevens</h2>
+        <div class="zd-field">
+          <label for="zd-nummer">Eigen factuurnummer</label>
+          <input type="text" id="zd-nummer" placeholder="bv. 2026-014" autocomplete="off" />
+          <span class="zd-readonly" id="zd-nummer-ro" hidden></span>
+        </div>
+        <div class="zd-field">
+          <label for="zd-logo">Eigen logo</label>
+          <input type="file" id="zd-logo" accept="image/png,image/jpeg,image/webp,image/gif" />
+          <img id="zd-logo-prev" class="zd-logo-prev" alt="Logo" hidden />
+        </div>
+        <div class="zd-field zd-field--full">
+          <label for="zd-extra">Extra gegevens (adres, IBAN, btw-nummer, opmerking…)</label>
+          <textarea id="zd-extra" placeholder="Optioneel — verschijnt op je factuur"></textarea>
+          <span class="zd-readonly" id="zd-extra-ro" hidden></span>
+        </div>
+        <p class="zd-hint" id="zd-edit-hint">De diensten hieronder zijn ingevuld zoals gepland. Pas alleen aan wat afwijkt — wij zien automatisch wat je hebt gewijzigd (🔴) of verwijderd (🟠).</p>
+      </section>
 
       <section class="fzz-overview" aria-label="Proforma-totalen">
         <div class="fzz-card fzz-card--hero">
@@ -141,14 +186,16 @@
                 <th class="zd-num">Uren</th>
                 <th class="zd-num">Tarief</th>
                 <th class="zd-num">Bedrag</th>
+                <th class="zd-num" id="zd-th-actie" hidden>Actie</th>
               </tr>
             </thead>
             <tbody id="zd-regels"></tbody>
           </table>
         </div>
-        <div class="zd-foot">
+        <div class="zd-foot" id="zd-foot">
           <span><span class="zd-foot-lbl">Totaal uren:</span> <span id="zd-foot-uren">0</span></span>
           <span><span class="zd-foot-lbl">Totaal bedrag:</span> <span id="zd-foot-bedrag">€ 0,00</span></span>
+          <span id="zd-foot-afw" hidden></span>
         </div>
       </section>
     </main>
@@ -169,7 +216,7 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="zzp-facturen-data.js?v=zf1" defer></script>
-  <script src="zzp-factuur-detail.js?v=zf1" defer></script>
+  <script src="zzp-facturen-data.js?v=zf2" defer></script>
+  <script src="zzp-factuur-detail.js?v=zf2" defer></script>
 </body>
 </html>

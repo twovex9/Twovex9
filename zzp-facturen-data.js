@@ -228,6 +228,49 @@
     return res.data;
   }
 
+  // medewerker_id van de ingelogde gebruiker (voor eigenaar-detectie ZZP-editor).
+  function currentMedewerkerId() {
+    try {
+      var p = global.profilesDB && global.profilesDB.getCurrentSync && global.profilesDB.getCurrentSync();
+      return p ? (p.medewerkerId || p.medewerker_id || null) : null;
+    } catch (e) { return null; }
+  }
+
+  // Logo uploaden naar Storage → publieke URL (publieke bucket zzp-factuur-logos).
+  async function uploadLogo(factuurId, file) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var ext = (String(file.name || "").match(/\.([a-z0-9]+)$/i) || [, "png"])[1].toLowerCase();
+    var path = String(factuurId) + "/logo-" + Date.now() + "." + ext;
+    var up = await global.besaSupabase.storage.from("zzp-factuur-logos")
+      .upload(path, file, { upsert: true, contentType: file.type || ("image/" + ext) });
+    if (up.error) throw up.error;
+    var pub = global.besaSupabase.storage.from("zzp-factuur-logos").getPublicUrl(path);
+    return (pub && pub.data && pub.data.publicUrl) || "";
+  }
+
+  // Opslaan/indienen via de DB-RPC (één code-pad; change-detectie 🔴/🟠 + herbereken
+  // gebeuren server-side). opts = {eigenFactuurnummer, logoUrl, extra, regels[], indienen}.
+  async function opslaan(factuurId, opts) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    opts = opts || {};
+    var res = await global.besaSupabase.rpc("zzp_factuur_opslaan", {
+      p_factuur_id: factuurId,
+      p_eigen_factuurnummer: opts.eigenFactuurnummer != null ? opts.eigenFactuurnummer : null,
+      p_logo_url: opts.logoUrl != null ? opts.logoUrl : null,
+      p_extra: opts.extra != null ? opts.extra : null,
+      p_regels: opts.regels != null ? opts.regels : null,
+      p_indienen: !!opts.indienen,
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    delete _reg[String(factuurId)];
+    delete _tr[String(factuurId)];
+    await refresh();
+    return res.data;
+  }
+
   global.zzpFacturenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -237,6 +280,9 @@
     getTransitions: getTransitions,
     getDetail: getDetail,
     genereer: genereer,
+    currentMedewerkerId: currentMedewerkerId,
+    uploadLogo: uploadLogo,
+    opslaan: opslaan,
   };
 
   bootstrap();
