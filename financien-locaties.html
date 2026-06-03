@@ -150,7 +150,7 @@
           <svg class="fin-note-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
           <div>
             <strong>Hoe deze cijfers berekend zijn.</strong>
-            <b>Kosten</b> = ingehuurde ZZP-diensten uit de planning (netto-uren × uurtarief uit HR). Salarissen van vast personeel (loondienst) zitten hier niet in.
+            <b>Kosten</b> = ingehuurde ZZP-diensten uit de planning (netto-uren × uurtarief uit HR) <b>plus</b> handmatig toegevoegde onkosten per locatie (huur, boodschappen, energie, water, …). Salarissen van vast personeel (loondienst) zitten hier niet in.
             <b>Opbrengst</b> = beschikkingen-omzet per locatie: betaald + gedeclareerd-wacht-op-betaling + nog-te-declareren (zelfde berekening als het beschikkingen-dashboard).
             Recente maanden lopen achter doordat nog niet alle zorg is gedeclareerd; het resultaat van recente maanden is daarom indicatief.
           </div>
@@ -163,7 +163,7 @@
             <span class="bd-money-sub" id="fin-omzet-sub">—</span>
           </div>
           <div class="bd-money bd-money--red fin-static" id="fin-card-kosten">
-            <span class="bd-money-lbl">Kosten — ingehuurde ZZP</span>
+            <span class="bd-money-lbl">Kosten — ZZP + overige onkosten</span>
             <span class="bd-money-val" id="fin-v-kosten">€ 0,00</span>
             <span class="bd-money-sub" id="fin-kosten-sub">—</span>
           </div>
@@ -185,17 +185,22 @@
         </section>
 
         <section class="table-card fin-loc-card" aria-label="Resultaat per locatie">
-          <h2 class="bd-sec-t">Per locatie</h2>
-          <p class="bd-sec-s">Klik op een locatie voor de ingezette ZZP'ers en de cliënten/beschikkingen</p>
+          <div class="fin-card-head">
+            <div>
+              <h2 class="bd-sec-t">Per locatie</h2>
+              <p class="bd-sec-s">Klik op een locatie voor de ZZP'ers, cliënten/beschikkingen én onkosten</p>
+            </div>
+            <button type="button" class="btn-outline fin-add-onk-btn" id="fin-add-onk">+ Onkosten toevoegen</button>
+          </div>
           <div class="fin-table-wrap">
             <table class="fin-table" id="fin-loc-table">
               <thead>
                 <tr>
                   <th scope="col">Locatie</th>
                   <th scope="col" class="fin-num">ZZP'ers</th>
-                  <th scope="col" class="fin-num">Diensten</th>
-                  <th scope="col" class="fin-num">Uren</th>
-                  <th scope="col" class="fin-num">Kosten (ZZP)</th>
+                  <th scope="col" class="fin-num">ZZP-kosten</th>
+                  <th scope="col" class="fin-num">Onkosten</th>
+                  <th scope="col" class="fin-num">Tot. kosten</th>
                   <th scope="col" class="fin-num">Opbrengst</th>
                   <th scope="col" class="fin-num">Resultaat</th>
                   <th scope="col" class="fin-num">Marge</th>
@@ -205,7 +210,9 @@
               <tfoot>
                 <tr>
                   <td class="bd-td-strong">Totaal</td>
-                  <td></td><td></td><td></td>
+                  <td></td>
+                  <td class="fin-num fin-eur bd-td-strong" id="fin-foot-zzp"></td>
+                  <td class="fin-num fin-eur bd-td-strong" id="fin-foot-onk"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-kosten"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-omzet"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-result"></td>
@@ -227,6 +234,47 @@
           </div>
           <p class="bd-modal-sub" id="bd-modal-sub"></p>
           <div class="bd-modal-body" id="bd-modal-body"></div>
+        </div>
+      </div>
+
+      <!-- Onkosten toevoegen / bewerken -->
+      <div class="bd-modal fin-onk-modal" id="fin-onk-modal" hidden>
+        <div class="bd-modal-backdrop" id="fin-onk-backdrop"></div>
+        <div class="bd-modal-box fin-onk-box" role="dialog" aria-modal="true" aria-labelledby="fin-onk-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="fin-onk-title">Onkost toevoegen</h2>
+            <button type="button" class="bd-modal-x" id="fin-onk-x" aria-label="Sluiten">×</button>
+          </div>
+          <div class="bd-modal-body">
+            <form id="fin-onk-form" class="fin-form" autocomplete="off">
+              <label class="fin-field" id="fin-onk-locwrap"><span>Locatie</span>
+                <select id="fin-onk-loc" class="fin-input"></select></label>
+              <div class="fin-field-row">
+                <label class="fin-field"><span>Categorie</span>
+                  <select id="fin-onk-cat" class="fin-input">
+                    <option>Huur</option><option>Boodschappen</option><option>Elektra</option>
+                    <option>Water</option><option>Gas</option><option>Internet/telefoon</option>
+                    <option>Schoonmaak</option><option>Verzekering</option><option>Onderhoud</option><option>Overig</option>
+                  </select></label>
+                <label class="fin-field"><span>Bedrag per maand (€)</span>
+                  <input id="fin-onk-bedrag" class="fin-input" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              </div>
+              <label class="fin-field"><span>Omschrijving (optioneel)</span>
+                <input id="fin-onk-oms" class="fin-input" type="text" maxlength="120" placeholder="bv. maandhuur pand"></label>
+              <div class="fin-field-row">
+                <label class="fin-field"><span>Vanaf maand</span>
+                  <select id="fin-onk-van" class="fin-input"></select></label>
+                <label class="fin-field" id="fin-onk-totwrap"><span>T/m maand</span>
+                  <select id="fin-onk-tot" class="fin-input"></select></label>
+              </div>
+              <label class="fin-check"><input type="checkbox" id="fin-onk-doorlopend"> Doorlopend — elke maand, geen einddatum</label>
+              <p class="fin-form-err" id="fin-onk-err" hidden></p>
+              <div class="fin-form-actions">
+                <button type="button" class="btn-outline" id="fin-onk-cancel">Annuleren</button>
+                <button type="submit" class="btn-primary" id="fin-onk-save">Opslaan</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </main>

@@ -25410,3 +25410,29 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-sum-sub { font-size: 11px; color: var(--text-muted); }
 .fin-sec-h { font-size: 14px; font-weight: 700; color: var(--text); margin: 18px 0 8px; }
 @media (max-width: 720px) { .fin-sum { grid-template-columns: 1fr; } }
+
+/* Onkosten: kaart-header, sectie-header, acties, formulier */
+.fin-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.fin-add-onk-btn { flex: 0 0 auto; white-space: nowrap; }
+.fin-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 8px; }
+.fin-sec-head .fin-sec-h { margin: 0; }
+.fin-sec-add { padding: 4px 10px; font-size: 12px; }
+.fin-onk-acties { white-space: nowrap; text-align: right; }
+.fin-icon-btn { background: transparent; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); padding: 3px 9px; font-size: 12px; cursor: pointer; color: var(--text); margin-left: 6px; font: inherit; }
+.fin-icon-btn:hover { background: var(--row-hover, rgba(0,0,0,0.05)); }
+.fin-icon-btn--danger { color: var(--red); }
+.fin-icon-btn--danger:hover { background: rgba(220,38,38,0.10); }
+
+/* Onkosten-formulier (modal bovenop de drill-down) */
+.fin-onk-modal { z-index: 1300; }
+.fin-onk-box { width: min(520px, calc(100vw - 32px)); }
+.fin-form { display: flex; flex-direction: column; gap: 12px; padding: 4px 20px 18px; }
+.fin-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.fin-field > span { color: var(--text-muted); font-size: 12px; }
+.fin-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fin-input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; }
+.fin-input:focus { outline: 2px solid var(--blue); outline-offset: -1px; border-color: var(--blue); }
+.fin-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.fin-form-err { color: var(--red); font-size: 13px; margin: 0; }
+.fin-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+@media (max-width: 520px) { .fin-field-row { grid-template-columns: 1fr; } }
