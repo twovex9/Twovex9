@@ -103,6 +103,9 @@
     "verbeteringsmaatregelen.html": { action: "view", entity: "improvement-measures" },
 
     // ─── Facturen (top-bar = employee-invoices) ──────────────────────────────
+    // FF-native ZZP-proforma-facturatie (zzp_facturen) — zelfde invoices-permissie.
+    "zzp-facturen.html": { action: "view", entity: "invoices" },
+    "zzp-factuur-detail.html": { action: "view", entity: "invoices" },
     "facturen-alle.html": { action: "browse", entity: "invoices" },
     "facturen-te-beoordelen.html": { action: "view", entity: "invoices" },
     "facturen-indiening.html": { action: "view", entity: "invoices" },

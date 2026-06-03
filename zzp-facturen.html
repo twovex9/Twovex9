@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
@@ -9,9 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Factuur — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9" />
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
+  <title>Proforma-facturen (ZZP) — Future Flow</title>
+  <link rel="stylesheet" href="styles.css?v=compact1" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -19,11 +18,46 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style>
+    /* ── ZZP proforma-overzicht: nieuwe componenten (var()-tokens → dark-mode gratis) ── */
+    .zf-loc-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 14px;}
+    .zf-loc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s,box-shadow .12s;text-align:left;}
+    .zf-loc:hover,.zf-loc:focus-visible{border-color:var(--accent,#2563eb);box-shadow:0 1px 8px rgba(37,99,235,.10);outline:none;}
+    .zf-loc.is-active{border-color:var(--accent,#2563eb);box-shadow:0 0 0 1px var(--accent,#2563eb) inset;}
+    .zf-loc-naam{display:block;font-size:12.5px;font-weight:650;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .zf-loc-bedrag{display:block;font-size:16px;font-weight:750;color:var(--text);letter-spacing:-.01em;}
+    .zf-loc-sub{display:block;font-size:11px;color:var(--text-muted,#64748b);margin-top:2px;}
+    .zf-loc--all .zf-loc-naam{color:var(--accent,#2563eb);}
+    .zf-sec-t{font-size:14px;font-weight:700;color:var(--text);margin:0;}
+    .zf-sec-s{font-size:12px;color:var(--text-muted,#64748b);margin:2px 0 0;}
+    .zf-strip-head{display:flex;align-items:baseline;justify-content:space-between;margin:4px 0 9px;gap:12px;flex-wrap:wrap;}
+    /* status-pills */
+    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.7;white-space:nowrap;}
+    .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
+    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
+    .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
+    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
+    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
+    .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
+    [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
+    [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
+    [data-theme="dark"] .zf-pill--in_behandeling{background:rgba(168,85,247,.24);color:#d8b4fe;}
+    [data-theme="dark"] .zf-pill--goedgekeurd{background:rgba(34,197,94,.22);color:#86efac;}
+    [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
+    [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
+    /* signaal-stip 🔴/🟠 */
+    .zf-sig{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:middle;}
+    .zf-sig--rood{background:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.18);}
+    .zf-sig--oranje{background:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18);}
+    .zf-row{cursor:pointer;}
+    .zf-num{text-align:right;font-variant-numeric:tabular-nums;}
+    .zf-bureau-tag{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,#64748b);background:var(--chip-bg,rgba(100,116,139,.10));border-radius:5px;padding:1px 6px;margin-left:6px;}
+    .zf-gen-note{font-size:11.5px;color:var(--text-muted,#64748b);}
+  </style>
 </head>
 <body>
   <script src="save-feedback.js?v=sf500" defer></script>
   <script src="besa-export.js?v=ex1" defer></script>
-  <script src="besa-filter-chips.js?v=fc1" defer></script>
   <script src="floating-panels.js?v=fpv9" defer></script>
 
   <div class="app-shell">
@@ -41,7 +75,6 @@
                 <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overzicht planning</span><span class="top-dropdown-subtitle">Bekijk planningsoverzicht</span></a>
                 <a href="open-diensten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Open diensten</span><span class="top-dropdown-subtitle">Aanmeldingen op open diensten</span></a>
                 <a href="beschikbaarheid-overzicht" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikbaarheid ZZP'ers</span><span class="top-dropdown-subtitle">Wie vulde zijn beschikbaarheid in</span></a>
-                <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -57,31 +90,20 @@
                 <a href="hr" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
                 <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
                 <a href="locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
-                <a href="hr-diensttypes" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Diensttypes</span><span class="top-dropdown-subtitle">Beheer eigen diensttypes</span></a>
-                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
-                <a href="inwerk-items" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Inwerken</span><span class="top-dropdown-subtitle">Beheer inwerk-onderdelen</span></a>
-                <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
                 <a href="bureaus" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+                <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="clienten" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
                 <a href="clienten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
-                <a href="zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
                 <a href="beschikkingen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
                 <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
-                <a href="incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
-                <a href="kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
-              </div>
-            </div>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="facturen-te-beoordelen" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="zzp-facturen" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
                 <a href="zzp-facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Proforma's per locatie</span><span class="top-dropdown-subtitle">ZZP-proforma's o.b.v. de planning</span></a>
                 <a href="facturen-te-beoordelen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
@@ -89,7 +111,7 @@
                 <a href="facturen-indiening" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Indiening per maand</span><span class="top-dropdown-subtitle">Wie heeft wel/niet ingediend + reconciliatie</span></a>
               </div>
             </div>
-            <a href="taken" class="top-link">Taken</a>            <a href="beleid-documenten" class="top-link">Beleid</a>
+            <a href="taken" class="top-link">Taken</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="financien-locaties" class="top-link top-link--dropdown">Financiën<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
@@ -97,14 +119,6 @@
               </div>
             </div>
             <a href="audit" class="top-link">Audit</a>
-            <div class="top-nav-item top-nav-item--dropdown">
-              <a href="teams" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
-                <a href="rollen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
-                <a href="teams" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
-                <a href="gebruikers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Gebruikers</span><span class="top-dropdown-subtitle">Beheer login-accounts (admin-tier)</span></a>
-              </div>
-            </div>
             <a href="instellingen" class="top-link">Instellingen</a>
           </nav>
           <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
@@ -122,11 +136,15 @@
 
     <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
       <nav class="side-nav" aria-label="Facturen module">
+        <a href="zzp-facturen" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+          Proforma's
+        </a>
         <a href="facturen-te-beoordelen" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Te beoordelen
         </a>
-        <a href="facturen-alle" class="side-link is-active" aria-current="page">
+        <a href="facturen-alle" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Alle facturen
         </a>
@@ -141,83 +159,96 @@
       </div>
     </aside>
 
-    <main class="content content--inv-detail">
+    <main class="content content--fact-tb">
       <div class="content-header">
         <div>
-          <a href="facturen-alle" class="im-back" id="inv-back">‹ Terug naar facturen</a>
-          <h1 id="inv-title">Factuur</h1>
-          <p class="content-subtitle" id="inv-subtitle"></p>
+          <h1>Proforma-facturen (ZZP)</h1>
+          <p class="content-subtitle">Per werk-maand staan de proforma's klaar — Σ geplande diensten × uurtarief, <strong>per locatie gesplitst</strong>. Bron = de planning van Future Flow.</p>
         </div>
-        <div class="header-actions" id="inv-actions"></div>
-      </div>
-
-      <div class="inv-detail-grid">
-        <section class="inv-detail-data">
-          <div id="inv-reject-banner" hidden></div>
-          <div class="inv-meta-card" id="inv-meta"></div>
-
-          <section class="inv-control-card" id="inv-control" hidden></section>
-
-          <section class="table-card">
-            <div class="table-wrapper">
-              <table class="employees-table inv-lines-table" id="inv-lines-table">
-                <thead>
-                  <tr>
-                    <th data-col="oms">Omschrijving</th>
-                    <th data-col="unit">Eenheid</th>
-                    <th data-col="price" class="th-num">Prijs</th>
-                    <th data-col="amount" class="th-num">Aantal</th>
-                    <th data-col="total" class="th-num">Totaal</th>
-                  </tr>
-                </thead>
-                <tbody id="inv-lines-tbody"></tbody>
-                <tfoot id="inv-lines-foot"></tfoot>
-              </table>
+        <div class="header-actions">
+          <div class="bd-periode" id="zf-periode">
+            <div class="bd-pick" id="zf-pick-maand">
+              <button type="button" class="bd-nav" id="zf-prev" aria-label="Vorige maand">‹</button>
+              <select id="zf-maand" class="bd-select" aria-label="Kies maand"></select>
+              <button type="button" class="bd-nav" id="zf-next" aria-label="Volgende maand">›</button>
             </div>
-          </section>
-
-          <section class="inv-wf-card">
-            <h2 class="inv-section-title">Beoordelingshistorie</h2>
-            <ol class="inv-wf-list" id="inv-wf-list"></ol>
-          </section>
-        </section>
-
-        <aside class="inv-detail-pdf" aria-label="Factuur PDF-weergave">
-          <div class="inv-pdf-toolbar">
-            <span class="inv-pdf-label">Factuur — PDF-weergave</span>
-            <button type="button" class="btn-outline" id="inv-print-btn">Print / PDF</button>
+            <button type="button" class="btn-outline" id="zf-genereer" aria-label="Proforma's genereren voor deze maand">
+              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              Genereer
+            </button>
           </div>
-          <div class="inv-pdf-sheet" id="inv-pdf-sheet"></div>
-        </aside>
+        </div>
       </div>
+
+      <!-- KPI's voor de geselecteerde maand -->
+      <section class="fzz-overview" aria-label="Proforma-totalen voor de geselecteerde maand">
+        <div class="fzz-card fzz-card--hero" id="zf-card-totaal">
+          <span class="fzz-card-lbl">Totaal proforma <span class="fzz-period" id="zf-lbl-maand"></span></span>
+          <span class="fzz-card-val" id="zf-v-totaal">€ 0,00</span>
+          <span class="fzz-card-sub" id="zf-sub-totaal">0 proforma's · 0 ZZP'ers · 0 uur</span>
+        </div>
+        <div class="fzz-card" id="zf-card-klaar">
+          <span class="fzz-card-lbl">Klaargezet</span>
+          <span class="fzz-card-val" id="zf-v-klaar">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="zf-c-klaar">0</span> wachten op indiening</span>
+        </div>
+        <div class="fzz-card fzz-card--blue" id="zf-card-ingediend">
+          <span class="fzz-card-lbl">Ingediend</span>
+          <span class="fzz-card-val" id="zf-v-ingediend">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="zf-c-ingediend">0</span> ingediend door ZZP'er</span>
+        </div>
+        <div class="fzz-card fzz-card--green" id="zf-card-ok">
+          <span class="fzz-card-lbl">Goedgekeurd</span>
+          <span class="fzz-card-val" id="zf-v-ok">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="zf-c-ok">0</span> klaar voor betaling</span>
+        </div>
+      </section>
+
+      <!-- Per-locatie splitsing (kostensplitsing per locatie) -->
+      <div class="zf-strip-head">
+        <div>
+          <h2 class="zf-sec-t">Per locatie</h2>
+          <p class="zf-sec-s">Kosten per locatie — klik om de tabel te filteren</p>
+        </div>
+        <span class="zf-gen-note" id="zf-gen-note"></span>
+      </div>
+      <div class="zf-loc-strip" id="zf-loc-strip" role="list" aria-label="Proforma per locatie"></div>
+
+      <div class="toolbar fact-tb-toolbar">
+        <input class="search" type="search" id="zf-search" placeholder="Zoek medewerker, bureau of locatie..." autocomplete="off" aria-label="Zoeken in proforma-facturen" />
+        <span class="fzz-table-hint" id="zf-table-hint"></span>
+      </div>
+
+      <section class="table-card table-card--compact">
+        <div class="table-wrapper">
+          <table class="employees-table" id="zf-table">
+            <thead>
+              <tr>
+                <th data-col="medewerker">Medewerker</th>
+                <th data-col="locatie">Locatie</th>
+                <th data-col="diensten" class="zf-num">Diensten</th>
+                <th data-col="uren" class="zf-num">Uren</th>
+                <th data-col="tarief" class="zf-num">Tarief</th>
+                <th data-col="bedrag" class="zf-num">Bedrag</th>
+                <th data-col="status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="zf-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer table-footer--pagebar">
+          <div class="footer-left">
+            <span id="zf-range" class="pager-range">0 van 0</span>
+          </div>
+          <div class="footer-right">
+            <span id="zf-foot-totaal" class="pager-page-label"></span>
+          </div>
+        </div>
+      </section>
     </main>
-
-    <div class="modal-overlay" id="inv-review-modal" hidden aria-hidden="true">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inv-review-title" tabindex="-1">
-        <div class="modal-header">
-          <h2 class="modal-title" id="inv-review-title">Beoordelen</h2>
-          <button type="button" class="modal-close" id="inv-review-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-        </div>
-        <form id="inv-review-form" class="modal-body" novalidate>
-          <div class="modal-field" id="inv-review-lines-field" hidden>
-            <span class="modal-label">Welke dienst(en) kloppen niet?</span>
-            <div class="inv-review-lines" id="inv-review-lines"></div>
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="inv-review-comment" id="inv-review-comment-label">Opmerking</label>
-            <textarea class="modal-input" id="inv-review-comment" rows="3" placeholder="Optionele opmerking bij deze beoordeling"></textarea>
-          </div>
-          <p class="im-error" id="inv-review-error" role="alert" hidden></p>
-        </form>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="inv-review-cancel">Annuleren</button>
-          <button type="button" class="btn-primary" id="inv-review-confirm">Bevestigen</button>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <div class="app-toast" id="fact-tb-toast" role="status" aria-live="polite" hidden></div>
+  <div class="app-toast" id="zf-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="sidebar-nav.js"></script>
@@ -225,10 +256,6 @@
   <script src="supabase-client.js"></script>
   <script src="error-reporter.js?v=er1"></script>
   <script src="besa-sync-reporter.js"></script>
-  <script src="optimistic-lock.js?v=ol1" defer></script>
-  <script src="realtime-sync.js?v=rt1" defer></script>
-  <script src="bulk-actions.js?v=ba1" defer></script>
-  <script src="pdf-export.js?v=pdf1" defer></script>
   <script src="permissions.js?v=perm2" defer></script>
   <script src="permissions-page-map.js?v=permmap1" defer></script>
   <script src="permissions-gate.js?v=permgate1" defer></script>
@@ -240,9 +267,7 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="medewerkers-data.js" defer></script>
-  <script src="besa-daterange.js?v=bdr1" defer></script>
-  <script src="invoices-data.js?v=inv1" defer></script>
-  <script src="invoice-detail.js?v=invd1" defer></script>
+  <script src="zzp-facturen-data.js?v=zf1" defer></script>
+  <script src="zzp-facturen.js?v=zf1" defer></script>
 </body>
 </html>
