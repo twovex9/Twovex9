@@ -318,6 +318,64 @@
     return res.data || {};
   }
 
+  // Fase 5 — Detacheringsbureau-portaal.
+  async function getBureauContext() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_bureau_context");
+    if (res.error) throw res.error;
+    return res.data || {};
+  }
+  async function getBureauOverzicht(jaar, maand, bureau) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_bureau_overzicht", {
+      p_jaar: jaar || null, p_maand: maand || null, p_bureau: bureau || null,
+    });
+    if (res.error) throw res.error;
+    return res.data || {};
+  }
+  async function bureauAccordeer(factuurId, factuurnummer) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_bureau_accordeer", {
+      p_factuur_id: factuurId, p_factuurnummer: factuurnummer || null,
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    return res.data;
+  }
+  // Reviewer-beheer: koppel/ontkoppel een login-e-mail aan een bureau + lijst.
+  async function listBureauUsers() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.from("bureau_users").select("user_email, bureau_id, aangemaakt_door, aanmaakdatum, bureaus(naam)");
+    if (res.error) throw res.error;
+    return res.data || [];
+  }
+  async function linkBureauUser(email, bureauId) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_bureau_link_user", { p_email: email, p_bureau_id: bureauId });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    return res.data;
+  }
+  async function unlinkBureauUser(email) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_bureau_unlink_user", { p_email: email });
+    if (res.error) throw res.error;
+    return res.data;
+  }
+  async function listBureaus() {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.from("bureaus").select("id, naam, standaard_uurtarief").order("naam");
+    if (res.error) throw res.error;
+    return res.data || [];
+  }
+
   global.zzpFacturenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -335,6 +393,13 @@
     getOpenOveruren: getOpenOveruren,
     overurenBeoordelen: overurenBeoordelen,
     getReconciliatie: getReconciliatie,
+    getBureauContext: getBureauContext,
+    getBureauOverzicht: getBureauOverzicht,
+    bureauAccordeer: bureauAccordeer,
+    listBureauUsers: listBureauUsers,
+    linkBureauUser: linkBureauUser,
+    unlinkBureauUser: unlinkBureauUser,
+    listBureaus: listBureaus,
   };
 
   bootstrap();

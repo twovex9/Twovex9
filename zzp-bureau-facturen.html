@@ -8,7 +8,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
-  <title>Reconciliatie per locatie — Future Flow</title>
+  <title>Detacheringsbureau — facturen — Future Flow</title>
   <link rel="stylesheet" href="styles.css?v=compact1" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -16,13 +16,36 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
   <style>
-    .zr-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zr-rest{color:#b45309;font-weight:700;} [data-theme="dark"] .zr-rest{color:#fbbf24;}
-    .zr-ok{color:#15803d;font-weight:600;} [data-theme="dark"] .zr-ok{color:#86efac;}
-    .zr-no{color:#b91c1c;font-weight:600;} [data-theme="dark"] .zr-no{color:#fca5a5;}
-    tr.zr-tot td{font-weight:750;border-top:2px solid var(--border);background:var(--surface);}
-    .zr-cnt{font-size:11px;color:var(--text-muted,#64748b);font-weight:400;}
-    .zr-note{font-size:12px;color:var(--text-muted,#64748b);margin:0 0 14px;max-width:820px;}
+    .zb-num{text-align:right;font-variant-numeric:tabular-nums;}
+    .zb-rest{color:#b45309;font-weight:700;} [data-theme="dark"] .zb-rest{color:#fbbf24;}
+    .zb-ok{color:#15803d;font-weight:600;} [data-theme="dark"] .zb-ok{color:#86efac;}
+    .zb-cnt{font-size:11px;color:var(--text-muted,#64748b);font-weight:400;}
+    tr.zb-tot td{font-weight:750;border-top:2px solid var(--border);background:var(--surface);}
+    .zb-loc-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;}
+    .zb-loc-chip{border:1px solid var(--border);border-radius:10px;padding:8px 12px;background:var(--surface);min-width:150px;}
+    .zb-loc-chip b{display:block;font-size:13px;}
+    .zb-loc-chip span{font-size:12px;color:var(--text-muted,#64748b);}
+    .zb-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border);}
+    .zb-pill--klaar{background:rgba(180,83,9,.10);color:#b45309;border-color:rgba(180,83,9,.3);}
+    .zb-pill--ok{background:rgba(21,128,61,.10);color:#15803d;border-color:rgba(21,128,61,.3);}
+    .zb-pill--in{background:rgba(37,99,235,.10);color:#2563eb;border-color:rgba(37,99,235,.3);}
+    [data-theme="dark"] .zb-pill--klaar{color:#fbbf24;} [data-theme="dark"] .zb-pill--ok{color:#86efac;} [data-theme="dark"] .zb-pill--in{color:#93c5fd;}
+    .zb-flag{font-size:11px;font-weight:700;margin-left:6px;}
+    .zb-flag--rood{color:#b91c1c;} .zb-flag--oranje{color:#b45309;}
+    [data-theme="dark"] .zb-flag--rood{color:#fca5a5;} [data-theme="dark"] .zb-flag--oranje{color:#fbbf24;}
+    .zb-acc-btn{font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;}
+    .zb-acc-btn:hover{background:var(--surface-hover,rgba(0,0,0,.04));}
+    .zb-banner{border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:0 0 16px;background:var(--surface);}
+    .zb-banner b{color:var(--text);}
+    .zb-mgmt{border:1px dashed var(--border);border-radius:12px;padding:14px 16px;margin:0 0 16px;background:var(--surface);}
+    .zb-mgmt h3{margin:0 0 8px;font-size:14px;}
+    .zb-mgmt-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+    .zb-mgmt input,.zb-mgmt select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg,#fff);color:var(--text);font-size:13px;}
+    [data-theme="dark"] .zb-mgmt input,[data-theme="dark"] .zb-mgmt select{background:#0f172a;}
+    .zb-mgmt-list{margin:10px 0 0;font-size:12px;color:var(--text-muted,#64748b);}
+    .zb-mgmt-list .zb-mgmt-item{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-top:1px solid var(--border);}
+    .zb-note{font-size:12px;color:var(--text-muted,#64748b);margin:0 0 14px;max-width:860px;}
+    .zb-hide{display:none !important;}
   </style>
 </head>
 <body>
@@ -64,7 +87,7 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen" id="zb-sidebar">
       <nav class="side-nav" aria-label="Facturen module">
         <a href="zzp-facturen" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
@@ -74,9 +97,13 @@
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           Overuren
         </a>
-        <a href="zzp-reconciliatie" class="side-link is-active" aria-current="page">
+        <a href="zzp-reconciliatie" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
           Reconciliatie
+        </a>
+        <a href="zzp-bureau-facturen" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+          Detacheringsbureaus
         </a>
         <a href="facturen-indiening" class="side-link">
           <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -92,62 +119,83 @@
     <main class="content content--fact-tb">
       <div class="content-header">
         <div>
-          <h1>Reconciliatie per locatie</h1>
-          <p class="content-subtitle">Wat we per locatie verwachten te betalen o.b.v. de planning, vs. wat al binnen, goedgekeurd of afgewezen is — en wat er nog moet komen.</p>
+          <h1 id="zb-title">Detacheringsbureau — facturen</h1>
+          <p class="content-subtitle" id="zb-subtitle">De uren die jouw mensen per locatie hebben gemaakt, met de proforma ernaast. Controleer en accordeer voor betaling.</p>
         </div>
         <div class="header-actions">
-          <div class="bd-periode" id="zr-periode">
+          <select id="zb-bureau" class="bd-select zb-hide" aria-label="Kies bureau" style="margin-right:8px"></select>
+          <div class="bd-periode" id="zb-periode">
             <div class="bd-pick">
-              <button type="button" class="bd-nav" id="zr-prev" aria-label="Vorige maand">‹</button>
-              <select id="zr-maand" class="bd-select" aria-label="Kies maand"></select>
-              <button type="button" class="bd-nav" id="zr-next" aria-label="Volgende maand">›</button>
+              <button type="button" class="bd-nav" id="zb-prev" aria-label="Vorige maand">‹</button>
+              <select id="zb-maand" class="bd-select" aria-label="Kies maand"></select>
+              <button type="button" class="bd-nav" id="zb-next" aria-label="Volgende maand">›</button>
             </div>
           </div>
         </div>
       </div>
 
-      <section class="fzz-overview" aria-label="Reconciliatie-totalen">
+      <div class="zb-banner" id="zb-banner"><b id="zb-bureau-naam">—</b> <span id="zb-banner-sub"></span></div>
+
+      <!-- Reviewer-only beheerpaneel: koppel een login-e-mail aan een bureau -->
+      <div class="zb-mgmt zb-hide" id="zb-mgmt">
+        <h3>Bureau-login koppelen <span style="font-weight:400;color:var(--text-muted,#64748b)">(alleen kantoor)</span></h3>
+        <p class="zb-note" style="margin:0 0 10px">Maak het account aan via <a href="gebruikers">Gebruikers</a> en geef het de rol <b>Detacheringsbureau</b>. Koppel hier vervolgens dat e-mailadres aan het juiste bureau — dan ziet dat account uitsluitend dit bureau.</p>
+        <div class="zb-mgmt-row">
+          <input type="email" id="zb-link-email" placeholder="e-mailadres van het bureau-account" style="min-width:260px" />
+          <select id="zb-link-bureau"></select>
+          <button type="button" class="btn-primary" id="zb-link-btn">Koppelen</button>
+          <span id="zb-link-msg" class="zb-note" style="margin:0"></span>
+        </div>
+        <div class="zb-mgmt-list" id="zb-link-list"></div>
+      </div>
+
+      <section class="fzz-overview" aria-label="Bureau-totalen">
         <div class="fzz-card fzz-card--hero">
-          <span class="fzz-card-lbl">Verwacht o.b.v. planning <span class="fzz-period" id="zr-lbl"></span></span>
-          <span class="fzz-card-val" id="zr-verwacht">€ 0,00</span>
-          <span class="fzz-card-sub" id="zr-verwacht-sub">te betalen aan ZZP'ers</span>
+          <span class="fzz-card-lbl">Verwacht o.b.v. planning <span class="fzz-period" id="zb-lbl"></span></span>
+          <span class="fzz-card-val" id="zb-verwacht">€ 0,00</span>
+          <span class="fzz-card-sub" id="zb-verwacht-sub">te betalen aan dit bureau</span>
         </div>
         <div class="fzz-card fzz-card--orange">
           <span class="fzz-card-lbl">Nog te verwachten</span>
-          <span class="fzz-card-val" id="zr-rest">€ 0,00</span>
-          <span class="fzz-card-sub">nog niet ingediend</span>
+          <span class="fzz-card-val" id="zb-rest">€ 0,00</span>
+          <span class="fzz-card-sub">nog niet geaccordeerd</span>
         </div>
         <div class="fzz-card fzz-card--blue">
-          <span class="fzz-card-lbl">Ingediend (te beoordelen)</span>
-          <span class="fzz-card-val" id="zr-ingediend">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zr-ingediend-cnt">0</span> facturen</span>
+          <span class="fzz-card-lbl">Ingediend</span>
+          <span class="fzz-card-val" id="zb-ingediend">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="zb-ingediend-cnt">0</span> facturen</span>
         </div>
         <div class="fzz-card fzz-card--green">
-          <span class="fzz-card-lbl">Goedgekeurd</span>
-          <span class="fzz-card-val" id="zr-goedgekeurd">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zr-goedgekeurd-cnt">0</span> klaar voor betaling</span>
+          <span class="fzz-card-lbl">Goedgekeurd / klaar voor betaling</span>
+          <span class="fzz-card-val" id="zb-goedgekeurd">€ 0,00</span>
+          <span class="fzz-card-sub"><span id="zb-goedgekeurd-cnt">0</span> geaccordeerd</span>
         </div>
         <div class="fzz-card">
-          <span class="fzz-card-lbl">Afgewezen</span>
-          <span class="fzz-card-val" id="zr-afgewezen">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zr-afgewezen-cnt">0</span> afgewezen</span>
+          <span class="fzz-card-lbl">Uren totaal</span>
+          <span class="fzz-card-val" id="zb-uren">0</span>
+          <span class="fzz-card-sub"><span id="zb-facturen-cnt">0</span> diensten/personen</span>
         </div>
       </section>
 
+      <h2 style="font-size:15px;margin:4px 0 10px">Per locatie</h2>
+      <div class="zb-loc-strip" id="zb-loc-strip"></div>
+
+      <h2 style="font-size:15px;margin:4px 0 10px">Mijn mensen — proforma vs. ingediend</h2>
       <section class="table-card table-card--compact">
         <div class="table-wrapper">
-          <table class="employees-table" id="zr-table">
+          <table class="employees-table" id="zb-table">
             <thead>
               <tr>
+                <th>Medewerker</th>
                 <th>Locatie</th>
-                <th class="zr-num">Verwacht</th>
-                <th class="zr-num">Ingediend</th>
-                <th class="zr-num">Goedgekeurd</th>
-                <th class="zr-num">Afgewezen</th>
-                <th class="zr-num">Nog te verwachten</th>
+                <th class="zb-num">Uren</th>
+                <th class="zb-num">Proforma</th>
+                <th class="zb-num">Ingediend</th>
+                <th>Status</th>
+                <th></th>
               </tr>
             </thead>
-            <tbody id="zr-tbody"></tbody>
+            <tbody id="zb-tbody"></tbody>
           </table>
         </div>
       </section>
@@ -161,13 +209,13 @@
   <script src="error-reporter.js?v=er1"></script>
   <script src="besa-sync-reporter.js"></script>
   <script src="permissions.js?v=perm2" defer></script>
-  <script src="permissions-page-map.js?v=permmap1" defer></script>
-  <script src="permissions-gate.js?v=permgate1" defer></script>
+  <script src="permissions-page-map.js?v=permmap2" defer></script>
+  <script src="permissions-gate.js?v=permgate2" defer></script>
   <script src="permissions-nav-hide.js?v=permhide1" defer></script>
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="zzp-facturen-data.js?v=zf4" defer></script>
-  <script src="zzp-reconciliatie.js?v=zf4" defer></script>
+  <script src="zzp-facturen-data.js?v=zf5" defer></script>
+  <script src="zzp-bureau-facturen.js?v=zf5" defer></script>
 </body>
 </html>
