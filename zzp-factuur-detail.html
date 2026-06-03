@@ -76,6 +76,25 @@
     .zd-banner--afgewezen{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.25);}
     .zd-banner--goedgekeurd{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.25);}
     .zd-banner--ingediend{background:rgba(37,99,235,.07);color:#1d4ed8;border:1px solid rgba(37,99,235,.22);}
+    .zd-betaalveld{margin-top:10px;}
+    .zd-betaalveld label{display:block;font-size:12px;margin-bottom:4px;font-weight:600;}
+    .zd-termijn-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+    .zd-termijn-opts button{padding:4px 12px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:transparent;cursor:pointer;font:inherit;font-size:13px;color:inherit;}
+    .zd-termijn-opts button.is-active{background:var(--primary,#2563eb);color:#fff;border-color:var(--primary,#2563eb);}
+    .zd-betaalveld input{width:120px;box-sizing:border-box;padding:7px 8px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:var(--background,#fff);color:inherit;font:inherit;}
+    .zd-betaalveld .zd-betaaldatum-prev{font-size:12px;margin-top:6px;opacity:.85;}
+    .zd-opm-card{border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:14px 16px;margin-top:16px;background:var(--card,#fff);color:var(--card-foreground,inherit);}
+    .zd-opm-card h3{margin:0 0 4px;font-size:15px;}
+    .zd-opm-card .zd-opm-sub{font-size:12px;opacity:.7;margin:0 0 12px;}
+    .zd-opm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+    .zd-opm{border-radius:10px;padding:8px 12px;font-size:13px;border:1px solid var(--border,#e5e7eb);}
+    .zd-opm--zzp{background:rgba(37,99,235,.07);}
+    .zd-opm--controleur{background:rgba(22,163,74,.07);}
+    .zd-opm-head{font-size:11px;opacity:.7;margin-bottom:3px;display:flex;justify-content:space-between;gap:10px;}
+    .zd-opm-empty{font-size:13px;opacity:.65;margin-bottom:12px;}
+    .zd-opm-form{display:flex;flex-direction:column;gap:6px;}
+    .zd-opm-form textarea{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:var(--background,#fff);color:inherit;font:inherit;min-height:62px;resize:vertical;}
+    .zd-opm-form .zd-opm-actions{display:flex;justify-content:flex-end;}
     .zd-reden{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:8px;}
     .zd-reden textarea{font:inherit;font-size:13px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card,var(--surface));color:var(--text);min-height:48px;}
     .zd-reden-row{display:flex;gap:8px;}
@@ -212,6 +231,8 @@
           <span id="zd-foot-afw" hidden></span>
         </div>
       </section>
+
+      <section class="zd-opm-card" id="zd-opmerkingen" hidden></section>
     </main>
   </div>
 

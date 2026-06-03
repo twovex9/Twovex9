@@ -112,7 +112,7 @@
     }
     act.innerHTML = statusHtml + btns;
     if (canEdit(f) && $("zd-bewerk")) $("zd-bewerk").addEventListener("click", function () { setMode("edit"); });
-    if ($("zd-goedkeuren")) $("zd-goedkeuren").addEventListener("click", doGoedkeuren);
+    if ($("zd-goedkeuren")) $("zd-goedkeuren").addEventListener("click", startGoedkeuren);
     if ($("zd-afwijzen")) $("zd-afwijzen").addEventListener("click", startAfwijzen);
   }
 
@@ -121,7 +121,12 @@
     if (f.status === "afgewezen" && f.afwijzingReden) {
       b.innerHTML = '<div class="zd-banner zd-banner--afgewezen"><strong>Afgewezen.</strong> ' + esc(f.afwijzingReden) + " — de ZZP'er kan aanpassen en opnieuw indienen.</div>";
     } else if (f.status === "goedgekeurd" || f.status === "klaar_voor_betaling") {
-      b.innerHTML = '<div class="zd-banner zd-banner--goedgekeurd"><strong>Goedgekeurd</strong> — klaargezet voor betaling.</div>';
+      var extra = "";
+      if (f.betaaldatum) {
+        extra = " Betaling staat klaar op <strong>" + esc(fmtDatum(f.betaaldatum)) + "</strong>" +
+                (f.betaaltermijnDagen != null ? " (betaaltermijn " + f.betaaltermijnDagen + " dagen)" : "") + ".";
+      }
+      b.innerHTML = '<div class="zd-banner zd-banner--goedgekeurd"><strong>Goedgekeurd</strong> — klaargezet voor betaling.' + extra + "</div>";
     } else if (f.status === "ingediend" && isReviewer()) {
       b.innerHTML = '<div class="zd-banner zd-banner--ingediend">Ingediend door de ZZP\'er. Vergelijk hieronder de proforma met de ingediende factuur en keur goed of wijs af.</div>';
     } else { b.innerHTML = ""; }
@@ -297,10 +302,57 @@
   }
 
   // ── Beoordelen (reviewer) ──
-  async function doGoedkeuren() {
-    var btn = $("zd-goedkeuren"); if (btn) btn.disabled = true;
+  function fmtDatum(d) {
+    if (!d) return "—";
+    var dt = (d instanceof Date) ? d : new Date(d);
+    if (isNaN(dt.getTime())) return "—";
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(dt.getDate()) + "-" + p(dt.getMonth() + 1) + "-" + dt.getFullYear();
+  }
+  function startGoedkeuren() {
+    var b = $("zd-banner");
+    b.innerHTML = '<div class="zd-banner zd-banner--ingediend"><strong>Goedkeuren</strong> — kies de betaaltermijn. De ZZP\'er krijgt een melding met de betaaldatum.' +
+      '<div class="zd-betaalveld">' +
+        '<div class="zd-termijn-opts">' +
+          '<button type="button" data-d="14">14 dagen</button>' +
+          '<button type="button" data-d="30">30 dagen</button>' +
+          '<button type="button" data-d="40">40 dagen</button>' +
+          '<button type="button" data-d="60">60 dagen</button>' +
+        '</div>' +
+        '<label for="zd-termijn-txt">Betaaltermijn (dagen)</label>' +
+        '<input type="number" id="zd-termijn-txt" min="0" step="1" value="30" />' +
+        '<div class="zd-betaaldatum-prev" id="zd-betaaldatum-prev"></div>' +
+        '<div class="zd-reden-row" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn-outline" id="zd-termijn-annuleer">Annuleren</button>' +
+          '<button type="button" class="btn-primary" id="zd-termijn-bevestig">Goedkeuren &amp; klaarzetten voor betaling</button>' +
+        '</div>' +
+      '</div></div>';
+    var txt = $("zd-termijn-txt");
+    function updatePrev() {
+      var d = parseInt(txt.value, 10);
+      var prev = $("zd-betaaldatum-prev");
+      if (isFinite(d) && d >= 0) {
+        var dt = new Date(); dt.setHours(0, 0, 0, 0); dt.setDate(dt.getDate() + d);
+        prev.textContent = "Verwachte betaaldatum: " + fmtDatum(dt) + " (over " + d + " dagen).";
+      } else { prev.textContent = ""; }
+      Array.prototype.forEach.call(document.querySelectorAll(".zd-termijn-opts button"), function (btn) {
+        btn.classList.toggle("is-active", String(d) === btn.getAttribute("data-d"));
+      });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".zd-termijn-opts button"), function (btn) {
+      btn.addEventListener("click", function () { txt.value = btn.getAttribute("data-d"); updatePrev(); });
+    });
+    txt.addEventListener("input", updatePrev);
+    updatePrev(); txt.focus();
+    $("zd-termijn-annuleer").addEventListener("click", function () { renderBanner(); });
+    $("zd-termijn-bevestig").addEventListener("click", function () { doGoedkeuren(txt.value); });
+  }
+  async function doGoedkeuren(termijn) {
+    var d = parseInt(termijn, 10);
+    if (!isFinite(d) || d < 0) { toast("Vul een geldige betaaltermijn (dagen) in."); return; }
+    var btn = $("zd-termijn-bevestig"); if (btn) btn.disabled = true;
     try {
-      await zzpFacturenDB.beoordelen(state.id, "goedkeuren", null);
+      await zzpFacturenDB.beoordelen(state.id, "goedkeuren", null, d);
       toast("Factuur goedgekeurd — klaar voor betaling.");
       await reload(); renderAll();
     } catch (e) { toast("Goedkeuren mislukt: " + (e && e.message ? e.message : e)); if (btn) btn.disabled = false; }
@@ -325,9 +377,60 @@
     } catch (e) { toast("Afwijzen mislukt: " + (e && e.message ? e.message : e)); if (btn) btn.disabled = false; }
   }
 
+  // ── Opmerkingen & vragen (ZZP'er ↔ financiële afdeling) ──
+  function fmtDatumTijd(s) {
+    var dt = new Date(s); if (isNaN(dt.getTime())) return "";
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(dt.getDate()) + "-" + p(dt.getMonth() + 1) + "-" + dt.getFullYear() + " " + p(dt.getHours()) + ":" + p(dt.getMinutes());
+  }
+  function renderOpmerkingen() {
+    var sec = $("zd-opmerkingen"); if (!sec) return;
+    var f = state.factuur;
+    if (!f) { sec.hidden = true; return; }
+    var trs = (state.transitions || []).filter(function (t) { return t && t.data && t.data.soort === "opmerking"; });
+    var canPost = isReviewer() || isOwner(f);
+    sec.hidden = false;
+    var html = "<h3>Opmerkingen &amp; vragen</h3>" +
+      '<p class="zd-opm-sub">Vragen of opmerkingen over deze factuur of de planning — zichtbaar voor de ZZP\'er en de financiële afdeling.</p>';
+    if (!trs.length) {
+      html += '<div class="zd-opm-empty">Nog geen opmerkingen.</div>';
+    } else {
+      html += '<div class="zd-opm-list">';
+      trs.forEach(function (t) {
+        var who = (t.actor_type === "zzp") ? "zzp" : "controleur";
+        var rol = (who === "zzp") ? "ZZP'er" : "Financiële afdeling";
+        var naam = esc(t.actor_naam || rol);
+        html += '<div class="zd-opm zd-opm--' + who + '">' +
+          '<div class="zd-opm-head"><span>' + naam + " · " + esc(rol) + '</span><span>' + esc(fmtDatumTijd(t.created_at)) + "</span></div>" +
+          "<div>" + esc(t.comment || "") + "</div></div>";
+      });
+      html += "</div>";
+    }
+    if (canPost) {
+      var ph = (isReviewer() && !isOwner(f)) ? "Reageer naar de ZZP'er…" : "Stel een vraag of plaats een opmerking voor de financiële afdeling…";
+      html += '<div class="zd-opm-form">' +
+        '<textarea id="zd-opm-txt" placeholder="' + esc(ph) + '"></textarea>' +
+        '<div class="zd-opm-actions"><button type="button" class="btn-primary" id="zd-opm-send">Versturen</button></div></div>';
+    }
+    sec.innerHTML = html;
+    if (canPost && $("zd-opm-send")) $("zd-opm-send").addEventListener("click", doOpmerking);
+  }
+  async function doOpmerking() {
+    var txt = $("zd-opm-txt"); var tekst = ((txt && txt.value) || "").trim();
+    if (!tekst) { toast("Typ eerst een opmerking."); return; }
+    var btn = $("zd-opm-send"); if (btn) btn.disabled = true;
+    try {
+      await zzpFacturenDB.plaatsOpmerking(state.id, tekst);
+      toast("Opmerking verstuurd.");
+      await reload(); renderOpmerkingen();
+    } catch (e) { toast("Versturen mislukt: " + (e && e.message ? e.message : e)); if (btn) btn.disabled = false; }
+  }
+
   async function reload() {
     var detail = await zzpFacturenDB.getDetail(state.id);
-    if (detail && detail.factuur) { state.factuur = detail.factuur; state.regels = detail.regels || []; }
+    if (detail && detail.factuur) {
+      state.factuur = detail.factuur; state.regels = detail.regels || []; state.transitions = detail.transitions || [];
+    }
   }
 
   function renderAll() {
@@ -337,7 +440,7 @@
       return;
     }
     state.mode = "view";
-    renderHeader(); renderBanner(); renderKpis(); renderViewRegels();
+    renderHeader(); renderBanner(); renderKpis(); renderViewRegels(); renderOpmerkingen();
   }
 
   async function start() {

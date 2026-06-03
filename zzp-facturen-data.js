@@ -87,6 +87,8 @@
       bureauGeaccordeerdOp: r.bureau_geaccordeerd_op || null,
       bureauGeaccordeerdDoor: r.bureau_geaccordeerd_door || "",
       betalingKlaarOp: r.betaling_klaar_op || null,
+      betaaltermijnDagen: r.betaaltermijn_dagen == null ? null : Number(r.betaaltermijn_dagen),
+      betaaldatum: r.betaaldatum || null,
       archived: !!r.archived,
       aanmaakdatum: r.aanmaakdatum, laatstGewijzigd: r.laatst_gewijzigd,
     };
@@ -122,7 +124,7 @@
     "eigen_factuurnummer,ingediend_uren,ingediend_bedrag,status," +
     "heeft_bedrag_afwijking,heeft_verwijderde_dienst,afwijking_bedrag," +
     "submitted_at,approved_at,rejected_at,afwijzing_reden,bureau_geaccordeerd_op," +
-    "bureau_geaccordeerd_door,betaling_klaar_op,archived,aanmaakdatum,laatst_gewijzigd";
+    "bureau_geaccordeerd_door,betaling_klaar_op,betaaltermijn_dagen,betaaldatum,archived,aanmaakdatum,laatst_gewijzigd";
 
   // PostgREST cap't 1000 rijen/request → pagineren (groeit ~71/maand).
   async function fetchAllRows() {
@@ -271,17 +273,32 @@
     return res.data;
   }
 
-  // Controleur keurt een ingediende factuur goed/af (reden verplicht bij afwijzen).
-  async function beoordelen(factuurId, actie, reden) {
+  // Controleur keurt een ingediende factuur goed/af. Reden verplicht bij afwijzen;
+  // betaaltermijn (dagen) verplicht bij goedkeuren → betaaldatum + melding naar ZZP'er.
+  async function beoordelen(factuurId, actie, reden, betaaltermijnDagen) {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     if (global.besaSupabaseReady) await global.besaSupabaseReady;
     var res = await global.besaSupabase.rpc("zzp_factuur_beoordelen", {
       p_factuur_id: factuurId, p_actie: actie, p_reden: reden || null,
+      p_betaaltermijn_dagen: (betaaltermijnDagen != null && betaaltermijnDagen !== "") ? Number(betaaltermijnDagen) : null,
     });
     if (res.error) throw res.error;
     if (res.data && res.data.error) throw new Error(res.data.error);
     delete _tr[String(factuurId)];
     await refresh();
+    return res.data;
+  }
+
+  // Opmerking / vraag plaatsen bij een factuur (ZZP'er → financiën, of reviewer → ZZP'er).
+  async function plaatsOpmerking(factuurId, tekst) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_factuur_opmerking", {
+      p_factuur_id: factuurId, p_tekst: tekst,
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    delete _tr[String(factuurId)];
     return res.data;
   }
 
@@ -390,6 +407,7 @@
     uploadLogo: uploadLogo,
     opslaan: opslaan,
     beoordelen: beoordelen,
+    plaatsOpmerking: plaatsOpmerking,
     getOpenOveruren: getOpenOveruren,
     overurenBeoordelen: overurenBeoordelen,
     getReconciliatie: getReconciliatie,

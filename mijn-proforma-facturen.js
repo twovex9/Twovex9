@@ -20,6 +20,12 @@
   }
   function fmtEur(n) { return "€ " + (Number(n) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function fmtUren(n) { return (Number(n) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  function fmtDatumNL(d) {
+    if (!d) return "";
+    var dt = new Date(d); if (isNaN(dt.getTime())) return "";
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(dt.getDate()) + "-" + p(dt.getMonth() + 1) + "-" + dt.getFullYear();
+  }
   function ymLabel(ym) {
     if (!ym) return "";
     var p = ym.split("-"); var m = parseInt(p[1], 10);
@@ -47,13 +53,15 @@
       var lbl = STATUS_LABEL[f.status] || f.status;
       var sig = (f.heeftBedragAfwijking ? '<span class="mp-sig mp-sig--rood" title="je hebt een tarief/bedrag gewijzigd"></span>' : "") +
         (f.heeftVerwijderdeDienst ? '<span class="mp-sig mp-sig--oranje" title="je hebt een dienst verwijderd"></span>' : "");
+      var betaalInfo = (f.betaaldatum && (f.status === "goedgekeurd" || f.status === "klaar_voor_betaling"))
+        ? '<div style="font-size:11px;opacity:.75;margin-top:2px">Betaling op ' + esc(fmtDatumNL(f.betaaldatum)) + "</div>" : "";
       html += '<tr class="mp-row" data-id="' + esc(f.id) + '" tabindex="0">' +
         "<td>" + esc(ymLabel(f.ym)) + "</td>" +
         "<td>" + esc(f.locatie) + "</td>" +
         '<td class="mp-num">' + f.proformaDiensten + "</td>" +
         '<td class="mp-num">' + fmtUren(f.proformaUren) + "</td>" +
         '<td class="mp-num"><strong>' + fmtEur(f.proformaBedrag) + "</strong></td>" +
-        '<td><span class="zf-pill zf-pill--' + esc(f.status) + '">' + esc(lbl) + "</span>" + sig + "</td>" +
+        '<td><span class="zf-pill zf-pill--' + esc(f.status) + '">' + esc(lbl) + "</span>" + sig + betaalInfo + "</td>" +
         "</tr>";
     });
     tb.innerHTML = html;
