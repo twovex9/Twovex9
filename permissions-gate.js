@@ -67,6 +67,20 @@
     // op rol/permissie. Als er geen rollen geladen zijn en de pagina is gevoelig,
     // dan blokkeren we tenzij admin.
 
+    // Detacheringsbureau-account = UITSLUITEND de bureau-factuurpagina. Iemand met
+    // ENKEL de rol "Detacheringsbureau" wordt overal vandaan teruggestuurd naar z'n
+    // eigen pagina. (De RLS-lockout is de echte muur; dit is UX + defense-in-depth.)
+    try {
+      var rnames = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
+        ? (global.besaPermissions.getRoleNames() || []) : [];
+      var isBureauOnly = rnames.length === 1 && rnames[0] === "Detacheringsbureau";
+      if (isBureauOnly && page !== "zzp-bureau-facturen.html") {
+        try { global.location.replace("zzp-bureau-facturen"); }
+        catch (e) { global.location.href = "zzp-bureau-facturen"; }
+        return;
+      }
+    } catch (e) { /* doorgaan */ }
+
     var map = global.BESA_PAGE_PERMISSIONS || {};
     var req = map[page];
     if (req === null) return;                 // expliciet open

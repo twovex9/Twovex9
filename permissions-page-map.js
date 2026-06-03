@@ -110,6 +110,10 @@
     // Overuren-goedkeuring → teamleider (Zorgcoördinator) + admin-tier/HR/Finance. RPC gate't ook server-side.
     "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "HR", "Finance"] },
     "zzp-reconciliatie.html": { action: "view", entity: "invoices" },
+    // Detacheringsbureau-portaal: het bureau-account (rol Detacheringsbureau) ziet hier
+    // ALLEEN z'n eigen mensen/facturen (server-side via RPC + RLS-lockout). Reviewers
+    // mogen previewen. permissions-gate.js stuurt een bureau-only account hier altijd heen.
+    "zzp-bureau-facturen.html": { allowedRoles: ["Detacheringsbureau", "Eigenaar", "Admin", "Directeur", "HR", "Finance", "Salarisadministratie", "Zorgcoördinator"] },
     "facturen-alle.html": { action: "browse", entity: "invoices" },
     "facturen-te-beoordelen.html": { action: "view", entity: "invoices" },
     "facturen-indiening.html": { action: "view", entity: "invoices" },
