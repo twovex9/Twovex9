@@ -63,6 +63,22 @@
     /* [hidden] moet winnen van display:grid/inline-flex (bekende valkuil) */
     .zd-zzpcard[hidden]{display:none;}
     #zd-foot-afw[hidden]{display:none;}
+    /* side-by-side vergelijking proforma ↔ ingediend */
+    .zd-grp{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+    .zd-grp--pf{color:var(--text-muted,#64748b);}
+    .zd-grp--ing{color:#1d4ed8;}
+    [data-theme="dark"] .zd-grp--ing{color:#93c5fd;}
+    td.zd-ing{background:rgba(37,99,235,.05);}
+    [data-theme="dark"] td.zd-ing{background:rgba(59,130,246,.10);}
+    td.zd-chg{color:#b91c1c;font-weight:700;}
+    [data-theme="dark"] td.zd-chg{color:#fca5a5;}
+    .zd-banner{border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px;}
+    .zd-banner--afgewezen{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.25);}
+    .zd-banner--goedgekeurd{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.25);}
+    .zd-banner--ingediend{background:rgba(37,99,235,.07);color:#1d4ed8;border:1px solid rgba(37,99,235,.22);}
+    .zd-reden{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:8px;}
+    .zd-reden textarea{font:inherit;font-size:13px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card,var(--surface));color:var(--text);min-height:48px;}
+    .zd-reden-row{display:flex;gap:8px;}
   </style>
 </head>
 <body>
@@ -134,6 +150,8 @@
         <div class="header-actions zd-actions" id="zd-actions"></div>
       </div>
 
+      <div id="zd-banner"></div>
+
       <!-- ZZP-invoer (eigen factuurnummer / logo / extra) -->
       <section class="zd-zzpcard" id="zd-zzpcard" hidden>
         <h2>Mijn factuurgegevens</h2>
@@ -181,18 +199,7 @@
       <section class="table-card table-card--compact">
         <div class="table-wrapper">
           <table class="employees-table" id="zd-table">
-            <thead>
-              <tr>
-                <th>Dag</th>
-                <th>Datum</th>
-                <th>Tijd</th>
-                <th class="zd-num">Pauze</th>
-                <th class="zd-num">Uren</th>
-                <th class="zd-num">Tarief</th>
-                <th class="zd-num">Bedrag</th>
-                <th class="zd-num" id="zd-th-actie" hidden>Actie</th>
-              </tr>
-            </thead>
+            <thead id="zd-thead"></thead>
             <tbody id="zd-regels"></tbody>
           </table>
         </div>
@@ -220,7 +227,7 @@
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="zzp-facturen-data.js?v=zf2" defer></script>
-  <script src="zzp-factuur-detail.js?v=zf2" defer></script>
+  <script src="zzp-facturen-data.js?v=zf3" defer></script>
+  <script src="zzp-factuur-detail.js?v=zf3" defer></script>
 </body>
 </html>

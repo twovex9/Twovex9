@@ -271,6 +271,25 @@
     return res.data;
   }
 
+  // Controleur keurt een ingediende factuur goed/af (reden verplicht bij afwijzen).
+  async function beoordelen(factuurId, actie, reden) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_factuur_beoordelen", {
+      p_factuur_id: factuurId, p_actie: actie, p_reden: reden || null,
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.error) throw new Error(res.data.error);
+    delete _tr[String(factuurId)];
+    await refresh();
+    return res.data;
+  }
+
+  function isReviewer() {
+    return !!((global.besaIsAdminTier && global.besaIsAdminTier()) ||
+      (global.besaCan && global.besaCan("view", "invoices")));
+  }
+
   global.zzpFacturenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -281,8 +300,10 @@
     getDetail: getDetail,
     genereer: genereer,
     currentMedewerkerId: currentMedewerkerId,
+    isReviewer: isReviewer,
     uploadLogo: uploadLogo,
     opslaan: opslaan,
+    beoordelen: beoordelen,
   };
 
   bootstrap();
