@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <script src="theme.js?v=th1" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <title>Mijn facturen — Future Flow</title>
+  <link rel="stylesheet" href="styles.css?v=compact1" />
+  <link rel="icon" type="image/png" href="assets/app-icon-192.png">
+  <link rel="apple-touch-icon" href="assets/app-icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style>
+    .mp-row{cursor:pointer;}
+    .mp-num{text-align:right;font-variant-numeric:tabular-nums;}
+    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.7;white-space:nowrap;}
+    .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
+    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
+    .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
+    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
+    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
+    .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
+    [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
+    [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
+    [data-theme="dark"] .zf-pill--in_behandeling{background:rgba(168,85,247,.24);color:#d8b4fe;}
+    [data-theme="dark"] .zf-pill--goedgekeurd{background:rgba(34,197,94,.22);color:#86efac;}
+    [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
+    [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
+    .mp-sig{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:middle;}
+    .mp-sig--rood{background:#dc2626;} .mp-sig--oranje{background:#f59e0b;}
+    .mp-monthhead td{background:var(--surface);font-weight:700;font-size:12px;color:var(--text-muted,#64748b);}
+    .content--mp{max-width:1100px;}
+  </style>
+</head>
+<body>
+  <div class="app-shell app-shell--noaside">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="home" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home" class="top-link">Home</a>
+            <a href="mijn-proforma-facturen" class="top-link is-active">Mijn facturen</a>
+            <a href="mijn-gegevens" class="top-link">Mijn gegevens</a>
+          </nav>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Thema wisselen" onclick="var d=document.documentElement,n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('besa-theme',n)}catch(e){}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="content content--mp">
+      <div class="content-header">
+        <div>
+          <h1>Mijn facturen</h1>
+          <p class="content-subtitle">Je proforma-facturen staan per maand klaar op basis van je planning. Controleer ze, pas aan wat afwijkt en dien in.</p>
+        </div>
+      </div>
+
+      <section class="table-card table-card--compact">
+        <div class="table-wrapper">
+          <table class="employees-table" id="mp-table">
+            <thead>
+              <tr>
+                <th>Maand</th>
+                <th>Locatie</th>
+                <th class="mp-num">Diensten</th>
+                <th class="mp-num">Uren</th>
+                <th class="mp-num">Bedrag</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="mp-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="error-reporter.js?v=er1"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="permissions.js?v=perm2" defer></script>
+  <script src="permissions-page-map.js?v=permmap1" defer></script>
+  <script src="permissions-gate.js?v=permgate1" defer></script>
+  <script src="auth-guard.js"></script>
+  <script src="notification-bell.js?v=nb1" defer></script>
+  <script src="profiles-data.js"></script>
+  <script src="zzp-facturen-data.js?v=zf2" defer></script>
+  <script src="mijn-proforma-facturen.js?v=zf2" defer></script>
+</body>
+</html>
