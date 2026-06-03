@@ -25,11 +25,14 @@
     return last;
   }
 
-  function pageAccessible(page) {
+  function pageAccessible(page, adminTier) {
     if (!page) return true;
     var map = global.BESA_PAGE_PERMISSIONS || {};
     var req = map[page];
     if (req === null || req === undefined) return true;
+
+    // Admin-tier ziet alles — behalve expliciet strict-gemarkeerde pagina's (bv. Financiën).
+    if (adminTier && !req.strict) return true;
 
     if (Array.isArray(req.allowedRoles)) {
       try {
@@ -66,10 +69,12 @@
       }
     } catch (e) { /* doorgaan */ }
 
-    // Admin-tier ziet alles
+    // Admin-tier ziet alles — behalve strict-gemarkeerde pagina's, die hieronder
+    // per link alsnog op rol worden gecontroleerd (zie pageAccessible).
+    var adminTier = false;
     try {
-      if (typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return;
-    } catch (e) { /* doorgaan zonder hide bij twijfel */ return; }
+      adminTier = (typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier());
+    } catch (e) { /* bij twijfel niets verbergen — behoud bestaand gedrag */ return; }
 
     var doc = global.document;
     if (!doc) return;
@@ -80,7 +85,7 @@
       var href = a.getAttribute("href");
       if (!href || href === "#") return;
       var page = normalizeFileName(href);
-      if (!pageAccessible(page)) hideEl(a);
+      if (!pageAccessible(page, adminTier)) hideEl(a);
     });
 
     // 2. Verberg sidebar links (`.side-link[href]`) waar de target niet toegankelijk is
@@ -89,7 +94,7 @@
       var href = a.getAttribute("href");
       if (!href || href === "#") return;
       var page = normalizeFileName(href);
-      if (!pageAccessible(page)) hideEl(a);
+      if (!pageAccessible(page, adminTier)) hideEl(a);
     });
 
     // 3. Sidebar collapsibles — als alle nested links verborgen zijn, verberg de toggle

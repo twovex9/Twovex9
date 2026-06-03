@@ -72,9 +72,10 @@
     if (req === null) return;                 // expliciet open
     if (req === undefined) return;            // niet-gemapt → default open
 
-    // Admin-tier wint altijd
+    // Admin-tier wint altijd — BEHALVE bij strict-gemarkeerde pagina's (bv. Financiën),
+    // waar uitsluitend de opgegeven allowedRoles tellen (geen admin-bypass).
     try {
-      if (typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return;
+      if (!req.strict && typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return;
     } catch (e) { /* doorgaan met normale check */ }
 
     var allowed = false;
