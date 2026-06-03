@@ -3372,18 +3372,22 @@ function initNav() {
     doExportPlanningXlsx(items, !!split);
   });
 
-  /* AI-planning regels modal */
-  document.getElementById("planning-ai-btn")?.addEventListener("click", openAiSettingsModal);
-  document.getElementById("planning-ai-close")?.addEventListener("click", closeAiSettingsModal);
-  document.getElementById("planning-ai-cancel")?.addEventListener("click", closeAiSettingsModal);
-  document.getElementById("planning-ai-modal")?.addEventListener("click", (e) => {
-    if (e.target.id === "planning-ai-modal") closeAiSettingsModal();
+  /* AI-planning regels modal. NB: deze modal-HTML staat ná het planning.js-script
+     in de body, dus directe element-wiring bij init zou de modal-knoppen missen
+     (ze bestaan dan nog niet). Daarom via event-delegation op document — dat
+     bestaat altijd en vangt de klik ongeacht wanneer de knop in de DOM komt. */
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest("#planning-ai-btn")) { openAiSettingsModal(); return; }
+    if (t.closest("#planning-ai-save")) { saveAiSettings(); return; }
+    if (t.closest("#planning-ai-close") || t.closest("#planning-ai-cancel")) { closeAiSettingsModal(); return; }
+    if (t.id === "planning-ai-modal") { closeAiSettingsModal(); return; }
   });
   document.addEventListener("keydown", (e) => {
     const m = document.getElementById("planning-ai-modal");
     if (e.key === "Escape" && m && !m.hidden) closeAiSettingsModal();
   });
-  document.getElementById("planning-ai-save")?.addEventListener("click", saveAiSettings);
   document.addEventListener("click", (ev) => {
     if (ev.target.closest?.(".planning-erm-card")) return;
     if (ui.selectedId) {
