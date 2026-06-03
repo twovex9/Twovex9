@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <script src="theme.js?v=th1" defer></script>
+  <script src="sidebar-collapse.js?v=sc1" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+  <title>Proforma-factuur — Future Flow</title>
+  <link rel="stylesheet" href="styles.css?v=compact1" />
+  <link rel="icon" type="image/png" href="assets/app-icon-192.png">
+  <link rel="apple-touch-icon" href="assets/app-icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style>
+    .zf-back{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-muted,#64748b);text-decoration:none;margin:0 0 8px;}
+    .zf-back:hover{color:var(--accent,#2563eb);}
+    .zd-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--text-muted,#64748b);margin-top:3px;}
+    .zd-meta strong{color:var(--text);font-weight:600;}
+    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:999px;font-size:12px;font-weight:650;}
+    .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
+    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
+    .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
+    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
+    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
+    .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
+    [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
+    [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
+    [data-theme="dark"] .zf-pill--in_behandeling{background:rgba(168,85,247,.24);color:#d8b4fe;}
+    [data-theme="dark"] .zf-pill--goedgekeurd{background:rgba(34,197,94,.22);color:#86efac;}
+    [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
+    [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
+    .zd-num{text-align:right;font-variant-numeric:tabular-nums;}
+    .zd-foot{display:flex;justify-content:flex-end;gap:24px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--text);}
+    .zd-foot .zd-foot-lbl{color:var(--text-muted,#64748b);font-weight:600;}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="hr" class="brand-logo" aria-label="Home">
+          <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
+        </a>
+        <div class="top-nav-track">
+          <nav class="top-nav" aria-label="Hoofdnavigatie">
+            <a href="home" class="top-link">Home</a>
+            <a href="planning" class="top-link">Planning</a>
+            <a href="hr" class="top-link">HR</a>
+            <a href="clienten" class="top-link">Cliënten</a>
+            <div class="top-nav-item top-nav-item--dropdown">
+              <a href="zzp-facturen" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
+                <a href="zzp-facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Proforma's per locatie</span><span class="top-dropdown-subtitle">ZZP-proforma's o.b.v. de planning</span></a>
+                <a href="facturen-te-beoordelen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
+                <a href="facturen-indiening" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Indiening per maand</span><span class="top-dropdown-subtitle">Wie heeft wel/niet ingediend + reconciliatie</span></a>
+              </div>
+            </div>
+            <a href="financien-locaties" class="top-link">Financiën</a>
+            <a href="instellingen" class="top-link">Instellingen</a>
+          </nav>
+          <button type="button" class="top-nav-overflow" id="top-nav-overflow-btn" aria-label="Meer navigatie" aria-expanded="false">
+            <span class="top-nav-overflow-chev" aria-hidden="true"></span>
+            <div class="top-nav-overflow-panel" id="top-nav-overflow-panel"></div>
+          </button>
+        </div>
+      </div>
+      <div class="topbar-icons">
+        <button type="button" class="icon-btn" aria-label="Help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
+      <nav class="side-nav" aria-label="Facturen module">
+        <a href="zzp-facturen" class="side-link is-active" aria-current="page">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+          Proforma's
+        </a>
+        <a href="facturen-te-beoordelen" class="side-link">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Te beoordelen
+        </a>
+        <a href="facturen-indiening" class="side-link">
+          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Indiening per maand
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="zzp-facturen">← Proforma's</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">FA</span>
+      </div>
+    </aside>
+
+    <main class="content content--fact-tb">
+      <a class="zf-back" href="zzp-facturen">‹ Terug naar proforma-facturen</a>
+      <div class="content-header">
+        <div>
+          <h1 id="zd-titel">Proforma-factuur</h1>
+          <div class="zd-meta" id="zd-meta"></div>
+        </div>
+        <div class="header-actions" id="zd-status-wrap"></div>
+      </div>
+
+      <section class="fzz-overview" aria-label="Proforma-totalen">
+        <div class="fzz-card fzz-card--hero">
+          <span class="fzz-card-lbl">Totaal proforma</span>
+          <span class="fzz-card-val" id="zd-totaal">€ 0,00</span>
+          <span class="fzz-card-sub" id="zd-totaal-sub">excl. btw</span>
+        </div>
+        <div class="fzz-card">
+          <span class="fzz-card-lbl">Uren</span>
+          <span class="fzz-card-val" id="zd-uren">0</span>
+          <span class="fzz-card-sub">netto-uren (− pauze)</span>
+        </div>
+        <div class="fzz-card">
+          <span class="fzz-card-lbl">Uurtarief</span>
+          <span class="fzz-card-val" id="zd-tarief">€ 0</span>
+          <span class="fzz-card-sub">per uur</span>
+        </div>
+        <div class="fzz-card">
+          <span class="fzz-card-lbl">Diensten</span>
+          <span class="fzz-card-val" id="zd-diensten">0</span>
+          <span class="fzz-card-sub">geplande diensten</span>
+        </div>
+      </section>
+
+      <section class="table-card table-card--compact">
+        <div class="table-wrapper">
+          <table class="employees-table" id="zd-table">
+            <thead>
+              <tr>
+                <th>Dag</th>
+                <th>Datum</th>
+                <th>Tijd</th>
+                <th class="zd-num">Pauze</th>
+                <th class="zd-num">Uren</th>
+                <th class="zd-num">Tarief</th>
+                <th class="zd-num">Bedrag</th>
+              </tr>
+            </thead>
+            <tbody id="zd-regels"></tbody>
+          </table>
+        </div>
+        <div class="zd-foot">
+          <span><span class="zd-foot-lbl">Totaal uren:</span> <span id="zd-foot-uren">0</span></span>
+          <span><span class="zd-foot-lbl">Totaal bedrag:</span> <span id="zd-foot-bedrag">€ 0,00</span></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="app-toast" id="zd-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="error-reporter.js?v=er1"></script>
+  <script src="besa-sync-reporter.js"></script>
+  <script src="permissions.js?v=perm2" defer></script>
+  <script src="permissions-page-map.js?v=permmap1" defer></script>
+  <script src="permissions-gate.js?v=permgate1" defer></script>
+  <script src="permissions-nav-hide.js?v=permhide1" defer></script>
+  <script src="auth-guard.js"></script>
+  <script src="notification-bell.js?v=nb1" defer></script>
+  <script src="profiles-data.js"></script>
+  <script src="zzp-facturen-data.js?v=zf1" defer></script>
+  <script src="zzp-factuur-detail.js?v=zf1" defer></script>
+</body>
+</html>
