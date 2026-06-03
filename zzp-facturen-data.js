@@ -309,6 +309,15 @@
     return res.data;
   }
 
+  // Fase 6 — reconciliatie per locatie + totaal (read-only).
+  async function getReconciliatie(jaar, maand) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    var res = await global.besaSupabase.rpc("zzp_reconciliatie", { p_jaar: jaar || null, p_maand: maand || null });
+    if (res.error) throw res.error;
+    return res.data || {};
+  }
+
   global.zzpFacturenDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -325,6 +334,7 @@
     beoordelen: beoordelen,
     getOpenOveruren: getOpenOveruren,
     overurenBeoordelen: overurenBeoordelen,
+    getReconciliatie: getReconciliatie,
   };
 
   bootstrap();
