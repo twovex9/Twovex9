@@ -880,11 +880,30 @@
               <h3>Uurtarieven</h3>
 
               <div class="emp-prof-rate-box">
+                <h4 class="emp-prof-subtitle">Detacheringsbureau</h4>
+                <div class="emp-prof-rate-row">
+                  <div class="emp-prof-rate-copy">
+                    <p class="emp-prof-rate-label">Bureau</p>
+                    <p class="emp-prof-rate-desc">Komt deze medewerker via een detacheringsbureau? Kies het bureau — het uurtarief (inclusief fee) wordt dan automatisch overgenomen.</p>
+                  </div>
+                  <label class="emp-field emp-prof-rate-input">
+                    <select id="emp-bureau" class="emp-select">
+                      <option value="">— Geen bureau (direct ZZP) —</option>
+                    </select>
+                  </label>
+                </div>
+                <p id="emp-bureau-tarief-hint" class="emp-prof-rate-desc" style="margin-top:8px;font-weight:600" hidden></p>
+              </div>
+
+              <div class="emp-prof-rate-box">
                 <h4 class="emp-prof-subtitle">Algemeen Uurtarief</h4>
                 <div class="emp-prof-rate-row">
                   <div class="emp-prof-rate-copy">
                     <p class="emp-prof-rate-label">Algemeen uurtarief</p>
                     <p class="emp-prof-rate-desc">Dit tarief wordt gebruikt voor diensten waarvoor geen specifiek diensttype tarief is ingesteld hieronder</p>
+                    <label id="emp-tarief-handmatig-wrap" style="display:none;align-items:center;gap:6px;margin-top:8px;font-size:13px;cursor:pointer">
+                      <input type="checkbox" id="emp-tarief-handmatig" style="margin:0"> Tarief handmatig aanpassen (afwijkend van bureau-tarief)
+                    </label>
                   </div>
                   <label class="emp-field emp-prof-rate-input">
                     <input id="emp-uur-algemeen" type="text" placeholder="€ 45">
@@ -1943,6 +1962,7 @@
   <script src="opleidingen-data.js"></script>
   <script src="competenties-data.js"></script>
   <script src="medewerkers-data.js?v=rt1"></script>
+  <script src="bureaus-data.js?v=bt1"></script>
   <script src="medewerker-notities-data.js"></script>
   <script src="medewerker-verlof-overgedragen-data.js"></script>
   <script src="medewerker-verzuim-data.js"></script>

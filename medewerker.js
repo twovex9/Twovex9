@@ -860,6 +860,7 @@ function loadEmployeeIntoForm() {
     window.__syncLoondienstRooster();
   }
   setValue("emp-uur-algemeen", emp.uurAlgemeen);
+  if (typeof window.__loadBureauKeuze === "function") window.__loadBureauKeuze(emp);
   setValue("emp-uur-diensttype", "Boventallig");
   setValue("emp-uur-tarief", emp.uurTarief);
   setDateValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
@@ -3781,6 +3782,8 @@ function gatherFormData() {
     weekendVoorkeur,
     periodiekeMaand,
     uurAlgemeen: val("emp-uur-algemeen"),
+    bureau: (document.getElementById("emp-bureau") && document.getElementById("emp-bureau").value) || "",
+    tariefHandmatig: bool("emp-tarief-handmatig"),
     uurDiensttype: "Boventallig",
     uurTarief: val("emp-uur-tarief"),
     locatiesSelected: selectedLocaties,
@@ -5125,4 +5128,128 @@ initOffboardingTab();
       });
     });
   });
+})();
+
+/* ===========================================================================
+ * Detacheringsbureau-keuze + automatisch uurtarief (uurtarief + fee).
+ * HR kiest bij een inhuur-medewerker een bureau → het uurtarief (incl. fee)
+ * wordt automatisch overgenomen (read-only). Met 'handmatig aanpassen' kan HR
+ * een afwijkend tarief per medewerker zetten (data.tariefHandmatig=true).
+ * Bron van waarheid blijft de DB-functie zzp_medewerker_uurtarief().
+ * =========================================================================== */
+(function () {
+  "use strict";
+  function eur(n) {
+    var v = Number(n) || 0;
+    return "€ " + v.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function escAttr(s) { return String(s == null ? "" : s).replace(/["&<>]/g, function (c) { return { '"': "&quot;", "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function activeBureaus() {
+    try {
+      var list = (window.bureausDB && window.bureausDB.getAllSync && window.bureausDB.getAllSync()) ||
+                 (window.getBureaus && window.getBureaus()) || [];
+      return list.filter(function (b) { return b && !b.archived; })
+                 .sort(function (a, b) { return String(a.naam).localeCompare(String(b.naam), "nl"); });
+    } catch (e) { return []; }
+  }
+  function bureauTarief(b) {
+    if (!b) return null;
+    return (Number(b.standaardUurtarief) || 0) + (Number(b.feePerUur) || 0);
+  }
+  function findBureau(naam) {
+    if (!naam) return null;
+    var s = String(naam).trim().toLowerCase();
+    return activeBureaus().find(function (b) { return String(b.naam).trim().toLowerCase() === s; }) || null;
+  }
+  function fillDropdown() {
+    var sel = document.getElementById("emp-bureau");
+    if (!sel) return;
+    var cur = sel.value;
+    var html = ['<option value="">— Geen bureau (direct ZZP) —</option>'];
+    activeBureaus().forEach(function (b) {
+      html.push('<option value="' + escAttr(b.naam) + '">' + esc(b.naam) + " (" + eur(bureauTarief(b)) + "/uur)</option>");
+    });
+    sel.innerHTML = html.join("");
+    if (cur && !Array.prototype.some.call(sel.options, function (o) { return o.value === cur; })) {
+      var o = document.createElement("option"); o.value = cur; o.textContent = cur; sel.appendChild(o);
+    }
+    sel.value = cur;
+  }
+  function syncTarief() {
+    var sel = document.getElementById("emp-bureau");
+    var inp = document.getElementById("emp-uur-algemeen");
+    var hint = document.getElementById("emp-bureau-tarief-hint");
+    var hmWrap = document.getElementById("emp-tarief-handmatig-wrap");
+    var hmChk = document.getElementById("emp-tarief-handmatig");
+    if (!sel || !inp) return;
+    var b = findBureau(sel.value);
+    if (b) {
+      if (hmWrap) hmWrap.style.display = "inline-flex";
+      var t = bureauTarief(b);
+      var handmatig = !!(hmChk && hmChk.checked);
+      if (!handmatig) {
+        inp.value = (Number(t) || 0).toFixed(2);   // schone numerieke string voor de generator
+        inp.readOnly = true;
+        inp.style.opacity = "0.7";
+        if (hint) {
+          hint.hidden = false;
+          hint.style.color = "var(--primary, #2563eb)";
+          hint.textContent = "✓ Tarief automatisch overgenomen van " + b.naam + ": " + eur(t) +
+            " (" + eur(b.standaardUurtarief || 0) + " uurtarief + " + eur(b.feePerUur || 0) + " fee).";
+        }
+      } else {
+        inp.readOnly = false;
+        inp.style.opacity = "";
+        if (hint) {
+          hint.hidden = false;
+          hint.style.color = "var(--destructive, #b45309)";
+          hint.textContent = "⚠ Handmatig tarief — wijkt af van het bureau-tarief van " + b.naam + " (" + eur(t) + ").";
+        }
+      }
+    } else {
+      if (hmWrap) hmWrap.style.display = "none";
+      if (hmChk) hmChk.checked = false;
+      inp.readOnly = false;
+      inp.style.opacity = "";
+      if (hint) { hint.hidden = true; hint.textContent = ""; }
+    }
+  }
+  function load(emp) {
+    fillDropdown();
+    var sel = document.getElementById("emp-bureau");
+    var hmChk = document.getElementById("emp-tarief-handmatig");
+    var naam = emp && (emp.bureau != null ? emp.bureau : (emp.data && emp.data.bureau));
+    var hm = emp && (emp.tariefHandmatig != null ? emp.tariefHandmatig : (emp.data && emp.data.tariefHandmatig));
+    if (sel) {
+      if (naam && !Array.prototype.some.call(sel.options, function (o) { return o.value === naam; })) {
+        var o = document.createElement("option"); o.value = naam; o.textContent = naam; sel.appendChild(o);
+      }
+      sel.value = naam || "";
+    }
+    if (hmChk) hmChk.checked = (hm === true || String(hm) === "true");
+    syncTarief();
+  }
+  function init() {
+    fillDropdown();
+    var sel = document.getElementById("emp-bureau");
+    var hmChk = document.getElementById("emp-tarief-handmatig");
+    if (sel && !sel.dataset.bbound) {
+      sel.dataset.bbound = "1";
+      sel.addEventListener("change", function () {
+        if (hmChk) hmChk.checked = false;  // nieuw bureau → vers bureau-tarief overnemen
+        syncTarief();
+      });
+    }
+    if (hmChk && !hmChk.dataset.bbound) {
+      hmChk.dataset.bbound = "1";
+      hmChk.addEventListener("change", syncTarief);
+    }
+    try { if (window.bureausDB && window.bureausDB.bootstrap) window.bureausDB.bootstrap(); } catch (e) { /* */ }
+    window.addEventListener("besa:bureaus-updated", function () { fillDropdown(); syncTarief(); });
+  }
+  window.__loadBureauKeuze = load;
+  window.__syncBureauTarief = syncTarief;
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
 })();
