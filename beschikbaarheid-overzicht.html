@@ -11,6 +11,22 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Beschikbaarheid ZZP'ers</title>
   <link rel="stylesheet" href="styles.css?v=compact1">
+  <style>
+    .bz-row { cursor: pointer; }
+    .bz-invoer-card { width: min(460px, 96vw); }
+    .bz-invoer-body { padding: 4px 2px 0; }
+    .bz-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .bz-field > span { font-weight: 600; font-size: 13px; color: var(--text-secondary); }
+    .bz-invoer-body select, .bz-invoer-body input[type="date"], .bz-invoer-body input[type="time"] {
+      padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--surface); color: var(--text); font-size: 14px;
+    }
+    .bz-radio-row { display: flex; gap: 18px; font-size: 14px; }
+    .bz-radio-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .bz-tijd-row { display: flex; align-items: center; gap: 10px; }
+    .bz-invoer-hint { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+    .bz-invoer-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 4px; border-top: 1px solid var(--line); margin-top: 8px; }
+  </style>
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -124,6 +140,7 @@
       <div class="content-header">
         <h1>Beschikbaarheid ZZP'ers</h1>
         <div class="header-actions">
+          <button class="btn-primary" type="button" id="bz-invoer-btn">+ Beschikbaarheid invoeren</button>
           <button class="btn-outline" type="button" id="bz-refresh">Ververs</button>
         </div>
       </div>
@@ -190,6 +207,37 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="modal-overlay" id="bz-invoer-modal" hidden>
+    <div class="modal-card bz-invoer-card">
+      <div class="modal-header">
+        <h2>Beschikbaarheid invoeren</h2>
+        <button type="button" class="modal-close" id="bz-invoer-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body bz-invoer-body">
+        <label class="bz-field"><span>Medewerker</span><select id="bz-invoer-mw"></select></label>
+        <label class="bz-field"><span>Datum</span><input type="date" id="bz-invoer-datum" /></label>
+        <div class="bz-field"><span>Status</span>
+          <div class="bz-radio-row">
+            <label><input type="radio" name="bz-invoer-status" value="beschikbaar" checked /> Beschikbaar</label>
+            <label><input type="radio" name="bz-invoer-status" value="niet_beschikbaar" /> Niet beschikbaar</label>
+          </div>
+        </div>
+        <div class="bz-field" id="bz-invoer-tijden"><span>Tijden (optioneel — leeg = hele dag)</span>
+          <div class="bz-tijd-row">
+            <input type="time" id="bz-invoer-begin" step="900" aria-label="Begintijd" />
+            <span>–</span>
+            <input type="time" id="bz-invoer-eind" step="900" aria-label="Eindtijd" />
+          </div>
+        </div>
+        <p class="bz-invoer-hint">ZZP'ers vullen dit normaal zelf in via de Future Flow-app. Hier kun je het namens hen invoeren of corrigeren.</p>
+      </div>
+      <div class="bz-invoer-foot">
+        <button type="button" class="btn-outline" id="bz-invoer-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="bz-invoer-save">Opslaan</button>
+      </div>
+    </div>
   </div>
 
   <script src="top-nav-overflow.js?v=imcols9"></script>

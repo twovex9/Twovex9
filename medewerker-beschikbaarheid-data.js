@@ -50,7 +50,7 @@
       while (true) {
         var r = await supa
           .from(TABLE)
-          .select("user_id, medewerker_id, datum, status, laatst_gewijzigd")
+          .select("user_id, medewerker_id, datum, status, begin_tijd, eind_tijd, laatst_gewijzigd")
           .gte("datum", vanISO)
           .lte("datum", totISO)
           .order("datum", { ascending: true })
@@ -74,9 +74,29 @@
   function getRowsSync() { return _mem.slice(); }
   function getRangeSync() { return { van: _range.van, tot: _range.tot }; }
 
+  /**
+   * Office-invoer: planner/HR zet (namens een medewerker) de beschikbaarheid voor
+   * één dag, optioneel met begin/eind-tijd. Loopt via de SECURITY DEFINER RPC
+   * beschikbaarheid_zet (zelfde tabel als de mobiele ZZP-invoer = één code-pad).
+   */
+  async function zet(medewerkerId, datum, status, begin, eind) {
+    if (!medewerkerId || !datum || !status) throw new Error("medewerker, datum en status zijn verplicht");
+    var r = await supa.rpc("beschikbaarheid_zet", {
+      p_medewerker_id: medewerkerId,
+      p_datum: datum,
+      p_status: status,
+      p_begin: begin || null,
+      p_eind: eind || null,
+    });
+    if (r.error) throw r.error;
+    if (_range.van && _range.tot) await fetchRange(_range.van, _range.tot); // ververs het overzicht
+    return r.data;
+  }
+
   global.beschikbaarheidDB = {
     fetchRange: fetchRange,
     getRowsSync: getRowsSync,
     getRangeSync: getRangeSync,
+    zet: zet,
   };
 })(window);
