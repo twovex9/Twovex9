@@ -228,6 +228,12 @@
         var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
         var localIds = payload.map(function (r) { return r.id; });
         var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
+        // DIEHARD delete-guard: een lege schalen-lijst is nooit legitiem (getSalarisschalen
+        // valt altijd terug op defaults) → een leegmaak-sync duidt op een stale bron; weiger.
+        if (toDelete.length && localIds.length === 0 && existingIds.length > 0) {
+          reportSilent("pushAllScalesAsync delete-guard", new Error("Totale wipe geweigerd: 0 lokale schalen tegen " + existingIds.length + " in DB"));
+          toDelete = [];
+        }
         if (toDelete.length) {
           var del = await global.besaSupabase.from(TABLE_SCHALEN).delete().in("id", toDelete);
           if (del.error) reportSilent("delete schalen", del.error);
