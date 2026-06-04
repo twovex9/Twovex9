@@ -86,6 +86,9 @@
     .mb-choice__ic--clock { color: var(--blue); }
 
     .mb-times { display: flex; align-items: flex-end; gap: 12px; margin: 12px 2px 2px; }
+    /* `hidden` moet winnen van display:flex (anders tonen de tijden ook bij 'hele dag'/'niet'). */
+    .mb-times[hidden] { display: none; }
+    #mb-error[hidden] { display: none; }
     .mb-time { display: flex; flex-direction: column; gap: 5px; flex: 1; }
     .mb-time > span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
     .mb-time__btn {
