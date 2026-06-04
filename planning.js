@@ -105,6 +105,7 @@ const ui = {
   rowAxis: "vestiging",
   selectedId: null,
   editingId: null,
+  dienstModus: "groep", // "groep" = klassieke dienst (1 medewerker) | "individueel" = 1-op-1/ambulant met cliënt↔teamlid-koppelingen
   moveId: null,
   tarief: 45,
   prefillStartDay: null,
@@ -2167,6 +2168,373 @@ function applyDienstFormOneOnOneState() {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * Individuele dienst (1-op-1 / ambulant): cliënt↔teamlid-koppelingen.
+ *
+ * Bij "Groepsdienst" werkt het paneel zoals vanouds: één dienst → één
+ * medewerker (+ optioneel één cliënt). Bij "Individueel" koppel je per cliënt
+ * een teamlid, elk met eigen tijden en eigen weekdagen. Elke koppeling × elke
+ * geselecteerde dag binnen de periode wordt één planning-rij — exact hetzelfde
+ * datamodel als de bestaande "<naam> 1 op 1"-diensten (één rij = één dienst met
+ * client + teamlid). Geen schaduwtabel; gericht via planningDB.add().
+ * ───────────────────────────────────────────────────────────────────────── */
+const PLANNING_WEEKDAGEN = [
+  { dow: 1, label: "Ma" }, { dow: 2, label: "Di" }, { dow: 3, label: "Wo" },
+  { dow: 4, label: "Do" }, { dow: 5, label: "Vr" }, { dow: 6, label: "Za" }, { dow: 0, label: "Zo" },
+];
+
+// Laatst opgebouwde dataState (medewerkers/cliënten-lijsten) zodat een nieuwe
+// koppelingsrij zijn selects kan vullen zonder buildDataState opnieuw te draaien.
+let lastDienstDataState = null;
+
+function dateOnlyFromInput(dateStr) {
+  if (!dateStr) return null;
+  const [Y, M, D] = String(dateStr).split("-").map((x) => parseInt(x, 10));
+  if (Number.isNaN(Y) || Number.isNaN(M) || Number.isNaN(D)) return null;
+  return new Date(Y, M - 1, D, 0, 0, 0, 0);
+}
+
+function fillSelectFromArray(sel, arr, placeholder) {
+  if (!sel) return;
+  sel.innerHTML = "";
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = placeholder || "Selecteer…";
+  sel.appendChild(ph);
+  (Array.isArray(arr) ? arr : []).forEach((t) => {
+    if (t == null || String(t).trim() === "") return;
+    const o = document.createElement("option");
+    o.value = String(t);
+    o.textContent = String(t);
+    sel.appendChild(o);
+  });
+}
+
+function syncDienstModusButtons() {
+  const map = { groep: "dienst-modus-groep", individueel: "dienst-modus-individueel" };
+  Object.keys(map).forEach((m) => {
+    const btn = document.getElementById(map[m]);
+    if (!btn) return;
+    const on = ui.dienstModus === m;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-checked", on ? "true" : "false");
+  });
+}
+
+function applyDienstModus() {
+  const form = document.getElementById("planning-dienst-form");
+  if (!form) return;
+  const individueel = ui.dienstModus === "individueel";
+  form.querySelectorAll(".dienst-only-groep").forEach((el) => { el.hidden = individueel; });
+  form.querySelectorAll(".dienst-only-ind").forEach((el) => { el.hidden = !individueel; });
+  syncDienstModusButtons();
+  if (individueel) {
+    // De klassieke "Herhaling / periode" hoort niet bij individueel (die heeft
+    // een eigen vanaf/tot-periode): zet 'm uit zodat repeat-options niet zichtbaar blijft.
+    const herh = document.getElementById("dienst-herhaal");
+    if (herh) herh.checked = false;
+    syncDienstRepeatOptions();
+    // Neem de (verborgen) hoofd-startdatum over als 'vanaf'-datum zolang die nog leeg is.
+    const vanaf = document.getElementById("dienst-ind-vanaf");
+    const sd = document.getElementById("dienst-startdate");
+    if (vanaf && !vanaf.value && sd && sd.value) vanaf.value = sd.value;
+    ensureOneKoppelRow();
+    updateKoppelTel();
+  }
+}
+
+function setDienstModus(modus) {
+  ui.dienstModus = modus === "individueel" ? "individueel" : "groep";
+  applyDienstModus();
+}
+
+function defaultKoppelTijden() {
+  const list = document.getElementById("dienst-koppel-list");
+  const rows = list ? list.querySelectorAll("[data-koppel-rij]") : [];
+  if (rows.length) {
+    const last = rows[rows.length - 1];
+    const van = last.querySelector('[data-k="van"]')?.value;
+    const tot = last.querySelector('[data-k="tot"]')?.value;
+    if (van && tot) return { van, tot };
+  }
+  const hv = document.getElementById("dienst-starttime")?.value;
+  const ht = document.getElementById("dienst-eindtime")?.value;
+  return { van: hv || "09:00", tot: ht || "17:00" };
+}
+
+function defaultKoppelDagen() {
+  const vanaf = document.getElementById("dienst-ind-vanaf")?.value || document.getElementById("dienst-startdate")?.value;
+  const d = dateOnlyFromInput(vanaf);
+  return d ? new Set([d.getDay()]) : new Set();
+}
+
+function makeKoppelRow(prefill) {
+  const data = lastDienstDataState || buildDataState();
+  const tij = (prefill && prefill.van && prefill.tot) ? { van: prefill.van, tot: prefill.tot } : defaultKoppelTijden();
+  const dagen = (prefill && prefill.dagen) ? new Set(prefill.dagen) : defaultKoppelDagen();
+
+  const rij = document.createElement("div");
+  rij.className = "planning-dienst-koppel-rij";
+  rij.setAttribute("data-koppel-rij", "");
+
+  // Rij 1: cliënt + teamlid + verwijderknop
+  const top = document.createElement("div");
+  top.className = "planning-dienst-koppel-rij-top";
+
+  const cWrap = document.createElement("div");
+  cWrap.className = "planning-dienst-koppel-veld";
+  const cLab = document.createElement("span");
+  cLab.className = "planning-dienst-koppel-mini";
+  cLab.textContent = "Cliënt";
+  const cSel = document.createElement("select");
+  cSel.className = "planning-dienst-input";
+  cSel.setAttribute("data-k", "client");
+  fillSelectFromArray(cSel, data.clienten, "Selecteer cliënt");
+  if (prefill && prefill.client) cSel.value = prefill.client;
+  cWrap.appendChild(cLab);
+  cWrap.appendChild(cSel);
+
+  const tWrap = document.createElement("div");
+  tWrap.className = "planning-dienst-koppel-veld";
+  const tLab = document.createElement("span");
+  tLab.className = "planning-dienst-koppel-mini";
+  tLab.textContent = "Teamlid";
+  const tSel = document.createElement("select");
+  tSel.className = "planning-dienst-input";
+  tSel.setAttribute("data-k", "teamlid");
+  fillSelectFromArray(tSel, data.medewerkers, "Selecteer teamlid");
+  if (prefill && prefill.teamlid) tSel.value = prefill.teamlid;
+  tWrap.appendChild(tLab);
+  tWrap.appendChild(tSel);
+
+  const del = document.createElement("button");
+  del.type = "button";
+  del.className = "planning-dienst-koppel-del";
+  del.setAttribute("aria-label", "Koppeling verwijderen");
+  del.innerHTML = '<span aria-hidden="true">×</span>';
+  del.addEventListener("click", () => {
+    rij.remove();
+    ensureOneKoppelRow();
+    updateKoppelTel();
+  });
+
+  top.appendChild(cWrap);
+  top.appendChild(tWrap);
+  top.appendChild(del);
+
+  // Rij 2: van/tot tijd
+  const tijd = document.createElement("div");
+  tijd.className = "planning-dienst-koppel-rij-tijd";
+  const mkTime = (k, label, val) => {
+    const w = document.createElement("div");
+    w.className = "planning-dienst-koppel-veld";
+    const l = document.createElement("span");
+    l.className = "planning-dienst-koppel-mini";
+    l.textContent = label;
+    const inp = document.createElement("input");
+    inp.type = "time";
+    inp.step = "60";
+    inp.className = "planning-dienst-input";
+    inp.setAttribute("data-k", k);
+    inp.value = val || "";
+    w.appendChild(l);
+    w.appendChild(inp);
+    return w;
+  };
+  tijd.appendChild(mkTime("van", "Van", tij.van));
+  tijd.appendChild(mkTime("tot", "Tot", tij.tot));
+
+  // Rij 3: weekdagen
+  const dagenWrap = document.createElement("div");
+  dagenWrap.className = "planning-dienst-koppel-dagen";
+  dagenWrap.setAttribute("role", "group");
+  dagenWrap.setAttribute("aria-label", "Dagen van de week");
+  PLANNING_WEEKDAGEN.forEach((wd) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "planning-dienst-dag-chip";
+    chip.setAttribute("data-dow", String(wd.dow));
+    chip.textContent = wd.label;
+    const on = dagen.has(wd.dow);
+    chip.classList.toggle("is-on", on);
+    chip.setAttribute("aria-pressed", on ? "true" : "false");
+    chip.addEventListener("click", () => {
+      const now = chip.classList.toggle("is-on");
+      chip.setAttribute("aria-pressed", now ? "true" : "false");
+      updateKoppelTel();
+    });
+    dagenWrap.appendChild(chip);
+  });
+
+  rij.appendChild(top);
+  rij.appendChild(tijd);
+  rij.appendChild(dagenWrap);
+  return rij;
+}
+
+function addKoppelRow(prefill) {
+  const list = document.getElementById("dienst-koppel-list");
+  if (!list) return;
+  list.appendChild(makeKoppelRow(prefill));
+  updateKoppelTel();
+}
+
+function ensureOneKoppelRow() {
+  const list = document.getElementById("dienst-koppel-list");
+  if (list && list.querySelectorAll("[data-koppel-rij]").length === 0) addKoppelRow();
+}
+
+function resetKoppelRows() {
+  const list = document.getElementById("dienst-koppel-list");
+  if (list) list.innerHTML = "";
+  const tel = document.getElementById("dienst-koppel-tel");
+  if (tel) { tel.hidden = true; tel.textContent = ""; }
+  const vanaf = document.getElementById("dienst-ind-vanaf");
+  const tot = document.getElementById("dienst-ind-tot");
+  if (vanaf) vanaf.value = "";
+  if (tot) tot.value = "";
+}
+
+function readKoppelRows() {
+  const list = document.getElementById("dienst-koppel-list");
+  if (!list) return [];
+  return Array.from(list.querySelectorAll("[data-koppel-rij]")).map((rij) => {
+    const dagen = new Set();
+    rij.querySelectorAll(".planning-dienst-dag-chip.is-on").forEach((c) => {
+      const dow = parseInt(c.getAttribute("data-dow"), 10);
+      if (!Number.isNaN(dow)) dagen.add(dow);
+    });
+    return {
+      client: (rij.querySelector('[data-k="client"]')?.value || "").trim(),
+      teamlid: (rij.querySelector('[data-k="teamlid"]')?.value || "").trim(),
+      van: rij.querySelector('[data-k="van"]')?.value || "",
+      tot: rij.querySelector('[data-k="tot"]')?.value || "",
+      dagen,
+    };
+  });
+}
+
+/** Telt (zonder aan te maken) hoeveel diensten de individuele-modus zou opleveren. */
+function countIndividueleDiensten() {
+  const vanaf = document.getElementById("dienst-ind-vanaf")?.value;
+  const tot = document.getElementById("dienst-ind-tot")?.value || "";
+  if (!vanaf) return 0;
+  const rows = readKoppelRows().filter((r) => r.client && r.teamlid && r.van && r.tot && r.dagen.size);
+  if (!rows.length) return 0;
+  const startD = dateOnlyFromInput(vanaf);
+  const endD = tot ? dateOnlyFromInput(tot) : (startD ? new Date(startD) : null);
+  if (!startD || !endD || endD < startD) return 0;
+  let n = 0;
+  const cur = new Date(startD);
+  for (let g = 0; g < 4000; g++) {
+    if (cur > endD) break;
+    const dow = cur.getDay();
+    rows.forEach((r) => { if (r.dagen.has(dow)) n++; });
+    if (n > 5000) break;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return n;
+}
+
+function updateKoppelTel() {
+  const tel = document.getElementById("dienst-koppel-tel");
+  if (!tel) return;
+  if (ui.dienstModus !== "individueel") { tel.hidden = true; return; }
+  const n = countIndividueleDiensten();
+  if (n <= 0) { tel.hidden = true; tel.textContent = ""; return; }
+  tel.textContent = n === 1 ? "Dit maakt 1 dienst aan." : ("Dit maakt " + n + " diensten aan.");
+  tel.hidden = false;
+}
+
+/** Bouwt de planning-rijen voor de individuele modus, of toont een melding en
+ *  retourneert null bij een ongeldige invoer. Eén rij per koppeling × gekozen dag. */
+function generateIndividueleDiensten() {
+  const fb = (t, m) => { if (typeof window.showActionFeedback === "function") window.showActionFeedback("info", t, m); };
+  const diensttype = getSelectedDiensttypeFieldString().trim();
+  const locHr = document.getElementById("dienst-locatie-hr")?.value || "";
+  if (!diensttype || !locHr) {
+    fb("Verplichte velden", !diensttype
+      ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
+      : "Selecteer een locatie.");
+    return null;
+  }
+  const vanaf = document.getElementById("dienst-ind-vanaf")?.value;
+  const totRaw = document.getElementById("dienst-ind-tot")?.value || "";
+  if (!vanaf) { fb("Periode ontbreekt", "Kies een 'vanaf'-datum voor de koppelingen."); return null; }
+  const startD = dateOnlyFromInput(vanaf);
+  const endD = totRaw ? dateOnlyFromInput(totRaw) : (startD ? new Date(startD) : null);
+  if (!startD || !endD) { fb("Ongeldige datum", "Controleer de 'vanaf'- en 'tot en met'-datum."); return null; }
+  if (endD < startD) { fb("Ongeldige periode", "De 'tot en met'-datum ligt vóór de 'vanaf'-datum."); return null; }
+
+  const rowsAll = readKoppelRows();
+  const rows = rowsAll.filter((r) => r.client && r.teamlid && r.van && r.tot && r.dagen.size);
+  if (!rows.length) {
+    fb("Koppeling onvolledig", rowsAll.length === 0
+      ? "Voeg minstens één cliënt↔teamlid-koppeling toe."
+      : "Vul per koppeling een cliënt, een teamlid, de tijden én minstens één dag van de week in.");
+    return null;
+  }
+
+  const pauze = Math.max(0, parseFloat(document.getElementById("dienst-pauze")?.value) || 0);
+  const richt = document.getElementById("dienst-beschrijving");
+  const besch = (richt && richt.innerHTML.trim()) || "";
+  const dState = buildDataState();
+  const afd = dState.afdelingen[0] || "Overig";
+  const teamlead = dState.teamlead[0] || "";
+  const MAX_REPEAT = 1000;
+
+  const items = [];
+  let truncated = false;
+  const cur = new Date(startD);
+  for (let guard = 0; guard < 4000; guard++) {
+    if (cur > endD) break;
+    const dow = cur.getDay();
+    const dateStr = toDateInputValue(cur);
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r.dagen.has(dow)) continue;
+      const startIso = combineDateTimeToLocalIso(dateStr, r.van);
+      let endIso = combineDateTimeToLocalIso(dateStr, r.tot);
+      if (!startIso || !endIso) continue;
+      // Nachtdienst: eindtijd ≤ starttijd → loopt door tot de volgende dag.
+      if (parseStartDate(endIso) <= parseStartDate(startIso)) {
+        const nd = new Date(cur);
+        nd.setDate(nd.getDate() + 1);
+        endIso = combineDateTimeToLocalIso(toDateInputValue(nd), r.tot);
+      }
+      if (items.length >= MAX_REPEAT) { truncated = true; break; }
+      items.push(normalizeItem({
+        id: makePlanningId(),
+        afdeling: afd,
+        diensttype,
+        functie: diensttype,
+        teamlead,
+        teamlid: r.teamlid,
+        client: r.client,
+        vestiging: locHr,
+        locatie: locHr,
+        start: startIso,
+        einde: endIso,
+        pauzeUren: pauze,
+        vereistAantalMedewerkers: 1,
+        competenties: "",
+        beschrijving: besch,
+        herhaal: false,
+        leer: 0,
+        sterren: 0,
+        conflict: false,
+      }));
+    }
+    if (truncated) break;
+    cur.setDate(cur.getDate() + 1);
+  }
+  if (!items.length) {
+    fb("Geen diensten", "Binnen de gekozen periode valt geen enkele geselecteerde weekdag. Pas de dagen of de periode aan.");
+    return null;
+  }
+  return { items, truncated };
+}
+
 /**
  * PR-F: bij keuze van exact 1 diensttype dat een `standaard_pauze_uren > 0` heeft,
  * autofillen we het pauze-veld — maar enkel als de gebruiker het zelf nog niet
@@ -2402,6 +2770,7 @@ function renderFilterDiensttypeMultiselect() {
 }
 
 function fillDienstFormSelects(data) {
+  lastDienstDataState = data; // cache voor nieuwe koppelingsrijen (individuele modus)
   const setOpts = (sel, items, placeholder, phVal) => {
     if (!sel) return;
     const current = sel.value;
@@ -2578,6 +2947,13 @@ function openDienstPanel(editId = null) {
     if (et) et.value = t1;
     ui.prefillStartDay = null;
   }
+  // Type-dienst modus. Bewerken gaat altijd over één bestaande planning-rij →
+  // klassieke (groep) weergave met de toggle verborgen. Bij een nieuwe dienst
+  // kan de planner kiezen tussen Groepsdienst en Individueel (1-op-1/ambulant).
+  const modusToggle = document.getElementById("dienst-modus");
+  resetKoppelRows();
+  if (modusToggle) modusToggle.hidden = Boolean(editId);
+  setDienstModus("groep");
   back.removeAttribute("hidden");
   back.setAttribute("aria-hidden", "false");
   panel.removeAttribute("hidden");
@@ -2605,6 +2981,8 @@ function closeDienstPanel() {
   if (rt) rt.innerHTML = "";
   clearPlanningDiensttypeMultiselect();
   syncDienstRepeatOptions();
+  resetKoppelRows();
+  ui.dienstModus = "groep";
 }
 
 function initDienstPanel() {
@@ -2633,6 +3011,17 @@ function initDienstPanel() {
   // Compensatie-saldo badge bij medewerker-keuze
   const mwSel = document.getElementById("dienst-mw");
   mwSel?.addEventListener("change", () => updateCompensatieSaldoHint());
+
+  // Type-dienst modus-toggle (Groepsdienst ↔ Individueel 1-op-1/ambulant)
+  document.getElementById("dienst-modus-groep")?.addEventListener("click", () => setDienstModus("groep"));
+  document.getElementById("dienst-modus-individueel")?.addEventListener("click", () => setDienstModus("individueel"));
+  // Cliënt↔teamlid-koppeling toevoegen
+  document.getElementById("dienst-koppel-add")?.addEventListener("click", () => addKoppelRow());
+  // Periode/tijden/cliënt-wijzigingen → herbereken hoeveel diensten dit oplevert.
+  // (De weekdag-chips hebben een eigen click-handler die updateKoppelTel aanroept.)
+  const koppelBlok = document.getElementById("dienst-koppel-blok");
+  koppelBlok?.addEventListener("input", () => updateKoppelTel());
+  koppelBlok?.addEventListener("change", () => updateKoppelTel());
   openBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     openDienstPanel();
@@ -2652,6 +3041,28 @@ function initDienstPanel() {
   herhaal?.addEventListener("change", syncDienstRepeatOptions);
   form?.addEventListener("submit", (ev) => {
     ev.preventDefault();
+    // Individuele modus (1-op-1 / ambulant): genereer per cliënt↔teamlid-koppeling ×
+    // gekozen weekdag een aparte planning-rij. Alleen bij een NIEUWE dienst — bewerken
+    // gaat over één bestaande rij en blijft in groep-modus.
+    if (ui.dienstModus === "individueel" && !ui.editingId) {
+      const gen = generateIndividueleDiensten();
+      if (!gen) return;
+      if (gen.truncated && typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Periode ingekort",
+          "Er zijn maximaal 1000 diensten in één keer aangemaakt. Verfijn de periode of voeg de rest later toe.");
+      }
+      if (window.planningDB && window.planningDB.add) {
+        Promise.all(gen.items.map((o) => window.planningDB.add(o)))
+          .catch(function (e) { console.error("[planning] individuele diensten toevoegen mislukt:", e); });
+      }
+      if (typeof window.showActionFeedback === "function") {
+        const n = gen.items.length;
+        window.showActionFeedback("info", "Ingepland",
+          n === 1 ? "1 individuele dienst aangemaakt." : (n + " individuele diensten aangemaakt."));
+      }
+      closeDienstPanel();
+      return;
+    }
     const diensttype = getSelectedDiensttypeFieldString().trim();
     const locHr = document.getElementById("dienst-locatie-hr")?.value || "";
     // Medewerker en cliënt zijn NIET verplicht: een dienst kan als open dienst

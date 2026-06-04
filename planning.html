@@ -429,6 +429,16 @@
       <button type="button" class="planning-dienst-close" id="planning-dienst-close" aria-label="Sluiten"><span aria-hidden="true">×</span></button>
     </div>
     <form class="planning-dienst-form" id="planning-dienst-form" novalidate>
+      <div class="planning-dienst-modus" id="dienst-modus" role="radiogroup" aria-label="Type dienst">
+        <button type="button" class="planning-dienst-modus-btn is-active" id="dienst-modus-groep" role="radio" aria-checked="true" data-modus="groep">
+          <span class="planning-dienst-modus-btn-t">Groepsdienst</span>
+          <span class="planning-dienst-modus-btn-s">Eén dienst, één medewerker</span>
+        </button>
+        <button type="button" class="planning-dienst-modus-btn" id="dienst-modus-individueel" role="radio" aria-checked="false" data-modus="individueel">
+          <span class="planning-dienst-modus-btn-t">Individueel · 1-op-1 / ambulant</span>
+          <span class="planning-dienst-modus-btn-s">Koppel cliënten aan teamleden</span>
+        </button>
+      </div>
       <div class="planning-dienst-grid">
         <div class="planning-dienst-field planning-dienst-field--wide">
           <span class="planning-dienst-label" id="dienst-diensttype-label">Diensttype <span class="req">*</span></span>
@@ -458,7 +468,7 @@
           <label class="planning-dienst-label" for="dienst-locatie-hr">Locatie <span class="req">*</span></label>
           <select id="dienst-locatie-hr" class="planning-dienst-input" name="locatie_hr" required></select>
         </div>
-        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide">
+        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide dienst-only-groep">
           <span class="planning-dienst-label">Starttijd <span class="req">*</span></span>
           <div class="planning-dienst-dtrow">
             <div class="planning-dienst-dt">
@@ -477,7 +487,7 @@
             </div>
           </div>
         </div>
-        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide">
+        <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide dienst-only-groep">
           <span class="planning-dienst-label">Eindtijd <span class="req">*</span></span>
           <div class="planning-dienst-dtrow">
             <div class="planning-dienst-dt">
@@ -495,19 +505,19 @@
           <input type="number" class="planning-dienst-input" id="dienst-pauze" name="pauze" min="0" max="8" step="0.25" value="0" />
           <p class="planning-dienst-hint" id="dienst-pauze-hint" hidden></p>
         </div>
-        <div class="planning-dienst-field planning-dienst-field--short">
+        <div class="planning-dienst-field planning-dienst-field--short dienst-only-groep">
           <label class="planning-dienst-label" for="dienst-aantal">Vereist aantal medewerkers</label>
           <input type="number" class="planning-dienst-input" id="dienst-aantal" name="aantal" min="1" max="999" value="1" />
         </div>
       </div>
-      <div class="planning-dienst-field planning-dienst-field--full">
+      <div class="planning-dienst-field planning-dienst-field--full dienst-only-groep">
         <label class="planning-dienst-label" for="dienst-mw">Medewerker <span class="planning-dienst-opt">(optioneel)</span></label>
         <select id="dienst-mw" class="planning-dienst-input" name="teamlid">
           <option value="">Geen — open dienst (later in te vullen)</option>
         </select>
         <p class="planning-dienst-hint" id="dienst-mw-saldo-hint" hidden></p>
       </div>
-      <div class="planning-dienst-grid">
+      <div class="planning-dienst-grid dienst-only-groep">
         <div class="planning-dienst-field" id="dienst-client-field">
           <label class="planning-dienst-label" for="dienst-client" id="dienst-client-label">Cliënt <span class="planning-dienst-opt">(optioneel)</span></label>
           <select id="dienst-client" class="planning-dienst-input" name="client"></select>
@@ -517,6 +527,25 @@
           <label class="planning-dienst-label" for="dienst-competentie">Vereiste competenties</label>
           <select id="dienst-competentie" class="planning-dienst-input" name="competentie"></select>
         </div>
+      </div>
+      <div class="planning-dienst-koppel dienst-only-ind" id="dienst-koppel-blok" hidden>
+        <span class="planning-dienst-label" id="dienst-koppel-label">Cliënt ↔ teamlid koppelingen <span class="req">*</span></span>
+        <p class="planning-dienst-hint planning-dienst-koppel-uitleg">Koppel elke cliënt aan een teamlid voor individuele (1-op-1 of ambulante) begeleiding. Per koppeling kies je de tijden en de dag(en) van de week. De periode hieronder geldt voor alle koppelingen.</p>
+        <div class="planning-dienst-grid">
+          <div class="planning-dienst-field">
+            <label class="planning-dienst-label" for="dienst-ind-vanaf">Vanaf datum <span class="req">*</span></label>
+            <input type="date" class="planning-dienst-input" id="dienst-ind-vanaf" />
+          </div>
+          <div class="planning-dienst-field">
+            <label class="planning-dienst-label" for="dienst-ind-tot">Tot en met datum <span class="planning-dienst-opt">(optioneel)</span></label>
+            <input type="date" class="planning-dienst-input" id="dienst-ind-tot" />
+          </div>
+        </div>
+        <div class="planning-dienst-koppel-list" id="dienst-koppel-list"></div>
+        <button type="button" class="planning-dienst-koppel-add" id="dienst-koppel-add">
+          <span class="planning-dienst-koppel-add-ico" aria-hidden="true">+</span> Koppeling toevoegen
+        </button>
+        <p class="planning-dienst-hint planning-dienst-koppel-tel" id="dienst-koppel-tel" hidden></p>
       </div>
       <div class="planning-dienst-field planning-dienst-field--full">
         <span class="planning-dienst-label" id="dienst-richtext-label">Beschrijving</span>
@@ -533,7 +562,7 @@
         <div class="planning-dienst-richtext" id="dienst-beschrijving" contenteditable="true" role="textbox" aria-labelledby="dienst-richtext-label" data-placeholder="Optionele toelichting…"></div>
         <input type="hidden" id="dienst-beschrijving-h" name="beschrijving" value="" />
       </div>
-      <div class="planning-dienst-herhaling">
+      <div class="planning-dienst-herhaling dienst-only-groep">
         <span class="planning-dienst-herhaling-t">Herhaling / periode</span>
         <label class="planning-dienst-toggle">
           <input type="checkbox" id="dienst-herhaal" name="herhaal" />

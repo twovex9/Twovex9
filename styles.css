@@ -11986,6 +11986,199 @@ body.planning-dienst-open {
   display: none !important;
 }
 
+/* ── Type-dienst modus (Groepsdienst ↔ Individueel) + cliënt↔teamlid-koppelingen ── */
+/* Toggle-bare secties: [hidden] moet winnen van display:grid/flex (grid/field-containers). */
+.dienst-only-groep[hidden],
+.dienst-only-ind[hidden],
+.planning-dienst-modus[hidden] {
+  display: none !important;
+}
+
+.planning-dienst-modus {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.planning-dienst-modus-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1.5px solid var(--pb-d1d5db);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.planning-dienst-modus-btn:hover {
+  border-color: var(--blue);
+}
+
+.planning-dienst-modus-btn.is-active {
+  border-color: var(--blue);
+  background: var(--ps-eff6ff);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+
+.planning-dienst-modus-btn-t {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--pt-0f172a);
+  letter-spacing: -0.01em;
+}
+
+.planning-dienst-modus-btn-s {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pt-94a3b8);
+}
+
+.planning-dienst-modus-btn.is-active .planning-dienst-modus-btn-s {
+  color: var(--pt-1d4ed8);
+}
+
+/* Koppelingen-blok: zelfde "soft panel"-look als de herhaal-sectie */
+.planning-dienst-koppel {
+  border: 1px solid var(--pb-dbe7f5);
+  border-radius: 14px;
+  background: var(--ps-f8fbff);
+  padding: 12px;
+}
+
+.planning-dienst-koppel-uitleg {
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.planning-dienst-koppel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.planning-dienst-koppel-rij {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid var(--pb-e2e8f0);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 10px 10px 12px;
+}
+
+.planning-dienst-koppel-rij-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.planning-dienst-koppel-rij-tijd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.planning-dienst-koppel-veld {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.planning-dienst-koppel-mini {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pt-334155);
+  margin-bottom: 4px;
+}
+
+.planning-dienst-koppel-del {
+  align-self: end;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  border: 1px solid var(--pb-d1d5db);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--pt-94a3b8);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+
+.planning-dienst-koppel-del:hover {
+  color: var(--pt-b91c1c);
+  border-color: var(--pt-b91c1c);
+  background: var(--ps-f1f5f9);
+}
+
+.planning-dienst-koppel-dagen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.planning-dienst-dag-chip {
+  min-width: 40px;
+  padding: 6px 9px;
+  border: 1px solid var(--pb-d1d5db);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--pt-334155);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.planning-dienst-dag-chip:hover {
+  border-color: var(--blue);
+}
+
+.planning-dienst-dag-chip.is-on {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+
+.planning-dienst-koppel-add {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1.5px dashed var(--pb-c7d2fe);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pt-1d4ed8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.planning-dienst-koppel-add:hover {
+  background: var(--ps-eff6ff);
+  border-color: var(--blue);
+}
+
+.planning-dienst-koppel-add-ico {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.planning-dienst-koppel-tel {
+  margin-top: 10px;
+}
+
 .planning-dienst-footer {
   display: flex;
   justify-content: flex-end;
