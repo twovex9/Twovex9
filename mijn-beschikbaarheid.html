@@ -5,25 +5,109 @@
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=th1" defer></script>
   <script src="sidebar-collapse.js?v=sc1" defer></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Plus-/minuren — HR</title>
-  <link rel="stylesheet" href="styles.css?v=compact1">
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
+  <title>Mijn beschikbaarheid — Future Flow</title>
+  <link rel="stylesheet" href="styles.css?v=compact1" />
+  <link rel="stylesheet" href="tijd-klok.css?v=klok1" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style>
+    .content--mb { max-width: 760px; }
+    .mb-sub { color: var(--text-secondary); }
+
+    /* Gate / melding (niet gekoppeld of niet ZZP) */
+    .mb-gate { display: none; }
+    .mb-gate .card { padding: 22px 24px; }
+    .mb-gate h2 { margin: 0 0 6px; font-size: 17px; }
+    .mb-gate p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Maand-navigatie */
+    .mb-calnav { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
+    .mb-calnav__btn {
+      width: 38px; height: 38px; flex: none;
+      border: 1px solid var(--line); background: var(--surface);
+      color: var(--text-secondary); border-radius: var(--r-sm);
+      font-size: 18px; line-height: 1; cursor: pointer;
+    }
+    .mb-calnav__btn:hover { border-color: var(--blue); color: var(--blue); }
+    .mb-calnav__label { flex: 1; text-align: center; font-size: 18px; font-weight: 700; text-transform: capitalize; }
+    .mb-calnav__today {
+      border: 1px solid var(--line); background: var(--surface); color: var(--text-secondary);
+      border-radius: var(--r-sm); padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .mb-calnav__today:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* Kalender */
+    .mb-cal { padding: 14px; }
+    .mb-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .mb-grid--head { margin-bottom: 8px; }
+    .mb-wd { text-align: center; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .mb-cell {
+      aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      border: 1px solid var(--line); background: var(--surface-alt); color: var(--text);
+      border-radius: var(--r-sm); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0;
+    }
+    .mb-cell:hover { border-color: var(--blue); }
+    .mb-cell--empty { border: 0; background: transparent; cursor: default; }
+    .mb-cell--beschikbaar { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .mb-cell--niet_beschikbaar { background: #dc2626; border-color: #dc2626; color: #fff; }
+    .mb-cell--today { box-shadow: 0 0 0 2px var(--blue); }
+    .mb-cell--past { opacity: 0.45; }
+    .mb-cell__t { font-size: 10px; font-weight: 700; line-height: 1; opacity: 0.96; }
+
+    /* Legenda */
+    .mb-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding: 2px; }
+    .mb-legend__item { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-secondary); }
+    .mb-legend__dot { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+    .mb-legend__dot--green { background: #16a34a; }
+    .mb-legend__dot--red { background: #dc2626; }
+    .mb-legend__dot--leeg { background: var(--surface-alt); border: 1px solid var(--line); }
+
+    /* Dag-editor (modal) */
+    .mb-modal-card { width: min(420px, 96vw); }
+    .mb-modal-body { padding: 6px 4px 2px; }
+    .mb-choices { display: flex; flex-direction: column; gap: 8px; margin: 2px 0 4px; }
+    .mb-choice {
+      text-align: left; padding: 12px 14px; border: 1px solid var(--line);
+      background: var(--surface); color: var(--text); border-radius: var(--r-md);
+      font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    }
+    .mb-choice:hover { border-color: var(--blue); }
+    .mb-choice--active { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-soft); }
+    .mb-choice__ic { width: 15px; height: 15px; border-radius: 4px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+    .mb-choice__ic--green { background: #16a34a; }
+    .mb-choice__ic--red { background: #dc2626; }
+    .mb-choice__ic--clock { color: var(--blue); }
+
+    .mb-times { display: flex; align-items: flex-end; gap: 12px; margin: 12px 2px 2px; }
+    /* `hidden` moet winnen van display:flex (anders tonen de tijden ook bij 'hele dag'/'niet'). */
+    .mb-times[hidden] { display: none; }
+    #mb-error[hidden] { display: none; }
+    .mb-time { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .mb-time > span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .mb-time__btn {
+      height: 50px; border: 1px solid var(--line); background: var(--surface-alt); color: var(--text);
+      border-radius: var(--r-sm); font-size: 21px; font-weight: 700; cursor: pointer;
+      font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .mb-time__btn:hover { border-color: var(--blue); }
+    .mb-time__btn svg { width: 16px; height: 16px; color: var(--text-muted); }
+    .mb-times__dash { color: var(--text-muted); padding-bottom: 14px; }
+    .mb-time-hint { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; }
+
+    .mb-modal-foot { display: flex; align-items: center; gap: 10px; padding: 14px 20px 4px; border-top: 1px solid var(--line); margin-top: 12px; }
+    .mb-modal-foot .btn-primary { flex: 1; }
+    .mb-wis { background: transparent; border: 0; color: var(--red); font-weight: 600; font-size: 13px; cursor: pointer; padding: 6px 8px; }
+    .mb-busy { opacity: 0.6; pointer-events: none; }
+  </style>
 </head>
 <body>
-  <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="floating-panels.js?v=fpv9" defer></script>
-
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
@@ -34,7 +118,7 @@
           <nav class="top-nav" aria-label="Hoofdnavigatie">
             <a href="home" class="top-link">Home</a>
             <a href="mijn-proforma-facturen" class="top-link">Mijn facturen</a>
-            <a href="mijn-beschikbaarheid" class="top-link">Mijn beschikbaarheid</a>
+            <a href="mijn-beschikbaarheid" class="top-link is-active">Mijn beschikbaarheid</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="planning" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
@@ -114,108 +198,125 @@
           </button>
         </div>
       </div>
-      <div class="topbar-icons">
-        <button type="button" class="icon-btn" aria-label="Help">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-        </button>
-      </div>
+      <div class="topbar-icons"></div>
     </header>
 
     <aside class="sidebar">
-      <nav class="side-nav">
-        <a href="hr" class="side-link">Medewerkers</a>
-        <a href="competenties" class="side-link">Competenties</a>
-        <a href="opleidingen" class="side-link">Opleidingen</a>
-        <a href="locaties" class="side-link">Locaties</a>
-        <div class="side-group" data-side-group="salarishuis">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
-            <span class="side-group__label">Salarishuis</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
-            <a href="salarishuis" class="side-link side-link--nested">Salarishuis</a>
-            <a href="salarishuis-wijzigingsgeschiedenis" class="side-link side-link--nested">Wijzigingsgeschiedenis</a>
-          </div>
-        </div>
-        <a href="bureaus" class="side-link">Bureau's</a>
-        <a href="salarisadministratie-exporter" class="side-link">Salarisadministratie</a>
-        <div class="side-group" data-side-group="verlof">
-          <button type="button" class="side-link side-link--sub side-group__toggle is-active" aria-expanded="true" aria-controls="side-verlof-sub">
-            <span class="side-group__label">Verlof</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-verlof-sub">
-            <a href="verlof" class="side-link side-link--nested">Verlofaanvragen</a>
-            <a href="verlofstanden" class="side-link side-link--nested">Verlofstanden</a>
-            <a href="verlof-uitdienst" class="side-link side-link--nested">Uitdiensttreding</a>
-            <a href="plus-minuren" class="side-link side-link--nested is-active">Plus-/minuren</a>
-            <a href="verloftypes" class="side-link side-link--nested">Verloftypes</a>
-          </div>
-        </div>
-        <div class="side-group" data-side-group="compensatie">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
-            <span class="side-group__label">Compensatie</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-compensatie-sub" hidden>
-            <a href="compensatie-saldi" class="side-link side-link--nested">Saldi</a>
-            <a href="compensatie-berekeningen" class="side-link side-link--nested">Berekeningen</a>
-            <a href="compensatie-feestdagen" class="side-link side-link--nested">Feestdagen</a>
-            <a href="compensatie-diensttypes" class="side-link side-link--nested">Diensttypes</a>
-          </div>
-        </div>
-        <a href="verzuim" class="side-link">Verzuim</a>
-        <a href="nieuws" class="side-link">Nieuws</a>
+      <nav class="side-nav" aria-label="Persoonlijk">
+        <a href="mijn-proforma-facturen" class="side-link">Mijn facturen</a>
+        <a href="mijn-uitnodigingen" class="side-link">Mijn uitnodigingen</a>
+        <a href="mijn-beschikbaarheid" class="side-link is-active">Mijn beschikbaarheid</a>
+        <a href="mijn-gegevens" class="side-link">Mijn gegevens</a>
       </nav>
-      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
     </aside>
 
-    <main class="content">
+    <main class="content content--mb">
       <div class="content-header">
-        <h1>Plus-/minuren</h1>
+        <div>
+          <h1>Mijn beschikbaarheid</h1>
+          <p class="content-subtitle mb-sub">Geef per dag door wanneer je beschikbaar bent. Tik op een dag: hele dag beschikbaar, beschikbaar tussen bepaalde tijden (met de klok), of niet beschikbaar.</p>
+        </div>
       </div>
 
-      <section class="table-card table-card--compact">
-        <div style="padding:48px 24px;text-align:center;">
-          <div style="max-width:480px;margin:0 auto;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:0.55;">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="16"></line>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
-            <h2 style="font-size:18px;margin:0 0 12px;color:var(--text);">Plus-/minuren — gereserveerd</h2>
-            <p style="font-size:14px;color:var(--text-secondary);margin:0 0 8px;">
-              Deze functionaliteit komt in een volgende module/fase.
-            </p>
-            <p style="font-size:13px;color:var(--text-muted);margin:0;">
-              De pagina is gereserveerd in de structuur conform BS2-pariteit.
-            </p>
-          </div>
+      <!-- Gate: niet gekoppeld / geen ZZP'er -->
+      <div class="mb-gate" id="mb-gate">
+        <div class="card">
+          <h2 id="mb-gate-titel">Even geduld…</h2>
+          <p id="mb-gate-tekst">Je beschikbaarheid wordt geladen.</p>
         </div>
-      </section>
+      </div>
+
+      <!-- App: kalender -->
+      <div id="mb-app" hidden>
+        <div class="mb-calnav">
+          <button type="button" class="mb-calnav__btn" id="mb-prev" aria-label="Vorige maand">‹</button>
+          <div class="mb-calnav__label" id="mb-maandlabel">—</div>
+          <button type="button" class="mb-calnav__btn" id="mb-next" aria-label="Volgende maand">›</button>
+          <button type="button" class="mb-calnav__today" id="mb-today">Vandaag</button>
+        </div>
+
+        <section class="card mb-cal">
+          <div class="mb-grid mb-grid--head" aria-hidden="true">
+            <div class="mb-wd">ma</div><div class="mb-wd">di</div><div class="mb-wd">wo</div>
+            <div class="mb-wd">do</div><div class="mb-wd">vr</div><div class="mb-wd">za</div><div class="mb-wd">zo</div>
+          </div>
+          <div class="mb-grid" id="mb-grid"></div>
+        </section>
+
+        <div class="mb-legend">
+          <span class="mb-legend__item"><span class="mb-legend__dot mb-legend__dot--green"></span> Beschikbaar</span>
+          <span class="mb-legend__item"><span class="mb-legend__dot mb-legend__dot--red"></span> Niet beschikbaar</span>
+          <span class="mb-legend__item"><span class="mb-legend__dot mb-legend__dot--leeg"></span> Niet ingevuld</span>
+        </div>
+      </div>
     </main>
   </div>
 
+  <!-- Dag-editor -->
+  <div class="modal-overlay" id="mb-modal" hidden>
+    <div class="modal-card mb-modal-card">
+      <div class="modal-header">
+        <h2 id="mb-modal-titel">Beschikbaarheid</h2>
+        <button type="button" class="modal-close" id="mb-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body mb-modal-body">
+        <div class="mb-choices">
+          <button type="button" class="mb-choice" data-mode="beschikbaar">
+            <span class="mb-choice__ic mb-choice__ic--green"></span> Hele dag beschikbaar
+          </button>
+          <button type="button" class="mb-choice" data-mode="tijden">
+            <span class="mb-choice__ic mb-choice__ic--clock" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            </span> Beschikbaar met tijden
+          </button>
+          <button type="button" class="mb-choice" data-mode="niet">
+            <span class="mb-choice__ic mb-choice__ic--red"></span> Niet beschikbaar
+          </button>
+        </div>
+
+        <div class="mb-times" id="mb-times" hidden>
+          <label class="mb-time">
+            <span>Van</span>
+            <button type="button" class="mb-time__btn" id="mb-begin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span id="mb-begin-lbl">09:00</span>
+            </button>
+          </label>
+          <span class="mb-times__dash">–</span>
+          <label class="mb-time">
+            <span>Tot</span>
+            <button type="button" class="mb-time__btn" id="mb-eind">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span id="mb-eind-lbl">17:00</span>
+            </button>
+          </label>
+        </div>
+        <p class="mb-time-hint" id="mb-hint">Laat de tijden leeg voor "hele dag beschikbaar".</p>
+        <p class="error-text" id="mb-error" hidden></p>
+      </div>
+      <div class="mb-modal-foot">
+        <button type="button" class="mb-wis" id="mb-wis" hidden>Wissen</button>
+        <button type="button" class="btn-outline" id="mb-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="mb-save">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=imcols9"></script>
-  <script src="sidebar-nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="error-reporter.js?v=er1"></script>
   <script src="besa-sync-reporter.js"></script>
-  <script src="optimistic-lock.js?v=ol1" defer></script>
-  <script src="realtime-sync.js?v=rt1" defer></script>
-  <script src="bulk-actions.js?v=ba1" defer></script>
-  <script src="pdf-export.js?v=pdf1" defer></script>
+  <script src="save-feedback.js?v=sf500" defer></script>
   <script src="permissions.js?v=perm2" defer></script>
   <script src="permissions-page-map.js?v=permmap1" defer></script>
   <script src="permissions-gate.js?v=permgate1" defer></script>
   <script src="permissions-nav-hide.js?v=permhide1" defer></script>
-  <script src="helpdesk-modal.js?v=help1" defer></script>
-  <script src="onboarding-flow.js?v=onb3" defer></script>
-  <script src="mfa-challenge.js?v=mfa1" defer></script>
   <script src="auth-guard.js"></script>
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
-  <script src="besa-audit.js" defer></script>
+  <script src="mijn-beschikbaarheid-data.js?v=mb1"></script>
+  <script src="tijd-klok.js?v=klok1" defer></script>
+  <script src="mijn-beschikbaarheid.js?v=mb1" defer></script>
 </body>
 </html>
