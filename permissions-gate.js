@@ -46,10 +46,58 @@
     } catch (e) { /* ok */ }
   }
 
+  // Toon een eventueel gezette flash-melding (bv. na een geen-toegang-redirect)
+  // als nette, thema-bewuste banner. Eenmalig: de melding wordt na tonen gewist.
+  function renderFlash(msg) {
+    var doc = global.document;
+    if (!doc || !doc.body) return;
+    try {
+      var bar = doc.createElement("div");
+      bar.setAttribute("role", "alert");
+      bar.style.cssText = [
+        "position:fixed", "top:16px", "left:50%", "transform:translateX(-50%)",
+        "z-index:5000", "max-width:min(520px,94vw)", "display:flex",
+        "align-items:flex-start", "gap:10px", "padding:13px 16px", "border-radius:14px",
+        "background:var(--surface,#fff)", "color:var(--text,#111)",
+        "border:1px solid var(--red,#dc2626)", "box-shadow:0 12px 40px rgba(0,0,0,.22)",
+        "font-size:14px", "line-height:1.4", "font-family:inherit"
+      ].join(";");
+      var icon = doc.createElement("span");
+      icon.textContent = "🔒"; // 🔒
+      icon.style.cssText = "flex:none;font-size:16px";
+      var txt = doc.createElement("div");
+      txt.style.cssText = "flex:1";
+      txt.textContent = msg;
+      var close = doc.createElement("button");
+      close.type = "button";
+      close.setAttribute("aria-label", "Sluiten");
+      close.textContent = "×";
+      close.style.cssText = "flex:none;border:0;background:transparent;color:var(--text-muted,#737373);font-size:18px;line-height:1;cursor:pointer;padding:0 2px";
+      close.addEventListener("click", function () { try { bar.remove(); } catch (e) { /* ok */ } });
+      bar.appendChild(icon); bar.appendChild(txt); bar.appendChild(close);
+      doc.body.appendChild(bar);
+      global.setTimeout(function () { try { bar.remove(); } catch (e) { /* ok */ } }, 7000);
+    } catch (e) { /* ok */ }
+  }
+
+  function showAccessFlash() {
+    var msg = null;
+    try { msg = global.sessionStorage && global.sessionStorage.getItem("besa-flash"); } catch (e) { msg = null; }
+    if (!msg) return;
+    try { global.sessionStorage.removeItem("besa-flash"); } catch (e) { /* ok */ }
+    var doc = global.document;
+    if (doc && doc.body) renderFlash(msg);
+    else if (doc) doc.addEventListener("DOMContentLoaded", function () { renderFlash(msg); });
+  }
+
   async function run() {
     var page = currentPageName();
     if (!page) return;                        // root / onbekend → laat door
     if (page === "login.html") return;        // login mag nooit redirecten
+
+    // Toon een eventuele geen-toegang-melding die op een vorige (geblokkeerde)
+    // pagina is gezet en die naar hier (home) heeft geredirect.
+    showAccessFlash();
 
     // Wacht op auth + permissions
     try {
@@ -113,10 +161,7 @@
     }
 
     if (!allowed) {
-      var label = (req.allowedRoles && req.allowedRoles.length)
-        ? ("rollen: " + req.allowedRoles.join(", "))
-        : ("permissie: " + req.action + (req.entity ? ("-" + req.entity) : ""));
-      setFlash("Geen toegang tot " + page + " (vereist " + label + ").");
+      setFlash("Deze functie is niet beschikbaar voor jouw rol.");
       try {
         global.location.replace("home.html");
       } catch (e) {
