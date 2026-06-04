@@ -1,0 +1,154 @@
+/* tijd-klok.css — stijl voor de analoge-klok-tijdkiezer (window.BesaKlok).
+ *
+ * Volledig thema-bewust via de besa CSS-variabelen (--surface/--text/--line/
+ * --blue/…), zodat de picker in licht én donker correct oogt. Bewust GEEN
+ * niet-bestaande vars (--card/--primary/…) — zie de dark-mode-lessen. */
+
+.klok-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;            /* boven modals (1200) en sliders (210) */
+  padding: 16px;
+}
+
+.klok-card {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  width: min(332px, 96vw);
+  padding: 18px 18px 14px;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+}
+
+.klok-titel {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ── Cijfer-invoer (typen) ───────────────────────────────────────────── */
+.klok-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.klok-veld {
+  width: 66px;
+  height: 58px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  color: var(--text);
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.klok-veld::-webkit-outer-spin-button,
+.klok-veld::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.klok-veld:focus { outline: none; }
+.klok-veld--active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-soft);
+}
+.klok-colon { font-size: 30px; font-weight: 700; color: var(--text-muted); }
+.klok-ampm { /* gereserveerd; 24-uurs picker toont dit niet */ display: none; }
+
+/* ── Wijzerplaat ─────────────────────────────────────────────────────── */
+.klok-face {
+  position: relative;
+  width: 264px;
+  height: 264px;
+  max-width: 78vw;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.klok-face__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.klok-hand { stroke: var(--blue); stroke-width: 2; }
+.klok-knob { fill: var(--blue); }
+.klok-knob--hollow { fill: var(--blue); }
+.klok-center { fill: var(--blue); }
+
+.klok-num {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.klok-num--inner { font-size: 12px; color: var(--text-muted); }
+.klok-num--sel { color: #ffffff; }                 /* zit visueel ín de blauwe knob */
+.klok-num--sel.klok-num--inner { color: #ffffff; }
+
+/* ── Acties ──────────────────────────────────────────────────────────── */
+.klok-acties {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 12px;
+}
+.klok-acties .klok-nu {
+  margin-right: auto;
+  background: transparent;
+  border: 0;
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+/* Klok-knop die aan een bestaande tijd-input wordt gekoppeld (enhance). */
+.klok-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+.klok-trigger:hover { border-color: var(--blue); color: var(--blue); }
+.klok-trigger svg { width: 18px; height: 18px; }

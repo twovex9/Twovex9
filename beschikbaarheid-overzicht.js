@@ -435,6 +435,13 @@
     if (datumInp) datumInp.addEventListener("change", prefillFromExisting);
     var isave = document.getElementById("bz-invoer-save");
     if (isave) isave.addEventListener("click", saveInvoer);
+    // Analoge klok-tijdkiezer naast de begin/eind-velden (naast native invoer).
+    if (window.BesaKlok && window.BesaKlok.enhance) {
+      var bInp = document.getElementById("bz-invoer-begin");
+      var eInp = document.getElementById("bz-invoer-eind");
+      if (bInp) window.BesaKlok.enhance(bInp, { titel: "Begintijd", nuKnop: true });
+      if (eInp) window.BesaKlok.enhance(eInp, { titel: "Eindtijd", nuKnop: true });
+    }
     var tbodyEl = document.getElementById("bz-tbody");
     if (tbodyEl) tbodyEl.addEventListener("click", function (e) {
       var tr = e.target.closest(".bz-row");
