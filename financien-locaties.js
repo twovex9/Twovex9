@@ -144,31 +144,47 @@
     });
   }
 
+  /* ---- overhead-detectie: een locatie zonder omzet én zonder ZZP-kosten is een
+     pure kostenpost (kantoor/overhead). Zorggroepen hebben omzet en/of ZZP-inzet. ---- */
+  function isOverhead(l) {
+    return (Number(l.omzet) || 0) === 0 && (Number(l.kosten_zzp) || 0) === 0
+      && ((Number(l.personeel) || 0) > 0 || (Number(l.onkosten) || 0) > 0);
+  }
+
   /* ---- per-locatie tabel ---- */
   function renderLocTable(locations) {
     var tb = $("fin-loc-tbody"); if (!tb) return;
     clear(tb);
     if (!locations.length) {
-      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 8;
+      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 9;
       td0.textContent = "Geen kosten of opbrengst in deze periode."; tr0.appendChild(td0); tb.appendChild(tr0);
-      ["fin-foot-zzp", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result"].forEach(function (id) { setText(id, ""); });
+      ["fin-foot-zzp", "fin-foot-pers", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result"].forEach(function (id) { setText(id, ""); });
       return;
     }
-    var tOmzet = 0, tKosten = 0, tZzp = 0, tOnk = 0;
-    locations.forEach(function (l) {
+    var tOmzet = 0, tKosten = 0, tZzp = 0, tPers = 0, tOnk = 0;
+    // zorggroepen eerst, overhead-regels onderaan
+    var sorted = locations.slice().sort(function (a, b) {
+      var ao = isOverhead(a) ? 1 : 0, bo = isOverhead(b) ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      return (Number(b.omzet) || 0) - (Number(a.omzet) || 0);
+    });
+    sorted.forEach(function (l) {
       tOmzet += Number(l.omzet) || 0; tKosten += Number(l.kosten) || 0;
-      tZzp += Number(l.kosten_zzp) || 0; tOnk += Number(l.onkosten) || 0;
+      tZzp += Number(l.kosten_zzp) || 0; tPers += Number(l.personeel) || 0; tOnk += Number(l.onkosten) || 0;
       var res = Number(l.resultaat) || 0;
-      var tr = el("tr", "fin-loc-row"); tr.tabIndex = 0; tr.setAttribute("role", "button");
+      var ovh = isOverhead(l);
+      var tr = el("tr", "fin-loc-row" + (ovh ? " fin-loc-row--overhead" : "")); tr.tabIndex = 0; tr.setAttribute("role", "button");
       tr.setAttribute("aria-label", l.name + " — details");
 
       var tdN = el("td", "fin-loc-name");
       var dot = el("span", "fin-loc-dot"); dot.style.background = l.kleur || "var(--blue)";
       tdN.appendChild(dot); tdN.appendChild(el("span", null, l.name));
+      if (ovh) tdN.appendChild(el("span", "fin-ovh-badge", "overhead"));
       tr.appendChild(tdN);
 
       tr.appendChild(el("td", "fin-num", fmtInt(l.zzpers)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten_zzp)));
+      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.personeel)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.onkosten)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten)));
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.omzet)));
@@ -182,12 +198,24 @@
       tb.appendChild(tr);
     });
     setText("fin-foot-zzp", fmtEuro(tZzp));
+    setText("fin-foot-pers", fmtEuro(tPers));
     setText("fin-foot-onk", fmtEuro(tOnk));
     setText("fin-foot-kosten", fmtEuro(tKosten));
     setText("fin-foot-omzet", fmtEuro(tOmzet));
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
     if (foot) { foot.textContent = fmtEuro(tRes); foot.className = "fin-num fin-eur " + (tRes >= 0 ? "fin-pos" : "fin-neg"); }
+  }
+
+  /* ---- locatie- vs overheadkosten-splitsing onder de KPI's ---- */
+  function renderSplit(locations) {
+    var locK = 0, ovhK = 0;
+    (locations || []).forEach(function (l) {
+      if (isOverhead(l)) ovhK += Number(l.kosten) || 0;
+      else locK += Number(l.kosten) || 0;
+    });
+    setText("fin-split-loc", fmtEuro(locK));
+    setText("fin-split-overhead", fmtEuro(ovhK));
   }
 
   function curLoc(name) {
@@ -246,7 +274,7 @@
     sum.appendChild(stat("Opbrengst", fmtEuro(loc.omzet), "",
       "Betaald " + fmtEuro(loc.paid) + " · Open " + fmtEuro(loc.pending) + " · Nog te declareren " + fmtEuro(loc.to_declare)));
     sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "",
-      "ZZP " + fmtEuro(loc.kosten_zzp) + " · Onkosten " + fmtEuro(loc.onkosten) + " · " + fmtInt(loc.zzpers) + " ZZP'ers · " + fmtUur(loc.uren) + " uur"));
+      "ZZP " + fmtEuro(loc.kosten_zzp) + " · Personeel " + fmtEuro(loc.personeel) + " · Onkosten " + fmtEuro(loc.onkosten)));
     sum.appendChild(stat("Resultaat", fmtEuro(res0), (res0 >= 0 ? "fin-pos" : "fin-neg"),
       (res0 >= 0 ? "Winst" : "Verlies") + (loc.marge_pct != null ? " · marge " + fmtPct(loc.marge_pct) : "")));
     body.appendChild(sum);
@@ -257,6 +285,9 @@
       // verwijder loader (laatste element)
       if (body.lastChild) body.removeChild(body.lastChild);
       if (!d || d.unauthorized) { emptyRow(body, "Geen toegang tot deze gegevens."); return; }
+
+      // Overhead-personeel (read-only; beheer via de Overhead-tab)
+      renderPersSection(body, loc.name, d.personeel || []);
 
       // Overige onkosten (bewerkbaar)
       renderOnkSection(body, loc.name, d.onkosten || []);
@@ -314,6 +345,34 @@
         body.appendChild(el("p", "bd-mrow-note", "Opbrengst = betaald + gedeclareerd-open + nog-te-declareren (schatting o.b.v. eigen factuurhistorie van de beschikking). Beweeg over een bedrag voor de uitsplitsing."));
       }
     });
+  }
+
+  /* ---- overhead-personeel (read-only weergave; beheer op de Overhead-tab) ---- */
+  function renderPersSection(body, locName, rows) {
+    if (!rows || !rows.length) return;   // alleen tonen als er handmatig personeel is
+    var head = el("div", "fin-sec-head");
+    head.appendChild(el("h3", "fin-sec-h", "Personeel (handmatig ingevoerd)"));
+    var mng = el("a", "btn-outline fin-sec-add", "Beheren →"); mng.href = "financien-overhead";
+    head.appendChild(mng);
+    body.appendChild(head);
+    var t = buildTable([{ label: "Naam" }, { label: "Functie" }, { label: "Type" }, { label: "€/maand", num: true }, { label: "In periode", num: true }]);
+    var sum = 0;
+    rows.forEach(function (p) {
+      sum += Number(p.kost_periode) || 0;
+      var tr = el("tr");
+      tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
+      tr.appendChild(el("td", null, p.functie || "—"));
+      tr.appendChild(el("td", null, p.dienstverband === "zzp" ? "ZZP" : "Loondienst"));
+      tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
+      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
+      t.tb.appendChild(tr);
+    });
+    var tf = el("tfoot"), trf = el("tr");
+    trf.appendChild(el("td", "bd-td-strong", "Totaal personeel"));
+    trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, ""));
+    trf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sum)));
+    tf.appendChild(trf); t.tbl.appendChild(tf);
+    body.appendChild(t.tbl);
   }
 
   /* ---- overige onkosten ---- */
@@ -561,7 +620,7 @@
     setHTML("fin-omzet-sub", "Betaald " + esc(fmtEuro(t.paid)) + " · Open " + esc(fmtEuro(t.pending)) + " · Nog te declareren " + esc(fmtEuro(t.to_declare)));
 
     setText("fin-v-kosten", fmtEuro(t.kosten));
-    setText("fin-kosten-sub", "ZZP " + fmtEuro(t.kosten_zzp) + " · Onkosten " + fmtEuro(t.onkosten) + " · " + fmtInt(t.zzpers) + " ZZP'ers");
+    setText("fin-kosten-sub", "ZZP " + fmtEuro(t.kosten_zzp) + " · Personeel " + fmtEuro(t.personeel) + " · Onkosten " + fmtEuro(t.onkosten));
 
     setText("fin-v-result", fmtEuro(t.resultaat));
     var pos = (Number(t.resultaat) || 0) >= 0;
@@ -571,6 +630,7 @@
     setText("fin-result-sub", (pos ? "Winst" : "Verlies") + (marge != null ? " · marge " + fmtPct(marge) : ""));
 
     renderLocTable(data.locations || []);
+    renderSplit(data.locations || []);
     renderMonthChart(data.months || []);
   }
 

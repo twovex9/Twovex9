@@ -25455,3 +25455,22 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-form-err { color: var(--red); font-size: 13px; margin: 0; }
 .fin-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 @media (max-width: 520px) { .fin-field-row { grid-template-columns: 1fr; } }
+
+/* Locatie- vs overheadkosten-splitsbalk (Locaties-tab) */
+.fin-split { display: flex; align-items: stretch; margin: 0 0 16px; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); background: var(--bg, var(--surface)); overflow: hidden; }
+.fin-split-item { flex: 1 1 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 16px; }
+.fin-split-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.fin-split-val { font-size: 17px; font-weight: 700; color: var(--text); }
+.fin-split-sep { width: 1px; flex: 0 0 1px; background: var(--line); }
+@media (max-width: 560px) { .fin-split { flex-direction: column; } .fin-split-sep { width: auto; height: 1px; } }
+
+/* Overhead-markering in de per-locatie tabel */
+.fin-loc-row--overhead td { background: rgba(148, 163, 184, 0.10); }
+.fin-ovh-badge { display: inline-block; margin-left: 8px; padding: 1px 7px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); background: rgba(148, 163, 184, 0.20); border-radius: 999px; vertical-align: middle; }
+.fin-muted { color: var(--text-muted); }
+
+/* Personeelskost live-preview in het toevoeg-formulier (Overhead-tab) */
+.fin-pers-cost { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: var(--r-sm, 8px); background: var(--bg, var(--surface)); }
+.fin-pers-cost-lbl { font-size: 12px; color: var(--text-muted); }
+.fin-pers-cost-val { font-size: 18px; font-weight: 700; color: var(--text); }
+.fin-pers-cost-sub { flex: 1 1 100%; font-size: 11px; color: var(--text-muted); }

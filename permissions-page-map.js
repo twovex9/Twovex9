@@ -141,6 +141,7 @@
     // permissions-nav-hide.js): Admin krijgt hier GEEN toegang. Finance (degene die
     // de financiën/declaraties regelt) mag de onkosten invoeren/aanpassen.
     "financien-locaties.html": { allowedRoles: ["Eigenaar", "Directeur", "Finance"], strict: true },
+    "financien-overhead.html": { allowedRoles: ["Eigenaar", "Directeur", "Finance"], strict: true },
 
     // ─── Audit (admin-tier) ───────────────────────────────────────────────────
     "audit.html": { action: "view", entity: "audit-logs" },

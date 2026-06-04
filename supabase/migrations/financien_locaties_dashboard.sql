@@ -1,21 +1,24 @@
--- Financiën › Locaties — winst/verlies per locatie per maand.
--- Toegepast via Supabase MCP (apply_migration). Dit bestand legt de definities vast
--- voor de repo-historie.
+-- Financiën › Locaties — winst/verlies per locatie per maand. CANONIEKE RPC-definities.
+-- Toegepast via Supabase MCP (apply_migration). Dit bestand legt de actuele definities
+-- vast voor de repo-historie (laatste migratie wint: financien_dashboard_met_personeel /
+-- financien_detail_met_personeel).
 --
--- Toegang: STRIKT alleen rol Eigenaar of Directeur (NIET admin-tier) — server-side
+-- Toegang: STRIKT alleen rol Eigenaar/Directeur/Finance (NIET admin-tier) — server-side
 -- afgeschermd via can_view_financien(). Frontend gate: permissions-page-map.js
 -- (strict:true) + permissions-gate.js / permissions-nav-hide.js.
 --
--- Kosten   = ingehuurde ZZP-diensten uit planning: netto-uren × uurtarief
---            (medewerkers.data.uurAlgemeen, fallback 45). Loondienst heeft geen
---            uurtarief in de data en zit dus niet in de kosten.
+-- Kosten   = ingehuurde ZZP-diensten uit planning (netto-uren × uurtarief, fallback 45)
+--          + handmatige onkosten per locatie (financien_locatie_onkosten: huur, energie, …)
+--          + handmatige overhead-personeelskosten (financien_overhead_personeel: maandkost).
+--            Loondienst op een groep heeft géén uurtarief in de planning-data en zit dus
+--            niet in de ZZP-kosten; voer zulke loonkosten desgewenst in via
+--            financien_overhead_personeel onder de betreffende locatie.
 -- Opbrengst = beschikkingen-omzet per locatie: betaald + gedeclareerd-open +
---            nog-te-declareren-schatting (gem. maand-factuur per beschikking,
---            identiek aan beschikkingen_dashboard_v2), gekoppeld via
+--            nog-te-declareren-schatting, gekoppeld via
 --            facturen -> bs2_disposition_payments -> beschikkingen.locatie.
 -- Venster   = vanaf eerste maand met kosten-data t/m huidige maand.
 
--- Strikte rol-gate: alleen Eigenaar of Directeur.
+-- Strikte rol-gate: Eigenaar/Directeur/Finance (zie ook financien_locatie_onkosten.sql).
 create or replace function public.can_view_financien()
 returns boolean
 language sql stable security definer
@@ -25,11 +28,11 @@ as $$
     select 1 from public.profiles p
     join public.bs2_role_users ru on lower(ru.user_email) = lower(p.email)
     join public.bs2_roles r on r.id = ru.role_id
-    where p.id = auth.uid() and r.slug in ('eigenaar','directeur')
+    where p.id = auth.uid() and r.slug in ('eigenaar','directeur','finance')
   );
 $$;
 
--- Hoofd-dashboard: totalen + per locatie + maandreeks.
+-- Hoofd-dashboard: totalen + per locatie + maandreeks (incl. onkosten + personeel).
 create or replace function public.financien_locaties_dashboard(p_start date default null, p_end date default null)
 returns jsonb
 language plpgsql stable security invoker
@@ -63,8 +66,7 @@ begin
     left join lm lmx on lmx.naam = nullif(btrim(b.locatie),'') where not f.gearchiveerd and f.periode ~ '^\d{2}-\d{2}-\d{4}'
   ),
   fmonth_loc as (
-    select ym, loc, coalesce(sum(bedrag) filter (where status='betaald'),0) as paid, coalesce(sum(bedrag) filter (where status<>'betaald'),0) as pending,
-           count(*) filter (where status='betaald') as paid_cnt, count(*) filter (where status<>'betaald') as pending_cnt
+    select ym, loc, coalesce(sum(bedrag) filter (where status='betaald'),0) as paid, coalesce(sum(bedrag) filter (where status<>'betaald'),0) as pending
     from fb group by ym, loc
   ),
   bmnd as ( select bid, ym, sum(bedrag) as msom from fb group by bid, ym ),
@@ -82,7 +84,7 @@ begin
     where not b.gearchiveerd and b.fase <> 'In aanvraag'
   ),
   todecl as (
-    select m.ym, ba.loc, sum(case when bl.bid is null then ba.gem_maand else 0 end) as amount, count(*) filter (where bl.bid is null) as cnt
+    select m.ym, ba.loc, sum(case when bl.bid is null then ba.gem_maand else 0 end) as amount
     from besch_act ba join months_f m on m.ym >= ba.eerste_ym and m.ym >= to_char(ba.start_iso,'YYYY-MM') and m.ym <= to_char(least(coalesce(ba.eind_iso,current_date),current_date),'YYYY-MM')
     left join billed bl on bl.bid = ba.id and bl.ym = m.ym group by m.ym, ba.loc
   ),
@@ -90,14 +92,36 @@ begin
     select coalesce(fm.ym, td.ym) as ym, coalesce(fm.loc, td.loc) as loc, coalesce(fm.paid,0) as paid, coalesce(fm.pending,0) as pending, coalesce(td.amount,0) as to_declare
     from fmonth_loc fm full outer join todecl td on td.ym = fm.ym and td.loc = fm.loc
   ),
+  win as ( select coalesce((select min_ym from cost_win), to_char(current_date,'YYYY-MM')) as min_ym, to_char(current_date,'YYYY-MM') as max_ym ),
+  win_months as (
+    select to_char(gs,'YYYY-MM') as ym from win
+    cross join lateral generate_series(to_date(win.min_ym,'YYYY-MM'), to_date(win.max_ym,'YYYY-MM'), interval '1 month') gs
+  ),
+  onk_m as (
+    select o.locatie as loc, wm.ym, sum(o.bedrag) as onkosten
+    from financien_locatie_onkosten o join win_months wm on wm.ym >= o.van_ym and wm.ym <= coalesce(o.tot_ym, wm.ym)
+    where not o.archived
+    group by o.locatie, wm.ym
+  ),
+  pers_m as (
+    select p.locatie as loc, wm.ym, sum(p.maandkost) as personeel
+    from financien_overhead_personeel p join win_months wm on wm.ym >= p.van_ym and wm.ym <= coalesce(p.tot_ym, wm.ym)
+    where not p.archived
+    group by p.locatie, wm.ym
+  ),
+  keys as ( select loc, ym from rev union select loc, ym from zzp_m union select loc, ym from onk_m union select loc, ym from pers_m ),
   pl as (
-    select coalesce(r.ym, z.ym) as ym, coalesce(r.loc, z.loc) as loc,
+    select k.ym, k.loc,
            coalesce(r.paid,0)+coalesce(r.pending,0)+coalesce(r.to_declare,0) as omzet,
            coalesce(r.paid,0) as paid, coalesce(r.pending,0) as pending, coalesce(r.to_declare,0) as to_declare,
-           coalesce(z.kosten,0) as kosten, coalesce(z.uren,0) as uren, coalesce(z.diensten,0) as diensten
-    from rev r full outer join zzp_m z on z.ym = r.ym and z.loc = r.loc
+           coalesce(z.kosten,0) as kosten_zzp, coalesce(z.uren,0) as uren, coalesce(z.diensten,0) as diensten,
+           coalesce(o.onkosten,0) as onkosten, coalesce(pr.personeel,0) as personeel
+    from keys k
+    left join rev r on r.loc=k.loc and r.ym=k.ym
+    left join zzp_m z on z.loc=k.loc and z.ym=k.ym
+    left join onk_m o on o.loc=k.loc and o.ym=k.ym
+    left join pers_m pr on pr.loc=k.loc and pr.ym=k.ym
   ),
-  win as ( select coalesce((select min_ym from cost_win), to_char(current_date,'YYYY-MM')) as min_ym, to_char(current_date,'YYYY-MM') as max_ym ),
   defm as ( select least(greatest(coalesce((select max_ym from win_f), (select max_ym from win)), (select min_ym from win)), (select max_ym from win)) as d ),
   refp as (
     select coalesce(to_char(p_start,'YYYY-MM'), (select d from defm)) as s_ym,
@@ -105,7 +129,10 @@ begin
   ),
   zzpers_sel as ( select loc, count(distinct teamlid_key) as zzpers from zzp, refp where zzp.ym >= refp.s_ym and zzp.ym <= refp.e_ym group by loc ),
   loc_sel as (
-    select pl.loc, sum(omzet) as omzet, sum(paid) as paid, sum(pending) as pending, sum(to_declare) as to_declare, sum(kosten) as kosten, sum(uren) as uren, sum(diensten) as diensten
+    select pl.loc, sum(omzet) as omzet, sum(paid) as paid, sum(pending) as pending, sum(to_declare) as to_declare,
+           sum(kosten_zzp) as kosten_zzp, sum(onkosten) as onkosten, sum(personeel) as personeel,
+           sum(kosten_zzp+onkosten+personeel) as kosten,
+           sum(uren) as uren, sum(diensten) as diensten
     from pl, refp where pl.ym >= refp.s_ym and pl.ym <= refp.e_ym group by pl.loc
   )
   select jsonb_build_object(
@@ -115,6 +142,8 @@ begin
       select jsonb_build_object(
         'omzet', round(coalesce(sum(omzet),0)::numeric,2), 'paid', round(coalesce(sum(paid),0)::numeric,2),
         'pending', round(coalesce(sum(pending),0)::numeric,2), 'to_declare', round(coalesce(sum(to_declare),0)::numeric,2),
+        'kosten_zzp', round(coalesce(sum(kosten_zzp),0)::numeric,2), 'onkosten', round(coalesce(sum(onkosten),0)::numeric,2),
+        'personeel', round(coalesce(sum(personeel),0)::numeric,2),
         'kosten', round(coalesce(sum(kosten),0)::numeric,2), 'resultaat', round((coalesce(sum(omzet),0)-coalesce(sum(kosten),0))::numeric,2),
         'uren', round(coalesce(sum(uren),0)::numeric,1), 'diensten', coalesce(sum(diensten),0),
         'zzpers', (select count(distinct teamlid_key) from zzp, refp r where zzp.ym>=r.s_ym and zzp.ym<=r.e_ym),
@@ -124,7 +153,8 @@ begin
       select jsonb_agg(jsonb_build_object(
         'name', ls.loc, 'kleur', coalesce(lc.kleur, '#94a3b8'),
         'omzet', round(ls.omzet::numeric,2), 'paid', round(ls.paid::numeric,2), 'pending', round(ls.pending::numeric,2), 'to_declare', round(ls.to_declare::numeric,2),
-        'kosten', round(ls.kosten::numeric,2), 'resultaat', round((ls.omzet-ls.kosten)::numeric,2),
+        'kosten_zzp', round(ls.kosten_zzp::numeric,2), 'onkosten', round(ls.onkosten::numeric,2), 'personeel', round(ls.personeel::numeric,2), 'kosten', round(ls.kosten::numeric,2),
+        'resultaat', round((ls.omzet-ls.kosten)::numeric,2),
         'uren', round(ls.uren::numeric,1), 'diensten', ls.diensten, 'zzpers', coalesce(zs.zzpers,0),
         'marge_pct', case when ls.omzet>0 then round(((ls.omzet-ls.kosten)/ls.omzet*100)::numeric,1) else null end
       ) order by ls.omzet desc, ls.kosten desc)
@@ -133,14 +163,14 @@ begin
     ), '[]'::jsonb),
     'months', coalesce((
       select jsonb_agg(jsonb_build_object('ym', ym, 'omzet', round(omzet::numeric,2), 'kosten', round(kosten::numeric,2), 'resultaat', round((omzet-kosten)::numeric,2)) order by ym)
-      from ( select pl.ym, sum(omzet) as omzet, sum(kosten) as kosten from pl, win where pl.ym >= win.min_ym and pl.ym <= win.max_ym group by pl.ym ) mm
+      from ( select pl.ym, sum(omzet) as omzet, sum(kosten_zzp+onkosten+personeel) as kosten from pl, win where pl.ym >= win.min_ym and pl.ym <= win.max_ym group by pl.ym ) mm
     ), '[]'::jsonb)
   ) into v_result;
   return v_result;
 end;
 $$;
 
--- Drill-down per locatie: ZZP'ers + cliënten/beschikkingen.
+-- Drill-down per locatie: ZZP'ers + cliënten/beschikkingen + personeel + onkosten.
 create or replace function public.financien_locatie_maand_detail(p_location text, p_start date default null, p_end date default null)
 returns jsonb
 language plpgsql stable security invoker
@@ -205,6 +235,10 @@ begin
     select coalesce(to_char(p_start,'YYYY-MM'), (select d from defm)) as s_ym,
            coalesce(to_char(p_end,'YYYY-MM'),   (select d from defm)) as e_ym
   ),
+  period_months as (
+    select to_char(gs,'YYYY-MM') as ym from refp
+    cross join lateral generate_series(to_date(refp.s_ym,'YYYY-MM'), to_date(refp.e_ym,'YYYY-MM'), interval '1 month') gs
+  ),
   bloc as ( select b.id, coalesce(lmx.naam,'Overig') as loc from beschikkingen b left join lm lmx on lmx.naam = nullif(btrim(b.locatie),'') )
   select jsonb_build_object(
     'location', p_location,
@@ -230,12 +264,44 @@ begin
         group by b.id, b.naam, b.zorgsoort_key, b.tarief_eur, b.tarief_eenheid, b.client_id
         having (sum(rb.paid)+sum(rb.pending)+sum(rb.to_declare)) <> 0
       ) q), '[]'::jsonb),
+    'personeel', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', pr.id, 'naam', pr.naam, 'functie', pr.functie, 'dienstverband', pr.dienstverband,
+        'bruto_maand', round(pr.bruto_maand::numeric,2), 'werkgeverslasten_pct', pr.werkgeverslasten_pct,
+        'netto_maand', case when pr.netto_maand is null then null else round(pr.netto_maand::numeric,2) end,
+        'zzp_maand', round(pr.zzp_maand::numeric,2), 'maandkost', round(pr.maandkost::numeric,2),
+        'van_ym', pr.van_ym, 'tot_ym', pr.tot_ym, 'maanden', pr.maanden,
+        'kost_periode', round((pr.maandkost*pr.maanden)::numeric,2)
+      ) order by (pr.maandkost*pr.maanden) desc, pr.naam)
+      from (
+        select p.*, (select count(*) from period_months pm where pm.ym >= p.van_ym and pm.ym <= coalesce(p.tot_ym, pm.ym)) as maanden
+        from financien_overhead_personeel p
+        where not p.archived and p.locatie = p_location
+      ) pr
+      where pr.maanden > 0
+    ), '[]'::jsonb),
+    'onkosten', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', orr.id, 'categorie', orr.categorie, 'omschrijving', orr.omschrijving,
+        'bedrag', round(orr.bedrag::numeric,2), 'van_ym', orr.van_ym, 'tot_ym', orr.tot_ym,
+        'maanden', orr.maanden, 'bedrag_periode', round((orr.bedrag*orr.maanden)::numeric,2)
+      ) order by (orr.bedrag*orr.maanden) desc, orr.categorie)
+      from (
+        select o.id, o.categorie, o.omschrijving, o.bedrag, o.van_ym, o.tot_ym,
+               (select count(*) from period_months pm where pm.ym >= o.van_ym and pm.ym <= coalesce(o.tot_ym, pm.ym)) as maanden
+        from financien_locatie_onkosten o
+        where not o.archived and o.locatie = p_location
+      ) orr
+      where orr.maanden > 0
+    ), '[]'::jsonb),
     'months', coalesce((
       select jsonb_agg(jsonb_build_object('ym', ym, 'omzet', round(omzet::numeric,2), 'kosten', round(kosten::numeric,2), 'resultaat', round((omzet-kosten)::numeric,2)) order by ym)
       from (
         select mm.ym,
                coalesce((select sum(rb.paid+rb.pending+rb.to_declare) from rev_b rb join bloc on bloc.id=rb.bid where bloc.loc=p_location and rb.ym=mm.ym),0) as omzet,
-               coalesce((select kosten from zzp_m z where z.loc=p_location and z.ym=mm.ym),0) as kosten
+               coalesce((select kosten from zzp_m z where z.loc=p_location and z.ym=mm.ym),0)
+               + coalesce((select sum(o.bedrag) from financien_locatie_onkosten o where not o.archived and o.locatie=p_location and o.van_ym<=mm.ym and mm.ym<=coalesce(o.tot_ym,mm.ym)),0)
+               + coalesce((select sum(pp.maandkost) from financien_overhead_personeel pp where not pp.archived and pp.locatie=p_location and pp.van_ym<=mm.ym and mm.ym<=coalesce(pp.tot_ym,mm.ym)),0) as kosten
         from (select win.min_ym, win.max_ym from win) w
         cross join lateral generate_series(to_date(w.min_ym,'YYYY-MM'), to_date(w.max_ym,'YYYY-MM'), interval '1 month') gs
         cross join lateral (select to_char(gs,'YYYY-MM') as ym) mm

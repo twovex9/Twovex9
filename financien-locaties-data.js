@@ -97,6 +97,62 @@
       .update({ archived: true, laatst_gewijzigd: new Date().toISOString() }).eq("id", id);
     if (res.error) throw res.error;
   }
+  // ─── Overhead-personeel CRUD (handmatige personeelskosten per locatie) ───
+  /** Maandkost zoals de DB die berekent (generated column) — voor live-preview vóór opslaan. */
+  function maandkostVan(row) {
+    if (!row) return 0;
+    if (row.dienstverband === "zzp") return Number(row.zzp_maand) || 0;
+    var bruto = Number(row.bruto_maand) || 0;
+    var pct = Number(row.werkgeverslasten_pct) || 0;
+    return bruto * (1 + pct / 100);
+  }
+  async function listPersoneel() {
+    await ensureSupabase();
+    var res = await global.besaSupabase.from("financien_overhead_personeel")
+      .select("*").eq("archived", false).order("locatie", { ascending: true }).order("naam", { ascending: true });
+    if (res.error) throw res.error;
+    return res.data || [];
+  }
+  async function addPersoneel(row) {
+    await ensureSupabase();
+    var payload = {
+      naam: row.naam, functie: row.functie || null, dienstverband: row.dienstverband || "loondienst",
+      locatie: row.locatie || "Kantoor",
+      bruto_maand: row.bruto_maand || 0,
+      werkgeverslasten_pct: (row.werkgeverslasten_pct != null ? row.werkgeverslasten_pct : 30),
+      netto_maand: (row.netto_maand != null && row.netto_maand !== "") ? row.netto_maand : null,
+      zzp_maand: row.zzp_maand || 0,
+      van_ym: row.van_ym, tot_ym: row.tot_ym || null,
+      aangemaakt_door: await currentUserEmail(),
+    };
+    var res = await global.besaSupabase.from("financien_overhead_personeel").insert(payload);
+    if (res.error) throw res.error;
+  }
+  async function updatePersoneel(id, fields) {
+    await ensureSupabase();
+    var patch = {};
+    ["naam", "functie", "dienstverband", "locatie", "bruto_maand", "werkgeverslasten_pct", "netto_maand", "zzp_maand", "van_ym", "tot_ym"].forEach(function (k) {
+      if (k in fields) patch[k] = fields[k];
+    });
+    patch.laatst_gewijzigd = new Date().toISOString();
+    var res = await global.besaSupabase.from("financien_overhead_personeel").update(patch).eq("id", id);
+    if (res.error) throw res.error;
+  }
+  async function archivePersoneel(id) {
+    await ensureSupabase();
+    var res = await global.besaSupabase.from("financien_overhead_personeel")
+      .update({ archived: true, laatst_gewijzigd: new Date().toISOString() }).eq("id", id);
+    if (res.error) throw res.error;
+  }
+  /** Alle niet-gearchiveerde handmatige onkosten (voor de Overhead-beheerpagina). */
+  async function listOnkosten() {
+    await ensureSupabase();
+    var res = await global.besaSupabase.from("financien_locatie_onkosten")
+      .select("*").eq("archived", false).order("locatie", { ascending: true }).order("categorie", { ascending: true });
+    if (res.error) throw res.error;
+    return res.data || [];
+  }
+
   var _locNames = null;
   async function locatieNamen() {
     if (_locNames) return _locNames;
@@ -131,7 +187,14 @@
     addOnkost: addOnkost,
     updateOnkost: updateOnkost,
     archiveOnkost: archiveOnkost,
+    listOnkosten: listOnkosten,
     locatieNamen: locatieNamen,
+    // Overhead-personeel
+    maandkostVan: maandkostVan,
+    listPersoneel: listPersoneel,
+    addPersoneel: addPersoneel,
+    updatePersoneel: updatePersoneel,
+    archivePersoneel: archivePersoneel,
   };
 
   if (global.besaSupabase) bootstrap();
