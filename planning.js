@@ -1374,7 +1374,7 @@ function buildShiftCardEl(it, gi, overlapIds) {
         return;
       }
       if (act === "edit") {
-        openEditModal(it.id, false);
+        openDienstPanel(it.id);
         ev.stopPropagation();
         return;
       }
@@ -2093,162 +2093,8 @@ function syncAssignStatusRadios() {
   });
 }
 
-function fillSelect(selectId, items, withEmpty) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = "";
-  if (withEmpty) {
-    const o = document.createElement("option");
-    o.value = "";
-    o.textContent = "— kies —";
-    sel.appendChild(o);
-  }
-  items.forEach((item) => {
-    const opt = document.createElement("option");
-    opt.value = item;
-    opt.textContent = item;
-    sel.appendChild(opt);
-  });
-  if (current && (items || []).map(String).includes(String(current))) sel.value = current;
-}
-
-function fillLegacyPlanningLocationSelects(data) {
-  const locaties = getVestigingOptiesVoorForm(data || buildDataState());
-  fillSelect("plan-add-vestiging", locaties, true);
-  fillSelect("plan-add-locatie", locaties, true);
-}
-
 function getItemById(id) {
   return readPlanningItems().find((x) => x.id === id);
-}
-
-function openAddModal() {
-  ui.editingId = null;
-  ui.moveId = null;
-  const h = document.getElementById("planning-add-title");
-  if (h) h.textContent = "Nieuwe planning";
-  const b = document.getElementById("planning-add-submit");
-  if (b) b.textContent = "Opslaan";
-  return openModalWithState(buildDataState());
-}
-
-function openModalWithState(data) {
-  const modal = document.getElementById("planning-add-modal");
-  fillSelect("plan-add-afdeling", data.afdelingen, false);
-  fillSelect("plan-add-diensttype", data.diensttypes, true);
-  fillLegacyPlanningLocationSelects(data);
-  fillSelect("plan-add-teamlead", data.teamlead, true);
-  fillSelect("plan-add-teamlid", data.teamleden, true);
-  fillSelect("plan-add-client", data.clienten, true);
-  const si0 = document.getElementById("plan-add-start");
-  const ei0 = document.getElementById("plan-add-einde");
-  if (ui.prefillStartDay) {
-    const p = new Date(ui.prefillStartDay);
-    p.setHours(8, 0, 0, 0);
-    const pEnd = new Date(p.getTime() + 8 * 3600000);
-    if (si0) si0.value = toIsoLocal(p);
-    if (ei0) ei0.value = toIsoLocal(pEnd);
-    ui.prefillStartDay = null;
-  } else {
-  const w = getVisibleRange();
-  const now = new Date();
-  let start = new Date(now);
-  if (ui.calMode === "day") {
-    const d0 = new Date(ui.dayDate || now);
-    d0.setHours(8, 0, 0, 0);
-    if (!sameCalendarDay(d0, start)) start = d0;
-  } else if (ui.calMode === "week") {
-    if (!itemOverlapsRange({ start: toIsoLocal(start) }, w.start, w.end)) {
-      start = new Date(w.start);
-      start.setHours(8, 0, 0, 0);
-    }
-  } else {
-    if (!itemOverlapsRange({ start: toIsoLocal(start) }, w.start, w.end)) {
-      start = new Date(w.start);
-      start.setHours(8, 0, 0, 0);
-    }
-  }
-  const end = new Date(start.getTime() + 8 * 3600000);
-  const si = document.getElementById("plan-add-start");
-  const ei = document.getElementById("plan-add-einde");
-  if (si) si.value = toIsoLocal(start);
-  if (ei) ei.value = toIsoLocal(end);
-  }
-  if (modal) {
-    modal.removeAttribute("hidden");
-    modal.setAttribute("aria-hidden", "false");
-  }
-}
-
-function openEditModal(id, isMove) {
-  if (!isMove) {
-    openDienstPanel(id);
-    return;
-  }
-  const it = getItemById(id);
-  if (!it) return;
-  ui.editingId = id;
-  const modal = document.getElementById("planning-add-modal");
-  const h = document.getElementById("planning-add-title");
-  if (h) h.textContent = isMove ? "Verplaatsen" : "Planning bewerken";
-  const b = document.getElementById("planning-add-submit");
-  if (b) b.textContent = "Bijwerken";
-  const data = buildDataState();
-  fillSelect("plan-add-afdeling", data.afdelingen, false);
-  fillSelect("plan-add-diensttype", data.diensttypes, true);
-  fillLegacyPlanningLocationSelects(data);
-  fillSelect("plan-add-teamlead", data.teamlead, true);
-  fillSelect("plan-add-teamlid", data.teamleden, true);
-  fillSelect("plan-add-client", data.clienten, true);
-  const v = (id) => document.getElementById(id);
-  if (v("plan-add-afdeling")) v("plan-add-afdeling").value = it.afdeling || "";
-  if (v("plan-add-diensttype")) v("plan-add-diensttype").value = it.diensttype || "";
-  if (v("plan-add-functie")) v("plan-add-functie").value = it.functie || "";
-  if (v("plan-add-vestiging")) v("plan-add-vestiging").value = it.vestiging || "";
-  if (v("plan-add-locatie")) v("plan-add-locatie").value = it.locatie || "";
-  if (v("plan-add-teamlead")) v("plan-add-teamlead").value = it.teamlead || "";
-  if (v("plan-add-teamlid")) v("plan-add-teamlid").value = it.teamlid || "";
-  if (v("plan-add-client")) v("plan-add-client").value = it.client || "";
-  if (v("plan-add-start")) v("plan-add-start").value = it.start || "";
-  if (v("plan-add-einde")) v("plan-add-einde").value = it.einde || "";
-  if (v("plan-add-leer")) v("plan-add-leer").value = String(it.leer ?? 0);
-  if (v("plan-add-sterren")) v("plan-add-sterren").value = String(it.sterren ?? 0);
-  if (v("plan-add-conflict")) v("plan-add-conflict").checked = Boolean(it.conflict);
-  if (modal) {
-    modal.removeAttribute("hidden");
-    modal.setAttribute("aria-hidden", "false");
-  }
-}
-
-function readForm() {
-  const locatie = document.getElementById("plan-add-locatie")?.value || "";
-  const vestiging = document.getElementById("plan-add-vestiging")?.value || locatie;
-  return {
-    afdeling: document.getElementById("plan-add-afdeling")?.value || "",
-    diensttype: document.getElementById("plan-add-diensttype")?.value || "",
-    functie: document.getElementById("plan-add-functie")?.value?.trim() || "",
-    vestiging,
-    locatie,
-    teamlead: document.getElementById("plan-add-teamlead")?.value || "",
-    teamlid: document.getElementById("plan-add-teamlid")?.value || "",
-    client: document.getElementById("plan-add-client")?.value || "",
-    start: document.getElementById("plan-add-start")?.value || "",
-    einde: document.getElementById("plan-add-einde")?.value || "",
-    leer: parseInt(document.getElementById("plan-add-leer")?.value, 10) || 0,
-    sterren: parseInt(document.getElementById("plan-add-sterren")?.value, 10) || 0,
-    conflict: Boolean(document.getElementById("plan-add-conflict")?.checked),
-  };
-}
-
-function closeModal() {
-  const modal = document.getElementById("planning-add-modal");
-  if (modal) {
-    modal.setAttribute("hidden", "");
-    modal.setAttribute("aria-hidden", "true");
-  }
-  ui.editingId = null;
-  document.getElementById("planning-add-form")?.reset();
 }
 
 let planningDiensttypeListOpen = false;
@@ -3167,55 +3013,6 @@ function exportPlanningCsv() {
   openExportPlanningModal();
 }
 
-function initAddModal() {
-  const form = document.getElementById("planning-add-form");
-  const closeBtn = document.getElementById("planning-add-close-btn");
-  const cancelBtn = document.getElementById("planning-add-cancel-btn");
-  const modal = document.getElementById("planning-add-modal");
-  if (!form || !modal) return;
-  function close() {
-    closeModal();
-  }
-  closeBtn?.addEventListener("click", close);
-  cancelBtn?.addEventListener("click", close);
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) close();
-  });
-  // Escape sluit planning-add-modal (Bug #13 fix, CLEAN RUN #1)
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    if (!modal || modal.hasAttribute("hidden")) return;
-    close();
-  });
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const f = readForm();
-    if (!f.afdeling || !f.teamlid || !f.client || !f.start || !f.einde) {
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback(
-          "info",
-          "Verplichte velden",
-          "Vul afdeling, teamlid, cliënt, start en einde in."
-        );
-      }
-      return;
-    }
-    if (ui.editingId) {
-      const huidig = (window.planningDB && window.planningDB.getByIdSync) ? (window.planningDB.getByIdSync(ui.editingId) || {}) : {};
-      const patch = normalizeItem({ ...huidig, ...f, id: ui.editingId });
-      if (window.planningDB && window.planningDB.update) {
-        window.planningDB.update(ui.editingId, patch).catch(function (e) { console.error("[planning] bijwerken mislukt:", e); });
-      }
-    } else {
-      const nieuw = normalizeItem({ id: makePlanningId(), ...f });
-      if (window.planningDB && window.planningDB.add) {
-        window.planningDB.add(nieuw).catch(function (e) { console.error("[planning] toevoegen mislukt:", e); });
-      }
-    }
-    close();
-  });
-}
-
 function initNav() {
   document.getElementById("planning-erm-prev")?.addEventListener("click", () => {
     if (ui.calMode === "day") ui.dayDate = addDays(ui.dayDate, -1);
@@ -3663,7 +3460,7 @@ function initViewModal() {
     const id = ui.viewingId;
     if (id) {
       closeViewModal();
-      openEditModal(id, false);
+      openDienstPanel(id);
     }
   });
 }
@@ -3680,7 +3477,6 @@ function initPlanningPage() {
   if (ax) ui.rowAxis = ax.value;
   renderAllViews();
   initDienstPanel();
-  initAddModal();
   initViewModal();
   initNav();
   initSearch();
@@ -3698,9 +3494,6 @@ function initPlanningPage() {
       if (event.key === LOCATIES_STORAGE_KEY && document.body.classList.contains("planning-dienst-open")) {
         refreshDienstLocatieSelect();
       }
-      if (event.key === LOCATIES_STORAGE_KEY && !document.getElementById("planning-add-modal")?.hidden) {
-        fillLegacyPlanningLocationSelects(buildDataState());
-      }
       renderAllViews();
     }
   });
@@ -3709,9 +3502,6 @@ function initPlanningPage() {
       const keep = getSelectedDiensttypeValuesSet();
       renderPlanningDiensttypeMultiselect(keep);
       refreshDienstLocatieSelect();
-    }
-    if (!document.getElementById("planning-add-modal")?.hidden) {
-      fillLegacyPlanningLocationSelects(buildDataState());
     }
     renderAllViews();
   });

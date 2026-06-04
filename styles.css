@@ -11183,17 +11183,6 @@ select.cd-config-select {
 }
 .planning-delete-option:has(input:checked) { border-color: var(--blue); background: rgba(37, 99, 235, 0.05); }
 .modal-dialog--sm { width: min(440px, 100% - 32px); }
-.plan-recurring-fields {
-  background: var(--surface-alt, var(--ps-f8fafc)); padding: 12px;
-  border-radius: var(--r-md, 8px); margin-top: 8px;
-}
-.plan-recurring-days { display: flex; gap: 4px; margin-top: 6px; }
-.plan-recurring-day-btn {
-  width: 32px; height: 32px; border: 1px solid var(--line);
-  border-radius: var(--r-pill); background: var(--surface); font-size: 12px; font-weight: 600;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease;
-}
-.plan-recurring-day-btn.is-active { background: var(--blue); color: #fff; border-color: var(--blue); }
 .modal-field--full { grid-column: 1 / -1; }
 
 .modal-overlay--home-news {
@@ -12957,97 +12946,6 @@ button.planning-erm-new {
   max-width: 520px;
 }
 
-#planning-add-modal.modal-overlay {
-  background: rgba(15, 23, 42, 0.62);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-
-.planning-add-dialog--erm {
-  width: min(760px, calc(100vw - 32px));
-  max-height: min(90vh, 820px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--pb-dbe3ee);
-  border-radius: 18px;
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.32);
-}
-
-.planning-add-dialog--erm .modal-header {
-  padding: 22px 28px 16px;
-  border-bottom: 1px solid var(--pb-e5eaf2);
-  background: var(--surface);
-}
-
-.planning-add-dialog--erm .modal-title {
-  font-size: 22px;
-  letter-spacing: -0.02em;
-  color: var(--pt-020617);
-}
-
-.planning-add-dialog--erm .modal-body {
-  padding: 18px 28px 20px;
-  background: var(--ps-f8fafc);
-}
-
-.planning-add-dialog--erm .modal-field {
-  margin-bottom: 0;
-}
-
-.planning-add-dialog--erm .modal-label {
-  color: var(--pt-334155);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.planning-add-dialog--erm .modal-input {
-  height: 48px;
-  border-radius: 12px;
-  border-color: var(--pb-d7dee8);
-  background-color: var(--surface);
-  color: var(--pt-0f172a);
-  font-size: 15px;
-  font-weight: 650;
-}
-
-.planning-add-dialog--erm .modal-input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
-}
-
-.planning-add-dialog--erm .modal-footer {
-  padding: 18px 28px 22px;
-  border-top: 1px solid var(--pb-e5eaf2);
-  background: var(--surface);
-}
-
-.planning-add-dialog--erm .btn-outline,
-.planning-add-dialog--erm .btn-primary {
-  min-width: 136px;
-  height: 48px;
-  border-radius: 999px;
-  font-weight: 800;
-}
-
-.planning-add-grid--erm {
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px 14px;
-}
-
-@media (max-width: 800px) {
-  .planning-add-grid--erm {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 500px) {
-  .planning-add-grid--erm {
-    grid-template-columns: 1fr;
-  }
-}
-
 .planning-filters-card--erm .planning-title {
   font-size: 18px;
 }
@@ -13198,12 +13096,6 @@ button.planning-erm-new {
   font-size: 13px;
 }
 
-.planning-add-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 14px;
-}
-
 @media (max-width: 1040px) {
   .planning-layout {
     grid-template-columns: 1fr;
@@ -13212,12 +13104,6 @@ button.planning-erm-new {
   .planning-filters-card {
     position: static;
     max-height: none;
-  }
-}
-
-@media (max-width: 760px) {
-  .planning-add-grid {
-    grid-template-columns: 1fr;
   }
 }
 

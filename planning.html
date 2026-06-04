@@ -3,14 +3,14 @@
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
-  <script src="theme.js?v=0a23649" defer></script>
-  <script src="sidebar-collapse.js?v=0a23649" defer></script>
+  <script src="theme.js?v=24e10b0" defer></script>
+  <script src="sidebar-collapse.js?v=24e10b0" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Planning — HR</title>
-  <link rel="stylesheet" href="styles.css?v=0a23649">
+  <link rel="stylesheet" href="styles.css?v=24e10b0">
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -76,9 +76,9 @@
   </style>
 </head>
 <body class="page--planning-erm">
-  <script src="save-feedback.js?v=0a23649" defer></script>
-  <script src="besa-export.js?v=0a23649" defer></script>
-  <script src="floating-panels.js?v=0a23649" defer></script>
+  <script src="save-feedback.js?v=24e10b0" defer></script>
+  <script src="besa-export.js?v=24e10b0" defer></script>
+  <script src="floating-panels.js?v=24e10b0" defer></script>
 
   <div class="app-shell app-shell--home app-shell--planning-erm">
     <header class="topbar topbar--erm">
@@ -569,64 +569,6 @@
     </form>
   </aside>
 
-  <div class="modal-overlay" id="planning-add-modal" hidden aria-hidden="true">
-    <div class="modal-dialog planning-add-dialog planning-add-dialog--erm" role="dialog" aria-modal="true" aria-labelledby="planning-add-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="planning-add-title" class="modal-title">Nieuwe planning</h2>
-        <button type="button" class="modal-close" id="planning-add-close-btn" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <form class="modal-form" id="planning-add-form" novalidate>
-        <div class="modal-body planning-add-grid planning-add-grid--erm">
-          <div class="modal-field"><label class="modal-label" for="plan-add-afdeling">Afdeling / team</label><select id="plan-add-afdeling" class="modal-input modal-select" required></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-diensttype">Diensttype</label><select id="plan-add-diensttype" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-functie">Functie (titel in rooster)</label><input id="plan-add-functie" class="modal-input" type="text" placeholder="Bijv. Verzorgende IG" /></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-vestiging">Vestiging</label><select id="plan-add-vestiging" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-locatie">Locatie</label><select id="plan-add-locatie" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-teamlead">Teamlead</label><select id="plan-add-teamlead" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-teamlid">Teamlid</label><select id="plan-add-teamlid" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-client">Cliënt</label><select id="plan-add-client" class="modal-input modal-select"></select></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-start">Start</label><input id="plan-add-start" class="modal-input" type="datetime-local" required /></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-einde">Einde</label><input id="plan-add-einde" class="modal-input" type="datetime-local" required /></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-leer">Leer (0–3)</label><input id="plan-add-leer" class="modal-input" type="number" min="0" max="3" value="0" /></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-sterren">Sterren (0–3)</label><input id="plan-add-sterren" class="modal-input" type="number" min="0" max="3" value="0" /></div>
-          <div class="modal-field modal-field--rowspan2"><label class="modal-label planning-checkbox"><input type="checkbox" id="plan-add-conflict" /> Markeer als aandacht (conflict / risico)</label></div>
-          <!-- BS2-parity extra velden -->
-          <div class="modal-field"><label class="modal-label" for="plan-add-pauze">Pauze (uren)</label><input id="plan-add-pauze" class="modal-input" type="number" step="0.25" min="0" value="0" /></div>
-          <div class="modal-field"><label class="modal-label" for="plan-add-vereist-aantal">Vereist aantal medewerkers</label><input id="plan-add-vereist-aantal" class="modal-input" type="number" min="1" value="1" /></div>
-          <div class="modal-field modal-field--rowspan2"><label class="modal-label" for="plan-add-competenties">Vereiste competenties</label><select id="plan-add-competenties" class="modal-input modal-select" multiple size="3"></select></div>
-          <div class="modal-field modal-field--full"><label class="modal-label" for="plan-add-beschrijving">Beschrijving</label><textarea id="plan-add-beschrijving" class="modal-input" rows="3" placeholder="Optionele beschrijving van de dienst…"></textarea></div>
-          <!-- Herhaling sectie -->
-          <div class="modal-field modal-field--full"><label class="modal-label planning-checkbox"><input type="checkbox" id="plan-add-herhaal-toggle" /> Herhaal dienst</label></div>
-          <div class="modal-field modal-field--rowspan2 plan-recurring-fields" id="plan-recurring-fields" hidden>
-            <label class="modal-label" for="plan-add-recurring-interval">Herhaal iedere</label>
-            <select id="plan-add-recurring-interval" class="modal-input modal-select">
-              <option value="1">1 week</option>
-              <option value="2">2 weken</option>
-              <option value="3">3 weken</option>
-              <option value="4">4 weken</option>
-            </select>
-            <label class="modal-label" for="plan-add-recurring-enddate" style="margin-top:8px">Eindigt op <span style="color:var(--red)">*</span></label>
-            <input id="plan-add-recurring-enddate" class="modal-input" type="date" />
-            <label class="modal-label" style="margin-top:8px">Herhaal op</label>
-            <div class="plan-recurring-days">
-              <button type="button" class="plan-recurring-day-btn" data-day="1">M</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="2">D</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="3">W</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="4">D</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="5">V</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="6">Z</button>
-              <button type="button" class="plan-recurring-day-btn" data-day="7">Z</button>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="planning-add-cancel-btn">Annuleren</button>
-          <button type="submit" class="btn-primary" id="planning-add-submit">Opslaan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- BS2-parity dienst-detail side-panel: 7 secties (slide-in vanaf rechts) -->
   <div class="planning-detail-scrim" id="planning-view-scrim" hidden></div>
   <aside class="planning-detail-panel" id="planning-view-modal" hidden aria-hidden="true" aria-label="Dienst details">
@@ -772,46 +714,46 @@
     </div>
   </div>
 
-  <script src="top-nav-overflow.js?v=0a23649"></script>
+  <script src="top-nav-overflow.js?v=24e10b0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js?v=0a23649"></script>
-  <script src="error-reporter.js?v=0a23649"></script>
-  <script src="besa-sync-reporter.js?v=0a23649"></script>
-  <script src="optimistic-lock.js?v=0a23649" defer></script>
-  <script src="realtime-sync.js?v=0a23649" defer></script>
-  <script src="bulk-actions.js?v=0a23649" defer></script>
-  <script src="pdf-export.js?v=0a23649" defer></script>
-  <script src="permissions.js?v=0a23649" defer></script>
-  <script src="permissions-page-map.js?v=0a23649" defer></script>
-  <script src="permissions-gate.js?v=0a23649" defer></script>
-  <script src="permissions-nav-hide.js?v=0a23649" defer></script>
-  <script src="helpdesk-modal.js?v=0a23649" defer></script>
-  <script src="onboarding-flow.js?v=0a23649" defer></script>
-  <script src="mfa-challenge.js?v=0a23649" defer></script>
-  <script src="auth-guard.js?v=0a23649"></script>
-  <script src="profiles-data.js?v=0a23649"></script>
-  <script src="besa-audit.js?v=0a23649" defer></script>
-  <script src="notifications-data.js?v=0a23649"></script>
-  <script src="notification-bell.js?v=0a23649" defer></script>
-  <script src="planning-data.js?v=0a23649"></script>
-  <script src="clienten-data.js?v=0a23649"></script>
-  <script src="comp-diensttypes-data.js?v=0a23649"></script>
-  <script src="comp-saldi-data.js?v=0a23649"></script>
-  <script src="planning-settings-data.js?v=0a23649"></script>
-  <script src="planning-voorinstellingen-data.js?v=0a23649"></script>
-  <script src="dienst-uitnodigingen-data.js?v=0a23649"></script>
-  <script src="medewerker-verzuim-data.js?v=0a23649"></script>
-  <script src="dienst-activiteiten-data.js?v=0a23649"></script>
-  <script src="dienst-recurring-data.js?v=0a23649"></script>
-  <script src="medewerkers-data.js?v=0a23649"></script>
-  <script src="onboarding-trajecten-data.js?v=0a23649"></script>
-  <script src="competenties-data.js?v=0a23649"></script>
-  <script src="verlof-data.js?v=0a23649"></script>
-  <script src="dienst-detail.js?v=0a23649"></script>
+  <script src="supabase-client.js?v=24e10b0"></script>
+  <script src="error-reporter.js?v=24e10b0"></script>
+  <script src="besa-sync-reporter.js?v=24e10b0"></script>
+  <script src="optimistic-lock.js?v=24e10b0" defer></script>
+  <script src="realtime-sync.js?v=24e10b0" defer></script>
+  <script src="bulk-actions.js?v=24e10b0" defer></script>
+  <script src="pdf-export.js?v=24e10b0" defer></script>
+  <script src="permissions.js?v=24e10b0" defer></script>
+  <script src="permissions-page-map.js?v=24e10b0" defer></script>
+  <script src="permissions-gate.js?v=24e10b0" defer></script>
+  <script src="permissions-nav-hide.js?v=24e10b0" defer></script>
+  <script src="helpdesk-modal.js?v=24e10b0" defer></script>
+  <script src="onboarding-flow.js?v=24e10b0" defer></script>
+  <script src="mfa-challenge.js?v=24e10b0" defer></script>
+  <script src="auth-guard.js?v=24e10b0"></script>
+  <script src="profiles-data.js?v=24e10b0"></script>
+  <script src="besa-audit.js?v=24e10b0" defer></script>
+  <script src="notifications-data.js?v=24e10b0"></script>
+  <script src="notification-bell.js?v=24e10b0" defer></script>
+  <script src="planning-data.js?v=24e10b0"></script>
+  <script src="clienten-data.js?v=24e10b0"></script>
+  <script src="comp-diensttypes-data.js?v=24e10b0"></script>
+  <script src="comp-saldi-data.js?v=24e10b0"></script>
+  <script src="planning-settings-data.js?v=24e10b0"></script>
+  <script src="planning-voorinstellingen-data.js?v=24e10b0"></script>
+  <script src="dienst-uitnodigingen-data.js?v=24e10b0"></script>
+  <script src="medewerker-verzuim-data.js?v=24e10b0"></script>
+  <script src="dienst-activiteiten-data.js?v=24e10b0"></script>
+  <script src="dienst-recurring-data.js?v=24e10b0"></script>
+  <script src="medewerkers-data.js?v=24e10b0"></script>
+  <script src="onboarding-trajecten-data.js?v=24e10b0"></script>
+  <script src="competenties-data.js?v=24e10b0"></script>
+  <script src="verlof-data.js?v=24e10b0"></script>
+  <script src="dienst-detail.js?v=24e10b0"></script>
   <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="planning-generator.js?v=0a23649"></script>
-  <script src="planning.js?v=0a23649"></script>
+  <script src="planning-generator.js?v=24e10b0"></script>
+  <script src="planning.js?v=24e10b0"></script>
 
   <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->
   <div id="planning-export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="planning-export-title" hidden>
