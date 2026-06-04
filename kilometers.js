@@ -286,31 +286,23 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Werk-werk / loondienst-gating helpers
+  // Werk-werk gating
   //
-  // Woon-werk (Naar kantoor + dagen aanvinken) is ALLEEN voor loondienst.
-  // ZZP/inhuur en overige dienstverbanden krijgen enkel werk-werk
-  // (cliëntvervoer). Werk-werk wordt door de zorgcoördinator goedgekeurd en
-  // telt pas daarna mee in de totalen.
+  // Niemand voert hier nog handmatig WOON-WERK in: loondienstmedewerkers krijgen
+  // hun woon-werkverkeer automatisch via HR (op basis van hun thuisadres → de
+  // dienstlocatie), en ZZP'ers hebben een all-in tarief. Op deze pagina kan dus
+  // iedereen — loondienst én ZZP — uitsluitend WERK-WERK (cliëntvervoer tijdens
+  // werktijd) invoeren. Dat wordt door de zorgcoördinator goedgekeurd en telt pas
+  // daarna mee in de totalen.
   // ---------------------------------------------------------------------------
-  function declIsLoondienst(d) {
-    if (!d || !d.medewerkerId || !window.medewerkersDB) return false;
-    var m = window.medewerkersDB.getByIdSync
-      ? window.medewerkersDB.getByIdSync(d.medewerkerId) : null;
-    var dv = (m && m.dienstverband) ? String(m.dienstverband).toLowerCase() : "";
-    return dv.indexOf("loondienst") !== -1;
-  }
-  function applyChoiceGating(d) {
-    var loon = declIsLoondienst(d);
+  function applyChoiceGating() {
     var kantoor = $("km-choice-kantoor");
     var dagen = $("km-choice-woonwerk-dagen");
-    if (kantoor) kantoor.hidden = !loon;
-    if (dagen) dagen.hidden = !loon;
+    if (kantoor) kantoor.hidden = true;
+    if (dagen) dagen.hidden = true;
     var sub = document.querySelector("#km-add-choice-modal .km-choice-subtitle");
     if (sub) {
-      sub.textContent = loon
-        ? "Kies hoe je kilometers wilt toevoegen"
-        : "Voer werk-werk kilometers in (cliëntvervoer tijdens werktijd)";
+      sub.textContent = "Voer werk-werk kilometers in (cliëntvervoer tijdens werktijd)";
     }
   }
   // Telt deze rit mee in het maandtotaal? Werk-werk telt pas mee na goedkeuring.
@@ -906,7 +898,7 @@
       addBtn.addEventListener("click", function () {
         var d = currentDecl();
         if (!d || !isDeclEditable(d)) return;
-        applyChoiceGating(d);
+        applyChoiceGating();
         openModal("km-add-choice-modal");
       });
     }

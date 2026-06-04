@@ -3,14 +3,14 @@
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
-  <script src="theme.js?v=th1" defer></script>
-  <script src="sidebar-collapse.js?v=sc1" defer></script>
+  <script src="theme.js?v=0a23649" defer></script>
+  <script src="sidebar-collapse.js?v=0a23649" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Planning — HR</title>
-  <link rel="stylesheet" href="styles.css?v=imcols9">
+  <link rel="stylesheet" href="styles.css?v=0a23649">
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -76,9 +76,9 @@
   </style>
 </head>
 <body class="page--planning-erm">
-  <script src="save-feedback.js?v=sf500" defer></script>
-  <script src="besa-export.js?v=ex1" defer></script>
-  <script src="floating-panels.js?v=fpv9" defer></script>
+  <script src="save-feedback.js?v=0a23649" defer></script>
+  <script src="besa-export.js?v=0a23649" defer></script>
+  <script src="floating-panels.js?v=0a23649" defer></script>
 
   <div class="app-shell app-shell--home app-shell--planning-erm">
     <header class="topbar topbar--erm">
@@ -499,22 +499,18 @@
           <label class="planning-dienst-label" for="dienst-aantal">Vereist aantal medewerkers</label>
           <input type="number" class="planning-dienst-input" id="dienst-aantal" name="aantal" min="1" max="999" value="1" />
         </div>
-        <div class="planning-dienst-field planning-dienst-field--short">
-          <label class="planning-dienst-label" for="dienst-kilometers">Kilometers (per dienst)</label>
-          <input type="number" class="planning-dienst-input" id="dienst-kilometers" name="kilometers" min="0" step="0.1" value="0" />
-        </div>
       </div>
       <div class="planning-dienst-field planning-dienst-field--full">
-        <label class="planning-dienst-label" for="dienst-mw">Medewerkers <span class="req">*</span></label>
-        <select id="dienst-mw" class="planning-dienst-input" name="teamlid" required>
-          <option value="">Selecteer een teamlid</option>
+        <label class="planning-dienst-label" for="dienst-mw">Medewerker <span class="planning-dienst-opt">(optioneel)</span></label>
+        <select id="dienst-mw" class="planning-dienst-input" name="teamlid">
+          <option value="">Geen — open dienst (later in te vullen)</option>
         </select>
         <p class="planning-dienst-hint" id="dienst-mw-saldo-hint" hidden></p>
       </div>
       <div class="planning-dienst-grid">
         <div class="planning-dienst-field" id="dienst-client-field">
-          <label class="planning-dienst-label" for="dienst-client" id="dienst-client-label">Cliënt <span class="req">*</span></label>
-          <select id="dienst-client" class="planning-dienst-input" name="client" required></select>
+          <label class="planning-dienst-label" for="dienst-client" id="dienst-client-label">Cliënt <span class="planning-dienst-opt">(optioneel)</span></label>
+          <select id="dienst-client" class="planning-dienst-input" name="client"></select>
           <p class="planning-dienst-hint" id="dienst-client-hint" hidden>Selecteer de jongere die deze medewerker individueel zal begeleiden.</p>
         </div>
         <div class="planning-dienst-field">
@@ -538,29 +534,31 @@
         <input type="hidden" id="dienst-beschrijving-h" name="beschrijving" value="" />
       </div>
       <div class="planning-dienst-herhaling">
-        <span class="planning-dienst-herhaling-t">Herhaling</span>
+        <span class="planning-dienst-herhaling-t">Herhaling / periode</span>
         <label class="planning-dienst-toggle">
           <input type="checkbox" id="dienst-herhaal" name="herhaal" />
-          <span>Herhaal dienst</span>
+          <span>Herhaal deze dienst over een periode</span>
         </label>
       </div>
       <div class="planning-dienst-repeat" id="dienst-repeat-options" hidden>
+        <p class="planning-dienst-hint planning-dienst-repeat-uitleg">Maak deze dienst in één keer aan voor een hele periode: kies een ritme en een einddatum (bijvoorbeeld vanaf de starttijd hierboven t/m 31-12-2026). Een medewerker en cliënt zijn niet verplicht — laat ze leeg voor een open dienst.</p>
         <div class="planning-dienst-grid">
           <div class="planning-dienst-field">
-            <label class="planning-dienst-label" for="dienst-repeat-frequency">Herhaalritme</label>
+            <label class="planning-dienst-label" for="dienst-repeat-frequency">Ritme</label>
             <select id="dienst-repeat-frequency" class="planning-dienst-input">
-              <option value="weekly">Wekelijks</option>
-              <option value="daily">Dagelijks</option>
+              <option value="daily">Elke dag</option>
+              <option value="workdays">Elke werkdag (ma t/m vr)</option>
+              <option value="weekly">Wekelijks (zelfde weekdag)</option>
               <option value="monthly">Maandelijks</option>
             </select>
           </div>
-          <div class="planning-dienst-field">
-            <label class="planning-dienst-label" for="dienst-repeat-count">Aantal keer</label>
-            <input type="number" class="planning-dienst-input" id="dienst-repeat-count" min="1" max="52" value="1" />
-          </div>
           <div class="planning-dienst-field planning-dienst-field--wide">
-            <label class="planning-dienst-label" for="dienst-repeat-until">Niet herhalen na</label>
+            <label class="planning-dienst-label" for="dienst-repeat-until">Tot en met datum</label>
             <input type="date" class="planning-dienst-input" id="dienst-repeat-until" />
+          </div>
+          <div class="planning-dienst-field">
+            <label class="planning-dienst-label" for="dienst-repeat-count">Of: aantal keer <span class="planning-dienst-opt">(optioneel)</span></label>
+            <input type="number" class="planning-dienst-input" id="dienst-repeat-count" min="1" max="999" placeholder="—" />
           </div>
         </div>
       </div>
@@ -774,46 +772,46 @@
     </div>
   </div>
 
-  <script src="top-nav-overflow.js?v=imcols9"></script>
+  <script src="top-nav-overflow.js?v=0a23649"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js"></script>
-  <script src="error-reporter.js?v=er1"></script>
-  <script src="besa-sync-reporter.js"></script>
-  <script src="optimistic-lock.js?v=ol1" defer></script>
-  <script src="realtime-sync.js?v=rt1" defer></script>
-  <script src="bulk-actions.js?v=ba1" defer></script>
-  <script src="pdf-export.js?v=pdf1" defer></script>
-  <script src="permissions.js?v=perm2" defer></script>
-  <script src="permissions-page-map.js?v=permmap1" defer></script>
-  <script src="permissions-gate.js?v=permgate1" defer></script>
-  <script src="permissions-nav-hide.js?v=permhide1" defer></script>
-  <script src="helpdesk-modal.js?v=help1" defer></script>
-  <script src="onboarding-flow.js?v=onb3" defer></script>
-  <script src="mfa-challenge.js?v=mfa1" defer></script>
-  <script src="auth-guard.js"></script>
-  <script src="profiles-data.js"></script>
-  <script src="besa-audit.js" defer></script>
-  <script src="notifications-data.js"></script>
-  <script src="notification-bell.js?v=nb2" defer></script>
-  <script src="planning-data.js?v=pdf1"></script>
-  <script src="clienten-data.js?v=lockfix1"></script>
-  <script src="comp-diensttypes-data.js?v=cd2"></script>
-  <script src="comp-saldi-data.js"></script>
-  <script src="planning-settings-data.js?v=ps2"></script>
-  <script src="planning-voorinstellingen-data.js"></script>
-  <script src="dienst-uitnodigingen-data.js"></script>
-  <script src="medewerker-verzuim-data.js"></script>
-  <script src="dienst-activiteiten-data.js"></script>
-  <script src="dienst-recurring-data.js"></script>
-  <script src="medewerkers-data.js"></script>
-  <script src="onboarding-trajecten-data.js?v=onbtr3"></script>
-  <script src="competenties-data.js"></script>
-  <script src="verlof-data.js?v=vl1"></script>
-  <script src="dienst-detail.js"></script>
+  <script src="supabase-client.js?v=0a23649"></script>
+  <script src="error-reporter.js?v=0a23649"></script>
+  <script src="besa-sync-reporter.js?v=0a23649"></script>
+  <script src="optimistic-lock.js?v=0a23649" defer></script>
+  <script src="realtime-sync.js?v=0a23649" defer></script>
+  <script src="bulk-actions.js?v=0a23649" defer></script>
+  <script src="pdf-export.js?v=0a23649" defer></script>
+  <script src="permissions.js?v=0a23649" defer></script>
+  <script src="permissions-page-map.js?v=0a23649" defer></script>
+  <script src="permissions-gate.js?v=0a23649" defer></script>
+  <script src="permissions-nav-hide.js?v=0a23649" defer></script>
+  <script src="helpdesk-modal.js?v=0a23649" defer></script>
+  <script src="onboarding-flow.js?v=0a23649" defer></script>
+  <script src="mfa-challenge.js?v=0a23649" defer></script>
+  <script src="auth-guard.js?v=0a23649"></script>
+  <script src="profiles-data.js?v=0a23649"></script>
+  <script src="besa-audit.js?v=0a23649" defer></script>
+  <script src="notifications-data.js?v=0a23649"></script>
+  <script src="notification-bell.js?v=0a23649" defer></script>
+  <script src="planning-data.js?v=0a23649"></script>
+  <script src="clienten-data.js?v=0a23649"></script>
+  <script src="comp-diensttypes-data.js?v=0a23649"></script>
+  <script src="comp-saldi-data.js?v=0a23649"></script>
+  <script src="planning-settings-data.js?v=0a23649"></script>
+  <script src="planning-voorinstellingen-data.js?v=0a23649"></script>
+  <script src="dienst-uitnodigingen-data.js?v=0a23649"></script>
+  <script src="medewerker-verzuim-data.js?v=0a23649"></script>
+  <script src="dienst-activiteiten-data.js?v=0a23649"></script>
+  <script src="dienst-recurring-data.js?v=0a23649"></script>
+  <script src="medewerkers-data.js?v=0a23649"></script>
+  <script src="onboarding-trajecten-data.js?v=0a23649"></script>
+  <script src="competenties-data.js?v=0a23649"></script>
+  <script src="verlof-data.js?v=0a23649"></script>
+  <script src="dienst-detail.js?v=0a23649"></script>
   <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="planning-generator.js?v=plgen1"></script>
-  <script src="planning.js?v=pjf2"></script>
+  <script src="planning-generator.js?v=0a23649"></script>
+  <script src="planning.js?v=0a23649"></script>
 
   <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->
   <div id="planning-export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="planning-export-title" hidden>

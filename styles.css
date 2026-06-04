@@ -11737,6 +11737,17 @@ body.planning-dienst-open {
   font-weight: 800;
 }
 
+/* "(optioneel)" — muted, erft labelkleur zodat het in dark mode meebeweegt */
+.planning-dienst-label .planning-dienst-opt {
+  font-weight: 600;
+  font-size: 0.92em;
+  opacity: 0.6;
+}
+
+.planning-dienst-repeat-uitleg {
+  margin-bottom: 12px;
+}
+
 .planning-dienst-input {
   width: 100%;
   box-sizing: border-box;
