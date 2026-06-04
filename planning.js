@@ -2311,11 +2311,11 @@ function applyDienstFormOneOnOneState() {
     if (resolveDiensttypeKey(v) === "1_op_1") isOneOnOne = true;
   });
   if (isOneOnOne) {
-    label.innerHTML = 'Jongere voor 1-op-1 begeleiding <span class="req">*</span>';
+    label.innerHTML = 'Jongere voor 1-op-1 begeleiding <span class="planning-dienst-opt">(optioneel)</span>';
     if (hint) hint.hidden = false;
     if (select) select.setAttribute("aria-label", "Jongere voor 1-op-1 begeleiding");
   } else {
-    label.innerHTML = 'Cliënt <span class="req">*</span>';
+    label.innerHTML = 'Cliënt <span class="planning-dienst-opt">(optioneel)</span>';
     if (hint) hint.hidden = true;
     if (select) select.setAttribute("aria-label", "Cliënt");
   }
@@ -2428,14 +2428,6 @@ function syncDienstRepeatOptions() {
   const checked = Boolean(document.getElementById("dienst-herhaal")?.checked);
   const options = document.getElementById("dienst-repeat-options");
   if (options) options.hidden = !checked;
-}
-
-function addRepeatInterval(date, freq, index) {
-  const d = new Date(date);
-  if (freq === "daily") d.setDate(d.getDate() + index);
-  else if (freq === "monthly") d.setMonth(d.getMonth() + index);
-  else d.setDate(d.getDate() + index * 7);
-  return d;
 }
 
 function getSelectedDiensttypeFieldString() {
@@ -2646,8 +2638,8 @@ function setDienstFormDefaults() {
   if (p) p.value = "0";
   if (n) n.value = "1";
   if (h) h.checked = false;
-  if (repeatCount) repeatCount.value = "1";
-  if (repeatFreq) repeatFreq.value = "weekly";
+  if (repeatCount) repeatCount.value = "";
+  if (repeatFreq) repeatFreq.value = "daily";
   if (repeatUntil) repeatUntil.value = "";
   if (rt) {
     rt.innerHTML = "";
@@ -2694,7 +2686,6 @@ function fillDienstPanelForItem(item) {
   }
   setVal("dienst-pauze", item.pauzeUren ?? 0);
   setVal("dienst-aantal", item.vereistAantalMedewerkers ?? 1);
-  setVal("dienst-kilometers", item.kilometers ?? 0);
   setVal("dienst-competentie", item.competenties || "");
   const rt = document.getElementById("dienst-beschrijving");
   if (rt) rt.innerHTML = item.beschrijving || "";
@@ -2817,20 +2808,22 @@ function initDienstPanel() {
     ev.preventDefault();
     const diensttype = getSelectedDiensttypeFieldString().trim();
     const locHr = document.getElementById("dienst-locatie-hr")?.value || "";
+    // Medewerker en cliënt zijn NIET verplicht: een dienst kan als open dienst
+    // worden aangemaakt (alleen type, locatie, tijden en eventueel een periode).
     const teamlid = document.getElementById("dienst-mw")?.value || "";
     const client = document.getElementById("dienst-client")?.value || "";
     const sd = document.getElementById("dienst-startdate")?.value;
     const st = document.getElementById("dienst-starttime")?.value;
     const ed = document.getElementById("dienst-einddate")?.value;
     const et = document.getElementById("dienst-eindtime")?.value;
-    if (!diensttype || !locHr || !teamlid || !client || !sd || !st || !ed || !et) {
+    if (!diensttype || !locHr || !sd || !st || !ed || !et) {
       if (typeof window.showActionFeedback === "function") {
         window.showActionFeedback(
           "info",
           "Verplichte velden",
           !diensttype
             ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
-            : "Vul alle verplichte velden in (met *)."
+            : "Vul het diensttype, de locatie en de start- en eindtijd in."
         );
       }
       return;
@@ -2851,7 +2844,6 @@ function initDienstPanel() {
     }
     const pauze = Math.max(0, parseFloat(document.getElementById("dienst-pauze")?.value) || 0);
     const aantal = Math.max(1, parseInt(document.getElementById("dienst-aantal")?.value, 10) || 1);
-    const kilometers = Math.max(0, parseFloat(document.getElementById("dienst-kilometers")?.value) || 0);
     const comp = document.getElementById("dienst-competentie")?.value || "";
     const besch = (richt && richt.innerHTML.trim()) || "";
     const her = Boolean(document.getElementById("dienst-herhaal")?.checked);
@@ -2873,7 +2865,6 @@ function initDienstPanel() {
       einde: endIso,
       pauzeUren: pauze,
       vereistAantalMedewerkers: aantal,
-      kilometers: kilometers,
       competenties: comp,
       beschrijving: besch,
       herhaal: her,
@@ -2894,26 +2885,58 @@ function initDienstPanel() {
     if (her) {
       const s0 = parseStartDate(startIso);
       const e0 = parseStartDate(endIso);
-      const freq = document.getElementById("dienst-repeat-frequency")?.value || "weekly";
-      const count = Math.max(1, Math.min(52, parseInt(document.getElementById("dienst-repeat-count")?.value, 10) || 1));
+      const freq = document.getElementById("dienst-repeat-frequency")?.value || "daily";
       const untilRaw = document.getElementById("dienst-repeat-until")?.value || "";
       const until = untilRaw ? combineDateTimeToLocalIso(untilRaw, "23:59") : "";
       const untilDate = until ? parseStartDate(until) : null;
+      const countRaw = parseInt(document.getElementById("dienst-repeat-count")?.value, 10);
+      const hasCount = Number.isFinite(countRaw) && countRaw > 0;
+      // Een periode-dienst heeft een einddatum (t/m) óf een aantal keer nodig;
+      // zonder beide is de herhaling betekenisloos.
+      if (!untilDate && !hasCount) {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("info", "Periode ontbreekt",
+            "Kies een einddatum (t/m) of een aantal keer voor de herhaling, of zet 'Herhaal' uit.");
+        }
+        return;
+      }
+      // Veiligheidsgrens: nooit meer dan dit aantal diensten in één keer aanmaken.
+      const MAX_REPEAT = 1000;
       if (s0 && e0) {
-        for (let i = 1; i <= count; i++) {
-          const rs = addRepeatInterval(s0, freq, i);
-          const re = addRepeatInterval(e0, freq, i);
-          if (untilDate && rs > untilDate) break;
+        const cs = new Date(s0);
+        const ce = new Date(e0);
+        const advance = (dt) => {
+          if (freq === "monthly") dt.setMonth(dt.getMonth() + 1);
+          else if (freq === "weekly") dt.setDate(dt.getDate() + 7);
+          else dt.setDate(dt.getDate() + 1); // 'daily' én 'workdays': per dag; weekend wordt overgeslagen
+        };
+        let made = 0;
+        let truncated = false;
+        for (let guard = 0; guard < 4000; guard++) {
+          advance(cs);
+          advance(ce);
+          if (untilDate && cs > untilDate) break;
+          if (freq === "workdays") {
+            const dow = cs.getDay(); // 0 = zondag, 6 = zaterdag
+            if (dow === 0 || dow === 6) continue;
+          }
+          if (hasCount && !untilDate && made >= countRaw) break;
+          if (made >= MAX_REPEAT) { truncated = true; break; }
           toAdd.push(
             normalizeItem({
               ...item,
               id: makePlanningId(),
-              start: toIsoLocal(rs),
-              einde: toIsoLocal(re),
+              start: toIsoLocal(new Date(cs)),
+              einde: toIsoLocal(new Date(ce)),
               herhaal: true,
               herhaalFrequentie: freq,
             })
           );
+          made++;
+        }
+        if (truncated && typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("info", "Periode ingekort",
+            "Er zijn maximaal " + MAX_REPEAT + " diensten in één keer aangemaakt. Verfijn de periode of voeg de rest later toe.");
         }
       }
     }
