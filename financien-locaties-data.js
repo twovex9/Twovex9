@@ -153,6 +153,40 @@
     return res.data || [];
   }
 
+  // ─── Kamers/capaciteit + jongere↔locatie-koppeling (via SECURITY DEFINER RPC's) ───
+  /** Capaciteit (aantal kamers) van een locatie instellen. p_kamers null = wissen. */
+  async function zetKamers(locatie, kamers) {
+    await ensureSupabase();
+    var res = await global.besaSupabase.rpc("financien_zet_locatie_kamers", {
+      p_locatie: locatie,
+      p_kamers: (kamers === "" || kamers == null) ? null : Math.round(Number(kamers)),
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.unauthorized) throw new Error("Geen toegang.");
+    if (res.data && res.data.ok === false) throw new Error(res.data.error || "Opslaan mislukt.");
+    return res.data;
+  }
+  /** Een cliënt aan een locatie koppelen/verplaatsen; locatie leeg = ontkoppelen. */
+  async function koppelClient(clientId, locatie) {
+    await ensureSupabase();
+    var res = await global.besaSupabase.rpc("financien_koppel_client_locatie", {
+      p_client_id: clientId,
+      p_locatie: locatie || "",
+    });
+    if (res.error) throw res.error;
+    if (res.data && res.data.unauthorized) throw new Error("Geen toegang.");
+    if (res.data && res.data.ok === false) throw new Error(res.data.error || "Koppelen mislukt.");
+    return res.data;
+  }
+  /** Alle in-zorg cliënten (id, naam, clientnummer, huidige locatie) voor de koppel-keuzelijst. */
+  async function koppelbareClienten() {
+    await ensureSupabase();
+    var res = await global.besaSupabase.rpc("financien_koppelbare_clienten", {});
+    if (res.error) throw res.error;
+    if (res.data && res.data.unauthorized) return [];
+    return (res.data && res.data.clienten) || [];
+  }
+
   var _locNames = null;
   async function locatieNamen() {
     if (_locNames) return _locNames;
@@ -189,6 +223,10 @@
     archiveOnkost: archiveOnkost,
     listOnkosten: listOnkosten,
     locatieNamen: locatieNamen,
+    // Kamers/capaciteit + jongere-koppeling
+    zetKamers: zetKamers,
+    koppelClient: koppelClient,
+    koppelbareClienten: koppelbareClienten,
     // Overhead-personeel
     maandkostVan: maandkostVan,
     listPersoneel: listPersoneel,

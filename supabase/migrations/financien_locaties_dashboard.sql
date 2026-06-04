@@ -1,7 +1,6 @@
 -- Financiën › Locaties — winst/verlies per locatie per maand. CANONIEKE RPC-definities.
 -- Toegepast via Supabase MCP (apply_migration). Dit bestand legt de actuele definities
--- vast voor de repo-historie (laatste migratie wint: financien_dashboard_met_personeel /
--- financien_detail_met_personeel).
+-- vast voor de repo-historie (laatste migratie wint: financien_dashboard_detail_met_kamers).
 --
 -- Toegang: STRIKT alleen rol Eigenaar/Directeur/Finance (NIET admin-tier) — server-side
 -- afgeschermd via can_view_financien(). Frontend gate: permissions-page-map.js
@@ -16,6 +15,10 @@
 -- Opbrengst = beschikkingen-omzet per locatie: betaald + gedeclareerd-open +
 --            nog-te-declareren-schatting, gekoppeld via
 --            facturen -> bs2_disposition_payments -> beschikkingen.locatie.
+-- Kamers   = locaties.aantal_kamers (capaciteit). Bezetting = in-zorg cliënten met
+--            clienten.locatie = master-locatienaam. Vrij = max(kamers − bezet, 0).
+--            In-zorg cliënten zonder geldige locatie = totals.zonder_locatie.
+--            Zie financien_locatie_kamers.sql voor de kolom + mutatie-RPC's.
 -- Venster   = vanaf eerste maand met kosten-data t/m huidige maand.
 
 -- Strikte rol-gate: Eigenaar/Directeur/Finance (zie ook financien_locatie_onkosten.sql).
@@ -32,7 +35,7 @@ as $$
   );
 $$;
 
--- Hoofd-dashboard: totalen + per locatie + maandreeks (incl. onkosten + personeel).
+-- Hoofd-dashboard: totalen + per locatie + maandreeks (incl. onkosten + personeel + kamers/bezetting).
 create or replace function public.financien_locaties_dashboard(p_start date default null, p_end date default null)
 returns jsonb
 language plpgsql stable security invoker
@@ -134,6 +137,24 @@ begin
            sum(kosten_zzp+onkosten+personeel) as kosten,
            sum(uren) as uren, sum(diensten) as diensten
     from pl, refp where pl.ym >= refp.s_ym and pl.ym <= refp.e_ym group by pl.loc
+  ),
+  -- Kamers/capaciteit per master-locatie (max over evt. dubbele naam-rijen).
+  loc_kamers as (
+    select naam as loc, max(coalesce(aantal_kamers,0)) as kamers
+    from locaties where not archived and naam is not null and naam <> '' group by naam
+  ),
+  -- Bezetting = in-zorg cliënten gekoppeld aan een master-locatie (inner join).
+  bezetting as (
+    select lmx.naam as loc, count(*) as bezet
+    from clienten c join lm lmx on lmx.naam = nullif(btrim(c.locatie),'')
+    where not c.archived and lower(btrim(coalesce(c.fase,''))) = 'in zorg'
+    group by lmx.naam
+  ),
+  -- Locatie-universe: financieel actief (in periode) ∪ kamers ingesteld ∪ bezetting.
+  loc_uni as (
+    select loc from loc_sel where omzet <> 0 or kosten <> 0
+    union select loc from loc_kamers where kamers > 0
+    union select loc from bezetting where bezet > 0
   )
   select jsonb_build_object(
     'period', (select jsonb_build_object('start', s_ym, 'end', e_ym) from refp),
@@ -147,19 +168,34 @@ begin
         'kosten', round(coalesce(sum(kosten),0)::numeric,2), 'resultaat', round((coalesce(sum(omzet),0)-coalesce(sum(kosten),0))::numeric,2),
         'uren', round(coalesce(sum(uren),0)::numeric,1), 'diensten', coalesce(sum(diensten),0),
         'zzpers', (select count(distinct teamlid_key) from zzp, refp r where zzp.ym>=r.s_ym and zzp.ym<=r.e_ym),
-        'locaties', (select count(*) from loc_sel where omzet<>0 or kosten<>0)
+        'locaties', (select count(*) from loc_sel where omzet<>0 or kosten<>0),
+        'kamers', (select coalesce(sum(kamers),0) from loc_kamers),
+        'bezet', (select coalesce(sum(bezet),0) from bezetting),
+        'vrij', (select coalesce(sum(greatest(coalesce(lk.kamers,0)-coalesce(bz.bezet,0),0)),0)
+                 from loc_kamers lk left join bezetting bz on bz.loc = lk.loc where lk.kamers > 0),
+        'zonder_locatie', (select count(*) from clienten c
+                           where not c.archived and lower(btrim(coalesce(c.fase,''))) = 'in zorg'
+                             and not exists (select 1 from lm where lm.naam = nullif(btrim(c.locatie),'')))
       ) from loc_sel),
     'locations', coalesce((
       select jsonb_agg(jsonb_build_object(
-        'name', ls.loc, 'kleur', coalesce(lc.kleur, '#94a3b8'),
-        'omzet', round(ls.omzet::numeric,2), 'paid', round(ls.paid::numeric,2), 'pending', round(ls.pending::numeric,2), 'to_declare', round(ls.to_declare::numeric,2),
-        'kosten_zzp', round(ls.kosten_zzp::numeric,2), 'onkosten', round(ls.onkosten::numeric,2), 'personeel', round(ls.personeel::numeric,2), 'kosten', round(ls.kosten::numeric,2),
-        'resultaat', round((ls.omzet-ls.kosten)::numeric,2),
-        'uren', round(ls.uren::numeric,1), 'diensten', ls.diensten, 'zzpers', coalesce(zs.zzpers,0),
-        'marge_pct', case when ls.omzet>0 then round(((ls.omzet-ls.kosten)/ls.omzet*100)::numeric,1) else null end
-      ) order by ls.omzet desc, ls.kosten desc)
-      from loc_sel ls left join loc_color lc on lc.naam = ls.loc left join zzpers_sel zs on zs.loc = ls.loc
-      where ls.omzet<>0 or ls.kosten<>0
+        'name', u.loc, 'kleur', coalesce(lc.kleur, '#94a3b8'),
+        'omzet', round(coalesce(ls.omzet,0)::numeric,2), 'paid', round(coalesce(ls.paid,0)::numeric,2),
+        'pending', round(coalesce(ls.pending,0)::numeric,2), 'to_declare', round(coalesce(ls.to_declare,0)::numeric,2),
+        'kosten_zzp', round(coalesce(ls.kosten_zzp,0)::numeric,2), 'onkosten', round(coalesce(ls.onkosten,0)::numeric,2),
+        'personeel', round(coalesce(ls.personeel,0)::numeric,2), 'kosten', round(coalesce(ls.kosten,0)::numeric,2),
+        'resultaat', round((coalesce(ls.omzet,0)-coalesce(ls.kosten,0))::numeric,2),
+        'uren', round(coalesce(ls.uren,0)::numeric,1), 'diensten', coalesce(ls.diensten,0), 'zzpers', coalesce(zs.zzpers,0),
+        'marge_pct', case when coalesce(ls.omzet,0)>0 then round(((ls.omzet-ls.kosten)/ls.omzet*100)::numeric,1) else null end,
+        'kamers', coalesce(lk.kamers,0), 'bezet', coalesce(bz.bezet,0),
+        'vrij', greatest(coalesce(lk.kamers,0)-coalesce(bz.bezet,0),0)
+      ) order by coalesce(ls.omzet,0) desc, coalesce(ls.kosten,0) desc, u.loc)
+      from loc_uni u
+      left join loc_sel ls on ls.loc = u.loc
+      left join loc_color lc on lc.naam = u.loc
+      left join zzpers_sel zs on zs.loc = u.loc
+      left join loc_kamers lk on lk.loc = u.loc
+      left join bezetting bz on bz.loc = u.loc
     ), '[]'::jsonb),
     'months', coalesce((
       select jsonb_agg(jsonb_build_object('ym', ym, 'omzet', round(omzet::numeric,2), 'kosten', round(kosten::numeric,2), 'resultaat', round((omzet-kosten)::numeric,2)) order by ym)
@@ -170,7 +206,7 @@ begin
 end;
 $$;
 
--- Drill-down per locatie: ZZP'ers + cliënten/beschikkingen + personeel + onkosten.
+-- Drill-down per locatie: ZZP'ers + cliënten/beschikkingen + personeel + onkosten + kamers/bezetting + jongeren.
 create or replace function public.financien_locatie_maand_detail(p_location text, p_start date default null, p_end date default null)
 returns jsonb
 language plpgsql stable security invoker
@@ -243,6 +279,27 @@ begin
   select jsonb_build_object(
     'location', p_location,
     'period', (select jsonb_build_object('start', s_ym, 'end', e_ym) from refp),
+    -- Kamers/bezetting (huidige momentopname, niet periode-afhankelijk).
+    'kamers', (select max(coalesce(aantal_kamers,0)) from locaties where naam = p_location and not archived),
+    'bezet', (
+      select count(*) from clienten c
+      where not c.archived and lower(btrim(coalesce(c.fase,''))) = 'in zorg'
+        and case when p_location = 'Overig'
+                 then not exists (select 1 from lm where lm.naam = nullif(btrim(c.locatie),''))
+                 else nullif(btrim(c.locatie),'') = p_location end
+    ),
+    'jongeren', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'id', c.id,
+               'naam', trim(coalesce(c.voornaam,'') || ' ' || coalesce(c.achternaam,'')),
+               'clientnummer', c.clientnummer
+             ) order by lower(trim(coalesce(c.voornaam,'') || ' ' || coalesce(c.achternaam,''))))
+      from clienten c
+      where not c.archived and lower(btrim(coalesce(c.fase,''))) = 'in zorg'
+        and case when p_location = 'Overig'
+                 then not exists (select 1 from lm where lm.naam = nullif(btrim(c.locatie),''))
+                 else nullif(btrim(c.locatie),'') = p_location end
+    ), '[]'::jsonb),
     'zzpers', coalesce((
       select jsonb_agg(jsonb_build_object('naam', naam, 'uren', round(uren::numeric,1), 'tarief', round(tarief::numeric,2), 'kosten', round(kosten::numeric,2)) order by kosten desc)
       from (
