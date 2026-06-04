@@ -6,28 +6,28 @@
  * BS2-bron: POST /api/rpc met signature "get:employee-document-status"
  *   → response { errors: [...], warnings: [...] }
  *
- * Document-statusregels (geijkt op BS2, geverifieerd 2026-06-01):
- *  - GROEN  = geen blokkering en niets vervalt binnen 3 maanden
- *  - ORANJE = WAARSCHUWING: iets vervalt binnen 3 maanden (90 dagen), OF een
- *             niet-blokkerend document (opleiding/ID/addendum/arbeidsvoorwaarden)
- *             is verlopen → medewerker blijft planbaar, met aantekening
- *  - ROOD   = BLOKKERING: een kerndocument ontbreekt of is verlopen waardoor de
- *             medewerker niet planbaar is
+ * Document-statusregels (user-eis Lionel 2026-06-04 — STRIKTE 7-puntseis):
+ *  - GROEN  = alle 7 verplichte gegevens aanwezig & geldig, niets vervalt <90 dgn
+ *  - ORANJE = een verplicht document is geldig maar vervalt binnen 3 maanden (90 dgn)
+ *  - ROOD   = een verplicht gegeven ONTBREEKT, of alle exemplaren ervan zijn verlopen
  *
- * Welke documenten BLOKKEREN (rood) — exact zoals BS2:
- *  - VOG ontbreekt of (alle exemplaren) verlopen → ERROR (rood)   [iedereen]
- *  - Contract ontbreekt of (alle exemplaren) verlopen → ERROR (rood)
- *      MAAR alléén als ETF zelf de contractpartij is (loondienst / rechtstreekse
- *      inhuur). Bij inhuur "Via bureau" levert het bureau het contract → het
- *      ETF-contract blokkeert NIET en geeft geen waarschuwing. Alleen het meest
- *      recente/geldende contract telt: een oud verlopen contract dat al door een
- *      geldig is vervangen, blokkeert niet.
+ * De 7 verplichte gegevens (gelden voor ÁLLE medewerkers, geen uitzonderingen):
+ *   1. VOG                          (documenttype 'vog')
+ *   2. Arbeidsovereenkomst/contract (documenttype 'contract' — óók bij inhuur via bureau)
+ *   3. ID-kaart                     (documenttype 'id')
+ *   4. BHV                          (document met "bhv" in de naam)
+ *   5. Medicatietraining            (document met "medicat" in de naam)
+ *   6. Meldcode huiselijk geweld    (document met "meldcode"/"huiselijk" in de naam)
+ *   7. Bankrekeningnummer (IBAN)    (data-veld profIban; geen vervaldatum)
  *
- * Welke documenten alleen WAARSCHUWEN (oranje), nooit blokkeren — exact zoals BS2:
- *  - VOG / Contract verloopt binnen 90 dagen → WARNING (oranje)
- *  - Opleiding (BHV) / ID / addendum / arbeidsvoorwaarden verlopen óf vervalt
- *    binnen 90 dagen → WARNING (oranje). Een verlopen opleiding maakt iemand
- *    dus NIET rood (dit week eerder af van BS2 en is nu gelijkgetrokken).
+ * BHV/medicatie/meldcode hebben in de DB geen eigen documenttype maar staan als
+ * 'education'/'other' met een vrije naam → daarom matchen we op trefwoord in de
+ * naam. Per document: ontbreekt → rood; alle exemplaren verlopen → rood; geldig
+ * maar vervalt <90 dgn → oranje; een exemplaar zonder vervaldatum = aanwezig & geldig.
+ *
+ * NB De doc-status staat LOS van planbaarheid: een rode/oranje medewerker kan
+ * handmatig planbaar worden gezet (medewerker.js → isPlannable); de melding blijft
+ * staan tot de documentatie is aangeleverd. Groen = automatisch planbaar.
  *
  * Geen DB-tabel, pure compute. Resultaat wordt per medewerker geheugen-
  * gecached zodat herhaalde renders snel zijn.
@@ -77,18 +77,6 @@
     return dd + "-" + mm + "-" + d.getFullYear();
   }
 
-  function typeLabel(t) {
-    switch (String(t || "").toLowerCase()) {
-      case "vog": return "VOG";
-      case "contract": return "Contract";
-      case "addendum": return "Addendum";
-      case "id": return "ID-bewijs";
-      case "education": return "Opleiding";
-      case "employment_conditions": return "Arbeidsvoorwaarden";
-      default: return "Document";
-    }
-  }
-
   /**
    * Compute errors + warnings voor 1 medewerker.
    * @param employee {object} — uit medewerkersDB.getByIdSync
@@ -101,23 +89,32 @@
     var now = new Date();
     var list = (docs || []).filter(function (d) { return d && !d.archived; });
 
-    // Inhuurtype bepalen. Bij inhuur "Via bureau" levert het uitzend-/
-    // detacheringsbureau het contract; een ontbrekend of verlopen ETF-contract
-    // is dan GEEN blokkering en geen waarschuwing — exact zoals BS2. (Het emp-
-    // object spreidt de jsonb `data` naar top-level, dus emp.inhuurtype; we
-    // checken voor de zekerheid ook emp.data.inhuurtype.)
-    var inhuurtype = String(
-      (employee && (employee.inhuurtype || (employee.data && employee.data.inhuurtype))) || ""
-    ).toLowerCase();
-    var viaBureau = inhuurtype.indexOf("bureau") !== -1; // "Via bureau"
+    // Matcher-helpers. Een verplicht document wordt herkend op TYPE
+    // (vog/contract/id) óf op NAAM. BHV/medicatie/meldcode hebben in de DB geen
+    // eigen documenttype maar staan als 'education'/'other' met een vrije naam,
+    // dus die matchen we op trefwoord(en) in de naam.
+    function byType(typeKey) {
+      return function (d) { return String(d.type || "").toLowerCase() === typeKey; };
+    }
+    function nameContains(keywords) {
+      return function (d) {
+        var n = String(d.naam || "").toLowerCase();
+        for (var i = 0; i < keywords.length; i++) {
+          if (n.indexOf(keywords[i]) !== -1) return true;
+        }
+        return false;
+      };
+    }
 
-    // Hulpfunctie: bepaal of een verzameling documenten van één type een geldig
-    // exemplaar bevat (geen vervaldatum = geldig, toekomstige datum = geldig) en
-    // verzamel intussen een "vervalt binnenkort"-waarschuwing. Een verlopen
-    // exemplaar telt niet als geldig — alleen het meest recente/geldende telt,
-    // dus een oud verlopen document dat al door een geldig is vervangen, blokkeert niet.
-    function evalBlocking(typeKey, label, missingNaam, missingReden) {
-      var items = list.filter(function (d) { return String(d.type || "").toLowerCase() === typeKey; });
+    // Evalueer één verplicht document (geïdentificeerd door matchFn):
+    //  - ontbreekt volledig            → ERROR (rood)
+    //  - bestaat maar ALLE verlopen    → ERROR (rood)
+    //  - geldig maar vervalt <WARN_DAYS→ WARNING (oranje)
+    // Een exemplaar zonder vervaldatum telt als aanwezig & geldig. Alleen het
+    // meest recente exemplaar telt: een oud verlopen document dat al door een
+    // geldig is vervangen, blokkeert niet.
+    function evalRequiredDoc(matchFn, label, missingNaam, missingReden) {
+      var items = list.filter(matchFn);
       var hasValid = false;
       items.forEach(function (it) {
         var vd = parseDate(it.vervaldatum);
@@ -127,7 +124,7 @@
         hasValid = true;
         if (dd <= WARN_DAYS) {
           warnings.push({
-            id: it.id, type: typeKey, kind: "expiry-soon",
+            id: it.id, type: label, kind: "expiry-soon",
             label: label, naam: it.naam || label,
             datum: it.vervaldatum, datumLabel: fmtDate(vd),
             reden: "Verloopt op " + fmtDate(vd) + " (over " + dd + " dagen)",
@@ -136,7 +133,7 @@
       });
       if (items.length === 0) {
         errors.push({
-          id: null, type: typeKey, kind: typeKey + "-missing",
+          id: null, type: label, kind: "missing",
           label: label, naam: missingNaam, datum: null, datumLabel: "",
           reden: missingReden,
         });
@@ -146,7 +143,7 @@
           return (!best || (d && best.d && d > best.d)) ? { it: it, d: d } : best;
         }, null);
         errors.push({
-          id: laatste && laatste.it.id, type: typeKey, kind: "expired",
+          id: laatste && laatste.it.id, type: label, kind: "expired",
           label: label, naam: (laatste && laatste.it.naam) || label,
           datum: laatste && laatste.it.vervaldatum,
           datumLabel: laatste && laatste.d ? fmtDate(laatste.d) : "",
@@ -155,43 +152,35 @@
       }
     }
 
-    // ---- VOG: blokkerend kerndocument voor IEDEREEN ----
-    evalBlocking("vog", "VOG", "VOG ontbreekt", "Er is geen VOG-document geüpload");
+    // ---- De 7 strikt verplichte gegevens (user-eis Lionel 2026-06-04). ----
+    // Ontbreekt = rood; vervalt binnenkort = oranje; alles geldig = groen.
+    // Geldt voor ÁLLE medewerkers; géén uitzondering voor inhuur "via bureau".
+    evalRequiredDoc(byType("vog"), "VOG",
+      "VOG ontbreekt", "Er is geen VOG geüpload");
+    evalRequiredDoc(byType("contract"), "Arbeidsovereenkomst / contract",
+      "Contract ontbreekt", "Er is geen arbeidsovereenkomst/contract geüpload");
+    evalRequiredDoc(byType("id"), "ID-kaart",
+      "ID-kaart ontbreekt", "Er is geen ID-bewijs geüpload");
+    evalRequiredDoc(nameContains(["bhv"]), "BHV",
+      "BHV ontbreekt", "Er is geen BHV-certificaat geüpload");
+    evalRequiredDoc(nameContains(["medicat"]), "Medicatietraining",
+      "Medicatietraining ontbreekt", "Er is geen medicatietraining-certificaat geüpload");
+    evalRequiredDoc(nameContains(["meldcode", "huiselijk"]), "Meldcode huiselijk geweld",
+      "Meldcode huiselijk geweld ontbreekt", "Er is geen certificaat 'meldcode huiselijk geweld' geüpload");
 
-    // ---- Contract: blokkerend kerndocument, maar alléén als ETF zelf de
-    //      contractpartij is (loondienst / rechtstreekse inhuur). Bij "Via
-    //      bureau" volledig negeren (geen error, geen warning). ----
-    if (!viaBureau) {
-      evalBlocking("contract", "Contract", "Contract ontbreekt", "Er is geen geldig contract");
+    // ---- Bankrekeningnummer (IBAN): data-veld (profIban), geen document en
+    //      geen vervaldatum. Leeg/ontbreekt → ROOD. ----
+    var iban = String(
+      (employee && (employee.profIban || (employee.data && employee.data.profIban))) || ""
+    ).trim();
+    if (!iban) {
+      errors.push({
+        id: null, type: "iban", kind: "missing",
+        label: "Bankrekeningnummer", naam: "Bankrekeningnummer ontbreekt",
+        datum: null, datumLabel: "",
+        reden: "Er is geen bankrekeningnummer (IBAN) ingevuld",
+      });
     }
-
-    // ---- Opleiding (BHV) / ID / addendum / arbeidsvoorwaarden: NOOIT
-    //      blokkerend. Verlopen óf binnenkort vervallend = alleen WARNING
-    //      (oranje); medewerker blijft planbaar — exact zoals BS2. ----
-    var WARN_ONLY_TYPES = ["addendum", "id", "education", "employment_conditions"];
-    list.forEach(function (d) {
-      var t = String(d.type || "").toLowerCase();
-      if (WARN_ONLY_TYPES.indexOf(t) < 0) return;
-      var vd = parseDate(d.vervaldatum);
-      if (!vd) return;
-      var dd = daysBetween(now, vd);
-      if (dd < 0) {
-        warnings.push({
-          id: d.id, type: t, kind: "expired-warn",
-          label: typeLabel(t), naam: d.naam || typeLabel(t),
-          datum: d.vervaldatum, datumLabel: fmtDate(vd),
-          reden: "Verlopen op " + fmtDate(vd),
-        });
-      } else if (dd <= WARN_DAYS) {
-        warnings.push({
-          id: d.id, type: t, kind: "expiry-soon",
-          label: typeLabel(t), naam: d.naam || typeLabel(t),
-          datum: d.vervaldatum, datumLabel: fmtDate(vd),
-          reden: "Verloopt op " + fmtDate(vd) + " (over " + dd + " dagen)",
-        });
-      }
-      // > WARN_DAYS: geen waarschuwing (nog ruim geldig)
-    });
 
     return { errors: errors, warnings: warnings };
   }
