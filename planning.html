@@ -30,6 +30,19 @@
     .planning-overlap-banner__btn{flex:none;align-self:center;background:#dc2626;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
     .planning-overlap-banner__btn:hover{background:#b91c1c;}
     [data-theme="dark"] .planning-overlap-banner{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
+    /* Detail-lijst: per medewerker de concrete overlappende diensten (dienst + tijd + locatie). */
+    .planning-overlap-banner__details{margin-top:9px;display:flex;flex-direction:column;gap:9px;max-height:238px;overflow-y:auto;padding-right:5px;}
+    .planning-overlap-banner__details:empty{display:none;}
+    .planning-overlap-conf__who{font-weight:700;font-size:12.5px;margin-bottom:3px;}
+    .planning-overlap-conf__pair{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 7px;padding:5px 9px;margin-bottom:4px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.14);border-radius:7px;cursor:pointer;}
+    .planning-overlap-conf__pair:hover{background:rgba(220,38,38,.12);}
+    .planning-overlap-conf__shift{display:inline-flex;align-items:baseline;gap:5px;}
+    .planning-overlap-conf__shift .ttl{font-weight:600;}
+    .planning-overlap-conf__shift .loc{opacity:.72;}
+    .planning-overlap-conf__when{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;}
+    .planning-overlap-conf__vs{opacity:.6;font-weight:800;padding:0 2px;}
+    [data-theme="dark"] .planning-overlap-conf__pair{background:rgba(239,68,68,.13);border-color:rgba(239,68,68,.3);}
+    [data-theme="dark"] .planning-overlap-conf__pair:hover{background:rgba(239,68,68,.2);}
 
     /* ── AI-instellingen knop in de toolbar ── */
     .planning-erm-tb-ai{display:inline-flex;align-items:center;gap:6px;}
@@ -328,6 +341,7 @@
             <div class="planning-overlap-banner__body">
               <div class="planning-overlap-banner__title" id="planning-overlap-banner-title"></div>
               <div class="planning-overlap-banner__names" id="planning-overlap-banner-names"></div>
+              <div class="planning-overlap-banner__details" id="planning-overlap-banner-details"></div>
             </div>
             <button type="button" class="planning-overlap-banner__btn" id="planning-overlap-banner-btn">Toon in lijst</button>
           </div>
