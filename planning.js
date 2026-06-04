@@ -1959,41 +1959,47 @@ function renderOverlapShiftHtml(it) {
 function updateOverlapBanner(items) {
   const banner = document.getElementById("planning-overlap-banner");
   if (!banner) return;
-  let aan = true;
   try {
-    const cfg = window.planningSettingsDB?.getSync?.();
-    if (cfg && cfg.ai_overlap_waarschuwing === false) aan = false;
-  } catch (e) { /* default aan */ }
-  const titleEl = document.getElementById("planning-overlap-banner-title");
-  const namesEl = document.getElementById("planning-overlap-banner-names");
-  const detailsEl = document.getElementById("planning-overlap-banner-details");
-  const info = aan ? overlapConflictsInView(items) : { members: [], pairCount: 0 };
-  if (!info.members.length) {
-    banner.hidden = true;
-    if (detailsEl) detailsEl.innerHTML = "";
+    let aan = true;
+    try {
+      const cfg = window.planningSettingsDB?.getSync?.();
+      if (cfg && cfg.ai_overlap_waarschuwing === false) aan = false;
+    } catch (e) { /* default aan */ }
+    const titleEl = document.getElementById("planning-overlap-banner-title");
+    const namesEl = document.getElementById("planning-overlap-banner-names");
+    const detailsEl = document.getElementById("planning-overlap-banner-details");
+    const info = aan ? overlapConflictsInView(items) : { members: [], pairCount: 0 };
+    if (!info.members.length) {
+      banner.hidden = true;
+      if (detailsEl) detailsEl.innerHTML = "";
+      if (namesEl) namesEl.textContent = "";
+      return;
+    }
+    const m = info.members.length;
+    const p = info.pairCount;
+    if (titleEl) {
+      titleEl.textContent =
+        `${m} medewerker${m === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — ${p} overlappende dienst${p === 1 ? "" : "en"}`;
+    }
     if (namesEl) namesEl.textContent = "";
-    return;
+    if (detailsEl) {
+      detailsEl.innerHTML = info.members.map((mem) => {
+        const pairs = mem.pairs.map((pr) =>
+          `<div class="planning-overlap-conf__pair" data-overlap-shift="${escapeHtml(String(pr.a.id))}" title="Klik om de eerste dienst te openen">` +
+            renderOverlapShiftHtml(pr.a) +
+            `<span class="planning-overlap-conf__vs" aria-hidden="true">⟷</span>` +
+            renderOverlapShiftHtml(pr.b) +
+          `</div>`
+        ).join("");
+        return `<div class="planning-overlap-conf"><div class="planning-overlap-conf__who">${escapeHtml(mem.naam)}</div>${pairs}</div>`;
+      }).join("");
+    }
+    banner.hidden = false;
+  } catch (err) {
+    /* Faalt veilig: een fout in de overlap-melding mag de rest van de planning nooit breken. */
+    if (window.console) console.warn("Overlap-melding kon niet worden opgebouwd:", err);
+    banner.hidden = true;
   }
-  const m = info.members.length;
-  const p = info.pairCount;
-  if (titleEl) {
-    titleEl.textContent =
-      `${m} medewerker${m === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — ${p} overlappende dienst${p === 1 ? "" : "en"}`;
-  }
-  if (namesEl) namesEl.textContent = "";
-  if (detailsEl) {
-    detailsEl.innerHTML = info.members.map((mem) => {
-      const pairs = mem.pairs.map((pr) =>
-        `<div class="planning-overlap-conf__pair" data-overlap-shift="${escapeHtml(String(pr.a.id))}" title="Klik om de eerste dienst te openen">` +
-          renderOverlapShiftHtml(pr.a) +
-          `<span class="planning-overlap-conf__vs" aria-hidden="true">⟷</span>` +
-          renderOverlapShiftHtml(pr.b) +
-        `</div>`
-      ).join("");
-      return `<div class="planning-overlap-conf"><div class="planning-overlap-conf__who">${escapeHtml(mem.naam)}</div>${pairs}</div>`;
-    }).join("");
-  }
-  banner.hidden = false;
 }
 
 function setListMode(isList) {
