@@ -50,6 +50,7 @@
 
     // ─── Salaris-uitvoer + compensatie (Salarisadministratie + admin-tier) ────
     "salarisadministratie-exporter.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
+    "loonstroken.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
     "compensatie-saldi.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
     "compensatie-berekeningen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
     "compensatie-feestdagen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
