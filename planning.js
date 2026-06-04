@@ -123,15 +123,15 @@ function readJsonArray(key) {
 }
 
 function writePlanningItems(items) {
-  try {
-    window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    /* demo */
-  }
-  // Fire-and-forget bulk-sync naar Supabase via data-laag (planning-data.js).
+  // De data-laag (planningDB) is de bron-van-waarheid: pushFullCache werkt _mem +
+  // de best-effort localStorage-cache bij én synct naar Supabase (met delete-guard
+  // tegen accidentele massa-verwijdering door een stale/partiële cache).
   if (window.planningDB && typeof window.planningDB.pushFullCache === "function") {
     try { window.planningDB.pushFullCache(items); } catch (e) { /* */ }
+    return;
   }
+  // Fallback zonder data-laag: best-effort localStorage.
+  try { window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(items)); } catch (e) { /* */ }
 }
 
 function normalizeItem(raw) {
@@ -155,7 +155,13 @@ function normalizeItem(raw) {
 }
 
 function readPlanningItems() {
-  return readJsonArray(PLANNING_STORAGE_KEY).map(normalizeItem);
+  // Bron-van-waarheid is de Supabase-gesyncde data-laag (planningDB, met _mem in
+  // RAM). getAllSync valt zelf terug op de localStorage-cache zolang de data-laag
+  // nog niet klaar is; alleen als planningDB ontbreekt lezen we localStorage direct.
+  var src = (window.planningDB && typeof window.planningDB.getAllSync === "function")
+    ? window.planningDB.getAllSync()
+    : readJsonArray(PLANNING_STORAGE_KEY);
+  return (Array.isArray(src) ? src : []).map(normalizeItem);
 }
 
 function getEmployeeName(emp) {
@@ -747,64 +753,12 @@ function buildDataState() {
   };
 }
 
-function ensurePlanningSeed(dataState) {
-  const existing = readJsonArray(PLANNING_STORAGE_KEY);
-  if (existing.length > 0) return existing;
-  try {
-    if (window.localStorage.getItem(PLANNING_NO_DEMO_SEED_KEY) === "1") {
-      return [];
-    }
-  } catch {
-    /* */
-  }
-  const tm = (i) => dataState.teamleden[i % Math.max(1, dataState.teamleden.length)] || dataState.medewerkers[i] || "Medewerker";
-  const teamleadFallback = dataState.teamlead[0] || dataState.medewerkers[0] || "Teamlead";
-  const types = dataState.diensttypes;
-  const t0 = (i) => types[i % types.length] || "Dienst";
-  const cl = (i) => dataState.clienten[i % dataState.clienten.length] || "Cliënt";
-  const afdL = dataState.afdelingen;
-  const afd = (i) => afdL[i % afdL.length] || "Overig";
-  const v0 = dataState.vestigingen[0] || "";
-  const w0 = getMonday(new Date());
-  const mk = (dayOffset, startHour, hoursDur, extra) => {
-    const d = addDays(w0, dayOffset);
-    d.setHours(startHour, 0, 0, 0);
-    const de = new Date(d.getTime() + hoursDur * 3600000);
-    return {
-      id: makePlanningId(),
-      afdeling: extra.afdeling,
-      diensttype: extra.diensttype,
-      functie: extra.functie,
-      teamlead: teamleadFallback,
-      teamlid: extra.teamlid,
-      client: extra.client,
-      vestiging: v0,
-      locatie: extra.locatie,
-      leer: extra.leer,
-      sterren: extra.sterren,
-      conflict: extra.conflict,
-      start: toIsoLocal(d),
-      einde: toIsoLocal(de),
-    };
-  };
-  const seed = [
-    mk(0, 8, 8, { afdeling: afd(0), diensttype: t0(0), functie: "Verzorging", teamlid: tm(0), client: cl(0), locatie: "A1", leer: 1, sterren: 2, conflict: false }),
-    /* Bewuste overlap: zelfde medewerker, overlappende tijd (voor autodetect) */
-    mk(0, 9, 2, { afdeling: afd(2), diensttype: t0(2), functie: "Extra afspraak", teamlid: tm(0), client: cl(1), locatie: "A1", leer: 0, sterren: 0, conflict: false }),
-    mk(0, 15, 5, { afdeling: afd(1), diensttype: t0(1), functie: "Backoffice", teamlid: tm(1), client: cl(1), locatie: "B0", leer: 0, sterren: 1, conflict: false }),
-    mk(1, 9, 6, { afdeling: afd(2), diensttype: t0(2), functie: "Verkoop vloer", teamlid: tm(2), client: cl(0), locatie: "Showroom", leer: 1, sterren: 3, conflict: true }),
-    mk(1, 14, 3, { afdeling: afd(3), diensttype: t0(0), functie: "Magazijn", teamlid: tm(0), client: cl(1), locatie: "Docks", leer: 0, sterren: 0, conflict: false }),
-    mk(2, 7, 4, { afdeling: afd(4), diensttype: t0(1), functie: "Logistiek ochtend", teamlid: tm(3), client: cl(0), locatie: "Gates", leer: 0, sterren: 2, conflict: false }),
-    mk(2, 13, 4, { afdeling: afd(0), diensttype: t0(2), functie: "Planning call", teamlid: tm(4), client: cl(1), locatie: "Remote", leer: 2, sterren: 1, conflict: false }),
-    mk(3, 8, 8, { afdeling: afd(5), diensttype: t0(0), functie: "1-op-1 begeleiding", teamlid: tm(1), client: cl(0), locatie: "Client", leer: 1, sterren: 2, conflict: false }),
-    mk(3, 17, 2, { afdeling: afd(1), diensttype: t0(1), functie: "Late shifters", teamlid: tm(2), client: cl(1), locatie: "Nachtpunt", leer: 0, sterren: 3, conflict: true }),
-    mk(4, 6, 7, { afdeling: afd(2), diensttype: t0(2), functie: "Openingsdienst", teamlid: tm(0), client: cl(0), locatie: "Kassa", leer: 0, sterren: 0, conflict: false }),
-    mk(4, 15, 5, { afdeling: afd(3), diensttype: t0(0), functie: "Opleiding (starters)", teamlid: tm(5) || tm(0), client: cl(0), locatie: "Klaslokaal", leer: 3, sterren: 3, conflict: false }),
-    mk(5, 8, 6, { afdeling: afd(4), diensttype: t0(1), functie: "Winkel weekend", teamlid: tm(3), client: cl(1), locatie: "Shop", leer: 0, sterren: 1, conflict: false }),
-    mk(5, 15, 4, { afdeling: afd(5), diensttype: t0(2), functie: "Distributie", teamlid: tm(4), client: cl(0), locatie: "HUB", leer: 0, sterren: 1, conflict: false }),
-  ];
-  writePlanningItems(seed);
-  return seed;
+function ensurePlanningSeed() {
+  // GEEN demo-seed meer. De planning toont uitsluitend de echte Supabase-data via
+  // planningDB. De oude demo-seed genereerde nep retail-diensten (Winkel/Logistiek/
+  // Kassa/Shop … + een bewuste dubbele inroostering) die de echte planning verborgen
+  // én via pushFullCache als 'plan-…'-rijen in Supabase belandden. Bewust verwijderd.
+  return readPlanningItems();
 }
 
 function clearAllPlannedDiensten() {
@@ -1447,13 +1401,15 @@ function buildShiftCardEl(it, gi, overlapIds) {
         }
         confirmFn.then(function (ok) {
           if (!ok) return;
-          const arr = readJsonArray(PLANNING_STORAGE_KEY).filter((x) => x.id !== it.id);
-          writePlanningItems(arr);
           ui.selectedId = null;
-          renderAllViews();
-          if (typeof window.showActionFeedback === "function") {
-            window.showActionFeedback("deleted", "Planningsregel");
-          }
+          const feedback = function () {
+            if (typeof window.showActionFeedback === "function") window.showActionFeedback("deleted", "Planningsregel");
+          };
+          // Gerichte delete via de data-laag (werkt _mem + Supabase bij, dispatcht
+          // besa:planning-updated → re-render). Geen bulk-overwrite meer.
+          if (window.planningDB && window.planningDB.delete) {
+            window.planningDB.delete(it.id).then(feedback).catch(function (e) { console.error("[planning] verwijderen mislukt:", e); });
+          } else { feedback(); }
         });
         return;
       }
@@ -1474,11 +1430,11 @@ function copyItem(it) {
   const dur = e - s;
   s.setTime(s.getTime() + 3600000);
   e.setTime(s.getTime() + dur);
-  const n = { ...it, id: makePlanningId(), start: toIsoLocal(s), einde: toIsoLocal(e) };
-  const arr = readJsonArray(PLANNING_STORAGE_KEY);
-  arr.unshift(n);
-  writePlanningItems(arr);
-  renderAllViews();
+  const n = normalizeItem({ ...it, id: makePlanningId(), start: toIsoLocal(s), einde: toIsoLocal(e) });
+  // Gericht toevoegen via de data-laag (dispatcht besa:planning-updated → re-render).
+  if (window.planningDB && window.planningDB.add) {
+    window.planningDB.add(n).catch(function (err) { console.error("[planning] kopiëren mislukt:", err); });
+  }
 }
 
 function getDayHourTotals(cols, allItems) {
@@ -2922,23 +2878,13 @@ function initDienstPanel() {
       sterren: 0,
       conflict: false,
     };
-    const items = readJsonArray(PLANNING_STORAGE_KEY);
     if (ui.editingId) {
-      const updated = items.map((x) =>
-        x.id === ui.editingId
-          ? normalizeItem({
-              ...x,
-              ...item,
-              id: ui.editingId,
-              conflict: Boolean(x.conflict),
-              leer: x.leer ?? 0,
-              sterren: x.sterren ?? 0,
-            })
-          : x
-      );
-      writePlanningItems(updated);
+      const huidig = (window.planningDB && window.planningDB.getByIdSync) ? (window.planningDB.getByIdSync(ui.editingId) || {}) : {};
+      const patch = normalizeItem({ ...huidig, ...item, id: ui.editingId });
+      if (window.planningDB && window.planningDB.update) {
+        window.planningDB.update(ui.editingId, patch).catch(function (e) { console.error("[planning] bijwerken mislukt:", e); });
+      }
       closeDienstPanel();
-      renderAllViews();
       return;
     }
     const toAdd = [normalizeItem(item)];
@@ -2968,10 +2914,11 @@ function initDienstPanel() {
         }
       }
     }
-    toAdd.forEach((o) => items.unshift(o));
-    writePlanningItems(items);
+    // Gericht toevoegen via de data-laag (dispatcht besa:planning-updated → re-render).
+    if (window.planningDB && window.planningDB.add) {
+      Promise.all(toAdd.map((o) => window.planningDB.add(o))).catch(function (e) { console.error("[planning] toevoegen mislukt:", e); });
+    }
     closeDienstPanel();
-    renderAllViews();
   });
   document.querySelector(".planning-dienst-rt-toolbar")?.addEventListener("click", (e) => {
     const b = e.target.closest("[data-cmd]");
@@ -3228,23 +3175,17 @@ function initAddModal() {
       return;
     }
     if (ui.editingId) {
-      const items = readJsonArray(PLANNING_STORAGE_KEY).map((x) =>
-        x.id === ui.editingId
-          ? normalizeItem({
-              ...x,
-              ...f,
-            })
-          : x
-      );
-      writePlanningItems(items);
+      const huidig = (window.planningDB && window.planningDB.getByIdSync) ? (window.planningDB.getByIdSync(ui.editingId) || {}) : {};
+      const patch = normalizeItem({ ...huidig, ...f, id: ui.editingId });
+      if (window.planningDB && window.planningDB.update) {
+        window.planningDB.update(ui.editingId, patch).catch(function (e) { console.error("[planning] bijwerken mislukt:", e); });
+      }
     } else {
-      const items = readJsonArray(PLANNING_STORAGE_KEY);
-      items.unshift(
-        normalizeItem({ id: makePlanningId(), ...f })
-      );
-      writePlanningItems(items);
+      const nieuw = normalizeItem({ id: makePlanningId(), ...f });
+      if (window.planningDB && window.planningDB.add) {
+        window.planningDB.add(nieuw).catch(function (e) { console.error("[planning] toevoegen mislukt:", e); });
+      }
     }
-    renderAllViews();
     close();
   });
 }
