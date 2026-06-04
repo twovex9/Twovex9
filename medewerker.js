@@ -5194,7 +5194,7 @@ initOffboardingTab();
         inp.style.opacity = "0.7";
         if (hint) {
           hint.hidden = false;
-          hint.style.color = "var(--primary, #2563eb)";
+          hint.style.color = "#16a34a";
           hint.textContent = "✓ Tarief automatisch overgenomen van " + b.naam + ": " + eur(t) +
             " (" + eur(b.standaardUurtarief || 0) + " uurtarief + " + eur(b.feePerUur || 0) + " fee).";
         }
@@ -5203,7 +5203,7 @@ initOffboardingTab();
         inp.style.opacity = "";
         if (hint) {
           hint.hidden = false;
-          hint.style.color = "var(--destructive, #b45309)";
+          hint.style.color = "#dc2626";
           hint.textContent = "⚠ Handmatig tarief — wijkt af van het bureau-tarief van " + b.naam + " (" + eur(t) + ").";
         }
       }
