@@ -997,6 +997,34 @@ function getZzpHourlyRateForName(name) {
   return isFinite(r) && r > 0 ? r : 0;
 }
 
+/* De functie in de planning moet de HR-functie van de ingeroosterde medewerker
+ * zijn (zoals ingevoerd bij HR onder Professioneel), niet een los dienst-veld.
+ * Bouw één keer per render een naam→functie-index uit de canonieke medewerkers-
+ * bron. Faalt veilig: bij ontbrekende data een lege map → kolom toont "—". */
+function buildNaamFunctieMap() {
+  const map = new Map();
+  try {
+    const meds = (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function")
+      ? (window.medewerkersDB.getAllSync() || [])
+      : [];
+    meds.forEach((m) => {
+      const naam = getEmployeeName(m).toLowerCase();
+      if (!naam) return;
+      const f = String(m.functie || "").trim();
+      if (f && f !== "—") map.set(naam, f);
+    });
+  } catch (e) { /* lege map = veilige fallback */ }
+  return map;
+}
+
+/** HR-functie van de medewerker die op deze dienst staat (op naam gematcht). */
+function functieVoorTeamlid(naam, map) {
+  const want = String(naam || "").trim().toLowerCase();
+  if (!want) return "";
+  const m = map || buildNaamFunctieMap();
+  return m.get(want) || "";
+}
+
 function getMetrics(items) {
   let hours = 0;
   let zzpHours = 0;
@@ -1835,6 +1863,7 @@ function renderListTable() {
   if (!body) return;
   const items = getItemsForView().slice().sort(comparePlanningItemsByTime);
   const overlapIds = buildOverlapConflictIds(items);
+  const naamFunctieMap = buildNaamFunctieMap();
   body.innerHTML = "";
   items.forEach((item) => {
     const tr = document.createElement("tr");
@@ -1844,10 +1873,11 @@ function renderListTable() {
     if (item.conflict && autoO) risk = "Aandacht + overlap";
     else if (item.conflict) risk = "Aandacht";
     else if (autoO) risk = "Overlap (auto)";
+    const functieWeergave = functieVoorTeamlid(item.teamlid, naamFunctieMap) || item.functie || "";
     tr.innerHTML = `
       <td data-col="afdeling">${escapeHtml(item.afdeling || "—")}</td>
       <td data-col="diensttype">${escapeHtml(item.diensttype || "—")}</td>
-      <td data-col="functie">${escapeHtml(item.functie || "—")}</td>
+      <td data-col="functie">${escapeHtml(functieWeergave || "—")}</td>
       <td data-col="teamlead">${escapeHtml(item.teamlead || "—")}</td>
       <td data-col="teamlid">${escapeHtml(item.teamlid || "—")}</td>
       <td data-col="client">${escapeHtml(item.client || "—")}</td>
@@ -1870,42 +1900,106 @@ function countOverlapInView(items) {
   return buildOverlapConflictIds(items).size;
 }
 
-/** Namen van medewerkers met overlappende (dubbel geboekte) diensten in de view. */
-function overlapMedewerkersInView(items) {
+/** Volledige overlap-info in de view: per medewerker de overlappende dienst-paren,
+ *  zodat de melding precies toont WELKE diensten botsen en bij WIE. Elke tijdoverlap
+ *  telt (ook van één minuut), conform de instelling van de organisatie. */
+function overlapConflictsInView(items) {
   const norm = (s) => String(s || "").trim().toLowerCase();
   const rows = items
-    .map((it) => ({ s: parseStartDate(it.start), e: parseStartDate(it.einde), who: String(it.teamlid || "").trim() }))
+    .map((it) => ({ it, s: parseStartDate(it.start), e: parseStartDate(it.einde), who: String(it.teamlid || "").trim() }))
     .filter((r) => r.s && r.e && r.who);
-  const namen = new Map(); // norm → weergavenaam
+  const byMember = new Map(); // norm → { naam, pairs: [{a, b}] }
+  let pairCount = 0;
   for (let i = 0; i < rows.length; i++) {
     for (let j = i + 1; j < rows.length; j++) {
       if (norm(rows[i].who) !== norm(rows[j].who)) continue;
-      if (rows[i].s < rows[j].e && rows[j].s < rows[i].e) namen.set(norm(rows[i].who), rows[i].who);
+      if (rows[i].s < rows[j].e && rows[j].s < rows[i].e) {
+        const key = norm(rows[i].who);
+        if (!byMember.has(key)) byMember.set(key, { naam: rows[i].who, pairs: [] });
+        const [a, b] = rows[i].s <= rows[j].s ? [rows[i].it, rows[j].it] : [rows[j].it, rows[i].it];
+        byMember.get(key).pairs.push({ a, b });
+        pairCount++;
+      }
     }
   }
-  return Array.from(namen.values()).sort((a, b) => a.localeCompare(b, "nl"));
+  const members = Array.from(byMember.values()).sort((x, y) => x.naam.localeCompare(y.naam, "nl"));
+  members.forEach((m) => m.pairs.sort((p, q) => (parseStartDate(p.a.start) - parseStartDate(q.a.start))));
+  return { members, pairCount };
 }
 
-/** Toon/verberg de prominente overlap-waarschuwing (respecteert de AI-instelling). */
+/** Korte dienst-omschrijving voor de overlap-melding: titel (diensttype of "X 1 op 1") + locatie. */
+function overlapShiftLabel(it) {
+  const dtParts = rowDiensttypeLabels(it);
+  const clientLabel = String(it.client || "").trim();
+  const dtKey = resolveDiensttypeKey(dtParts[0] || it.diensttype || it.functie);
+  const titel = (dtKey === "1_op_1" && clientLabel)
+    ? `${getClientFirstName(clientLabel)} 1 op 1`
+    : (dtParts[0] || it.diensttype || it.functie || "Dienst");
+  const loc = String(it.locatie || it.vestiging || "").trim();
+  return { titel, loc };
+}
+
+/** Datum + tijdvak van een dienst, consistent met de kalenderplaatsing (parseStartDate). */
+function overlapShiftWhen(it) {
+  const d = parseStartDate(it.start);
+  const datum = d ? d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }) : "";
+  const tijd = `${formatTimeShort(it.start)}–${formatTimeShort(it.einde)}`;
+  return `${datum} ${tijd}`.trim();
+}
+
+function renderOverlapShiftHtml(it) {
+  const { titel, loc } = overlapShiftLabel(it);
+  const locHtml = loc ? ` <span class="loc">· ${escapeHtml(loc)}</span>` : "";
+  return `<span class="planning-overlap-conf__shift"><span class="ttl">${escapeHtml(titel)}</span>${locHtml}</span>` +
+         ` <span class="planning-overlap-conf__when">${escapeHtml(overlapShiftWhen(it))}</span>`;
+}
+
+/** Toon/verberg de prominente overlap-waarschuwing met de concrete diensten erbij
+ *  (respecteert de AI-instelling ai_overlap_waarschuwing). */
 function updateOverlapBanner(items) {
   const banner = document.getElementById("planning-overlap-banner");
   if (!banner) return;
-  let aan = true;
   try {
-    const cfg = window.planningSettingsDB?.getSync?.();
-    if (cfg && cfg.ai_overlap_waarschuwing === false) aan = false;
-  } catch (e) { /* default aan */ }
-  const namen = aan ? overlapMedewerkersInView(items) : [];
-  if (!namen.length) { banner.hidden = true; return; }
-  const n = namen.length;
-  const titleEl = document.getElementById("planning-overlap-banner-title");
-  const namesEl = document.getElementById("planning-overlap-banner-names");
-  if (titleEl) {
-    titleEl.textContent =
-      `${n} medewerker${n === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — controleer de overlappende diensten`;
+    let aan = true;
+    try {
+      const cfg = window.planningSettingsDB?.getSync?.();
+      if (cfg && cfg.ai_overlap_waarschuwing === false) aan = false;
+    } catch (e) { /* default aan */ }
+    const titleEl = document.getElementById("planning-overlap-banner-title");
+    const namesEl = document.getElementById("planning-overlap-banner-names");
+    const detailsEl = document.getElementById("planning-overlap-banner-details");
+    const info = aan ? overlapConflictsInView(items) : { members: [], pairCount: 0 };
+    if (!info.members.length) {
+      banner.hidden = true;
+      if (detailsEl) detailsEl.innerHTML = "";
+      if (namesEl) namesEl.textContent = "";
+      return;
+    }
+    const m = info.members.length;
+    const p = info.pairCount;
+    if (titleEl) {
+      titleEl.textContent =
+        `${m} medewerker${m === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — ${p} overlappende dienst${p === 1 ? "" : "en"}`;
+    }
+    if (namesEl) namesEl.textContent = "";
+    if (detailsEl) {
+      detailsEl.innerHTML = info.members.map((mem) => {
+        const pairs = mem.pairs.map((pr) =>
+          `<div class="planning-overlap-conf__pair" data-overlap-shift="${escapeHtml(String(pr.a.id))}" title="Klik om de eerste dienst te openen">` +
+            renderOverlapShiftHtml(pr.a) +
+            `<span class="planning-overlap-conf__vs" aria-hidden="true">⟷</span>` +
+            renderOverlapShiftHtml(pr.b) +
+          `</div>`
+        ).join("");
+        return `<div class="planning-overlap-conf"><div class="planning-overlap-conf__who">${escapeHtml(mem.naam)}</div>${pairs}</div>`;
+      }).join("");
+    }
+    banner.hidden = false;
+  } catch (err) {
+    /* Faalt veilig: een fout in de overlap-melding mag de rest van de planning nooit breken. */
+    if (window.console) console.warn("Overlap-melding kon niet worden opgebouwd:", err);
+    banner.hidden = true;
   }
-  if (namesEl) namesEl.textContent = namen.join("  ·  ");
-  banner.hidden = false;
 }
 
 function setListMode(isList) {
@@ -3288,6 +3382,15 @@ function initNav() {
   document.getElementById("planning-overlap-banner-btn")?.addEventListener("click", () => {
     setListMode(true);
     renderAllViews();
+  });
+
+  /* Klik op een overlappende dienst in de melding → open die dienst meteen (om aan te
+   * passen). Delegation op document: robuust ongeacht of de banner-HTML al geparsed is. */
+  document.addEventListener("click", (e) => {
+    const pair = e.target && e.target.closest && e.target.closest(".planning-overlap-conf__pair");
+    if (!pair) return;
+    const id = pair.getAttribute("data-overlap-shift");
+    if (id && typeof openViewModal === "function") openViewModal(id);
   });
 
   /* Toolbar: Genereren + Optimaliseren (placeholders, bevestigen + log) */
