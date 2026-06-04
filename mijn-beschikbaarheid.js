@@ -259,19 +259,25 @@
     }
 
     // ZZP-check (gericht, licht): alleen ingehuurde ZZP'ers krijgen de kalender.
-    try {
-      var r = await window.besaSupabase.from("medewerkers")
-        .select("dienstverband").eq("id", medewerkerId).maybeSingle();
-      var dv = r && r.data ? (r.data.dienstverband || "") : "";
-      if (dv === "Loondienst" || dv === "Stagiair") {
-        showGate("Beschikbaarheid is voor ZZP'ers",
-          "Deze pagina is bedoeld voor ingehuurde ZZP'ers. Als loondienstmedewerker word je via het rooster ingepland — je hoeft hier niets door te geven.");
-        return;
+    // Uitzondering: admin-tier (Eigenaar/Directeur/HR/…) mag de pagina altijd zien,
+    // voor beheer en om de ZZP-ervaring te kunnen bekijken/demonstreren.
+    var adminTier = false;
+    try { adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()); } catch (e) { /* */ }
+    if (!adminTier) {
+      try {
+        var r = await window.besaSupabase.from("medewerkers")
+          .select("dienstverband").eq("id", medewerkerId).maybeSingle();
+        var dv = r && r.data ? (r.data.dienstverband || "") : "";
+        if (dv === "Loondienst" || dv === "Stagiair") {
+          showGate("Beschikbaarheid is voor ZZP'ers",
+            "Deze pagina is bedoeld voor ingehuurde ZZP'ers. Als loondienstmedewerker word je via het rooster ingepland — je hoeft hier niets door te geven.");
+          return;
+        }
+        // Inhuur of onbekend dienstverband → kalender tonen (niet onterecht blokkeren).
+      } catch (e) {
+        // Bij twijfel: toon de kalender (functionaliteit boven gate).
+        console.warn("[mijn-beschikbaarheid] dienstverband-check overgeslagen:", e);
       }
-      // Inhuur of onbekend dienstverband → kalender tonen (niet onterecht blokkeren).
-    } catch (e) {
-      // Bij twijfel: toon de kalender (functionaliteit boven gate).
-      console.warn("[mijn-beschikbaarheid] dienstverband-check overgeslagen:", e);
     }
 
     showApp();
