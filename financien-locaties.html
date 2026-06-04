@@ -194,6 +194,30 @@
           </div>
         </div>
 
+        <div class="fin-bezetting" id="fin-bezetting" aria-label="Kamerbezetting alle locaties">
+          <div class="fin-bz-item">
+            <span class="fin-bz-lbl">Kamers totaal</span>
+            <span class="fin-bz-val" id="fin-bz-kamers">—</span>
+          </div>
+          <div class="fin-bz-sep" aria-hidden="true"></div>
+          <div class="fin-bz-item">
+            <span class="fin-bz-lbl">Bezet</span>
+            <span class="fin-bz-val" id="fin-bz-bezet">—</span>
+          </div>
+          <div class="fin-bz-sep" aria-hidden="true"></div>
+          <div class="fin-bz-item fin-bz-item--accent">
+            <span class="fin-bz-lbl">Vrije plekken</span>
+            <span class="fin-bz-val" id="fin-bz-vrij">—</span>
+          </div>
+          <div class="fin-bz-sep" aria-hidden="true"></div>
+          <div class="fin-bz-item">
+            <span class="fin-bz-lbl">Nog te koppelen</span>
+            <span class="fin-bz-val" id="fin-bz-zonder">—</span>
+            <span class="fin-bz-sub">in-zorg, geen locatie</span>
+          </div>
+        </div>
+        <p class="fin-bz-note" id="fin-bz-note">Bezetting = huidige in-zorg cliënten die aan een locatie gekoppeld zijn — een momentopname, los van de gekozen periode. Stel het aantal kamers per locatie in via de locatiedetails.</p>
+
         <section class="table-card fin-chart-card" aria-label="Winst en verlies per maand">
           <h2 class="bd-sec-t">Winst / verlies per maand</h2>
           <p class="bd-sec-s">Opbrengst vs. kosten per maand · klik op een maand om te selecteren</p>
@@ -225,6 +249,8 @@
                   <th scope="col" class="fin-num">Opbrengst</th>
                   <th scope="col" class="fin-num">Resultaat</th>
                   <th scope="col" class="fin-num">Marge</th>
+                  <th scope="col" class="fin-num fin-col-bezet">Bezetting</th>
+                  <th scope="col" class="fin-num fin-col-bezet">Vrij</th>
                 </tr>
               </thead>
               <tbody id="fin-loc-tbody"></tbody>
@@ -239,6 +265,8 @@
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-omzet"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-result"></td>
                   <td></td>
+                  <td class="fin-num bd-td-strong fin-col-bezet" id="fin-foot-bezet"></td>
+                  <td class="fin-num bd-td-strong fin-col-bezet" id="fin-foot-vrij"></td>
                 </tr>
               </tfoot>
             </table>
@@ -296,6 +324,23 @@
                 <button type="submit" class="btn-primary" id="fin-onk-save">Opslaan</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jongere koppelen aan locatie -->
+      <div class="bd-modal fin-koppel-modal" id="fin-koppel-modal" hidden>
+        <div class="bd-modal-backdrop" id="fin-koppel-backdrop"></div>
+        <div class="bd-modal-box fin-koppel-box" role="dialog" aria-modal="true" aria-labelledby="fin-koppel-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="fin-koppel-title">Jongere koppelen</h2>
+            <button type="button" class="bd-modal-x" id="fin-koppel-x" aria-label="Sluiten">×</button>
+          </div>
+          <p class="bd-modal-sub" id="fin-koppel-sub"></p>
+          <div class="bd-modal-body">
+            <input type="search" id="fin-koppel-zoek" class="fin-input fin-koppel-zoek" placeholder="Zoek op naam of cliëntnummer…" autocomplete="off">
+            <p class="fin-form-err" id="fin-koppel-err" hidden></p>
+            <div class="fin-koppel-list" id="fin-koppel-list" role="listbox" aria-label="Kies een cliënt"></div>
           </div>
         </div>
       </div>

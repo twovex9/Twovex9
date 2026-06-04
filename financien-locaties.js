@@ -77,6 +77,8 @@
   var winMin = null, winMax = null;
   var openLoc = null;          // naam van de locatie waarvan de drill-down open is (voor refresh)
   var onkEditId = null;        // id van de onkost die bewerkt wordt (null = nieuwe)
+  var koppelLoc = null;        // locatie waarvoor de koppel-modal openstaat
+  var koppelCache = null;      // gecachte lijst in-zorg cliënten (voor de keuzelijst)
 
   function curData() { return (window.financienLocatiesDB && window.financienLocatiesDB.getData()) || null; }
   function periodeLabel() {
@@ -151,17 +153,31 @@
       && ((Number(l.personeel) || 0) > 0 || (Number(l.onkosten) || 0) > 0);
   }
 
+  /* ---- bezetting-cellen ---- */
+  function bezetText(l) {
+    var bezet = Number(l.bezet) || 0, kamers = Number(l.kamers) || 0;
+    return fmtInt(bezet) + " / " + (kamers > 0 ? fmtInt(kamers) : "—");
+  }
+  function makeVrijBadge(kamers, bezet) {
+    kamers = Number(kamers) || 0; bezet = Number(bezet) || 0;
+    if (kamers <= 0) { var b0 = el("span", "fin-vrij-badge fin-vrij-badge--none", "—"); b0.title = "Aantal kamers nog niet ingesteld"; return b0; }
+    var vrij = kamers - bezet;
+    if (vrij > 0) return el("span", "fin-vrij-badge fin-vrij-badge--free", fmtInt(vrij) + (vrij === 1 ? " plek" : " plekken"));
+    if (vrij === 0) return el("span", "fin-vrij-badge fin-vrij-badge--full", "vol");
+    return el("span", "fin-vrij-badge fin-vrij-badge--over", fmtInt(-vrij) + " over");
+  }
+
   /* ---- per-locatie tabel ---- */
   function renderLocTable(locations) {
     var tb = $("fin-loc-tbody"); if (!tb) return;
     clear(tb);
     if (!locations.length) {
-      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 9;
+      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 11;
       td0.textContent = "Geen kosten of opbrengst in deze periode."; tr0.appendChild(td0); tb.appendChild(tr0);
-      ["fin-foot-zzp", "fin-foot-pers", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result"].forEach(function (id) { setText(id, ""); });
+      ["fin-foot-zzp", "fin-foot-pers", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result", "fin-foot-bezet", "fin-foot-vrij"].forEach(function (id) { setText(id, ""); });
       return;
     }
-    var tOmzet = 0, tKosten = 0, tZzp = 0, tPers = 0, tOnk = 0;
+    var tOmzet = 0, tKosten = 0, tZzp = 0, tPers = 0, tOnk = 0, tKamers = 0, tBezet = 0, tVrij = 0;
     // zorggroepen eerst, overhead-regels onderaan
     var sorted = locations.slice().sort(function (a, b) {
       var ao = isOverhead(a) ? 1 : 0, bo = isOverhead(b) ? 1 : 0;
@@ -171,6 +187,8 @@
     sorted.forEach(function (l) {
       tOmzet += Number(l.omzet) || 0; tKosten += Number(l.kosten) || 0;
       tZzp += Number(l.kosten_zzp) || 0; tPers += Number(l.personeel) || 0; tOnk += Number(l.onkosten) || 0;
+      tKamers += Number(l.kamers) || 0; tBezet += Number(l.bezet) || 0;
+      if ((Number(l.kamers) || 0) > 0) tVrij += Math.max((Number(l.kamers) || 0) - (Number(l.bezet) || 0), 0);
       var res = Number(l.resultaat) || 0;
       var ovh = isOverhead(l);
       var tr = el("tr", "fin-loc-row" + (ovh ? " fin-loc-row--overhead" : "")); tr.tabIndex = 0; tr.setAttribute("role", "button");
@@ -191,6 +209,10 @@
       tr.appendChild(el("td", "fin-num fin-eur " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtEuro(res)));
       tr.appendChild(el("td", "fin-num " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtPct(l.marge_pct)));
 
+      tr.appendChild(el("td", "fin-num fin-col-bezet", bezetText(l)));
+      var tdVrij = el("td", "fin-num fin-col-bezet"); tdVrij.appendChild(makeVrijBadge(l.kamers, l.bezet));
+      tr.appendChild(tdVrij);
+
       (function (naam) {
         tr.addEventListener("click", function () { openDetail(naam); });
         tr.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(naam); } });
@@ -205,6 +227,9 @@
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
     if (foot) { foot.textContent = fmtEuro(tRes); foot.className = "fin-num fin-eur " + (tRes >= 0 ? "fin-pos" : "fin-neg"); }
+    setText("fin-foot-bezet", fmtInt(tBezet) + " / " + (tKamers > 0 ? fmtInt(tKamers) : "—"));
+    var footVrij = $("fin-foot-vrij");
+    if (footVrij) { clear(footVrij); footVrij.appendChild(makeVrijBadge(tKamers, tKamers - tVrij)); }
   }
 
   /* ---- locatie- vs overheadkosten-splitsing onder de KPI's ---- */
@@ -216,6 +241,18 @@
     });
     setText("fin-split-loc", fmtEuro(locK));
     setText("fin-split-overhead", fmtEuro(ovhK));
+  }
+
+  /* ---- bezetting-strip (totalen alle locaties) ---- */
+  function renderBezetting(totals) {
+    var t = totals || {};
+    var kamers = Number(t.kamers) || 0, bezet = Number(t.bezet) || 0, vrij = Number(t.vrij) || 0, zonder = Number(t.zonder_locatie) || 0;
+    setText("fin-bz-kamers", kamers > 0 ? fmtInt(kamers) : "—");
+    setText("fin-bz-bezet", fmtInt(bezet));
+    var vrijEl = $("fin-bz-vrij");
+    if (vrijEl) { vrijEl.textContent = kamers > 0 ? fmtInt(vrij) : "—"; vrijEl.className = "fin-bz-val " + (kamers > 0 && vrij > 0 ? "fin-pos" : ""); }
+    var zEl = $("fin-bz-zonder");
+    if (zEl) { zEl.textContent = fmtInt(zonder); zEl.className = "fin-bz-val " + (zonder > 0 ? "fin-warn" : ""); }
   }
 
   function curLoc(name) {
@@ -286,6 +323,10 @@
       if (body.lastChild) body.removeChild(body.lastChild);
       if (!d || d.unauthorized) { emptyRow(body, "Geen toegang tot deze gegevens."); return; }
 
+      // Kamers & bezetting + gekoppelde jongeren (bovenaan, prominent)
+      renderKamersBezetting(body, loc.name, d);
+      renderJongeren(body, loc.name, d.jongeren || []);
+
       // Overhead-personeel (read-only; beheer via de Overhead-tab)
       renderPersSection(body, loc.name, d.personeel || []);
 
@@ -345,6 +386,158 @@
         body.appendChild(el("p", "bd-mrow-note", "Opbrengst = betaald + gedeclareerd-open + nog-te-declareren (schatting o.b.v. eigen factuurhistorie van de beschikking). Beweeg over een bedrag voor de uitsplitsing."));
       }
     });
+  }
+
+  /* ---- kamers & bezetting (drill-down) ---- */
+  function renderKamersBezetting(body, locName, d) {
+    body.appendChild(el("h3", "fin-sec-h", "Kamers & bezetting"));
+    var kamers = Number(d.kamers) || 0, bezet = Number(d.bezet) || 0;
+    var grid = el("div", "fin-kb-grid");
+
+    // Kamers — bewerkbaar
+    var cK = el("div", "fin-kb-card");
+    cK.appendChild(el("span", "fin-kb-lbl", "Kamers"));
+    var kRow = el("div", "fin-kb-edit");
+    var inp = el("input", "fin-input fin-kb-input"); inp.type = "number"; inp.min = "0"; inp.step = "1";
+    inp.value = kamers > 0 ? String(kamers) : ""; inp.placeholder = "—";
+    inp.setAttribute("aria-label", "Aantal kamers op " + locName);
+    var save = el("button", "btn-outline fin-kb-save", "Opslaan"); save.type = "button";
+    var errK = el("span", "fin-kb-err"); errK.hidden = true;
+    function doSaveKamers() {
+      save.disabled = true; errK.hidden = true;
+      window.financienLocatiesDB.zetKamers(locName, inp.value).then(function () {
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Kamers");
+        afterOnkChange();
+      }).catch(function (err) {
+        save.disabled = false; errK.hidden = false; errK.textContent = (err && err.message) ? err.message : "Opslaan mislukt";
+      });
+    }
+    save.addEventListener("click", doSaveKamers);
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); doSaveKamers(); } });
+    kRow.appendChild(inp); kRow.appendChild(save);
+    cK.appendChild(kRow); cK.appendChild(errK);
+    grid.appendChild(cK);
+
+    // Bezet
+    var cB = el("div", "fin-kb-card");
+    cB.appendChild(el("span", "fin-kb-lbl", "Bezet"));
+    cB.appendChild(el("span", "fin-kb-val", fmtInt(bezet)));
+    grid.appendChild(cB);
+
+    // Vrij
+    var cV = el("div", "fin-kb-card");
+    cV.appendChild(el("span", "fin-kb-lbl", "Vrije plekken"));
+    var vWrap = el("span", "fin-kb-val"); vWrap.appendChild(makeVrijBadge(kamers, bezet));
+    cV.appendChild(vWrap);
+    grid.appendChild(cV);
+
+    body.appendChild(grid);
+  }
+
+  /* ---- gekoppelde jongeren (drill-down) ---- */
+  function renderJongeren(body, locName, jongeren) {
+    var head = el("div", "fin-sec-head");
+    head.appendChild(el("h3", "fin-sec-h", "Jongeren op deze locatie (" + jongeren.length + ")"));
+    var addBtn = el("button", "btn-outline fin-sec-add", "+ Jongere koppelen"); addBtn.type = "button";
+    addBtn.addEventListener("click", function () { openKoppel(locName); });
+    head.appendChild(addBtn);
+    body.appendChild(head);
+    if (!jongeren.length) { emptyRow(body, "Nog geen jongeren aan deze locatie gekoppeld."); return; }
+    var list = el("div", "fin-jong-list");
+    jongeren.forEach(function (j) {
+      var row = el("div", "fin-jong-item");
+      row.appendChild(el("span", "fin-jong-naam", j.naam || "—"));
+      if (j.clientnummer != null && j.clientnummer !== "") row.appendChild(el("span", "fin-jong-nr", "#" + j.clientnummer));
+      row.appendChild(el("span", "fin-jong-spacer"));
+      var unb = el("button", "fin-icon-btn fin-icon-btn--danger", "Ontkoppelen"); unb.type = "button";
+      unb.addEventListener("click", function () {
+        clear(row);
+        row.appendChild(el("span", "fin-jong-naam", j.naam || "—"));
+        row.appendChild(el("span", "fin-jong-spacer"));
+        row.appendChild(el("span", "fin-onk-confirm", "Ontkoppelen?"));
+        var yes = el("button", "fin-icon-btn fin-icon-btn--danger", "Ja"); yes.type = "button";
+        var no = el("button", "fin-icon-btn", "Nee"); no.type = "button";
+        yes.addEventListener("click", function () { doOntkoppel(j); });
+        no.addEventListener("click", function () { if (openLoc) openDetail(openLoc); });
+        row.appendChild(yes); row.appendChild(no);
+      });
+      row.appendChild(unb);
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+  }
+
+  /* ---- koppel-modal: kies een in-zorg cliënt om aan de locatie te koppelen ---- */
+  function openKoppel(locName) {
+    koppelLoc = locName;
+    setText("fin-koppel-title", "Jongere koppelen");
+    setText("fin-koppel-sub", "Aan locatie: " + locName);
+    var err = $("fin-koppel-err"); if (err) err.hidden = true;
+    var zoek = $("fin-koppel-zoek"); if (zoek) zoek.value = "";
+    var list = $("fin-koppel-list");
+    if (list) { clear(list); list.appendChild(el("p", "bd-mrow-loading", "Laden…")); }
+    var m = $("fin-koppel-modal"); if (m) m.hidden = false;
+    document.body.classList.add("bd-modal-open");
+    var p = koppelCache ? Promise.resolve(koppelCache) : window.financienLocatiesDB.koppelbareClienten();
+    p.then(function (rows) {
+      koppelCache = rows || [];
+      renderKoppelList("");
+    }).catch(function (e) {
+      if (list) { clear(list); list.appendChild(el("p", "bd-modal-empty", "Laden mislukt: " + ((e && e.message) || e))); }
+    });
+    setTimeout(function () { if (zoek) zoek.focus(); }, 60);
+  }
+  function renderKoppelList(filter) {
+    var list = $("fin-koppel-list"); if (!list) return;
+    clear(list);
+    var f = (filter || "").trim().toLowerCase();
+    var rows = (koppelCache || []).filter(function (c) {
+      if (c.locatie === koppelLoc) return false;   // staat al op deze locatie
+      if (!f) return true;
+      return (c.naam || "").toLowerCase().indexOf(f) >= 0 || String(c.clientnummer == null ? "" : c.clientnummer).indexOf(f) >= 0;
+    });
+    if (!rows.length) {
+      list.appendChild(el("p", "bd-modal-empty", f ? "Geen cliënten gevonden." : "Alle in-zorg cliënten staan al op deze locatie."));
+      return;
+    }
+    rows.forEach(function (c) {
+      var item = el("button", "fin-koppel-item"); item.type = "button";
+      item.appendChild(el("span", "fin-koppel-item-nm", c.naam || "—"));
+      if (c.clientnummer != null) item.appendChild(el("span", "fin-koppel-item-nr", "#" + c.clientnummer));
+      item.appendChild(el("span", "fin-koppel-item-spacer"));
+      var loc = el("span", "fin-koppel-item-loc", c.locatie ? ("nu: " + c.locatie) : "geen locatie");
+      if (!c.locatie) loc.classList.add("fin-warn");
+      item.appendChild(loc);
+      item.addEventListener("click", function () { doKoppel(c); });
+      list.appendChild(item);
+    });
+  }
+  function doKoppel(c) {
+    var err = $("fin-koppel-err");
+    window.financienLocatiesDB.koppelClient(c.id, koppelLoc).then(function () {
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Gekoppeld");
+      koppelCache = null;   // locatie van deze cliënt is gewijzigd → cache verlopen
+      closeKoppel();
+      afterOnkChange();
+    }).catch(function (e) {
+      if (err) { err.hidden = false; err.textContent = (e && e.message) ? e.message : "Koppelen mislukt"; }
+    });
+  }
+  function doOntkoppel(j) {
+    window.financienLocatiesDB.koppelClient(j.id, "").then(function () {
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Ontkoppeld");
+      koppelCache = null;
+      afterOnkChange();
+    }).catch(function (e) {
+      if (window.showError) window.showError("Ontkoppelen mislukt: " + ((e && e.message) || e));
+      else if (openLoc) openDetail(openLoc);
+    });
+  }
+  function closeKoppel() {
+    var m = $("fin-koppel-modal"); if (m) m.hidden = true;
+    koppelLoc = null;
+    var bd = $("bd-modal");
+    if (!bd || bd.hidden) document.body.classList.remove("bd-modal-open");
   }
 
   /* ---- overhead-personeel (read-only weergave; beheer op de Overhead-tab) ---- */
@@ -583,10 +776,17 @@
     var onkForm = $("fin-onk-form"); if (onkForm) onkForm.addEventListener("submit", saveOnk);
     var onkDoorl = $("fin-onk-doorlopend"); if (onkDoorl) onkDoorl.addEventListener("change", applyDoorlopend);
 
+    // Koppel-modal: jongere aan locatie koppelen
+    var kX = $("fin-koppel-x"); if (kX) kX.addEventListener("click", closeKoppel);
+    var kBack = $("fin-koppel-backdrop"); if (kBack) kBack.addEventListener("click", closeKoppel);
+    var kZoek = $("fin-koppel-zoek"); if (kZoek) kZoek.addEventListener("input", function () { renderKoppelList(kZoek.value); });
+
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
+      var kM = $("fin-koppel-modal");
+      if (kM && !kM.hidden) { closeKoppel(); return; }        // sluit eerst de koppel-modal
       var onkM = $("fin-onk-modal");
-      if (onkM && !onkM.hidden) { closeOnkForm(); return; }   // sluit eerst het formulier
+      if (onkM && !onkM.hidden) { closeOnkForm(); return; }   // dan het onkosten-formulier
       var m = $("bd-modal"); if (m && !m.hidden) closeModal();
     });
   }
@@ -631,6 +831,7 @@
 
     renderLocTable(data.locations || []);
     renderSplit(data.locations || []);
+    renderBezetting(t);
     renderMonthChart(data.months || []);
   }
 
