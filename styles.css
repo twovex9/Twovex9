@@ -12150,6 +12150,13 @@ body.planning-dienst-open {
   color: #ffffff;
 }
 
+/* Dark: iets donkerder blauw voor de actieve chip zodat de witte tekst ruim
+   boven WCAG AA (4.5:1) blijft (var(--blue) is in dark #3b82f6 → te licht). */
+[data-theme="dark"] .planning-dienst-dag-chip.is-on {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
 .planning-dienst-koppel-add {
   width: 100%;
   margin-top: 10px;
