@@ -288,7 +288,20 @@
   }
 
   let rafId = null;
-  const ro = new ResizeObserver(() => {
+  // Laatst verwerkte nav-breedte. De ResizeObserver levert óók een initiële
+  // callback bij elke observe én bij de visibility-mutaties die update() zelf
+  // maakt. Zonder deze breedte-vergelijking ontstond een oneindige
+  // observe→callback→update-lus die het overflow-paneel ~continu herbouwde
+  // (panel.innerHTML = "") en zo elk geopend submenu meteen weer dichtklapte.
+  // De nav-breedte is flex-bepaald (flex:1, overflow-x:clip), dus stabiel zolang
+  // de beschikbare ruimte niet wijzigt — alleen een ECHTE breedte-wijziging
+  // (venster-/sidebar-resize) hoort een herberekening te triggeren.
+  let lastObservedWidth = -1;
+  const ro = new ResizeObserver((entries) => {
+    const entry = entries && entries[0];
+    const width = entry ? Math.round(entry.contentRect.width) : -1;
+    if (width === lastObservedWidth) return;
+    lastObservedWidth = width;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(update);
   });
@@ -298,8 +311,6 @@
   function update() {
     if (updating) return;
     updating = true;
-
-    ro.unobserve(nav);
 
     resetVisibility();
 
@@ -319,7 +330,6 @@
     if (hiddenItems.length === 0) {
       btn.classList.remove("is-visible");
       closePanel();
-      ro.observe(nav);
       updating = false;
       return;
     }
@@ -344,10 +354,7 @@
     btn.classList.add("is-visible");
     buildPanel(navItems.filter(i => i.classList.contains("top-nav-hidden")));
 
-    requestAnimationFrame(() => {
-      ro.observe(nav);
-      updating = false;
-    });
+    updating = false;
   }
 
   function buildPanel(hiddenItems) {
