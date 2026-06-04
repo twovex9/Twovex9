@@ -20325,6 +20325,11 @@ button.besc-dtl-tab:hover {
 }
 .emp-planbaar-pill:hover { background: var(--surface); }
 .emp-planbaar-pill:active { transform: scale(0.98); }
+/* Dark mode: de basis-achtergrond is hardcoded glassmorphism-wit (mooi op de
+   lichte hero), maar in dark zou lichte var(--text) dan op wit staan = onleesbaar.
+   Gebruik in dark de donkere surface zodat de tekst contrasteert. */
+[data-theme="dark"] .emp-planbaar-pill { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .emp-planbaar-pill:hover { background: var(--bg); }
 .emp-planbaar-pill[disabled],
 .emp-planbaar-pill[data-permission-hidden] { cursor: default; opacity: 0.65; }
 .emp-planbaar-dot {
