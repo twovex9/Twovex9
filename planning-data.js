@@ -16,7 +16,26 @@
   var CACHE_KEY = "planningItems";
   var MIGRATION_FLAG_KEY = "planningMigratedToSupabase.v1";
 
+  // In-memory bron-van-waarheid voor synchrone reads. De planning-dataset
+  // (duizenden diensten) is te groot voor localStorage (quota ~5MB) → _mem houdt
+  // de volledige lijst in RAM, en de localStorage-cache is slechts een best-effort
+  // warm-start die mág falen. Zelfde patroon als medewerkers-/clienten-/werkuren-
+  // data.js. Voorkomt dat een verse load op een lege/stale cache de UI leeg laat.
+  var _mem = null;
+
+  // Alleen UI-velden in de localStorage-cache bewaren (de zware bs2-import-velden
+  // in `data` — freelancer_cost_breakdown e.d. — blazen de cache op tot >5MB).
+  function slimForCache(items) {
+    var FIELDS = EXPLICIT_FIELDS.concat(["leer", "sterren", "herhaal", "herhaalFrequentie", "competenties"]);
+    return (Array.isArray(items) ? items : []).map(function (o) {
+      var s = {};
+      for (var i = 0; i < FIELDS.length; i++) { var k = FIELDS[i]; if (o && o[k] !== undefined) s[k] = o[k]; }
+      return s;
+    });
+  }
+
   function readCache() {
+    if (Array.isArray(_mem)) return _mem;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return [];
@@ -25,7 +44,14 @@
     } catch (e) { return []; }
   }
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    _mem = Array.isArray(items) ? items : [];   // RAM = bron van waarheid (geen quota-limiet)
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(slimForCache(_mem)));   // best-effort warm-start
+    } catch (e) {
+      // Quota overschreden: verwijder de (mogelijk stale) warm-start cache zodat een
+      // verse load niet op verouderde data terugvalt. _mem blijft de bron van waarheid.
+      try { localStorage.removeItem(CACHE_KEY); } catch (e2) { /* */ }
+    }
   }
   function dispatchUpdated() {
     try { global.dispatchEvent(new CustomEvent("besa:planning-updated")); } catch (e) { /* */ }
@@ -207,6 +233,7 @@
   async function pushFullCache(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
+    writeCache(items);   // _mem (+ best-effort localStorage) direct bijwerken zodat de UI de mutatie meteen ziet
     try {
       // Diff-strategie: upsert alle records (id is primary key) en delete wat
       // niet meer in de lijst staat.
@@ -215,6 +242,18 @@
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
       var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
+
+      // 🔴 DIEHARD-veiligheidsklep: een NIET-lege lijst die toch een groot deel van de
+      // bestaande diensten zou verwijderen, duidt vrijwel zeker op een stale/partiële
+      // cache (bv. een oude demo-seed met 13 items naast 7000+ echte diensten). Nooit
+      // zwijgend duizenden echte diensten wissen. Een expliciete "wis alles" geeft
+      // items=[] en valt hier bewust NIET onder.
+      if (items.length > 0 && toDelete.length > 50 && toDelete.length > existingIds.length * 0.5) {
+        reportSilent("pushFullCache delete-guard",
+          new Error("Geweigerd: zou " + toDelete.length + " van " + existingIds.length +
+                    " diensten verwijderen op basis van " + items.length + " cache-items (stale cache?)"));
+        toDelete = [];
+      }
 
       if (items.length) {
         var payload = items.map(function (r) { return objToInsertPayload(r); });
@@ -247,6 +286,11 @@
     var merged = Object.assign({}, existing, patch || {});
     var payload = objToInsertPayload(merged);
     delete payload.id;
+    // 🔴 DIEHARD: laat het `data` jsonb in Supabase ongemoeid bij een puur top-level
+    // patch (de normale planning-mutatie). Anders zou een patch op basis van een slanke
+    // cache (zonder de bs2-velden) het bestaande data jsonb leeg overschrijven.
+    var patchHasDataField = Object.keys(patch || {}).some(function (k) { return EXPLICIT_FIELDS.indexOf(k) === -1; });
+    if (!patchHasDataField) delete payload.data;
     var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var row = rowToObj(res.data);
