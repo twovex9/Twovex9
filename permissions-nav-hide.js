@@ -62,6 +62,12 @@
     return !el || el.style.display === "none";
   }
 
+  function linkOk(a, adminTier) {
+    var href = a && a.getAttribute("href");
+    if (!href || href === "#") return true;        // geen echte target → laat staan
+    return pageAccessible(normalizeFileName(href), adminTier);
+  }
+
   async function run() {
     try {
       if (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function") {
@@ -79,25 +85,42 @@
     var doc = global.document;
     if (!doc) return;
 
-    // 1. Verberg topbar `.top-link[href]` waar de target-pagina niet toegankelijk is
-    var topLinks = doc.querySelectorAll(".top-link[href]");
-    topLinks.forEach(function (a) {
-      var href = a.getAttribute("href");
-      if (!href || href === "#") return;
-      var page = normalizeFileName(href);
-      if (!pageAccessible(page, adminTier)) hideEl(a);
+    // 1. Top-nav DROPDOWNS: filter de items én de kop integraal.
+    //    - Niet-toegankelijke dropdown-items worden uit de DOM verwijderd, zodat
+    //      ze ook niet in het "meer"-overflowmenu opduiken (top-nav-overflow.js
+    //      bouwt dat menu opnieuw uit de overgebleven .top-dropdown-link's).
+    //    - Heeft de rol GEEN enkel item én de kop-pagina ook niet → hele
+    //      dropdown weg. Mag de kop-pagina niet maar zijn er wél items → de kop
+    //      wijst voortaan naar het eerste toegankelijke item (blijft menu-opener).
+    doc.querySelectorAll(".top-nav-item--dropdown").forEach(function (wrap) {
+      var kop = wrap.querySelector(".top-link--dropdown");
+      var items = wrap.querySelectorAll(".top-dropdown-link[href]");
+      var zichtbaar = [];
+      items.forEach(function (a) {
+        if (linkOk(a, adminTier)) zichtbaar.push(a);
+        else { try { a.remove(); } catch (e) { hideEl(a); } }
+      });
+      var kopOk = linkOk(kop, adminTier);
+      if (zichtbaar.length === 0 && !kopOk) {
+        hideEl(wrap);
+      } else if (kop && !kopOk && zichtbaar.length > 0) {
+        var firstHref = zichtbaar[0].getAttribute("href");
+        if (firstHref) kop.setAttribute("href", firstHref);
+      }
     });
 
-    // 2. Verberg sidebar links (`.side-link[href]`) waar de target niet toegankelijk is
+    // 2. Losse top-links (directe kinderen van .top-nav, geen dropdown-kop).
+    doc.querySelectorAll(".top-nav > .top-link[href]:not(.top-link--dropdown)").forEach(function (a) {
+      if (!linkOk(a, adminTier)) hideEl(a);
+    });
+
+    // 3. Verberg sidebar links (`.side-link[href]`) waar de target niet toegankelijk is
     var sideLinks = doc.querySelectorAll(".side-link[href], .side-link--sub[href], .side-link--nested[href]");
     sideLinks.forEach(function (a) {
-      var href = a.getAttribute("href");
-      if (!href || href === "#") return;
-      var page = normalizeFileName(href);
-      if (!pageAccessible(page, adminTier)) hideEl(a);
+      if (!linkOk(a, adminTier)) hideEl(a);
     });
 
-    // 3. Sidebar collapsibles — als alle nested links verborgen zijn, verberg de toggle
+    // 4. Sidebar collapsibles — als alle nested links verborgen zijn, verberg de toggle
     var toggles = doc.querySelectorAll(".side-group__toggle, .side-link.side-link--sub[aria-controls]");
     toggles.forEach(function (btn) {
       var subId = btn.getAttribute("aria-controls");
@@ -116,9 +139,12 @@
       }
     });
 
-    // 4. Top-nav overflow herberekenen (als top-nav-overflow.js dat exposed)
+    // 5. Top-nav overflow opnieuw laten meten (links/dropdowns zijn gewijzigd).
+    //    top-nav-overflow.js luistert op resize + ResizeObserver; een resize-tik
+    //    laat het z'n "meer"-menu herbouwen uit de overgebleven items.
     try {
       if (typeof global.recomputeTopNavOverflow === "function") global.recomputeTopNavOverflow();
+      else global.dispatchEvent(new Event("resize"));
     } catch (e) {}
   }
 

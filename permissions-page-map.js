@@ -44,6 +44,12 @@
     "bureaus.html": { action: "browse", entity: "locations" },          // BS1-only, gebruikt locations als proxy
     "bureau-detail.html": { action: "view", entity: "locations" },
     "verzuim.html": { action: "browse", entity: "employee-absences-sickness" },
+    // HR-beheer-pagina's zonder eigen BS2-permissie: strikt HR/admin-tier, zodat
+    // gewone medewerkers/ZZP'ers ze niet in hun menu zien. (Diensttypes ook
+    // Planner — die speelt mee in de planning.) Pas de rollen aan naar wens.
+    "hr-diensttypes.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner"] },
+    "contract-sjablonen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
+    "inwerk-items.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
 
     // ─── Salarishuis — UITZONDERING op BS2-model (strikt 4 rollen) ────────────
     "salarishuis.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
