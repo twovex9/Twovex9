@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Compensatie berekeningen — HR</title>
+  <title>Loonstroken — HR</title>
   <link rel="stylesheet" href="styles.css?v=compact1">
   <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
@@ -34,7 +34,6 @@
           <nav class="top-nav" aria-label="Hoofdnavigatie">
             <a href="home" class="top-link">Home</a>
             <a href="mijn-proforma-facturen" class="top-link">Mijn facturen</a>
-            <a href="mijn-beschikbaarheid" class="top-link">Mijn beschikbaarheid</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="planning" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
@@ -139,7 +138,7 @@
         </div>
         <a href="bureaus" class="side-link">Bureau's</a>
         <a href="salarisadministratie-exporter" class="side-link">Salarisadministratie</a>
-        <a href="loonstroken" class="side-link">Loonstroken</a>
+        <a href="loonstroken" class="side-link is-active">Loonstroken</a>
         <div class="side-group" data-side-group="verlof">
           <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-verlof-sub">
             <span class="side-group__label">Verlof</span>
@@ -153,14 +152,14 @@
             <a href="verloftypes" class="side-link side-link--nested">Verloftypes</a>
           </div>
         </div>
-        <div class="side-group is-open" data-side-group="compensatie">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="true" aria-controls="side-compensatie-sub">
+        <div class="side-group" data-side-group="compensatie">
+          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
             <span class="side-group__label">Compensatie</span>
             <span class="side-chev" aria-hidden="true"></span>
           </button>
-          <div class="side-group__panel" id="side-compensatie-sub">
+          <div class="side-group__panel" id="side-compensatie-sub" hidden>
             <a href="compensatie-saldi" class="side-link side-link--nested">Saldi</a>
-            <a href="compensatie-berekeningen" class="side-link side-link--nested is-active">Berekeningen</a>
+            <a href="compensatie-berekeningen" class="side-link side-link--nested">Berekeningen</a>
             <a href="compensatie-feestdagen" class="side-link side-link--nested">Feestdagen</a>
             <a href="compensatie-diensttypes" class="side-link side-link--nested">Diensttypes</a>
           </div>
@@ -171,121 +170,53 @@
       <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
     </aside>
 
-    <main class="content content--hr-list content--comp-berekeningen">
+    <main class="content content--hr-list">
       <div class="content-header">
-        <h1>Compensatie berekeningen</h1>
-        <div class="header-actions">
-          <div class="columns-dropdown">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" aria-haspopup="true" id="cb-columns-menu-btn" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="cb-columns-panel" role="menu" aria-labelledby="cb-columns-menu-btn" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" role="none">
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="datum" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Datum</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="medewerker" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Medewerker</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="contract" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Contract uren</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="gepland" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Geplande uren</button></li>
-                <li role="none"><button type="button" class="column-toggle is-checked" data-col="compensatie" role="menuitemcheckbox" aria-checked="true"><span class="column-check" aria-hidden="true">✓</span> Compensatie uren</button></li>
-              </ul>
-            </div>
-          </div>
+        <h1>Loonstroken</h1>
+      </div>
+
+      <section class="emp-section">
+        <h3>Loonstrook toevoegen</h3>
+        <p class="emp-section-sub">Upload een loonstrook-PDF voor een loondienstmedewerker. De medewerker ziet 'm meteen in de app.</p>
+        <div class="sa-field-grid">
+          <label class="emp-field">
+            <span>Medewerker</span>
+            <select id="ls-mw" class="comp-modal-input" aria-label="Medewerker"></select>
+          </label>
+          <label class="emp-field">
+            <span>Jaar</span>
+            <select id="ls-jaar" class="comp-modal-input" aria-label="Jaar"></select>
+          </label>
+          <label class="emp-field">
+            <span>Maand</span>
+            <select id="ls-maand" class="comp-modal-input" aria-label="Maand"></select>
+          </label>
+          <label class="emp-field">
+            <span>Bestand (PDF)</span>
+            <input type="file" id="ls-file" accept="application/pdf" class="comp-modal-input" />
+          </label>
         </div>
-      </div>
+        <div class="sa-export-actions" style="margin-top:14px">
+          <button type="button" class="btn-primary" id="ls-upload-btn">Loonstrook uploaden</button>
+        </div>
+        <p id="ls-msg" hidden></p>
+      </section>
 
-      <div class="toolbar">
-        <input class="search" type="search" id="cb-search" placeholder="Zoeken..." autocomplete="off" />
-      </div>
-
-      <section class="table-card table-card--comp-berekeningen table-card--compact">
+      <h2 class="sa-history-heading" style="margin-top:24px">Geüploade loonstroken</h2>
+      <section class="table-card table-card--compact">
         <div class="table-wrapper">
-          <table class="employees-table" id="cb-table">
+          <table class="employees-table">
             <thead>
               <tr>
-                <th data-col="datum" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Datum</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Datum"><span class="th-sort-arrows" aria-hidden="true"></span></button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th data-col="medewerker" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Medewerker</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Medewerker"><span class="th-sort-arrows" aria-hidden="true"></span></button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th data-col="contract" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Contract uren</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Contract uren"><span class="th-sort-arrows" aria-hidden="true"></span></button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th data-col="gepland" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Geplande uren</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Geplande uren"><span class="th-sort-arrows" aria-hidden="true"></span></button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
-                <th data-col="compensatie" class="th-sort">
-                  <div class="th-sort-inner">
-                    <span class="th-label">Compensatie uren</span>
-                    <button type="button" class="th-sort-trigger" aria-label="Sorteren Compensatie uren"><span class="th-sort-arrows" aria-hidden="true"></span></button>
-                  </div>
-                  <div class="th-sort-menu" role="menu" hidden>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
-                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
-                  </div>
-                </th>
+                <th>Medewerker</th>
+                <th>Periode</th>
+                <th>Bestand</th>
+                <th>Geüpload</th>
+                <th class="th-dl">Acties</th>
               </tr>
             </thead>
-            <tbody id="cb-tbody"></tbody>
+            <tbody id="ls-tbody"></tbody>
           </table>
-        </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="cb-pager-range" class="pager-range">0 of 0 total.</span>
-          </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="cb-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="cb-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="10">10</option>
-                <option value="15" selected>15</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-              </select>
-            </label>
-            <span id="cb-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="cb-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="cb-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="cb-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="cb-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
-            </span>
-          </div>
         </div>
       </section>
     </main>
@@ -312,7 +243,11 @@
   <script src="notification-bell.js?v=nb1" defer></script>
   <script src="profiles-data.js"></script>
   <script src="besa-audit.js" defer></script>
-  <script src="comp-berekeningen-data.js"></script>
-  <script src="compensatie-berekeningen.js"></script>
+  <script src="medewerkers-data.js"></script>
+  <script src="werkuren-data.js"></script>
+  <script src="verlof-data.js"></script>
+  <script src="comp-feestdagen-data.js"></script>
+  <script src="kilometer-declaraties-data.js?v=ww1"></script>
+  <script src="loonstroken.js?v=ls1"></script>
 </body>
 </html>
