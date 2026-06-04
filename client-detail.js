@@ -328,7 +328,7 @@
   }
   document.getElementById("cd-f-gem").value = c.gemeente != null ? String(c.gemeente) : "";
   document.getElementById("cd-f-req").value = c.requiredForms != null ? String(c.requiredForms) : "";
-  document.getElementById("cd-srch-gw").value = c.gedragswetenschapperZoek != null ? String(c.gedragswetenschapperZoek) : "";
+  /* cd-srch-gw is een keuzelijst (gedragswetenschapper); wordt gevuld + geselecteerd door syncGwSelect() */
   var zn = document.getElementById("cd-zij-not");
   if (zn) zn.value = c.zijbalkNotities != null ? String(c.zijbalkNotities) : "";
   var tno = document.getElementById("cd-tabnot");
@@ -424,6 +424,59 @@
     if (typeof updHints === "function") updHints();
   }
 
+  // Gedragswetenschapper-keuzelijst — gevuld uit bs2_role_users (rol 'gedragswetenschapper').
+  var _gwListCache = null;
+  async function fetchGwList() {
+    if (_gwListCache) return _gwListCache;
+    try {
+      var sb = window.besaSupabase;
+      if (!sb) return [];
+      var roleRes = await sb.from("bs2_roles").select("id").eq("slug", "gedragswetenschapper").limit(1);
+      if (roleRes.error || !roleRes.data || !roleRes.data.length) return [];
+      var roleId = roleRes.data[0].id;
+      var usrRes = await sb.from("bs2_role_users").select("user_email,user_name").eq("role_id", roleId);
+      if (usrRes.error || !usrRes.data) return [];
+      _gwListCache = usrRes.data
+        .filter(function (u) { return u && u.user_email; })
+        .map(function (u) { return { email: String(u.user_email), naam: String(u.user_name || u.user_email) }; })
+        .sort(function (a, b) { return a.naam.localeCompare(b.naam); });
+      return _gwListCache;
+    } catch (e) { return []; }
+  }
+
+  async function syncGwSelect() {
+    var sel = document.getElementById("cd-srch-gw");
+    if (!sel) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    var savedEmail = cl && cl.gedragswetenschapper_email != null ? String(cl.gedragswetenschapper_email).trim() : "";
+    var savedNaam = cl && cl.gedragswetenschapper_naam != null ? String(cl.gedragswetenschapper_naam).trim() : "";
+    var list = await fetchGwList();
+    sel.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = "— Geen gedragswetenschapper";
+    sel.appendChild(o0);
+    list.forEach(function (g) {
+      var o = document.createElement("option");
+      o.value = g.email;
+      o.textContent = g.naam;
+      sel.appendChild(o);
+    });
+    var lc = savedEmail.toLowerCase();
+    var found = list.some(function (g) { return g.email.toLowerCase() === lc; });
+    if (savedEmail && !found) {
+      var ox = document.createElement("option");
+      ox.value = savedEmail;
+      ox.textContent = (savedNaam || savedEmail) + " (niet meer in lijst)";
+      sel.appendChild(ox);
+    }
+    sel.value = "";
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value.toLowerCase() === lc) { sel.selectedIndex = i; break; }
+    }
+    if (typeof updHints === "function") updHints();
+  }
+
   function updHints() {
     if (empHint) {
       var es = document.getElementById("cd-emp");
@@ -441,8 +494,10 @@
       }
     }
     if (gwHint) {
-      gwHint.textContent = (document.getElementById("cd-srch-gw").value || "").trim()
-        ? "Zoekopdracht opgeslagen. Koppeling gedragswetenschapper volgt wanneer beschikbaar."
+      var gsel = document.getElementById("cd-srch-gw");
+      var gtxt = (gsel && gsel.value && gsel.options[gsel.selectedIndex]) ? gsel.options[gsel.selectedIndex].textContent : "";
+      gwHint.textContent = gtxt
+        ? "Gekoppeld aan " + gtxt + ". Deze gedragswetenschapper krijgt automatisch een melding wanneer een beschikking van deze cliënt (bijna) verloopt."
         : "Er is nog geen gedragswetenschapper gekoppeld aan deze cliënt.";
     }
     if (notHint) {
@@ -452,13 +507,15 @@
     }
   }
   syncMedewerkerSelect();
+  syncGwSelect();
   updHints();
   var cdEmp = document.getElementById("cd-emp");
   if (cdEmp) {
     cdEmp.addEventListener("change", updHints);
     cdEmp.addEventListener("focus", onHrListMaybeChanged);
   }
-  document.getElementById("cd-srch-gw").addEventListener("input", updHints);
+  var cdGw = document.getElementById("cd-srch-gw");
+  if (cdGw) cdGw.addEventListener("change", updHints);
   if (zn) zn.addEventListener("input", updHints);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") onHrListMaybeChanged();
@@ -1353,7 +1410,22 @@
         if (oi < 0 || !s.options[oi]) return "";
         return String(s.options[oi].textContent || "").trim();
       })(),
-      gedragswetenschapperZoek: (document.getElementById("cd-srch-gw").value || "").trim(),
+      gedragswetenschapper_email: (function () {
+        var s = document.getElementById("cd-srch-gw");
+        return (s && s.value) ? String(s.value) : "";
+      })(),
+      gedragswetenschapper_naam: (function () {
+        var s = document.getElementById("cd-srch-gw");
+        if (!s || !s.value) return "";
+        var o = s.options[s.selectedIndex];
+        return o ? String(o.textContent || "").replace(/\s*\(niet meer in lijst\)\s*$/, "").trim() : "";
+      })(),
+      gedragswetenschapperZoek: (function () {
+        var s = document.getElementById("cd-srch-gw");
+        if (!s || !s.value) return "";
+        var o = s.options[s.selectedIndex];
+        return o ? String(o.textContent || "").replace(/\s*\(niet meer in lijst\)\s*$/, "").trim() : "";
+      })(),
       zijbalkNotities: zn && zn.value != null ? String(zn.value) : "",
       tabNotities: tno && tno.value != null ? String(tno.value) : "",
       archived: c.archived,
