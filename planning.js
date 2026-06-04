@@ -1829,7 +1829,10 @@ function renderListTable() {
     if (item.conflict && autoO) risk = "Aandacht + overlap";
     else if (item.conflict) risk = "Aandacht";
     else if (autoO) risk = "Overlap (auto)";
-    const functieWeergave = functieVoorTeamlid(item.teamlid, naamFunctieMap) || item.functie || "";
+    // Functie = HR-functie van de ingeroosterde medewerker. Geen terugval op het
+    // diensttype (normalizeItem zet een lege functie op het diensttype) — bij een
+    // onbekende/functie-loze medewerker tonen we "—" i.p.v. een misleidend diensttype.
+    const functieWeergave = functieVoorTeamlid(item.teamlid, naamFunctieMap) || "";
     tr.innerHTML = `
       <td data-col="afdeling">${escapeHtml(item.afdeling || "—")}</td>
       <td data-col="diensttype">${escapeHtml(item.diensttype || "—")}</td>
