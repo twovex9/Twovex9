@@ -5188,13 +5188,14 @@ initOffboardingTab();
       if (hmWrap) hmWrap.style.display = "inline-flex";
       var t = bureauTarief(b);
       var handmatig = !!(hmChk && hmChk.checked);
+      var btDark = document.documentElement.getAttribute("data-theme") === "dark";
       if (!handmatig) {
         inp.value = (Number(t) || 0).toFixed(2);   // schone numerieke string voor de generator
         inp.readOnly = true;
         inp.style.opacity = "0.7";
         if (hint) {
           hint.hidden = false;
-          hint.style.color = "#16a34a";
+          hint.style.color = btDark ? "#4ade80" : "#15803d";
           hint.textContent = "✓ Tarief automatisch overgenomen van " + b.naam + ": " + eur(t) +
             " (" + eur(b.standaardUurtarief || 0) + " uurtarief + " + eur(b.feePerUur || 0) + " fee).";
         }
@@ -5203,7 +5204,7 @@ initOffboardingTab();
         inp.style.opacity = "";
         if (hint) {
           hint.hidden = false;
-          hint.style.color = "#dc2626";
+          hint.style.color = btDark ? "#f87171" : "#b91c1c";
           hint.textContent = "⚠ Handmatig tarief — wijkt af van het bureau-tarief van " + b.naam + " (" + eur(t) + ").";
         }
       }
