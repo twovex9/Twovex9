@@ -3354,22 +3354,30 @@ function initNav() {
     renderAllViews();
   });
 
-  /* Module 2 Bug #91 fix: Export-modal handlers */
-  document.getElementById("planning-export-close")?.addEventListener("click", closeExportPlanningModal);
-  document.getElementById("planning-export-cancel")?.addEventListener("click", closeExportPlanningModal);
-  document.getElementById("planning-export-modal")?.addEventListener("click", (e) => {
-    if (e.target.id === "planning-export-modal") closeExportPlanningModal();
+  /* Module 2 Bug #91 fix: Export-modal handlers.
+     NB: net als de AI-modal hieronder staat de export-modal-HTML ná het
+     planning.js-script in de body (planning.html r.803). initPlanningPage() draait
+     SYNCHROON top-level, dus directe element-wiring bij init mist de modal-knoppen
+     (getElementById = null → addEventListener faalt stil). Daarom via
+     event-delegation op document — dat bestaat altijd en vangt de klik ongeacht
+     wanneer de knop in de DOM komt. */
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest("#planning-export-close") || t.closest("#planning-export-cancel")) { closeExportPlanningModal(); return; }
+    if (t.id === "planning-export-modal") { closeExportPlanningModal(); return; }
+    if (t.closest("#planning-export-go")) {
+      const splitCb = document.getElementById("planning-export-split");
+      const split = splitCb && splitCb.checked;
+      const items = getItemsForView();
+      closeExportPlanningModal();
+      doExportPlanningXlsx(items, !!split);
+      return;
+    }
   });
   document.addEventListener("keydown", (e) => {
     const m = document.getElementById("planning-export-modal");
     if (e.key === "Escape" && m && !m.hidden) closeExportPlanningModal();
-  });
-  document.getElementById("planning-export-go")?.addEventListener("click", () => {
-    const splitCb = document.getElementById("planning-export-split");
-    const split = splitCb && splitCb.checked;
-    const items = getItemsForView();
-    closeExportPlanningModal();
-    doExportPlanningXlsx(items, !!split);
   });
 
   /* AI-planning regels modal. NB: deze modal-HTML staat ná het planning.js-script
