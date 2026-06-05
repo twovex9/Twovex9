@@ -717,7 +717,9 @@ function makePlanningId() {
 
 function buildDataState() {
   const heldBack = getHeldBackPlanningNames();
-  const employees = readEmployees().filter((e) => !heldBack.has(getEmployeeName(e).toLowerCase()));
+  // Verberg medewerkers die uitsluitend op kantoor/overhead-locaties zijn ingedeeld.
+  const zichtbaar = (typeof window.besaMwZichtbaarInPlanning === "function") ? window.besaMwZichtbaarInPlanning : () => true;
+  const employees = readEmployees().filter((e) => !heldBack.has(getEmployeeName(e).toLowerCase()) && zichtbaar(e));
   const medewerkers = employees.map(getEmployeeName).filter(Boolean);
   const teamlead = employees
     .filter((emp) => /teamlead|teamleider|zorgco.?rdinator/i.test(String(emp?.functie || "")))
@@ -4247,6 +4249,11 @@ function initPlanningPage() {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:medewerkers-updated", () => {
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
+  // Locaties bepalen welke medewerkers planbaar zijn (kantoor/overhead = verborgen);
+  // her-render zodra de locatie-data laadt of wijzigt.
+  window.addEventListener("besa:locaties-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   // Release 7: vrijgave-status van onboarders kan de selecteerbare medewerkers wijzigen.

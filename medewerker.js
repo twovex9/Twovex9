@@ -438,6 +438,7 @@ const LANDEN = [
   "Vietnam","Zambia","Zimbabwe","Zuid-Afrika","Zuid-Korea","Zuid-Soedan","Zweden","Zwitserland"
 ];
 const CAO_OPTIONS = ["CAO Jeugdzorg", "CAO VVT"];
+// Fallback-lijst zolang de HR-locaties (Supabase) nog niet in cache zitten.
 const LOCATIE_OPTIONS = [
   { name: "Voorburggracht", color: "#5ecf62" },
   { name: "Varnebroek", color: "#3d55df" },
@@ -445,9 +446,30 @@ const LOCATIE_OPTIONS = [
   { name: "Breedstraat", color: "#f0be4b" },
   { name: "Achterwacht", color: "#0917a8" },
   { name: "satelliet woning", color: "#9f49b9" },
-  { name: "satelliet woning", color: "#9f49b9" },
-  { name: "satelliet woning", color: "#9f49b9" },
 ];
+
+// Echte locatie-opties uit de HR-locaties-module (window.locatiesDB), zodat nieuwe
+// locaties én kantoor/overhead-locaties automatisch kiesbaar zijn. Dedupt op naam
+// (er bestaan meerdere "satelliet woning"). Valt terug op LOCATIE_OPTIONS als de
+// cache nog leeg is.
+function getLocatieOptions() {
+  try {
+    if (window.locatiesDB && typeof window.locatiesDB.getAllSync === "function") {
+      const rows = window.locatiesDB.getAllSync() || [];
+      const out = [];
+      const seen = new Set();
+      rows.forEach((l) => {
+        if (!l || l.archived) return;
+        const name = String(l.naam || "").trim();
+        if (!name || seen.has(name.toLowerCase())) return;
+        seen.add(name.toLowerCase());
+        out.push({ name: name, color: l.kleur || "#64748b", nietInPlanning: !!l.nietInPlanning });
+      });
+      if (out.length) return out;
+    }
+  } catch (e) { /* val terug op hardcoded lijst */ }
+  return LOCATIE_OPTIONS;
+}
 const FUNCTIE_OPTIONS = [
   "Stagiair",
   "Coördinator Ambulant",
@@ -872,13 +894,15 @@ function loadEmployeeIntoForm() {
           .map((x) => x.trim())
           .filter(Boolean)
   );
-  const defaultLocaties = ["Voorburggracht", "Varnebroek", "Magdalenenstraat", "Breedstraat"];
+  // Geen default-locaties meer voorvullen: een medewerker zonder locatie start
+  // leeg, zodat overhead/kantoor-personeel niet ongewild op zorglocaties wordt
+  // gezet (en zo per ongeluk planbaar wordt). User-keuze 2026-06-05.
   const coreMap =
     emp.locatiesCoreMap && typeof emp.locatiesCoreMap === "object"
       ? Object.assign({}, emp.locatiesCoreMap)
       : {};
   window.__empLocatiesState = {
-    selected: selectedLocaties.length ? selectedLocaties : defaultLocaties,
+    selected: selectedLocaties,
     coreMap,
   };
   if (typeof window.__renderEmpLocaties === "function") {
@@ -2294,7 +2318,7 @@ function initLocatiesSection() {
     const selectedSet = new Set(normalizeLocatieNames(state.selected || []));
     const q = (query || "").trim().toLowerCase();
     targetList.innerHTML = "";
-    LOCATIE_OPTIONS.filter((loc) => loc.name.toLowerCase().includes(q)).forEach((loc) => {
+    getLocatieOptions().filter((loc) => loc.name.toLowerCase().includes(q)).forEach((loc) => {
       const item = document.createElement("li");
       item.className = "emp-loc-item";
       const left = document.createElement("span");
@@ -2305,6 +2329,13 @@ function initLocatiesSection() {
       const txt = document.createElement("span");
       txt.textContent = loc.name;
       left.append(dot, txt);
+      if (loc.nietInPlanning) {
+        const tag = document.createElement("span");
+        tag.textContent = "kantoor";
+        tag.title = "Kantoor-/overheadlocatie — telt niet mee voor planning-zichtbaarheid";
+        tag.style.cssText = "margin-left:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:999px;background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45)";
+        left.append(tag);
+      }
       const check = document.createElement("span");
       check.className = "emp-loc-check";
       check.textContent = selectedSet.has(loc.name) ? "✓" : "";
@@ -2330,7 +2361,7 @@ function initLocatiesSection() {
     if (!targetRows) return;
     const state = getLocatiesState();
     const selected = normalizeLocatieNames(state.selected || []);
-    const colorByName = Object.fromEntries(LOCATIE_OPTIONS.map((x) => [x.name, x.color]));
+    const colorByName = Object.fromEntries(getLocatieOptions().map((x) => [x.name, x.color]));
     targetRows.innerHTML = "";
     selected.forEach((name) => {
       const row = document.createElement("label");
@@ -2383,6 +2414,15 @@ function initLocatiesSection() {
   }
 
   window.__renderEmpLocaties = renderAll;
+
+  // Locatie-opties komen async uit window.locatiesDB; her-render zodra die laadt
+  // (anders toont de lijst alleen de fallback tot de eerste interactie).
+  if (!window.__empLocatiesUpdateBound) {
+    window.__empLocatiesUpdateBound = true;
+    window.addEventListener("besa:locaties-updated", () => {
+      try { if (typeof window.__renderEmpLocaties === "function") window.__renderEmpLocaties(); } catch (e) { /* */ }
+    });
+  }
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();

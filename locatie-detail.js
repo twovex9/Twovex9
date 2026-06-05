@@ -62,6 +62,7 @@
   var toevoeging = document.getElementById("loc-detail-toevoeging");
   var straat = document.getElementById("loc-detail-straat");
   var plaats = document.getElementById("loc-detail-plaats");
+  var nietInPlanning = document.getElementById("loc-detail-niet-in-planning");
 
   var medewerkersTab = null;
 
@@ -94,6 +95,7 @@
     if (toevoeging) toevoeging.value = loc.toevoeging || "";
     if (straat) straat.value = loc.straat || "";
     if (plaats) plaats.value = loc.plaats || "";
+    if (nietInPlanning) nietInPlanning.checked = !!loc.nietInPlanning;
     document.title = (loc.naam || "Locatie") + " — HR";
     ensureMedewerkersTab(loc);
     if (medewerkersTab && typeof medewerkersTab.refresh === "function") medewerkersTab.refresh();
@@ -203,6 +205,7 @@
         toevoeging: toevoeging ? toevoeging.value.trim() : "",
         straat: straat ? straat.value.trim() : "",
         plaats: plaats ? plaats.value.trim() : "",
+        nietInPlanning: nietInPlanning ? nietInPlanning.checked : false,
       };
       var updated;
       try {
@@ -217,8 +220,8 @@
         return;
       }
       hydrate(updated);
-      if (typeof showSaveModal === "function") showSaveModal("Adres is opgeslagen.");
-      else showToast("adres opgeslagen");
+      if (typeof showSaveModal === "function") showSaveModal("Locatie is opgeslagen.");
+      else showToast("Locatie opgeslagen");
     });
   }
 

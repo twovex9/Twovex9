@@ -123,6 +123,7 @@ function locFmtDate(iso) {
       straat: row.straat || "",
       plaats: row.plaats || "",
       archived: !!row.archived,
+      nietInPlanning: !!row.niet_in_planning,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
     };
@@ -195,6 +196,7 @@ function locFmtDate(iso) {
       toevoeging: obj.toevoeging || "",
       straat: obj.straat || "",
       plaats: obj.plaats || "",
+      niet_in_planning: !!obj.nietInPlanning,
     };
   }
 
@@ -241,6 +243,9 @@ function locFmtDate(iso) {
     if (Object.prototype.hasOwnProperty.call(patch, "archived")) {
       dbPatch.archived = !!patch.archived;
     }
+    if (Object.prototype.hasOwnProperty.call(patch, "nietInPlanning")) {
+      dbPatch.niet_in_planning = !!patch.nietInPlanning;
+    }
     if (Object.keys(dbPatch).length === 0) return current.id ? current : null;
 
     var res = await window.besaSupabase
@@ -275,6 +280,44 @@ function locFmtDate(iso) {
     return readCache().map(function (l) { return Object.assign({}, l); });
   }
 
+  // ── Planning-zichtbaarheid ───────────────────────────────────────────────
+  // Set van locatie-namen (lowercase) die als kantoor/overhead zijn gemarkeerd.
+  function getNietPlanbareNamenSync() {
+    var s = new Set();
+    try {
+      readCache().forEach(function (l) {
+        if (l && l.nietInPlanning && !l.archived) {
+          s.add(String(l.naam || "").trim().toLowerCase());
+        }
+      });
+    } catch (e) { /* */ }
+    return s;
+  }
+
+  // Is een medewerker zichtbaar/planbaar in de planning?
+  // User-keuze 2026-06-05: zichtbaar TENZIJ álle gekozen locaties kantoor/overhead
+  // zijn. Geen locatie → zichtbaar (geen regressie). Kernteam op een planbare
+  // locatie → zichtbaar (vangnet). Niets gemarkeerd → alles zichtbaar (veilig).
+  function mwZichtbaarInPlanning(emp) {
+    if (!emp || typeof emp !== "object") return true;
+    var sel = Array.isArray(emp.locatiesSelected)
+      ? emp.locatiesSelected
+      : (emp.data && Array.isArray(emp.data.locatiesSelected)) ? emp.data.locatiesSelected : [];
+    sel = sel.map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+    if (sel.length === 0) return true;
+    var npb = getNietPlanbareNamenSync();
+    if (!npb || npb.size === 0) return true;
+    var heeftEchte = sel.some(function (n) { return !npb.has(n.toLowerCase()); });
+    if (heeftEchte) return true;
+    // Vangnet: kernteam-vinkje op een planbare (niet-kantoor) locatie.
+    var cm = (emp.locatiesCoreMap && typeof emp.locatiesCoreMap === "object")
+      ? emp.locatiesCoreMap
+      : (emp.data && emp.data.locatiesCoreMap && typeof emp.data.locatiesCoreMap === "object") ? emp.data.locatiesCoreMap : {};
+    return Object.keys(cm).some(function (n) {
+      return cm[n] === true && !npb.has(String(n).trim().toLowerCase());
+    });
+  }
+
   var api = {
     bootstrap: bootstrap,
     refresh: refresh,
@@ -284,6 +327,8 @@ function locFmtDate(iso) {
     restore: restore,
     delete: remove,
     getAllSync: getAllSync,
+    getNietPlanbareNamenSync: getNietPlanbareNamenSync,
+    mwZichtbaarInPlanning: mwZichtbaarInPlanning,
   };
 
   Object.defineProperty(api, "ready", {
@@ -292,6 +337,8 @@ function locFmtDate(iso) {
 
   global.locatiesDB = api;
   global.getLocaties = getLocatiesCompat;
+  // Gedeelde helper voor planning.js én planning-generator.js (één bron van waarheid).
+  global.besaMwZichtbaarInPlanning = mwZichtbaarInPlanning;
 
   // Auto-bootstrap zodra dit script laadt.
   bootstrap();
