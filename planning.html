@@ -549,6 +549,13 @@
         </div>
       </div>
       <div class="planning-dienst-koppel dienst-only-ind" id="dienst-koppel-blok" hidden>
+        <div class="planning-dienst-field planning-dienst-field--full" style="margin-bottom:14px">
+          <label class="planning-dienst-label" for="dienst-zorgsoort">Zorgsoort <span class="req">*</span></label>
+          <select id="dienst-zorgsoort" class="planning-dienst-input" name="zorgsoort">
+            <option value="">Selecteer zorgsoort…</option>
+          </select>
+          <p class="planning-dienst-hint">Wat voor cliëntzorg betreft deze dienst (1-op-1, ambulant intern/extern, WLZ)? Bepaalt het tarief en de financiële uitsplitsing in Financiën → Zorgsoorten.</p>
+        </div>
         <span class="planning-dienst-label" id="dienst-koppel-label">Cliënt ↔ teamlid koppelingen <span class="req">*</span></span>
         <p class="planning-dienst-hint planning-dienst-koppel-uitleg">Koppel elke cliënt aan een teamlid voor individuele (1-op-1 of ambulante) begeleiding. Per koppeling kies je de tijden en de dag(en) van de week. De periode hieronder geldt voor alle koppelingen.</p>
         <div class="planning-dienst-grid">
@@ -566,6 +573,7 @@
           <span class="planning-dienst-koppel-add-ico" aria-hidden="true">+</span> Koppeling toevoegen
         </button>
         <p class="planning-dienst-hint planning-dienst-koppel-tel" id="dienst-koppel-tel" hidden></p>
+        <div class="planning-koppel-tarief" id="dienst-koppel-tarief" hidden></div>
         <div class="planning-koppel-besch" id="dienst-koppel-beschikking" role="alert" hidden></div>
       </div>
       <div class="planning-dienst-field planning-dienst-field--full">
@@ -788,6 +796,7 @@
   <script src="planning-data.js?v=24e10b0"></script>
   <script src="clienten-data.js?v=24e10b0"></script>
   <script src="beschikkingen-data.js?v=24e10b0"></script>
+  <script src="zorgsoorten-data.js?v=24e10b0"></script>
   <script src="comp-diensttypes-data.js?v=24e10b0"></script>
   <script src="comp-saldi-data.js?v=24e10b0"></script>
   <script src="planning-settings-data.js?v=24e10b0"></script>

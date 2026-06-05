@@ -16,7 +16,20 @@
   var heroName = document.getElementById("zs-hero-name");
   var naamInput = document.getElementById("zs-detail-naam");
   var tariefSelect = document.getElementById("zs-detail-tarief");
+  var tariefBedrag = document.getElementById("zs-detail-tarief-bedrag");
+  var kostenBedrag = document.getElementById("zs-detail-kosten-bedrag");
+  var eenheidLbl = document.getElementById("zs-detail-eenheid");
+  var eenheidLblK = document.getElementById("zs-detail-eenheid-k");
   var saveBtn = document.getElementById("zs-detail-save");
+
+  var EENHEID_TXT = { uur: "per uur", dag: "per dag", week: "per week" };
+  function syncEenheidLabels() {
+    var t = tariefSelect && tariefSelect.value ? String(tariefSelect.value).toLowerCase() : "uur";
+    var txt = EENHEID_TXT[t] || "per uur";
+    if (eenheidLbl) eenheidLbl.textContent = txt;
+    if (eenheidLblK) eenheidLblK.textContent = txt;
+  }
+  if (tariefSelect) tariefSelect.addEventListener("change", syncEenheidLabels);
 
   function findZorgsoortCached() {
     var list = window.zorgsoortenDB.getAllSync() || [];
@@ -34,6 +47,9 @@
       var t = String(item.tarieftype || "").toLowerCase();
       tariefSelect.value = TARIEF_LABEL[t] ? t : "dag";
     }
+    if (tariefBedrag) tariefBedrag.value = (item.tarief != null ? item.tarief : "");
+    if (kostenBedrag) kostenBedrag.value = (item.kostenTarief != null ? item.kostenTarief : "");
+    syncEenheidLabels();
     document.title = (item.naam || "Zorgsoort") + " — Cliënten";
   }
 
@@ -85,9 +101,11 @@
         showInlineToast("Kies een tarieftype (Dag, Uur of Week)");
         return;
       }
+      var tariefVal = tariefBedrag && tariefBedrag.value !== "" ? tariefBedrag.value : null;
+      var kostenVal = kostenBedrag && kostenBedrag.value !== "" ? kostenBedrag.value : null;
       var updated;
       try {
-        updated = await window.zorgsoortenDB.update(zsId, { naam: nm, tarieftype: tr });
+        updated = await window.zorgsoortenDB.update(zsId, { naam: nm, tarieftype: tr, tarief: tariefVal, kostenTarief: kostenVal });
       } catch (err) {
         console.error("Zorgsoort opslaan mislukt:", err);
         showInlineToast("Opslaan is niet gelukt");

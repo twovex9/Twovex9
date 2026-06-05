@@ -26,7 +26,7 @@
   // Alleen UI-velden in de localStorage-cache bewaren (de zware bs2-import-velden
   // in `data` — freelancer_cost_breakdown e.d. — blazen de cache op tot >5MB).
   function slimForCache(items) {
-    var FIELDS = EXPLICIT_FIELDS.concat(["leer", "sterren", "herhaal", "herhaalFrequentie", "competenties"]);
+    var FIELDS = EXPLICIT_FIELDS.concat(["leer", "sterren", "herhaal", "herhaalFrequentie", "competenties", "zorgsoort"]);
     return (Array.isArray(items) ? items : []).map(function (o) {
       var s = {};
       for (var i = 0; i < FIELDS.length; i++) { var k = FIELDS[i]; if (o && o[k] !== undefined) s[k] = o[k]; }
