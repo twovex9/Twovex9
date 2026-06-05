@@ -892,6 +892,8 @@ function loadEmployeeIntoForm() {
   if (dvEl) {
     dvEl.dataset.persistedValue = dvEl.value || emp.dienstverband || "Loondienst";
   }
+  // Verzuim-tab tonen/verbergen op basis van dienstverband (alleen loondienst).
+  applyVerzuimTabVisibility();
   const inhuurEl = document.getElementById("emp-inhuurtype");
   if (inhuurEl && emp.inhuurtype) {
     selectOrAddOption(inhuurEl, emp.inhuurtype);
@@ -2203,6 +2205,30 @@ function initProfessioneelByDienstverband() {
   window.__syncProfessioneelVariant = syncProfessioneelVariant;
   syncProfessioneelVariant();
 }
+
+// Verzuim wordt alleen bijgehouden voor medewerkers in loondienst. Voor inhuur
+// (ZZP'ers) voeren wij geen verzuim in — bij ziekte worden zij niet doorbetaald en
+// zijn wij daar niet verantwoordelijk voor — dus de Verzuim-tab en het bijbehorende
+// paneel worden voor inhuur verborgen.
+function applyVerzuimTabVisibility() {
+  const dvEl = document.getElementById("emp-dienstverband");
+  const persisted = dvEl ? (dvEl.dataset.persistedValue || dvEl.value || "").trim() : "";
+  const isInhuur = (persisted || "Loondienst") === "Inhuur";
+
+  const tabBtn = document.querySelector('.emp-tab[data-tab="verzuim"]');
+  const panel = document.querySelector('.emp-tab-panel[data-panel="verzuim"]');
+  // Inline display (i.p.v. [hidden]) zodat het robuust is t.o.v. utility-classes.
+  if (tabBtn) tabBtn.style.display = isInhuur ? "none" : "";
+  if (panel) panel.hidden = isInhuur;
+
+  // Stond de Verzuim-tab open terwijl die nu verborgen wordt (bv. hersteld uit
+  // sessionStorage)? Val dan terug op de Details-tab zodat er geen leeg paneel blijft.
+  if (isInhuur && tabBtn && tabBtn.classList.contains("is-active")) {
+    const detailsBtn = document.querySelector('.emp-tab[data-tab="details"]');
+    if (detailsBtn) detailsBtn.click();
+  }
+}
+window.__applyVerzuimTabVisibility = applyVerzuimTabVisibility;
 
 function initLocatiesSection() {
   const btn = document.getElementById("emp-locaties-select-btn");
@@ -4003,6 +4029,9 @@ function initSectionSave() {
         if (typeof window.__syncProfessioneelVariant === "function") {
           window.__syncProfessioneelVariant();
         }
+        if (typeof window.__applyVerzuimTabVisibility === "function") {
+          window.__applyVerzuimTabVisibility();
+        }
       }
 
       const fullName = `${document.getElementById("emp-voornaam")?.value || ""} ${document.getElementById("emp-achternaam")?.value || ""}`.trim();
@@ -5074,6 +5103,9 @@ initCaoDropdown();
 initExtraSidebarActions();
 initLiveContactMirror();
 initProfessioneelByDienstverband();
+// Na initTabs (tab-restore uit sessionStorage) de Verzuim-tab desnoods alsnog
+// verbergen + terugvallen op Details als verzuim de herstelde tab was.
+applyVerzuimTabVisibility();
 initLocatiesSection();
 initFunctieScrollableDropdown();
 initLoondienstSalaryDropdowns();
