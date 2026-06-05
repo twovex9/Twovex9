@@ -971,8 +971,9 @@ function renderPlanbaarPill(emp) {
   const pill = document.getElementById("emp-planbaar-pill");
   const textEl = document.getElementById("emp-planbaar-text");
   if (!pill || !textEl) return;
-  const stored = emp && emp.data && Object.prototype.hasOwnProperty.call(emp.data, "isPlannable")
-    ? emp.data.isPlannable
+  // rowToObj spreidt de medewerker-`data` jsonb top-level → lees emp.isPlannable, niet emp.data.isPlannable.
+  const stored = emp && Object.prototype.hasOwnProperty.call(emp, "isPlannable")
+    ? emp.isPlannable
     : true;
   const planbaar = stored !== false;
   pill.classList.toggle("emp-planbaar-pill--planbaar", planbaar);
@@ -989,8 +990,8 @@ function openPlanbaarModal() {
   }
   const modal = document.getElementById("emp-planbaar-modal");
   if (!modal) return;
-  const stored = emp.data && Object.prototype.hasOwnProperty.call(emp.data, "isPlannable")
-    ? emp.data.isPlannable
+  const stored = Object.prototype.hasOwnProperty.call(emp, "isPlannable")
+    ? emp.isPlannable
     : true;
   const cur = stored === false ? "false" : "true";
   document.querySelectorAll('input[name="emp-planbaar-choice"]').forEach(function (r) {
@@ -1021,10 +1022,11 @@ async function savePlanbaarChoice() {
   const saveBtn = document.getElementById("emp-planbaar-modal-save");
   if (saveBtn) saveBtn.disabled = true;
   try {
-    const currentData = (emp.data && typeof emp.data === "object") ? emp.data : {};
-    const newData = Object.assign({}, currentData, { isPlannable: newValue });
-    await window.medewerkersDB.update(emp.id, { data: newData });
-    emp.data = newData;
+    // rowToObj spreidt `data` top-level; update() verpakt een niet-top-level patch-veld
+    // weer correct in de data-jsonb → schrijf isPlannable als top-level patch (niet als {data:…},
+    // wat eerder een geneste data.data.isPlannable opleverde die nergens werd uitgelezen).
+    await window.medewerkersDB.update(emp.id, { isPlannable: newValue });
+    emp.isPlannable = newValue;
     renderPlanbaarPill(emp);
     closePlanbaarModal();
     if (window.showActionFeedback) {
@@ -1411,7 +1413,8 @@ var ONB_CONTRACT_FORM_VARS = ["functie", "startdatum", "contractduur", "uren", "
 var _onbContractMode = "new"; // "new" | "view"
 
 function onbBuildContractAutoVars(emp) {
-  var d = (emp && emp.data) || {};
+  // rowToObj spreidt de medewerker-`data` jsonb top-level → lees de velden van emp zelf.
+  var d = emp || {};
   var voornaam = (emp && emp.voornaam) || d.voornaam || "";
   var achternaam = (emp && emp.achternaam) || d.achternaam || "";
   return {

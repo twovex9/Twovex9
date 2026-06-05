@@ -266,7 +266,7 @@
 
       // Match diensttype-voorkeur (uit medewerker.data.voorkeuren) — beschikbaar in BS1 v1+
       try {
-        var prefs = m.data && (m.data.diensttype_voorkeuren || m.data.voorkeur_diensttypes);
+        var prefs = m.diensttype_voorkeuren || m.voorkeur_diensttypes;
         if (prefs && Array.isArray(prefs) && prefs.indexOf(dienst.diensttype) >= 0) score += 30;
       } catch (e) {}
 
@@ -419,10 +419,11 @@
   }
 
   function getMedewerkerUurtarief(med, dienst) {
-    if (!med || !med.data) return null;
+    if (!med) return null;
     // BS2-parity: shift_type_rates is een map {diensttype-naam: rate} per medewerker
     // (geïmporteerd uit BS2 /api/employees op 2026-05-15).
-    var rates = med.data.shift_type_rates;
+    // rowToObj spreidt de medewerker-`data` jsonb top-level — lees dus med.X, niet med.data.X.
+    var rates = med.shift_type_rates;
     if (rates && typeof rates === "object" && !Array.isArray(rates)) {
       var diensttype = dienst && dienst.diensttype;
       if (diensttype && rates[diensttype] !== undefined && rates[diensttype] !== null) {
@@ -437,7 +438,7 @@
       }
     }
     // Legacy fallback: per-medewerker single uurTarief veld
-    var t = med.data.uurTarief;
+    var t = med.uurTarief;
     if (t !== null && t !== undefined && t !== "") {
       var lt = parseFloat(t);
       return isNaN(lt) ? null : lt;
@@ -559,8 +560,8 @@
     var warnings = [];
     if (!med || !dienst) return warnings;
 
-    // 1. Locatie-check (data.locatiesSelected is array van locatie-namen)
-    var locaties = (med.data && Array.isArray(med.data.locatiesSelected)) ? med.data.locatiesSelected : [];
+    // 1. Locatie-check (locatiesSelected is array van locatie-namen; top-level na rowToObj)
+    var locaties = Array.isArray(med.locatiesSelected) ? med.locatiesSelected : [];
     if (dienst.locatie && locaties.length > 0 && locaties.indexOf(dienst.locatie) === -1) {
       warnings.push({ type: "locatie", text: "Medewerker is niet toegewezen aan deze locatie" });
     }
@@ -568,8 +569,8 @@
     var dienstStart = new Date(dienst.start_iso);
     var dienstEinde = new Date(dienst.einde_iso);
 
-    // 2. Rooster-check (data.rooster is stringified JSON met per-dag enabled/start/end)
-    var rooster = parseRooster(med.data && med.data.rooster);
+    // 2. Rooster-check (rooster is stringified JSON met per-dag enabled/start/end; top-level na rowToObj)
+    var rooster = parseRooster(med.rooster);
     if (rooster) {
       var dag = WEEKDAY_SLUGS[dienstStart.getDay()];
       var rd = rooster[dag];

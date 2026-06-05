@@ -852,6 +852,12 @@
     if (!pendingPurgeId) return;
     var s = document.getElementById("cl-purge-slider");
     if (s && parseInt(s.value, 10) < 100) return;
+    // DIEHARD: definitief verwijderen vereist expliciete beheer-permissie (manage-clients).
+    if (typeof window.besaCan === "function" && !window.besaCan("manage-clients")) {
+      if (typeof showToast === "function") showToast("Geen rechten om een cliënt definitief te verwijderen.");
+      closePurge();
+      return;
+    }
     if (typeof deleteClientenById === "function") deleteClientenById(pendingPurgeId);
     if (typeof showSaveModal === "function") showSaveModal("Cliënt is definitief verwijderd.", "Verwijderd");
     else showToast("Cliënt verwijderd");

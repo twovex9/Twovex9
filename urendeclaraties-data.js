@@ -114,6 +114,13 @@
         var ups = await global.besaSupabase.from(TABLE).upsert(items.map(objToInsertPayload), { onConflict: "id" });
         if (ups.error) reportSilent("upsert", ups.error);
       }
+      // DIEHARD delete-guard (zelfde patroon als planning-data.js pushFullCache): een
+      // lege/id-loze bron mag nooit de hele tabel wissen — dat duidt op een stale/mislukte
+      // load, niet op een echte verwijdering. Legitiem leegmaken hoort expliciet bevestigd.
+      if (toDelete.length && localIds.length === 0 && existingIds.length > 0) {
+        reportSilent("pushAll delete-guard", new Error("Totale wipe geweigerd: 0 geldige lokale id's tegen " + existingIds.length + " in DB"));
+        toDelete = [];
+      }
       if (toDelete.length) {
         var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
         if (del.error) reportSilent("delete", del.error);
