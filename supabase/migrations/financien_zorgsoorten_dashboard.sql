@@ -267,8 +267,9 @@ begin
                        / (public.besa_parse_num(m.data->>'contracturen') * c_weken)
                   else null end
       end as uurkosten
-    from zp, refp
+    from zp
     left join medewerkers m on lower(btrim(m.voornaam||' '||m.achternaam)) = zp.teamlid_key and coalesce(m.archived,false)=false
+    cross join refp
     where lower(btrim(zp.zorgsoort)) = v_key and zp.ym >= refp.s_ym and zp.ym <= refp.e_ym
   ),
   zd as (
