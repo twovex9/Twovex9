@@ -208,6 +208,43 @@
     return { km: km, home: h, location: l };
   }
 
+  // ---------------------------------------------------------------------------
+  // Public: lookupAdres — postcode + huisnummer → straat + woonplaats
+  // Voor automatisch invullen van adresformulieren (straat/plaats). Hergebruikt
+  // dezelfde PDOK-cache + retry als geocode(). Geeft ook lat/lng/label terug.
+  // ---------------------------------------------------------------------------
+  async function lookupAdres(adres) {
+    var postcode = pickStr(adres, "postcode").replace(/\s+/g, "").toUpperCase();
+    var huisnr = pickStr(adres, "huisnummer");
+    if (!postcode || !huisnr) return null;
+    var q = postcode + " " + huisnr;
+    var cacheKey = "adr:" + q.toLowerCase();
+    var cached = cacheGet(cacheKey, CACHE_KEY_GEO, TTL_GEO_MS);
+    if (cached) return cached;
+
+    var url = PDOK + "?q=" + encodeURIComponent(q) + "&fq=type:adres&rows=1";
+    var res = await fetchWithRetry(url, "PDOK");
+    var data = await res.json();
+    var doc = data && data.response && Array.isArray(data.response.docs) ? data.response.docs[0] : null;
+    if (!doc) return null;
+    var straat = pickStr(doc, "straatnaam");
+    var plaats = pickStr(doc, "woonplaatsnaam");
+    if (!straat && !plaats) return null;
+    var ll = parseCentroide(doc.centroide_ll);
+    var value = {
+      straat: straat,
+      plaats: plaats,
+      postcode: pickStr(doc, "postcode"),
+      huisnummer: pickStr(doc, "huisnummer"),
+      gemeente: pickStr(doc, "gemeentenaam"),
+      label: pickStr(doc, "weergavenaam") || q,
+      lat: ll ? ll.lat : null,
+      lng: ll ? ll.lng : null,
+    };
+    cacheSet(cacheKey, CACHE_KEY_GEO, value);
+    return value;
+  }
+
   function clearCache() {
     try { window.localStorage.removeItem(CACHE_KEY_GEO); } catch (e) {}
     try { window.localStorage.removeItem(CACHE_KEY_OSRM); } catch (e) {}
@@ -215,6 +252,7 @@
 
   window.besaGeoDistance = {
     geocode: geocode,
+    lookupAdres: lookupAdres,
     routeKm: routeKm,
     calculateEnkeleReis: calculateEnkeleReis,
     clearCache: clearCache,
