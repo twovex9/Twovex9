@@ -727,7 +727,9 @@
 
     try {
       try { if (global.medewerkersDB.ready) await global.medewerkersDB.ready; } catch (e) { /* */ }
-      var medewerkers = global.medewerkersDB.getAllSync().filter(function (m) { return m && !m.archived; });
+      // Verberg kantoor/overhead-medewerkers (alleen niet-planbare locaties) net als de planning zelf.
+      var zicht = (typeof global.besaMwZichtbaarInPlanning === "function") ? global.besaMwZichtbaarInPlanning : function () { return true; };
+      var medewerkers = global.medewerkersDB.getAllSync().filter(function (m) { return m && !m.archived && zicht(m); });
       var diensten = await fetchLegeDiensten(startIso, eindIso, opts.locatieFilter || "", opts.diensttypeSet || null, mode === "reintegreren");
       var ctx = await loadContext(startIso, eindIso);
       var voorstel = berekenVoorstel(diensten, medewerkers, ctx);

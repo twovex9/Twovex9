@@ -126,6 +126,13 @@
         var tdNaam = document.createElement("td");
         tdNaam.dataset.col = "naam";
         tdNaam.textContent = o.naam || "";
+        if (o.nietInPlanning) {
+          var nipBadge = document.createElement("span");
+          nipBadge.textContent = "Niet in planning";
+          nipBadge.title = "Kantoor-/overheadlocatie — telt niet mee voor planning-zichtbaarheid";
+          nipBadge.style.cssText = "margin-left:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45);white-space:nowrap;vertical-align:middle";
+          tdNaam.appendChild(nipBadge);
+        }
         tr.appendChild(tdNaam);
 
         var tdAdres = document.createElement("td");
@@ -308,6 +315,8 @@
       var el = document.getElementById(id);
       if (el) el.value = "";
     });
+    var nip = document.getElementById("loc-add-niet-in-planning");
+    if (nip) nip.checked = false;
   }
 
   function openAddModal() {
@@ -552,6 +561,7 @@
         if (naamInput) naamInput.focus();
         return;
       }
+      var nipEl = document.getElementById("loc-add-niet-in-planning");
       var input = {
         naam: naam,
         kleur: "#64748b",
@@ -560,6 +570,7 @@
         toevoeging: tvEl ? tvEl.value.trim() : "",
         straat: stEl ? stEl.value.trim() : "",
         plaats: plEl ? plEl.value.trim() : "",
+        nietInPlanning: nipEl ? nipEl.checked : false,
       };
       try {
         await window.locatiesDB.add(input);
