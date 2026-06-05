@@ -149,7 +149,10 @@
         return;
       }
       var key = normPostcode(pcv) + "|" + hnv.toLowerCase();
-      if (key === lastQuery) return; // al opgehaald voor deze combinatie
+      // Skip alleen als deze combinatie al opgehaald is ÉN straat+plaats al gevuld
+      // zijn. Zo worden door een (modal-)reset geleegde velden bij dezelfde
+      // postcode tóch opnieuw gevuld.
+      if (key === lastQuery && norm(st.value) && norm(pl.value)) return;
       lastQuery = key;
       setStatus(status, "", "Adres opzoeken…", true);
 
@@ -175,10 +178,28 @@
       }
     }
 
+    // Wis een (stale) statusmelding zodra het formulier leeg is — bv. bij een
+    // her-geopende modal die de velden reset zonder input-event te vuren.
+    function clearIfEmpty() {
+      if (!norm(pc.value) && !norm(hn.value)) {
+        setStatus(status, "", "");
+        lastQuery = "";
+      }
+    }
+
     pc.addEventListener("input", schedule);
     hn.addEventListener("input", schedule);
     pc.addEventListener("blur", runNow);
     hn.addEventListener("blur", runNow);
+    pc.addEventListener("focus", clearIfEmpty);
+    hn.addEventListener("focus", clearIfEmpty);
+    var form = pc.closest("form");
+    if (form) {
+      form.addEventListener("reset", function () {
+        setStatus(status, "", "");
+        lastQuery = "";
+      });
+    }
     return true;
   }
 

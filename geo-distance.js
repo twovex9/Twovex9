@@ -227,6 +227,10 @@
     var data = await res.json();
     var doc = data && data.response && Array.isArray(data.response.docs) ? data.response.docs[0] : null;
     if (!doc) return null;
+    // PDOK free-text matcht fuzzy: een onzin-postcode levert tóch het "beste"
+    // adres. Accepteer alleen als de gevonden postcode exact die van de invoer is.
+    var gevondenPc = pickStr(doc, "postcode").replace(/\s+/g, "").toUpperCase();
+    if (gevondenPc !== postcode) return null;
     var straat = pickStr(doc, "straatnaam");
     var plaats = pickStr(doc, "woonplaatsnaam");
     if (!straat && !plaats) return null;
