@@ -52,6 +52,17 @@
   var zsAddCancel = document.getElementById("zs-add-cancel");
   var zsAddNaam = document.getElementById("zs-add-naam");
   var zsAddTarief = document.getElementById("zs-add-tarief");
+  var zsAddTariefBedrag = document.getElementById("zs-add-tarief-bedrag");
+
+  var EENHEID_KORT = { uur: "uur", dag: "dag", week: "week" };
+  function fmtTariefBedrag(r) {
+    if (!r || r.tarief == null || r.tarief === "") return "—";
+    var n = Number(r.tarief);
+    if (!isFinite(n)) return "—";
+    var eenheid = EENHEID_KORT[String(r.tarieftype || "").toLowerCase()] || "";
+    var bedrag = "€ " + n.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return eenheid ? bedrag + " / " + eenheid : bedrag;
+  }
 
   function openZsAddModal() {
     if (!zsAddModal || !zsAddForm) return;
@@ -81,6 +92,7 @@
   function getSortValue(item, key) {
     if (!item) return "";
     if (key === "tarieftype") return String(item.tarieftype || "");
+    if (key === "tarief") return item.tarief == null ? null : Number(item.tarief);
     if (key === "naam") return String(item.naam || "").toLowerCase();
     return "";
   }
@@ -117,6 +129,14 @@
         var an = order[av] != null ? order[av] : 99;
         var bn = order[bv] != null ? order[bv] : 99;
         if (an !== bn) return sortDir === "asc" ? an - bn : bn - an;
+      }
+      if (sortKey === "tarief") {
+        // Numeriek sorteren; lege tarieven altijd onderaan.
+        var ae = av == null, be = bv == null;
+        if (ae && be) return 0;
+        if (ae) return 1;
+        if (be) return -1;
+        return sortDir === "asc" ? av - bv : bv - av;
       }
       var as = String(av);
       var bs = String(bv);
@@ -156,7 +176,7 @@
     if (!page.length) {
       var trE = document.createElement("tr");
       var tdE = document.createElement("td");
-      tdE.colSpan = 4;
+      tdE.colSpan = 5;
       tdE.className = "cl-empty-cell";
       tdE.textContent = "Geen zorgsoorten gevonden.";
       trE.appendChild(tdE);
@@ -179,6 +199,10 @@
         td2.setAttribute("data-col", "tarieftype");
         td2.textContent = tariefLabel(r.tarieftype);
         tr.appendChild(td2);
+        var td3 = document.createElement("td");
+        td3.setAttribute("data-col", "tarief");
+        td3.textContent = fmtTariefBedrag(r);
+        tr.appendChild(td3);
         var tdA = document.createElement("td");
         tdA.setAttribute("data-col", "acties");
         tdA.className = "cl-actions-cell";
@@ -371,8 +395,9 @@
         showToast("Kies een tarieftype (Dag, Uur of Week)");
         return;
       }
+      var tariefVal = zsAddTariefBedrag && zsAddTariefBedrag.value !== "" ? zsAddTariefBedrag.value : null;
       try {
-        await window.zorgsoortenDB.add({ naam: nm, tarieftype: tr });
+        await window.zorgsoortenDB.add({ naam: nm, tarieftype: tr, tarief: tariefVal });
       } catch (err) {
         console.error("Zorgsoort toevoegen mislukt:", err);
         showToast("Opslaan is niet gelukt");
@@ -602,7 +627,7 @@
     if (cached.length > 0) {
       render();
     } else if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="4" class="cl-empty-cell">Zorgsoorten laden…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="cl-empty-cell">Zorgsoorten laden…</td></tr>';
     }
   }
 

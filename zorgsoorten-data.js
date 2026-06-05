@@ -34,12 +34,22 @@
   var TABLE = "zorgsoorten";
   var EVENT_NAME = "besa:zorgsoorten-updated";
 
+  function numOrNull(v) {
+    if (v === null || v === undefined || v === "") return null;
+    var n = Number(String(v).replace(",", "."));
+    return isFinite(n) ? n : null;
+  }
+
   function rowToObj(row) {
     if (!row) return null;
     return {
       id: row.id,
       naam: row.naam,
       tarieftype: row.tarieftype,
+      // tarief = opbrengst per eenheid (eenheid = tarieftype); kostenTarief = kosten-norm
+      // voor open diensten (zonder toegewezen medewerker). Beide mogen leeg zijn.
+      tarief: row.tarief != null ? Number(row.tarief) : null,
+      kostenTarief: row.kosten_tarief != null ? Number(row.kosten_tarief) : null,
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -112,7 +122,13 @@
     if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var res = await window.besaSupabase
       .from(TABLE)
-      .insert({ naam: naam, tarieftype: String(src.tarieftype).toLowerCase(), archived: false })
+      .insert({
+        naam: naam,
+        tarieftype: String(src.tarieftype).toLowerCase(),
+        tarief: numOrNull(src.tarief),
+        kosten_tarief: numOrNull(src.kostenTarief),
+        archived: false,
+      })
       .select()
       .single();
     if (res.error) throw res.error;
@@ -133,6 +149,8 @@
       dbPatch.tarieftype = String(patch.tarieftype).toLowerCase();
     }
     if (typeof patch.archived === "boolean") dbPatch.archived = patch.archived;
+    if (patch.tarief !== undefined) dbPatch.tarief = numOrNull(patch.tarief);
+    if (patch.kostenTarief !== undefined) dbPatch.kosten_tarief = numOrNull(patch.kostenTarief);
     if (Object.keys(dbPatch).length === 0) {
       var existing = readCache().find(function (z) { return z.id === id; });
       return existing || null;

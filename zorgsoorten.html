@@ -96,6 +96,7 @@
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
                 <a href="financien-locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Kosten, opbrengst &amp; resultaat per locatie</span></a>
                 <a href="financien-overhead" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overhead / kantoor</span><span class="top-dropdown-subtitle">Personeel &amp; kantoorkosten buiten de groepen</span></a>
+                <a href="financien-zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Kosten &amp; opbrengst per zorgsoort (planning)</span></a>
               </div>
             </div>
             <a href="audit" class="top-link">Audit</a>
@@ -183,6 +184,11 @@
                     <span class="column-check" aria-hidden="true">✓</span> Tarieftype
                   </button>
                 </li>
+                <li role="none">
+                  <button type="button" class="column-toggle is-checked" data-col="tarief" role="menuitemcheckbox" aria-checked="true">
+                    <span class="column-check" aria-hidden="true">✓</span> Opbrengsttarief
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -224,6 +230,19 @@
                   <div class="th-sort-inner">
                     <span class="th-label">Tarieftype</span>
                     <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op tarieftype">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
+                <th data-col="tarief" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Opbrengsttarief</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op opbrengsttarief">
                       <span class="th-sort-arrows" aria-hidden="true"></span>
                     </button>
                   </div>
@@ -327,13 +346,17 @@
             <input class="modal-input" type="text" id="zs-add-naam" name="naam" required autocomplete="off" />
           </div>
           <div class="modal-field">
-            <label class="modal-label" for="zs-add-tarief">Tarieftype</label>
+            <label class="modal-label" for="zs-add-tarief">Tarieftype (eenheid)</label>
             <select class="modal-input modal-select" id="zs-add-tarief" name="tarieftype" required aria-label="Tarieftype">
               <option value="">Selecteer tarieftype</option>
               <option value="dag">Dag</option>
               <option value="uur">Uur</option>
               <option value="week">Week</option>
             </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="zs-add-tarief-bedrag">Opbrengsttarief <span style="font-weight:400;opacity:.7">(optioneel — € per eenheid)</span></label>
+            <input class="modal-input" type="number" id="zs-add-tarief-bedrag" name="tarief" min="0" step="0.01" inputmode="decimal" placeholder="bv. 77,00" autocomplete="off" />
           </div>
         </div>
         <div class="modal-footer">

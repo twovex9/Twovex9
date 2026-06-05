@@ -152,6 +152,9 @@ function normalizeItem(raw) {
   o.competenties = o.competenties != null ? String(o.competenties) : "";
   o.beschrijving = o.beschrijving != null ? String(o.beschrijving) : "";
   o.herhaal = Boolean(o.herhaal);
+  // Zorgsoort (cliëntzorg-classificatie voor financiën): behoud indien aanwezig, voeg niet toe
+  // aan bestaande diensten zonder waarde (zodat een normale top-level patch hem niet leeg wegschrijft).
+  if (o.zorgsoort != null) o.zorgsoort = String(o.zorgsoort);
   return o;
 }
 
@@ -2394,6 +2397,10 @@ function resetKoppelRows() {
   const tot = document.getElementById("dienst-ind-tot");
   if (vanaf) vanaf.value = "";
   if (tot) tot.value = "";
+  const zs = document.getElementById("dienst-zorgsoort");
+  if (zs) zs.value = "";
+  const tar = document.getElementById("dienst-koppel-tarief");
+  if (tar) { tar.hidden = true; tar.innerHTML = ""; }
 }
 
 function readKoppelRows() {
@@ -2428,6 +2435,11 @@ function buildKoppelItems() {
     return fail("Verplichte velden", !diensttype
       ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
       : "Selecteer een locatie.");
+  }
+  const zorgsoort = (document.getElementById("dienst-zorgsoort")?.value || "").trim();
+  if (!zorgsoort) {
+    return fail("Zorgsoort ontbreekt",
+      "Kies een zorgsoort (1-op-1, ambulant intern/extern of WLZ) — die bepaalt het tarief en de financiële uitsplitsing.");
   }
   const vanaf = document.getElementById("dienst-ind-vanaf")?.value;
   const totRaw = document.getElementById("dienst-ind-tot")?.value || "";
@@ -2488,6 +2500,7 @@ function buildKoppelItems() {
         afdeling: afd,
         diensttype,
         functie: diensttype,
+        zorgsoort,
         teamlead,
         teamlid: r.teamlid,
         client: r.client,
@@ -2519,6 +2532,7 @@ function updateKoppelTel() {
   if (ui.dienstModus !== "individueel") {
     if (tel) tel.hidden = true;
     updateKoppelBeschikkingMelding([]);
+    updateKoppelTariefIndicatie([]);
     return;
   }
   const res = buildKoppelItems();
@@ -2527,6 +2541,7 @@ function updateKoppelTel() {
     if (n <= 0) { tel.hidden = true; tel.textContent = ""; }
     else { tel.textContent = n === 1 ? "Dit maakt 1 dienst aan." : ("Dit maakt " + n + " diensten aan."); tel.hidden = false; }
   }
+  updateKoppelTariefIndicatie(res.items);
   // Live beschikking-urencheck: bestaande planning + de nieuw te maken diensten,
   // beperkt tot de cliënten die in dit formulier voorkomen.
   const bestaand = (window.planningDB && window.planningDB.getAllSync) ? window.planningDB.getAllSync() : [];
@@ -2546,6 +2561,53 @@ function updateKoppelBeschikkingMelding(list) {
   ).join("");
   const meer = list.length > 6 ? `<li>… en nog ${list.length - 6} meer</li>` : "";
   el.innerHTML = `<div class="planning-koppel-besch-kop">Meer uren dan beschikt</div><ul class="planning-koppel-besch-list">${rows}${meer}</ul>`;
+  el.hidden = false;
+}
+
+/** Live geschatte opbrengst & kosten voor de te maken individuele diensten (deze invoer).
+ *  Opbrengst = (uren / eenheidfactor) × zorgsoort.tarief; kosten = uren × medewerker-uurkosten
+ *  (ZZP-tarief of geschatte loonkosten; open dienst → zorgsoort.kostenTarief indien ingesteld). */
+function updateKoppelTariefIndicatie(items) {
+  const el = document.getElementById("dienst-koppel-tarief");
+  if (!el) return;
+  const zsNaam = (document.getElementById("dienst-zorgsoort")?.value || "").trim();
+  if (!zsNaam || !Array.isArray(items) || items.length === 0) { el.hidden = true; el.innerHTML = ""; return; }
+  let zs = null;
+  try {
+    const list = (window.zorgsoortenDB && window.zorgsoortenDB.getAllSync()) || [];
+    zs = list.find((z) => z && z.naam && z.naam.toLowerCase() === zsNaam.toLowerCase()) || null;
+  } catch (e) { zs = null; }
+  const eenheid = (zs && zs.tarieftype) ? String(zs.tarieftype).toLowerCase() : "uur";
+  const factor = eenheid === "dag" ? 24 : (eenheid === "week" ? 168 : 1);
+  const tarief = (zs && zs.tarief != null && isFinite(Number(zs.tarief))) ? Number(zs.tarief) : null;
+  const kostenTarief = (zs && zs.kostenTarief != null && isFinite(Number(zs.kostenTarief))) ? Number(zs.kostenTarief) : null;
+
+  let totUren = 0, omzet = 0, kosten = 0, kostenOnbekend = false;
+  items.forEach((it) => {
+    const u = dienstNettoUren(it);
+    if (u <= 0) return;
+    totUren += u;
+    if (tarief != null) omzet += (u / factor) * tarief;
+    const r = geschatteUurkostenVoorTeamlid(it.teamlid);
+    if (r != null) kosten += u * r;
+    else if (kostenTarief != null) kosten += u * kostenTarief;
+    else if (String(it.teamlid || "").trim()) kostenOnbekend = true;
+  });
+
+  const eur = (n) => "€ " + Number(n).toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const parts = [`<strong>${(Math.round(totUren * 10) / 10).toLocaleString("nl-NL")} u</strong> gepland`];
+  if (tarief != null) parts.push(`opbrengst ± <strong>${eur(omzet)}</strong>`);
+  parts.push(`kosten ± <strong>${eur(kosten)}</strong>`);
+  if (tarief != null) {
+    const res = omzet - kosten;
+    parts.push(`resultaat <strong class="${res >= 0 ? "kt-pos" : "kt-neg"}">${eur(res)}</strong>`);
+  }
+  let html = `<div class="planning-koppel-tarief-kop">Geschat voor deze diensten</div><div class="planning-koppel-tarief-row">${parts.join(" · ")}</div>`;
+  const noten = [];
+  if (tarief == null) noten.push('Geen opbrengsttarief ingesteld voor "' + zsNaam + '" — stel het in bij Zorgsoorten.');
+  if (kostenOnbekend) noten.push("Voor één of meer toegewezen medewerkers is geen uurtarief/salaris bekend (niet in de kosten meegerekend).");
+  if (noten.length) html += `<div class="planning-koppel-tarief-note">${noten.map(escapeHtml).join(" ")}</div>`;
+  el.innerHTML = html;
   el.hidden = false;
 }
 
@@ -3013,6 +3075,60 @@ function fillDienstFormSelects(data) {
     "Selecteer competenties",
     ""
   );
+  fillZorgsoortSelect();
+}
+
+/** Vul de zorgsoort-keuze (individuele modus) uit de zorgsoorten-data-laag. De vier
+ *  cliënt-zorgsoorten (1-op-1, ambulant intern/extern, WLZ) staan bovenaan. Bewaart de
+ *  huidige keuze. Het tarief staat als context achter de naam ("Ambulant intern — € 80/uur"). */
+function fillZorgsoortSelect() {
+  const sel = document.getElementById("dienst-zorgsoort");
+  if (!sel) return;
+  const current = sel.value;
+  let list = [];
+  try { list = (window.zorgsoortenDB && window.zorgsoortenDB.getAllSync()) || []; } catch (e) { list = []; }
+  const PRIO = ["1 op 1", "ambulant intern", "ambulant extern", "wlz"];
+  const actief = list.filter((z) => z && !z.archived && z.naam);
+  actief.sort((a, b) => {
+    const ia = PRIO.indexOf(String(a.naam).toLowerCase());
+    const ib = PRIO.indexOf(String(b.naam).toLowerCase());
+    const ra = ia === -1 ? 99 : ia, rb = ib === -1 ? 99 : ib;
+    if (ra !== rb) return ra - rb;
+    return String(a.naam).localeCompare(String(b.naam), "nl");
+  });
+  sel.innerHTML = "";
+  const ph = document.createElement("option");
+  ph.value = ""; ph.textContent = "Selecteer zorgsoort…";
+  sel.appendChild(ph);
+  actief.forEach((z) => {
+    const o = document.createElement("option");
+    o.value = z.naam;
+    let suffix = "";
+    if (z.tarief != null && isFinite(Number(z.tarief))) {
+      suffix = " — € " + Number(z.tarief).toLocaleString("nl-NL", { maximumFractionDigits: 2 }) + "/" + (z.tarieftype || "");
+    }
+    o.textContent = z.naam + suffix;
+    sel.appendChild(o);
+  });
+  if (current && actief.some((z) => z.naam === current)) sel.value = current;
+}
+
+/** Geschatte uurkosten van een teamlid (naam): ZZP = uurAlgemeen (fallback 45),
+ *  loondienst = bruto maandsalaris × 1,30 / (contracturen × 4,33). null = onbekend/open. */
+function geschatteUurkostenVoorTeamlid(naam) {
+  const want = String(naam || "").trim().toLowerCase();
+  if (!want) return null;
+  let meds = [];
+  try { meds = (window.medewerkersDB && window.medewerkersDB.getAllSync()) || []; } catch (e) { meds = []; }
+  const m = meds.find((e) => getEmployeeName(e).toLowerCase() === want);
+  if (!m) return null;
+  const num = (v) => { const n = Number(String(v == null ? "" : v).replace(",", ".")); return isFinite(n) ? n : 0; };
+  const empType = String(m.bs2_employment_type || m.employmentType || m.dienstverband || "").toLowerCase();
+  const isZzp = empType === "hiring" || /inhuur|zzp|agency/.test(empType);
+  if (isZzp) { const r = num(m.uurAlgemeen) || num(m.uurTarief); return r > 0 ? r : 45; }
+  const sal = num(m.salaris), cu = num(m.contracturen);
+  if (sal > 0 && cu > 0) return (sal * 1.30) / (cu * 4.33);
+  return null;
 }
 
 function refreshDienstLocatieSelect() {
@@ -3219,6 +3335,8 @@ function initDienstPanel() {
   const koppelBlok = document.getElementById("dienst-koppel-blok");
   koppelBlok?.addEventListener("input", () => updateKoppelTel());
   koppelBlok?.addEventListener("change", () => updateKoppelTel());
+  // Zorgsoort-keuzelijst verversen zodra de zorgsoorten (incl. tarieven) laden of wijzigen.
+  window.addEventListener("besa:zorgsoorten-updated", () => { if (document.getElementById("dienst-zorgsoort")) fillZorgsoortSelect(); });
   openBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     openDienstPanel();
