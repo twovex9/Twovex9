@@ -25575,6 +25575,20 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-sec-h { font-size: 14px; font-weight: 700; color: var(--text); margin: 18px 0 8px; }
 @media (max-width: 720px) { .fin-sum { grid-template-columns: 1fr; } }
 
+/* Financiën › Zorgsoorten — tabel + drill-down (dark-safe, besa-vars). */
+.fin-sum--zs { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 860px) { .fin-sum--zs { grid-template-columns: repeat(2, 1fr); } }
+.fin-zs-row { cursor: pointer; }
+.fin-zs-row:hover { background: var(--bg-muted); }
+.fin-zs-naam { font-weight: 600; color: var(--text); }
+.fin-zs-eenheid { display: inline-block; margin-left: 8px; font-size: 11px; color: var(--text-muted); }
+.fin-zs-notarief { color: var(--text-muted); font-style: italic; }
+.fin-zs-edit {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  border-radius: 7px; width: 30px; height: 28px; line-height: 1; cursor: pointer; font-size: 14px;
+}
+.fin-zs-edit:hover { background: var(--bg-muted); border-color: var(--blue); color: var(--blue); }
+
 /* Onkosten: kaart-header, sectie-header, acties, formulier */
 .fin-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .fin-add-onk-btn { flex: 0 0 auto; white-space: nowrap; }
