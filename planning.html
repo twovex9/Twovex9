@@ -33,6 +33,18 @@
     /* Detail-lijst: per medewerker de concrete overlappende diensten (dienst + tijd + locatie). */
     .planning-overlap-banner__details{margin-top:9px;display:flex;flex-direction:column;gap:9px;max-height:238px;overflow-y:auto;padding-right:5px;}
     .planning-overlap-banner__details:empty{display:none;}
+    /* Beschikking-urenbewaking-banner (cliënt zit boven de beschikte uren/week). */
+    .planning-besch-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:9px;color:#991b1b;font-size:13px;line-height:1.45;}
+    .planning-besch-banner[hidden]{display:none;}
+    .planning-besch-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#dc2626;color:#fff;font-weight:700;font-size:13px;}
+    .planning-besch-banner__body{flex:1;min-width:0;}
+    .planning-besch-banner__title{font-weight:700;}
+    .planning-besch-banner__details{margin-top:8px;display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;padding-right:5px;}
+    .planning-besch-banner__details:empty{display:none;}
+    .planning-besch-row{padding:5px 9px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.14);border-radius:7px;}
+    .planning-besch-row b{font-weight:700;}
+    [data-theme="dark"] .planning-besch-banner{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
+    [data-theme="dark"] .planning-besch-row{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.30);}
     .planning-overlap-conf__who{font-weight:700;font-size:12.5px;margin-bottom:3px;}
     .planning-overlap-conf__pair{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 7px;padding:5px 9px;margin-bottom:4px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.14);border-radius:7px;cursor:pointer;}
     .planning-overlap-conf__pair:hover{background:rgba(220,38,38,.12);}
@@ -346,6 +358,14 @@
             <button type="button" class="planning-overlap-banner__btn" id="planning-overlap-banner-btn">Toon in lijst</button>
           </div>
 
+          <div class="planning-besch-banner" id="planning-besch-banner" role="alert" hidden>
+            <span class="planning-besch-banner__ico" aria-hidden="true">!</span>
+            <div class="planning-besch-banner__body">
+              <div class="planning-besch-banner__title" id="planning-besch-banner-title"></div>
+              <div class="planning-besch-banner__details" id="planning-besch-banner-details"></div>
+            </div>
+          </div>
+
           <div class="planning-main-head planning-main-head--sub planning-main-head--hidden" hidden>
             <div>
               <h2 class="planning-main-title" id="planning-panel-title">Weekrooster</h2>
@@ -546,6 +566,7 @@
           <span class="planning-dienst-koppel-add-ico" aria-hidden="true">+</span> Koppeling toevoegen
         </button>
         <p class="planning-dienst-hint planning-dienst-koppel-tel" id="dienst-koppel-tel" hidden></p>
+        <div class="planning-koppel-besch" id="dienst-koppel-beschikking" role="alert" hidden></div>
       </div>
       <div class="planning-dienst-field planning-dienst-field--full">
         <span class="planning-dienst-label" id="dienst-richtext-label">Beschrijving</span>
@@ -766,6 +787,7 @@
   <script src="notification-bell.js?v=24e10b0" defer></script>
   <script src="planning-data.js?v=24e10b0"></script>
   <script src="clienten-data.js?v=24e10b0"></script>
+  <script src="beschikkingen-data.js?v=24e10b0"></script>
   <script src="comp-diensttypes-data.js?v=24e10b0"></script>
   <script src="comp-saldi-data.js?v=24e10b0"></script>
   <script src="planning-settings-data.js?v=24e10b0"></script>
