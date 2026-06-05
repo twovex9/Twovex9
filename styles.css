@@ -12186,6 +12186,28 @@ body.planning-dienst-open {
   margin-top: 10px;
 }
 
+/* Live "meer uren dan beschikt"-melding in het dienst-paneel (rood, dark-safe). */
+.planning-koppel-besch {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid #fecaca;
+  border-left: 3px solid #dc2626;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.planning-koppel-besch[hidden] { display: none; }
+.planning-koppel-besch-kop { font-weight: 800; margin-bottom: 5px; }
+.planning-koppel-besch-list { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; }
+[data-theme="dark"] .planning-koppel-besch {
+  background: rgba(220, 38, 38, 0.13);
+  border-color: rgba(220, 38, 38, 0.42);
+  border-left-color: #ef4444;
+  color: #fca5a5;
+}
+
 .planning-dienst-footer {
   display: flex;
   justify-content: flex-end;

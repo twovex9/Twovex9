@@ -2060,6 +2060,7 @@ function renderAllViews() {
     meta.textContent = t;
   }
   updateOverlapBanner(items);
+  updateBeschikkingBanner();
   renderMonthStrip();
   return dataState;
 }
@@ -2414,65 +2415,36 @@ function readKoppelRows() {
   });
 }
 
-/** Telt (zonder aan te maken) hoeveel diensten de individuele-modus zou opleveren. */
-function countIndividueleDiensten() {
-  const vanaf = document.getElementById("dienst-ind-vanaf")?.value;
-  const tot = document.getElementById("dienst-ind-tot")?.value || "";
-  if (!vanaf) return 0;
-  const rows = readKoppelRows().filter((r) => r.client && r.teamlid && r.van && r.tot && r.dagen.size);
-  if (!rows.length) return 0;
-  const startD = dateOnlyFromInput(vanaf);
-  const endD = tot ? dateOnlyFromInput(tot) : (startD ? new Date(startD) : null);
-  if (!startD || !endD || endD < startD) return 0;
-  let n = 0;
-  const cur = new Date(startD);
-  for (let g = 0; g < 4000; g++) {
-    if (cur > endD) break;
-    const dow = cur.getDay();
-    rows.forEach((r) => { if (r.dagen.has(dow)) n++; });
-    if (n > 5000) break;
-    cur.setDate(cur.getDate() + 1);
-  }
-  return n;
-}
-
-function updateKoppelTel() {
-  const tel = document.getElementById("dienst-koppel-tel");
-  if (!tel) return;
-  if (ui.dienstModus !== "individueel") { tel.hidden = true; return; }
-  const n = countIndividueleDiensten();
-  if (n <= 0) { tel.hidden = true; tel.textContent = ""; return; }
-  tel.textContent = n === 1 ? "Dit maakt 1 dienst aan." : ("Dit maakt " + n + " diensten aan.");
-  tel.hidden = false;
-}
-
-/** Bouwt de planning-rijen voor de individuele modus, of toont een melding en
- *  retourneert null bij een ongeldige invoer. Eén rij per koppeling × gekozen dag. */
-function generateIndividueleDiensten() {
-  const fb = (t, m) => { if (typeof window.showActionFeedback === "function") window.showActionFeedback("info", t, m); };
+/**
+ * Gedeelde item-bouw voor de individuele modus — gebruikt door de teller, de live
+ * beschikking-urencheck én het daadwerkelijk aanmaken (één code-pad). Puur, zonder
+ * UI-feedback. Retourneert { items, truncated, error } met error = {title, body} of null.
+ */
+function buildKoppelItems() {
+  const fail = (title, body) => ({ items: [], truncated: false, error: { title, body } });
   const diensttype = getSelectedDiensttypeFieldString().trim();
   const locHr = document.getElementById("dienst-locatie-hr")?.value || "";
   if (!diensttype || !locHr) {
-    fb("Verplichte velden", !diensttype
+    return fail("Verplichte velden", !diensttype
       ? "Selecteer minstens één diensttype (de lijst volgt de compensatie-instellingen)."
       : "Selecteer een locatie.");
-    return null;
   }
   const vanaf = document.getElementById("dienst-ind-vanaf")?.value;
   const totRaw = document.getElementById("dienst-ind-tot")?.value || "";
-  if (!vanaf) { fb("Periode ontbreekt", "Kies een 'vanaf'-datum voor de koppelingen."); return null; }
+  if (!vanaf) return fail("Periode ontbreekt", "Kies een 'vanaf'-datum voor de koppelingen.");
   const startD = dateOnlyFromInput(vanaf);
   const endD = totRaw ? dateOnlyFromInput(totRaw) : (startD ? new Date(startD) : null);
-  if (!startD || !endD) { fb("Ongeldige datum", "Controleer de 'vanaf'- en 'tot en met'-datum."); return null; }
-  if (endD < startD) { fb("Ongeldige periode", "De 'tot en met'-datum ligt vóór de 'vanaf'-datum."); return null; }
+  if (!startD || !endD) return fail("Ongeldige datum", "Controleer de 'vanaf'- en 'tot en met'-datum.");
+  if (endD < startD) return fail("Ongeldige periode", "De 'tot en met'-datum ligt vóór de 'vanaf'-datum.");
 
   const rowsAll = readKoppelRows();
-  const rows = rowsAll.filter((r) => r.client && r.teamlid && r.van && r.tot && r.dagen.size);
+  // Tijden zijn NIET verplicht: een koppeling zonder tijd wordt aangemaakt als dienst
+  // zonder tijdvak (de planner kan de tijd later met Bewerken invullen).
+  const rows = rowsAll.filter((r) => r.client && r.teamlid && r.dagen.size);
   if (!rows.length) {
-    fb("Koppeling onvolledig", rowsAll.length === 0
+    return fail("Koppeling onvolledig", rowsAll.length === 0
       ? "Voeg minstens één cliënt↔teamlid-koppeling toe."
-      : "Vul per koppeling een cliënt, een teamlid, de tijden én minstens één dag van de week in.");
-    return null;
+      : "Kies per koppeling een cliënt, een teamlid én minstens één dag van de week (de tijden mag je leeg laten en later invullen).");
   }
 
   const pauze = Math.max(0, parseFloat(document.getElementById("dienst-pauze")?.value) || 0);
@@ -2493,14 +2465,22 @@ function generateIndividueleDiensten() {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       if (!r.dagen.has(dow)) continue;
-      const startIso = combineDateTimeToLocalIso(dateStr, r.van);
-      let endIso = combineDateTimeToLocalIso(dateStr, r.tot);
-      if (!startIso || !endIso) continue;
-      // Nachtdienst: eindtijd ≤ starttijd → loopt door tot de volgende dag.
-      if (parseStartDate(endIso) <= parseStartDate(startIso)) {
-        const nd = new Date(cur);
-        nd.setDate(nd.getDate() + 1);
-        endIso = combineDateTimeToLocalIso(toDateInputValue(nd), r.tot);
+      let startIso, endIso;
+      if (r.van && r.tot) {
+        startIso = combineDateTimeToLocalIso(dateStr, r.van);
+        endIso = combineDateTimeToLocalIso(dateStr, r.tot);
+        if (!startIso || !endIso) continue;
+        // Nachtdienst: eindtijd ≤ starttijd → loopt door tot de volgende dag.
+        if (parseStartDate(endIso) <= parseStartDate(startIso)) {
+          const nd = new Date(cur);
+          nd.setDate(nd.getDate() + 1);
+          endIso = combineDateTimeToLocalIso(toDateInputValue(nd), r.tot);
+        }
+      } else {
+        // Geen (volledige) tijd opgegeven: dienst zonder tijdvak op deze dag. start=einde
+        // → 0 uur, telt (nog) niet mee voor de beschikking-urenbewaking; "tijd nog in te vullen".
+        startIso = combineDateTimeToLocalIso(dateStr, "00:00");
+        endIso = startIso;
       }
       if (items.length >= MAX_REPEAT) { truncated = true; break; }
       items.push(normalizeItem({
@@ -2529,10 +2509,227 @@ function generateIndividueleDiensten() {
     cur.setDate(cur.getDate() + 1);
   }
   if (!items.length) {
-    fb("Geen diensten", "Binnen de gekozen periode valt geen enkele geselecteerde weekdag. Pas de dagen of de periode aan.");
+    return fail("Geen diensten", "Binnen de gekozen periode valt geen enkele geselecteerde weekdag. Pas de dagen of de periode aan.");
+  }
+  return { items, truncated, error: null };
+}
+
+function updateKoppelTel() {
+  const tel = document.getElementById("dienst-koppel-tel");
+  if (ui.dienstModus !== "individueel") {
+    if (tel) tel.hidden = true;
+    updateKoppelBeschikkingMelding([]);
+    return;
+  }
+  const res = buildKoppelItems();
+  const n = res.items.length;
+  if (tel) {
+    if (n <= 0) { tel.hidden = true; tel.textContent = ""; }
+    else { tel.textContent = n === 1 ? "Dit maakt 1 dienst aan." : ("Dit maakt " + n + " diensten aan."); tel.hidden = false; }
+  }
+  // Live beschikking-urencheck: bestaande planning + de nieuw te maken diensten,
+  // beperkt tot de cliënten die in dit formulier voorkomen.
+  const bestaand = (window.planningDB && window.planningDB.getAllSync) ? window.planningDB.getAllSync() : [];
+  const formClients = new Set(res.items.map((it) => String(it.client || "").trim().toLowerCase()).filter(Boolean));
+  const over = computeBeschikkingOverschrijdingen(bestaand, res.items)
+    .filter((o) => formClients.has(o.client.toLowerCase()));
+  updateKoppelBeschikkingMelding(over);
+}
+
+/** Toont/verbergt de live "meer uren dan beschikt"-melding in het dienst-paneel. */
+function updateKoppelBeschikkingMelding(list) {
+  const el = document.getElementById("dienst-koppel-beschikking");
+  if (!el) return;
+  if (!Array.isArray(list) || list.length === 0) { el.hidden = true; el.innerHTML = ""; return; }
+  const rows = list.slice(0, 6).map((o) =>
+    `<li><strong>${escapeHtml(o.client)}</strong> — ${escapeHtml(o.zorgsoortLabel)}, ${escapeHtml(isoWeekLabel(o.week))}: <strong>${o.gepland} u</strong> gepland t.o.v. <strong>${o.budget} u</strong> beschikt (${o.over} u te veel)</li>`
+  ).join("");
+  const meer = list.length > 6 ? `<li>… en nog ${list.length - 6} meer</li>` : "";
+  el.innerHTML = `<div class="planning-koppel-besch-kop">Meer uren dan beschikt</div><ul class="planning-koppel-besch-list">${rows}${meer}</ul>`;
+  el.hidden = false;
+}
+
+/** Bouwt de planning-rijen voor de individuele modus; toont een melding +
+ *  retourneert null bij een ongeldige invoer. */
+function generateIndividueleDiensten() {
+  const res = buildKoppelItems();
+  if (res.error) {
+    if (typeof window.showActionFeedback === "function") window.showActionFeedback("info", res.error.title, res.error.body);
     return null;
   }
-  return { items, truncated };
+  return { items: res.items, truncated: res.truncated };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Beschikking-urenbewaking (1-op-1 / ambulant).
+ *
+ * Een cliënt heeft in de beschikking X uur per week (uur-zorgsoorten zoals
+ * Ambulant intern / WLZ; veld `data.urenPerWeek`). In het rooster mag voor die
+ * cliënt niet méér individuele (1-op-1/ambulante) zorg per week worden ingepland
+ * dan beschikt; bij overschrijding → rode melding (banner + in het dienst-paneel).
+ *
+ * Matching: dienst.client (naam) → cliënt → bs2_id → beschikking.client_id.
+ * Elke cliënt heeft in de huidige data max. 1 uur-beschikking, dus de zorgsoort is
+ * eenduidig; er wordt tóch per zorgsoort gegroepeerd zodat het klopt blijft als er
+ * later meerdere bijkomen. Een lege `urenPerWeek` = geen limiet → geen melding.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** ISO-8601 weeksleutel "JJJJ-Wnn" (week begint op maandag). */
+function isoWeekKey(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7; // zondag = 7
+  date.setUTCDate(date.getUTCDate() + 4 - day); // donderdag van deze ISO-week
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return date.getUTCFullYear() + "-W" + String(week).padStart(2, "0");
+}
+
+/** Leesbaar weeklabel "wk 24 · 2026" bij een isoWeekKey. */
+function isoWeekLabel(key) {
+  const m = /^(\d{4})-W(\d{2})$/.exec(String(key || ""));
+  if (!m) return String(key || "");
+  return "wk " + parseInt(m[2], 10) + " · " + m[1];
+}
+
+/** Telt deze dienst als individuele (1-op-1 / ambulant) zorg tegen de beschikking? */
+function isIndividueleZorgDienst(it) {
+  const t = String((it && (it.diensttype || it.functie)) || "").toLowerCase();
+  const loc = String((it && (it.locatie || it.vestiging)) || "").toLowerCase();
+  if (/1\s*op\s*1|1op1|een op een/.test(t)) return true;
+  if (/ambulant/.test(t) || /ambulant/.test(loc)) return true;
+  return false;
+}
+
+/** Netto geplande uren van een dienst (duur minus pauze); 0 bij ontbrekende/0-tijd. */
+function dienstNettoUren(it) {
+  const s = parseStartDate(it && it.start);
+  const e = parseStartDate(it && it.einde);
+  if (!s || !e) return 0;
+  let u = (e.getTime() - s.getTime()) / 3600000 - Math.max(0, Number(it && it.pauzeUren) || 0);
+  return u > 0 ? u : 0;
+}
+
+/**
+ * Index: genormaliseerde cliëntnaam → lopende uur-beschikking(en)
+ * { zorgsoortKey, zorgsoortLabel, urenWeek, startISO, eindISO }.
+ */
+function buildBeschikkingUrenIndex() {
+  const byName = new Map();
+  if (!window.beschikkingenDB || typeof window.beschikkingenDB.getAllSync !== "function") return byName;
+  if (!window.clientenDB || typeof window.clientenDB.getAllSync !== "function") return byName;
+  // bs2_id → cliëntnaam (clienten-data.js spreidt `data` top-level → c.bs2_id)
+  const idToName = new Map();
+  (window.clientenDB.getAllSync() || []).forEach((c) => {
+    if (!c) return;
+    const naam = (`${String(c.voornaam || "").trim()} ${String(c.achternaam || "").trim()}`.trim()) || String(c.naam || "").trim();
+    const bs2 = String(c.bs2_id || (c.data && c.data.bs2_id) || "");
+    if (bs2 && naam) idToName.set(bs2, naam);
+  });
+  (window.beschikkingenDB.getAllSync() || []).forEach((b) => {
+    if (!b || b.gearchiveerd) return;
+    if (String(b.tariefEenheid || "") !== "uur") return;
+    const fase = String(b.fase || "").toLowerCase();
+    if (fase === "in aanvraag" || fase === "beëindigd" || fase === "beeindigd" || fase === "afgewezen") return;
+    const naam = idToName.get(String(b.clientId || ""));
+    if (!naam) return;
+    const key = naam.toLowerCase();
+    if (!byName.has(key)) byName.set(key, []);
+    byName.get(key).push({
+      zorgsoortKey: b.zorgsoortKey || "uur",
+      zorgsoortLabel: b.zorgsoortLabel || b.zorgsoortKey || "Ambulant",
+      urenWeek: Number(b._data && b._data.urenPerWeek) || 0,
+      startISO: b.startISO || "",
+      eindISO: b.eindISO || "",
+    });
+  });
+  return byName;
+}
+
+/** Valt datum d binnen de (optionele) periode van de beschikking? */
+function dienstBinnenBeschikkingPeriode(d, besch) {
+  if (!d) return false;
+  const ymd = toDateInputValue(d);
+  if (besch.startISO && ymd < String(besch.startISO).slice(0, 10)) return false;
+  if (besch.eindISO && ymd > String(besch.eindISO).slice(0, 10)) return false;
+  return true;
+}
+
+/**
+ * Berekent per (cliënt × zorgsoort × ISO-week) de geplande individuele uren en
+ * vergelijkt met de beschikte urenWeek. Retourneert de overschrijdingen.
+ * `extraItems` = nog niet opgeslagen diensten (live in het paneel) tellen mee.
+ */
+function computeBeschikkingOverschrijdingen(items, extraItems) {
+  const index = buildBeschikkingUrenIndex();
+  if (index.size === 0) return [];
+  const all = (Array.isArray(items) ? items : []).concat(Array.isArray(extraItems) ? extraItems : []);
+  const groep = new Map();
+  all.forEach((it) => {
+    if (!isIndividueleZorgDienst(it)) return;
+    const naam = String(it.client || "").trim();
+    if (!naam) return;
+    const beschList = index.get(naam.toLowerCase());
+    if (!beschList || !beschList.length) return;
+    const s = parseStartDate(it.start);
+    if (!s) return;
+    const uren = dienstNettoUren(it);
+    if (uren <= 0) return; // diensten zonder ingevulde tijd tellen niet mee
+    const besch = beschList.find((b) => dienstBinnenBeschikkingPeriode(s, b)) || beschList[0];
+    if (!besch || besch.urenWeek <= 0) return; // geen limiet ingevuld → geen bewaking
+    const wk = isoWeekKey(s);
+    const k = naam.toLowerCase() + "|" + besch.zorgsoortKey + "|" + wk;
+    if (!groep.has(k)) {
+      groep.set(k, { client: naam, zorgsoortLabel: besch.zorgsoortLabel, week: wk, budget: besch.urenWeek, gepland: 0 });
+    }
+    groep.get(k).gepland += uren;
+  });
+  const out = [];
+  groep.forEach((g) => {
+    if (g.gepland > g.budget + 1e-6) {
+      out.push(Object.assign({}, g, {
+        gepland: Math.round(g.gepland * 100) / 100,
+        over: Math.round((g.gepland - g.budget) * 100) / 100,
+      }));
+    }
+  });
+  out.sort((a, b) => a.client.localeCompare(b.client, "nl") || a.week.localeCompare(b.week));
+  return out;
+}
+
+/**
+ * Rode banner boven de planning: cliënten die in de zichtbare periode boven hun
+ * beschikte uren/week zitten (1-op-1 + ambulant). Werkt op ALLE diensten in de
+ * zichtbare periode (ongefilterd), zodat de week-som per cliënt volledig is.
+ */
+function updateBeschikkingBanner() {
+  const banner = document.getElementById("planning-besch-banner");
+  if (!banner) return;
+  const titleEl = document.getElementById("planning-besch-banner-title");
+  const detailsEl = document.getElementById("planning-besch-banner-details");
+  let over = [];
+  try {
+    const range = (typeof getVisibleRange === "function") ? getVisibleRange() : null;
+    const alle = readPlanningItems().filter((it) => !range || itemOverlapsRange(it, range.start, range.end));
+    over = computeBeschikkingOverschrijdingen(alle, null);
+  } catch (e) { over = []; }
+  if (!over.length) {
+    banner.hidden = true;
+    if (detailsEl) detailsEl.innerHTML = "";
+    return;
+  }
+  const clientCount = new Set(over.map((o) => o.client.toLowerCase())).size;
+  if (titleEl) {
+    titleEl.textContent = `${clientCount} cliënt${clientCount === 1 ? "" : "en"} boven de beschikte uren` +
+      ` — ${over.length} ${over.length === 1 ? "week" : "weken"} met overschrijding in deze periode`;
+  }
+  if (detailsEl) {
+    detailsEl.innerHTML = over.slice(0, 40).map((o) =>
+      `<div class="planning-besch-row"><b>${escapeHtml(o.client)}</b> — ${escapeHtml(o.zorgsoortLabel)}, ` +
+      `${escapeHtml(isoWeekLabel(o.week))}: <b>${o.gepland} u</b> gepland t.o.v. <b>${o.budget} u</b> beschikt ` +
+      `(${o.over} u te veel)</div>`
+    ).join("") + (over.length > 40 ? `<div class="planning-besch-row">… en nog ${over.length - 40} meer</div>` : "");
+  }
+  banner.hidden = false;
 }
 
 /**
