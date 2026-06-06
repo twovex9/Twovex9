@@ -1435,27 +1435,129 @@ function onbComputeSteps(emp, traject) {
 }
 
 // ===== Contract opstellen (release 4) =====
-var ONB_CONTRACT_FORM_VARS = ["functie", "startdatum", "contractduur", "uren", "tarief", "schaal", "locatie", "werkzaamheden"];
+// Velden die altijd automatisch worden ingevuld en niet als los invoerveld hoeven.
+var ONB_HIDDEN_VARS = ["volledige_naam", "voornaam", "achternaam", "datum_vandaag"];
+
+// Vriendelijke labels voor bekende merge-velden (fallback: veldnaam met hoofdletter).
+var ONB_VAR_LABELS = {
+  geboortedatum: "Geboortedatum",
+  straat_huisnummer: "Straat en huisnummer",
+  postcode: "Postcode",
+  woonplaats: "Woonplaats",
+  functie: "Functie",
+  startdatum: "Ingangsdatum",
+  ingangsdatum: "Ingangsdatum",
+  einddatum: "Einddatum",
+  contractduur: "Contractduur",
+  uren: "Uren per week",
+  dagen: "Dagen per week",
+  tarief: "Tarief (EUR per uur)",
+  schaal: "Salarisschaal",
+  periodiek: "Periodiek / trede",
+  salaris: "Salaris (EUR bruto per maand)",
+  werkzaamheden: "Werkzaamheden",
+  locatie: "Locatie / standplaats",
+  iban: "IBAN",
+  bsn: "BSN",
+  proeftijd: "Proeftijd",
+  bedrijfsnaam: "Bedrijfsnaam (ZZP)",
+  kvk_nummer: "KvK-nummer",
+  btw_nummer: "Btw-nummer",
+  vestigingsadres: "Vestigingsadres",
+  vestiging_postcode: "Postcode vestiging",
+  vestigingsplaats: "Vestigingsplaats",
+  opleiding: "Opleiding",
+  onderwijsinstelling: "Onderwijsinstelling",
+  studentnummer: "Studentnummer",
+  adres_onderwijsinstelling: "Adres onderwijsinstelling",
+  contactpersoon: "Contactpersoon onderwijsinstelling",
+  stagebegeleider: "Stagebegeleider (ETF)",
+  stagedocent: "Stagedocent / praktijkbegeleider",
+  hoofdsom: "Hoofdsom (EUR)",
+  hoofdsom_voluit: "Hoofdsom voluit (in woorden)",
+  maandbedrag: "Maandelijkse inhouding (EUR)",
+  eerste_inhouding: "Eerste inhouding (maand en jaar)",
+  bedrijfsmiddelen: "Bedrijfsmiddelen in bruikleen",
+};
+
+// Velden die als groot tekstveld (textarea) worden getoond.
+var ONB_VAR_TEXTAREA = { werkzaamheden: 1, bedrijfsmiddelen: 1, hoofdsom_voluit: 1 };
+
 var _onbContractMode = "new"; // "new" | "view"
+
+// DD-MM-JJJJ of ISO → ISO (jjjj-mm-dd) voor date-inputs; leeg bij onbekend formaat.
+function onbToISODate(v) {
+  v = String(v == null ? "" : v).trim();
+  if (!v) return "";
+  if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+  return ddmmyyyyToISO(v) || "";
+}
+
+// Samenvatting van de in bruikleen gegeven bedrijfsmiddelen uit de voorzieningen.
+function onbBedrijfsmiddelenTekst(d) {
+  var rows = [];
+  function add(on, label, note) { if (on) rows.push("- " + label + (note ? " (" + note + ")" : "")); }
+  add(d.voorzLaptop, "Laptop", d.voorzLaptopNote);
+  add(d.voorzTelefoon, "Telefoon", d.voorzTelefoonNote);
+  add(d.voorzSimkaart, "Simkaart", d.voorzSimkaartNote);
+  add(d.voorzAuto, "Auto", d.voorzAutoNote);
+  add(d.voorzFiets, "Fiets", d.voorzFietsNote);
+  add(d.voorzSleutels, "Sleutels", d.voorzSleutelsNote);
+  return rows.join("\n");
+}
 
 function onbBuildContractAutoVars(emp) {
   // rowToObj spreidt de medewerker-`data` jsonb top-level → lees de velden van emp zelf.
   var d = emp || {};
   var voornaam = (emp && emp.voornaam) || d.voornaam || "";
   var achternaam = (emp && emp.achternaam) || d.achternaam || "";
+  var straatHnr = [d.straat, d.huisnummer].filter(Boolean).join(" ");
+  if (d.toevoeging) straatHnr = (straatHnr + " " + d.toevoeging).trim();
+  var vestAdres = [d.inhuurStraat, d.inhuurHuisnummer].filter(Boolean).join(" ");
+  if (d.inhuurToevoeging) vestAdres = (vestAdres + " " + d.inhuurToevoeging).trim();
   return {
     voornaam: voornaam,
     achternaam: achternaam,
     volledige_naam: (voornaam + " " + achternaam).trim(),
     datum_vandaag: onbFormatDate(new Date().toISOString()),
+    geboortedatum: onbToISODate(d.verjaardag || d.geboortedatum || d.bs2_date_of_birth),
+    straat_huisnummer: straatHnr,
+    postcode: d.postcode || "",
+    woonplaats: d.plaats || d.woonplaats || "",
     functie: (emp && emp.functie) || d.functie || "",
     werkzaamheden: d.werkzaamheden || "",
-    startdatum: d.loondienst_startdatum || d.startdatum || "",
+    startdatum: onbToISODate(d.loondienst_startdatum || d.startdatum),
+    ingangsdatum: onbToISODate(d.loondienst_startdatum || d.startdatum),
+    einddatum: onbToISODate(d.eindeContract || d.einddatum),
     contractduur: d.contractduur || "",
     uren: d.contracturen || d.uren || d.garantie_uren || "",
-    tarief: d.inhuur_tarief || d.uurtarief || d.tarief || "",
+    dagen: "",
+    tarief: d.uurAlgemeen || d.uurTarief || d.inhuur_tarief || d.tarief || "",
     schaal: d.salarisschaal || d.schaal || "",
+    periodiek: d.salaristrede || d.periodiekeMaand || "",
+    salaris: d.salaris || d.salaris36uur || "",
     locatie: d.locatie || "",
+    iban: d.profIban || d.iban || "",
+    bsn: d.bsn || "",
+    proeftijd: "",
+    bedrijfsnaam: d.inhuurBedrijfsnaam || "",
+    kvk_nummer: d.inhuurKvk || "",
+    btw_nummer: d.inhuurBtw || "",
+    vestigingsadres: vestAdres,
+    vestiging_postcode: d.inhuurPostcode || "",
+    vestigingsplaats: d.inhuurStad || "",
+    opleiding: d.opleiding || "",
+    onderwijsinstelling: "",
+    studentnummer: "",
+    adres_onderwijsinstelling: "",
+    contactpersoon: "",
+    stagebegeleider: "",
+    stagedocent: "",
+    hoofdsom: "",
+    hoofdsom_voluit: "",
+    maandbedrag: "",
+    eerste_inhouding: "",
+    bedrijfsmiddelen: onbBedrijfsmiddelenTekst(d),
   };
 }
 
@@ -1463,29 +1565,73 @@ function onbMergeContract(body, vars) {
   return String(body || "").replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, function (m, key) {
     var v = vars[key.toLowerCase()];
     if (v === undefined || v === null || String(v).trim() === "") return "__________";
-    if (key.toLowerCase() === "startdatum" && /^\d{4}-\d{2}-\d{2}/.test(String(v))) return onbFormatDate(String(v));
+    var s = String(v).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return onbFormatDate(s); // ISO-datum → lange NL-datum
     return String(v);
   });
 }
 
+// Unieke merge-velden uit een sjabloon-body, in volgorde van eerste voorkomen.
+function onbParseSjabloonVelden(body) {
+  var seen = {}, out = [];
+  String(body || "").replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, function (m, k) {
+    k = k.toLowerCase();
+    if (!seen[k]) { seen[k] = 1; out.push(k); }
+    return m;
+  });
+  return out;
+}
+
+function onbVarLabel(k) {
+  if (ONB_VAR_LABELS[k]) return ONB_VAR_LABELS[k];
+  return k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ");
+}
+function onbVarIsDate(k) { return /datum$/.test(k); }
+function onbVarIsTextarea(k) { return !!ONB_VAR_TEXTAREA[k]; }
+
+// Bouwt het invoerformulier voor de invulbare velden van het gekozen sjabloon.
+// Auto-velden worden voorgevuld; ontbrekende velden blijven leeg (→ invul-streep).
+function onbBuildContractForm(sjabloon, prefill) {
+  var grid = document.getElementById("emp-contract-vargrid");
+  if (!grid) return;
+  var velden = onbParseSjabloonVelden(sjabloon ? sjabloon.body : "")
+    .filter(function (k) { return ONB_HIDDEN_VARS.indexOf(k) < 0; });
+  if (!velden.length) {
+    grid.innerHTML = '<p class="emp-contract-novars">Dit sjabloon heeft geen losse in te vullen velden; de gegevens worden automatisch ingevuld.</p>';
+    return;
+  }
+  grid.innerHTML = velden.map(function (k) {
+    var raw = prefill && prefill[k] != null ? prefill[k] : "";
+    var label = onbEscHtml(onbVarLabel(k));
+    var id = "emp-cvar-" + k;
+    if (onbVarIsTextarea(k)) {
+      return '<label class="modal-label emp-cvar-full" data-cvar="' + onbEscHtml(k) + '">' + label
+        + '<textarea id="' + id + '" class="modal-input emp-contract-werkz" rows="3">' + onbEscHtml(raw) + '</textarea></label>';
+    }
+    var isDate = onbVarIsDate(k);
+    var val = isDate ? onbToISODate(raw) : raw;
+    return '<label class="modal-label" data-cvar="' + onbEscHtml(k) + '">' + label
+      + '<input type="' + (isDate ? "date" : "text") + '" id="' + id + '" class="modal-input" value="' + onbEscHtml(val) + '" autocomplete="off"></label>';
+  }).join("");
+}
+
 function onbReadContractForm() {
-  var g = function (id) { var el = document.getElementById(id); return el ? el.value : ""; };
-  return {
-    functie: g("emp-contract-var-functie"),
-    startdatum: g("emp-contract-var-startdatum"),
-    contractduur: g("emp-contract-var-contractduur"),
-    uren: g("emp-contract-var-uren"),
-    tarief: g("emp-contract-var-tarief"),
-    schaal: g("emp-contract-var-schaal"),
-    locatie: g("emp-contract-var-locatie"),
-    werkzaamheden: g("emp-contract-var-werkzaamheden"),
-  };
+  var grid = document.getElementById("emp-contract-vargrid");
+  var out = {};
+  if (!grid) return out;
+  var labels = grid.querySelectorAll("[data-cvar]");
+  for (var i = 0; i < labels.length; i++) {
+    var k = labels[i].getAttribute("data-cvar");
+    var el = document.getElementById("emp-cvar-" + k);
+    if (el) out[k] = el.value;
+  }
+  return out;
 }
 
 function onbContractVarsFromForm(emp) {
   var vars = onbBuildContractAutoVars(emp);
   var form = onbReadContractForm();
-  ONB_CONTRACT_FORM_VARS.forEach(function (k) { vars[k] = form[k]; });
+  Object.keys(form).forEach(function (k) { vars[k] = form[k]; });
   return vars;
 }
 
@@ -1496,32 +1642,25 @@ function onbGetSjablonen() {
   return [];
 }
 
+function onbSelectedSjabloon() {
+  var sjId = (document.getElementById("emp-contract-sjabloon") || {}).value || "";
+  return onbGetSjablonen().find(function (s) { return String(s.id) === String(sjId); }) || null;
+}
+
 function onbUpdateContractPreview(emp) {
   var preview = document.getElementById("emp-contract-preview");
   if (!preview) return;
-  var sjId = (document.getElementById("emp-contract-sjabloon") || {}).value || "";
-  var sj = onbGetSjablonen().find(function (s) { return String(s.id) === String(sjId); });
+  var sj = onbSelectedSjabloon();
   preview.textContent = onbMergeContract(sj ? sj.body : "", onbContractVarsFromForm(emp));
 }
 
-function onbFillContractForm(vals) {
-  var set = function (id, v) { var el = document.getElementById(id); if (el) el.value = v == null ? "" : v; };
-  set("emp-contract-var-functie", vals.functie);
-  set("emp-contract-var-startdatum", /^\d{4}-\d{2}-\d{2}/.test(String(vals.startdatum || "")) ? String(vals.startdatum).slice(0, 10) : "");
-  set("emp-contract-var-contractduur", vals.contractduur);
-  set("emp-contract-var-uren", vals.uren);
-  set("emp-contract-var-tarief", vals.tarief);
-  set("emp-contract-var-schaal", vals.schaal);
-  set("emp-contract-var-locatie", vals.locatie);
-  set("emp-contract-var-werkzaamheden", vals.werkzaamheden);
-}
-
 function onbSetContractFormReadonly(ro) {
-  ["emp-contract-sjabloon", "emp-contract-var-functie", "emp-contract-var-startdatum", "emp-contract-var-contractduur", "emp-contract-var-uren", "emp-contract-var-tarief", "emp-contract-var-schaal", "emp-contract-var-locatie", "emp-contract-var-werkzaamheden"].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (el.tagName === "SELECT") el.disabled = ro; else el.readOnly = ro;
-  });
+  var sel = document.getElementById("emp-contract-sjabloon");
+  if (sel) sel.disabled = ro;
+  var grid = document.getElementById("emp-contract-vargrid");
+  if (!grid) return;
+  var els = grid.querySelectorAll("input, textarea");
+  for (var i = 0; i < els.length; i++) els[i].readOnly = ro;
 }
 
 function openContractModal(mode, existing) {
@@ -1544,21 +1683,22 @@ function openContractModal(mode, existing) {
     if (title) title.textContent = "Contract bekijken";
     if (saveBtn) saveBtn.style.display = "none";
     if (sel && existing.sjabloonId) sel.value = existing.sjabloonId;
-    onbFillContractForm(existing.variabelen || {});
+    onbBuildContractForm(onbSelectedSjabloon(), existing.variabelen || {});
     onbSetContractFormReadonly(true);
     var pv = document.getElementById("emp-contract-preview");
     if (pv) pv.textContent = existing.gegenereerdeTekst || "";
   } else {
     if (title) title.textContent = "Contract opstellen";
     if (saveBtn) { saveBtn.style.display = ""; saveBtn.disabled = false; }
-    onbSetContractFormReadonly(false);
-    onbFillContractForm(onbBuildContractAutoVars(emp));
     if (sel && sjablonen.length) {
       var dvKey = onbRequiredDocsKey(emp);
       var prefType = dvKey === "zzp" ? "opdracht" : (dvKey === "stagiair" ? "stage" : "arbeidsovereenkomst");
       var match = sjablonen.find(function (s) { return s.type === prefType; });
       sel.value = match ? match.id : sjablonen[0].id;
     }
+    // Eerst sjabloon kiezen, dan het bijbehorende formulier bouwen + voorvullen.
+    onbBuildContractForm(onbSelectedSjabloon(), onbBuildContractAutoVars(emp));
+    onbSetContractFormReadonly(false);
     onbUpdateContractPreview(emp);
   }
   modal.hidden = false;
@@ -1575,8 +1715,7 @@ function closeContractModal() {
 async function saveContract() {
   var emp = getSelectedEmployee();
   if (!emp || !emp.id || !window.contractenDB) return;
-  var sjId = (document.getElementById("emp-contract-sjabloon") || {}).value || "";
-  var sj = onbGetSjablonen().find(function (s) { return String(s.id) === String(sjId); });
+  var sj = onbSelectedSjabloon();
   if (!sj) {
     if (window.showActionFeedback) window.showActionFeedback("error", "Kies eerst een sjabloon.");
     return;
@@ -1618,13 +1757,24 @@ function initContractModal() {
   if (save) save.addEventListener("click", saveContract);
   modal.addEventListener("click", function (e) { if (e.target === modal) closeContractModal(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !modal.hidden) closeContractModal(); });
-  ["emp-contract-sjabloon", "emp-contract-var-functie", "emp-contract-var-startdatum", "emp-contract-var-contractduur", "emp-contract-var-uren", "emp-contract-var-tarief", "emp-contract-var-schaal", "emp-contract-var-locatie", "emp-contract-var-werkzaamheden"].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    var upd = function () { if (_onbContractMode !== "view") onbUpdateContractPreview(getSelectedEmployee()); };
-    el.addEventListener("input", upd);
-    el.addEventListener("change", upd);
+
+  // Sjabloon wisselen → formulier herbouwen voor dat sjabloon, met behoud van de
+  // reeds ingevulde waarden + auto-vars voor eventueel nieuwe velden.
+  var sel = document.getElementById("emp-contract-sjabloon");
+  if (sel) sel.addEventListener("change", function () {
+    if (_onbContractMode === "view") return;
+    var emp = getSelectedEmployee();
+    onbBuildContractForm(onbSelectedSjabloon(), onbContractVarsFromForm(emp));
+    onbUpdateContractPreview(emp);
   });
+
+  // Live preview bij elke invoer (event-delegation: de velden zijn dynamisch).
+  var grid = document.getElementById("emp-contract-vargrid");
+  if (grid) {
+    var upd = function () { if (_onbContractMode !== "view") onbUpdateContractPreview(getSelectedEmployee()); };
+    grid.addEventListener("input", upd);
+    grid.addEventListener("change", upd);
+  }
 }
 
 function onbStatusPill(status) {
