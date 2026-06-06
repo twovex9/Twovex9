@@ -136,6 +136,12 @@
     "beleid-documenten.html": { action: "manage", entity: "admins-documents" },
     "beleid.html": { action: "manage", entity: "admins-documents" },
 
+    // ─── SharePoint (interne documentbibliotheek) — alleen kantoor ────────────
+    // Werkvloer (rol Medewerker/ZZP) en detacheringsbureaus zien 'm niet. De
+    // toegang per map wordt daarbovenop server-side beperkt via RLS
+    // (is_office_staff + sp_folder_visible). Admin-tier wint sowieso.
+    "sharepoint.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator", "Finance", "Salarisadministratie", "Beleid", "Facilitair", "Gedragswetenschapper", "Cliëntbeheer"] },
+
     // ─── Financiën — STRIKT Eigenaar + Directeur + Finance ────────────────────
     // `strict:true` schakelt de admin-tier-bypass UIT (zie permissions-gate.js /
     // permissions-nav-hide.js): Admin krijgt hier GEEN toegang. Finance (degene die
