@@ -519,7 +519,17 @@
     }
     listenForAuthChange();
     attachVisibilityChecks();
-    attachIdleTimeout();  // Fase E.12 — session-timeout idle-detector
+    // Auto-logout bij inactiviteit (Fase E.12, 30 min) is op verzoek van de
+    // eigenaar UITGESCHAKELD (2026-06-06): gebruikers blijven ingelogd en worden
+    // niet meer na een half uur inactiviteit uitgelogd. De sessie zelf blijft
+    // bewaard en ververst automatisch (Supabase persistSession + autoRefreshToken).
+    // Zet IDLE_LOGOUT_ENABLED weer op true om het BS2-achtige session-timeout-
+    // gedrag te herstellen.
+    var IDLE_LOGOUT_ENABLED = false;
+    try { window.besaIdleLogoutEnabled = IDLE_LOGOUT_ENABLED; } catch (e) { /* */ }
+    if (IDLE_LOGOUT_ENABLED) {
+      attachIdleTimeout();  // Fase E.12 — session-timeout idle-detector
+    }
   })();
 
   // =================================================================
