@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="nl">
 <head>
+  <script>/* Verplaatst: "Resultaat per zorgsoort" staat nu onder Financiën → Locaties. Doorverwijzen. */location.replace('financien-locaties');</script>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=24e10b0" defer></script>
@@ -94,7 +95,6 @@
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
                 <a href="financien-locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Kosten, opbrengst &amp; resultaat per locatie</span></a>
                 <a href="financien-overhead" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overhead / kantoor</span><span class="top-dropdown-subtitle">Personeel &amp; kantoorkosten buiten de groepen</span></a>
-                <a href="financien-zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem" aria-current="page"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Kosten &amp; opbrengst per zorgsoort (planning)</span></a>
               </div>
             </div>
             <a href="audit" class="top-link">Audit</a>
@@ -125,7 +125,6 @@
       <nav class="side-nav" aria-label="Financiën module">
         <a href="financien-locaties" class="side-link">Locaties</a>
         <a href="financien-overhead" class="side-link">Overhead / kantoor</a>
-        <a href="financien-zorgsoorten" class="side-link is-active" aria-current="page">Zorgsoorten</a>
       </nav>
       <div class="sidebar-footer">
         <a class="side-nav-exit" href="home">← Home</a>

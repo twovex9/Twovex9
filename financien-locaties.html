@@ -95,7 +95,6 @@
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
                 <a href="financien-locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem" aria-current="page"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Kosten, opbrengst &amp; resultaat per locatie</span></a>
                 <a href="financien-overhead" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overhead / kantoor</span><span class="top-dropdown-subtitle">Personeel &amp; kantoorkosten buiten de groepen</span></a>
-                <a href="financien-zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Kosten &amp; opbrengst per zorgsoort (planning)</span></a>
               </div>
             </div>
             <a href="audit" class="top-link">Audit</a>
@@ -126,7 +125,6 @@
       <nav class="side-nav" aria-label="Financiën module">
         <a href="financien-locaties" class="side-link is-active" aria-current="page">Locaties</a>
         <a href="financien-overhead" class="side-link">Overhead / kantoor</a>
-        <a href="financien-zorgsoorten" class="side-link">Zorgsoorten</a>
       </nav>
       <div class="sidebar-footer">
         <a class="side-nav-exit" href="home">← Home</a>
@@ -240,20 +238,16 @@
             <button type="button" class="btn-outline fin-add-onk-btn" id="fin-add-onk">+ Onkosten toevoegen</button>
           </div>
           <div class="fin-table-wrap">
-            <table class="fin-table" id="fin-loc-table">
+            <table class="fin-table fin-loc-tbl" id="fin-loc-table">
               <thead>
                 <tr>
                   <th scope="col">Locatie</th>
                   <th scope="col" class="fin-num">ZZP'ers</th>
-                  <th scope="col" class="fin-num">ZZP-kosten</th>
-                  <th scope="col" class="fin-num">Personeel</th>
-                  <th scope="col" class="fin-num">Onkosten</th>
-                  <th scope="col" class="fin-num">Tot. kosten</th>
+                  <th scope="col" class="fin-num">Kosten</th>
                   <th scope="col" class="fin-num">Opbrengst</th>
                   <th scope="col" class="fin-num">Resultaat</th>
                   <th scope="col" class="fin-num">Marge</th>
-                  <th scope="col" class="fin-num fin-col-bezet">Bezetting</th>
-                  <th scope="col" class="fin-num fin-col-bezet">Vrij</th>
+                  <th scope="col" class="fin-num">Bezetting</th>
                 </tr>
               </thead>
               <tbody id="fin-loc-tbody"></tbody>
@@ -261,15 +255,51 @@
                 <tr>
                   <td class="bd-td-strong">Totaal</td>
                   <td></td>
-                  <td class="fin-num fin-eur bd-td-strong" id="fin-foot-zzp"></td>
-                  <td class="fin-num fin-eur bd-td-strong" id="fin-foot-pers"></td>
-                  <td class="fin-num fin-eur bd-td-strong" id="fin-foot-onk"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-kosten"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-omzet"></td>
                   <td class="fin-num fin-eur bd-td-strong" id="fin-foot-result"></td>
                   <td></td>
-                  <td class="fin-num bd-td-strong fin-col-bezet" id="fin-foot-bezet"></td>
-                  <td class="fin-num bd-td-strong fin-col-bezet" id="fin-foot-vrij"></td>
+                  <td class="fin-num bd-td-strong" id="fin-foot-bezet"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <section class="table-card fin-loc-card" aria-label="Resultaat per zorgsoort" id="fz-section">
+          <div class="fin-card-head">
+            <div>
+              <h2 class="bd-sec-t">Resultaat per zorgsoort</h2>
+              <p class="bd-sec-s">Op basis van de planning · opbrengst = ingeplande uren × het opbrengsttarief per zorgsoort · klik op een rij voor de cliënten en medewerkers, of op het potlood om het tarief aan te passen</p>
+            </div>
+          </div>
+          <div class="fin-table-wrap">
+            <table class="fin-table" id="fz-zs-table">
+              <thead>
+                <tr>
+                  <th scope="col">Zorgsoort</th>
+                  <th scope="col" class="fin-num">Tarief</th>
+                  <th scope="col" class="fin-num">Diensten</th>
+                  <th scope="col" class="fin-num">Uren</th>
+                  <th scope="col" class="fin-num">Kosten</th>
+                  <th scope="col" class="fin-num">Opbrengst</th>
+                  <th scope="col" class="fin-num">Resultaat</th>
+                  <th scope="col" class="fin-num">Marge</th>
+                  <th scope="col" aria-label="Acties"></th>
+                </tr>
+              </thead>
+              <tbody id="fz-zs-tbody"></tbody>
+              <tfoot>
+                <tr>
+                  <td class="bd-td-strong">Totaal</td>
+                  <td></td>
+                  <td class="fin-num bd-td-strong" id="fz-foot-diensten"></td>
+                  <td class="fin-num bd-td-strong" id="fz-foot-uren"></td>
+                  <td class="fin-num fin-eur bd-td-strong" id="fz-foot-kosten"></td>
+                  <td class="fin-num fin-eur bd-td-strong" id="fz-foot-omzet"></td>
+                  <td class="fin-num fin-eur bd-td-strong" id="fz-foot-result"></td>
+                  <td class="fin-num bd-td-strong" id="fz-foot-marge"></td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
@@ -347,6 +377,47 @@
           </div>
         </div>
       </div>
+
+      <!-- Zorgsoort: drill-down (cliënten + medewerkers) — eigen IDs, los van de locatie-modal -->
+      <div class="bd-modal" id="fz-modal" hidden>
+        <div class="bd-modal-backdrop" id="fz-modal-backdrop"></div>
+        <div class="bd-modal-box" role="dialog" aria-modal="true" aria-labelledby="fz-modal-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="fz-modal-title">Details</h2>
+            <button type="button" class="bd-modal-x" id="fz-modal-x" aria-label="Sluiten">×</button>
+          </div>
+          <p class="bd-modal-sub" id="fz-modal-sub"></p>
+          <div class="bd-modal-body" id="fz-modal-body"></div>
+        </div>
+      </div>
+
+      <!-- Zorgsoort: tarief bewerken -->
+      <div class="bd-modal fin-onk-modal" id="fz-tarief-modal" hidden>
+        <div class="bd-modal-backdrop" id="fz-tarief-backdrop"></div>
+        <div class="bd-modal-box fin-onk-box" role="dialog" aria-modal="true" aria-labelledby="fz-tarief-title">
+          <div class="bd-modal-head">
+            <h2 class="bd-modal-title" id="fz-tarief-title">Tarief bewerken</h2>
+            <button type="button" class="bd-modal-x" id="fz-tarief-x" aria-label="Sluiten">×</button>
+          </div>
+          <div class="bd-modal-body">
+            <form id="fz-tarief-form" class="fin-form" autocomplete="off">
+              <p class="bd-modal-sub" id="fz-tarief-zs">—</p>
+              <div class="fin-field-row">
+                <label class="fin-field"><span>Opbrengsttarief (€ <span id="fz-tarief-eenheid">per uur</span>)</span>
+                  <input id="fz-tarief-opbrengst" class="fin-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="bv. 77,00"></label>
+                <label class="fin-field"><span>Kosten-tarief open diensten (optioneel)</span>
+                  <input id="fz-tarief-kosten" class="fin-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="leeg = medewerker-tarief"></label>
+              </div>
+              <p class="planning-dienst-hint">Het opbrengsttarief bepaalt de opbrengst (tarief × ingeplande uren/dagen). Het kosten-tarief geldt alleen voor open diensten zonder toegewezen medewerker.</p>
+              <p class="fin-form-err" id="fz-tarief-err" hidden></p>
+              <div class="fin-form-actions">
+                <button type="button" class="btn-outline" id="fz-tarief-cancel">Annuleren</button>
+                <button type="submit" class="btn-primary" id="fz-tarief-save">Opslaan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -368,6 +439,8 @@
   <script src="profiles-data.js?v=24e10b0"></script>
   <script src="besa-audit.js?v=24e10b0" defer></script>
   <script src="financien-locaties-data.js?v=24e10b0" defer></script>
+  <script src="zorgsoorten-data.js?v=24e10b0" defer></script>
   <script src="financien-locaties.js?v=24e10b0" defer></script>
+  <script src="financien-locaties-zorgsoorten.js?v=24e10b0" defer></script>
 </body>
 </html>

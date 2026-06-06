@@ -172,9 +172,9 @@
     var tb = $("fin-loc-tbody"); if (!tb) return;
     clear(tb);
     if (!locations.length) {
-      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 11;
+      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 7;
       td0.textContent = "Geen kosten of opbrengst in deze periode."; tr0.appendChild(td0); tb.appendChild(tr0);
-      ["fin-foot-zzp", "fin-foot-pers", "fin-foot-onk", "fin-foot-kosten", "fin-foot-omzet", "fin-foot-result", "fin-foot-bezet", "fin-foot-vrij"].forEach(function (id) { setText(id, ""); });
+      ["fin-foot-kosten", "fin-foot-omzet", "fin-foot-result", "fin-foot-bezet"].forEach(function (id) { setText(id, ""); });
       return;
     }
     var tOmzet = 0, tKosten = 0, tZzp = 0, tPers = 0, tOnk = 0, tKamers = 0, tBezet = 0, tVrij = 0;
@@ -201,17 +201,19 @@
       tr.appendChild(tdN);
 
       tr.appendChild(el("td", "fin-num", fmtInt(l.zzpers)));
-      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten_zzp)));
-      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.personeel)));
-      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.onkosten)));
-      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.kosten)));
+      // Kosten (totaal) — uitsplitsing ZZP/Personeel/Onkosten in tooltip; losse kolommen weg voor leesbaarheid
+      var tdK = el("td", "fin-num fin-eur", fmtEuro(l.kosten));
+      tdK.title = "ZZP " + fmtEuro(l.kosten_zzp) + " · Personeel " + fmtEuro(l.personeel) + " · Onkosten " + fmtEuro(l.onkosten);
+      tr.appendChild(tdK);
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.omzet)));
       tr.appendChild(el("td", "fin-num fin-eur " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtEuro(res)));
       tr.appendChild(el("td", "fin-num " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtPct(l.marge_pct)));
 
-      tr.appendChild(el("td", "fin-num fin-col-bezet", bezetText(l)));
-      var tdVrij = el("td", "fin-num fin-col-bezet"); tdVrij.appendChild(makeVrijBadge(l.kamers, l.bezet));
-      tr.appendChild(tdVrij);
+      // Bezetting + vrije plekken samengevoegd in één kolom (badge alleen bij bekende kamers)
+      var tdBez = el("td", "fin-num fin-loc-bez");
+      tdBez.appendChild(el("span", "fin-loc-bez-cnt", bezetText(l)));
+      if ((Number(l.kamers) || 0) > 0) tdBez.appendChild(makeVrijBadge(l.kamers, l.bezet));
+      tr.appendChild(tdBez);
 
       (function (naam) {
         tr.addEventListener("click", function () { openDetail(naam); });
@@ -219,17 +221,18 @@
       })(l.name);
       tb.appendChild(tr);
     });
-    setText("fin-foot-zzp", fmtEuro(tZzp));
-    setText("fin-foot-pers", fmtEuro(tPers));
-    setText("fin-foot-onk", fmtEuro(tOnk));
-    setText("fin-foot-kosten", fmtEuro(tKosten));
+    var footK = $("fin-foot-kosten");
+    if (footK) { footK.textContent = fmtEuro(tKosten); footK.title = "ZZP " + fmtEuro(tZzp) + " · Personeel " + fmtEuro(tPers) + " · Onkosten " + fmtEuro(tOnk); }
     setText("fin-foot-omzet", fmtEuro(tOmzet));
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
     if (foot) { foot.textContent = fmtEuro(tRes); foot.className = "fin-num fin-eur " + (tRes >= 0 ? "fin-pos" : "fin-neg"); }
-    setText("fin-foot-bezet", fmtInt(tBezet) + " / " + (tKamers > 0 ? fmtInt(tKamers) : "—"));
-    var footVrij = $("fin-foot-vrij");
-    if (footVrij) { clear(footVrij); footVrij.appendChild(makeVrijBadge(tKamers, tKamers - tVrij)); }
+    var footBez = $("fin-foot-bezet");
+    if (footBez) {
+      clear(footBez);
+      footBez.appendChild(el("span", "fin-loc-bez-cnt", fmtInt(tBezet) + " / " + (tKamers > 0 ? fmtInt(tKamers) : "—")));
+      if (tKamers > 0) footBez.appendChild(makeVrijBadge(tKamers, tKamers - tVrij));
+    }
   }
 
   /* ---- locatie- vs overheadkosten-splitsing onder de KPI's ---- */
@@ -833,6 +836,11 @@
     renderSplit(data.locations || []);
     renderBezetting(t);
     renderMonthChart(data.months || []);
+
+    // Laat de zorgsoort-sectie (apart script) dezelfde periode volgen.
+    try {
+      document.dispatchEvent(new CustomEvent("besa:fin-periode", { detail: { start: selStart, end: selEnd } }));
+    } catch (e) { /* CustomEvent niet beschikbaar — zorgsoort-sectie valt terug op eigen default */ }
   }
 
   async function init() {
