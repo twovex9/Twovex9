@@ -156,6 +156,14 @@
         var ups = await global.besaSupabase.from(TABLE_HISTORY).upsert(payload, { onConflict: "id" });
         if (ups.error) reportSilent("upsert history", ups.error);
       }
+      // DIEHARD delete-guard: een lokale set die 0 id's deelt met de DB is stale/seed
+      // (bv. de demo-seeds of een export vóór de DB-bootstrap) en mag nooit de hele
+      // export-historie wissen. Een legitieme sync laadt eerst de DB en deelt dus id's.
+      var overlap = localIds.filter(function (id) { return existingIds.indexOf(id) !== -1; }).length;
+      if (toDelete.length && existingIds.length > 0 && overlap === 0) {
+        reportSilent("pushHistory delete-guard", new Error("Totale wipe geweigerd: lokale set deelt 0 id's met DB (" + existingIds.length + " rijen)"));
+        toDelete = [];
+      }
       if (toDelete.length) {
         var del = await global.besaSupabase.from(TABLE_HISTORY).delete().in("id", toDelete);
         if (del.error) reportSilent("delete history", del.error);

@@ -148,20 +148,24 @@
         { id: "seed_2", createdAt: "2026-03-18T10:10:00", period: "Februari 2026", employees: 31, by: "Vennie Küster", csv: null },
         { id: "seed_3", createdAt: "2026-02-15T10:10:00", period: "Januari 2026", employees: 33, by: "Artem Fetchoj", csv: null },
       ];
-      try {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(seed));
-      } catch {}
+      // Seeds zijn ALLEEN demo-weergave: NIET naar localStorage schrijven (gedeelde sleutel
+      // met saladminDB) en NIET synct naar Supabase. Anders kan een export vóór de
+      // DB-bootstrap de echte export-historie overschrijven/wissen (DIEHARD).
       return seed;
     }
     return list;
   }
 
   function writeHistory(list) {
+    // Filter demo-seeds eruit zodat ze nooit naar de gedeelde cache of naar Supabase lekken.
+    var clean = (Array.isArray(list) ? list : []).filter(function (r) {
+      return r && !(typeof r.id === "string" && r.id.indexOf("seed_") === 0);
+    });
     try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(list || []));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(clean));
     } catch {}
     if (window.saladminDB && typeof window.saladminDB.pushHistory === "function") {
-      try { window.saladminDB.pushHistory(list || []); } catch (e) { /* */ }
+      try { window.saladminDB.pushHistory(clean); } catch (e) { /* */ }
     }
   }
 
