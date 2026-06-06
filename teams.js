@@ -46,10 +46,11 @@
     return ((m.voornaam || "") + " " + (m.achternaam || "")).trim() || "—";
   }
   function locatieLabel(id) {
-    if (!id || !window.locatiesDB) return "—";
-    var l = window.locatiesDB.getByIdSync ? window.locatiesDB.getByIdSync(id) : null;
-    if (!l) return "—";
-    return l.naam || "—";
+    // locatiesDB heeft géén getByIdSync → naam opzoeken via getAllSync.
+    if (!id || !window.locatiesDB || !window.locatiesDB.getAllSync) return "—";
+    var s = String(id);
+    var l = (window.locatiesDB.getAllSync() || []).find(function (x) { return x && String(x.id) === s; });
+    return (l && l.naam) || "—";
   }
 
   function getVisible() {
@@ -126,31 +127,27 @@
     var actief = allTeams.filter(function (t) { return t && !t.archived; });
     var teamleiderIds = {};
     var locatieIds = {};
-    var totalMembers = 0;
-
-    var memberships = (window.medewerkerTeamsDB && window.medewerkerTeamsDB.getAllSync && window.medewerkerTeamsDB.getAllSync()) || [];
-    var membershipsPerTeam = {};
-    memberships.forEach(function (m) {
-      if (!m || !m.team_id) return;
-      membershipsPerTeam[m.team_id] = (membershipsPerTeam[m.team_id] || 0) + 1;
-    });
+    var uniekeMedewerkers = {};
 
     actief.forEach(function (t) {
-      if (t.teamLeiderId || t.team_leider_id) teamleiderIds[t.teamLeiderId || t.team_leider_id] = true;
-      if (t.locatieId || t.locatie_id) locatieIds[t.locatieId || t.locatie_id] = true;
-      totalMembers += membershipsPerTeam[t.id] || 0;
+      if (t.teamLeiderId) teamleiderIds[t.teamLeiderId] = true;
+      if (t.locatieId) locatieIds[t.locatieId] = true;
+      window.teamsDB.getMembersSync(t.id).forEach(function (m) {
+        if (m && m.medewerker_id) uniekeMedewerkers[m.medewerker_id] = true;
+      });
     });
 
     totaalEl.textContent = actief.length;
-    medEl.textContent = totalMembers;
+    medEl.textContent = Object.keys(uniekeMedewerkers).length;
     leidersEl.textContent = Object.keys(teamleiderIds).length;
     locEl.textContent = Object.keys(locatieIds).length;
   }
 
-  function fillMedewerkerSelect(selId) {
+  function fillMedewerkerSelect(selId, excludeIds) {
     var sel = document.getElementById(selId);
     if (!sel || !window.medewerkersDB) return;
-    var items = (window.medewerkersDB.getAllSync() || []).filter(function (m) { return m && !m.archived; });
+    var exclude = excludeIds || {};
+    var items = (window.medewerkersDB.getAllSync() || []).filter(function (m) { return m && !m.archived && !exclude[m.id]; });
     items.sort(function (a, b) { return ((a.voornaam + " " + a.achternaam) || "").localeCompare(((b.voornaam + " " + b.achternaam) || "")); });
     var keep = sel.value;
     var firstOpt = sel.querySelector("option");
@@ -158,7 +155,7 @@
     sel.innerHTML = firstHtml + items.map(function (m) {
       return '<option value="' + escapeHtml(m.id) + '">' + escapeHtml(((m.voornaam || "") + " " + (m.achternaam || "")).trim()) + '</option>';
     }).join("");
-    if (keep) sel.value = keep;
+    if (keep && !exclude[keep]) sel.value = keep; else sel.value = "";
   }
   function fillLocatieSelect() {
     var sel = document.getElementById("teams-add-locatie");
@@ -245,13 +242,25 @@
     if (!teamId) return;
     var listEl = document.getElementById("teams-members-list");
     var members = window.teamsDB.getMembersSync(teamId);
+    members.sort(function (a, b) {
+      return medewerkerLabel(a.medewerker_id).localeCompare(medewerkerLabel(b.medewerker_id), "nl");
+    });
     if (members.length === 0) {
       listEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:16px;">Nog geen leden in dit team.</div>';
       return;
     }
     listEl.innerHTML = members.map(function (m) {
-      return '<div style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm);">' +
-        '<span style="flex:1;">' + escapeHtml(medewerkerLabel(m.medewerker_id)) + '</span>' +
+      var naam = escapeHtml(medewerkerLabel(m.medewerker_id));
+      if (m.bron === "locatie") {
+        // Automatisch lid via de locatiekoppeling → read-only (beheer via HR).
+        return '<div style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm,8px);">' +
+          '<span style="flex:1;">' + naam + '</span>' +
+          '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--blue-soft);color:var(--blue);white-space:nowrap;">via locatie</span>' +
+          '</div>';
+      }
+      // Handmatig lidmaatschap → rol-keuze + verwijderen.
+      return '<div style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm,8px);">' +
+        '<span style="flex:1;">' + naam + '</span>' +
         '<select class="comp-modal-input" data-action="set-role" data-medewerker="' + escapeHtml(m.medewerker_id) + '" style="width:120px;">' +
         '<option value="lid"' + (m.rol_in_team === "lid" ? " selected" : "") + '>Lid</option>' +
         '<option value="leider"' + (m.rol_in_team === "leider" ? " selected" : "") + '>Leider</option>' +
@@ -261,13 +270,37 @@
         '</div>';
     }).join("");
   }
+
+  // Vult de "lid toevoegen"-select, met uitsluiting van wie al lid is
+  // (afgeleid via locatie óf handmatig) zodat je niemand dubbel toevoegt.
+  function refreshMembersAddSelect() {
+    var teamId = state.membersTeamId;
+    if (!teamId) return;
+    var exclude = {};
+    window.teamsDB.getMembersSync(teamId).forEach(function (m) {
+      if (m && m.medewerker_id) exclude[m.medewerker_id] = true;
+    });
+    fillMedewerkerSelect("teams-members-add-medewerker", exclude);
+  }
   function openMembersModal(teamId) {
     state.membersTeamId = teamId;
     var team = window.teamsDB.getByIdSync(teamId);
     if (!team) return;
     document.getElementById("teams-members-team-id").value = teamId;
     document.getElementById("teams-members-title").textContent = "Teamleden: " + team.naam;
-    fillMedewerkerSelect("teams-members-add-medewerker");
+    // Infobalk: locatie-teams krijgen hun leden automatisch uit de HR-locatiekoppeling.
+    var infoEl = document.getElementById("teams-members-info");
+    if (infoEl) {
+      var locNaam = team.locatieId ? locatieLabel(team.locatieId) : null;
+      if (locNaam && locNaam !== "—") {
+        infoEl.style.cssText = "display:block;margin-bottom:12px;padding:10px 12px;background:var(--blue-soft);border:1px solid var(--line);border-radius:var(--r-sm,8px);color:var(--text-secondary);font-size:13px;line-height:1.5;";
+        infoEl.innerHTML = "Leden met het label <em>via locatie</em> komen automatisch uit locatie <strong>" + escapeHtml(locNaam) + "</strong> — iedereen die daar bij HR &rsaquo; Medewerker aan gekoppeld is. Wijzig de locatie bij de medewerker om iemand toe te voegen of te verwijderen. Hieronder kun je eventueel handmatig extra leden toevoegen.";
+      } else {
+        infoEl.style.cssText = "display:none;";
+        infoEl.innerHTML = "";
+      }
+    }
+    refreshMembersAddSelect();
     renderMembersList();
     document.getElementById("teams-members-modal").style.display = "flex";
   }
@@ -351,9 +384,9 @@
       if (!teamId || !medewerkerSel.value) return;
       try {
         await window.teamsDB.addMember(teamId, medewerkerSel.value, rolSel.value);
-        medewerkerSel.value = "";
         rolSel.value = "lid";
         renderMembersList();
+        refreshMembersAddSelect();
       } catch (err) {
         if (window.showError) window.showError("Toevoegen lid mislukt: " + (err && err.message || err));
       }
@@ -367,6 +400,7 @@
       try {
         await window.teamsDB.removeMember(teamId, medewerkerId);
         renderMembersList();
+        refreshMembersAddSelect();
       } catch (err) {
         if (window.showError) window.showError("Verwijderen lid mislukt: " + (err && err.message || err));
       }
