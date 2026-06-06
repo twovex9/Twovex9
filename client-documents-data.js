@@ -178,18 +178,47 @@
   // Cache
   // ---------------------------------------------------------------------------
 
+  // In-memory cache is ALTIJD de canonieke bron na bootstrap (volledige data,
+  // incl. eventuele legacy base64 fileData). localStorage is enkel een
+  // snelle-boot-kopie en kan stil falen bij volle quota — dan blijft `_mem`
+  // de betrouwbare bron (quota-proof). Zie quota-fix medewerkers/werkuren.
+  var _mem = null;
+
+  // Strip zware legacy base64-payloads ALLEEN uit de localStorage-kopie
+  // (niet uit `_mem` en niet uit de DB-payload): elke `fileData` of waarde
+  // die begint met "data:" wordt geleegd zodat de quota niet onnodig
+  // volloopt. `_mem` houdt het volledige object.
+  function isDataUrl(v) {
+    return typeof v === "string" && v.indexOf("data:") === 0;
+  }
+  function slimForCache(items) {
+    return (Array.isArray(items) ? items : []).map(function (r) {
+      if (!r || typeof r !== "object") return r;
+      var c = Object.assign({}, r);
+      if (isDataUrl(c.fileData)) c.fileData = "";
+      return c;
+    });
+  }
+
   function readCache() {
+    // _mem wint altijd — heeft de volledige data (incl. legacy base64)
+    if (_mem != null) return _mem;
     try {
       var raw = global.localStorage.getItem(CACHE_KEY);
-      if (!raw) return [];
+      if (!raw) { _mem = []; return _mem; }
       var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) { return []; }
+      _mem = Array.isArray(parsed) ? parsed : [];
+      return _mem;
+    } catch (e) { _mem = []; return _mem; }
   }
 
   function writeCache(items) {
+    var safe = Array.isArray(items) ? items : [];
+    // 1) IN-MEMORY: altijd volledig (geen quota-risico)
+    _mem = safe;
+    // 2) localStorage: geslankte kopie (zonder base64 data: URLs) voor snelle boot
     try {
-      global.localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+      global.localStorage.setItem(CACHE_KEY, JSON.stringify(slimForCache(safe)));
     } catch (e) {
       console.warn("[clientDocsDB] cache write mislukt:", e && e.message);
     }

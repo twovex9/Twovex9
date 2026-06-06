@@ -110,18 +110,23 @@
   // ---------------------------------------------------------------------------
   // Cache (localStorage)
   // ---------------------------------------------------------------------------
+  // _mem = in-memory bron-van-waarheid. Bij volle localStorage-quota faalt setItem stil;
+  // dan blijven de echte rijen via _mem leesbaar (anders "lege lijst bij volle quota").
+  var _mem = null;
   function readCache() {
+    if (_mem != null) return _mem;
     try {
       var raw = global.localStorage.getItem(CACHE_KEY);
-      if (!raw) return [];
-      var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
-    } catch (e) { return []; }
+      var p = raw ? JSON.parse(raw) : [];
+      _mem = Array.isArray(p) ? p : [];
+    } catch (e) { _mem = []; }
+    return _mem;
   }
 
   function writeCache(items) {
+    _mem = Array.isArray(items) ? items : [];
     try {
-      global.localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+      global.localStorage.setItem(CACHE_KEY, JSON.stringify(_mem));
     } catch (e) { /* */ }
   }
 

@@ -194,20 +194,26 @@
   // clienten-cache — de afgeleide objecten opnieuw kunnen samenstellen.
   var rawRows = [];
 
+  // _mem = in-memory bron-van-waarheid (quota-proof). rawRows blijft de RAW DB-bron;
+  // rebuildCacheFromRaw vult via writeCache deze _mem, zodat getAllSync/getByIdSync/
+  // getBeschikkingenItems ook bij volle localStorage-quota de echte rijen tonen i.p.v. leeg.
+  var _mem = null;
   function readCache() {
+    if (_mem != null) return _mem;
     try {
       var raw = global.localStorage.getItem(CACHE_KEY);
-      if (!raw) return [];
-      var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
+      var p = raw ? JSON.parse(raw) : [];
+      _mem = Array.isArray(p) ? p : [];
     } catch (e) {
-      return [];
+      _mem = [];
     }
+    return _mem;
   }
 
   function writeCache(items) {
+    _mem = Array.isArray(items) ? items : [];
     try {
-      global.localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+      global.localStorage.setItem(CACHE_KEY, JSON.stringify(_mem));
     } catch (e) { /* */ }
   }
 

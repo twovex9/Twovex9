@@ -30,9 +30,22 @@
     return _mem;
   }
 
+  // Strip het zware veld `gegenereerdeTekst` uit de localStorage-kopie zodat de
+  // gedeelde quota niet volloopt (idem medewerkers-data.js dat bs2_scrape strip).
+  // _mem houdt de VOLLEDIGE objecten (incl. gegenereerdeTekst); alleen de
+  // localStorage-cache wordt geslankt. DB-payload blijft ongemoeid.
+  function slimForCache(items) {
+    return (Array.isArray(items) ? items : []).map(function (r) {
+      if (!r || !r.gegenereerdeTekst) return r;
+      var copy = Object.assign({}, r);
+      copy.gegenereerdeTekst = "";
+      return copy;
+    });
+  }
+
   function writeCache(items) {
     _mem = Array.isArray(items) ? items : [];
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* quota — _mem blijft bron */ }
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(slimForCache(_mem))); } catch (e) { /* quota — _mem blijft bron */ }
   }
 
   function dispatchUpdated(source) {
