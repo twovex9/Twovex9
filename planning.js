@@ -468,6 +468,13 @@ function isToday(d) {
 
 function parseStartDate(iso) {
   if (!iso) return null;
+  // Diensten worden als "fake-UTC" opgeslagen: de wandklok-tijd met +00-offset
+  // (BS2-import "2026-12-31T22:45:00+00" + app-saves via toIsoOrNull). Parse de
+  // wandklok-componenten als LOKALE Date zodat dag-plaatsing, duur én weergave de
+  // bedoelde wandklok tonen i.p.v. +1/+2u door tijdzone-conversie. Consistent met
+  // open-diensten.js en de mobiele app (die de ISO-string slicen).
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0);
   const t = new Date(iso);
   return Number.isNaN(t.getTime()) ? null : t;
 }
@@ -645,16 +652,18 @@ function readCompetentieNamen() {
 
 function formatDateTime(value) {
   if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  // Via parseStartDate => wandklok (fake-UTC), niet +1/+2u door tz-conversie.
+  const d = parseStartDate(value);
+  if (!d) return "—";
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatTimeShort(value) {
   if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
+  // Via parseStartDate => wandklok (fake-UTC), niet +1/+2u door tz-conversie.
+  const d = parseStartDate(value);
+  if (!d) return "";
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -3688,16 +3697,11 @@ async function saveAiSettings() {
 function buildExportRow(r) {
   const fmtDT = (iso) => {
     if (!iso) return "";
-    try {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return String(iso);
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const yyyy = d.getFullYear();
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mi = String(d.getMinutes()).padStart(2, "0");
-      return `${dd}-${mm}-${yyyy} ${hh}:${mi}`;
-    } catch (e) { return String(iso); }
+    // Wandklok (fake-UTC): slice de ISO-string i.p.v. new Date().getHours() (+1/+2u fout).
+    const s = String(iso);
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+    if (m) return `${m[3]}-${m[2]}-${m[1]} ${m[4]}:${m[5]}`;
+    return s;
   };
   const pauzeMin = (r.pauzeMinuten != null && r.pauzeMinuten !== "") ? Number(r.pauzeMinuten) : (r.pauze_minuten != null ? Number(r.pauze_minuten) : "");
   const gewerkteUren = (r.start && r.einde) ? durationHours(r.start, r.einde) : "";
