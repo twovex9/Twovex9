@@ -264,10 +264,24 @@
     });
   }
 
+  function docsContentEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    function sig(d) {
+      return [d.id, d.naam, d.type, d.vervaldatum, d.uploaddatum, d.laatstGewijzigd,
+        d.archived ? 1 : 0, d.fileName, d.fileMime, d.storagePath, d.storage_path].join("|");
+    }
+    var sa = a.map(sig).sort(), sb = b.map(sig).sort();
+    for (var i = 0; i < sa.length; i++) { if (sa[i] !== sb[i]) return false; }
+    return true;
+  }
+
   function list(incidentId) {
     return fetchByIncidentId(incidentId).then(function (docs) {
+      // Dispatch ALLEEN bij een echte wijziging (bron-guard, mirror van #481): voorkomt
+      // dat een onvoorwaardelijke dispatch bij élke read een refetch/re-render-loop voedt.
+      var changed = !docsContentEqual(listSync(incidentId), docs);
       cacheReplaceForIncident(incidentId, docs);
-      dispatchUpdated(incidentId);
+      if (changed) dispatchUpdated(incidentId);
       return docs;
     });
   }
