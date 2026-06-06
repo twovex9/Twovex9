@@ -1177,11 +1177,18 @@ function groupItems(items) {
 function sortLocatieGroepen(groups) {
   const rank = new Map();
   PLANNING_LOCATIE_VOLGORDE.forEach((name, idx) => rank.set(name.toLowerCase(), idx));
+  // Eén-op-één en Achterwacht horen ALTIJD als laatste twee — ook ná onbekende
+  // locaties (bijv. kantoor/satelliet die niet in de vaste volgorde staan).
+  const BIG = Number.MAX_SAFE_INTEGER;
+  const rangVan = (g) => {
+    const k = String(g || "").trim().toLowerCase();
+    if (k === ACHTERWACHT_GROEP.toLowerCase()) return BIG;       // allerlaatste
+    if (k === EEN_OP_EEN_GROEP.toLowerCase()) return BIG - 1;    // net daarvoor
+    return rank.has(k) ? rank.get(k) : BIG - 2;                  // onbekend: vóór de speciale groepen
+  };
   return [...groups].sort((a, b) => {
-    const ka = String(a || "").trim().toLowerCase();
-    const kb = String(b || "").trim().toLowerCase();
-    const ra = rank.has(ka) ? rank.get(ka) : Number.MAX_SAFE_INTEGER;
-    const rb = rank.has(kb) ? rank.get(kb) : Number.MAX_SAFE_INTEGER;
+    const ra = rangVan(a);
+    const rb = rangVan(b);
     if (ra !== rb) return ra - rb;
     return String(a || "").localeCompare(String(b || ""), "nl", { sensitivity: "base" });
   });
