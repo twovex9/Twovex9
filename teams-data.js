@@ -43,6 +43,7 @@
       team_id: row.team_id,
       rol_in_team: row.rol_in_team || "lid",
       aanmaakdatum: row.aanmaakdatum,
+      bron: "handmatig",
     };
   }
 
@@ -166,18 +167,65 @@
     return found ? Object.assign({}, found) : null;
   }
 
+  // ── Leden afgeleid uit locatie ───────────────────────────────────────────
+  // Bron-van-waarheid: een team met een locatie krijgt zijn leden automatisch
+  // uit de medewerkers die deze locatie in hun `locatiesSelected` hebben staan
+  // (= de HR-locatiekoppeling). Zo blijft de teamledenlijst altijd in sync met
+  // HR zonder dubbele data. Teams zonder locatie (bv. Ambulant Extern, WLZ)
+  // gebruiken alleen handmatige lidmaatschappen uit `medewerker_teams`.
+  // locatiesDB heeft géén getByIdSync → naam opzoeken via getAllSync.
+  function locatieNaamById(locatieId) {
+    if (!locatieId || !global.locatiesDB || !global.locatiesDB.getAllSync) return null;
+    var s = String(locatieId);
+    var hit = (global.locatiesDB.getAllSync() || []).find(function (l) { return l && String(l.id) === s; });
+    return hit && hit.naam ? hit.naam : null;
+  }
+
+  function deriveLocationMemberIds(team) {
+    if (!team || !team.locatieId) return [];
+    var naam = locatieNaamById(team.locatieId);
+    if (!naam) return [];
+    if (!global.medewerkersDB || !global.medewerkersDB.getAllSync) return [];
+    var target = String(naam).trim().toLowerCase();
+    var ids = [];
+    (global.medewerkersDB.getAllSync() || []).forEach(function (m) {
+      if (!m || m.archived) return;
+      var sel = Array.isArray(m.locatiesSelected) ? m.locatiesSelected : null;
+      if (!sel) return;
+      var match = sel.some(function (x) { return String(x || "").trim().toLowerCase() === target; });
+      if (match) ids.push(m.id);
+    });
+    return ids;
+  }
+
   function getMembersSync(teamId) {
     if (!teamId) return [];
     var s = String(teamId);
-    return readCache(MEMBERS_CACHE_KEY).filter(function (m) { return m && String(m.team_id) === s; });
+    var team = getByIdSync(teamId);
+    var result = [];
+    var seen = {};
+    // 1) Afgeleid uit locatie (automatisch, read-only in de UI).
+    deriveLocationMemberIds(team).forEach(function (mid) {
+      if (seen[mid]) return;
+      seen[mid] = true;
+      result.push({ medewerker_id: mid, team_id: s, rol_in_team: "lid", bron: "locatie" });
+    });
+    // 2) Handmatig toegevoegde leden uit medewerker_teams (extra of niet-locatie-teams).
+    readCache(MEMBERS_CACHE_KEY).forEach(function (m) {
+      if (!m || String(m.team_id) !== s) return;
+      if (seen[m.medewerker_id]) return; // al via locatie → niet dubbel tellen
+      seen[m.medewerker_id] = true;
+      result.push(Object.assign({}, m, { bron: "handmatig" }));
+    });
+    return result;
   }
 
   function getTeamsForMedewerkerSync(medewerkerId) {
     if (!medewerkerId) return [];
     var s = String(medewerkerId);
-    var memberships = readCache(MEMBERS_CACHE_KEY).filter(function (m) { return m && String(m.medewerker_id) === s; });
-    var teamIds = memberships.map(function (m) { return m.team_id; });
-    return readCache(CACHE_KEY).filter(function (t) { return t && teamIds.indexOf(t.id) >= 0; });
+    return readCache(CACHE_KEY).filter(function (t) {
+      return t && getMembersSync(t.id).some(function (m) { return String(m.medewerker_id) === s; });
+    });
   }
 
   async function addMember(teamId, medewerkerId, rol) {
