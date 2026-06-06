@@ -371,10 +371,25 @@
     });
   }
 
+  function docsContentEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    function sig(d) {
+      return [d.id, d.naam, d.type, d.vervaldatum, d.uploaddatum, d.laatstGewijzigd,
+        d.archived ? 1 : 0, d.fileName, d.fileMime, d.storagePath, d.storage_path].join("|");
+    }
+    var sa = a.map(sig).sort(), sb = b.map(sig).sort();
+    for (var i = 0; i < sa.length; i++) { if (sa[i] !== sb[i]) return false; }
+    return true;
+  }
+
   function list(clientId) {
     return fetchByClientId(clientId).then(function (docs) {
+      // Dispatch ALLEEN bij een echte wijziging (bron-guard, mirror van #481): een
+      // onvoorwaardelijke dispatch bij élke read voedt refetch/re-render-loops bij een
+      // consument die op dit event opnieuw list()/rendert (scroll-jump-anti-patroon).
+      var changed = !docsContentEqual(listSync(clientId), docs);
       cacheReplaceForClient(clientId, docs);
-      dispatchUpdated(clientId);
+      if (changed) dispatchUpdated(clientId);
       // Migreer eventuele legacy base64-rijen op de achtergrond. Dit is
       // best-effort en blokkeert de UI niet.
       docs.forEach(function (d) {
