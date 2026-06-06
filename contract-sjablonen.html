@@ -216,9 +216,13 @@
         <label class="modal-label" for="cs-edit-type">Type</label>
         <select id="cs-edit-type" class="modal-input">
           <option value="arbeidsovereenkomst">Arbeidsovereenkomst (loondienst)</option>
+          <option value="bbl">BBL-arbeidsovereenkomst</option>
           <option value="opdracht">Overeenkomst van opdracht (ZZP)</option>
           <option value="stage">Stageovereenkomst</option>
           <option value="oproep">Oproepovereenkomst</option>
+          <option value="geldlening">Geldleningsovereenkomst</option>
+          <option value="bruikleen">Bruikleenovereenkomst</option>
+          <option value="reglement">Personeelsreglement</option>
           <option value="overig">Overig</option>
         </select>
 
@@ -227,7 +231,7 @@
 
         <label class="modal-label" for="cs-edit-body">Contracttekst</label>
         <textarea id="cs-edit-body" class="modal-input cs-body-textarea" rows="14" placeholder="Typ hier de contracttekst met invulvelden zoals {{volledige_naam}}…"></textarea>
-        <p class="cs-merge-hint">Invulvelden (worden bij het opstellen automatisch ingevuld): <code>{{volledige_naam}}</code> <code>{{voornaam}}</code> <code>{{achternaam}}</code> <code>{{functie}}</code> <code>{{werkzaamheden}}</code> <code>{{startdatum}}</code> <code>{{contractduur}}</code> <code>{{uren}}</code> <code>{{tarief}}</code> <code>{{schaal}}</code> <code>{{locatie}}</code> <code>{{datum_vandaag}}</code></p>
+        <p class="cs-merge-hint">Invulvelden (automatisch ingevuld vanuit de medewerker, of als invul-streep getoond als leeg). Persoonlijk: <code>{{volledige_naam}}</code> <code>{{geboortedatum}}</code> <code>{{straat_huisnummer}}</code> <code>{{postcode}}</code> <code>{{woonplaats}}</code> <code>{{functie}}</code> <code>{{iban}}</code> <code>{{bsn}}</code>. Contract: <code>{{startdatum}}</code> <code>{{einddatum}}</code> <code>{{contractduur}}</code> <code>{{uren}}</code> <code>{{dagen}}</code> <code>{{schaal}}</code> <code>{{periodiek}}</code> <code>{{salaris}}</code> <code>{{tarief}}</code> <code>{{werkzaamheden}}</code> <code>{{proeftijd}}</code>. ZZP: <code>{{bedrijfsnaam}}</code> <code>{{kvk_nummer}}</code> <code>{{btw_nummer}}</code> <code>{{vestigingsadres}}</code> <code>{{vestiging_postcode}}</code> <code>{{vestigingsplaats}}</code>. Opleiding: <code>{{opleiding}}</code> <code>{{onderwijsinstelling}}</code> <code>{{studentnummer}}</code> <code>{{stagebegeleider}}</code> <code>{{stagedocent}}</code>. Lening/bruikleen: <code>{{hoofdsom}}</code> <code>{{hoofdsom_voluit}}</code> <code>{{maandbedrag}}</code> <code>{{eerste_inhouding}}</code> <code>{{bedrijfsmiddelen}}</code>. Overig: <code>{{datum_vandaag}}</code></p>
 
         <input type="hidden" id="cs-edit-id" />
         <div class="modal-footer">

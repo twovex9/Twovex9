@@ -25071,6 +25071,18 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   max-height: 420px;
   overflow-y: auto;
 }
+.emp-contract-vargrid-hint {
+  margin: 0 0 10px;
+  font-size: var(--font-table-head);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.emp-cvar-full { grid-column: 1 / -1; }
+.emp-contract-novars {
+  margin: 4px 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
 @media (max-width: 860px) {
   .emp-contract-body { grid-template-columns: 1fr; }
   .emp-contract-vargrid { grid-template-columns: 1fr; }

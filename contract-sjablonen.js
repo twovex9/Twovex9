@@ -14,9 +14,13 @@
 
   var TYPE_LABELS = {
     arbeidsovereenkomst: "Arbeidsovereenkomst",
+    bbl: "BBL-arbeidsovereenkomst",
     opdracht: "Overeenkomst van opdracht (ZZP)",
     stage: "Stageovereenkomst",
     oproep: "Oproepovereenkomst",
+    geldlening: "Geldleningsovereenkomst",
+    bruikleen: "Bruikleenovereenkomst",
+    reglement: "Personeelsreglement",
     overig: "Overig",
   };
 

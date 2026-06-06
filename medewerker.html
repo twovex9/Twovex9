@@ -1916,17 +1916,8 @@
           <label class="modal-label" for="emp-contract-sjabloon">Sjabloon</label>
           <select id="emp-contract-sjabloon" class="modal-input"></select>
 
-          <div class="emp-contract-vargrid">
-            <label class="modal-label">Functie<input type="text" id="emp-contract-var-functie" class="modal-input" autocomplete="off"></label>
-            <label class="modal-label">Startdatum<input type="date" id="emp-contract-var-startdatum" class="modal-input"></label>
-            <label class="modal-label">Contractduur<input type="text" id="emp-contract-var-contractduur" class="modal-input" placeholder="Bijv. 12 maanden (bepaalde tijd)" autocomplete="off"></label>
-            <label class="modal-label">Uren per week<input type="text" id="emp-contract-var-uren" class="modal-input" autocomplete="off"></label>
-            <label class="modal-label">Tarief (&euro;/uur)<input type="text" id="emp-contract-var-tarief" class="modal-input" autocomplete="off"></label>
-            <label class="modal-label">Schaal<input type="text" id="emp-contract-var-schaal" class="modal-input" autocomplete="off"></label>
-            <label class="modal-label">Locatie<input type="text" id="emp-contract-var-locatie" class="modal-input" autocomplete="off"></label>
-          </div>
-          <label class="modal-label" for="emp-contract-var-werkzaamheden">Werkzaamheden</label>
-          <textarea id="emp-contract-var-werkzaamheden" class="modal-input emp-contract-werkz" rows="2"></textarea>
+          <p class="emp-contract-vargrid-hint">De velden hieronder worden automatisch ingevuld met de gegevens van de medewerker. Pas het maatwerk (zoals uren, tarief, salaris) aan waar nodig; lege velden verschijnen als invul-streep in het contract.</p>
+          <div class="emp-contract-vargrid" id="emp-contract-vargrid"></div>
         </div>
         <div class="emp-contract-preview-wrap">
           <div class="emp-contract-preview-label">Voorbeeld contract</div>
