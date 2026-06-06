@@ -1,0 +1,12 @@
+-- Beveilig backup-tabel _medewerkers_data_bak_voor_bs2status_20260606 (gemaakt
+-- 2026-06-06 als snapshot vóór de BS2-status-import). De tabel bevat medewerker-data
+-- en stond met RLS UIT in het public-schema -> daardoor leesbaar via PostgREST met de
+-- anon/authenticated key (privacylek; security-advisor ERROR rls_disabled_in_public).
+--
+-- Fix: RLS AAN, bewust GEEN policies -> DENY-ALL voor anon/authenticated. Alleen de
+-- service_role (RLS-bypass) kan de backup nog benaderen. Consistent met de eerdere
+-- migraties enable_rls_on_backup_tables (2026-06-01) en enable_rls_juni_backup_tabellen
+-- (2026-06-05).
+--
+-- DIEHARD: niets verwijderd of leeggemaakt; alle 102 backup-rijen blijven volledig intact.
+alter table public._medewerkers_data_bak_voor_bs2status_20260606 enable row level security;
