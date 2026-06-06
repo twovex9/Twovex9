@@ -186,11 +186,17 @@
           <div class="sa-export-head">
             <div>
               <h3>Maandelijkse export</h3>
-              <p class="emp-section-sub">Genereer een CSV voor externe salarisverwerking.</p>
+              <p class="emp-section-sub">Download de maandexport of verstuur hem direct naar de salarisadministratie.</p>
             </div>
-            <div class="sa-chip" id="sa-alert-chip" hidden>
-              <span class="sa-chip-dot" aria-hidden="true"></span>
-              Onvolledige gegevens
+            <div class="sa-head-right">
+              <button type="button" class="btn-outline btn-with-ico" id="sa-mail-settings-btn" title="E-mailinstellingen voor verzending naar de salarisadministratie">
+                <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15z"/></svg>
+                E-mailinstellingen
+              </button>
+              <div class="sa-chip" id="sa-alert-chip" hidden>
+                <span class="sa-chip-dot" aria-hidden="true"></span>
+                Onvolledige gegevens
+              </div>
             </div>
           </div>
 
@@ -233,14 +239,18 @@
                   <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
                   Dienst-gebaseerde export
                 </button>
-                <button type="button" class="btn-primary btn-with-ico" id="sa-generate-btn">
+                <button type="button" class="btn-outline btn-with-ico" id="sa-generate-btn" title="Genereer de Excel (per medewerker) en download hem">
                   <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
-                  Export genereren
+                  Export downloaden
+                </button>
+                <button type="button" class="btn-primary btn-with-ico" id="sa-send-btn" title="Genereer de Excel en mail hem direct naar de salarisadministratie">
+                  <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Verstuur naar salarisadministratie
                 </button>
               </div>
             </div>
             <label class="sa-dl-now">
-              <input type="checkbox" id="sa-download-now" />
+              <input type="checkbox" id="sa-download-now" checked />
               <span>Na genereren direct downloaden</span>
             </label>
           </div>
@@ -362,6 +372,81 @@
     </div>
   </div>
 
+  <!-- E-mailinstellingen voor verzending naar de salarisadministratie -->
+  <div class="emp-verzuim-modal-overlay" id="sa-mail-modal" style="display:none" aria-hidden="true">
+    <div class="emp-verzuim-modal sa-mail-modal-box" style="width:600px;max-width:94vw">
+      <div class="emp-verzuim-modal-head">
+        <h3 id="sa-mail-modal-title">E-mailinstellingen salarisadministratie</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="sa-mail-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <form id="sa-mail-form" novalidate>
+        <div class="emp-verzuim-modal-body">
+          <p class="sa-mail-hint">De knop <strong>“Verstuur naar salarisadministratie”</strong> mailt de Excel automatisch als bijlage naar onderstaand adres. Gebruik <code>{periode}</code>, <code>{aantal}</code> en <code>{afzender}</code> in onderwerp/bericht.</p>
+
+          <div class="sa-mail-section-title">Bericht</div>
+          <div class="sa-mail-grid">
+            <label class="emp-verzuim-modal-field">
+              <span>Ontvanger (e-mail) *</span>
+              <input type="email" id="sa-mail-ontvanger" class="comp-modal-input" placeholder="salaris@voorbeeld.nl" />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>CC (optioneel)</span>
+              <input type="text" id="sa-mail-cc" class="comp-modal-input" placeholder="kopie@voorbeeld.nl" />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Afzender naam</span>
+              <input type="text" id="sa-mail-afzender-naam" class="comp-modal-input" placeholder="Embrace the Future" />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Afzender e-mail *</span>
+              <input type="email" id="sa-mail-afzender-email" class="comp-modal-input" placeholder="hr@embracethefuture.nl" />
+            </label>
+          </div>
+          <label class="emp-verzuim-modal-field">
+            <span>Onderwerp</span>
+            <input type="text" id="sa-mail-onderwerp" class="comp-modal-input" />
+          </label>
+          <label class="emp-verzuim-modal-field">
+            <span>Bericht</span>
+            <textarea id="sa-mail-bericht" class="comp-modal-input" rows="4"></textarea>
+          </label>
+
+          <div class="sa-mail-section-title">SMTP-server (Office 365 / eigen mailserver)</div>
+          <div class="sa-mail-grid">
+            <label class="emp-verzuim-modal-field">
+              <span>SMTP-host *</span>
+              <input type="text" id="sa-mail-smtp-host" class="comp-modal-input" placeholder="smtp.office365.com" />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Poort *</span>
+              <input type="number" id="sa-mail-smtp-port" class="comp-modal-input" placeholder="587" min="1" max="65535" />
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Beveiliging</span>
+              <select id="sa-mail-smtp-secure" class="comp-modal-input">
+                <option value="starttls">STARTTLS (poort 587)</option>
+                <option value="ssl">SSL/TLS (poort 465)</option>
+              </select>
+            </label>
+            <label class="emp-verzuim-modal-field">
+              <span>Gebruikersnaam *</span>
+              <input type="text" id="sa-mail-smtp-user" class="comp-modal-input" placeholder="hr@embracethefuture.nl" autocomplete="off" />
+            </label>
+          </div>
+          <label class="emp-verzuim-modal-field">
+            <span>Wachtwoord <span id="sa-mail-pass-status" class="sa-mail-pass-status"></span></span>
+            <input type="password" id="sa-mail-smtp-pass" class="comp-modal-input" placeholder="••••••••" autocomplete="new-password" />
+          </label>
+          <p class="sa-mail-hint sa-mail-hint--secure">Het wachtwoord wordt veilig opgeslagen (alleen de verzendfunctie kan het lezen) en wordt nooit teruggetoond. Laat dit veld leeg om het huidige wachtwoord te behouden.</p>
+        </div>
+        <div class="emp-verzuim-modal-footer">
+          <button type="button" class="emp-verzuim-modal-cancel" id="sa-mail-cancel">Annuleren</button>
+          <button type="submit" class="emp-verzuim-modal-submit" id="sa-mail-save">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=24e10b0"></script>
   <script src="sidebar-nav.js?v=24e10b0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -388,6 +473,7 @@
   <script src="verlof-data.js?v=24e10b0"></script>
   <script src="comp-feestdagen-data.js?v=24e10b0"></script>
   <script src="kilometer-declaraties-data.js?v=24e10b0"></script>
+  <script src="planning-data.js?v=24e10b0"></script>
   <script src="saladmin-data.js?v=24e10b0"></script>
   <script src="ort-engine.js?v=24e10b0"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>

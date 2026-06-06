@@ -506,7 +506,10 @@
       if (window.planningDB && typeof window.planningDB.getAllSync === "function") {
         planning = window.planningDB.getAllSync() || [];
       } else {
-        var raw = localStorage.getItem("planning_items_v1");
+        // Fallback wanneer planning-data.js (nog) niet geladen is. De canonieke
+        // localStorage-cache-key van planning-data.js is "planningItems" (NIET
+        // "planning_items_v1" — die bestaat niet en gaf een leeg document).
+        var raw = localStorage.getItem("planningItems");
         if (raw) {
           var parsed = JSON.parse(raw);
           planning = Array.isArray(parsed) ? parsed : [];
@@ -535,7 +538,7 @@
       rows.push(toCsvRow([
         "(geen diensten in deze periode)", "", "", "", "", "", "", "", "", "", "",
       ]));
-      return rows.join("\n");
+      return { csv: rows.join("\n"), count: 0 };
     }
 
     var fmtNumber = function (n) {
@@ -551,7 +554,7 @@
         if (de && !isNaN(de.getTime())) {
           hours = Math.max(0, (de - ds) / 3.6e6);
         }
-        var pauze = Math.max(0, Number(p.pauzeUren) || 0);
+        var pauze = Math.max(0, Number(p.pauze_uren != null ? p.pauze_uren : p.pauzeUren) || 0);
         var net = Math.max(0, hours - pauze);
         var bruto = net * TARIEF;
         rows.push(toCsvRow([
@@ -571,7 +574,7 @@
         ]));
       } catch (e) { /* skip */ }
     });
-    return rows.join("\n");
+    return { csv: rows.join("\n"), count: filtered.length };
   }
 
   /* ── Hoofdtabs ───────────────────────────────────────── */
@@ -832,7 +835,7 @@
     writeHistory(hist.slice(0, 50));
     renderHistory();
 
-    var willDownloadNow = !!(nowDl && nowDl.checked) || true; // Loket-export is altijd download-bedoeld
+    var willDownloadNow = !nowDl || nowDl.checked; // respecteert de checkbox (default aan)
     if (willDownloadNow) {
       try { downloadXlsxWorkbook(built.filename, built.workbook); }
       catch (err) {
@@ -860,21 +863,23 @@
     var month = monthSel ? monthSel.value : "";
     var year = yearSel ? yearSel.value : "";
     var period = fmtPeriod(month, year);
-    var csv = buildShiftCsvForPeriod(period, month, year);
+    var built = buildShiftCsvForPeriod(period, month, year);
+    var csv = built.csv;
+    var shiftCount = built.count;
     var hist = readHistory();
     var entry = {
       id: "exp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
       createdAt: new Date().toISOString(),
       period: period + " (dienst-gebaseerd)",
-      employees: 0,
-      by: "Vennie Küster",
+      employees: shiftCount,
+      by: getCurrentUserDisplayName(),
       csv: csv,
       type: "shift",
     };
     hist.unshift(entry);
     writeHistory(hist.slice(0, 50));
     renderHistory();
-    var willDownloadNow = !!(nowDl && nowDl.checked);
+    var willDownloadNow = !nowDl || nowDl.checked;
     if (willDownloadNow) {
       var fname = "salarisadministratie_dienst_" + period.replace(/\s+/g, "_") + ".csv";
       downloadText(fname, csv, "text/csv;charset=utf-8");
@@ -891,6 +896,184 @@
   if (genBtn) genBtn.addEventListener("click", generateExport);
   var shiftBtn = document.getElementById("sa-generate-shift-btn");
   if (shiftBtn) shiftBtn.addEventListener("click", generateShiftExport);
+
+  /* ── Verzenden naar salarisadministratie (SMTP via edge function) ─────── */
+  (function mailModule() {
+    var sendBtn = document.getElementById("sa-send-btn");
+    var settingsBtn = document.getElementById("sa-mail-settings-btn");
+    var modal = document.getElementById("sa-mail-modal");
+    var form = document.getElementById("sa-mail-form");
+    var closeBtn = document.getElementById("sa-mail-close");
+    var cancelBtn = document.getElementById("sa-mail-cancel");
+    var passStatus = document.getElementById("sa-mail-pass-status");
+    if (!modal || !form) return;
+    var F = {
+      ontvanger: document.getElementById("sa-mail-ontvanger"),
+      cc: document.getElementById("sa-mail-cc"),
+      afzNaam: document.getElementById("sa-mail-afzender-naam"),
+      afzEmail: document.getElementById("sa-mail-afzender-email"),
+      onderwerp: document.getElementById("sa-mail-onderwerp"),
+      bericht: document.getElementById("sa-mail-bericht"),
+      host: document.getElementById("sa-mail-smtp-host"),
+      port: document.getElementById("sa-mail-smtp-port"),
+      secure: document.getElementById("sa-mail-smtp-secure"),
+      user: document.getElementById("sa-mail-smtp-user"),
+      pass: document.getElementById("sa-mail-smtp-pass"),
+    };
+
+    function fb(type, title, msg) {
+      if (typeof window.showActionFeedback === "function") window.showActionFeedback(type, title, msg);
+      else showToast(title + (msg ? " — " + msg : ""));
+    }
+
+    function openModal() {
+      modal.style.display = "";
+      modal.setAttribute("aria-hidden", "false");
+      loadConfig();
+    }
+    function closeModal() {
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    async function loadConfig() {
+      if (!window.besaSupabase) return;
+      try {
+        var res = await window.besaSupabase.rpc("saladmin_mail_config_get");
+        if (res.error) throw res.error;
+        var c = res.data || {};
+        F.ontvanger.value = c.ontvanger || "";
+        F.cc.value = c.cc || "";
+        F.afzNaam.value = c.afzender_naam || "";
+        F.afzEmail.value = c.afzender_email || "";
+        F.onderwerp.value = c.onderwerp || "";
+        F.bericht.value = c.bericht || "";
+        F.host.value = c.smtp_host || "";
+        F.port.value = c.smtp_port || 587;
+        F.secure.value = c.smtp_secure || "starttls";
+        F.user.value = c.smtp_user || "";
+        F.pass.value = "";
+        if (passStatus) {
+          passStatus.textContent = c.wachtwoord_ingesteld ? "✓ ingesteld" : "— nog niet ingesteld";
+          passStatus.style.color = c.wachtwoord_ingesteld ? "#16a34a" : "var(--text-muted)";
+        }
+      } catch (err) {
+        fb("error", "Instellingen laden mislukt", err && err.message ? err.message : String(err));
+      }
+    }
+
+    async function saveConfig(e) {
+      e.preventDefault();
+      if (!window.besaSupabase) return;
+      var saveBtn = document.getElementById("sa-mail-save");
+      if (saveBtn) saveBtn.disabled = true;
+      try {
+        var payload = {
+          p_ontvanger: F.ontvanger.value.trim(),
+          p_cc: F.cc.value.trim(),
+          p_onderwerp: F.onderwerp.value,
+          p_bericht: F.bericht.value,
+          p_afzender_naam: F.afzNaam.value.trim(),
+          p_afzender_email: F.afzEmail.value.trim(),
+          p_smtp_host: F.host.value.trim(),
+          p_smtp_port: parseInt(F.port.value, 10) || 587,
+          p_smtp_secure: F.secure.value || "starttls",
+          p_smtp_user: F.user.value.trim(),
+          p_smtp_pass: F.pass.value, // leeg = behoud bestaand wachtwoord
+        };
+        var res = await window.besaSupabase.rpc("saladmin_mail_config_zet", payload);
+        if (res.error) throw res.error;
+        fb("saved", "E-mailinstellingen opgeslagen");
+        closeModal();
+      } catch (err) {
+        fb("error", "Opslaan mislukt", err && err.message ? err.message : String(err));
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    }
+
+    async function readInvokeError(res) {
+      var detail = "";
+      try {
+        var ctx = res.error && res.error.context;
+        if (ctx && typeof ctx.json === "function") {
+          var j = await ctx.json();
+          if (j && j.error) detail = j.error;
+        }
+      } catch (e) { /* */ }
+      return detail || (res.error && res.error.message) || "Onbekende fout";
+    }
+
+    async function sendExport() {
+      if (typeof window.XLSX === "undefined") { fb("error", "Versturen mislukt", "SheetJS niet geladen — vernieuw de pagina."); return; }
+      if (!window.besaSupabase) { fb("error", "Versturen mislukt", "Supabase niet geladen."); return; }
+      var month = monthSel ? monthSel.value : (new Date().getMonth() + 1);
+      var year = yearSel ? yearSel.value : new Date().getFullYear();
+      var period = fmtPeriod(month, year);
+      var built;
+      try { built = buildLoketWorkbookForPeriod(month, year); }
+      catch (err) { fb("error", "Export bouwen mislukt", err && err.message ? err.message : String(err)); return; }
+      var b64;
+      try { b64 = window.XLSX.write(built.workbook, { bookType: "xlsx", type: "base64" }); }
+      catch (err) { fb("error", "Export coderen mislukt", String(err)); return; }
+
+      var origTxt = sendBtn ? sendBtn.innerHTML : "";
+      if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "Bezig met versturen…"; }
+      try {
+        var res = await window.besaSupabase.functions.invoke("salarisexport-mail", {
+          body: {
+            xlsx_base64: b64,
+            filename: built.filename,
+            periode: period,
+            aantal: built.summary.employeeCount,
+          },
+        });
+        if (res.error) throw new Error(await readInvokeError(res));
+        var data = res.data || {};
+        if (data && data.error) throw new Error(data.error);
+
+        var hist = readHistory();
+        hist.unshift({
+          id: "exp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
+          createdAt: new Date().toISOString(),
+          period: period + " (verstuurd → " + (data.verstuurd_naar || "salarisadministratie") + ")",
+          employees: built.summary.employeeCount,
+          by: getCurrentUserDisplayName(),
+          type: "mail-sent",
+          filename: built.filename,
+          month: built.summary.monthInt, year: built.summary.yearInt,
+          csv: null,
+        });
+        writeHistory(hist.slice(0, 50));
+        renderHistory();
+        fb("info", "Verstuurd naar salarisadministratie",
+          "“" + period + "” (" + built.summary.employeeCount + " medewerkers) is gemaild naar " +
+          (data.verstuurd_naar || "") + (data.cc ? " (cc " + data.cc + ")" : "") + ".");
+      } catch (err) {
+        var m = err && err.message ? err.message : String(err);
+        if (/onvolledig|ontbreek|instellingen|stel ze eerst/i.test(m)) {
+          fb("error", "E-mailinstellingen nodig", m);
+          openModal();
+        } else {
+          fb("error", "Versturen mislukt", m);
+        }
+      } finally {
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = origTxt; }
+      }
+    }
+
+    if (settingsBtn) settingsBtn.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && getComputedStyle(modal).display !== "none" && modal.getAttribute("aria-hidden") !== "true") {
+        closeModal();
+      }
+    });
+    form.addEventListener("submit", saveConfig);
+    if (sendBtn) sendBtn.addEventListener("click", sendExport);
+  })();
 
   /* ── ORT ─────────────────────────────────────────────── */
   (function ortModule() {

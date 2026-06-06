@@ -2730,6 +2730,60 @@ h1 {
   flex-wrap: wrap;
 }
 
+.sa-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* E-mailinstellingen-modal (verzending salarisadministratie) */
+.sa-mail-modal-box .emp-verzuim-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.sa-mail-section-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.sa-mail-section-title:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.sa-mail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.sa-mail-hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.sa-mail-hint code {
+  background: var(--border);
+  color: var(--text);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11.5px;
+}
+.sa-mail-pass-status {
+  font-weight: 600;
+  font-size: 11.5px;
+  color: #16a34a;
+}
+@media (max-width: 560px) {
+  .sa-mail-grid { grid-template-columns: 1fr; }
+}
+
 .sa-chip {
   display: inline-flex;
   align-items: center;
