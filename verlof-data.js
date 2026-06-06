@@ -83,11 +83,19 @@
     return payload;
   }
 
+  // _mem = in-memory bron-van-waarheid (quota-proof). Bij volle localStorage faalt setItem
+  // stil; dan blijven aanvragen via _mem leesbaar — kritiek voor de 2-staps goedkeuring
+  // (teamleider -> HR), die anders op een lege getByIdSync zou terugvallen.
+  var _mem = null;
   function readCache() {
-    try { var raw = localStorage.getItem(CACHE_KEY); return raw ? (JSON.parse(raw) || []) : []; } catch (e) { return []; }
+    if (_mem != null) return _mem;
+    try { var raw = localStorage.getItem(CACHE_KEY); _mem = raw ? (JSON.parse(raw) || []) : []; } catch (e) { _mem = []; }
+    if (!Array.isArray(_mem)) _mem = [];
+    return _mem;
   }
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    _mem = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* */ }
   }
 
   function sortItems(items) {

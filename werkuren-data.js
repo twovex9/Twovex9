@@ -206,6 +206,9 @@
   (function () {
     var TABLE = "werkuren_labels";
     var CACHE_KEY = "werkuren_labels_v1";
+    // In-memory canonieke cache (quota-proof). localStorage is op deze suite
+    // vaak vol → writeCache faalt stil; _mem is dan de enige betrouwbare bron.
+    var _memLabels = null;
     function generateId() { return "lbl_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
     function rowToObj(row) {
       if (!row) return null;
@@ -230,13 +233,13 @@
       var c = readCache(CACHE_KEY);
       if (c.length) dispatchEvt("besa:werkuren-labels-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenLabelsDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "refresh"); return items; }
-    function getAllSync() { return readCache(CACHE_KEY); }
+    async function refresh() { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "refresh"); return items; }
+    function getAllSync() { return _memLabels != null ? _memLabels : readCache(CACHE_KEY); }
     function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
     async function add(rec) {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
@@ -249,9 +252,9 @@
       var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
-      var cache = readCache(CACHE_KEY); cache.push(obj);
+      var cache = getAllSync().slice(); cache.push(obj);
       cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
-      writeCache(CACHE_KEY, cache);
+      _memLabels = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-labels-updated", "add");
       return obj;
     }
@@ -265,11 +268,11 @@
       var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
-      var cache = readCache(CACHE_KEY);
+      var cache = getAllSync().slice();
       var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
       if (idx >= 0) cache[idx] = obj; else cache.push(obj);
       cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
-      writeCache(CACHE_KEY, cache);
+      _memLabels = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-labels-updated", "update");
       return obj;
     }
@@ -279,8 +282,8 @@
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
       var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
       if (res.error) throw res.error;
-      var cache = readCache(CACHE_KEY).filter(function (r) { return r && String(r.id) !== String(id); });
-      writeCache(CACHE_KEY, cache);
+      var cache = getAllSync().filter(function (r) { return r && String(r.id) !== String(id); });
+      _memLabels = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-labels-updated", "remove");
       return true;
     }
@@ -298,6 +301,10 @@
   (function () {
     var TABLE = "werkuren_vergrendeld";
     var CACHE_KEY = "werkuren_vergrendeld_v1";
+    // In-memory canonieke cache (quota-proof). Cruciaal hier: bij volle
+    // localStorage zou isLockedSync uit een lege readCache onterecht false
+    // geven → een vergrendelde maand lijkt bewerkbaar. _mem voorkomt dat.
+    var _memLock = null;
     function generateId() { return "lk_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
     function rowToObj(row) {
       return row ? {
@@ -317,15 +324,15 @@
       var c = readCache(CACHE_KEY);
       if (c.length) dispatchEvt("besa:werkuren-vergrendeld-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenVergrendeldDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "refresh"); return items; }
-    function getAllSync() { return readCache(CACHE_KEY); }
+    async function refresh() { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "refresh"); return items; }
+    function getAllSync() { return _memLock != null ? _memLock : readCache(CACHE_KEY); }
     function isLockedSync(medewerkerId, year, month) {
-      return readCache(CACHE_KEY).some(function (r) {
+      return getAllSync().some(function (r) {
         return r && String(r.medewerker_id) === String(medewerkerId)
           && Number(r.jaar) === Number(year) && Number(r.maand) === Number(month);
       });
@@ -342,8 +349,8 @@
       };
       var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
-      var cache = readCache(CACHE_KEY); cache.push(rowToObj(res.data));
-      writeCache(CACHE_KEY, cache);
+      var cache = getAllSync().slice(); cache.push(rowToObj(res.data));
+      _memLock = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-vergrendeld-updated", "lock");
       return rowToObj(res.data);
     }
@@ -352,11 +359,11 @@
       var res = await global.besaSupabase.from(TABLE).delete()
         .eq("medewerker_id", medewerkerId).eq("jaar", year).eq("maand", month);
       if (res.error) throw res.error;
-      var cache = readCache(CACHE_KEY).filter(function (r) {
+      var cache = getAllSync().filter(function (r) {
         return !(r && String(r.medewerker_id) === String(medewerkerId)
           && Number(r.jaar) === Number(year) && Number(r.maand) === Number(month));
       });
-      writeCache(CACHE_KEY, cache);
+      _memLock = cache; writeCache(CACHE_KEY, cache);
       dispatchEvt("besa:werkuren-vergrendeld-updated", "unlock");
       return true;
     }

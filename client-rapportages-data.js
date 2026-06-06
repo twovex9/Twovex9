@@ -38,16 +38,41 @@
 
   function isoNow() { return new Date().toISOString(); }
 
+  // In-memory cache is ALTIJD de canonieke bron na bootstrap (volledige data,
+  // incl. het zware vrijtekst-veld `inhoud`). localStorage is enkel een
+  // snelle-boot-kopie en kan stil falen bij volle quota — dan blijft `_mem`
+  // de betrouwbare bron (quota-proof). Zie quota-fix medewerkers/werkuren.
+  var _mem = null;
+
+  // Strip het zware vrijtekst-veld `inhoud` ALLEEN uit de localStorage-kopie
+  // (niet uit `_mem` en niet uit de DB-payload) zodat de quota niet onnodig
+  // volloopt. `_mem` houdt de volledige `inhoud`.
+  function slimForCache(items) {
+    return (Array.isArray(items) ? items : []).map(function (r) {
+      if (!r || typeof r !== "object") return r;
+      var c = Object.assign({}, r);
+      c.inhoud = "";
+      return c;
+    });
+  }
+
   function readCache() {
+    // _mem wint altijd — heeft de volledige data (incl. inhoud)
+    if (_mem != null) return _mem;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return [];
+      if (!raw) { _mem = []; return _mem; }
       var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
-    } catch (e) { return []; }
+      _mem = Array.isArray(p) ? p : [];
+      return _mem;
+    } catch (e) { _mem = []; return _mem; }
   }
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    var safe = Array.isArray(items) ? items : [];
+    // 1) IN-MEMORY: altijd volledig (geen quota-risico)
+    _mem = safe;
+    // 2) localStorage: geslankte kopie (zonder zware `inhoud`) voor snelle boot
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(slimForCache(safe))); } catch (e) { /* quota vol — _mem blijft canoniek */ }
   }
 
   function dispatchUpdated(source) {

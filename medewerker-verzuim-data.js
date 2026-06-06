@@ -43,17 +43,25 @@
 
   function isoNow() { return new Date().toISOString(); }
 
+  // In-memory bron-van-waarheid voor sync-reads. Bij volle localStorage-quota
+  // faalt setItem stil; zonder _mem zouden sync-getters dan een lege lijst
+  // teruggeven terwijl de data wél in Supabase staat. _mem voorkomt dat.
+  var _mem = null;
+
   function readCache() {
+    if (_mem != null) return _mem;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return [];
+      if (!raw) { _mem = []; return _mem; }
       var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
-    } catch (e) { return []; }
+      _mem = Array.isArray(p) ? p : [];
+      return _mem;
+    } catch (e) { _mem = []; return _mem; }
   }
 
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    _mem = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* */ }
   }
 
   function dispatchUpdated(source) {
