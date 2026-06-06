@@ -61,6 +61,12 @@ const DEFAULT_AFDELINGEN = [
 ];
 
 const GRID_ACCENT = ["#2563eb", "#16a34a", "#ca8a04", "#dc2626", "#7c3aed", "#db2777"];
+/** Vaste groep-kopjes voor 1-op-1/ambulant en achterwacht. Deze diensten worden
+ *  — los van hun woonlocatie — onder één eigen kop gebundeld (user-eis 2026-06-06):
+ *  alle 1-op-1's bij elkaar in één kopje, en de achterwacht helemaal onderaan
+ *  (1 persoon die verantwoordelijk is voor àlle locaties). */
+const EEN_OP_EEN_GROEP = "Eén op één / Ambulant";
+const ACHTERWACHT_GROEP = "Achterwacht";
 const PLANNING_LOCATIE_VOLGORDE = [
   "Openstaande diensten",
   "Breedstraat",
@@ -69,9 +75,9 @@ const PLANNING_LOCATIE_VOLGORDE = [
   "Voorburggracht",
   "Varnebroek",
   "Magdalenenstraat",
-  "Achterwacht",
-  "Ambulant Extern",
   "WLZ",
+  EEN_OP_EEN_GROEP,
+  ACHTERWACHT_GROEP,
 ];
 
 const filterState = {
@@ -518,48 +524,66 @@ function renderLeavePlaneHtml(dateObj) {
   return `<span class="planning-erm-leave-plane" title="${tooltip}" aria-label="${leaves.length} medewerker(s) op verlof"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.5 11.5-1.5-1.5-5 5-5-5-1.5 1.5 5 5-5 5 1.5 1.5 5-5 5 5 1.5-1.5-5-5z" style="display:none"/><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>${leaves.length > 1 ? `<span class="planning-erm-leave-count">${leaves.length}</span>` : ""}</span>`;
 }
 
-// F9: vaste diensttype-volgorde per user-eis (planning week/dag).
-// Eerst 5 verplichte types, dan 1-op-1 gegroepeerd per cliënt, dan rest
-// alfabetisch. Binnen elke groep: oplopend op start-tijd.
-const DIENSTTYPE_VASTE_VOLGORDE = [
-  "vroege dienst", "vroege",
-  "late dienst", "late",
-  "waakdienst", "waak", "wak-dienst",
-  "achterwacht",
-  // 1-op-1 = 5e groep maar wordt apart behandeld (groepering per cliënt).
-];
+// Vaste dagdeel-/diensttype-volgorde binnen een locatie (user-eis 2026-06-06):
+// Vroege dienst → Tussendienst → Late/avonddienst → Waakdienst → rest.
+// Achterwacht en 1-op-1/ambulant krijgen elk hun éigen kop-groep (zie getRowKey),
+// maar houden hier ook een rang: voor de lijst-view en als veilige fallback.
+// Binnen elke groep: 1-op-1 per cliënt, rest alfabetisch, daarna oplopend op start-tijd.
+const DIENSTRANG = {
+  VROEG: 0,
+  TUSSEN: 1,
+  LATE: 2,
+  WAAK: 3,
+  ACHTERWACHT: 4,
+  EEN_OP_EEN: 5,
+  REST: 6,
+};
+
+/** Herkent een 1-op-1/ambulante dienst aan het diensttype (bv. "Kiyaro 1 op 1"). */
+function isEenOpEenDienst(dt) {
+  const s = String(dt || "").trim().toLowerCase();
+  if (!s) return false;
+  return (
+    s.includes("1 op 1") ||
+    s === "1-op-1" ||
+    s === "1op1" ||
+    s === "een op een" ||
+    s.includes("ambulant")
+  );
+}
+
+/** Herkent de achterwacht-dienst aan het diensttype. */
+function isAchterwachtDienst(dt) {
+  return String(dt || "").trim().toLowerCase() === "achterwacht";
+}
+
 function diensttypeRangIndex(dt) {
   const s = String(dt || "").trim().toLowerCase();
-  if (!s) return DIENSTTYPE_VASTE_VOLGORDE.length + 2; // onbekend: na alles
-  // 1-op-1 expliciet check (groep 5)
-  if (s === "1 op 1" || s === "1-op-1" || s === "1op1" || s.indexOf("op 1") >= 0 || s === "een op een") {
-    return 4; // index 4 = "groep 5" (na achterwacht, vóór rest)
-  }
-  for (let i = 0; i < DIENSTTYPE_VASTE_VOLGORDE.length; i += 1) {
-    if (s === DIENSTTYPE_VASTE_VOLGORDE[i]) {
-      // Eerst alle varianten van Vroege → groep 0, Late → groep 1, etc.
-      if (i <= 1) return 0;
-      if (i <= 3) return 1;
-      if (i <= 6) return 2;
-      if (i === 7) return 3;
-    }
-  }
-  return DIENSTTYPE_VASTE_VOLGORDE.length + 1; // rest (Boventallig/Training/Tussendienst/Vergadering/MDO/...)
+  if (!s) return DIENSTRANG.REST + 1; // onbekend: helemaal achteraan
+  // 1-op-1 en achterwacht eerst herkennen (vóór de dagdeel-substrings),
+  // want een cliëntnaam in "<naam> 1 op 1" mag niet per ongeluk als dagdeel matchen.
+  if (isAchterwachtDienst(s)) return DIENSTRANG.ACHTERWACHT;
+  if (isEenOpEenDienst(s)) return DIENSTRANG.EEN_OP_EEN;
+  if (s.includes("vroeg")) return DIENSTRANG.VROEG;
+  if (s.includes("tussen")) return DIENSTRANG.TUSSEN;
+  if (s.includes("avond") || s.includes("late")) return DIENSTRANG.LATE;
+  if (s.includes("waak") || s.includes("wak-dienst") || s.includes("slaap")) return DIENSTRANG.WAAK;
+  return DIENSTRANG.REST; // Vergadering, Boventallig, Training, MDO, ...
 }
 
 function comparePlanningItemsByTime(a, b) {
-  // Eerst groeperen op vaste diensttype-volgorde (F9 user-eis)
+  // Eerst groeperen op vaste dagdeel-/diensttype-volgorde (user-eis)
   const ra = diensttypeRangIndex(a.diensttype || a.functie);
   const rb = diensttypeRangIndex(b.diensttype || b.functie);
   if (ra !== rb) return ra - rb;
   // Binnen 1-op-1-groep: alfabetisch op cliënt-naam (gegroepeerd per cliënt)
-  if (ra === 4) {
+  if (ra === DIENSTRANG.EEN_OP_EEN) {
     const ca = String(a.client || a.clientNaam || a.cliënt || "").toLowerCase();
     const cb = String(b.client || b.clientNaam || b.cliënt || "").toLowerCase();
     if (ca !== cb) return ca.localeCompare(cb, "nl", { sensitivity: "base" });
   }
   // Binnen "rest"-groep: alfabetisch op diensttype-naam
-  if (ra === DIENSTTYPE_VASTE_VOLGORDE.length + 1) {
+  if (ra === DIENSTRANG.REST) {
     const da = String(a.diensttype || "").toLowerCase();
     const db = String(b.diensttype || "").toLowerCase();
     if (da !== db) return da.localeCompare(db, "nl", { sensitivity: "base" });
@@ -705,7 +729,14 @@ function getRowKey(it) {
   const ax = ui.rowAxis || "afdeling";
   // BS2-parity: groupering op locatie (BS2 toont locatie-namen als group-headers).
   // Fallback naar locatie als vestiging leeg is (Phase 3 import vult vestiging niet).
-  if (ax === "vestiging") return (it.vestiging || it.locatie || "").trim() || "Onbekende locatie";
+  if (ax === "vestiging") {
+    // 1-op-1/ambulant en achterwacht krijgen — los van hun woonlocatie — een eigen
+    // kop-groep, zodat ze gebundeld onder één kopje verschijnen (user-eis 2026-06-06).
+    const dt = it.diensttype || it.functie;
+    if (isAchterwachtDienst(dt)) return ACHTERWACHT_GROEP;
+    if (isEenOpEenDienst(dt)) return EEN_OP_EEN_GROEP;
+    return (it.vestiging || it.locatie || "").trim() || "Onbekende locatie";
+  }
   if (ax === "medewerker") return (it.teamlid || "—").trim() || "—";
   if (ax === "functie") return (it.functie || it.diensttype || "—").trim() || "—";
   return (it.afdeling || it.diensttype || "Overig").trim() || "Overig";
