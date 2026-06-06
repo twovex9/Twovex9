@@ -199,22 +199,67 @@
           <div class="comp-tab-panel" id="bur-tab-details">
             <div class="emp-section">
               <h3>Bureau informatie</h3>
-              <div class="emp-field">
-                <span>Naam</span>
-                <input type="text" id="bur-detail-naam" class="comp-modal-input" autocomplete="off" />
+              <div class="bur-detail-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px">
+                <div class="emp-field emp-field--full">
+                  <span>Naam</span>
+                  <input type="text" id="bur-detail-naam" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>Standaard uurtarief</span>
+                  <input type="number" inputmode="decimal" step="0.01" min="0" id="bur-detail-uurtarief" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>Fee per uur (ex. BTW)</span>
+                  <input type="number" inputmode="decimal" step="0.01" min="0" id="bur-detail-fee" class="comp-modal-input" autocomplete="off" />
+                </div>
               </div>
-              <div class="emp-field" style="margin-top:12px">
-                <span>Standaard uurtarief</span>
-                <input type="number" inputmode="decimal" step="0.01" min="0" id="bur-detail-uurtarief" class="comp-modal-input" autocomplete="off" />
-              </div>
-              <div class="emp-field" style="margin-top:12px">
-                <span>Fee per uur (ex. BTW)</span>
-                <input type="number" inputmode="decimal" step="0.01" min="0" id="bur-detail-fee" class="comp-modal-input" autocomplete="off" />
-              </div>
+            </div>
 
-              <div style="display:flex;justify-content:flex-end;margin-top:18px">
-                <button type="button" class="emp-verzuim-modal-submit" id="bur-detail-save" style="width:auto;padding:0 24px;flex:none">Wijzigingen opslaan</button>
+            <div class="emp-section">
+              <h3>Contactgegevens</h3>
+              <p class="emp-section-sub">Wie kun je benaderen als je iets nodig hebt van dit bureau?</p>
+              <div class="bur-detail-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px">
+                <div class="emp-field">
+                  <span>Eigenaar van het bureau</span>
+                  <input type="text" id="bur-detail-eigenaar" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>Contactpersoon planning</span>
+                  <input type="text" id="bur-detail-contactpersoon" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>E-mailadres</span>
+                  <input type="email" id="bur-detail-email" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>Telefoonnummer</span>
+                  <input type="tel" id="bur-detail-telefoon" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field">
+                  <span>Website</span>
+                  <input type="text" id="bur-detail-website" class="comp-modal-input" autocomplete="off" placeholder="www.voorbeeld.nl" />
+                </div>
+                <div class="emp-field">
+                  <span>KvK-nummer</span>
+                  <input type="text" id="bur-detail-kvk" class="comp-modal-input" autocomplete="off" />
+                </div>
+                <div class="emp-field emp-field--full">
+                  <span>Adres</span>
+                  <input type="text" id="bur-detail-adres" class="comp-modal-input" autocomplete="off" placeholder="Straat, postcode en plaats" />
+                </div>
               </div>
+            </div>
+
+            <div class="emp-section">
+              <h3>Notities</h3>
+              <div class="emp-field">
+                <span>Opmerkingen / aanvullende informatie</span>
+                <textarea id="bur-detail-notities" autocomplete="off" placeholder="Bijvoorbeeld bijzondere afspraken, factuurgegevens of overige aandachtspunten."></textarea>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:4px">
+              <button type="button" class="emp-verzuim-modal-submit" id="bur-detail-save" style="width:auto;padding:0 24px;flex:none">Wijzigingen opslaan</button>
             </div>
           </div>
         </div>

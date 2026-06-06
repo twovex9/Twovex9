@@ -53,6 +53,14 @@
   var naamInput = document.getElementById("bur-detail-naam");
   var uurtariefInput = document.getElementById("bur-detail-uurtarief");
   var feeInput = document.getElementById("bur-detail-fee");
+  var eigenaarInput = document.getElementById("bur-detail-eigenaar");
+  var contactpersoonInput = document.getElementById("bur-detail-contactpersoon");
+  var emailInput = document.getElementById("bur-detail-email");
+  var telefoonInput = document.getElementById("bur-detail-telefoon");
+  var websiteInput = document.getElementById("bur-detail-website");
+  var kvkInput = document.getElementById("bur-detail-kvk");
+  var adresInput = document.getElementById("bur-detail-adres");
+  var notitiesInput = document.getElementById("bur-detail-notities");
   var saveBtn = document.getElementById("bur-detail-save");
 
   /* ── ••• Meer opties menu (Module 09 Bug #29 fix) ── */
@@ -142,6 +150,14 @@
     if (naamInput) naamInput.value = bur.naam || "";
     if (uurtariefInput) uurtariefInput.value = toInputNumberValue(bur.standaardUurtarief);
     if (feeInput) feeInput.value = toInputNumberValue(bur.feePerUur);
+    if (eigenaarInput) eigenaarInput.value = bur.eigenaar || "";
+    if (contactpersoonInput) contactpersoonInput.value = bur.contactpersoonPlanning || "";
+    if (emailInput) emailInput.value = bur.email || "";
+    if (telefoonInput) telefoonInput.value = bur.telefoon || "";
+    if (websiteInput) websiteInput.value = bur.website || "";
+    if (kvkInput) kvkInput.value = bur.kvkNummer || "";
+    if (adresInput) adresInput.value = bur.adres || "";
+    if (notitiesInput) notitiesInput.value = bur.notities || "";
   }
 
   if (saveBtn) {
@@ -155,6 +171,14 @@
         naam: newName,
         standaardUurtarief: parseMoneyLike(uurtariefInput ? uurtariefInput.value : ""),
         feePerUur: parseMoneyLike(feeInput ? feeInput.value : ""),
+        eigenaar: eigenaarInput ? eigenaarInput.value : "",
+        contactpersoonPlanning: contactpersoonInput ? contactpersoonInput.value : "",
+        email: emailInput ? emailInput.value : "",
+        telefoon: telefoonInput ? telefoonInput.value : "",
+        website: websiteInput ? websiteInput.value : "",
+        kvkNummer: kvkInput ? kvkInput.value : "",
+        adres: adresInput ? adresInput.value : "",
+        notities: notitiesInput ? notitiesInput.value : "",
       };
       var updated;
       try {

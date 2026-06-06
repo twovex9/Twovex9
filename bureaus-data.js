@@ -7,9 +7,11 @@
  * Public async API:
  *   await window.bureausDB.bootstrap()
  *   await window.bureausDB.refresh()
- *   await window.bureausDB.add({naam, standaardUurtarief?, feePerUur?})
+ *   await window.bureausDB.add({naam, standaardUurtarief?, feePerUur?, ...contactvelden?})
  *   await window.bureausDB.update(id, patch)
- *     // patch: {naam?, standaardUurtarief?, feePerUur?, archived?}
+ *     // patch: {naam?, standaardUurtarief?, feePerUur?, archived?,
+ *     //         eigenaar?, contactpersoonPlanning?, email?, telefoon?,
+ *     //         adres?, kvkNummer?, website?, notities?}
  *   await window.bureausDB.archive(id)
  *   await window.bureausDB.restore(id)
  *   await window.bureausDB.delete(id)
@@ -25,7 +27,9 @@
  *   "besa:bureaus-updated" op `window` na elke mutatie of bootstrap.
  *
  * Cache-formaat:
- *   { id, naam, standaardUurtarief, feePerUur, archived, aanmaakdatum, laatstGewijzigd }
+ *   { id, naam, standaardUurtarief, feePerUur,
+ *     eigenaar, contactpersoonPlanning, email, telefoon, adres, kvkNummer, website, notities,
+ *     archived, aanmaakdatum, laatstGewijzigd }
  */
 (function (global) {
   "use strict";
@@ -45,6 +49,14 @@
       feePerUur: row.fee_per_uur !== null && row.fee_per_uur !== undefined
         ? Number(row.fee_per_uur)
         : null,
+      eigenaar: row.eigenaar || "",
+      contactpersoonPlanning: row.contactpersoon_planning || "",
+      email: row.email || "",
+      telefoon: row.telefoon || "",
+      adres: row.adres || "",
+      kvkNummer: row.kvk_nummer || "",
+      website: row.website || "",
+      notities: row.notities || "",
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -112,6 +124,24 @@
     return Math.round(n * 100) / 100;
   }
 
+  function textOrNull(v) {
+    if (v === null || v === undefined) return null;
+    var s = String(v).trim();
+    return s === "" ? null : s;
+  }
+
+  // Tekstvelden: camelCase API-key → snake_case DB-kolom.
+  var TEXT_FIELDS = [
+    ["eigenaar", "eigenaar"],
+    ["contactpersoonPlanning", "contactpersoon_planning"],
+    ["email", "email"],
+    ["telefoon", "telefoon"],
+    ["adres", "adres"],
+    ["kvkNummer", "kvk_nummer"],
+    ["website", "website"],
+    ["notities", "notities"],
+  ];
+
   async function add(input) {
     var src = input || {};
     var naam = String(src.naam || "").trim();
@@ -123,6 +153,9 @@
       fee_per_uur: toMoneyOrNull(src.feePerUur),
       archived: false,
     };
+    TEXT_FIELDS.forEach(function (f) {
+      payload[f[1]] = textOrNull(src[f[0]]);
+    });
     var res = await window.besaSupabase
       .from(TABLE)
       .insert(payload)
@@ -147,6 +180,11 @@
     if (Object.prototype.hasOwnProperty.call(patch, "feePerUur")) {
       dbPatch.fee_per_uur = toMoneyOrNull(patch.feePerUur);
     }
+    TEXT_FIELDS.forEach(function (f) {
+      if (Object.prototype.hasOwnProperty.call(patch, f[0])) {
+        dbPatch[f[1]] = textOrNull(patch[f[0]]);
+      }
+    });
     if (typeof patch.archived === "boolean") dbPatch.archived = patch.archived;
     if (Object.keys(dbPatch).length === 0) {
       var existing = readCache().find(function (b) { return b.id === id; });

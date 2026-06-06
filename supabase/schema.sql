@@ -268,10 +268,29 @@ create table if not exists public.bureaus (
   naam text not null,
   standaard_uurtarief numeric(10, 2),
   fee_per_uur numeric(10, 2),
+  eigenaar text,
+  contactpersoon_planning text,
+  email text,
+  telefoon text,
+  adres text,
+  kvk_nummer text,
+  website text,
+  notities text,
   archived boolean not null default false,
   aanmaakdatum timestamptz not null default now(),
   laatst_gewijzigd timestamptz not null default now()
 );
+
+-- Additief (bestaande DBs): contact-/informatievelden voor het bureau.
+alter table public.bureaus
+  add column if not exists eigenaar text,
+  add column if not exists contactpersoon_planning text,
+  add column if not exists email text,
+  add column if not exists telefoon text,
+  add column if not exists adres text,
+  add column if not exists kvk_nummer text,
+  add column if not exists website text,
+  add column if not exists notities text;
 
 create unique index if not exists bureaus_naam_unique_active
   on public.bureaus (lower(naam))
