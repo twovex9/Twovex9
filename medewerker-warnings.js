@@ -6,24 +6,24 @@
  * BS2-bron: POST /api/rpc met signature "get:employee-document-status"
  *   → response { errors: [...], warnings: [...] }
  *
- * Document-statusregels (user-eis Lionel 2026-06-04 — STRIKTE 7-puntseis):
- *  - GROEN  = alle 7 verplichte gegevens aanwezig & geldig, niets vervalt <90 dgn
- *  - ORANJE = een verplicht document is geldig maar vervalt binnen 3 maanden (90 dgn)
- *  - ROOD   = een verplicht gegeven ONTBREEKT, of alle exemplaren ervan zijn verlopen
+ * Statusbron (sinds 2026-06-06, user-eis "gelijktrekken met BS2"):
+ *  1) Heeft de medewerker een overgenomen BS2-status (data.bs2_doc_status, uit
+ *     BS2's eigen get:employee-document-status) → DAT is de bron-van-waarheid;
+ *     de errors/warnings + kleur komen 1-op-1 van BS2. (De ~80 medewerkers die
+ *     in BS2 staan.)
+ *  2) Geen overgenomen status (medewerker staat niet in BS2) → live-berekening
+ *     compute() hieronder, die BS2's regel zo dicht mogelijk benadert.
  *
- * De 7 verplichte gegevens (gelden voor ÁLLE medewerkers, geen uitzonderingen):
- *   1. VOG                          (documenttype 'vog')
- *   2. Arbeidsovereenkomst/contract (documenttype 'contract' — óók bij inhuur via bureau)
- *   3. ID-kaart                     (documenttype 'id')
- *   4. BHV                          (document met "bhv" in de naam)
- *   5. Medicatietraining            (document met "medicat" in de naam)
- *   6. Meldcode huiselijk geweld    (document met "meldcode"/"huiselijk" in de naam)
- *   7. Bankrekeningnummer (IBAN)    (data-veld profIban; geen vervaldatum)
- *
- * BHV/medicatie/meldcode hebben in de DB geen eigen documenttype maar staan als
- * 'education'/'other' met een vrije naam → daarom matchen we op trefwoord in de
- * naam. Per document: ontbreekt → rood; alle exemplaren verlopen → rood; geldig
- * maar vervalt <90 dgn → oranje; een exemplaar zonder vervaldatum = aanwezig & geldig.
+ * compute() — de live-fallbackregel (conform BS2, NIET meer de oude 7-puntseis):
+ *  - ROOD   = VOG ontbreekt, of contract ontbreekt/verlopen. Contract is vereist
+ *             behalve bij inhuur via een bureau (extern contract; benaderd via
+ *             het dienstverband — BS2 doet dit via "via_agency").
+ *  - ORANJE = een document (VOG/contract/ID/BHV) vervalt binnen 90 dgn, of een
+ *             opleiding/training is verlopen.
+ *  - GROEN  = de rest. ID/BHV/medicatie/meldcode/IBAN maken NOOIT rood.
+ * Per categorie telt het beste exemplaar; een exemplaar zonder vervaldatum is
+ * aanwezig & geldig. (De oude strikte 7-puntseis van Lionel 2026-06-04 is op
+ * verzoek losgelaten omdat BS2 milder rekent — zie [[project_besa_hr_doc_status_bs2]].)
  *
  * NB De doc-status staat LOS van planbaarheid: een rode/oranje medewerker kan
  * handmatig planbaar worden gezet (medewerker.js → isPlannable); de melding blijft
@@ -89,106 +89,127 @@
     var now = new Date();
     var list = (docs || []).filter(function (d) { return d && !d.archived; });
 
-    // Matcher-helpers. Een verplicht document wordt herkend op TYPE
-    // (vog/contract/id) óf op NAAM. BHV/medicatie/meldcode hebben in de DB geen
-    // eigen documenttype maar staan als 'education'/'other' met een vrije naam,
-    // dus die matchen we op trefwoord(en) in de naam.
-    function byType(typeKey) {
-      return function (d) { return String(d.type || "").toLowerCase() === typeKey; };
-    }
-    function nameContains(keywords) {
-      return function (d) {
-        var n = String(d.naam || "").toLowerCase();
-        for (var i = 0; i < keywords.length; i++) {
-          if (n.indexOf(keywords[i]) !== -1) return true;
-        }
-        return false;
-      };
-    }
+    function typeOf(d) { return String(d.type || "").toLowerCase(); }
+    function nameOf(d) { return String(d.naam || "").toLowerCase(); }
 
-    // Evalueer één verplicht document (geïdentificeerd door matchFn):
-    //  - ontbreekt volledig            → ERROR (rood)
-    //  - bestaat maar ALLE verlopen    → ERROR (rood)
-    //  - geldig maar vervalt <WARN_DAYS→ WARNING (oranje)
-    // Een exemplaar zonder vervaldatum telt als aanwezig & geldig. Alleen het
-    // meest recente exemplaar telt: een oud verlopen document dat al door een
-    // geldig is vervangen, blokkeert niet.
-    function evalRequiredDoc(matchFn, label, missingNaam, missingReden) {
+    // Evalueer een categorie documenten en bepaal: bestaat er een exemplaar, is
+    // er een GELDIG (niet-verlopen) exemplaar, en zo ja vervalt het beste
+    // exemplaar binnen WARN_DAYS? Een exemplaar zonder vervaldatum telt als
+    // geldig. Alleen het beste exemplaar telt — een oud verlopen document naast
+    // een geldig blokkeert niet.
+    function evalCat(matchFn) {
       var items = list.filter(matchFn);
-      var hasValid = false;
+      if (!items.length) return { exists: false, valid: false, expired: false, soon: null };
+      var valid = false, best = null;
       items.forEach(function (it) {
         var vd = parseDate(it.vervaldatum);
-        if (!vd) { hasValid = true; return; } // zonder datum = aanwezig & geldig
+        if (!vd) { valid = true; return; } // zonder datum = aanwezig & geldig
         var dd = daysBetween(now, vd);
-        if (dd < 0) return; // verlopen exemplaar — telt niet als geldig
-        hasValid = true;
-        if (dd <= WARN_DAYS) {
-          warnings.push({
-            id: it.id, type: label, kind: "expiry-soon",
-            label: label, naam: it.naam || label,
-            datum: it.vervaldatum, datumLabel: fmtDate(vd),
-            reden: "Verloopt op " + fmtDate(vd) + " (over " + dd + " dagen)",
-          });
-        }
+        if (dd < 0) return; // verlopen exemplaar
+        valid = true;
+        if (dd <= WARN_DAYS && (best === null || dd < best.dd)) best = { vd: vd, dd: dd, it: it };
       });
-      if (items.length === 0) {
-        errors.push({
-          id: null, type: label, kind: "missing",
-          label: label, naam: missingNaam, datum: null, datumLabel: "",
-          reden: missingReden,
-        });
-      } else if (!hasValid) {
-        var laatste = items.reduce(function (best, it) {
-          var d = parseDate(it.vervaldatum);
-          return (!best || (d && best.d && d > best.d)) ? { it: it, d: d } : best;
-        }, null);
-        errors.push({
-          id: laatste && laatste.it.id, type: label, kind: "expired",
-          label: label, naam: (laatste && laatste.it.naam) || label,
-          datum: laatste && laatste.it.vervaldatum,
-          datumLabel: laatste && laatste.d ? fmtDate(laatste.d) : "",
-          reden: "Verlopen op " + (laatste && laatste.d ? fmtDate(laatste.d) : "onbekende datum"),
-        });
+      return { exists: true, valid: valid, expired: !valid, soon: valid ? best : null };
+    }
+
+    var isVog = function (d) { return typeOf(d) === "vog"; };
+    var isContract = function (d) { return typeOf(d) === "contract"; };
+    var isId = function (d) { return typeOf(d) === "id"; };
+    var isBhv = function (d) { return typeOf(d) === "education" && nameOf(d).indexOf("bhv") !== -1; };
+    var isOtherEdu = function (d) { return typeOf(d) === "education" && nameOf(d).indexOf("bhv") === -1; };
+
+    var vog = evalCat(isVog);
+    var con = evalCat(isContract);
+    var idc = evalCat(isId);
+    var bhv = evalCat(isBhv);
+
+    // Regel conform BS2 (zie [[project_besa_hr_doc_status_bs2]]):
+    //  ROOD   = VOG ontbreekt, of contract ontbreekt/verlopen.
+    //  ORANJE = document (VOG/contract/ID/BHV) vervalt binnen WARN_DAYS, of een
+    //           opleiding/training is verlopen.
+    //  GROEN  = de rest. ID/BHV/medicatie/meldcode/IBAN maken NOOIT rood.
+    // Contract is vereist behalve bij inhuur via een bureau (extern contract) —
+    // BS2 doet dit via "via_agency"; wij benaderen het via het dienstverband.
+    // NB Voor medewerkers met een overgenomen BS2-status wordt deze berekening
+    // overgeslagen (zie computeForId/computeForIdSync); dit is de live-fallback
+    // voor medewerkers die niet in BS2 staan.
+    var dv = String((employee && (employee.dienstverband || (employee.data && employee.data.dienstverband))) || "").toLowerCase();
+    var contractRequired = dv.indexOf("inhuur") === -1;
+
+    // ---- ROOD (errors) ----
+    if (!vog.exists) {
+      errors.push({ id: null, type: "vog", kind: "missing", label: "VOG",
+        naam: "VOG ontbreekt", datum: null, datumLabel: "", reden: "Er is geen VOG aanwezig" });
+    }
+    if (contractRequired) {
+      if (!con.exists) {
+        errors.push({ id: null, type: "contract", kind: "missing", label: "Arbeidsovereenkomst / contract",
+          naam: "Contract ontbreekt", datum: null, datumLabel: "", reden: "Er is geen arbeidsovereenkomst/contract aanwezig" });
+      } else if (con.expired) {
+        errors.push({ id: null, type: "contract", kind: "expired", label: "Arbeidsovereenkomst / contract",
+          naam: "Contract verlopen", datum: null, datumLabel: "", reden: "Het contract is verlopen" });
       }
     }
 
-    // ---- De 7 strikt verplichte gegevens (user-eis Lionel 2026-06-04). ----
-    // Ontbreekt = rood; vervalt binnenkort = oranje; alles geldig = groen.
-    // Geldt voor ÁLLE medewerkers; géén uitzondering voor inhuur "via bureau".
-    evalRequiredDoc(byType("vog"), "VOG",
-      "VOG ontbreekt", "Er is geen VOG geüpload");
-    evalRequiredDoc(byType("contract"), "Arbeidsovereenkomst / contract",
-      "Contract ontbreekt", "Er is geen arbeidsovereenkomst/contract geüpload");
-    evalRequiredDoc(byType("id"), "ID-kaart",
-      "ID-kaart ontbreekt", "Er is geen ID-bewijs geüpload");
-    evalRequiredDoc(nameContains(["bhv"]), "BHV",
-      "BHV ontbreekt", "Er is geen BHV-certificaat geüpload");
-    evalRequiredDoc(nameContains(["medicat"]), "Medicatietraining",
-      "Medicatietraining ontbreekt", "Er is geen medicatietraining-certificaat geüpload");
-    evalRequiredDoc(nameContains(["meldcode", "huiselijk"]), "Meldcode huiselijk geweld",
-      "Meldcode huiselijk geweld ontbreekt", "Er is geen certificaat 'meldcode huiselijk geweld' geüpload");
-
-    // ---- Bankrekeningnummer (IBAN): data-veld (profIban), geen document en
-    //      geen vervaldatum. Leeg/ontbreekt → ROOD. ----
-    var iban = String(
-      (employee && (employee.profIban || (employee.data && employee.data.profIban))) || ""
-    ).trim();
-    if (!iban) {
-      errors.push({
-        id: null, type: "iban", kind: "missing",
-        label: "Bankrekeningnummer", naam: "Bankrekeningnummer ontbreekt",
-        datum: null, datumLabel: "",
-        reden: "Er is geen bankrekeningnummer (IBAN) ingevuld",
-      });
+    // ---- ORANJE (warnings) ----
+    function pushSoon(cat, label) {
+      if (cat.exists && cat.soon) {
+        warnings.push({ id: cat.soon.it && cat.soon.it.id, type: label, kind: "expiry-soon",
+          label: label, naam: (cat.soon.it && cat.soon.it.naam) || label,
+          datum: cat.soon.it && cat.soon.it.vervaldatum, datumLabel: fmtDate(cat.soon.vd),
+          reden: "Verloopt op " + fmtDate(cat.soon.vd) + " (over " + cat.soon.dd + " dagen)" });
+      }
     }
+    pushSoon(vog, "VOG");
+    pushSoon(con, "Arbeidsovereenkomst / contract");
+    pushSoon(idc, "ID-kaart");
+    if (bhv.exists && bhv.expired) {
+      warnings.push({ id: null, type: "BHV", kind: "expired", label: "BHV",
+        naam: "BHV", datum: null, datumLabel: "", reden: "BHV-certificaat is verlopen" });
+    } else {
+      pushSoon(bhv, "BHV");
+    }
+    // Verlopen opleidingen/trainingen (niet-BHV education) → waarschuwing.
+    list.filter(isOtherEdu).forEach(function (d) {
+      var vd = parseDate(d.vervaldatum);
+      if (vd && daysBetween(now, vd) < 0) {
+        warnings.push({ id: d.id, type: "expired_education", kind: "expired",
+          label: "Opleiding/training", naam: d.naam || "Opleiding/training",
+          datum: d.vervaldatum, datumLabel: fmtDate(vd), reden: "Opleiding/training is verlopen" });
+      }
+    });
 
     return { errors: errors, warnings: warnings };
+  }
+
+  // Overgenomen BS2-documentstatus: als een medewerker een bs2_doc_status heeft
+  // (ingelezen uit BS2 — zie [[project_besa_hr_doc_status_bs2]]), is DAT de
+  // bron-van-waarheid voor de stoplicht-kleur, exact zoals BS2 'm berekent. We
+  // geven de bijbehorende errors/warnings terug; statusFromResult leidt daar de
+  // kleur (rood/oranje/groen) consistent uit af. Medewerkers zonder deze status
+  // (niet in BS2) vallen terug op de live-berekening compute().
+  function bs2Override(emp) {
+    if (!emp) return null;
+    var bs = emp.bs2_doc_status || (emp.data && emp.data.bs2_doc_status);
+    if (!bs || typeof bs !== "object") return null;
+    var st = String(bs.status || "");
+    if (st !== "red" && st !== "orange" && st !== "green") return null;
+    return {
+      errors: Array.isArray(bs.errors) ? bs.errors : [],
+      warnings: Array.isArray(bs.warnings) ? bs.warnings : [],
+    };
   }
 
   function computeForId(employeeId) {
     if (!employeeId) return Promise.resolve({ errors: [], warnings: [] });
     var emp = null;
     try { if (global.medewerkersDB) emp = global.medewerkersDB.getByIdSync(employeeId); } catch (e) { /* */ }
+
+    var ov = bs2Override(emp);
+    if (ov) {
+      _cache[employeeId] = { errors: ov.errors, warnings: ov.warnings, ts: Date.now() };
+      return Promise.resolve({ errors: ov.errors, warnings: ov.warnings });
+    }
 
     var docsP = (global.medewerkerDocsDB && typeof global.medewerkerDocsDB.list === "function")
       ? global.medewerkerDocsDB.list(employeeId).catch(function () {
@@ -208,6 +229,11 @@
     if (!employeeId) return { errors: [], warnings: [] };
     var emp = null, docs = [];
     try { if (global.medewerkersDB) emp = global.medewerkersDB.getByIdSync(employeeId); } catch (e) { /* */ }
+    var ov = bs2Override(emp);
+    if (ov) {
+      _cache[employeeId] = { errors: ov.errors, warnings: ov.warnings, ts: Date.now() };
+      return { errors: ov.errors, warnings: ov.warnings };
+    }
     try { if (global.medewerkerDocsDB) docs = global.medewerkerDocsDB.listSync(employeeId) || []; } catch (e) { /* */ }
     var result = compute(emp, docs);
     _cache[employeeId] = { errors: result.errors, warnings: result.warnings, ts: Date.now() };

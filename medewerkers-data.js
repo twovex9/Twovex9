@@ -144,6 +144,12 @@
   var _mem = null;
 
   function isHeavyBs2Key(k) {
+    // bs2_doc_status is klein (overgenomen BS2-documentstatus: stoplicht-kleur +
+    // korte redenen) én wordt synchroon gelezen om het avatar-bolletje op de
+    // HR-lijst te kleuren. Daarom expliciet BEHOUDEN in de localStorage-cache,
+    // anders ontbreekt de kleur bij de allereerste render (vóór de netwerk-fetch).
+    // De zware bs2_scrape/bs2_raw blobs blijven wél gestript.
+    if (k === "bs2_doc_status") return false;
     return typeof k === "string" && /^bs2_/.test(k);
   }
 
