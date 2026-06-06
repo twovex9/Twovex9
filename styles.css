@@ -25553,7 +25553,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 /* Per-locatie tabel */
 .fin-table-wrap { overflow-x: auto; }
 .fin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.fin-table th, .fin-table td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.fin-table th, .fin-table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .fin-table th.fin-num, .fin-table td.fin-num { text-align: right; }
 .fin-table thead th { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 .fin-table tbody tr { cursor: pointer; }
@@ -25565,6 +25565,9 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-empty { text-align: center; color: var(--text-muted); padding: 24px 12px; }
 .fin-loc-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
 .fin-loc-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+/* Bezetting-cel: telling + vrij-badge naast elkaar (Per-locatie tabel) */
+.fin-loc-bez { white-space: nowrap; }
+.fin-loc-bez-cnt { margin-right: 8px; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* Drill-down samenvatting */
 .fin-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
