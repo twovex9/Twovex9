@@ -47,8 +47,10 @@
   function fmtDate(d) { if (!d) return ""; var p = String(d).slice(0, 10).split("-"); return p.length === 3 ? p[2] + "-" + p[1] + "-" + p[0] : d; }
   function fmtTime(iso) {
     if (!iso) return "";
-    try { return new Date(iso).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Amsterdam" }); }
-    catch (e) { return ""; }
+    // Dienst-tijden zijn fake-UTC (wandklok met +00). Slice de ISO-string i.p.v.
+    // tz-conversie (die schoof +1/+2u). Consistent met open-diensten.js en mobiel.
+    var s = String(iso);
+    return s.length >= 16 ? s.slice(11, 16) : "";
   }
   function getParam(name) { try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; } }
   function toast(msg) {

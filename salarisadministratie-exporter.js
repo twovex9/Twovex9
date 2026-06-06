@@ -528,14 +528,13 @@
     var yearInt = parseInt(year, 10) || 0;
     var filtered = planning.filter(function (p) {
       if (!p || !p.start) return false;
-      try {
-        var d = new Date(p.start);
-        if (isNaN(d.getTime())) return false;
-        return (
-          (monthInt === 0 || d.getMonth() + 1 === monthInt) &&
-          (yearInt === 0 || d.getFullYear() === yearInt)
-        );
-      } catch (e) { return false; }
+      // Wandklok-maand (fake-UTC): vergelijk op de ISO-string i.p.v. new Date().getMonth(),
+      // anders rolt een dienst op de maandgrens (bv. de 31e om 23:00) naar de verkeerde maand.
+      var ym = String(p.start).slice(0, 7); // "YYYY-MM"
+      if (ym.length < 7) return false;
+      var yy = parseInt(ym.slice(0, 4), 10);
+      var mm = parseInt(ym.slice(5, 7), 10);
+      return (monthInt === 0 || mm === monthInt) && (yearInt === 0 || yy === yearInt);
     });
 
     if (!filtered.length) {
@@ -561,12 +560,16 @@
         var pauze = Math.max(0, Number(p.pauze_uren != null ? p.pauze_uren : p.pauzeUren) || 0);
         var net = Math.max(0, hours - pauze);
         var bruto = net * TARIEF;
+        // Datum + tijden uit de wandklok (fake-UTC): slice de ISO-string i.p.v.
+        // toLocale* op new Date() (dat schoof +1/+2u en kon de datum een dag verleggen).
+        var sStr = String(p.start);
+        var eStr = de ? String(p.einde) : "";
+        var dParts = sStr.slice(0, 10).split("-");
+        var datumNl = dParts.length === 3 ? dParts[2] + "-" + dParts[1] + "-" + dParts[0] : sStr.slice(0, 10);
         rows.push(toCsvRow([
-          ds.toLocaleDateString("nl-NL"),
-          ds.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }),
-          de && !isNaN(de.getTime())
-            ? de.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
-            : "",
+          datumNl,
+          sStr.length >= 16 ? sStr.slice(11, 16) : "",
+          eStr.length >= 16 ? eStr.slice(11, 16) : "",
           p.teamlid || "(open)",
           p.diensttype || "",
           p.vestiging || p.locatie || "",
@@ -1017,6 +1020,15 @@
       var built;
       try { built = buildLoketWorkbookForPeriod(month, year); }
       catch (err) { fb("error", "Export bouwen mislukt", err && err.message ? err.message : String(err)); return; }
+      // DIEHARD e-mail: bevestigingsstap vóór een echte verzending naar de salarisadministratie,
+      // zodat een verkeerde maand of misklik niet ongezien een loonbestand mailt.
+      var aantalMw = (built && built.summary && built.summary.employeeCount) || 0;
+      if (!window.confirm(
+        "Salarisexport definitief versturen naar de salarisadministratie?\n\n" +
+        "Periode: " + period + "\n" +
+        "Aantal medewerkers: " + aantalMw + "\n\n" +
+        "Er wordt nu een e-mail met het loonbestand verzonden. Controleer de periode."
+      )) { return; }
       var b64;
       try { b64 = window.XLSX.write(built.workbook, { bookType: "xlsx", type: "base64" }); }
       catch (err) { fb("error", "Export coderen mislukt", String(err)); return; }

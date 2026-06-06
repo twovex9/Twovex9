@@ -73,7 +73,20 @@
 
   function toIsoOrNull(s) {
     if (!s) return null;
-    var d = new Date(s);
+    var str = String(s);
+    // Wandklok-zonder-tijdzone (bv. "2026-05-01T07:00" uit planning.js combineDateTimeToLocalIso)
+    // opslaan als FAKE-UTC: de wandklok-componenten letterlijk als UTC (+00:00). Zo zijn
+    // app-diensten consistent met de BS2-import (start_iso "...:00+00") en met hoe planning.js
+    // / open-diensten.js / de mobiele app de tijd LEZEN (wandklok via slice/parseStartDate).
+    // De oude new Date(str).toISOString() interpreteerde de wandklok als LOKALE tijd en
+    // verschoof app-diensten +1/+2u t.o.v. de BS2-mirror.
+    // Trailing offset/Z bewust negeren: élke ISO-achtige dienst-tijd wordt als wandklok
+    // (fake-UTC) opgeslagen, consistent met de BS2-mirror en de lees-kant (parseStartDate/slice).
+    var m = str.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (m) {
+      return m[1] + "-" + m[2] + "-" + m[3] + "T" + m[4] + ":" + m[5] + ":" + (m[6] || "00") + "+00:00";
+    }
+    var d = new Date(str);
     return isNaN(d.getTime()) ? null : d.toISOString();
   }
 
