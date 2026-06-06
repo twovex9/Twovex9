@@ -107,14 +107,20 @@ const items = [
   { diensttype: "Vroege dienst", locatie: "Varnebroek", start: D + "07:00", einde: D + "15:00" },
   { diensttype: "Late dienst", locatie: "Varnebroek", start: D + "14:30", einde: D + "23:00", teamlid: "Justin van Loenen" },
   { diensttype: "Waakdienst", locatie: "Varnebroek", start: D + "22:45", einde: "2026-06-07T07:15", teamlid: "Sofyan Amenchar" },
+  // Onbekende (niet-vaste) woonlocatie: moet ná de bekende woonlocaties komen,
+  // maar vóór de Eén-op-één- en Achterwacht-kopjes.
+  { diensttype: "Vroege dienst", locatie: "satelliet woning", start: D + "08:00", einde: D + "16:00", teamlid: "Test Mw" },
 ];
 
 // Groep-volgorde zoals renderWeekGrid: alle voorkomende groepen, geordend.
 const groups = P.sortLocatieGroepen(P.groupItems(items));
-// Woonlocaties eerst (in PLANNING_LOCATIE_VOLGORDE), dan Eén-op-één, dan Achterwacht laatst.
-eq(groups, ["Breedstraat", "Leonard Bramerstraat", "Voorburggracht", "Varnebroek", "Magdalenenstraat", P.EEN_OP_EEN_GROEP, P.ACHTERWACHT_GROEP].filter((g) => groups.includes(g)), "Groep-volgorde: woonlocaties → Eén-op-één → Achterwacht");
-ok(groups[groups.length - 1] === P.ACHTERWACHT_GROEP, "Achterwacht staat HELEMAAL onderaan");
-ok(groups.includes(P.EEN_OP_EEN_GROEP), "Eén-op-één-groep bestaat");
+// Woonlocaties eerst (in PLANNING_LOCATIE_VOLGORDE), dan onbekende locaties,
+// dan Eén-op-één, dan Achterwacht helemaal laatst.
+eq(groups, ["Breedstraat", "Leonard Bramerstraat", "Voorburggracht", "Varnebroek", "Magdalenenstraat", "satelliet woning", P.EEN_OP_EEN_GROEP, P.ACHTERWACHT_GROEP].filter((g) => groups.includes(g)), "Groep-volgorde: woonlocaties → onbekend → Eén-op-één → Achterwacht");
+ok(groups[groups.length - 1] === P.ACHTERWACHT_GROEP, "Achterwacht staat HELEMAAL onderaan (ook ná onbekende locaties)");
+ok(groups[groups.length - 2] === P.EEN_OP_EEN_GROEP, "Eén-op-één staat direct vóór Achterwacht");
+ok(groups.indexOf("satelliet woning") < groups.indexOf(P.EEN_OP_EEN_GROEP), "Onbekende locatie komt vóór de speciale kopjes");
+ok(groups.indexOf("Magdalenenstraat") < groups.indexOf("satelliet woning"), "Onbekende locatie komt ná de bekende woonlocaties");
 
 // Magdalenenstraat bevat GEEN 1-op-1 meer (die zit in de Eén-op-één-groep).
 const magd = items.filter((it) => P.getRowKey(it) === "Magdalenenstraat").sort(P.comparePlanningItemsByTime);
