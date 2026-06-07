@@ -540,10 +540,11 @@
     n: document.getElementById("cd-pan-n"),
     j: document.getElementById("cd-pan-j"),
     r: document.getElementById("cd-pan-r"),
+    m: document.getElementById("cd-pan-m"),
     q: document.getElementById("cd-pan-q"),
     i: document.getElementById("cd-pan-i"),
   };
-  var panOrder = "dbpcnjqri";
+  var panOrder = "dbpcnjrmqi";
 
   function setTab(k) {
     if (!pans[k]) k = "d";
@@ -571,6 +572,7 @@
     if (k === "p") renderBetalingen();
     if (k === "c") renderContacten();
     if (k === "r") renderRapportages();
+    if (k === "m") renderMedicatie();
     if (k === "q") renderVragenlijsten();
   }
 
@@ -1079,6 +1081,434 @@
   window.addEventListener("besa:client-rapportages-updated", function () {
     var panR = document.getElementById("cd-pan-r");
     if (panR && !panR.hidden) renderRapportages();
+  });
+
+  // ============================================================
+  // MEDICATIE-tab: medicatielijst + aftekenlijst (clientMedicatieDB)
+  // ============================================================
+
+  var MED_DAGDEEL_LABEL = { ochtend: "Ochtend", middag: "Middag", avond: "Avond" };
+  var MED_DAGDEEL_ORDER = ["ochtend", "middag", "avond"];
+  var MED_WEEKDAG_LABEL = { 1: "Ma", 2: "Di", 3: "Wo", 4: "Do", 5: "Vr", 6: "Za", 7: "Zo" };
+  var medSelectedDate = medTodayISO();
+  var medAftSeq = 0;
+
+  function medTodayISO() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function medAddDays(iso, n) {
+    var d = new Date(iso + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function medIsoWeekday(iso) {
+    var d = new Date(iso + "T00:00:00");
+    var wd = d.getDay(); // 0=zo..6=za
+    return wd === 0 ? 7 : wd;
+  }
+  function medTimeHM(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  function medSortedDagdelen(arr) {
+    var set = {};
+    (arr || []).forEach(function (x) { set[x] = 1; });
+    return MED_DAGDEEL_ORDER.filter(function (d) { return set[d]; });
+  }
+  function medDagenLabel(weekdagen) {
+    var w = (weekdagen || []).slice().sort(function (a, b) { return a - b; });
+    if (w.length === 0 || w.length === 7) return "Elke dag";
+    return w.map(function (n) { return MED_WEEKDAG_LABEL[n] || n; }).join(", ");
+  }
+  function medActiefOpDatum(med, iso) {
+    if (!med || !med.actief || med.archived) return false;
+    if (med.startdatum && iso < med.startdatum) return false;
+    if (med.einddatum && iso > med.einddatum) return false;
+    if (Array.isArray(med.weekdagen) && med.weekdagen.length) {
+      if (med.weekdagen.indexOf(medIsoWeekday(iso)) < 0) return false;
+    }
+    return true;
+  }
+
+  function medGetForClient(cl) {
+    if (!cl) return [];
+    if (!(window.clientMedicatieDB && typeof window.clientMedicatieDB.getForClientSync === "function")) return [];
+    return window.clientMedicatieDB.getForClientSync(cl.id).filter(function (r) { return r && !r.archived; });
+  }
+
+  function renderMedicatie() {
+    var tbody = document.getElementById("cd-med-tbody");
+    var empty = document.getElementById("cd-med-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var rows = medGetForClient(cl).sort(function (a, b) {
+      return String(a.naam || "").localeCompare(String(b.naam || ""), "nl");
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach(function (r) {
+      var dagdelen = medSortedDagdelen(r.dagdelen);
+      var dagdeelChips = dagdelen.length
+        ? dagdelen.map(function (d) { return '<span class="cd-med-chip">' + escapeHtml(MED_DAGDEEL_LABEL[d] || d) + "</span>"; }).join(" ")
+        : '<span class="cd-med-muted">—</span>';
+      var periode = (r.startdatum || r.einddatum)
+        ? escapeHtml((r.startdatum ? formatDateNL(r.startdatum) : "…") + " – " + (r.einddatum ? formatDateNL(r.einddatum) : "…"))
+        : "—";
+      var aftekenenBadge = r.aftekenen
+        ? '<span class="cd-med-pill cd-med-pill--on">Ja</span>'
+        : '<span class="cd-med-pill cd-med-pill--off">Nee</span>';
+      var actiefMark = r.actief ? "" : ' <span class="cd-med-pill cd-med-pill--off">Inactief</span>';
+      var sub = [];
+      if (r.vorm) sub.push(escapeHtml(r.vorm));
+      if (r.instructie) sub.push(escapeHtml(r.instructie));
+      var naamCell = "<strong>" + escapeHtml(r.naam || "—") + "</strong>" + actiefMark +
+        (sub.length ? '<div class="cd-med-rowsub">' + sub.join(" · ") + "</div>" : "");
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-id", r.id);
+      tr.innerHTML =
+        '<td data-col="naam">' + naamCell + "</td>" +
+        '<td data-col="dosering">' + escapeHtml(r.dosering || "—") + "</td>" +
+        '<td data-col="dagdelen">' + dagdeelChips + "</td>" +
+        '<td data-col="dagen">' + escapeHtml(medDagenLabel(r.weekdagen)) + "</td>" +
+        '<td data-col="periode">' + periode + "</td>" +
+        '<td data-col="aftekenen">' + aftekenenBadge + "</td>" +
+        '<td data-col="acties" class="cd-med-actions-cell">' +
+          '<button type="button" class="btn-outline cd-med-edit-btn" data-id="' + r.id + '">Bewerken</button>' +
+          '<button type="button" class="employee-delete-btn cd-med-archive-btn" data-id="' + r.id + '" aria-label="Archiveren">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+            "</svg>" +
+          "</button>" +
+        "</td>";
+      tbody.appendChild(tr);
+    });
+    empty.hidden = rows.length > 0;
+
+    var dateEl = document.getElementById("cd-med-date");
+    if (dateEl && dateEl.value !== medSelectedDate) dateEl.value = medSelectedDate;
+    renderMedAftekenlijst();
+  }
+
+  function medAftStatusCell(med, dagdeel, aft) {
+    var btnGeg = '<button type="button" class="cd-med-aft-btn cd-med-aft-btn--geg' +
+      (aft && aft.status === "gegeven" ? " is-active" : "") + '" data-med="' + med.id +
+      '" data-dagdeel="' + dagdeel + '" data-act="gegeven">Gegeven</button>';
+    var btnNg = '<button type="button" class="cd-med-aft-btn cd-med-aft-btn--ng' +
+      (aft && aft.status === "niet_gegeven" ? " is-active" : "") + '" data-med="' + med.id +
+      '" data-dagdeel="' + dagdeel + '" data-act="niet_gegeven">Niet gegeven</button>';
+
+    var info = "";
+    if (aft && aft.status === "gegeven") {
+      info = '<span class="cd-med-aft-badge cd-med-aft-badge--geg">✓ Gegeven</span>' +
+        '<span class="cd-med-aft-meta">' +
+        (aft.afgetekendDoor ? escapeHtml(aft.afgetekendDoor) : "") +
+        (aft.afgetekendOp ? (aft.afgetekendDoor ? " · " : "") + medTimeHM(aft.afgetekendOp) : "") + "</span>";
+    } else if (aft && aft.status === "niet_gegeven") {
+      info = '<span class="cd-med-aft-badge cd-med-aft-badge--ng">Niet gegeven</span>' +
+        (aft.reden ? '<span class="cd-med-aft-meta">' + escapeHtml(aft.reden) + "</span>" : "");
+    } else if (aft && aft.status === "gemist") {
+      info = '<span class="cd-med-aft-badge cd-med-aft-badge--gemist">Gemist</span>' +
+        '<span class="cd-med-aft-meta"><a href="incidenten.html" class="cd-med-aft-incident">Incident aangemaakt</a></span>';
+    } else {
+      info = '<span class="cd-med-aft-badge cd-med-aft-badge--open">Open</span>';
+    }
+
+    return '<div class="cd-med-aft-cell">' +
+      '<div class="cd-med-aft-dagdeel">' + escapeHtml(MED_DAGDEEL_LABEL[dagdeel] || dagdeel) + "</div>" +
+      '<div class="cd-med-aft-status">' + info + "</div>" +
+      '<div class="cd-med-aft-acts">' + btnGeg + btnNg + "</div>" +
+      "</div>";
+  }
+
+  async function renderMedAftekenlijst() {
+    var listEl = document.getElementById("cd-med-aft-list");
+    var emptyEl = document.getElementById("cd-med-aft-empty");
+    if (!listEl || !emptyEl) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var iso = medSelectedDate;
+    var meds = medGetForClient(cl).filter(function (m) {
+      return m.aftekenen && medSortedDagdelen(m.dagdelen).length > 0 && medActiefOpDatum(m, iso);
+    });
+
+    if (meds.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+    listEl.innerHTML = '<p class="cd-med-muted">Laden…</p>';
+
+    var seq = ++medAftSeq;
+    var afts = [];
+    try {
+      afts = await window.clientMedicatieDB.fetchAftekeningen(cl.id, iso);
+    } catch (err) {
+      if (seq !== medAftSeq) return;
+      listEl.innerHTML = '<p class="cd-med-muted">Aftekeningen laden mislukt.</p>';
+      return;
+    }
+    if (seq !== medAftSeq) return; // datum is inmiddels gewijzigd
+
+    var byKey = {};
+    afts.forEach(function (a) { byKey[a.medicatieId + "|" + a.dagdeel] = a; });
+
+    listEl.innerHTML = meds.map(function (m) {
+      var cells = medSortedDagdelen(m.dagdelen).map(function (d) {
+        return medAftStatusCell(m, d, byKey[m.id + "|" + d]);
+      }).join("");
+      var subtitle = [];
+      if (m.dosering) subtitle.push(escapeHtml(m.dosering));
+      if (m.instructie) subtitle.push(escapeHtml(m.instructie));
+      return '<div class="cd-med-aft-card">' +
+        '<div class="cd-med-aft-cardhead">' +
+          '<span class="cd-med-aft-naam">' + escapeHtml(m.naam || "—") + "</span>" +
+          (subtitle.length ? '<span class="cd-med-aft-cardsub">' + subtitle.join(" · ") + "</span>" : "") +
+        "</div>" +
+        '<div class="cd-med-aft-cells">' + cells + "</div>" +
+        "</div>";
+    }).join("");
+  }
+
+  // ---- Medicatie modal -------------------------------------------------------
+  var medModal = document.getElementById("cd-med-modal");
+  var medForm = document.getElementById("cd-med-form");
+  var medTitle = document.getElementById("cd-med-modal-title");
+  var medFId = document.getElementById("cd-med-f-id");
+  var medFNaam = document.getElementById("cd-med-f-naam");
+  var medFDosering = document.getElementById("cd-med-f-dosering");
+  var medFVorm = document.getElementById("cd-med-f-vorm");
+  var medFInstructie = document.getElementById("cd-med-f-instructie");
+  var medFNotitie = document.getElementById("cd-med-f-notitie");
+  var medFStart = document.getElementById("cd-med-f-start");
+  var medFEind = document.getElementById("cd-med-f-eind");
+  var medFAftekenen = document.getElementById("cd-med-f-aftekenen");
+  var medFActief = document.getElementById("cd-med-f-actief");
+
+  function medSetChecks(containerId, values) {
+    var cont = document.getElementById(containerId);
+    if (!cont) return;
+    var want = (values || []).map(String);
+    cont.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+      cb.checked = want.indexOf(cb.value) >= 0;
+    });
+  }
+  function medGetChecks(containerId) {
+    var cont = document.getElementById(containerId);
+    if (!cont) return [];
+    var out = [];
+    cont.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+      if (cb.checked) out.push(cb.value);
+    });
+    return out;
+  }
+
+  function openMedModal(rec) {
+    if (!medModal) return;
+    if (rec && rec.id) {
+      if (medTitle) medTitle.textContent = "Medicatie bewerken";
+      medFId.value = rec.id;
+      medFNaam.value = rec.naam || "";
+      medFDosering.value = rec.dosering || "";
+      medFVorm.value = rec.vorm || "";
+      medFInstructie.value = rec.instructie || "";
+      medFNotitie.value = rec.notitie || "";
+      medFStart.value = rec.startdatum || "";
+      medFEind.value = rec.einddatum || "";
+      medFAftekenen.checked = rec.aftekenen !== false;
+      medFActief.checked = rec.actief !== false;
+      medSetChecks("cd-med-f-dagdelen", medSortedDagdelen(rec.dagdelen));
+      medSetChecks("cd-med-f-weekdagen", (rec.weekdagen && rec.weekdagen.length ? rec.weekdagen : [1, 2, 3, 4, 5, 6, 7]).map(String));
+    } else {
+      if (medTitle) medTitle.textContent = "Medicatie toevoegen";
+      if (medForm) medForm.reset();
+      medFId.value = "";
+      medFAftekenen.checked = true;
+      medFActief.checked = true;
+      medSetChecks("cd-med-f-dagdelen", []);
+      medSetChecks("cd-med-f-weekdagen", ["1", "2", "3", "4", "5", "6", "7"]);
+    }
+    medModal.hidden = false;
+    medModal.setAttribute("aria-hidden", "false");
+    try { medFNaam.focus(); } catch (e) { /* */ }
+  }
+  function closeMedModal() {
+    if (!medModal) return;
+    medModal.hidden = true;
+    medModal.setAttribute("aria-hidden", "true");
+  }
+
+  async function saveMedFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var naam = (medFNaam.value || "").trim();
+    if (!naam) { try { medFNaam.focus(); } catch (e) {} return; }
+    var dagdelen = medGetChecks("cd-med-f-dagdelen");
+    var weekdagen = medGetChecks("cd-med-f-weekdagen").map(function (x) { return parseInt(x, 10); });
+    if (medFAftekenen.checked && dagdelen.length === 0) {
+      if (window.showError) window.showError("Kies minstens één dagdeel waarop afgetekend moet worden.");
+      return;
+    }
+    var rec = {
+      clientId: cl.id,
+      naam: naam,
+      dosering: (medFDosering.value || "").trim(),
+      vorm: (medFVorm.value || "").trim(),
+      instructie: (medFInstructie.value || "").trim(),
+      notitie: (medFNotitie.value || "").trim(),
+      dagdelen: dagdelen,
+      weekdagen: weekdagen,
+      startdatum: medFStart.value || null,
+      einddatum: medFEind.value || null,
+      aftekenen: !!medFAftekenen.checked,
+      actief: !!medFActief.checked,
+    };
+    try {
+      var id = medFId.value;
+      if (id) {
+        await window.clientMedicatieDB.update(id, rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Medicatie");
+      } else {
+        await window.clientMedicatieDB.add(rec);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Medicatie toegevoegd");
+      }
+      closeMedModal();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // ---- Niet-gegeven modal ----------------------------------------------------
+  var medNgModal = document.getElementById("cd-med-ng-modal");
+  function openMedNgModal(medId, dagdeel) {
+    if (!medNgModal) return;
+    var med = window.clientMedicatieDB && window.clientMedicatieDB.getByIdSync(medId);
+    document.getElementById("cd-med-ng-medid").value = medId;
+    document.getElementById("cd-med-ng-datum").value = medSelectedDate;
+    document.getElementById("cd-med-ng-dagdeel").value = dagdeel;
+    document.getElementById("cd-med-ng-reden").value = "";
+    var info = document.getElementById("cd-med-ng-info");
+    if (info) {
+      info.textContent = (med ? med.naam : "Medicatie") + " — " + (MED_DAGDEEL_LABEL[dagdeel] || dagdeel) +
+        " · " + formatDateNL(medSelectedDate);
+    }
+    medNgModal.hidden = false;
+    medNgModal.setAttribute("aria-hidden", "false");
+    try { document.getElementById("cd-med-ng-reden").focus(); } catch (e) { /* */ }
+  }
+  function closeMedNgModal() {
+    if (!medNgModal) return;
+    medNgModal.hidden = true;
+    medNgModal.setAttribute("aria-hidden", "true");
+  }
+  async function saveMedNg() {
+    var medId = document.getElementById("cd-med-ng-medid").value;
+    var datum = document.getElementById("cd-med-ng-datum").value;
+    var dagdeel = document.getElementById("cd-med-ng-dagdeel").value;
+    var reden = (document.getElementById("cd-med-ng-reden").value || "").trim();
+    try {
+      await window.clientMedicatieDB.afteken(medId, datum, dagdeel, "niet_gegeven", reden || null, null);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Vastgelegd");
+      closeMedNgModal();
+      renderMedAftekenlijst();
+    } catch (err) {
+      if (window.showError) window.showError("Vastleggen mislukt: " + (err && err.message || err));
+    }
+  }
+
+  async function medAftekenGegeven(medId, dagdeel) {
+    try {
+      await window.clientMedicatieDB.afteken(medId, medSelectedDate, dagdeel, "gegeven", null, null);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Afgetekend");
+      renderMedAftekenlijst();
+    } catch (err) {
+      if (window.showError) window.showError("Aftekenen mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // ---- Wiring ----------------------------------------------------------------
+  document.getElementById("cd-med-add-btn")?.addEventListener("click", function () { openMedModal(null); });
+  document.getElementById("cd-med-modal-close")?.addEventListener("click", closeMedModal);
+  document.getElementById("cd-med-cancel-btn")?.addEventListener("click", closeMedModal);
+  document.getElementById("cd-med-save-btn")?.addEventListener("click", function (e) { e.preventDefault(); saveMedFromForm(); });
+  if (medForm) medForm.addEventListener("submit", function (e) { e.preventDefault(); saveMedFromForm(); });
+  if (medModal) medModal.addEventListener("click", function (e) { if (e.target === medModal) closeMedModal(); });
+
+  document.getElementById("cd-med-ng-close")?.addEventListener("click", closeMedNgModal);
+  document.getElementById("cd-med-ng-cancel")?.addEventListener("click", closeMedNgModal);
+  document.getElementById("cd-med-ng-save")?.addEventListener("click", function (e) { e.preventDefault(); saveMedNg(); });
+  if (medNgModal) medNgModal.addEventListener("click", function (e) { if (e.target === medNgModal) closeMedNgModal(); });
+
+  // Medicatielijst row-acties
+  document.getElementById("cd-med-tbody")?.addEventListener("click", async function (e) {
+    var editBtn = e.target.closest(".cd-med-edit-btn");
+    var arcBtn = e.target.closest(".cd-med-archive-btn");
+    if (editBtn) {
+      var rec = window.clientMedicatieDB && window.clientMedicatieDB.getByIdSync(editBtn.getAttribute("data-id"));
+      if (rec) openMedModal(rec);
+      return;
+    }
+    if (arcBtn) {
+      var aid = arcBtn.getAttribute("data-id");
+      var rec2 = window.clientMedicatieDB && window.clientMedicatieDB.getByIdSync(aid);
+      if (!rec2) return;
+      try {
+        var ok = await window.showArchiveConfirm({ preview: rec2.naam || "Medicatie" });
+        if (!ok) return;
+        await window.clientMedicatieDB.archive(aid);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Medicatie");
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+
+  // Aftekenlijst-acties (Gegeven / Niet gegeven)
+  document.getElementById("cd-med-aft-list")?.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cd-med-aft-btn");
+    if (!btn) return;
+    var medId = btn.getAttribute("data-med");
+    var dagdeel = btn.getAttribute("data-dagdeel");
+    var act = btn.getAttribute("data-act");
+    if (act === "gegeven") medAftekenGegeven(medId, dagdeel);
+    else if (act === "niet_gegeven") openMedNgModal(medId, dagdeel);
+  });
+
+  // Datum-navigatie aftekenlijst
+  document.getElementById("cd-med-prev")?.addEventListener("click", function () {
+    medSelectedDate = medAddDays(medSelectedDate, -1);
+    var d = document.getElementById("cd-med-date"); if (d) d.value = medSelectedDate;
+    renderMedAftekenlijst();
+  });
+  document.getElementById("cd-med-next")?.addEventListener("click", function () {
+    medSelectedDate = medAddDays(medSelectedDate, 1);
+    var d = document.getElementById("cd-med-date"); if (d) d.value = medSelectedDate;
+    renderMedAftekenlijst();
+  });
+  document.getElementById("cd-med-today")?.addEventListener("click", function () {
+    medSelectedDate = medTodayISO();
+    var d = document.getElementById("cd-med-date"); if (d) d.value = medSelectedDate;
+    renderMedAftekenlijst();
+  });
+  document.getElementById("cd-med-date")?.addEventListener("change", function (e) {
+    var v = e.target.value;
+    if (v) { medSelectedDate = v; renderMedAftekenlijst(); }
+  });
+
+  // Live-refresh
+  window.addEventListener("besa:client-medicatie-updated", function () {
+    var panM = document.getElementById("cd-pan-m");
+    if (panM && !panM.hidden) renderMedicatie();
+  });
+  window.addEventListener("besa:client-medicatie-aftekening-updated", function () {
+    var panM = document.getElementById("cd-pan-m");
+    if (panM && !panM.hidden) renderMedAftekenlijst();
   });
 
   // ============================================================

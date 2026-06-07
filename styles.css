@@ -22980,6 +22980,234 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   font-size: var(--font-table-cell);
 }
 
+/* ===== Cliënt-detail Medicatie-tab ===== */
+.cd-med-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.cd-med-sub {
+  margin: 4px 0 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+  max-width: 640px;
+}
+.cd-med-table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.cd-med-rowsub {
+  margin-top: 2px;
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+}
+.cd-med-muted { color: var(--text-muted); }
+.cd-med-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  margin: 1px 0;
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft);
+  color: var(--text);
+}
+.cd-med-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cd-med-pill--on { color: var(--green); background: var(--green-soft); }
+.cd-med-pill--off { color: var(--text-muted); background: var(--line); }
+.cd-med-actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.cd-med-edit-btn {
+  padding: 4px 10px;
+  font-size: var(--font-table-cell);
+}
+
+/* Aftekenlijst */
+.cd-med-aft-block { margin-top: 28px; }
+.cd-med-aft-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.cd-med-aft-title {
+  margin: 0;
+  font-size: var(--font-section-title, 16px);
+  font-weight: 700;
+  color: var(--text);
+}
+.cd-med-datenav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cd-med-datenav-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cd-med-datenav-btn:hover { background: var(--line); }
+.cd-med-date {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-table-cell);
+}
+.cd-med-aft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cd-med-aft-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  background: var(--surface);
+}
+.cd-med-aft-cardhead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.cd-med-aft-naam { font-weight: 700; color: var(--text); }
+.cd-med-aft-cardsub { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.cd-med-aft-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.cd-med-aft-cell {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg, var(--surface));
+}
+.cd-med-aft-dagdeel {
+  font-weight: 700;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+}
+.cd-med-aft-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 20px;
+}
+.cd-med-aft-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 8px;
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  border-radius: var(--r-pill);
+}
+.cd-med-aft-badge--geg { color: var(--green); background: var(--green-soft); }
+.cd-med-aft-badge--ng { color: var(--yellow); background: var(--yellow-soft, rgba(234, 179, 8, 0.12)); }
+.cd-med-aft-badge--gemist { color: var(--red); background: var(--red-soft); }
+.cd-med-aft-badge--open { color: var(--text-muted); background: var(--line); }
+.cd-med-aft-meta {
+  font-size: var(--font-ui-badge);
+  color: var(--text-muted);
+}
+.cd-med-aft-incident { color: var(--red); font-weight: 600; }
+.cd-med-aft-acts {
+  display: flex;
+  gap: 6px;
+}
+.cd-med-aft-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  cursor: pointer;
+}
+.cd-med-aft-btn:hover { background: var(--line); }
+.cd-med-aft-btn--geg.is-active {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green);
+}
+.cd-med-aft-btn--ng.is-active {
+  background: var(--yellow-soft, rgba(234, 179, 8, 0.12));
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+/* Medicatie modal */
+.cd-med-modal-card { max-width: 680px; }
+.cd-med-f-row { display: flex; gap: 12px; }
+.cd-med-f-grow { flex: 2; }
+.cd-med-f-third { flex: 1; }
+.cd-med-f-area { font-family: inherit; resize: vertical; }
+.cd-med-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-top: 4px;
+}
+.cd-med-checks--days { gap: 6px 12px; }
+.cd-med-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+  cursor: pointer;
+}
+.cd-med-f-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cd-med-ng-card { max-width: 480px; }
+.cd-med-ng-info {
+  margin: 0 0 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .cd-med-head { flex-direction: column; align-items: stretch; }
+  .cd-med-f-row { flex-direction: column; }
+  .cd-med-aft-head { flex-direction: column; align-items: stretch; }
+  .cd-med-aft-cells { grid-template-columns: 1fr; }
+}
+
 /* Vragenlijst modal */
 .cd-vrl-modal-card {
   max-width: 800px;

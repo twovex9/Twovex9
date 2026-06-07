@@ -232,6 +232,7 @@
             <button type="button" class="client-detail-tab" data-cd-panel="n" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-n">Notities</button>
             <button type="button" class="client-detail-tab" data-cd-panel="j" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-j">Documenten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="r" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-r">Rapportages</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="m" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-m">Medicatie</button>
             <button type="button" class="client-detail-tab" data-cd-panel="q" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-q">Vragenlijsten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
           </div>
@@ -891,6 +892,148 @@
                 </div>
               </div>
             </section>
+            <section class="client-detail-pan" id="cd-pan-m" role="tabpanel" aria-labelledby="cd-tab-m" aria-hidden="true" hidden>
+              <div class="cd-med-head">
+                <div>
+                  <h3 class="client-detail-pan-h">Medicatie &amp; aftekenlijst</h3>
+                  <p class="cd-med-sub">Leg vast welke medicatie de cliënt gebruikt en op welke dagdelen er afgetekend moet worden. Niet-afgetekende dagdelen worden automatisch een incident.</p>
+                </div>
+                <button type="button" class="btn-primary cd-med-add-btn" id="cd-med-add-btn">+ Medicatie toevoegen</button>
+              </div>
+
+              <!-- Medicatielijst -->
+              <div class="table-card cd-med-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table cd-med-table">
+                    <thead>
+                      <tr>
+                        <th data-col="naam">Medicatie</th>
+                        <th data-col="dosering">Dosering</th>
+                        <th data-col="dagdelen">Dagdelen</th>
+                        <th data-col="dagen">Dagen</th>
+                        <th data-col="periode">Periode</th>
+                        <th data-col="aftekenen">Aftekenen</th>
+                        <th data-col="acties" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-med-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-med-empty" hidden>Geen medicatie vastgelegd. Klik op "+ Medicatie toevoegen" om te beginnen.</div>
+              </div>
+
+              <!-- Aftekenlijst -->
+              <div class="cd-med-aft-block">
+                <div class="cd-med-aft-head">
+                  <h4 class="cd-med-aft-title">Aftekenlijst</h4>
+                  <div class="cd-med-datenav">
+                    <button type="button" class="cd-med-datenav-btn" id="cd-med-prev" aria-label="Vorige dag">‹</button>
+                    <input type="date" class="cd-med-date" id="cd-med-date" aria-label="Kies datum" />
+                    <button type="button" class="cd-med-datenav-btn" id="cd-med-next" aria-label="Volgende dag">›</button>
+                    <button type="button" class="link-btn cd-med-today" id="cd-med-today">Vandaag</button>
+                  </div>
+                </div>
+                <div id="cd-med-aft-list" class="cd-med-aft-list"></div>
+                <div class="client-detail-empty-list" id="cd-med-aft-empty" hidden>Geen af te tekenen medicatie op deze dag.</div>
+              </div>
+
+              <!-- Modal: nieuw / bewerk medicatie -->
+              <div class="modal-overlay" id="cd-med-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-med-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-med-modal-title">Medicatie toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-med-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-med-form" novalidate>
+                    <input type="hidden" id="cd-med-f-id" />
+                    <div class="modal-field cd-med-f-row">
+                      <div class="modal-field cd-med-f-grow">
+                        <label class="modal-label" for="cd-med-f-naam">Medicatie *</label>
+                        <input class="modal-input" id="cd-med-f-naam" type="text" required autocomplete="off" placeholder="bv. Ritalin" />
+                      </div>
+                      <div class="modal-field cd-med-f-third">
+                        <label class="modal-label" for="cd-med-f-dosering">Dosering</label>
+                        <input class="modal-input" id="cd-med-f-dosering" type="text" autocomplete="off" placeholder="bv. 10 mg" />
+                      </div>
+                      <div class="modal-field cd-med-f-third">
+                        <label class="modal-label" for="cd-med-f-vorm">Vorm</label>
+                        <input class="modal-input" id="cd-med-f-vorm" type="text" autocomplete="off" placeholder="bv. tablet" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label">Dagdelen waarop afgetekend moet worden *</label>
+                      <div class="cd-med-checks" id="cd-med-f-dagdelen">
+                        <label class="cd-med-check"><input type="checkbox" value="ochtend" /> <span>Ochtend</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="middag" /> <span>Middag</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="avond" /> <span>Avond</span></label>
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label">Op welke dagen</label>
+                      <div class="cd-med-checks cd-med-checks--days" id="cd-med-f-weekdagen">
+                        <label class="cd-med-check"><input type="checkbox" value="1" checked /> <span>Ma</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="2" checked /> <span>Di</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="3" checked /> <span>Wo</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="4" checked /> <span>Do</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="5" checked /> <span>Vr</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="6" checked /> <span>Za</span></label>
+                        <label class="cd-med-check"><input type="checkbox" value="7" checked /> <span>Zo</span></label>
+                      </div>
+                    </div>
+                    <div class="modal-field cd-med-f-row">
+                      <div class="modal-field cd-med-f-third">
+                        <label class="modal-label" for="cd-med-f-start">Startdatum</label>
+                        <input class="modal-input" id="cd-med-f-start" type="date" />
+                      </div>
+                      <div class="modal-field cd-med-f-third">
+                        <label class="modal-label" for="cd-med-f-eind">Einddatum</label>
+                        <input class="modal-input" id="cd-med-f-eind" type="date" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-med-f-instructie">Instructie</label>
+                      <textarea class="modal-input cd-med-f-area" id="cd-med-f-instructie" rows="2" placeholder="bv. met eten innemen"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-med-f-notitie">Notitie</label>
+                      <textarea class="modal-input cd-med-f-area" id="cd-med-f-notitie" rows="2" placeholder="Extra informatie (optioneel)"></textarea>
+                    </div>
+                    <div class="modal-field cd-med-f-toggles">
+                      <label class="cd-med-check"><input type="checkbox" id="cd-med-f-aftekenen" checked /> <span>Dagelijks aftekenen verplicht (gemist dagdeel = incident)</span></label>
+                      <label class="cd-med-check"><input type="checkbox" id="cd-med-f-actief" checked /> <span>Actief</span></label>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-med-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-med-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal: niet gegeven (reden) -->
+              <div class="modal-overlay" id="cd-med-ng-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-med-ng-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title">Niet gegeven</h2>
+                    <button type="button" class="modal-close" id="cd-med-ng-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-med-ng-form" novalidate>
+                    <input type="hidden" id="cd-med-ng-medid" />
+                    <input type="hidden" id="cd-med-ng-datum" />
+                    <input type="hidden" id="cd-med-ng-dagdeel" />
+                    <p class="cd-med-ng-info" id="cd-med-ng-info"></p>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-med-ng-reden">Reden (bv. cliënt weigerde, afwezig)</label>
+                      <textarea class="modal-input cd-med-f-area" id="cd-med-ng-reden" rows="3" placeholder="Reden waarom de medicatie niet is gegeven"></textarea>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-med-ng-cancel">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-med-ng-save">Vastleggen</button>
+                  </div>
+                </div>
+              </div>
+            </section>
             <section class="client-detail-pan" id="cd-pan-q" role="tabpanel" aria-hidden="true" hidden>
               <div class="cd-vrl-head">
                 <h3 class="client-detail-pan-h">Vragenlijsten</h3>
@@ -1301,6 +1444,7 @@
   <script src="facturen-data.js?v=74b4884" defer></script>
   <script src="client-contacten-data.js?v=74b4884" defer></script>
   <script src="client-rapportages-data.js?v=74b4884" defer></script>
+  <script src="client-medicatie-data.js?v=74b4884" defer></script>
   <script src="client-vragenlijsten-data.js?v=74b4884" defer></script>
   <script src="client-detail.js?v=74b4884" defer></script>
   <script src="read-audit.js?v=74b4884" defer></script>
