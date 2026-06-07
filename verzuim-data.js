@@ -1,41 +1,75 @@
 /* global window, localStorage */
 /**
- * Verzuim — Supabase data-laag met localStorage als read-cache.
+ * Verzuim — Supabase data-laag met in-memory bron-van-waarheid (_mem).
  *
  * - Source of truth: `public.verzuim` (1 tabel, kolom `type` = 'lang' | 'kort').
- * - Twee localStorage caches: "hr_verzuim_lang_rows" en "hr_verzuim_kort_rows".
- * - `pushType('lang' | 'kort', arr)` synct die ene categorie naar Supabase.
+ * - `_mem` is de in-memory lijst; localStorage ("hr_verzuim_rows") is alleen
+ *   een secundaire cache zodat een volle quota de lijst niet leegmaakt (DIEHARD).
+ * - Schrijfacties zijn PER RIJ (add/update/delete) — geen full-overwrite/bulk-delete
+ *   meer. De vroegere pushType() deed upsert + delete-van-missende-ids, wat bij een
+ *   stale cache de hele tabel kon proberen te wissen; dat is hier verwijderd.
+ *
+ * Datavorm (camelCase frontend-conventie):
+ *   { id, type:"lang"|"kort", medewerker, eerstZiektedag, verwachteTerug,
+ *     werkelijkeTerug, beschrijving, status }
+ *
+ * Public API:
+ *   window.verzuimDB.ready                  → Promise (bootstrap klaar)
+ *   window.verzuimDB.refresh()              → Promise (refetch)
+ *   window.verzuimDB.getAllSync()           → array (alle rijen)
+ *   window.verzuimDB.getByIdSync(id)        → object | null
+ *   window.verzuimDB.add(obj)               → Promise<obj>
+ *   window.verzuimDB.update(id, patch)      → Promise<obj>
+ *   window.verzuimDB.delete(id)             → Promise<true>
+ *
+ * Event: besa:verzuim-updated
  */
 (function (global) {
   "use strict";
 
   var TABLE = "verzuim";
-  var CACHE_KEYS = {
-    lang: "hr_verzuim_lang_rows",
-    kort: "hr_verzuim_kort_rows",
-  };
-  var MIGRATION_FLAG_KEY = "verzuimMigratedToSupabase.v1";
+  var CACHE_KEY = "hr_verzuim_rows";
+  // Legacy split-caches (alleen nog ingelezen voor eenmalige migratie-detectie)
+  var LEGACY_LANG = "hr_verzuim_lang_rows";
+  var LEGACY_KORT = "hr_verzuim_kort_rows";
+  var ALLOWED_TYPES = ["lang", "kort"];
 
-  function readCache(type) {
+  var _mem = null;
+
+  function readCache() {
+    if (_mem != null) return _mem;
     try {
-      var raw = localStorage.getItem(CACHE_KEYS[type]);
-      if (!raw) return [];
-      var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
-    } catch (e) { return []; }
+      var raw = localStorage.getItem(CACHE_KEY);
+      var p = raw ? JSON.parse(raw) : [];
+      _mem = Array.isArray(p) ? p : [];
+    } catch (e) { _mem = []; }
+    return _mem;
   }
-  function writeCache(type, items) {
-    try { localStorage.setItem(CACHE_KEYS[type], JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+
+  function writeCache(items) {
+    _mem = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* quota: _mem blijft bron */ }
   }
+
   function dispatchUpdated() {
     try { global.dispatchEvent(new CustomEvent("besa:verzuim-updated")); } catch (e) { /* */ }
+  }
+
+  function reportSilent(action, err) {
+    console.error("[verzuimDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim — " + action, err);
+  }
+
+  function normType(t) {
+    var s = String(t || "lang").toLowerCase();
+    return ALLOWED_TYPES.indexOf(s) >= 0 ? s : "lang";
   }
 
   function rowToObj(row) {
     if (!row) return null;
     return {
       id: row.id,
-      type: row.type,
+      type: normType(row.type),
       medewerker: row.medewerker || "",
       eerstZiektedag: row.eerst_ziektedag || "",
       verwachteTerug: row.verwachte_terug || "",
@@ -44,119 +78,145 @@
       status: row.status || "Actief",
     };
   }
-  function objToInsertPayload(o, type) {
+
+  function genId(type) {
+    return "vz_" + (normType(type) === "kort" ? "k_" : "l_") + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  }
+
+  function objToInsertPayload(o) {
     var safe = o || {};
+    var type = normType(safe.type);
     return {
-      id: safe.id || ("vz_" + (type === "kort" ? "k_" : "l_") + Date.now() + "_" + Math.random().toString(36).slice(2, 6)),
+      id: safe.id || genId(type),
       type: type,
       medewerker: String(safe.medewerker || ""),
       eerst_ziektedag: safe.eerstZiektedag || null,
       verwachte_terug: safe.verwachteTerug || null,
       werkelijke_terug: safe.werkelijkeTerug || null,
-      beschrijving: String(safe.beschrijving || ""),
+      beschrijving: safe.beschrijving == null ? "" : String(safe.beschrijving),
       status: safe.status || "Actief",
     };
   }
 
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("eerst_ziektedag", { ascending: false, nullsFirst: false });
+    var res = await global.besaSupabase.from(TABLE).select("*")
+      .order("eerst_ziektedag", { ascending: false, nullsFirst: false });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
 
-  async function maybeMigrateLocalToSupabase() {
+  // Eenmalige migratie van de oude gesplitste localStorage-caches → Supabase.
+  // Draait alleen als de tabel leeg is (count 0) én er legacy-rijen staan. Bij
+  // een gevulde tabel (de normale situatie) doet dit niets.
+  async function maybeMigrateLegacy() {
     try {
-      if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.besaSupabase) return;
       var head = await global.besaSupabase.from(TABLE).select("id", { count: "exact", head: true });
-      if (head.error) return false;
-      if ((head.count || 0) > 0) {
-        try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
-        return false;
+      if (head.error || (head.count || 0) > 0) return;
+      function readLegacy(key, type) {
+        try {
+          var raw = localStorage.getItem(key);
+          var arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr.map(function (o) {
+            var p = objToInsertPayload(Object.assign({}, o, { type: type }));
+            return p;
+          }) : [];
+        } catch (e) { return []; }
       }
-      var langRows = readCache("lang");
-      var kortRows = readCache("kort");
-      var payload = []
-        .concat(langRows.map(function (o) { return objToInsertPayload(o, "lang"); }))
-        .concat(kortRows.map(function (o) { return objToInsertPayload(o, "kort"); }));
-      if (!payload.length) {
-        try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
-        return false;
-      }
-      console.info("[verzuimDB] Migratie van " + payload.length + " verzuim-records…");
-      var ins = await global.besaSupabase.from(TABLE).insert(payload).select();
-      if (ins.error) {
-        console.error("[verzuimDB] Migratie mislukt:", ins.error);
-        return false;
-      }
-      try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
-      return true;
-    } catch (err) {
-      console.error("[verzuimDB] Migratiefout:", err);
-      return false;
-    }
+      var payload = readLegacy(LEGACY_LANG, "lang").concat(readLegacy(LEGACY_KORT, "kort"));
+      if (!payload.length) return;
+      console.info("[verzuimDB] Eenmalige migratie van " + payload.length + " verzuim-records…");
+      var ins = await global.besaSupabase.from(TABLE).insert(payload);
+      if (ins.error) reportSilent("migratie", ins.error);
+    } catch (err) { reportSilent("migratie", err); }
   }
 
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
+    readCache();
     readyPromise = (async function () {
       try {
-        await maybeMigrateLocalToSupabase();
+        await maybeMigrateLegacy();
         var items = await fetchAll();
-        var langItems = items.filter(function (i) { return i.type === "lang"; });
-        var kortItems = items.filter(function (i) { return i.type === "kort"; });
-        writeCache("lang", langItems);
-        writeCache("kort", kortItems);
+        writeCache(items);
         dispatchUpdated();
-      } catch (err) {
-        console.error("[verzuimDB] Bootstrap mislukt:", err);
-      }
+      } catch (err) { reportSilent("bootstrap", err); }
     })();
     return readyPromise;
   }
 
-  function reportSilent(action, err) {
-    console.error("[verzuimDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim — " + action, err);
+  async function refresh() {
+    var items = await fetchAll();
+    writeCache(items);
+    dispatchUpdated();
+    return items;
   }
 
-  /** Bulk full-overwrite voor één type (lang of kort): upsert + delete. */
-  async function pushType(type, items) {
-    if (!global.besaSupabase) return;
-    if (!type || !Array.isArray(items)) return;
-    if (type !== "lang" && type !== "kort") return;
-    try {
-      var existingHead = await global.besaSupabase.from(TABLE).select("id").eq("type", type);
-      if (existingHead.error) { reportSilent("pushType select", existingHead.error); return; }
-      var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
-      var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
-      var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
+  function getAllSync() { return readCache(); }
 
-      if (items.length) {
-        var payload = items.map(function (o) { return objToInsertPayload(o, type); });
-        var ups = await global.besaSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
-        if (ups.error) reportSilent("upsert", ups.error);
-      }
-      if (toDelete.length) {
-        var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
-        if (del.error) reportSilent("delete", del.error);
-      }
-    } catch (err) {
-      reportSilent("pushType", err);
-    }
+  function getByIdSync(id) {
+    if (id == null) return null;
+    var s = String(id);
+    var found = readCache().find(function (r) { return r && String(r.id) === s; });
+    return found ? Object.assign({}, found) : null;
+  }
+
+  async function add(obj) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    var payload = objToInsertPayload(obj);
+    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    if (res.error) throw res.error;
+    var saved = rowToObj(res.data);
+    var cache = readCache().slice();
+    cache.unshift(saved);
+    writeCache(cache);
+    dispatchUpdated();
+    return saved;
+  }
+
+  async function update(id, patch) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) throw new Error("id verplicht");
+    var upd = {};
+    if (patch && "type" in patch) upd.type = normType(patch.type);
+    if (patch && "medewerker" in patch) upd.medewerker = String(patch.medewerker || "");
+    if (patch && "eerstZiektedag" in patch) upd.eerst_ziektedag = patch.eerstZiektedag || null;
+    if (patch && "verwachteTerug" in patch) upd.verwachte_terug = patch.verwachteTerug || null;
+    if (patch && "werkelijkeTerug" in patch) upd.werkelijke_terug = patch.werkelijkeTerug || null;
+    if (patch && "beschrijving" in patch) upd.beschrijving = patch.beschrijving == null ? "" : String(patch.beschrijving);
+    if (patch && "status" in patch) upd.status = patch.status || "Actief";
+    var res = await global.besaSupabase.from(TABLE).update(upd).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    var saved = rowToObj(res.data);
+    var cache = readCache().slice();
+    var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
+    if (idx >= 0) cache[idx] = saved; else cache.unshift(saved);
+    writeCache(cache);
+    dispatchUpdated();
+    return saved;
+  }
+
+  async function remove(id) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!id) return false;
+    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (res.error) throw res.error;
+    writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
+    dispatchUpdated();
+    return true;
   }
 
   global.verzuimDB = {
     get ready() { return readyPromise || bootstrap(); },
-    pushType: pushType,
-    refresh: async function () {
-      var items = await fetchAll();
-      writeCache("lang", items.filter(function (i) { return i.type === "lang"; }));
-      writeCache("kort", items.filter(function (i) { return i.type === "kort"; }));
-      dispatchUpdated();
-    },
+    refresh: refresh,
+    getAllSync: getAllSync,
+    getByIdSync: getByIdSync,
+    add: add,
+    update: update,
+    delete: remove,
+    remove: remove,
   };
 
   bootstrap();

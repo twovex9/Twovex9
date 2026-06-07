@@ -1,879 +1,125 @@
+/* global window, document */
+/**
+ * verzuim.js — Professioneel verzuim-dashboard.
+ *
+ * Bron-van-waarheid: window.verzuimDB (tabel `verzuim`) + de sub-data-lagen
+ * verzuimMijlpalenDB (Wet-Poortwachter), verzuimContactmomentenDB (rapportages)
+ * en verzuimDocsDB (privé documenten, signed URLs).
+ *
+ * Twee weergaven binnen dezelfde pagina:
+ *   1. Dashboard  — KPI-strip + filterbare lijst van lopende verzuimcasussen.
+ *   2. Detail     — één casus opengeklapt: verzuimduur, Wet-Poortwachter-tijdlijn
+ *                   met "aangeleverd"-status, contactmomenten en documenten.
+ *
+ * Verwijderen kan alleen op SUB-items (mijlpaal / contactmoment / document) en
+ * altijd met slider-bevestiging. Een verzuimcasus zelf wordt nooit verwijderd
+ * (DIEHARD: data van een persoon) — de levensloop verloopt via status → Hersteld.
+ */
 (function () {
-  var STORAGE_LANG = "hr_verzuim_lang_rows";
-  var STORAGE_KORT = "hr_verzuim_kort_rows";
+  "use strict";
 
-  var tbody = document.getElementById("vz-tbody");
-  var table = document.getElementById("vz-table");
-  var searchInput = document.getElementById("vz-search");
-  var titleEl = document.getElementById("vz-page-title");
-  var tabLang = document.getElementById("vz-tab-lang");
-  var tabKort = document.getElementById("vz-tab-kort");
-  var rangeEl = document.getElementById("vz-pager-range");
-  var pageEl = document.getElementById("vz-pager-page");
-  var rowsSelect = document.getElementById("vz-rows-per-page");
-  var columnsBtn = document.getElementById("vz-columns-menu-btn");
-  var columnsPanel = document.getElementById("vz-columns-panel");
-  var delModal = document.getElementById("vz-delete-modal");
-  var delSlider = document.getElementById("vz-delete-slider");
-  var delConfirmBtn = document.getElementById("vz-delete-confirm-btn");
-  var delCancelBtn = document.getElementById("vz-delete-cancel-btn");
-  var delCloseBtn = document.getElementById("vz-delete-close-btn");
-  var delPreview = document.getElementById("vz-delete-preview");
-  var deleteTargetId = null;
-  var listView = document.getElementById("vz-list-view");
-  var detailView = document.getElementById("vz-detail-view");
-  var detailCards = document.getElementById("vz-detail-cards");
-  var detailHeading = document.getElementById("vz-detail-heading");
-  var detailSub = document.getElementById("vz-detail-sub");
-  var detailBack = document.getElementById("vz-detail-back");
-  var mainEl = document.querySelector("main.content--comp-verzuim");
-  var editModal = document.getElementById("vz-edit-modal");
-  var editForm = document.getElementById("vz-edit-form");
-  var editCloseBtn = document.getElementById("vz-edit-close-btn");
-  var editCancelBtn = document.getElementById("vz-edit-cancel-btn");
-  var editId = document.getElementById("vz-edit-id");
-  var editMedewerker = document.getElementById("vz-edit-medewerker");
-  var editEerst = document.getElementById("vz-edit-eerst");
-  var editVerwacht = document.getElementById("vz-edit-verwacht");
-  var editWerkelijk = document.getElementById("vz-edit-werkelijk");
-  var editBeschrijving = document.getElementById("vz-edit-beschrijving");
-  var editStatus = document.getElementById("vz-edit-status");
+  function $(id) { return document.getElementById(id); }
 
-  if (!tbody || !table) return;
+  var dashView = $("vz-dash-view");
+  var detailView = $("vz-detail-view");
+  var caseListEl = $("vz-case-list");
+  var searchInput = $("vz-search");
 
-  var vzType = "lang";
-  var currentPage = 0;
-  var selectedEmployee = null;
+  if (!caseListEl || !detailView) return;
 
-  function pad2(n) {
-    return (n < 10 ? "0" : "") + n;
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  var filters = { status: "actief", type: "alle", q: "" };
+  var currentId = null;
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
 
-  function fmtDateNl(iso) {
-    if (!iso) return "—";
-    var d = new Date(iso + (iso.length <= 10 ? "T12:00:00" : ""));
-    if (isNaN(d.getTime())) return iso;
-    return pad2(d.getDate()) + "-" + pad2(d.getMonth() + 1) + "-" + d.getFullYear();
+  // Vandaag op UTC-middernacht (consistent met verzuimMijlpalenDB).
+  function todayMid() {
+    var t = new Date();
+    t.setUTCHours(0, 0, 0, 0);
+    return t;
   }
-
-  function parseDdMmYyyyToIso(str) {
-    if (!str || !String(str).trim()) return "";
-    var p = String(str).trim().split(/[-./]/);
-    if (p.length !== 3) return null;
-    var day = parseInt(p[0], 10);
-    var month = parseInt(p[1], 10);
-    var year = parseInt(p[2], 10);
-    if (!year || !month || !day) return null;
-    if (year < 100) year += 2000;
-    var dt = new Date(year, month - 1, day);
-    if (dt.getFullYear() !== year || dt.getMonth() !== month - 1 || dt.getDate() !== day) return null;
-    return year + "-" + pad2(month) + "-" + pad2(day);
+  function parseISO(iso) {
+    if (!iso) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    if (!m) return null;
+    var d = new Date(iso.length <= 10 ? (iso + "T00:00:00Z") : iso);
+    return isFinite(d.getTime()) ? d : null;
   }
-
-  function initialsFromName(name) {
-    var parts = String(name || "")
-      .trim()
-      .split(/\s+/);
+  function fmtNl(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return "—";
+    return m[3] + "-" + m[2] + "-" + m[1];
+  }
+  var DAY = 86400000;
+  function daysUntil(iso) {
+    var d = parseISO(iso);
+    if (!d) return null;
+    return Math.floor((d.getTime() - todayMid().getTime()) / DAY);
+  }
+  function dagenZiek(c) {
+    var start = parseISO(c.eerstZiektedag);
+    if (!start) return null;
+    var end = c.werkelijkeTerug ? parseISO(c.werkelijkeTerug) : todayMid();
+    if (!end) end = todayMid();
+    var d = Math.floor((end.getTime() - start.getTime()) / DAY);
+    return d < 0 ? 0 : d;
+  }
+  function initials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return "?";
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
-
-  function avatarHue(name) {
-    var s = String(name || "x");
-    var h = 0;
-    var i;
+  function hue(name) {
+    var s = String(name || "x"), h = 0, i;
     for (i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
     return h;
   }
-
-  function vzTypeLabel() {
-    return vzType === "lang" ? "Lange termijn verzuim" : "Kort verzuim";
+  // De BS2-import zette "Geïmporteerd vanuit Excel" als placeholder-beschrijving.
+  // Die tonen we niet als echte toelichting — de data blijft ongemoeid (DIEHARD).
+  function isPlaceholderBeschr(s) {
+    return /^\s*ge[iï]mporteerd\s+vanuit\s+excel\s*$/i.test(String(s || ""));
   }
-
-  function defaultLangRows() {
-    // Bron-van-waarheid is Supabase (verzuimDB). Geen hardcoded fictieve
-    // fallback meer: bij een lege cache tonen we niets tot de Supabase-
-    // bootstrap de echte data levert. Voorkomt dat nepdata kort flitst.
-    return [];
+  function cleanBeschr(s) {
+    return isPlaceholderBeschr(s) ? "" : String(s || "");
   }
-
-  function defaultKortRows() {
-    // Zie defaultLangRows: Supabase is de enige bron, geen fictieve fallback.
-    return [];
+  function isHersteld(c) { return String(c.status || "") === "Hersteld"; }
+  function isActiveCase(c) {
+    if (isHersteld(c)) return false;
+    if (c.werkelijkeTerug && String(c.werkelijkeTerug).length >= 8) return false;
+    return true;
   }
-
-  function loadRows(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      if (raw) {
-        var p = JSON.parse(raw);
-        if (Array.isArray(p) && p.length) return p;
-      }
-    } catch (e) {
-      console.warn(key, e);
-    }
-    return fallback();
+  function typeLabel(t) { return String(t) === "kort" ? "Kort" : "Langdurig"; }
+  function statusMods(status) {
+    var t = String(status || "").toLowerCase();
+    if (t === "hersteld") return "hersteld";
+    if (t === "in behandeling") return "behandeling";
+    if (t === "afgekeurd" || t === "afgewezen") return "afgekeurd";
+    if (t === "goedgekeurd") return "goedgekeurd";
+    return "actief";
   }
-
-  function saveRows(key, arr) {
-    try {
-      localStorage.setItem(key, JSON.stringify(arr));
-    } catch (e) {
-      console.warn("saveRows", e);
-    }
-    if (window.verzuimDB && typeof window.verzuimDB.pushType === "function") {
-      var type = key === STORAGE_LANG ? "lang" : (key === STORAGE_KORT ? "kort" : null);
-      if (type) {
-        try { window.verzuimDB.pushType(type, arr); } catch (e) { /* */ }
-      }
-    }
-  }
-
-  var rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
-  var rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
-  // GEEN seed-push bij load. Vroeger werd hier bij een lege localStorage de
-  // cache naar Supabase gepusht via saveRows -> pushType. Omdat de cache op dat
-  // moment nog niet door de bootstrap gevuld is, berekende pushType dan
-  // toDelete = (alle server-records) en probeerde die te VERWIJDEREN (werd
-  // enkel door RLS geblokkeerd → "[verzuimDB] delete mislukt"). De Supabase-
-  // bootstrap (verzuimDB.bootstrap → writeCache → "besa:verzuim-updated") vult
-  // de cache en triggert de render; seeden is niet nodig.
-
-  function getActiveRows() {
-    return vzType === "lang" ? rowsLang : rowsKort;
-  }
-
-  function setActiveRows(arr) {
-    if (vzType === "lang") {
-      rowsLang = arr;
-      saveRows(STORAGE_LANG, rowsLang);
-    } else {
-      rowsKort = arr;
-      saveRows(STORAGE_KORT, rowsKort);
-    }
-  }
-
-  function getPageSize() {
-    return parseInt(rowsSelect ? rowsSelect.value : "15", 10) || 15;
-  }
-
-  function getFiltered() {
-    var items = getActiveRows().slice();
-    var q = (searchInput ? searchInput.value : "").trim().toLowerCase();
-    if (q) {
-      items = items.filter(function (r) {
-        return [r.medewerker, r.eerstZiektedag, r.verwachteTerug, r.werkelijkeTerug, r.beschrijving, r.status]
-          .join(" ")
-          .toLowerCase()
-          .includes(q);
-      });
-    }
-    return items;
-  }
-
-  function setColumnVisible(colId, visible) {
-    document.querySelectorAll('#vz-table [data-col="' + colId + '"]').forEach(function (cell) {
-      cell.classList.toggle("col-hidden", !visible);
-    });
-  }
-
-  function applyColumnVisibility() {
-    document.querySelectorAll("#vz-columns-panel .column-toggle").forEach(function (btn) {
-      var colId = btn.dataset.col;
-      var visible = btn.classList.contains("is-checked");
-      btn.setAttribute("aria-checked", visible);
-      setColumnVisible(colId, visible);
-    });
-  }
-
-  function statusClass(s) {
-    var t = (s || "").toLowerCase().trim();
-    if (t === "hersteld") return "vz-status-pill vz-status-pill--hersteld";
-    if (t === "goedgekeurd") return "vz-status-pill vz-status-pill--goedgekeurd";
-    if (t === "afgekeurd" || t === "afgewezen") return "vz-status-pill vz-status-pill--afgekeurd";
-    if (t === "in behandeling") return "vz-status-pill vz-status-pill--pending";
-    return "vz-status-pill vz-status-pill--actief";
-  }
-
-  function getRowsForSelectedEmployee() {
-    if (!selectedEmployee) return [];
-    return getActiveRows()
-      .filter(function (r) {
-        return (r.medewerker || "") === selectedEmployee;
-      })
-      .sort(function (a, b) {
-        return String(b.eerstZiektedag || "").localeCompare(String(a.eerstZiektedag || ""));
-      });
-  }
-
-  function syncListDetailVisibility() {
-    if (mainEl) mainEl.classList.toggle("vz-main--detail", !!selectedEmployee);
-    if (listView) listView.hidden = !!selectedEmployee;
-    if (detailView) detailView.hidden = !selectedEmployee;
-  }
-
-  function openEmployeeDetail(name) {
-    if (!name) return;
-    selectedEmployee = name;
-    closeVzEditModal();
-    render();
-  }
-
-  function closeEmployeeDetail() {
-    selectedEmployee = null;
-    closeVzEditModal();
-    render();
-  }
-
-  function renderDetailView() {
-    if (!detailCards || !selectedEmployee) return;
-    if (detailHeading) detailHeading.textContent = selectedEmployee;
-    if (detailSub) detailSub.textContent = vzTypeLabel() + " · " + getRowsForSelectedEmployee().length + " registratie(s)";
-    detailCards.innerHTML = "";
-    var rows = getRowsForSelectedEmployee();
-    if (!rows.length) {
-      var empty = document.createElement("p");
-      empty.className = "vz-detail-empty";
-      empty.textContent = "Geen registraties voor deze medewerker in dit tabblad.";
-      detailCards.appendChild(empty);
-      return;
-    }
-    rows.forEach(function (r) {
-      var card = document.createElement("article");
-      card.className = "vz-reg-card";
-      card.dataset.rowId = r.id;
-
-      var left = document.createElement("div");
-      left.className = "vz-reg-card-left";
-      var av = document.createElement("div");
-      av.className = "vz-reg-card-avatar";
-      av.style.setProperty("--vz-av-h", String(avatarHue(r.medewerker)));
-      av.textContent = initialsFromName(r.medewerker);
-      var dateEl = document.createElement("div");
-      dateEl.className = "vz-reg-card-date";
-      dateEl.textContent = fmtDateNl(r.eerstZiektedag);
-      left.appendChild(av);
-      left.appendChild(dateEl);
-
-      var body = document.createElement("div");
-      body.className = "vz-reg-card-body";
-      var titleRow = document.createElement("div");
-      titleRow.className = "vz-reg-card-title-row";
-      var h3 = document.createElement("h3");
-      h3.className = "vz-reg-card-title";
-      h3.textContent = vzTypeLabel();
-      var pill = document.createElement("span");
-      pill.className = statusClass(r.status);
-      pill.textContent = r.status || "Actief";
-      titleRow.appendChild(h3);
-      titleRow.appendChild(pill);
-      var meta = document.createElement("p");
-      meta.className = "vz-reg-card-meta";
-      meta.textContent =
-        "Verwacht: " + fmtDateNl(r.verwachteTerug) + " · Werkelijk: " + fmtDateNl(r.werkelijkeTerug);
-      var desc = document.createElement("p");
-      desc.className = "vz-reg-card-desc";
-      desc.textContent = r.beschrijving || "—";
-      body.appendChild(titleRow);
-      body.appendChild(meta);
-      body.appendChild(desc);
-
-      var actions = document.createElement("div");
-      actions.className = "vz-reg-card-actions";
-      var tlBtn = document.createElement("button");
-      tlBtn.type = "button";
-      tlBtn.className = "cs-view-btn vz-card-tl-btn";
-      tlBtn.setAttribute("aria-label", "Tijdlijn (mijlpalen en contactmomenten)");
-      tlBtn.setAttribute("data-row-id", r.id);
-      tlBtn.title = "Tijdlijn — mijlpalen en contactmomenten";
-      tlBtn.innerHTML =
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="2" x2="12" y2="22"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>';
-
-      var editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "cs-view-btn vz-card-edit-btn";
-      editBtn.setAttribute("aria-label", "Bewerken");
-      editBtn.setAttribute("data-row-id", r.id);
-      editBtn.innerHTML =
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
-      var delBtn = document.createElement("button");
-      delBtn.type = "button";
-      delBtn.className = "cd-type-delete-btn vz-card-del-btn";
-      delBtn.setAttribute("aria-label", "Verwijderen");
-      delBtn.setAttribute("data-row-id", r.id);
-      delBtn.innerHTML =
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-      actions.appendChild(tlBtn);
-      actions.appendChild(editBtn);
-      actions.appendChild(delBtn);
-
-      card.appendChild(left);
-      card.appendChild(body);
-      card.appendChild(actions);
-      detailCards.appendChild(card);
-    });
-  }
-
-  function findRowById(id) {
-    var list = getActiveRows();
-    var i;
-    for (i = 0; i < list.length; i++) {
-      if (list[i].id === id) return list[i];
-    }
-    return null;
-  }
-
-  function openVzEditModal(row) {
-    if (!editModal || !row) return;
-    if (editId) editId.value = row.id || "";
-    if (editMedewerker) editMedewerker.value = row.medewerker || "";
-    if (editEerst) editEerst.value = row.eerstZiektedag ? fmtDateNl(row.eerstZiektedag) : "";
-    if (editVerwacht) editVerwacht.value = row.verwachteTerug ? fmtDateNl(row.verwachteTerug) : "";
-    if (editWerkelijk) editWerkelijk.value = row.werkelijkeTerug ? fmtDateNl(row.werkelijkeTerug) : "";
-    if (editBeschrijving) editBeschrijving.value = row.beschrijving || "";
-    if (editStatus) {
-      var st = row.status || "Actief";
-      editStatus.value = ["Actief", "In behandeling", "Goedgekeurd", "Afgekeurd", "Hersteld"].indexOf(st) >= 0 ? st : "Actief";
-    }
-    editModal.style.display = "flex";
-    editModal.setAttribute("aria-hidden", "false");
-    if (editEerst) editEerst.focus();
-  }
-
-  function closeVzEditModal() {
-    if (!editModal) return;
-    editModal.style.display = "none";
-    editModal.setAttribute("aria-hidden", "true");
-    if (editForm) editForm.reset();
-  }
-
-  /**
-   * PR-E1: bepaal de "Volgende deadline" voor een verzuim-rij.
-   * Bronnen (in volgorde):
-   *   1. Eerstvolgende openstaande mijlpaal uit verzuim_mijlpalen (FK op verzuim.id)
-   *   2. Fallback: `verwachte_terug` zolang verzuim Actief is en geen werkelijke_terug
-   * Returnt { label, status, title } of null.
-   *   status = 'overdue' | 'warn' | 'ok'
-   */
-  function computeDeadlineInfoFor(r) {
-    if (!r) return null;
-    // Geen actie nodig als verzuim is afgesloten
-    var st = String(r.status || "Actief");
-    if (st === "Hersteld" || (r.werkelijkeTerug && r.werkelijkeTerug.length >= 8)) return null;
-
-    // 1) Mijlpalen-data
-    if (window.verzuimMijlpalenDB && typeof window.verzuimMijlpalenDB.getVolgendeDeadlineSync === "function") {
-      var m = window.verzuimMijlpalenDB.getVolgendeDeadlineSync(r.id);
-      if (m) {
-        var dagenLabel = m.dagen < 0 ? (Math.abs(m.dagen) + " dagen te laat") :
-                        (m.dagen === 0 ? "vandaag" :
-                        (m.dagen + " dagen"));
-        var mpNaam = m.naam || MP_LABELS[m.mijlpaalType] || m.mijlpaalType || "";
-        return {
-          label: (mpNaam ? mpNaam + " · " : "") + fmtDateNl(m.datum) + " (" + dagenLabel + ")",
-          status: m.status,
-          title: "Wet-Poortwachter mijlpaal: " + (mpNaam || "deadline") + " op " + fmtDateNl(m.datum),
-        };
-      }
-    }
-
-    // 2) Fallback: verwachte terugkeerdatum
-    if (r.verwachteTerug) {
-      var today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-      var d = new Date(r.verwachteTerug + "T00:00:00Z");
-      if (!isFinite(d.getTime())) return null;
-      var dagen = Math.floor((d - today) / (1000 * 60 * 60 * 24));
-      var status = "ok";
-      if (dagen < 0) status = "overdue";
-      else if (dagen <= 30) status = "warn";
-      var lbl = dagen < 0 ? (Math.abs(dagen) + " dagen te laat") :
-                (dagen === 0 ? "vandaag" :
-                (dagen + " dagen"));
-      return {
-        label: "Verwachte terugkeer " + fmtDateNl(r.verwachteTerug) + " (" + lbl + ")",
-        status: status,
-        title: "Verwachte terugkeerdatum: " + fmtDateNl(r.verwachteTerug),
-      };
-    }
-    return null;
-  }
-
-  function renderTable() {
-    var items = getFiltered();
-    var pageSize = getPageSize();
-    var total = items.length;
-    var totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
-    if (currentPage >= totalPages) currentPage = totalPages - 1;
-    if (currentPage < 0) currentPage = 0;
-    var start = currentPage * pageSize;
-    var page = items.slice(start, start + pageSize);
-
-    tbody.innerHTML = "";
-    if (!page.length) {
-      var tr0 = document.createElement("tr");
-      var td0 = document.createElement("td");
-      td0.colSpan = 8;
-      td0.textContent = "Geen resultaten";
-      td0.style.textAlign = "center";
-      td0.style.padding = "24px";
-      td0.style.color = "var(--text-muted)";
-      tr0.appendChild(td0);
-      tbody.appendChild(tr0);
-    } else {
-      page.forEach(function (r) {
-        var tr = document.createElement("tr");
-        tr.dataset.rowId = r.id;
-
-        function td(col, text) {
-          var cell = document.createElement("td");
-          cell.dataset.col = col;
-          cell.textContent = text;
-          return cell;
-        }
-
-        var tdM = document.createElement("td");
-        tdM.dataset.col = "medewerker";
-        var naamEl = document.createElement("span");
-        naamEl.className = "vz-medewerker-naam";
-        naamEl.textContent = r.medewerker || "";
-        tdM.appendChild(naamEl);
-        tr.appendChild(tdM);
-        tr.appendChild(td("eerst", fmtDateNl(r.eerstZiektedag)));
-        tr.appendChild(td("verwacht", fmtDateNl(r.verwachteTerug)));
-        tr.appendChild(td("werkelijk", fmtDateNl(r.werkelijkeTerug)));
-
-        var tdB = document.createElement("td");
-        tdB.dataset.col = "beschrijving";
-        tdB.textContent = r.beschrijving || "";
-        tr.appendChild(tdB);
-
-        var tdS = document.createElement("td");
-        tdS.dataset.col = "status";
-        var pill = document.createElement("span");
-        pill.className = statusClass(r.status);
-        pill.textContent = r.status || "Actief";
-        tdS.appendChild(pill);
-        tr.appendChild(tdS);
-
-        // PR-E1: kolom "Volgende deadline" met driehoek-icoon
-        var tdD = document.createElement("td");
-        tdD.dataset.col = "deadline";
-        var deadlineInfo = computeDeadlineInfoFor(r);
-        if (deadlineInfo) {
-          var iconClass = deadlineInfo.status === "overdue" ? "verzuim-deadline-overdue" :
-                          deadlineInfo.status === "warn" ? "verzuim-deadline-warn" : "";
-          if (iconClass) {
-            var icon = document.createElement("span");
-            icon.className = "verzuim-deadline-icon " + iconClass;
-            icon.setAttribute("aria-hidden", "true");
-            icon.title = deadlineInfo.title;
-            icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 L22 20 L2 20 Z"/></svg>';
-            tdD.appendChild(icon);
-          }
-          var lbl = document.createElement("span");
-          lbl.className = "verzuim-deadline-label";
-          lbl.textContent = " " + deadlineInfo.label;
-          if (iconClass) tdD.appendChild(lbl); else tdD.textContent = deadlineInfo.label;
-        } else {
-          tdD.textContent = "—";
-          tdD.style.color = "var(--text-muted)";
-        }
-        tr.appendChild(tdD);
-
-        var tdA = document.createElement("td");
-        tdA.dataset.col = "acties";
-        tdA.className = "vz-td-acties";
-        var wrap = document.createElement("div");
-        wrap.className = "vz-acties-row";
-        var editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.className = "cs-view-btn vz-edit-table-btn";
-        editBtn.setAttribute("aria-label", "Bewerken");
-        editBtn.setAttribute("data-row-id", r.id || "");
-        editBtn.innerHTML =
-          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
-        var delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "cd-type-delete-btn";
-        delBtn.setAttribute("aria-label", "Verwijderen");
-        delBtn.innerHTML =
-          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-        wrap.appendChild(editBtn);
-        wrap.appendChild(delBtn);
-        tdA.appendChild(wrap);
-        tr.appendChild(tdA);
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    applyColumnVisibility();
-
-    if (rangeEl) {
-      rangeEl.textContent = total === 0 ? "0 van 0" : page.length + " van " + total;
-    }
-    if (pageEl) pageEl.textContent = "Pagina " + (currentPage + 1) + " van " + totalPages;
-
-    var first = document.getElementById("vz-pager-first");
-    var prev = document.getElementById("vz-pager-prev");
-    var next = document.getElementById("vz-pager-next");
-    var last = document.getElementById("vz-pager-last");
-    var atFirst = currentPage <= 0 || total === 0;
-    var atLast = currentPage >= totalPages - 1 || total === 0;
-    if (first) first.disabled = atFirst;
-    if (prev) prev.disabled = atFirst;
-    if (next) next.disabled = atLast;
-    if (last) last.disabled = atLast;
-  }
-
-  function render() {
-    syncListDetailVisibility();
-    if (selectedEmployee) {
-      renderDetailView();
-    } else {
-      renderTable();
-    }
-  }
-
-  function closeVzDeleteModal() {
-    if (delModal) {
-      delModal.setAttribute("hidden", "");
-      delModal.setAttribute("aria-hidden", "true");
-    }
-    deleteTargetId = null;
-    if (delSlider) {
-      delSlider.value = "0";
-      syncVzDelSlider();
-    }
-    if (delPreview) delPreview.textContent = "";
-  }
-
-  function syncVzDelSlider() {
-    if (!delSlider) return;
-    var v = Math.min(100, Math.max(0, parseInt(delSlider.value, 10) || 0));
-    delSlider.value = String(v);
-    delSlider.style.setProperty("--employee-slider-pct", v + "%");
-    delSlider.setAttribute("aria-valuenow", String(v));
-    if (delConfirmBtn) delConfirmBtn.disabled = v < 100;
-  }
-
-  function openVzDeleteModal(id, previewLabel) {
-    deleteTargetId = id;
-    if (delPreview) delPreview.textContent = previewLabel || "";
-    if (delSlider) {
-      delSlider.value = "0";
-      syncVzDelSlider();
-    }
-    if (delModal) {
-      delModal.removeAttribute("hidden");
-      delModal.setAttribute("aria-hidden", "false");
-    }
-  }
-
-  function deleteRowById(id) {
-    if (!id) return;
-    var list = getActiveRows().slice();
-    var next = list.filter(function (x) {
-      return x.id !== id;
-    });
-    if (next.length === list.length) return;
-    setActiveRows(next);
-    if (selectedEmployee && !getRowsForSelectedEmployee().length) {
-      selectedEmployee = null;
-    }
-    render();
-  }
-
-  function confirmVzDelete() {
-    if (!deleteTargetId || (delConfirmBtn && delConfirmBtn.disabled)) return;
-    deleteRowById(deleteTargetId);
-    closeVzDeleteModal();
-    if (typeof window.showActionFeedback === "function") {
-      window.showActionFeedback("deleted", "Verzuimregel");
-    }
-  }
-
-  if (delSlider) {
-    delSlider.addEventListener("input", syncVzDelSlider);
-    delSlider.addEventListener("change", syncVzDelSlider);
-  }
-  if (delConfirmBtn) delConfirmBtn.addEventListener("click", confirmVzDelete);
-  if (delCancelBtn) delCancelBtn.addEventListener("click", closeVzDeleteModal);
-  if (delCloseBtn) delCloseBtn.addEventListener("click", closeVzDeleteModal);
-  if (delModal) {
-    delModal.addEventListener("click", function (e) {
-      if (e.target === delModal) closeVzDeleteModal();
-    });
-  }
-  syncVzDelSlider();
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && editModal && editModal.style.display === "flex") {
-      closeVzEditModal();
-      e.stopPropagation();
-      return;
-    }
-    if (e.key === "Escape" && selectedEmployee) {
-      closeEmployeeDetail();
-      e.stopPropagation();
-      return;
-    }
-    if (e.key === "Escape" && delModal && !delModal.hasAttribute("hidden")) {
-      closeVzDeleteModal();
-      e.stopPropagation();
-    }
-  });
-
-  function setTab(type) {
-    closeVzDeleteModal();
-    closeVzEditModal();
-    selectedEmployee = null;
-    vzType = type;
-    currentPage = 0;
-    if (titleEl) {
-      titleEl.textContent = type === "lang" ? "Lange termijn afwezigheid" : "Korte termijn afwezigheid";
-    }
-    if (tabLang && tabKort) {
-      var isLang = type === "lang";
-      tabLang.classList.toggle("is-active", isLang);
-      tabKort.classList.toggle("is-active", !isLang);
-      tabLang.setAttribute("aria-selected", isLang ? "true" : "false");
-      tabKort.setAttribute("aria-selected", isLang ? "false" : "true");
-    }
-    render();
-  }
-
-  if (tabLang) tabLang.addEventListener("click", function () { setTab("lang"); });
-  if (tabKort) tabKort.addEventListener("click", function () { setTab("kort"); });
-
-  if (searchInput) searchInput.addEventListener("input", function () { currentPage = 0; render(); });
-  if (rowsSelect) rowsSelect.addEventListener("change", function () { currentPage = 0; render(); });
-
-  ["first", "prev", "next", "last"].forEach(function (action) {
-    var btn = document.getElementById("vz-pager-" + action);
-    if (!btn) return;
-    btn.addEventListener("click", function () {
-      var items = getFiltered();
-      var pageSize = getPageSize();
-      var total = items.length;
-      var totalPages = Math.max(1, Math.ceil(total / pageSize));
-      if (action === "first") currentPage = 0;
-      else if (action === "prev") currentPage = Math.max(0, currentPage - 1);
-      else if (action === "next") currentPage = Math.min(totalPages - 1, currentPage + 1);
-      else if (action === "last") currentPage = totalPages - 1;
-      render();
-    });
-  });
-
-  document.querySelectorAll("#vz-columns-panel .column-toggle").forEach(function (btn) {
-    btn.addEventListener("click", function (event) {
-      event.stopPropagation();
-      btn.classList.toggle("is-checked");
-      var visible = btn.classList.contains("is-checked");
-      btn.setAttribute("aria-checked", visible);
-      setColumnVisible(btn.dataset.col, visible);
-    });
-  });
-
-  if (columnsBtn && columnsPanel) {
-    columnsBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      var open = !columnsPanel.hidden;
-      columnsPanel.hidden = open;
-      columnsBtn.setAttribute("aria-expanded", !open);
-    });
-    columnsPanel.addEventListener("click", function (e) { e.stopPropagation(); });
-  }
-
-  document.addEventListener("click", function () {
-    if (columnsPanel) {
-      columnsPanel.hidden = true;
-      if (columnsBtn) columnsBtn.setAttribute("aria-expanded", "false");
-    }
-  });
-
-  tbody.addEventListener("click", function (e) {
-    var del = e.target.closest(".cd-type-delete-btn");
-    if (del && tbody.contains(del)) {
-      e.preventDefault();
-      e.stopPropagation();
-      var trDel = del.closest("tr");
-      if (!trDel || !trDel.dataset.rowId) return;
-      var idDel = trDel.dataset.rowId;
-      var rowDel = findRowById(idDel);
-      var labelDel = rowDel ? rowDel.medewerker || idDel : idDel;
-      openVzDeleteModal(idDel, labelDel);
-      return;
-    }
-    var ed = e.target.closest(".vz-edit-table-btn");
-    if (ed && tbody.contains(ed)) {
-      e.preventDefault();
-      e.stopPropagation();
-      var rid = ed.getAttribute("data-row-id");
-      var rowEd = rid ? findRowById(rid) : null;
-      if (rowEd) openVzEditModal(rowEd);
-      return;
-    }
-    var tr = e.target.closest("tr");
-    if (!tr || !tbody.contains(tr) || !tr.dataset.rowId) return;
-    var rowOpen = findRowById(tr.dataset.rowId);
-    if (rowOpen && rowOpen.medewerker) openEmployeeDetail(rowOpen.medewerker);
-  });
-
-  if (detailCards) {
-    detailCards.addEventListener("click", function (e) {
-      var ed = e.target.closest(".vz-card-edit-btn");
-      if (ed && detailCards.contains(ed)) {
-        e.preventDefault();
-        var rid = ed.getAttribute("data-row-id");
-        var row = rid ? findRowById(rid) : null;
-        if (row) openVzEditModal(row);
-        return;
-      }
-      var del = e.target.closest(".vz-card-del-btn");
-      if (!del || !detailCards.contains(del)) return;
-      e.preventDefault();
-      var id2 = del.getAttribute("data-row-id");
-      if (!id2) return;
-      var row2 = findRowById(id2);
-      openVzDeleteModal(id2, row2 ? row2.medewerker || id2 : id2);
-    });
-  }
-
-  if (detailBack) {
-    detailBack.addEventListener("click", function () {
-      closeEmployeeDetail();
-    });
-  }
-
-  if (editCloseBtn) editCloseBtn.addEventListener("click", closeVzEditModal);
-  if (editCancelBtn) editCancelBtn.addEventListener("click", closeVzEditModal);
-  if (editModal) {
-    editModal.addEventListener("click", function (e) {
-      if (e.target === editModal) closeVzEditModal();
-    });
-  }
-
-  /**
-   * Sprint 15 / S15 — AVG Art. 9 safeguards op vrije-tekst veld.
-   * - Character counter (0 / 500)
-   * - Detectie van medische trefwoorden → rode hint (niet hard-block, want
-   *   sommige termen kunnen administratief gerechtvaardigd zijn)
-   * - submit waarschuwing als trefwoorden gevonden
-   */
-  var GDPR_MEDISCH_KEYWORDS = [
-    "diagnose", "diagnos", "medicat", "medicij", "medicat", "antidepres",
-    "depress", "angststoorn", "burn-?out", "burnout", "kanker", "tumor",
-    "hart", "longontsteking", "covid", "corona", "griep", "hiv", "aids",
-    "zwanger", "miskraam", "abortus", "kanker", "operatie", "operat",
-    "ziekenhuis", "psychiat", "trauma", "therapie", "therapeut",
-    "ms-?diagnose", "diabetes", "epileps", "huisarts", "specialist"
-  ];
-
-  function findMedischTokens(text) {
-    var t = String(text || "").toLowerCase();
-    return GDPR_MEDISCH_KEYWORDS.filter(function (k) {
-      var pattern = new RegExp("\\b" + k + "\\b", "i");
-      return pattern.test(t);
-    });
-  }
-
-  function updateBeschrijvingCounter() {
-    if (!editBeschrijving) return;
-    var counter = document.getElementById("vz-edit-beschrijving-counter");
-    var len = (editBeschrijving.value || "").length;
-    if (counter) counter.textContent = len + " / 500";
-    if (counter) counter.classList.toggle("vz-field-hint--near-limit", len > 400);
-
-    // Medische trefwoord detectie
-    var tokens = findMedischTokens(editBeschrijving.value);
-    var warning = document.getElementById("vz-edit-beschrijving-medisch");
-    if (tokens.length > 0) {
-      if (!warning) {
-        warning = document.createElement("div");
-        warning.id = "vz-edit-beschrijving-medisch";
-        warning.className = "vz-medisch-warning";
-        warning.setAttribute("role", "alert");
-        editBeschrijving.parentElement.appendChild(warning);
-      }
-      warning.innerHTML = '⚠️ <strong>Mogelijk medische term gedetecteerd:</strong> ' +
-        tokens.map(function(t) { return '<code>' + t + '</code>'; }).join(", ") +
-        '. Overweeg administratief-neutrale formulering.';
-    } else if (warning) {
-      warning.remove();
-    }
-  }
-
-  if (editBeschrijving) {
-    editBeschrijving.addEventListener("input", updateBeschrijvingCounter);
-    editBeschrijving.addEventListener("focus", updateBeschrijvingCounter);
-  }
-
-  if (editForm) {
-    editForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var id = editId ? editId.value : "";
-      if (!id) return;
-      var eerstIso = parseDdMmYyyyToIso(editEerst ? editEerst.value : "");
-      if (!eerstIso) {
-        if (editEerst) editEerst.focus();
-        return;
-      }
-      var verIso = editVerwacht && editVerwacht.value.trim() ? parseDdMmYyyyToIso(editVerwacht.value) : "";
-      if (editVerwacht && editVerwacht.value.trim() && verIso === null) {
-        editVerwacht.focus();
-        return;
-      }
-      var werIso = editWerkelijk && editWerkelijk.value.trim() ? parseDdMmYyyyToIso(editWerkelijk.value) : "";
-      if (editWerkelijk && editWerkelijk.value.trim() && werIso === null) {
-        editWerkelijk.focus();
-        return;
-      }
-      var list = getActiveRows().slice();
-      var idx = -1;
-      var j;
-      for (j = 0; j < list.length; j++) {
-        if (list[j].id === id) {
-          idx = j;
-          break;
-        }
-      }
-      if (idx < 0) return;
-      list[idx] = {
-        id: id,
-        medewerker: list[idx].medewerker,
-        eerstZiektedag: eerstIso,
-        verwachteTerug: verIso || "",
-        werkelijkeTerug: werIso || "",
-        beschrijving: editBeschrijving ? editBeschrijving.value.trim() : "",
-        status: editStatus ? editStatus.value : "Actief"
-      };
-      setActiveRows(list);
-      closeVzEditModal();
-      render();
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("saved", "Verzuimregel");
-      }
-    });
+  function fileSizeFmt(bytes) {
+    var b = Number(bytes || 0);
+    if (b <= 0) return "";
+    if (b < 1024) return b + " B";
+    if (b < 1024 * 1024) return Math.round(b / 1024) + " KB";
+    return (b / (1024 * 1024)).toFixed(1) + " MB";
   }
 
   // ---------------------------------------------------------------------------
-  // PR-F: tijdlijn-modal (mijlpalen + contactmomenten per verzuim-rij)
+  // Wet-Poortwachter-templates (1-op-1 BS2: template_id 1..9)
   // ---------------------------------------------------------------------------
-  var tlState = { verzuimId: null };
-  var MP_LABELS = {
-    notification: "Ziekmelding",
-    action_plan: "Plan van Aanpak",
-    evaluation: "Evaluatie",
-    report: "Melding / rapportage",
-    assessment: "Beoordeling",
-  };
-
-  // De vaste Wet-Poortwachter-mijlpalen (1-op-1 BS2: template_id 1..9). `week` =
-  // wettelijke week relatief tot de eerste ziektedag → deadline = eerste ziektedag
-  // + week*7 dagen. De UWV-melding (template 9) heeft geen vaste wettelijke week.
   var WP_TEMPLATES = [
     { templateId: 1, type: "notification", week: 0,    naam: "Ziekmelding" },
     { templateId: 2, type: "action_plan",  week: 6,    naam: "Probleemanalyse" },
@@ -885,285 +131,535 @@
     { templateId: 8, type: "assessment",   week: 104,  naam: "Einde Loondoorbetalingsverplichting" },
     { templateId: 9, type: "report",       week: null, naam: "Melding Beëindiging Ziekteverlof bij UWV" },
   ];
-
+  var MP_LABELS = {
+    notification: "Ziekmelding", action_plan: "Plan van Aanpak",
+    evaluation: "Evaluatie", report: "Melding / rapportage", assessment: "Beoordeling",
+  };
+  var CM_LABELS = {
+    contact_moment: "Contactmoment", company_doctor_visit: "Bezoek bedrijfsarts",
+    company_doctor_feedback: "Terugkoppeling bedrijfsarts", other: "Anders",
+  };
   function wpTemplateById(id) {
     var n = Number(id);
-    for (var i = 0; i < WP_TEMPLATES.length; i++) {
-      if (WP_TEMPLATES[i].templateId === n) return WP_TEMPLATES[i];
-    }
+    for (var i = 0; i < WP_TEMPLATES.length; i++) if (WP_TEMPLATES[i].templateId === n) return WP_TEMPLATES[i];
     return null;
   }
-
-  // Toon de echte mijlpaal-naam (uit data.naam, 1-op-1 BS2) met val-terug op het
-  // type-label voor oudere handmatige mijlpalen zonder naam.
   function mpDisplayName(it) {
     if (it && it.data && it.data.naam) return String(it.data.naam);
     return MP_LABELS[it && it.mijlpaalType] || (it && it.mijlpaalType) || "Mijlpaal";
   }
-
-  // deadline = eerste ziektedag + week*7 dagen (ISO yyyy-mm-dd), of "" als geen week/datum.
   function wpDeadlineFor(eersteZiektedag, week) {
     if (week == null || !eersteZiektedag) return "";
-    var base = new Date(String(eersteZiektedag) + "T00:00:00Z");
-    if (!isFinite(base.getTime())) return "";
+    var base = parseISO(eersteZiektedag);
+    if (!base) return "";
+    base = new Date(base.getTime());
     base.setUTCDate(base.getUTCDate() + Number(week) * 7);
     return base.toISOString().slice(0, 10);
   }
-  var CM_LABELS = {
-    contact_moment: "Contactmoment",
-    company_doctor_visit: "Bezoek bedrijfsarts",
-    company_doctor_feedback: "Terugkoppeling bedrijfsarts",
-    other: "Anders",
-  };
 
-  function tlEsc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  // ---------------------------------------------------------------------------
+  // Data getters
+  // ---------------------------------------------------------------------------
+  function allCases() {
+    try { return (window.verzuimDB && window.verzuimDB.getAllSync()) || []; } catch (e) { return []; }
   }
-  function tlFmtDate(iso) {
-    if (!iso) return "—";
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
-    return m ? (m[3] + "-" + m[2] + "-" + m[1]) : String(iso);
+  function caseById(id) {
+    try { return (window.verzuimDB && window.verzuimDB.getByIdSync(id)) || null; } catch (e) { return null; }
   }
-  function tlGetModal() { return document.getElementById("vz-tl-modal"); }
-
-  function tlOpen(verzuimId) {
-    var modal = tlGetModal();
-    if (!modal) return;
-    tlState.verzuimId = verzuimId;
-    var sub = document.getElementById("vz-tl-sub");
-    if (sub) {
-      var row = findRowById(verzuimId);
-      sub.textContent = "Mijlpalen en contactmomenten voor "
-        + ((row && row.medewerker) || "deze verzuimregistratie") + ".";
-    }
-    tlRenderMp();
-    tlRenderCm();
-    tlHideForm("mp");
-    tlHideForm("cm");
-    modal.hidden = false;
-    modal.setAttribute("aria-hidden", "false");
-    var card = modal.querySelector(".vz-tl-card");
-    if (card) card.focus();
+  function milestonesFor(id) {
+    try {
+      var arr = (window.verzuimMijlpalenDB && window.verzuimMijlpalenDB.getForVerzuimSync(id)) || [];
+      return arr.slice().sort(function (a, b) {
+        var da = a.deadlineDatum || "9999", db = b.deadlineDatum || "9999";
+        return String(da).localeCompare(String(db));
+      });
+    } catch (e) { return []; }
   }
-  function tlClose() {
-    var modal = tlGetModal();
-    if (!modal) return;
-    modal.hidden = true;
-    modal.setAttribute("aria-hidden", "true");
-    tlState.verzuimId = null;
+  function contactsFor(id) {
+    try {
+      var arr = (window.verzuimContactmomentenDB && window.verzuimContactmomentenDB.getForVerzuimSync(id)) || [];
+      return arr.slice().sort(function (a, b) { return String(b.datum || "").localeCompare(String(a.datum || "")); });
+    } catch (e) { return []; }
+  }
+  function docsFor(id) {
+    try {
+      var arr = (window.verzuimDocsDB && window.verzuimDocsDB.listSync(id)) || [];
+      return arr.filter(function (d) { return d && !d.archived; })
+        .sort(function (a, b) { return String(b.uploaddatum || "").localeCompare(String(a.uploaddatum || "")); });
+    } catch (e) { return []; }
   }
 
-  function tlHideForm(kind) {
-    var form = document.getElementById("vz-tl-" + kind + "-form");
-    if (form) form.hidden = true;
-    var idIn = document.getElementById("vz-tl-" + kind + "-id");
-    if (idIn) idIn.value = "";
-  }
-  function tlShowForm(kind, prefill) {
-    var form = document.getElementById("vz-tl-" + kind + "-form");
-    if (!form) return;
-    form.hidden = false;
-    var idIn = document.getElementById("vz-tl-" + kind + "-id");
-    if (idIn) idIn.value = (prefill && prefill.id) || "";
-    if (kind === "mp") {
-      // Bepaal het Wet-Poortwachter-template van de mijlpaal (op template_id, of
-      // val terug op het eerste template met hetzelfde type voor oude mijlpalen).
-      var tmplId = (prefill && prefill.data && (prefill.data.template_id || prefill.data.templateId)) || "";
-      if (!tmplId && prefill && prefill.mijlpaalType) {
-        for (var ti = 0; ti < WP_TEMPLATES.length; ti++) {
-          if (WP_TEMPLATES[ti].type === prefill.mijlpaalType) { tmplId = WP_TEMPLATES[ti].templateId; break; }
-        }
-      }
-      document.getElementById("vz-tl-mp-type").value = String(tmplId || WP_TEMPLATES[0].templateId);
-      document.getElementById("vz-tl-mp-deadline").value = (prefill && prefill.deadlineDatum) || "";
-      document.getElementById("vz-tl-mp-voltooid").value = (prefill && prefill.voltooidOp) || "";
-      // Nieuwe mijlpaal zonder deadline → stel de wettelijke deadline voor.
-      if (!prefill) tlAutofillMpDeadline();
-    } else {
-      document.getElementById("vz-tl-cm-type").value = (prefill && prefill.type) || "contact_moment";
-      document.getElementById("vz-tl-cm-datum").value = (prefill && prefill.datum) || "";
-      document.getElementById("vz-tl-cm-notitie").value = (prefill && prefill.notitie) || "";
-    }
-  }
-
-  function tlRenderMp() {
-    var list = document.getElementById("vz-tl-mp-list");
-    var empty = document.getElementById("vz-tl-mp-empty");
-    if (!list || !empty || !tlState.verzuimId) return;
-    var items = window.verzuimMijlpalenDB
-      ? (window.verzuimMijlpalenDB.getForVerzuimSync(tlState.verzuimId) || [])
-      : [];
-    items.sort(function (a, b) {
-      return String(a.deadlineDatum || "").localeCompare(String(b.deadlineDatum || ""));
+  // Afgeleide cijfers per casus
+  function derive(c) {
+    var ms = milestonesFor(c.id);
+    var open = ms.filter(function (m) { return !m.voltooidOp; });
+    var done = ms.length - open.length;
+    var overdue = 0, soon = 0, next = null;
+    open.forEach(function (m) {
+      if (!m.deadlineDatum) return;
+      var du = daysUntil(m.deadlineDatum);
+      if (du == null) return;
+      if (du < 0) overdue++;
+      else if (du <= 30) soon++;
+      if (next == null || String(m.deadlineDatum) < String(next.deadlineDatum)) next = m;
     });
-    if (items.length === 0) {
-      list.hidden = true;
-      empty.hidden = false;
-      list.innerHTML = "";
+    return {
+      total: ms.length, done: done, openCount: open.length,
+      overdue: overdue, soon: soon, next: next,
+      dagen: dagenZiek(c),
+      docs: (function () { try { return window.verzuimDocsDB ? window.verzuimDocsDB.countSync(c.id) : 0; } catch (e) { return 0; } })(),
+      contacts: contactsFor(c.id).length,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // KPI's
+  // ---------------------------------------------------------------------------
+  function renderKPIs() {
+    var cases = allCases();
+    var active = cases.filter(isActiveCase);
+    var actief = active.length;
+    var langdurig = active.filter(function (c) { return c.type === "lang" && (dagenZiek(c) || 0) > 42; }).length;
+    var sumDagen = 0, nDagen = 0;
+    active.forEach(function (c) { var d = dagenZiek(c); if (d != null) { sumDagen += d; nDagen++; } });
+    var gem = nDagen ? Math.round(sumDagen / nDagen) : 0;
+    var telaat = 0, komend = 0;
+    active.forEach(function (c) {
+      milestonesFor(c.id).forEach(function (m) {
+        if (m.voltooidOp || !m.deadlineDatum) return;
+        var du = daysUntil(m.deadlineDatum);
+        if (du == null) return;
+        if (du < 0) telaat++;
+        else if (du <= 30) komend++;
+      });
+    });
+    var hersteld = cases.filter(isHersteld).length;
+
+    setText("vz-kpi-actief", actief);
+    setText("vz-kpi-langdurig", langdurig);
+    setText("vz-kpi-duur", gem);
+    setText("vz-kpi-telaat", telaat);
+    setText("vz-kpi-komend", komend);
+    setText("vz-kpi-hersteld", hersteld);
+    var sub = $("vz-kpi-actief-sub");
+    if (sub) sub.textContent = cases.length + " casussen totaal";
+  }
+  function setText(id, v) { var el = $(id); if (el) el.textContent = String(v); }
+
+  // ---------------------------------------------------------------------------
+  // Case list
+  // ---------------------------------------------------------------------------
+  function getFilteredCases() {
+    var q = (filters.q || "").trim().toLowerCase();
+    return allCases().filter(function (c) {
+      if (filters.status === "actief" && !isActiveCase(c)) return false;
+      if (filters.status === "hersteld" && !isHersteld(c)) return false;
+      if (filters.type !== "alle" && c.type !== filters.type) return false;
+      if (q && String(c.medewerker || "").toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (a, b) {
+      // Lopende casussen met te-late momenten bovenaan, dan op langste verzuim.
+      var da = derive(a), db = derive(b);
+      if (db.overdue !== da.overdue) return db.overdue - da.overdue;
+      return (db.dagen || 0) - (da.dagen || 0);
+    });
+  }
+
+  function nextMomentChip(d) {
+    if (!d.next) {
+      if (d.total > 0 && d.openCount === 0) return '<span class="vz-chip vz-chip--ok">Traject compleet</span>';
+      return '<span class="vz-chip vz-chip--muted">Geen openstaand moment</span>';
+    }
+    var naam = mpDisplayName(d.next);
+    var du = daysUntil(d.next.deadlineDatum);
+    if (du == null) return '<span class="vz-chip vz-chip--muted">' + escHtml(naam) + '</span>';
+    if (du < 0) return '<span class="vz-chip vz-chip--late">⚠ ' + escHtml(naam) + ' · ' + Math.abs(du) + ' d te laat</span>';
+    if (du <= 30) return '<span class="vz-chip vz-chip--warn">' + escHtml(naam) + ' · over ' + du + ' d</span>';
+    return '<span class="vz-chip vz-chip--soft">' + escHtml(naam) + ' · ' + fmtNl(d.next.deadlineDatum) + '</span>';
+  }
+
+  function renderCaseList() {
+    var list = getFilteredCases();
+    caseListEl.innerHTML = "";
+    if (!list.length) {
+      var empty = document.createElement("div");
+      empty.className = "vz-empty";
+      empty.innerHTML = '<div class="vz-empty-ico" aria-hidden="true">🗂️</div>'
+        + '<p class="vz-empty-title">Geen verzuimcasussen gevonden</p>'
+        + '<p class="vz-empty-sub">Pas de filters aan of meld een nieuw verzuim.</p>';
+      caseListEl.appendChild(empty);
       return;
     }
-    list.hidden = false;
-    empty.hidden = true;
-    list.innerHTML = items.map(function (it) {
-      var status = it.voltooidOp ? "voltooid" : "open";
-      var deadline = tlFmtDate(it.deadlineDatum);
-      var voltooid = it.voltooidOp ? "Voltooid op " + tlFmtDate(it.voltooidOp) : "Openstaand";
+    list.forEach(function (c) {
+      var d = derive(c);
+      var card = document.createElement("div");
+      card.className = "vz-case-card";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("data-id", c.id);
+      card.setAttribute("aria-label", "Open verzuimcasus van " + (c.medewerker || "onbekend"));
+
+      var dagenTxt = d.dagen == null ? "—" : (d.dagen + " dag" + (d.dagen === 1 ? "" : "en"));
+      var sinds = c.eerstZiektedag ? fmtNl(c.eerstZiektedag) : "onbekend";
+      var prog = d.total ? (d.done + "/" + d.total + " aangeleverd") : "geen traject";
+
+      card.innerHTML =
+        '<div class="vz-case-av" style="--vz-h:' + hue(c.medewerker) + '">' + escHtml(initials(c.medewerker)) + '</div>'
+        + '<div class="vz-case-main">'
+        + '  <div class="vz-case-top">'
+        + '    <span class="vz-case-name">' + escHtml(c.medewerker || "Onbekend") + '</span>'
+        + '    <span class="vz-badge vz-badge--' + (c.type === "kort" ? "kort" : "lang") + '">' + typeLabel(c.type) + '</span>'
+        + '    <span class="vz-pill vz-pill--' + statusMods(c.status) + '">' + escHtml(c.status || "Actief") + '</span>'
+        + '  </div>'
+        + '  <div class="vz-case-meta">'
+        + '    <span class="vz-meta-it"><b>Ziek sinds</b> ' + sinds + '</span>'
+        + '    <span class="vz-meta-it"><b>' + dagenTxt + '</b></span>'
+        + '    <span class="vz-meta-it vz-meta-docs" title="Documenten">📎 ' + d.docs + '</span>'
+        + '    <span class="vz-meta-it vz-meta-cm" title="Contactmomenten">💬 ' + d.contacts + '</span>'
+        + '    <span class="vz-meta-it vz-meta-prog" title="Verplichte momenten">✓ ' + prog + '</span>'
+        + '  </div>'
+        + '</div>'
+        + '<div class="vz-case-right">' + nextMomentChip(d)
+        + '  <span class="vz-case-chev" aria-hidden="true">›</span>'
+        + '</div>';
+      caseListEl.appendChild(card);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // View switching
+  // ---------------------------------------------------------------------------
+  function showDash() {
+    currentId = null;
+    if (dashView) dashView.hidden = false;
+    if (detailView) detailView.hidden = true;
+    renderDash();
+    try { window.scrollTo(0, 0); } catch (e) { /* */ }
+  }
+  function renderDash() {
+    renderKPIs();
+    renderCaseList();
+  }
+  function openCase(id) {
+    var c = caseById(id);
+    if (!c) return;
+    currentId = id;
+    if (dashView) dashView.hidden = true;
+    if (detailView) detailView.hidden = false;
+    renderDetail();
+    try { window.scrollTo(0, 0); } catch (e) { /* */ }
+    // Documenten zijn privé en worden lazy opgehaald bij openen van de casus.
+    if (window.verzuimDocsDB) {
+      window.verzuimDocsDB.list(id).then(function () { if (currentId === id) renderDocs(); }).catch(function () { /* */ });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Detail render
+  // ---------------------------------------------------------------------------
+  function renderDetail() {
+    if (!currentId) return;
+    renderCaseHead();
+    renderPoort();
+    renderContacts();
+    renderDocs();
+  }
+
+  function renderCaseHead() {
+    var head = $("vz-case-head");
+    var c = caseById(currentId);
+    if (!head || !c) return;
+    var d = derive(c);
+    var beschr = cleanBeschr(c.beschrijving);
+    var chips = [];
+    chips.push('<span class="vz-stat"><span class="vz-stat-lbl">Ziek sinds</span><span class="vz-stat-val">' + fmtNl(c.eerstZiektedag) + '</span></span>');
+    chips.push('<span class="vz-stat"><span class="vz-stat-lbl">Verzuimduur</span><span class="vz-stat-val">' + (d.dagen == null ? "—" : (d.dagen + " dagen")) + '</span></span>');
+    chips.push('<span class="vz-stat"><span class="vz-stat-lbl">Verwachte terugkeer</span><span class="vz-stat-val">' + fmtNl(c.verwachteTerug) + '</span></span>');
+    if (c.werkelijkeTerug) chips.push('<span class="vz-stat"><span class="vz-stat-lbl">Werkelijke terugkeer</span><span class="vz-stat-val">' + fmtNl(c.werkelijkeTerug) + '</span></span>');
+
+    head.innerHTML =
+      '<div class="vz-case-av vz-case-av--lg" style="--vz-h:' + hue(c.medewerker) + '">' + escHtml(initials(c.medewerker)) + '</div>'
+      + '<div class="vz-case-head-body">'
+      + '  <div class="vz-case-head-top">'
+      + '    <h2 class="vz-case-head-name">' + escHtml(c.medewerker || "Onbekend") + '</h2>'
+      + '    <span class="vz-badge vz-badge--' + (c.type === "kort" ? "kort" : "lang") + '">' + typeLabel(c.type) + ' verzuim</span>'
+      + '    <span class="vz-pill vz-pill--' + statusMods(c.status) + '">' + escHtml(c.status || "Actief") + '</span>'
+      + '  </div>'
+      + '  <div class="vz-stat-row">' + chips.join("") + '</div>'
+      + (beschr ? '<p class="vz-case-head-note">' + escHtml(beschr) + '</p>' : '<p class="vz-case-head-note vz-case-head-note--muted">Geen toelichting toegevoegd.</p>')
+      + '</div>'
+      + '<div class="vz-case-head-actions">'
+      + '  <button type="button" class="btn-outline" id="vz-case-edit-btn">Bewerken</button>'
+      + '</div>';
+    var editBtn = $("vz-case-edit-btn");
+    if (editBtn) editBtn.addEventListener("click", function () { openCaseModal(c); });
+  }
+
+  function poortStatusBadge(m) {
+    if (m.voltooidOp) {
+      return '<span class="vz-ms-badge vz-ms-badge--done">✓ Aangeleverd op ' + fmtNl(m.voltooidOp) + '</span>';
+    }
+    var du = daysUntil(m.deadlineDatum);
+    if (du == null) return '<span class="vz-ms-badge vz-ms-badge--open">Openstaand (geen deadline)</span>';
+    if (du < 0) return '<span class="vz-ms-badge vz-ms-badge--late">⚠ ' + Math.abs(du) + ' dagen te laat</span>';
+    if (du === 0) return '<span class="vz-ms-badge vz-ms-badge--warn">Vandaag</span>';
+    if (du <= 30) return '<span class="vz-ms-badge vz-ms-badge--warn">Over ' + du + ' dagen</span>';
+    return '<span class="vz-ms-badge vz-ms-badge--open">Over ' + du + ' dagen</span>';
+  }
+
+  function renderPoort() {
+    var listEl = $("vz-poort-list");
+    var progEl = $("vz-poort-progress");
+    if (!listEl) return;
+    var ms = milestonesFor(currentId);
+    var done = ms.filter(function (m) { return m.voltooidOp; }).length;
+    var total = ms.length;
+    if (progEl) {
+      var pct = total ? Math.round((done / total) * 100) : 0;
+      progEl.innerHTML =
+        '<div class="vz-prog-head"><span class="vz-prog-txt"><b>' + done + ' van ' + total + '</b> aangeleverd</span>'
+        + '<span class="vz-prog-pct">' + pct + '%</span></div>'
+        + '<div class="vz-prog-track"><span class="vz-prog-fill" style="width:' + pct + '%"></span></div>';
+      progEl.hidden = total === 0;
+    }
+    if (!total) {
+      listEl.innerHTML = '<div class="vz-inline-empty">Nog geen verplichte momenten. Klik op <b>Genereer traject</b> om het Wet-Poortwachter-traject aan te maken op basis van de eerste ziektedag.</div>';
+      return;
+    }
+    listEl.innerHTML = ms.map(function (m) {
+      var done = !!m.voltooidOp;
+      var markBtn = done ? "" :
+        '<button type="button" class="vz-mini-btn vz-mini-btn--ok" data-mp-done="' + escHtml(m.id) + '">Markeer aangeleverd</button>';
       return ''
-        + '<li class="vz-tl-item vz-tl-item--' + status + '" data-mp-id="' + tlEsc(it.id) + '">'
-        + '  <div class="vz-tl-item-head">'
-        + '    <strong>' + tlEsc(mpDisplayName(it)) + '</strong>'
-        + '    <span class="vz-tl-item-meta">deadline: ' + tlEsc(deadline) + ' · ' + tlEsc(voltooid) + '</span>'
+        + '<div class="vz-ms-row ' + (done ? "is-done" : "") + '">'
+        + '  <span class="vz-ms-dot" aria-hidden="true"></span>'
+        + '  <div class="vz-ms-body">'
+        + '    <div class="vz-ms-top"><span class="vz-ms-name">' + escHtml(mpDisplayName(m)) + '</span>'
+        + poortStatusBadge(m) + '</div>'
+        + '    <div class="vz-ms-meta">Deadline: ' + fmtNl(m.deadlineDatum) + '</div>'
         + '  </div>'
-        + '  <div class="vz-tl-item-actions">'
-        + '    <button type="button" class="btn-outline vz-tl-edit" data-kind="mp" data-id="' + tlEsc(it.id) + '">Bewerken</button>'
-        + '    <button type="button" class="btn-outline vz-tl-del" data-kind="mp" data-id="' + tlEsc(it.id) + '">Verwijderen</button>'
+        + '  <div class="vz-ms-actions">'
+        + markBtn
+        + '    <button type="button" class="vz-icon-btn" title="Bewerken" data-mp-edit="' + escHtml(m.id) + '" aria-label="Mijlpaal bewerken">' + ICON_EDIT + '</button>'
+        + '    <button type="button" class="vz-icon-btn vz-icon-btn--del" title="Verwijderen" data-mp-del="' + escHtml(m.id) + '" aria-label="Mijlpaal verwijderen">' + ICON_DEL + '</button>'
         + '  </div>'
-        + '</li>';
+        + '</div>';
     }).join("");
   }
 
-  function tlRenderCm() {
-    var list = document.getElementById("vz-tl-cm-list");
-    var empty = document.getElementById("vz-tl-cm-empty");
-    if (!list || !empty || !tlState.verzuimId) return;
-    var items = window.verzuimContactmomentenDB
-      ? (window.verzuimContactmomentenDB.getForVerzuimSync(tlState.verzuimId) || [])
-      : [];
-    items.sort(function (a, b) { return String(b.datum || "").localeCompare(String(a.datum || "")); });
-    if (items.length === 0) {
-      list.hidden = true;
-      empty.hidden = false;
-      list.innerHTML = "";
+  function renderContacts() {
+    var listEl = $("vz-cm-list");
+    if (!listEl) return;
+    var items = contactsFor(currentId);
+    if (!items.length) {
+      listEl.innerHTML = '<div class="vz-inline-empty">Nog geen contactmomenten vastgelegd. Leg gesprekken en terugkoppelingen vast via <b>+ Contactmoment</b>.</div>';
       return;
     }
-    list.hidden = false;
-    empty.hidden = true;
-    list.innerHTML = items.map(function (it) {
-      var notitie = it.notitie ? '<p class="vz-tl-item-note">' + tlEsc(it.notitie) + '</p>' : "";
+    listEl.innerHTML = items.map(function (it) {
+      var note = it.notitie ? '<p class="vz-cm-note">' + escHtml(it.notitie) + '</p>' : '';
       return ''
-        + '<li class="vz-tl-item" data-cm-id="' + tlEsc(it.id) + '">'
-        + '  <div class="vz-tl-item-head">'
-        + '    <strong>' + tlEsc(CM_LABELS[it.type] || it.type) + '</strong>'
-        + '    <span class="vz-tl-item-meta">' + tlEsc(tlFmtDate(it.datum)) + '</span>'
+        + '<div class="vz-cm-item">'
+        + '  <div class="vz-cm-itop">'
+        + '    <span class="vz-cm-type">' + escHtml(CM_LABELS[it.type] || it.type) + '</span>'
+        + '    <span class="vz-cm-date">' + fmtNl(it.datum) + '</span>'
+        + '    <span class="vz-cm-acts">'
+        + '      <button type="button" class="vz-icon-btn" title="Bewerken" data-cm-edit="' + escHtml(it.id) + '" aria-label="Contactmoment bewerken">' + ICON_EDIT + '</button>'
+        + '      <button type="button" class="vz-icon-btn vz-icon-btn--del" title="Verwijderen" data-cm-del="' + escHtml(it.id) + '" aria-label="Contactmoment verwijderen">' + ICON_DEL + '</button>'
+        + '    </span>'
         + '  </div>'
-        + notitie
-        + '  <div class="vz-tl-item-actions">'
-        + '    <button type="button" class="btn-outline vz-tl-edit" data-kind="cm" data-id="' + tlEsc(it.id) + '">Bewerken</button>'
-        + '    <button type="button" class="btn-outline vz-tl-del" data-kind="cm" data-id="' + tlEsc(it.id) + '">Verwijderen</button>'
-        + '  </div>'
-        + '</li>';
+        + note
+        + '</div>';
     }).join("");
   }
 
-  // Vul het deadline-veld met de wettelijke datum van het gekozen template
-  // (eerste ziektedag + week*7). Overschrijft alleen een leeg veld.
-  function tlAutofillMpDeadline() {
-    var sel = document.getElementById("vz-tl-mp-type");
-    var dl = document.getElementById("vz-tl-mp-deadline");
+  function fileIcon() {
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  }
+  function renderDocs() {
+    var listEl = $("vz-doc-list");
+    if (!listEl) return;
+    var docs = docsFor(currentId);
+    if (!docs.length) {
+      listEl.innerHTML = '<div class="vz-inline-empty">Nog geen documenten geüpload. Klik op <b>Uploaden</b> om bv. de probleemanalyse of het bedrijfsartsrapport toe te voegen.</div>';
+      return;
+    }
+    listEl.innerHTML = docs.map(function (doc) {
+      var size = fileSizeFmt(doc.fileSize);
+      var meta = fmtNl(doc.uploaddatum) + (size ? " · " + size : "");
+      return ''
+        + '<div class="vz-doc-item">'
+        + '  <span class="vz-doc-ico" aria-hidden="true">' + fileIcon() + '</span>'
+        + '  <div class="vz-doc-body">'
+        + '    <span class="vz-doc-name">' + escHtml(doc.naam || doc.fileName || "Document") + '</span>'
+        + '    <span class="vz-doc-meta">' + escHtml(meta) + '</span>'
+        + '  </div>'
+        + '  <div class="vz-doc-acts">'
+        + '    <button type="button" class="vz-mini-btn" data-doc-open="' + escHtml(doc.id) + '">Openen</button>'
+        + '    <button type="button" class="vz-icon-btn vz-icon-btn--del" title="Verwijderen" data-doc-del="' + escHtml(doc.id) + '" aria-label="Document verwijderen">' + ICON_DEL + '</button>'
+        + '  </div>'
+        + '</div>';
+    }).join("");
+  }
+
+  var ICON_EDIT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+  var ICON_DEL = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+  // ---------------------------------------------------------------------------
+  // Modal helpers
+  // ---------------------------------------------------------------------------
+  function openModal(id) {
+    var m = $(id); if (!m) return;
+    m.hidden = false; m.setAttribute("aria-hidden", "false");
+    var card = m.querySelector(".modal-card"); if (card) try { card.focus(); } catch (e) { /* */ }
+  }
+  function closeModal(id) {
+    var m = $(id); if (!m) return;
+    m.hidden = true; m.setAttribute("aria-hidden", "true");
+  }
+
+  // ---- Casus-modal (nieuw / bewerken) ----
+  function openCaseModal(c) {
+    var isNew = !c;
+    $("vz-case-title").textContent = isNew ? "Verzuim melden" : "Verzuim bewerken";
+    $("vz-case-id").value = isNew ? "" : c.id;
+    var mw = $("vz-case-medewerker");
+    mw.value = isNew ? "" : (c.medewerker || "");
+    mw.readOnly = !isNew; // bestaande casus: naam niet wijzigen
+    $("vz-case-type").value = isNew ? "lang" : (c.type === "kort" ? "kort" : "lang");
+    var statusSel = $("vz-case-status");
+    var prevExtra = statusSel.querySelector("option[data-vz-extra]");
+    if (prevExtra) prevExtra.remove();
+    var stdStatus = ["Actief", "In behandeling", "Hersteld"];
+    if (isNew) {
+      statusSel.value = "Actief";
+    } else if (stdStatus.indexOf(c.status) >= 0) {
+      statusSel.value = c.status;
+    } else {
+      // Niet-standaard (bv. oude BS2-)status: voeg toe als optie zodat bewerken
+      // hem niet stil overschrijft naar Actief (DIEHARD: geen stille datamutatie).
+      var opt = document.createElement("option");
+      opt.value = c.status || "Actief"; opt.textContent = c.status || "Actief"; opt.setAttribute("data-vz-extra", "1");
+      statusSel.appendChild(opt);
+      statusSel.value = c.status || "Actief";
+    }
+    $("vz-case-eerst").value = isNew ? "" : (c.eerstZiektedag || "");
+    $("vz-case-verwacht").value = isNew ? "" : (c.verwachteTerug || "");
+    $("vz-case-werkelijk").value = isNew ? "" : (c.werkelijkeTerug || "");
+    $("vz-case-beschrijving").value = isNew ? "" : cleanBeschr(c.beschrijving);
+    updateBeschrCounter();
+    openModal("vz-case-modal");
+    setTimeout(function () { (isNew ? mw : $("vz-case-eerst")).focus(); }, 30);
+  }
+  function updateBeschrCounter() {
+    var ta = $("vz-case-beschrijving"), cnt = $("vz-case-beschr-counter");
+    if (!ta || !cnt) return;
+    var len = (ta.value || "").length;
+    cnt.textContent = len + " / 500";
+  }
+  async function submitCase(e) {
+    e.preventDefault();
+    var id = $("vz-case-id").value;
+    var medewerker = ($("vz-case-medewerker").value || "").trim();
+    var eerst = $("vz-case-eerst").value || "";
+    if (!medewerker) { $("vz-case-medewerker").focus(); return; }
+    if (!eerst) { $("vz-case-eerst").focus(); return; }
+    var payload = {
+      medewerker: medewerker,
+      type: $("vz-case-type").value,
+      status: $("vz-case-status").value,
+      eerstZiektedag: eerst,
+      verwachteTerug: $("vz-case-verwacht").value || "",
+      werkelijkeTerug: $("vz-case-werkelijk").value || "",
+      beschrijving: ($("vz-case-beschrijving").value || "").trim(),
+    };
+    try {
+      if (id) {
+        await window.verzuimDB.update(id, payload);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Verzuimcasus");
+      } else {
+        var saved = await window.verzuimDB.add(payload);
+        if (window.showActionFeedback) window.showActionFeedback("added", "Verzuimcasus");
+        currentId = saved && saved.id ? saved.id : currentId;
+      }
+      closeModal("vz-case-modal");
+      if (currentId && !detailView.hidden) renderDetail();
+      renderDash();
+    } catch (err) {
+      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  // ---- Mijlpaal-modal ----
+  function openMpModal(m) {
+    var isNew = !m;
+    $("vz-mp-title").textContent = isNew ? "Mijlpaal toevoegen" : "Mijlpaal bewerken";
+    $("vz-mp-id").value = isNew ? "" : m.id;
+    var tmplId = "";
+    if (!isNew) {
+      tmplId = (m.data && (m.data.template_id || m.data.templateId)) || "";
+      if (!tmplId && m.mijlpaalType) {
+        for (var ti = 0; ti < WP_TEMPLATES.length; ti++) if (WP_TEMPLATES[ti].type === m.mijlpaalType) { tmplId = WP_TEMPLATES[ti].templateId; break; }
+      }
+    }
+    $("vz-mp-type").value = String(tmplId || WP_TEMPLATES[0].templateId);
+    $("vz-mp-deadline").value = isNew ? "" : (m.deadlineDatum || "");
+    $("vz-mp-voltooid").value = isNew ? "" : (m.voltooidOp || "");
+    if (isNew) autofillMpDeadline();
+    openModal("vz-mp-modal");
+  }
+  function autofillMpDeadline() {
+    var sel = $("vz-mp-type"), dl = $("vz-mp-deadline");
     if (!sel || !dl) return;
     var tmpl = wpTemplateById(sel.value);
-    if (!tmpl) return;
-    var row = findRowById(tlState.verzuimId);
-    var berekend = wpDeadlineFor(row && row.eerstZiektedag, tmpl.week);
+    var c = caseById(currentId);
+    if (!tmpl || !c) return;
+    var berekend = wpDeadlineFor(c.eerstZiektedag, tmpl.week);
     if (berekend) dl.value = berekend;
   }
-
-  async function tlSaveMp(e) {
+  async function submitMp(e) {
     e.preventDefault();
-    var vzId = tlState.verzuimId;
-    if (!vzId || !window.verzuimMijlpalenDB) return;
-    var id = document.getElementById("vz-tl-mp-id").value;
-    var tmpl = wpTemplateById(document.getElementById("vz-tl-mp-type").value);
-    // Behoud bestaande data (bv. de 1-op-1 bewaarde BS2-raw) bij bewerken.
+    if (!currentId || !window.verzuimMijlpalenDB) return;
+    var id = $("vz-mp-id").value;
+    var tmpl = wpTemplateById($("vz-mp-type").value);
     var bestaandeData = {};
     if (id) {
-      var cur = (window.verzuimMijlpalenDB.getForVerzuimSync(vzId) || []).find(function (x) { return String(x.id) === String(id); });
+      var cur = milestonesFor(currentId).find(function (x) { return String(x.id) === String(id); });
       if (cur && cur.data) bestaandeData = Object.assign({}, cur.data);
     }
-    if (tmpl) {
-      bestaandeData.naam = tmpl.naam;
-      bestaandeData.week_number = tmpl.week;
-      bestaandeData.template_id = tmpl.templateId;
-    }
+    if (tmpl) { bestaandeData.naam = tmpl.naam; bestaandeData.week_number = tmpl.week; bestaandeData.template_id = tmpl.templateId; }
     var payload = {
-      verzuimId: vzId,
-      mijlpaalType: tmpl ? tmpl.type : document.getElementById("vz-tl-mp-type").value,
-      deadlineDatum: document.getElementById("vz-tl-mp-deadline").value || null,
-      voltooidOp: document.getElementById("vz-tl-mp-voltooid").value || null,
+      verzuimId: currentId,
+      mijlpaalType: tmpl ? tmpl.type : $("vz-mp-type").value,
+      deadlineDatum: $("vz-mp-deadline").value || null,
+      voltooidOp: $("vz-mp-voltooid").value || null,
       data: bestaandeData,
     };
     try {
-      if (id) {
-        await window.verzuimMijlpalenDB.update(id, payload);
-        if (window.showActionFeedback) window.showActionFeedback("saved", "Mijlpaal");
-      } else {
-        await window.verzuimMijlpalenDB.add(payload);
-        if (window.showActionFeedback) window.showActionFeedback("created", "Mijlpaal");
-      }
-      tlHideForm("mp");
-      tlRenderMp();
-    } catch (err) {
-      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
-    }
+      if (id) { await window.verzuimMijlpalenDB.update(id, payload); if (window.showActionFeedback) window.showActionFeedback("saved", "Mijlpaal"); }
+      else { await window.verzuimMijlpalenDB.add(payload); if (window.showActionFeedback) window.showActionFeedback("added","Mijlpaal"); }
+      closeModal("vz-mp-modal");
+      renderPoort();
+      renderDash();
+    } catch (err) { if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err)); }
   }
-
-  async function tlSaveCm(e) {
-    e.preventDefault();
-    var vzId = tlState.verzuimId;
-    if (!vzId || !window.verzuimContactmomentenDB) return;
-    var id = document.getElementById("vz-tl-cm-id").value;
-    var payload = {
-      verzuimId: vzId,
-      type: document.getElementById("vz-tl-cm-type").value,
-      datum: document.getElementById("vz-tl-cm-datum").value,
-      notitie: document.getElementById("vz-tl-cm-notitie").value,
-    };
-    try {
-      if (id) {
-        await window.verzuimContactmomentenDB.update(id, payload);
-        if (window.showActionFeedback) window.showActionFeedback("saved", "Contactmoment");
-      } else {
-        await window.verzuimContactmomentenDB.add(payload);
-        if (window.showActionFeedback) window.showActionFeedback("created", "Contactmoment");
-      }
-      tlHideForm("cm");
-      tlRenderCm();
-    } catch (err) {
-      if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
-    }
-  }
-
-  // Genereer het volledige Wet-Poortwachter-traject: voeg de ontbrekende
-  // wettelijke mijlpalen toe op deadline = eerste ziektedag + week*7.
-  async function tlGenerateTraject() {
-    var vzId = tlState.verzuimId;
-    if (!vzId || !window.verzuimMijlpalenDB) return;
-    var row = findRowById(vzId);
-    var eerste = row && row.eerstZiektedag;
-    if (!eerste) {
-      if (window.showError) window.showError("Geen eerste ziektedag bekend — vul die eerst in bij de verzuimregistratie.");
+  async function generateTraject() {
+    if (!currentId || !window.verzuimMijlpalenDB) return;
+    var c = caseById(currentId);
+    if (!c || !c.eerstZiektedag) {
+      if (window.showError) window.showError("Geen eerste ziektedag bekend — vul die eerst in via Bewerken.");
       return;
     }
-    var existing = window.verzuimMijlpalenDB.getForVerzuimSync(vzId) || [];
-    var haveTmpl = {};
-    existing.forEach(function (x) {
-      var t = x.data && (x.data.template_id || x.data.templateId);
-      if (t) haveTmpl[Number(t)] = true;
-    });
-    var toAdd = WP_TEMPLATES.filter(function (t) { return !haveTmpl[t.templateId]; });
-    if (!toAdd.length) {
-      if (window.showActionFeedback) window.showActionFeedback("saved", "Traject is al compleet");
-      return;
-    }
+    var existing = milestonesFor(currentId);
+    var have = {};
+    existing.forEach(function (x) { var t = x.data && (x.data.template_id || x.data.templateId); if (t) have[Number(t)] = true; });
+    var toAdd = WP_TEMPLATES.filter(function (t) { return !have[t.templateId]; });
+    if (!toAdd.length) { if (window.showActionFeedback) window.showActionFeedback("saved", "Traject is al compleet"); return; }
     var ok = true;
     if (typeof window.showSliderConfirmModal === "function") {
       ok = await window.showSliderConfirmModal({
         title: "Wet-Poortwachter-traject genereren?",
         preview: toAdd.length + " wettelijke mijlpa" + (toAdd.length === 1 ? "al wordt" : "len worden") + " toegevoegd op basis van de eerste ziektedag.",
-        okLabel: "Genereren",
-        cancelLabel: "Annuleren",
+        okLabel: "Genereren", cancelLabel: "Annuleren",
       });
     }
     if (!ok) return;
@@ -1171,148 +667,262 @@
       for (var i = 0; i < toAdd.length; i++) {
         var t = toAdd[i];
         await window.verzuimMijlpalenDB.add({
-          verzuimId: vzId,
-          mijlpaalType: t.type,
-          deadlineDatum: wpDeadlineFor(eerste, t.week) || null,
-          voltooidOp: null,
+          verzuimId: currentId, mijlpaalType: t.type,
+          deadlineDatum: wpDeadlineFor(c.eerstZiektedag, t.week) || null, voltooidOp: null,
           data: { naam: t.naam, week_number: t.week, template_id: t.templateId },
         });
       }
-      if (window.showActionFeedback) window.showActionFeedback("created", toAdd.length + " mijlpalen");
-      tlRenderMp();
-    } catch (err) {
-      if (window.showError) window.showError("Genereren mislukt: " + (err && err.message || err));
-    }
+      if (window.showActionFeedback) window.showActionFeedback("added",toAdd.length + " mijlpalen");
+      renderPoort();
+      renderDash();
+    } catch (err) { if (window.showError) window.showError("Genereren mislukt: " + (err && err.message || err)); }
+  }
+  async function markMpDone(id) {
+    if (!id || !window.verzuimMijlpalenDB) return;
+    try {
+      await window.verzuimMijlpalenDB.markVoltooid(id, todayMid().toISOString().slice(0, 10));
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Aangeleverd");
+      renderPoort();
+      renderDash();
+    } catch (err) { if (window.showError) window.showError("Bijwerken mislukt: " + (err && err.message || err)); }
   }
 
-  async function tlDelete(kind, id) {
-    if (!id) return;
-    var db = kind === "mp" ? window.verzuimMijlpalenDB : window.verzuimContactmomentenDB;
-    if (!db) return;
-    var label = kind === "mp" ? "Mijlpaal" : "Contactmoment";
-    var ok = false;
+  // ---- Contactmoment-modal ----
+  function openCmModal(it) {
+    var isNew = !it;
+    $("vz-cm-title").textContent = isNew ? "Contactmoment toevoegen" : "Contactmoment bewerken";
+    $("vz-cm-id").value = isNew ? "" : it.id;
+    $("vz-cm-type").value = isNew ? "contact_moment" : (it.type || "contact_moment");
+    $("vz-cm-datum").value = isNew ? todayMid().toISOString().slice(0, 10) : (it.datum || "");
+    $("vz-cm-notitie").value = isNew ? "" : (it.notitie || "");
+    openModal("vz-cm-modal");
+    setTimeout(function () { $("vz-cm-datum").focus(); }, 30);
+  }
+  async function submitCm(e) {
+    e.preventDefault();
+    if (!currentId || !window.verzuimContactmomentenDB) return;
+    var id = $("vz-cm-id").value;
+    var datum = $("vz-cm-datum").value;
+    if (!datum) { $("vz-cm-datum").focus(); return; }
+    var payload = {
+      verzuimId: currentId, type: $("vz-cm-type").value,
+      datum: datum, notitie: ($("vz-cm-notitie").value || "").trim(),
+    };
+    try {
+      if (id) { await window.verzuimContactmomentenDB.update(id, payload); if (window.showActionFeedback) window.showActionFeedback("saved", "Contactmoment"); }
+      else { await window.verzuimContactmomentenDB.add(payload); if (window.showActionFeedback) window.showActionFeedback("added","Contactmoment"); }
+      closeModal("vz-cm-modal");
+      renderContacts();
+      renderDash();
+    } catch (err) { if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err)); }
+  }
+
+  // ---- Documenten ----
+  function triggerDocUpload() {
+    var input = $("vz-doc-file");
+    if (input) input.click();
+  }
+  function onDocFileChosen(e) {
+    var input = e.target;
+    var file = input.files && input.files[0];
+    if (!file || !currentId || !window.verzuimDocsDB) { if (input) input.value = ""; return; }
+    var MAX = 25 * 1024 * 1024;
+    if (file.size > MAX) {
+      if (window.showError) window.showError("Bestand is te groot (max 25 MB).");
+      input.value = ""; return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      window.verzuimDocsDB.add({
+        verzuimId: currentId,
+        fileData: reader.result,
+        fileName: file.name,
+        fileMime: file.type || "application/octet-stream",
+        fileSize: file.size,
+        naam: file.name,
+      }).then(function () {
+        if (window.showActionFeedback) window.showActionFeedback("added","Document");
+        renderDocs();
+        renderDash();
+      }).catch(function (err) {
+        if (window.showError) window.showError("Uploaden mislukt: " + (err && err.message || err));
+      });
+    };
+    reader.onerror = function () { if (window.showError) window.showError("Bestand lezen mislukt."); };
+    reader.readAsDataURL(file);
+    input.value = "";
+  }
+  async function openDoc(id) {
+    if (!window.verzuimDocsDB) return;
+    try {
+      var url = await window.verzuimDocsDB.getFileUrl(id);
+      if (url) window.open(url, "_blank", "noopener");
+      else if (window.showError) window.showError("Document kon niet worden geopend.");
+    } catch (err) { if (window.showError) window.showError("Openen mislukt: " + (err && err.message || err)); }
+  }
+
+  // ---- Generieke verwijder-bevestiging (slider) ----
+  async function confirmDelete(opts, doDelete) {
+    var ok = true;
     if (typeof window.showSliderConfirmModal === "function") {
       ok = await window.showSliderConfirmModal({
-        title: label + " verwijderen?",
-        preview: "Deze actie kan niet ongedaan worden gemaakt.",
-        okLabel: "Verwijderen",
-        cancelLabel: "Annuleren",
+        title: opts.title, preview: opts.preview,
+        okLabel: "Verwijderen", cancelLabel: "Annuleren",
       });
-    } else { ok = true; }
+    } else { ok = window.confirm(opts.title); }
     if (!ok) return;
     try {
-      await db.delete(id);
-      if (window.showActionFeedback) window.showActionFeedback("deleted", label);
-      if (kind === "mp") tlRenderMp(); else tlRenderCm();
-    } catch (err) {
-      if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message || err));
-    }
+      await doDelete();
+      if (window.showActionFeedback) window.showActionFeedback("deleted", opts.label);
+    } catch (err) { if (window.showError) window.showError("Verwijderen mislukt: " + (err && err.message || err)); }
   }
 
-  function tlWire() {
-    var modal = tlGetModal();
-    if (!modal) return;
-
-    // Sluiten: X-knop, klik op overlay, of Escape (3 manieren, huisstijl)
-    var closeBtn = document.getElementById("vz-tl-close");
-    if (closeBtn) closeBtn.addEventListener("click", tlClose);
-    modal.addEventListener("click", function (e) {
-      if (e.target === modal) tlClose();
+  // ---------------------------------------------------------------------------
+  // Wiring
+  // ---------------------------------------------------------------------------
+  // Filters
+  function setSeg(group, value, attr) {
+    [].forEach.call(document.querySelectorAll('.vz-seg[data-' + attr + ']'), function (b) {
+      if (b.closest(".vz-segmented") !== group) return;
+      var on = b.getAttribute("data-" + attr) === value;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
     });
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      if (modal.hidden) return;
-      // Laat een ZICHTBARE slider-bevestiging (verwijderen/genereren) zijn eigen
-      // Escape afhandelen — sluit dan niet meteen de hele tijdlijn. Let op: de
-      // verzuim-pagina heeft een vaste, verborgen delete-modal met dezelfde
-      // slider-class; daarom checken op zichtbaarheid (offsetParent), niet op
-      // loutere aanwezigheid in de DOM.
-      var sliders = document.querySelectorAll(".modal-overlay .employee-delete-slider");
-      for (var si = 0; si < sliders.length; si++) {
-        if (sliders[si].offsetParent !== null) return;
-      }
-      tlClose();
-    });
-
-    // Add-buttons
-    [].forEach.call(modal.querySelectorAll("[data-vz-tl-add]"), function (b) {
-      b.addEventListener("click", function () { tlShowForm(b.getAttribute("data-vz-tl-add"), null); });
-    });
-
-    // Cancel-knoppen in formulieren
-    var cancelMp = document.getElementById("vz-tl-mp-cancel");
-    if (cancelMp) cancelMp.addEventListener("click", function () { tlHideForm("mp"); });
-    var cancelCm = document.getElementById("vz-tl-cm-cancel");
-    if (cancelCm) cancelCm.addEventListener("click", function () { tlHideForm("cm"); });
-
-    // Submit-forms
-    var mpForm = document.getElementById("vz-tl-mp-form");
-    if (mpForm) mpForm.addEventListener("submit", tlSaveMp);
-    var cmForm = document.getElementById("vz-tl-cm-form");
-    if (cmForm) cmForm.addEventListener("submit", tlSaveCm);
-
-    // Wet-Poortwachter: deadline auto-vullen bij template-keuze (alleen nieuwe mijlpaal)
-    var mpTypeSel = document.getElementById("vz-tl-mp-type");
-    if (mpTypeSel) mpTypeSel.addEventListener("change", function () {
-      var idIn = document.getElementById("vz-tl-mp-id");
-      if (idIn && idIn.value) return; // bestaande mijlpaal: deadline niet overschrijven
-      tlAutofillMpDeadline();
-    });
-
-    // "Genereer traject"-knop
-    var genBtn = document.getElementById("vz-tl-mp-generate");
-    if (genBtn) genBtn.addEventListener("click", tlGenerateTraject);
-
-    // Edit/Delete-event-delegation in lijsten
-    modal.addEventListener("click", function (e) {
-      var t = e.target;
-      while (t && t !== modal && !t.classList) t = t.parentNode;
-      if (!t || t === modal) return;
-      var id = t.getAttribute && t.getAttribute("data-id");
-      var kind = t.getAttribute && t.getAttribute("data-kind");
-      if (t.classList.contains("vz-tl-edit") && id && kind) {
-        var db = kind === "mp" ? window.verzuimMijlpalenDB : window.verzuimContactmomentenDB;
-        var items = db ? (db.getForVerzuimSync(tlState.verzuimId) || []) : [];
-        var it = items.find(function (x) { return String(x.id) === String(id); });
-        if (it) tlShowForm(kind, it);
-      } else if (t.classList.contains("vz-tl-del") && id && kind) {
-        tlDelete(kind, id);
-      }
-    });
-
-    // Knop op vz-reg-card opent modal (event-delegation op detail-cards)
-    if (detailCards) {
-      detailCards.addEventListener("click", function (e) {
-        var btn = e.target;
-        while (btn && btn !== detailCards && !(btn.classList && btn.classList.contains("vz-card-tl-btn"))) {
-          btn = btn.parentNode;
-        }
-        if (btn && btn.classList && btn.classList.contains("vz-card-tl-btn")) {
-          var rid = btn.getAttribute("data-row-id");
-          if (rid) tlOpen(rid);
-        }
-      });
-    }
   }
-  tlWire();
+  [].forEach.call(document.querySelectorAll(".vz-segmented"), function (grp) {
+    grp.addEventListener("click", function (e) {
+      var b = e.target.closest(".vz-seg");
+      if (!b || !grp.contains(b)) return;
+      if (b.hasAttribute("data-status")) { filters.status = b.getAttribute("data-status"); setSeg(grp, filters.status, "status"); }
+      else if (b.hasAttribute("data-type")) { filters.type = b.getAttribute("data-type"); setSeg(grp, filters.type, "type"); }
+      renderCaseList();
+    });
+  });
+  if (searchInput) searchInput.addEventListener("input", function () { filters.q = searchInput.value; renderCaseList(); });
 
-  render();
-
-  // Re-render zodra de Supabase-bootstrap of een externe wijziging de caches
-  // ververst (lang + kort).
-  window.addEventListener("besa:verzuim-updated", function () {
-    try {
-      rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
-      rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
-      render();
-    } catch (e) { /* */ }
+  // Case-list: open casus (klik + toetsenbord)
+  caseListEl.addEventListener("click", function (e) {
+    var card = e.target.closest(".vz-case-card");
+    if (card && caseListEl.contains(card)) openCase(card.getAttribute("data-id"));
+  });
+  caseListEl.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var card = e.target.closest(".vz-case-card");
+    if (card && caseListEl.contains(card)) { e.preventDefault(); openCase(card.getAttribute("data-id")); }
   });
 
-  // PR-E1: re-render bij mijlpalen-/contactmomenten-updates voor live driehoek-iconen
+  // Terug
+  var backBtn = $("vz-detail-back");
+  if (backBtn) backBtn.addEventListener("click", showDash);
+
+  // Nieuw verzuim
+  var newBtn = $("vz-new-btn");
+  if (newBtn) newBtn.addEventListener("click", function () { openCaseModal(null); });
+
+  // Poortwachter-knoppen
+  var genBtn = $("vz-poort-generate"); if (genBtn) genBtn.addEventListener("click", generateTraject);
+  var mpAddBtn = $("vz-poort-add"); if (mpAddBtn) mpAddBtn.addEventListener("click", function () { openMpModal(null); });
+  var cmAddBtn = $("vz-cm-add"); if (cmAddBtn) cmAddBtn.addEventListener("click", function () { openCmModal(null); });
+  var docAddBtn = $("vz-doc-add"); if (docAddBtn) docAddBtn.addEventListener("click", triggerDocUpload);
+  var docFile = $("vz-doc-file"); if (docFile) docFile.addEventListener("change", onDocFileChosen);
+
+  // Detail-acties via event-delegation
+  detailView.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-mp-done],[data-mp-edit],[data-mp-del],[data-cm-edit],[data-cm-del],[data-doc-open],[data-doc-del]");
+    if (!t) return;
+    var id;
+    if ((id = t.getAttribute("data-mp-done"))) { markMpDone(id); return; }
+    if ((id = t.getAttribute("data-mp-edit"))) {
+      var m = milestonesFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      if (m) openMpModal(m); return;
+    }
+    if ((id = t.getAttribute("data-mp-del"))) {
+      var md = milestonesFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      confirmDelete({ title: "Mijlpaal verwijderen?", preview: md ? mpDisplayName(md) : "", label: "Mijlpaal" },
+        function () { return window.verzuimMijlpalenDB.delete(id).then(function () { renderPoort(); renderDash(); }); });
+      return;
+    }
+    if ((id = t.getAttribute("data-cm-edit"))) {
+      var cm = contactsFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      if (cm) openCmModal(cm); return;
+    }
+    if ((id = t.getAttribute("data-cm-del"))) {
+      confirmDelete({ title: "Contactmoment verwijderen?", preview: "Deze actie kan niet ongedaan worden gemaakt.", label: "Contactmoment" },
+        function () { return window.verzuimContactmomentenDB.delete(id).then(function () { renderContacts(); renderDash(); }); });
+      return;
+    }
+    if ((id = t.getAttribute("data-doc-open"))) { openDoc(id); return; }
+    if ((id = t.getAttribute("data-doc-del"))) {
+      var doc = docsFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      confirmDelete({ title: "Document verwijderen?", preview: doc ? (doc.naam || doc.fileName || "") : "", label: "Document" },
+        function () { return window.verzuimDocsDB.remove(id).then(function () { renderDocs(); renderDash(); }); });
+      return;
+    }
+  });
+
+  // Modal-wiring
+  function wireModal(modalId, closeId, cancelId, formId, onSubmit) {
+    var close = $(closeId); if (close) close.addEventListener("click", function () { closeModal(modalId); });
+    var cancel = $(cancelId); if (cancel) cancel.addEventListener("click", function () { closeModal(modalId); });
+    var modal = $(modalId);
+    if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(modalId); });
+    var form = $(formId); if (form && onSubmit) form.addEventListener("submit", onSubmit);
+  }
+  wireModal("vz-case-modal", "vz-case-close", "vz-case-cancel", "vz-case-form", submitCase);
+  wireModal("vz-mp-modal", "vz-mp-close", "vz-mp-cancel", "vz-mp-form", submitMp);
+  wireModal("vz-cm-modal", "vz-cm-close", "vz-cm-cancel", "vz-cm-form", submitCm);
+
+  var beschrTa = $("vz-case-beschrijving");
+  if (beschrTa) beschrTa.addEventListener("input", updateBeschrCounter);
+  var mpTypeSel = $("vz-mp-type");
+  if (mpTypeSel) mpTypeSel.addEventListener("change", function () {
+    if ($("vz-mp-id").value) return; // bestaande mijlpaal: deadline niet overschrijven
+    autofillMpDeadline();
+  });
+
+  // Escape sluit een open modal (en anders de detail-weergave)
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var modals = ["vz-case-modal", "vz-mp-modal", "vz-cm-modal"];
+    for (var i = 0; i < modals.length; i++) {
+      var m = $(modals[i]);
+      if (m && !m.hidden) { closeModal(modals[i]); e.stopPropagation(); return; }
+    }
+    if (currentId && detailView && !detailView.hidden) { showDash(); }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Live re-render bij externe wijzigingen
+  // ---------------------------------------------------------------------------
+  window.addEventListener("besa:verzuim-updated", function () {
+    if (currentId && detailView && !detailView.hidden) renderCaseHead();
+    renderDash();
+  });
   window.addEventListener("besa:verzuim-mijlpalen-updated", function () {
-    try { render(); } catch (e) { /* */ }
+    if (currentId && detailView && !detailView.hidden) renderPoort();
+    renderKPIs();
+    if (dashView && !dashView.hidden) renderCaseList();
   });
   window.addEventListener("besa:verzuim-contactmomenten-updated", function () {
-    try { render(); } catch (e) { /* */ }
+    if (currentId && detailView && !detailView.hidden) renderContacts();
+    if (dashView && !dashView.hidden) renderCaseList();
   });
+  window.addEventListener("besa:verzuim-documenten-updated", function () {
+    if (currentId && detailView && !detailView.hidden) renderDocs();
+    if (dashView && !dashView.hidden) renderCaseList();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------------
+  renderDash();
+  if (window.verzuimDB && window.verzuimDB.ready) {
+    window.verzuimDB.ready.then(function () {
+      renderDash();
+      // Documenttellingen voor de lijst: haal alle docs één keer op.
+      if (window.verzuimDocsDB && window.verzuimDocsDB.refreshAll) {
+        window.verzuimDocsDB.refreshAll().then(function () { renderDash(); }).catch(function () { /* */ });
+      }
+    }).catch(function () { /* */ });
+  }
 })();
