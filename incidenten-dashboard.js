@@ -765,9 +765,356 @@
   }
 
   // ---------------------------------------------------------------------------
+  // 3-maanden incidentrapport (downloadbaar Word-document)
+  // ---------------------------------------------------------------------------
+  // Repliceert BS2's "Genereer 3-maanden rapport": kies een jaar + 3
+  // aaneengesloten maanden, krijg een kant-en-klare standaard-analyse als
+  // downloadbaar bestand (Word .doc, opent direct in Word/LibreOffice).
+  // De maand-indeling gebruikt — net als het dashboard en BS2 — de
+  // aanmaakdatum (registratiedatum), op kalendermaand-string (tijdzone-veilig).
+  var MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni",
+    "juli", "augustus", "september", "oktober", "november", "december"];
+  var MONTHS_NL_SHORT = ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
+    "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+  function capMonth(i) { var m = MONTHS_NL[i] || ""; return m.charAt(0).toUpperCase() + m.slice(1); }
+
+  // 1-op-1 BS2: nieuw-vanaf-nul = +100,00%; terug-naar-nul = -100,00%;
+  // beide 0 = "—"; anders ((cur-prev)/prev)*100 met NL-komma + 2 decimalen.
+  function pctChange(prev, cur) {
+    if (prev === 0 && cur === 0) return "—";
+    if (prev === 0) return "+100,00%";
+    if (cur === 0) return "-100,00%";
+    var v = ((cur - prev) / prev) * 100;
+    return (v > 0 ? "+" : "") + v.toFixed(2).replace(".", ",") + "%";
+  }
+  function pctOfTotal(n, total) {
+    if (!total) return "0,0%";
+    return (Math.round((n * 1000) / total) / 10).toFixed(1).replace(".", ",") + "%";
+  }
+  function monthKey(year, monthIdx) { return year + "-" + pad(monthIdx + 1); }
+  function incidentsInMonth(all, year, monthIdx) {
+    var key = monthKey(year, monthIdx);
+    return all.filter(function (i) {
+      return i && !i.archived && String(i.aanmaakdatum || "").slice(0, 7) === key;
+    });
+  }
+  function isOpen(i) { return i && i.status !== "opgelost"; }
+
+  // Verzamel het volledige analyse-model voor 3 aaneengesloten maanden.
+  function buildReportModel(year, startMonth) {
+    var all = getAllIncidenten();
+    var clientsById = {};
+    getAllClienten().forEach(function (c) { if (c) clientsById[String(c.id)] = c; });
+
+    var monthIdxs = [startMonth, startMonth + 1, startMonth + 2];
+    var months = monthIdxs.map(function (mi, pos) {
+      var set = incidentsInMonth(all, year, mi);
+      return {
+        idx: mi, pos: pos, name: capMonth(mi), nameLower: MONTHS_NL[mi],
+        set: set, total: set.length, open: set.filter(isOpen).length,
+      };
+    });
+    var grandTotal = months.reduce(function (a, m) { return a + m.total; }, 0);
+
+    // Incident type (categorie) × maand
+    var typeKeys = {};
+    months.forEach(function (m) {
+      m.set.forEach(function (i) { typeKeys[i.categorie || "Overig"] = true; });
+    });
+    var types = Object.keys(typeKeys).sort(function (a, b) {
+      return a.localeCompare(b, "nl", { sensitivity: "base" });
+    }).map(function (t) {
+      var perMonth = months.map(function (m) {
+        return m.set.filter(function (i) { return (i.categorie || "Overig") === t; }).length;
+      });
+      return { naam: t, perMonth: perMonth, m2: perMonth[1], m3: perMonth[2], totaal: perMonth[0] + perMonth[1] + perMonth[2] };
+    });
+
+    // Locatie × maand (locaties zonder naam overslaan, zoals BS2 by_location)
+    var locKeys = {};
+    months.forEach(function (m) {
+      m.set.forEach(function (i) {
+        var n = i.locatieBs2 && i.locatieBs2.name;
+        if (n) locKeys[n] = true;
+      });
+    });
+    var locaties = Object.keys(locKeys).map(function (n) {
+      var perMonth = months.map(function (m) {
+        return m.set.filter(function (i) { return (i.locatieBs2 && i.locatieBs2.name) === n; }).length;
+      });
+      return { naam: n, perMonth: perMonth, verschil: perMonth[2] - perMonth[1], m2: perMonth[1], m3: perMonth[2] };
+    }).sort(function (a, b) { return b.perMonth[2] - a.perMonth[2]; });
+
+    // Cliëntnummers met meeste incidenten in de laatste maand
+    var laatste = months[2];
+    var clientCounts = {};
+    laatste.set.forEach(function (i) {
+      var c = clientsById[String(i.clientId)];
+      var nr = c && c.clientnummer;
+      if (!nr) return;
+      clientCounts[nr] = (clientCounts[nr] || 0) + 1;
+    });
+    var topClienten = Object.keys(clientCounts).map(function (nr) {
+      return { clientnummer: nr, aantal: clientCounts[nr] };
+    }).sort(function (a, b) { return b.aantal - a.aantal; }).slice(0, 10);
+
+    return {
+      year: year, months: months, grandTotal: grandTotal,
+      types: types, locaties: locaties, topClienten: topClienten,
+    };
+  }
+
+  // Bouw het Word-document (HTML met Office-namespaces → opent in Word).
+  function buildReportDoc(model) {
+    var m = model.months;
+    var title = "Incidentanalyse – " + m[0].name + " t/m " + m[2].name + " " + model.year;
+
+    function tbl(headers, rows, numCols) {
+      var thead = "<tr>" + headers.map(function (h) { return "<th>" + escHtml(h) + "</th>"; }).join("") + "</tr>";
+      var tbody = rows.map(function (r) {
+        return "<tr>" + r.map(function (c, ci) {
+          var cls = (numCols && numCols.indexOf(ci) !== -1) ? " class='num'" : "";
+          return "<td" + cls + ">" + escHtml(c) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      return "<table><thead>" + thead + "</thead><tbody>" + tbody + "</tbody></table>";
+    }
+    function dash(n) { return n === 0 ? "—" : String(n); }
+
+    var html = [];
+    html.push("<h1>" + escHtml(title) + "</h1>");
+    html.push("<p class='intro'>In de periode " + escHtml(m[0].name) + " tot en met "
+      + escHtml(m[2].nameLower) + " " + model.year + " zijn er in totaal <b>"
+      + model.grandTotal + "</b> incidentmeldingen geregistreerd.</p>");
+
+    // 1. Aantal incidenten per maand
+    html.push("<h2>1. Aantal incidenten per maand</h2>");
+    html.push("<ul>" + m.map(function (mm, pos) {
+      var extra = pos === 0 ? "" : " (" + pctChange(m[pos - 1].total, mm.total) + " t.o.v. " + m[pos - 1].nameLower + ")";
+      return "<li><b>" + escHtml(mm.name) + "</b>: " + mm.total + " meldingen" + extra + "</li>";
+    }).join("") + "</ul>");
+
+    // 2. Openstaande meldingen per maand
+    html.push("<h2>2. Openstaande meldingen per maand</h2>");
+    html.push("<ul>" + m.map(function (mm, pos) {
+      var extra = pos === 0 ? "" : " (" + pctChange(m[pos - 1].open, mm.open) + " t.o.v. " + m[pos - 1].nameLower + ")";
+      return "<li><b>" + escHtml(mm.name) + "</b>: " + mm.open + " openstaande meldingen" + extra + "</li>";
+    }).join("") + "</ul>");
+
+    html.push(tbl(
+      ["Maand", "Totaal", "Openstaand", "% t.o.v. vorige maand"],
+      m.map(function (mm, pos) {
+        return [mm.name, mm.total, mm.open, pos === 0 ? "—" : pctChange(m[pos - 1].total, mm.total)];
+      }),
+      [1, 2, 3]
+    ));
+
+    // 3. Incident type
+    html.push("<h2>3. Incident type</h2>");
+    if (model.types.length === 0) {
+      html.push("<p class='muted'>Geen incidenten in deze periode.</p>");
+    } else {
+      html.push(tbl(
+        ["Incident type", m[0].name, m[1].name, m[2].name],
+        model.types.map(function (t) {
+          return [t.naam, dash(t.perMonth[0]), dash(t.perMonth[1]), dash(t.perMonth[2])];
+        }),
+        [1, 2, 3]
+      ));
+
+      var top3 = model.types.slice().filter(function (t) { return t.m3 > 0; })
+        .sort(function (a, b) { return b.m3 - a.m3; }).slice(0, 5);
+      html.push("<h3>3.1 Top incidenten " + escHtml(m[2].nameLower) + "</h3>");
+      if (top3.length) {
+        html.push("<p>De meest voorkomende incidenttypes in " + escHtml(m[2].nameLower) + " zijn:</p>");
+        html.push("<ul>" + top3.map(function (t) {
+          return "<li><b>" + escHtml(t.naam) + "</b>: " + t.m3 + "</li>";
+        }).join("") + "</ul>");
+      } else {
+        html.push("<p class='muted'>Geen incidenten in " + escHtml(m[2].nameLower) + ".</p>");
+      }
+
+      html.push("<h3>3.2 Belangrijke trend t.o.v. " + escHtml(m[1].nameLower) + "</h3>");
+      if (top3.length) {
+        html.push("<ul>" + top3.map(function (t) {
+          var arrow = t.m3 > t.m2 ? "↑" : (t.m3 < t.m2 ? "↓" : "→");
+          return "<li>" + escHtml(t.naam) + " " + arrow + " (" + t.m2 + " → " + t.m3 + ")</li>";
+        }).join("") + "</ul>");
+      } else {
+        html.push("<p class='muted'>Geen trend om te tonen.</p>");
+      }
+    }
+
+    // 4. Aantal incidenten per locatie
+    html.push("<h2>4. Aantal incidenten per locatie</h2>");
+    if (model.locaties.length === 0) {
+      html.push("<p class='muted'>Geen locatiegegevens in deze periode.</p>");
+    } else {
+      html.push(tbl(
+        ["Locatie", m[0].name, m[1].name, m[2].name, "Verschil", "% verandering"],
+        model.locaties.map(function (l) {
+          var v = l.verschil;
+          return [l.naam, dash(l.perMonth[0]), dash(l.perMonth[1]), dash(l.perMonth[2]),
+            (v > 0 ? "+" : "") + v, pctChange(l.m2, l.m3)];
+        }),
+        [1, 2, 3, 4, 5]
+      ));
+    }
+
+    // 5. Cliëntnummers meeste incidenten (laatste maand)
+    html.push("<h2>5. Cliëntnummers meeste incidenten (" + escHtml(m[2].name) + ")</h2>");
+    if (model.topClienten.length === 0) {
+      html.push("<p class='muted'>Geen cliëntgebonden incidenten in " + escHtml(m[2].nameLower) + ".</p>");
+    } else {
+      html.push(tbl(
+        ["Cliëntnummer", "Aantal incidenten", "% van totaal"],
+        model.topClienten.map(function (c) {
+          return [c.clientnummer, c.aantal, pctOfTotal(c.aantal, m[2].total)];
+        }),
+        [1, 2]
+      ));
+    }
+
+    var genStamp = formatNlDateTime(new Date().toISOString());
+    var styles = "@page{size:A4;margin:2cm;}"
+      + "body{font-family:Calibri,'Segoe UI',Arial,sans-serif;font-size:11pt;color:#1f2937;}"
+      + "h1{font-size:18pt;margin:0 0 4pt;color:#111827;}"
+      + "h2{font-size:13pt;margin:18pt 0 6pt;color:#111827;border-bottom:1px solid #d1d5db;padding-bottom:2pt;}"
+      + "h3{font-size:11.5pt;margin:12pt 0 4pt;color:#374151;}"
+      + "p{margin:4pt 0;}p.intro{margin:0 0 6pt;}p.muted{color:#6b7280;}"
+      + "ul{margin:4pt 0 8pt;padding-left:18pt;}li{margin:2pt 0;}"
+      + "table{border-collapse:collapse;width:100%;margin:6pt 0 10pt;font-size:10pt;}"
+      + "th,td{border:1px solid #9ca3af;padding:4pt 7pt;text-align:left;vertical-align:top;}"
+      + "th{background:#e5e7eb;font-weight:700;}"
+      + "td.num{text-align:right;}"
+      + ".meta{color:#6b7280;font-size:8.5pt;margin-top:14pt;}";
+
+    return "<!doctype html><html xmlns:o='urn:schemas-microsoft-com:office:office' "
+      + "xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>"
+      + "<head><meta charset='utf-8'><title>" + escHtml(title) + "</title>"
+      + "<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->"
+      + "<style>" + styles + "</style></head><body>"
+      + html.join("")
+      + "<p class='meta'>Automatisch gegenereerd op " + escHtml(genStamp) + " · ETF incidenten-dashboard</p>"
+      + "</body></html>";
+  }
+
+  function downloadDoc(html, filename) {
+    var blob = new Blob(["﻿", html], { type: "application/msword" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      try { URL.revokeObjectURL(a.href); } catch (e) { /* */ }
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 0);
+  }
+
+  function generateReport(year, startMonth) {
+    var model = buildReportModel(year, startMonth);
+    var doc = buildReportDoc(model);
+    var fn = "incidentanalyse-" + MONTHS_NL[model.months[0].idx] + "-"
+      + MONTHS_NL[model.months[2].idx] + "-" + year + ".doc";
+    downloadDoc(doc, fn);
+    if (typeof window.showActionFeedback === "function") {
+      window.showActionFeedback("exported", fn);
+    }
+  }
+
+  // Modal: jaar + 3-aaneengesloten-maanden kiezen, dan genereren.
+  function openReportModal() {
+    // Idempotent: een tweede klik (bv. dubbelklik op de knop) opent geen
+    // tweede overlay bovenop de eerste.
+    if (document.querySelector(".id-report-modal")) return;
+    // Focus terugzetten bij sluiten (a11y): val terug op de rapportknop als er
+    // geen zinnig actief element is (bv. bij een muisklik die niet focust).
+    var trigger = document.activeElement;
+    if (!trigger || trigger === document.body || !trigger.focus) trigger = $("id-report-btn");
+    var now = new Date();
+    var curYear = now.getFullYear();
+    var years = [];
+    for (var y = curYear; y >= curYear - 5; y--) years.push(y);
+    var sel = { year: curYear, start: Math.min(9, Math.max(0, now.getMonth() - 2)) };
+
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay modal-overlay--confirm";
+    overlay.setAttribute("aria-hidden", "false");
+    overlay.innerHTML =
+      "<div class='modal-dialog cl-add-dialog id-report-modal' role='dialog' aria-modal='true' aria-labelledby='id-report-title' tabindex='-1'>"
+      + "<div class='modal-header'><h2 class='modal-title' id='id-report-title'>Genereer 3-maanden rapport</h2>"
+      + "<button type='button' class='modal-close' data-close aria-label='Sluiten'><span aria-hidden='true'>&times;</span></button></div>"
+      + "<div class='modal-body'>"
+      + "<div class='id-rep-section'><div class='id-rep-lbl'>Jaar</div><div class='id-rep-chips' id='id-rep-years'></div></div>"
+      + "<div class='id-rep-section'><div class='id-rep-lbl'>Periode (3 aaneengesloten maanden)</div>"
+      + "<div class='id-rep-chips' id='id-rep-months'></div>"
+      + "<p class='id-rep-hint'>Klik op een maand om de beginmaand te kiezen. De twee volgende maanden worden automatisch geselecteerd.</p>"
+      + "<p class='id-rep-period' id='id-rep-period'></p></div>"
+      + "</div>"
+      + "<div class='modal-footer'>"
+      + "<button type='button' class='btn-outline' data-close>Annuleren</button>"
+      + "<button type='button' class='btn-primary' id='id-rep-go'>Rapport genereren</button>"
+      + "</div></div>";
+
+    function renderChips() {
+      var yc = overlay.querySelector("#id-rep-years");
+      yc.innerHTML = years.map(function (yy) {
+        return "<button type='button' class='id-rep-chip" + (yy === sel.year ? " is-active" : "")
+          + "' data-year='" + yy + "'>" + yy + "</button>";
+      }).join("");
+      var mc = overlay.querySelector("#id-rep-months");
+      mc.innerHTML = MONTHS_NL_SHORT.map(function (nm, i) {
+        var inRange = i >= sel.start && i <= sel.start + 2;
+        var cls = i === sel.start ? "is-active" : (inRange ? "is-range" : "");
+        return "<button type='button' class='id-rep-chip" + (cls ? " " + cls : "")
+          + "' data-month='" + i + "'>" + nm + "</button>";
+      }).join("");
+      overlay.querySelector("#id-rep-period").textContent =
+        capMonth(sel.start) + " – " + capMonth(sel.start + 2) + " " + sel.year;
+    }
+
+    function close() {
+      document.removeEventListener("keydown", onKey);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      if (!document.querySelector(".modal-overlay:not([hidden])")) {
+        document.body.classList.remove("modal-open");
+      }
+      try { if (trigger && trigger.focus) trigger.focus(); } catch (e) { /* */ }
+    }
+    function onKey(e) { if (e.key === "Escape") close(); }
+
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay || e.target.closest("[data-close]")) { close(); return; }
+      var yBtn = e.target.closest("[data-year]");
+      if (yBtn) { sel.year = parseInt(yBtn.getAttribute("data-year"), 10); renderChips(); return; }
+      var mBtn = e.target.closest("[data-month]");
+      if (mBtn) {
+        // Beginmaand zo dat de 3 maanden binnen het jaar blijven (max start = okt).
+        sel.start = Math.min(9, parseInt(mBtn.getAttribute("data-month"), 10));
+        renderChips();
+        return;
+      }
+    });
+    overlay.querySelector("#id-rep-go").addEventListener("click", function () {
+      generateReport(sel.year, sel.start);
+      close();
+    });
+
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(overlay);
+    document.body.classList.add("modal-open");
+    renderChips();
+    try { overlay.querySelector(".modal-dialog").focus(); } catch (e) { /* */ }
+  }
+
+  // ---------------------------------------------------------------------------
   // Wire-up
   // ---------------------------------------------------------------------------
   function wireUp() {
+    var reportBtn = $("id-report-btn");
+    if (reportBtn) reportBtn.addEventListener("click", openReportModal);
+
     Array.prototype.forEach.call(document.querySelectorAll(".id-range-preset"), function (b) {
       b.addEventListener("click", function () {
         applyPreset(b.getAttribute("data-range"));

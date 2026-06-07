@@ -15734,6 +15734,17 @@ button.planning-erm-new {
   max-width: 96vw;
 }
 
+/* Cliënt-toevoegen formulier moet de flex-kolom van de dialog vullen, zodat de
+   modal-body intern scrollt op korte schermen i.p.v. dat het formulier buiten
+   beeld valt en niet scrollbaar is (user-melding 2026-06-06: kon niet naar boven/
+   beneden scrollen, hele formulier niet in één keer zichtbaar). Spiegelt .modal-form. */
+.cl-add-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
 /* Organisatie / Gemeenten: .modal-dialog.cl-add-dialog */
 #org-add-modal .cl-add-dialog,
 #gem-add-modal .cl-add-dialog {
@@ -19710,6 +19721,30 @@ button.besc-dtl-tab:hover {
    ============================================================================= */
 
 .content--inc-dashboard { padding-bottom: 40px; }
+
+/* 3-maanden rapport: knop in header + keuze-modal */
+.id-report-btn { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.id-report-btn svg { flex-shrink: 0; }
+.id-report-modal .modal-body { display: flex; flex-direction: column; gap: 4px; }
+.id-rep-section { margin-bottom: 16px; }
+.id-rep-section:last-child { margin-bottom: 0; }
+.id-rep-lbl { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+.id-rep-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.id-rep-chip {
+  padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); font-weight: 600; font-size: 13px;
+  cursor: pointer; transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.id-rep-chip:hover { background: var(--fill-hover); }
+.id-rep-chip.is-range {
+  background: color-mix(in srgb, var(--blue) 16%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+  color: var(--text);
+}
+.id-rep-chip.is-active { background: var(--blue); border-color: var(--blue); color: #fff; }
+#id-rep-months .id-rep-chip { min-width: 48px; text-align: center; }
+.id-rep-hint { font-size: 12px; color: var(--text-muted); margin: 8px 0 4px; }
+.id-rep-period { font-weight: 700; color: var(--text); margin: 2px 0 0; }
 
 /* Datumbereik in header */
 /* Schone flex-row: de BesaDateRange-pill (besa-daterange.js) draagt zijn
