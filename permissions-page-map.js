@@ -30,6 +30,11 @@
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 
+    // ─── ETF Management Dashboard — STRIKT bestuur (Eigenaar + Directeur) ──────
+    // `strict:true` schakelt de admin-tier-bypass UIT: alleen de bestuurder ziet
+    // het. De RPC management_dashboard_v1 gate't server-side via can_view_management().
+    "management-dashboard.html": { allowedRoles: ["Eigenaar", "Directeur"], strict: true },
+
     // ─── HR-domein (employees-groep) ──────────────────────────────────────────
     "hr.html": { action: "browse", entity: "employees" },
     "medewerker.html": { action: "view", entity: "employees" },
@@ -111,6 +116,9 @@
     "incident-melden.html": { action: "view", entity: "incidents" },
     "incidenten-categorieen.html": { action: "view", entity: "incident-categories" },
     "verbeteringsmaatregelen.html": { action: "view", entity: "improvement-measures" },
+
+    // ─── Klachtenregister — kantoor/kwaliteit-rollen (admin-tier wint sowieso) ─
+    "klachten.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Zorgcoördinator", "Beleid", "Gedragswetenschapper", "Cliëntbeheer"] },
 
     // ─── Facturen (top-bar = employee-invoices) ──────────────────────────────
     // FF-native ZZP-proforma-facturatie (zzp_facturen) — zelfde invoices-permissie.

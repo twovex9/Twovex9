@@ -9,10 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Woon-werk afstanden — HR</title>
+  <title>Management Dashboard</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad" />
-  <link rel="stylesheet" href="km-afstanden.css?v=918f1ad" />
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -23,19 +21,18 @@
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
-  <script src="besa-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
 
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
           <nav class="top-nav" aria-label="Hoofdnavigatie">
             <a href="home" class="top-link">Home</a>
-            <a href="management-dashboard" class="top-link">Dashboard</a>
+            <a href="management-dashboard" class="top-link is-active" aria-current="page">Dashboard</a>
             <a href="mijn-proforma-facturen" class="top-link">Mijn facturen</a>
             <a href="mijn-beschikbaarheid" class="top-link">Mijn beschikbaarheid</a>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -46,7 +43,6 @@
                 <a href="locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
                 <a href="hr-diensttypes" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Diensttypes</span><span class="top-dropdown-subtitle">Beheer eigen diensttypes</span></a>
                 <a href="beschikbaarheid-overzicht" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikbaarheid ZZP'ers</span><span class="top-dropdown-subtitle">Wie vulde zijn beschikbaarheid in</span></a>
-                <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -61,8 +57,6 @@
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
                 <a href="hr" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
                 <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
-                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
-                <a href="inwerk-items" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Inwerken</span><span class="top-dropdown-subtitle">Beheer inwerk-onderdelen</span></a>
                 <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
                 <a href="bureaus" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
               </div>
@@ -73,16 +67,16 @@
                 <a href="clienten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
                 <a href="zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
                 <a href="beschikkingen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
+                <a href="beschikkingen-dashboard" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen-dashboard</span><span class="top-dropdown-subtitle">Declaraties &amp; betalingen</span></a>
                 <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
                 <a href="incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
                 <a href="klachten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Klachten</span><span class="top-dropdown-subtitle">Klachtenregister &amp; afhandeling</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="kilometers" class="top-link top-link--dropdown is-active">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
                 <a href="kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
-                <a href="km-afstanden" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Woon-werk afstanden</span><span class="top-dropdown-subtitle">Afstand woonadres naar locatie beheren</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -96,7 +90,8 @@
                 <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
               </div>
             </div>
-            <a href="taken" class="top-link">Taken</a>            <a href="beleid-documenten" class="top-link">Beleid</a>            <a href="sharepoint" class="top-link">SharePoint</a>
+            <a href="taken" class="top-link">Taken</a>
+            <a href="beleid-documenten" class="top-link">Beleid</a>            <a href="sharepoint" class="top-link">SharePoint</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="financien-locaties" class="top-link top-link--dropdown">Financiën<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
@@ -128,85 +123,126 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Kilometers">
-      <nav class="side-nav" aria-label="Kilometer module">
-        <a href="kilometers" class="side-link">Kilometer declaraties</a>
-        <a href="km-afstanden" class="side-link is-active" aria-current="page">Woon-werk afstanden</a>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Dashboard">
+      <nav class="side-nav" aria-label="Dashboard secties">
+        <a href="#md-top" class="side-link is-active" aria-current="page">Overzicht</a>
+        <a href="#md-fin" class="side-link">Financiën</a>
+        <a href="#md-hr" class="side-link">Medewerkers</a>
+        <a href="#md-planning" class="side-link">Planning</a>
+        <a href="#md-incidenten" class="side-link">Incidenten &amp; klachten</a>
+        <a href="#md-nieuws" class="side-link">Nieuws</a>
       </nav>
       <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">KM</span>
+        <a class="side-nav-exit" href="home">← Home</a>
       </div>
     </aside>
 
-    <main class="content" id="kma-main">
-      <div class="content-header">
-        <h1>Woon-werk afstanden</h1>
-        <div class="header-actions">
-          <button type="button" class="btn-outline" id="kma-recalc-missing-btn">Ontbrekende berekenen</button>
-          <button type="button" class="btn-primary" id="kma-recalc-all-btn">Alle afstanden berekenen</button>
+    <main class="content content--mgmt-dashboard" id="md-top">
+      <div class="content-header md-header">
+        <div>
+          <h1 id="md-greeting">Welkom</h1>
+          <p class="md-subtitle" id="md-date">—</p>
+        </div>
+        <div class="header-actions md-header-actions">
+          <span class="md-updated" id="md-updated"></span>
+          <button type="button" class="btn-outline md-refresh" id="md-refresh">Vernieuwen</button>
         </div>
       </div>
 
-      <p class="kma-intro">
-        De afstand (enkele reis) van het woonadres van een <strong>loondienst</strong>-medewerker naar elke
-        werklocatie. Deze waarde wordt gebruikt om de woon-werk kilometers automatisch te berekenen
-        (heen + terug = 2 × deze afstand per dienstdag). Bereken automatisch via de kaartservice, of
-        corrigeer een cel handmatig — een handmatige waarde blijft bij her-berekenen staan.
-      </p>
+      <!-- Signaleringsstrip -->
+      <section class="md-signals" id="md-signals" aria-label="Signaleringen" aria-live="polite"></section>
 
-      <div class="kma-progress" id="kma-progress" hidden>
-        <div class="kma-progress-bar"><div class="kma-progress-fill" id="kma-progress-fill"></div></div>
-        <div class="kma-progress-text" id="kma-progress-text"></div>
-      </div>
-
-      <div class="toolbar">
-        <div class="search">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="kma-search" placeholder="Zoek medewerker…" aria-label="Zoek medewerker" />
+      <!-- Snelle statistieken -->
+      <section class="md-quickstats" id="md-quickstats" aria-label="Snelle statistieken">
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="md-qs-bezetting">—</span>
+          <span class="md-qstat-lbl">Bezettingsgraad vandaag</span>
         </div>
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="kma-only-missing" />
-          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
-          <span class="switch-label">Alleen ontbrekend</span>
-        </label>
-      </div>
-
-      <section class="table-card table-card--compact">
-        <div class="table-wrapper kma-table-wrap">
-          <table class="employees-table kma-table" id="kma-table">
-            <thead id="kma-thead"></thead>
-            <tbody id="kma-tbody"></tbody>
-          </table>
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="md-qs-verzuim">—</span>
+          <span class="md-qstat-lbl">Ziekteverzuim</span>
         </div>
-        <div class="kma-empty" id="kma-empty" hidden>Geen loondienst-medewerkers gevonden.</div>
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="md-qs-declaraties">—</span>
+          <span class="md-qstat-lbl">Open declaraties</span>
+        </div>
+      </section>
+
+      <!-- Domeintegels 2x2 -->
+      <section class="md-tiles" id="md-tiles" aria-label="Domeinen">
+        <a href="#md-fin" class="md-tile" id="md-tile-fin" data-domein="financien">
+          <span class="md-tile-dot" id="md-dot-fin" aria-hidden="true"></span>
+          <span class="md-tile-name">Financiën</span>
+          <span class="md-tile-metric" id="md-tile-fin-metric">—</span>
+          <span class="md-tile-sub" id="md-tile-fin-sub"></span>
+        </a>
+        <a href="#md-hr" class="md-tile" id="md-tile-hr" data-domein="hr">
+          <span class="md-tile-dot" id="md-dot-hr" aria-hidden="true"></span>
+          <span class="md-tile-name">Medewerkers</span>
+          <span class="md-tile-metric" id="md-tile-hr-metric">—</span>
+          <span class="md-tile-sub" id="md-tile-hr-sub"></span>
+        </a>
+        <a href="#md-planning" class="md-tile" id="md-tile-planning" data-domein="planning">
+          <span class="md-tile-dot" id="md-dot-planning" aria-hidden="true"></span>
+          <span class="md-tile-name">Planning</span>
+          <span class="md-tile-metric" id="md-tile-planning-metric">—</span>
+          <span class="md-tile-sub" id="md-tile-planning-sub"></span>
+        </a>
+        <a href="#md-incidenten" class="md-tile" id="md-tile-incidenten" data-domein="incidenten">
+          <span class="md-tile-dot" id="md-dot-incidenten" aria-hidden="true"></span>
+          <span class="md-tile-name">Incidenten</span>
+          <span class="md-tile-metric" id="md-tile-incidenten-metric">—</span>
+          <span class="md-tile-sub" id="md-tile-incidenten-sub"></span>
+        </a>
+      </section>
+
+      <!-- Domein: Financiën -->
+      <section class="table-card md-domain" id="md-fin" aria-label="Financiën &amp; declaraties">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-fin-headdot" aria-hidden="true"></span>Financiën &amp; declaraties</h2>
+          <a href="beschikkingen-dashboard" class="md-domain-link">Naar declaraties →</a>
+        </div>
+        <div class="md-metric-grid" id="md-fin-grid"></div>
+        <p class="md-note" id="md-fin-note"></p>
+      </section>
+
+      <!-- Domein: Medewerkers -->
+      <section class="table-card md-domain" id="md-hr" aria-label="Medewerkers &amp; HR">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-hr-headdot" aria-hidden="true"></span>Medewerkers &amp; HR</h2>
+          <a href="hr" class="md-domain-link">Naar medewerkers →</a>
+        </div>
+        <div class="md-metric-grid" id="md-hr-grid"></div>
+      </section>
+
+      <!-- Domein: Planning -->
+      <section class="table-card md-domain" id="md-planning" aria-label="Planning &amp; bezetting">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-planning-headdot" aria-hidden="true"></span>Planning &amp; bezetting</h2>
+          <a href="planning" class="md-domain-link">Naar planning →</a>
+        </div>
+        <div class="md-metric-grid" id="md-planning-grid"></div>
+      </section>
+
+      <!-- Domein: Incidenten & kwaliteit -->
+      <section class="table-card md-domain" id="md-incidenten" aria-label="Incidenten &amp; kwaliteit">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-incidenten-headdot" aria-hidden="true"></span>Incidenten &amp; kwaliteit</h2>
+          <a href="incidenten-dashboard" class="md-domain-link">Naar incidenten →</a>
+        </div>
+        <div class="md-metric-grid" id="md-inc-grid"></div>
+        <div class="md-cat" id="md-inc-cat" aria-label="Incidenten per categorie"></div>
+      </section>
+
+      <!-- Nieuws -->
+      <section class="table-card md-domain" id="md-nieuws" aria-label="Nieuwsberichten">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Nieuwsberichten</h2>
+          <a href="nieuws" class="md-domain-link">Alles bekijken →</a>
+        </div>
+        <div class="md-news" id="md-news-list"></div>
       </section>
     </main>
-  </div>
-
-  <!-- Cel-bewerk modal -->
-  <div class="modal-overlay" id="kma-edit-modal" hidden>
-    <div class="modal-card kma-edit-card" role="dialog" aria-modal="true" aria-labelledby="kma-edit-title">
-      <div class="modal-header">
-        <h2 id="kma-edit-title">Afstand bewerken</h2>
-        <button type="button" class="modal-close" id="kma-edit-close" aria-label="Sluiten">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p class="kma-edit-sub" id="kma-edit-sub"></p>
-        <label class="kma-field">
-          <span class="kma-field-label">Enkele reis (km)</span>
-          <input type="number" id="kma-edit-km" min="0" step="0.1" inputmode="decimal" />
-        </label>
-        <p class="kma-edit-hint" id="kma-edit-hint"></p>
-        <div class="kma-edit-error" id="kma-edit-error" hidden></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="kma-edit-recalc">Automatisch berekenen</button>
-        <div class="kma-edit-spacer"></div>
-        <button type="button" class="btn-outline" id="kma-edit-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="kma-edit-save">Opslaan (handmatig)</button>
-      </div>
-    </div>
   </div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
@@ -220,14 +256,14 @@
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
   <script src="helpdesk-modal.js?v=918f1ad" defer></script>
+  <script src="onboarding-flow.js?v=918f1ad" defer></script>
   <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="medewerkers-data.js?v=918f1ad" defer></script>
-  <script src="locaties-data.js?v=918f1ad" defer></script>
-  <script src="geo-distance.js?v=918f1ad" defer></script>
-  <script src="km-afstanden-data.js?v=918f1ad" defer></script>
-  <script src="km-afstanden.js?v=918f1ad" defer></script>
+  <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="nieuws-data.js?v=918f1ad" defer></script>
+  <script src="management-dashboard-data.js?v=918f1ad" defer></script>
+  <script src="management-dashboard.js?v=918f1ad" defer></script>
 </body>
 </html>
