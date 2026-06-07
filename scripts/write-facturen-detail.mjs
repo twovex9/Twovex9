@@ -10,7 +10,7 @@
 import fs from "fs";
 import path from "path";
 
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DL = "C:/Users/sonck/Downloads";
 if (!KEY) { console.error("FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt."); process.exit(1); }

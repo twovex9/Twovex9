@@ -15,7 +15,7 @@
  */
 import fs from "fs";
 
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INPUT = "C:/Users/sonck/Downloads/bs2-99-employees.json";
 

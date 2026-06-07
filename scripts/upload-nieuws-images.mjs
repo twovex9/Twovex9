@@ -14,7 +14,7 @@
 import fs from "fs";
 import path from "path";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://ukjflilnhigozfoxowmj.supabase.co";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = "nieuws-images";
 const SOURCE_DIR = "C:\\Users\\sonck\\OneDrive\\Desktop\\Nieuwe map (5)";

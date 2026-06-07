@@ -7,7 +7,7 @@
 
 | Onderdeel | Locatie | Inhoud | Reden voor backup |
 |---|---|---|---|
-| **Supabase Postgres** | project `boscwvojcggkbdxhlfys` | 38+ tabellen, 5092+ records incl. medewerkers/cliënten/beschikkingen/facturen/planning | bedrijfskritisch — verlies = onherstelbaar werkverlies |
+| **Supabase Postgres** | project `ukjflilnhigozfoxowmj` | 38+ tabellen, 5092+ records incl. medewerkers/cliënten/beschikkingen/facturen/planning | bedrijfskritisch — verlies = onherstelbaar werkverlies |
 | **Supabase Storage** | buckets `client-documents`, `medewerker-documenten` | PDF's, scans, bestanden gekoppeld aan parent-records via `storage_path` | bedrijfskritisch — bestanden zijn niet reproduceerbaar |
 | **Supabase auth.users** | (deel van project) | gebruikersaccounts + sessies | bedrijfskritisch — login-toegang verlies |
 | **Supabase migrations** | `supabase/schema.sql` + applied migrations log | DB-structuur, RLS-policies, triggers | herbouwbaar uit code, maar tijd-intensief |
@@ -21,7 +21,7 @@
 Supabase doet automatisch dagelijkse PITR-backups (Point-In-Time Recovery) op Pro+ plans. Free tier heeft 7-daagse retention voor logical backups.
 
 **Verifieer**:
-1. Open `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/database/backups`
+1. Open `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/database/backups`
 2. Bevestig retention-window (7 dagen voor Free, 14-30 dagen voor Pro+)
 3. Check de meest recente backup-datum
 
@@ -42,11 +42,11 @@ Voor extra zekerheid: maandelijkse manuele export naar lokale schijf of S3/Googl
 
 ```powershell
 # Haal Connection String uit dashboard:
-# https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/database
+# https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/database
 # Sectie "Connection string" — gebruik "URI" met password
 
 $env:PGPASSWORD = "<DB_PASSWORD>"
-pg_dump "postgresql://postgres.boscwvojcggkbdxhlfys:[password]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres" `
+pg_dump "postgresql://postgres.ukjflilnhigozfoxowmj:[password]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres" `
   --schema=public --no-owner --no-acl `
   > "C:\backups\besa-suite-$(Get-Date -Format 'yyyyMMdd').sql"
 $env:PGPASSWORD = $null  # opruimen

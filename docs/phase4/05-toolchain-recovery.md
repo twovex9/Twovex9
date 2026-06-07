@@ -5,7 +5,7 @@
 ## Project-overzicht
 
 - **BS1 (target)**: vanilla HTML/JS app in `besa-suite-etf/`, hosted op Vercel: `https://besa-suite.vercel.app`
-- **BS1 Supabase**: project `boscwvojcggkbdxhlfys`, dashboard `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys`
+- **BS1 Supabase**: project `ukjflilnhigozfoxowmj`, dashboard `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj`
 - **BS2 (source)**: productie-demo, alleen UI: `https://etf.acceptance.besasuite.nl/home`, API: `https://api.etf.acceptance.besasuite.nl`
 - **GitHub repo**: `https://github.com/ETFalkmaar/besa-suite-`
 - **Local working dir**: `C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf`
@@ -156,7 +156,7 @@ Verplaats het bestand uit Downloads naar:
 
 ### Stap 4: Service_role key uit Supabase
 
-1. Open `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api`
+1. Open `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api`
 2. Tab **"Legacy anon, service_role API keys"** OF onder "Project API keys"
 3. Naast **`service_role secret`** → klik **"Reveal"**
 4. Kopieer hele JWT

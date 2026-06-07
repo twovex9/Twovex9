@@ -30,11 +30,11 @@
 (function () {
   "use strict";
 
-  var SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+  var SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
   var SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvc2N3dm9qY2dna2JkeGhsZnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NzAyOTMsImV4cCI6MjA5MzU0NjI5M30." +
-    "xsQ8ijVmUGOEyDyA26zKbR2-0jfeWVG6xGBZIKY6lnI";
+    "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVramZsaWxuaGlnb3pmb3hvd21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzkwMzEsImV4cCI6MjA5NjQxNTAzMX0." +
+    "ePh91-gndGEP8ve169Hq1XWXdtr3G9nEBDuZ0iA1z5U";
 
   var AUTH_ENABLED = true;
 

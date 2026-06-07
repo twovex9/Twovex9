@@ -62,7 +62,7 @@ Metrieken uit `performance.getEntriesByType('navigation')[0]`:
 
 **Optionele optimalisaties** (laag effort, klein voordeel):
 - Add `loading="lazy"` aan avatar-images in tabellen (niet alle pages hebben dit)
-- Preload kritieke API-calls via `<link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">` in `<head>` — bespaart 50-100ms DNS+TLS handshake
+- Preload kritieke API-calls via `<link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">` in `<head>` — bespaart 50-100ms DNS+TLS handshake
 
 ## Volgende meting
 

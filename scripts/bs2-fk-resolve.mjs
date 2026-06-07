@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const JSON_PATH = join(__dirname, "bs2-exports", "bs2-export-full.json");
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://ukjflilnhigozfoxowmj.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 
 const args = process.argv.slice(2);

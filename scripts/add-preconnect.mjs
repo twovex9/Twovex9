@@ -3,7 +3,7 @@
  * add-preconnect.mjs — voeg preconnect-hints toe aan <head> van alle HTML files.
  *
  * Voegt deze twee regels toe direct na de <meta name="viewport"> regel:
- *   <link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+ *   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
  *   <link rel="preconnect" href="https://cdn.jsdelivr.net">
  *
  * Bespaart 50-100ms DNS+TLS handshake per page-load (aanbeveling uit
@@ -27,7 +27,7 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--check") || args.includes("--dry-run");
 
 const PRECONNECTS = [
-  '<link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">',
+  '<link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">',
   '<link rel="preconnect" href="https://cdn.jsdelivr.net">',
 ];
 
