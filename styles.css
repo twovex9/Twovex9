@@ -25756,3 +25756,192 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-koppel-item-nr { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .fin-koppel-item-spacer { flex: 1 1 auto; }
 .fin-koppel-item-loc { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+
+/* =============================================================================
+   Verzuim-dashboard (KPI's + casuslijst + detail: Poortwachter / contact / docs)
+   Alle kleuren via theme-tokens → dark mode werkt automatisch.
+   ============================================================================= */
+.content--verzuim-dash { padding-bottom: 48px; }
+.vz-dash-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.vz-kpi-grid { margin-top: 4px; }
+
+/* Toolbar */
+.vz-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+.vz-toolbar-search { position: relative; display: flex; align-items: center; flex: 1 1 260px; max-width: 360px; }
+.vz-search-ico { position: absolute; left: 11px; color: var(--text-muted); pointer-events: none; }
+.vz-search-input {
+  width: 100%; padding: 9px 12px 9px 32px; font: inherit; font-size: 13px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--r-pill, 999px); outline: none;
+}
+.vz-search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+.vz-filtergroup { display: flex; gap: 10px; flex-wrap: wrap; }
+.vz-segmented { display: inline-flex; background: var(--bg-muted); border: 1px solid var(--line); border-radius: var(--r-pill, 999px); padding: 3px; gap: 2px; }
+.vz-seg {
+  border: 0; background: transparent; color: var(--text-muted); cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 500; padding: 5px 12px; border-radius: var(--r-pill, 999px);
+  transition: background 120ms ease, color 120ms ease;
+}
+.vz-seg:hover { color: var(--text); }
+.vz-seg.is-active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(15,23,42,0.10); font-weight: 600; }
+
+/* Avatar */
+.vz-case-av {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  background: hsl(var(--vz-h, 210), 55%, 48%);
+}
+.vz-case-av--lg { width: 56px; height: 56px; font-size: 19px; border-radius: 14px; }
+
+/* Pills & badges (theme-aware tints) */
+.vz-pill { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--r-pill, 999px); font-size: 11.5px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.vz-pill--actief { background: rgba(37,99,235,0.12); color: var(--blue); border-color: rgba(37,99,235,0.22); }
+.vz-pill--behandeling { background: rgba(202,138,4,0.15); color: var(--yellow); border-color: rgba(202,138,4,0.28); }
+.vz-pill--hersteld { background: rgba(22,163,74,0.14); color: var(--green); border-color: rgba(22,163,74,0.26); }
+.vz-pill--goedgekeurd { background: rgba(22,163,74,0.14); color: var(--green); border-color: rgba(22,163,74,0.26); }
+.vz-pill--afgekeurd { background: rgba(220,38,38,0.12); color: var(--red); border-color: rgba(220,38,38,0.24); }
+.vz-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--r-sm, 6px); font-size: 11px; font-weight: 600; }
+.vz-badge--lang { background: rgba(37,99,235,0.10); color: var(--blue); }
+.vz-badge--kort { background: var(--bg-muted); color: var(--text-secondary); }
+
+/* Casuslijst */
+.vz-case-list { display: flex; flex-direction: column; gap: 10px; }
+.vz-case-card {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card, 12px);
+  cursor: pointer; transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+.vz-case-card:hover { box-shadow: 0 6px 18px rgba(15,23,42,0.07); transform: translateY(-1px); border-color: var(--line-strong); }
+.vz-case-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.vz-case-main { flex: 1 1 auto; min-width: 0; }
+.vz-case-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vz-case-name { font-size: 14.5px; font-weight: 650; color: var(--text); }
+.vz-case-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 5px; font-size: 12px; color: var(--text-muted); }
+.vz-meta-it b { color: var(--text-secondary); font-weight: 600; }
+.vz-case-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.vz-case-chev { font-size: 22px; color: var(--text-muted); line-height: 1; }
+
+/* Chips (volgende verplichte moment) */
+.vz-chip { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: var(--r-pill, 999px); font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; }
+.vz-chip--late { background: rgba(220,38,38,0.12); color: var(--red); border-color: rgba(220,38,38,0.24); }
+.vz-chip--warn { background: rgba(202,138,4,0.15); color: var(--yellow); border-color: rgba(202,138,4,0.28); }
+.vz-chip--soft { background: var(--bg-muted); color: var(--text-secondary); }
+.vz-chip--ok { background: rgba(22,163,74,0.14); color: var(--green); border-color: rgba(22,163,74,0.26); }
+.vz-chip--muted { background: var(--bg-muted); color: var(--text-muted); }
+
+/* Lege staat */
+.vz-empty { text-align: center; padding: 48px 16px; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r-card, 12px); }
+.vz-empty-ico { font-size: 34px; margin-bottom: 8px; }
+.vz-empty-title { font-size: 15px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+.vz-empty-sub { font-size: 13px; color: var(--text-muted); margin: 0; }
+
+/* ---------------------------- Detail ---------------------------- */
+.vz-back-btn {
+  display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0;
+  color: var(--text-muted); cursor: pointer; font: inherit; font-size: 13px; font-weight: 500;
+  padding: 4px 0; margin-bottom: 14px;
+}
+.vz-back-btn:hover { color: var(--text); }
+.vz-back-ico { font-size: 16px; }
+
+.vz-case-head {
+  display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px; margin-bottom: 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card, 12px);
+}
+.vz-case-head-body { flex: 1 1 auto; min-width: 0; }
+.vz-case-head-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vz-case-head-name { margin: 0; font-size: 20px; font-weight: 700; color: var(--text); }
+.vz-stat-row { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 12px; }
+.vz-stat { display: flex; flex-direction: column; gap: 1px; }
+.vz-stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.vz-stat-val { font-size: 14px; font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+.vz-case-head-note { margin: 12px 0 0; font-size: 13px; color: var(--text-secondary); }
+.vz-case-head-note--muted { color: var(--text-muted); font-style: italic; }
+.vz-case-head-actions { flex-shrink: 0; }
+
+.vz-detail-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 980px) { .vz-detail-grid { grid-template-columns: 1fr; } }
+.vz-detail-col2 { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.vz-sec { margin-bottom: 0; }
+.vz-sec-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+/* Poortwachter-voortgang */
+.vz-poort-progress { margin-bottom: 14px; }
+.vz-poort-progress[hidden] { display: none; }
+.vz-prog-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.vz-prog-txt { font-size: 13px; color: var(--text-secondary); }
+.vz-prog-txt b { color: var(--text); }
+.vz-prog-pct { font-size: 12px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.vz-prog-track { height: 8px; background: var(--bg-muted); border-radius: 4px; overflow: hidden; }
+.vz-prog-fill { display: block; height: 100%; background: var(--green); border-radius: 4px; transition: width 320ms ease; }
+
+/* Poortwachter-tijdlijn */
+.vz-poort-list { display: flex; flex-direction: column; }
+.vz-ms-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--line); }
+.vz-ms-row:first-child { border-top: 0; }
+.vz-ms-dot { flex-shrink: 0; width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: var(--line-strong); }
+.vz-ms-row.is-done .vz-ms-dot { background: var(--green); }
+.vz-ms-body { flex: 1 1 auto; min-width: 0; }
+.vz-ms-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vz-ms-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.vz-ms-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.vz-ms-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.vz-ms-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--r-pill, 999px); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.vz-ms-badge--done { background: rgba(22,163,74,0.14); color: var(--green); }
+.vz-ms-badge--late { background: rgba(220,38,38,0.12); color: var(--red); }
+.vz-ms-badge--warn { background: rgba(202,138,4,0.15); color: var(--yellow); }
+.vz-ms-badge--open { background: var(--bg-muted); color: var(--text-muted); }
+
+/* Mini- en icoonknoppen */
+.vz-mini-btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-secondary);
+  font: inherit; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--r-sm, 6px); cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.vz-mini-btn:hover { background: var(--fill-hover); color: var(--text); border-color: var(--line-strong); }
+.vz-mini-btn--ok { color: var(--green); border-color: rgba(22,163,74,0.35); }
+.vz-mini-btn--ok:hover { background: rgba(22,163,74,0.10); }
+.vz-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-muted);
+  border-radius: var(--r-sm, 6px); cursor: pointer; transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.vz-icon-btn:hover { background: var(--fill-hover); color: var(--text); border-color: var(--line-strong); }
+.vz-icon-btn--del:hover { color: var(--red); border-color: rgba(220,38,38,0.35); background: rgba(220,38,38,0.08); }
+
+.vz-inline-empty { font-size: 13px; color: var(--text-muted); padding: 14px 2px; line-height: 1.5; }
+.vz-inline-empty b { color: var(--text-secondary); font-weight: 600; }
+
+/* Contactmomenten */
+.vz-cm-list { display: flex; flex-direction: column; }
+.vz-cm-item { padding: 12px 2px; border-top: 1px solid var(--line); }
+.vz-cm-item:first-child { border-top: 0; }
+.vz-cm-itop { display: flex; align-items: center; gap: 10px; }
+.vz-cm-type { font-size: 13px; font-weight: 600; color: var(--text); }
+.vz-cm-date { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.vz-cm-acts { margin-left: auto; display: flex; gap: 6px; }
+.vz-cm-note { margin: 6px 0 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+
+/* Documenten */
+.vz-doc-list { display: flex; flex-direction: column; }
+.vz-doc-item { display: flex; align-items: center; gap: 12px; padding: 11px 2px; border-top: 1px solid var(--line); }
+.vz-doc-item:first-child { border-top: 0; }
+.vz-doc-ico { flex-shrink: 0; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm, 6px); background: rgba(37,99,235,0.10); color: var(--blue); }
+.vz-doc-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.vz-doc-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vz-doc-meta { font-size: 11.5px; color: var(--text-muted); }
+.vz-doc-acts { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* Modals (verzuim) */
+.vz-modal-card {
+  width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 64px);
+  display: flex; flex-direction: column;
+  background: var(--surface); border-radius: var(--r-lg, 14px); box-shadow: 0 24px 48px rgba(0,0,0,0.22); overflow: hidden;
+}
+.vz-modal-card--sm { width: min(480px, calc(100vw - 32px)); }
+.vz-modal-body { overflow-y: auto; min-height: 0; }
+.vz-form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.vz-form-row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 14px; }
+@media (max-width: 560px) { .vz-form-row2, .vz-form-row3 { grid-template-columns: 1fr; } }
+.vz-modal-textarea { resize: vertical; min-height: 70px; height: auto; padding: 8px 12px; font-family: inherit; line-height: 1.45; }
