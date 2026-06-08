@@ -32,7 +32,11 @@
 
     "mijn-proforma-facturen.html": { deniedRoles: ["Eigenaar", "Directeur"] },   // ZZP self-service: eigen proforma's (RLS-gescoped)
     "mijn-uitnodigingen.html": { deniedRoles: ["Eigenaar", "Directeur"] },       // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
-    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur"] },     // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
+    // Planner mee in deniedRoles: een planner is overhead en wordt zelf niet op een
+    // locatie ingeroosterd, dus heeft geen eigen-beschikbaarheid-tab nodig (video-feedback
+    // eigenaar 2026-06-07). Multi-rol blijft veilig: alle huidige Planner-users zijn
+    // kantoor/bestuur (HR/Beleid/Directeur/Eigenaar) — geen ingeroosterde zorgmedewerker.
+    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur", "Planner"] }, // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 
@@ -52,8 +56,12 @@
     "opleiding-detail.html": { action: "view", entity: "certifications" },
     "locaties.html": { action: "browse", entity: "locations" },
     "locatie-detail.html": { action: "view", entity: "locations" },
-    "bureaus.html": { action: "browse", entity: "locations" },          // BS1-only, gebruikt locations als proxy
-    "bureau-detail.html": { action: "view", entity: "locations" },
+    // Bureau's (detacheringsbureau-beheer) hoort in het HR-dropdown → zelfde HR/admin-tier-
+    // scope als de andere HR-beheerpagina's. Voorheen op browse-locations (proxy), maar die
+    // permissie hebben ook Planner/Medewerker (nodig voor Planning → Locaties), waardoor "Bureau's"
+    // in hún HR-kopje lekte. allowedRoles scheidt dit netjes van locaties.html zonder Planning te raken.
+    "bureaus.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },          // BS1-only; HR/admin-tier (was browse-locations-proxy)
+    "bureau-detail.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
     "verzuim.html": { action: "browse", entity: "employee-absences-sickness" },
     // HR-beheer-pagina's zonder eigen BS2-permissie: strikt HR/admin-tier, zodat
     // gewone medewerkers/ZZP'ers ze niet in hun menu zien. (Diensttypes ook
