@@ -25,7 +25,7 @@
     "login.html": null,
     "mijn-gegevens.html": null,
     "notifications.html": null,
-    "nieuws.html": { action: "view", entity: "announcements" },
+    "nieuws.html": null,   // nieuws is universeel — elke ingelogde user ziet nieuwsberichten
 
     // ─── HR-domein (employees-groep) ──────────────────────────────────────────
     "hr.html": { action: "browse", entity: "employees" },
