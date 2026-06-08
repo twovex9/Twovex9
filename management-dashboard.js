@@ -203,7 +203,7 @@
     ].join("");
   }
 
-  // ─── Domein: Incidenten & kwaliteit ──────────────────────────────────────
+  // ─── Domein: Incidenten & klachten ───────────────────────────────────────
   function buildCategories(inc) {
     var byCat = Array.isArray(inc.by_category) ? inc.by_category : [];
     var rows = [];

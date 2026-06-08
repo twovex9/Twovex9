@@ -26220,6 +26220,28 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .md--rood { background: var(--red); }
 
 .content--mgmt-dashboard { display: flex; flex-direction: column; gap: 18px; }
+
+/* Scroll-gedrag management-dashboard: de topbar én de sectie-zijbalk blijven in
+   beeld terwijl de pagina-inhoud scrollt. De zijbalk is `sticky` zodat je vanaf
+   elke scrollpositie weer naar "Overzicht" (of een andere sectie) kunt; de
+   `scroll-margin-top` houdt de begroeting + domeinsecties vrij van de sticky
+   topbar zodat ze volledig leesbaar in beeld springen. We laten de app-shell met
+   de inhoud meegroeien (`height:auto`) i.p.v. hem op `100dvh` te klemmen — door
+   de globale `html{zoom}` overschrijdt een vaste 100dvh-shell de viewport, en dan
+   scrolt zónder dit de hele pagina (incl. zijbalk + begroeting) weg achter de
+   topbar (bug uit video 2026-06-07). */
+body.page-management-dashboard .app-shell { height: auto; min-height: 100dvh; }
+body.page-management-dashboard .content--mgmt-dashboard { overflow: visible; min-height: 0; }
+body.page-management-dashboard .sidebar {
+  position: sticky;
+  top: 52px;
+  align-self: start;
+  max-height: calc(100dvh - 52px);
+  overflow-y: auto;
+}
+body.page-management-dashboard #md-top,
+body.page-management-dashboard .md-domain { scroll-margin-top: 64px; }
+
 .md-header { align-items: flex-start; }
 .md-subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; text-transform: capitalize; }
 .md-header-actions { display: flex; align-items: center; gap: 12px; }
