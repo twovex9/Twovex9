@@ -28,6 +28,7 @@
     // Het bestuur wordt niet ingeroosterd en voert zelf geen facturen/beschikbaarheid in;
     // zij gebruiken de kantooroverzichten (Facturen / Beschikbaarheid ZZP'ers). deniedRoles
     // weert ook de admin-tier-bypass (zie permissions-nav-hide.js / permissions-gate.js).
+    "mijn-uren.html": { deniedRoles: ["Eigenaar", "Directeur"] },                 // self-service: eigen werkuren registreren (RLS-gescoped)
     "mijn-proforma-facturen.html": { deniedRoles: ["Eigenaar", "Directeur"] },   // ZZP self-service: eigen proforma's (RLS-gescoped)
     "mijn-uitnodigingen.html": { deniedRoles: ["Eigenaar", "Directeur"] },       // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
     "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur"] },     // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
