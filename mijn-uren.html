@@ -5,29 +5,39 @@
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Locatie — HR</title>
-  <link rel="stylesheet" href="styles.css?v=918f1ad">
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
+  <title>Mijn uren — Future Flow</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
+  <style>
+    .content--mu{max-width:1100px;}
+    .mu-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+    .mu-month-nav{display:inline-flex;align-items:center;gap:6px;}
+    .mu-month-label{font-weight:700;font-size:15px;min-width:140px;text-align:center;}
+    .mu-step{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;line-height:1;}
+    .mu-step:hover{border-color:var(--line-strong);}
+    .mu-row{cursor:pointer;}
+    .mu-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .mu-empty{padding:18px;text-align:center;color:var(--text-muted,#64748b);}
+    .mu-totals{display:flex;gap:22px;align-items:center;padding:10px 14px;color:var(--text-secondary);font-size:13px;}
+    .mu-emp{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+    .mu-emp-avatar{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;}
+    .mu-emp-naam{font-weight:650;}
+    .mu-locked-note{margin:0 0 12px;padding:9px 13px;border-radius:var(--r-md);background:var(--yellow-soft,rgba(245,158,11,.12));color:var(--text);font-size:13px;}
+    .mu-time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  </style>
 </head>
 <body>
-  <script src="save-feedback.js?v=918f1ad" defer></script>
-  <script src="floating-panels.js?v=918f1ad" defer></script>
-
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -36,7 +46,7 @@
             <a href="management-dashboard" class="top-link">Dashboard</a>
             <a href="mijn-proforma-facturen" class="top-link">Mijn facturen</a>
             <a href="mijn-beschikbaarheid" class="top-link">Mijn beschikbaarheid</a>
-            <a href="mijn-uren" class="top-link">Mijn uren</a>
+            <a href="mijn-uren" class="top-link is-active">Mijn uren</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="planning" class="top-link top-link--dropdown">Planning<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Planning opties">
@@ -56,7 +66,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="hr" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="hr" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
                 <a href="hr" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
                 <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
@@ -118,186 +128,138 @@
           </button>
         </div>
       </div>
-      <div class="topbar-icons">
-        <button type="button" class="icon-btn" aria-label="Help">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-        </button>
-      </div>
+      <div class="topbar-icons"></div>
     </header>
 
     <aside class="sidebar">
-      <nav class="side-nav">
-        <a href="hr" class="side-link">Medewerkers</a>
-        <a href="competenties" class="side-link">Competenties</a>
-        <a href="opleidingen" class="side-link">Opleidingen</a>
-        <div class="side-group" data-side-group="salarishuis">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-salarishuis-sub">
-            <span class="side-group__label">Salarishuis</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-salarishuis-sub" hidden>
-            <a href="salarishuis" class="side-link side-link--nested">Salarishuis</a>
-            <a href="salarishuis-wijzigingsgeschiedenis" class="side-link side-link--nested">Wijzigingsgeschiedenis</a>
-          </div>
-        </div>
-        <a href="bureaus" class="side-link">Bureau's</a>
-        <a href="salarisadministratie-exporter" class="side-link">Salarisadministratie</a>
-        <a href="loonstroken" class="side-link">Loonstroken</a>
-        <div class="side-group" data-side-group="verlof">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-verlof-sub">
-            <span class="side-group__label">Verlof</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-verlof-sub" hidden>
-            <a href="verlof" class="side-link side-link--nested">Verlofaanvragen</a>
-            <a href="verlofstanden" class="side-link side-link--nested">Verlofstanden</a>
-            <a href="verlof-uitdienst" class="side-link side-link--nested">Uitdiensttreding</a>
-            <a href="plus-minuren" class="side-link side-link--nested">Plus-/minuren</a>
-            <a href="verloftypes" class="side-link side-link--nested">Verloftypes</a>
-          </div>
-        </div>
-        <div class="side-group" data-side-group="compensatie">
-          <button type="button" class="side-link side-link--sub side-group__toggle" aria-expanded="false" aria-controls="side-compensatie-sub">
-            <span class="side-group__label">Compensatie</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="side-compensatie-sub" hidden>
-            <a href="compensatie-saldi" class="side-link side-link--nested">Saldi</a>
-            <a href="compensatie-berekeningen" class="side-link side-link--nested">Berekeningen</a>
-            <a href="compensatie-feestdagen" class="side-link side-link--nested">Feestdagen</a>
-            <a href="compensatie-diensttypes" class="side-link side-link--nested">Diensttypes</a>
-          </div>
-        </div>
-        <a href="verzuim" class="side-link">Verzuim</a>
-        <a href="nieuws" class="side-link">Nieuws</a>
+      <nav class="side-nav" aria-label="Persoonlijk">
+        <a href="mijn-uren" class="side-link is-active">Mijn uren</a>
+        <a href="mijn-proforma-facturen" class="side-link">Mijn facturen</a>
+        <a href="mijn-uitnodigingen" class="side-link">Mijn uitnodigingen</a>
+        <a href="mijn-gegevens" class="side-link">Mijn gegevens</a>
       </nav>
-      <div class="sidebar-footer"><span class="sidebar-hr-mark">HR</span></div>
     </aside>
 
-    <main class="content content--emp-detail">
-      <div class="comp-detail-layout">
-        <aside class="comp-detail-sidebar">
-          <div class="comp-detail-card">
-            <div class="comp-detail-hero">
-              <a href="locaties" class="emp-back-btn" aria-label="Terug naar locaties">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              </a>
-              <button type="button" class="comp-detail-menu" aria-label="Meer opties">•••</button>
-              <div class="comp-detail-hero-text">
-                <h2 id="loc-hero-name">—</h2>
-                <span>LOCATIE</span>
-              </div>
-            </div>
-            <div class="comp-detail-stats">
-              <h4>Medewerkers</h4>
-              <span id="loc-medewerkers-count">0</span>
-              <button type="button" class="loc-detail-qr-btn" id="loc-detail-qr-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
-                Show QR Code
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <div class="comp-detail-main">
-          <div class="emp-tabs">
-            <button type="button" class="emp-tab is-active" data-tab="details">Details</button>
-            <button type="button" class="emp-tab" data-tab="medewerkers">Medewerkers</button>
-          </div>
-
-          <div class="comp-tab-panel" id="loc-tab-details">
-            <div class="emp-section">
-              <h3>Locatie gegevens</h3>
-              <div class="emp-field">
-                <span>Naam</span>
-                <input type="text" id="loc-detail-naam" class="comp-modal-input" autocomplete="off" />
-              </div>
-            </div>
-
-            <div class="emp-section loc-detail-adres-block">
-              <h3>Adres</h3>
-              <div class="loc-addr-grid loc-addr-grid--3">
-                <div class="emp-field">
-                  <span>Postcode</span>
-                  <input type="text" id="loc-detail-postcode" class="comp-modal-input" autocomplete="postal-code" />
-                </div>
-                <div class="emp-field">
-                  <span>Huisnummer</span>
-                  <input type="text" id="loc-detail-huisnummer" class="comp-modal-input" autocomplete="off" />
-                </div>
-                <div class="emp-field">
-                  <span>Toevoeging</span>
-                  <input type="text" id="loc-detail-toevoeging" class="comp-modal-input" autocomplete="off" />
-                </div>
-              </div>
-              <div class="loc-addr-grid loc-addr-grid--2">
-                <div class="emp-field">
-                  <span>Straat</span>
-                  <input type="text" id="loc-detail-straat" class="comp-modal-input" autocomplete="address-line1" />
-                </div>
-                <div class="emp-field">
-                  <span>Plaats</span>
-                  <input type="text" id="loc-detail-plaats" class="comp-modal-input" autocomplete="address-level2" />
-                </div>
-              </div>
-            </div>
-
-            <div class="emp-section">
-              <h3>Planning</h3>
-              <label class="switch switch--yellow">
-                <input type="checkbox" id="loc-detail-niet-in-planning" />
-                <span class="switch-slider"></span>
-                <span class="switch-label">Niet zichtbaar in planning (kantoor/overhead)</span>
-              </label>
-              <p class="loc-detail-planning-hint" style="margin:8px 0 0;font-size:13px;color:var(--text-muted)">
-                Aan = kantoor-/overheadlocatie. Medewerkers die uitsluitend op zulke locaties zijn ingedeeld, verschijnen niet in de planning.
-              </p>
-            </div>
-
-            <div class="emp-section-footer card_footer loc-detail-emp-footer">
-              <button type="button" class="btn-primary emp-save-section button" id="loc-detail-save">Wijzigingen opslaan</button>
-            </div>
-          </div>
-
-          <div class="comp-tab-panel" id="loc-tab-medewerkers" style="display:none">
-            <div id="loc-medewerkers-list"></div>
-          </div>
+    <main class="content content--mu">
+      <div class="content-header">
+        <div>
+          <h1>Mijn uren</h1>
+          <p class="content-subtitle">Registreer hier je gewerkte uren per dag. Kies een maand, voeg uren toe en pas aan wat afwijkt.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn-primary" id="mu-add-btn">+ Uren toevoegen</button>
         </div>
       </div>
+
+      <p class="mu-locked-note" id="mu-locked-note" hidden>Deze maand is vergrendeld — je kunt geen uren meer toevoegen of wijzigen.</p>
+
+      <div class="mu-toolbar">
+        <div class="mu-month-nav">
+          <button type="button" class="mu-step" id="mu-prev" aria-label="Vorige maand">‹</button>
+          <span class="mu-month-label" id="mu-month-label">—</span>
+          <button type="button" class="mu-step" id="mu-next" aria-label="Volgende maand">›</button>
+        </div>
+      </div>
+
+      <section class="table-card table-card--compact">
+        <div class="table-wrapper">
+          <table class="employees-table" id="mu-table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Start</th>
+                <th>Eind</th>
+                <th class="mu-num">Duur</th>
+                <th>Cliënt</th>
+                <th>Label</th>
+                <th>Beschrijving</th>
+                <th data-col="acties">Acties</th>
+              </tr>
+            </thead>
+            <tbody id="mu-tbody"></tbody>
+          </table>
+        </div>
+        <div class="mu-totals">
+          <span><strong>Totaal uren:</strong> <span id="mu-total-uren">0</span></span>
+          <span><strong>Aantal:</strong> <span id="mu-total-aantal">0</span></span>
+        </div>
+      </section>
     </main>
   </div>
 
+  <!-- Toevoegen / bewerken modal -->
+  <div class="modal-overlay" id="mu-edit-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mu-edit-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="mu-edit-title">Uren toevoegen</h2>
+        <button type="button" class="modal-close" id="mu-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="mu-edit-form" class="modal-body" novalidate>
+        <input type="hidden" id="mu-edit-id" />
+        <div class="mu-emp">
+          <span class="mu-emp-avatar" id="mu-edit-emp-avatar">MW</span>
+          <span class="mu-emp-naam" id="mu-edit-emp-naam">—</span>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="mu-edit-datum">Datum <span class="im-req">*</span></label>
+          <input class="modal-input" type="date" id="mu-edit-datum" required />
+        </div>
+        <div class="mu-time-row">
+          <div class="modal-field">
+            <label class="modal-label" for="mu-edit-start">Starttijd</label>
+            <input class="modal-input" type="time" id="mu-edit-start" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="mu-edit-eind">Eindtijd</label>
+            <input class="modal-input" type="time" id="mu-edit-eind" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="mu-edit-duur">Duur (uren)</label>
+            <input class="modal-input" type="number" min="0" step="0.01" id="mu-edit-duur" placeholder="8" />
+          </div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="mu-edit-client">Cliënt</label>
+          <select class="modal-input" id="mu-edit-client">
+            <option value="">— Geen cliënt —</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="mu-edit-label">Label</label>
+          <select class="modal-input" id="mu-edit-label">
+            <option value="">Selecteer Label</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="mu-edit-beschr">Beschrijving</label>
+          <textarea class="modal-input" id="mu-edit-beschr" rows="3"></textarea>
+        </div>
+        <p class="im-error" id="mu-edit-error" role="alert" hidden></p>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="mu-edit-cancel">Annuleren</button>
+        <button type="submit" form="mu-edit-form" class="btn-primary" id="mu-edit-submit">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=918f1ad"></script>
-  <script src="sidebar-nav.js?v=918f1ad"></script>
+  <script src="save-feedback.js?v=918f1ad" defer></script>
+  <script src="floating-panels.js?v=918f1ad" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
   <script src="besa-sync-reporter.js?v=918f1ad"></script>
-  <script src="optimistic-lock.js?v=918f1ad" defer></script>
-  <script src="realtime-sync.js?v=918f1ad" defer></script>
-  <script src="bulk-actions.js?v=918f1ad" defer></script>
-  <script src="pdf-export.js?v=918f1ad" defer></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
-  <script src="helpdesk-modal.js?v=918f1ad" defer></script>
-  <script src="onboarding-flow.js?v=918f1ad" defer></script>
-  <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="locaties-data.js?v=918f1ad"></script>
-  <script src="competenties-data.js?v=918f1ad"></script>
-  <script src="opleidingen-data.js?v=918f1ad"></script>
-  <script src="bureaus-data.js?v=918f1ad"></script>
-  <script src="medewerkers-data.js?v=918f1ad"></script>
-  <script src="besa-filter-chips.js?v=918f1ad"></script>
-  <script src="besa-export.js?v=918f1ad"></script>
-  <script src="detail-medewerkers-tab.js?v=918f1ad"></script>
-  <script src="locatie-detail.js?v=918f1ad"></script>
-  <script src="geo-distance.js?v=918f1ad"></script>
-  <script src="besa-adres-autofill.js?v=918f1ad"></script>
+  <script src="medewerkers-data.js?v=918f1ad" defer></script>
+  <script src="clienten-data.js?v=918f1ad" defer></script>
+  <script src="werkuren-data.js?v=918f1ad" defer></script>
+  <script src="mijn-uren.js?v=918f1ad" defer></script>
 </body>
 </html>
