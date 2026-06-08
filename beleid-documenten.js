@@ -18,6 +18,22 @@
 
   var state = { search: "", page: 1, rowsPerPage: ROWS_PER_PAGE_DEFAULT, sortKey: "uploaddatum", sortDir: "desc", cols: null, editId: null, delId: null, pendingFile: null, pendingRemove: false };
 
+  // Beheer-rechten: uploaden/bewerken/verwijderen alleen voor wie manage-admins-documents
+  // heeft (Beleid/Zorgcoördinator/admin-tier). Een medewerker mag het beleid alleen LEZEN
+  // (bekijken/downloaden). Default false = fail-closed: knoppen pas tonen ná de permissie-load.
+  var canManage = false;
+  function computeCanManage() {
+    try {
+      return !!(((typeof window.besaIsAdminTier === "function") && window.besaIsAdminTier())
+        || ((typeof window.besaCan === "function") && window.besaCan("manage", "admins-documents")));
+    } catch (e) { return false; }
+  }
+  function applyManageVisibility() {
+    canManage = computeCanManage();
+    var up = document.getElementById("bd-upload-btn");
+    if (up) up.style.display = canManage ? "" : "none";
+  }
+
   function loadCols() {
     var on = {}; ALL_COLS.forEach(function (c) { on[c] = true; });
     try { var raw = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (raw && typeof raw === "object") ALL_COLS.forEach(function (c) { if (c in raw) on[c] = !!raw[c]; }); } catch (e) {}
@@ -75,10 +91,13 @@
 
   function renderRow(r) {
     var id = escapeHtml(r.id);
+    // Bekijken/downloaden voor iedereen; bewerken/verwijderen alleen voor beheerders.
     var actions = '<div class="bd-acties-cell">' +
       '<button class="bd-act-btn" data-action="view" data-id="' + id + '" title="Bekijken" aria-label="Bekijken">' + SVG_EYE + '</button>' +
-      '<button class="bd-act-btn" data-action="edit" data-id="' + id + '" title="Document bewerken" aria-label="Document bewerken">' + SVG_PEN + '</button>' +
-      '<button class="bd-act-btn bd-act-btn--del" data-action="delete" data-id="' + id + '" title="Verwijderen" aria-label="Verwijderen">' + SVG_TRASH + '</button>' +
+      (canManage
+        ? ('<button class="bd-act-btn" data-action="edit" data-id="' + id + '" title="Document bewerken" aria-label="Document bewerken">' + SVG_PEN + '</button>' +
+           '<button class="bd-act-btn bd-act-btn--del" data-action="delete" data-id="' + id + '" title="Verwijderen" aria-label="Verwijderen">' + SVG_TRASH + '</button>')
+        : "") +
       '</div>';
     return '<tr data-id="' + id + '" class="me-row" style="cursor:pointer">' +
       '<td data-col="naam"><span style="font-weight:600;color:var(--blue);">' + escapeHtml(r.name || "—") + '</span></td>' +
@@ -291,8 +310,8 @@
         if (!item) return;
         var act = btn.getAttribute("data-action");
         if (act === "view") openDoc(id);
-        else if (act === "edit") openEdit(item);
-        else if (act === "delete") openDel(item);
+        else if (act === "edit" && canManage) openEdit(item);
+        else if (act === "delete" && canManage) openDel(item);
         return;
       }
       var tr = e.target.closest("tr[data-id]");
@@ -340,8 +359,15 @@
     if (!window.beleidDocumentenDB) { console.error("[beleid] beleidDocumentenDB niet geladen"); return; }
     state.cols = loadCols();
     wire();
+    applyManageVisibility();   // best-effort (warm cache) — verbergt beheer-knoppen direct
     render();
     window.beleidDocumentenDB.ready.then(render);
+    // Authoritatief na permissie-load: beheer-knoppen tonen/verbergen + tabel herrenderen.
+    try {
+      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+        window.besaPermissionsReady.then(function () { applyManageVisibility(); render(); });
+      }
+    } catch (e) { /* status quo (read-only) */ }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

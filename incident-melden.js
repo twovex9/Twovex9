@@ -963,6 +963,44 @@
     if (tk) tk.hidden = !isEdit;
   }
 
+  // Mag de huidige user incidenten afhandelen (status/beoordeling/feedback wijzigen,
+  // taken aanmaken)? Office/kwaliteit-rollen (incident-dashboard of handle-incidents)
+  // + admin-tier wel; een pure melder (rol Medewerker) niet — die ziet zijn eigen
+  // melding read-only inclusief status "opgepakt" en terugkoppeling.
+  function incidentUserCanManage() {
+    try {
+      var adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
+      var can = (typeof window.besaCan === "function");
+      return !!(adminTier
+        || (can && window.besaCan("view", "incident-dashboard"))
+        || (can && window.besaCan("handle", "incidents")));
+    } catch (e) { return true; } // bij twijfel: bestaand gedrag (bewerkbaar)
+  }
+
+  // Vergrendel de afhandel-sectie voor een pure melder bij een bestaand incident:
+  // status + beoordeling/feedback zijn zichtbaar maar niet te wijzigen, en de
+  // taken-sectie (afhandelaar-tool) wordt verborgen.
+  function applyAfhandelReadonly(isEdit) {
+    if (!isEdit) return;
+    if (incidentUserCanManage()) return;
+    var sel = $("im-status");
+    if (sel) { sel.disabled = true; sel.classList.add("im-readonly"); }
+    ["im-beoordeling", "im-past-profiel-toel", "im-zorgplan-oms", "im-advies"].forEach(function (id) {
+      var el = $(id);
+      if (el) { el.readOnly = true; el.classList.add("im-readonly"); }
+    });
+    var tk = $("im-taken-card");
+    if (tk) tk.hidden = true;
+    var af = $("im-afhandelen-card");
+    if (af && !$("im-afhandel-readonly-note")) {
+      var note = document.createElement("p");
+      note.id = "im-afhandel-readonly-note";
+      note.className = "im-help";
+      note.textContent = "De afhandeling wordt door het team verzorgd. Je ziet hier de status en eventuele terugkoppeling op jouw melding.";
+      af.insertBefore(note, af.children.length > 1 ? af.children[1] : null);
+    }
+  }
+
   function populateForm(rec) {
     $("im-id").value = rec ? rec.id : "";
     $("im-client").value = rec && rec.clientId ? rec.clientId : "";
@@ -1009,6 +1047,7 @@
     // Afhandelen + Taken alleen bij een bestaand incident (BS2: afhandelen
     // en taken bestaan pas na create).
     showEditOnlySections(!!(rec && rec.id));
+    applyAfhandelReadonly(!!(rec && rec.id));
     toggleOudersReden();
     toggleAfhandelConditional();
     resetTaakForm();
