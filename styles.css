@@ -22234,7 +22234,7 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .wu-table-card {
   margin-bottom: 14px;
 }
-.wu-table { width: 100%; }
+.wu-table { width: max-content; min-width: 100%; }
 .wu-table th, .wu-table td {
   font-size: var(--font-table-cell);
   vertical-align: middle;

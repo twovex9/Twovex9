@@ -24,9 +24,13 @@
     "home.html": null,
     "login.html": null,
     "mijn-gegevens.html": null,
-    "mijn-proforma-facturen.html": null,          // ZZP self-service: eigen proforma's (RLS-gescoped)
-    "mijn-uitnodigingen.html": null,              // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
-    "mijn-beschikbaarheid.html": null,            // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
+    // Persoonlijke werkvloer self-service: open voor iedereen BEHALVE Eigenaar/Directeur.
+    // Het bestuur wordt niet ingeroosterd en voert zelf geen facturen/beschikbaarheid in;
+    // zij gebruiken de kantooroverzichten (Facturen / Beschikbaarheid ZZP'ers). deniedRoles
+    // weert ook de admin-tier-bypass (zie permissions-nav-hide.js / permissions-gate.js).
+    "mijn-proforma-facturen.html": { deniedRoles: ["Eigenaar", "Directeur"] },   // ZZP self-service: eigen proforma's (RLS-gescoped)
+    "mijn-uitnodigingen.html": { deniedRoles: ["Eigenaar", "Directeur"] },       // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
+    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur"] },     // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 

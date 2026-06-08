@@ -31,6 +31,22 @@
     var req = map[page];
     if (req === null || req === undefined) return true;
 
+    // Rol-uitsluiting (deniedRoles): bepaalde rollen mogen deze pagina NIET zien —
+    // geldt ook voor admin-tier (Eigenaar/Directeur), dus check vóór de admin-bypass.
+    // Bv. persoonlijke werkvloer-tabs (Mijn beschikbaarheid/Mijn facturen) voor bestuur.
+    if (Array.isArray(req.deniedRoles)) {
+      try {
+        var dRoles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
+          ? global.besaPermissions.getRoleNames()
+          : [];
+        for (var d = 0; d < req.deniedRoles.length; d++) {
+          if (dRoles.indexOf(req.deniedRoles[d]) !== -1) return false;
+        }
+      } catch (e) { /* bij twijfel niets verbergen */ }
+      // Niet uitgesloten én geen verdere allowedRoles/action-eis → open voor de rest.
+      if (!Array.isArray(req.allowedRoles) && !req.action) return true;
+    }
+
     // Admin-tier ziet alles — behalve expliciet strict-gemarkeerde pagina's (bv. Financiën).
     if (adminTier && !req.strict) return true;
 

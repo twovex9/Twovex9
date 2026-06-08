@@ -414,9 +414,12 @@
 
     var addBtn = $("km-add-open-btn");
     if (addBtn) {
-      addBtn.hidden = false;
-      addBtn.disabled = !editable;
-      addBtn.classList.toggle("is-disabled", !editable);
+      // Eigenaar/Directie/Admin voeren zelf geen kilometers in — voor het bestuur is
+      // deze pagina puur een overzicht/dashboard van ingediende declaraties (video-eis).
+      var isAdminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
+      addBtn.hidden = isAdminTier;
+      addBtn.disabled = isAdminTier || !editable;
+      addBtn.classList.toggle("is-disabled", isAdminTier || !editable);
     }
 
     renderDeadlineAndSubmit(d, editable);
@@ -1292,6 +1295,7 @@
       await Promise.all([
         window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.ready,
         window.medewerkersDB && window.medewerkersDB.ready,
+        window.besaPermissionsReady,   // admin-tier bekend vóór render (verberg invoerknop voor bestuur)
       ]);
     } catch (e) { /* events herstellen de UI */ }
     var s = getRouteState();
