@@ -5,13 +5,13 @@
  *
  * APART systeem, los van de bestaande `beleidsdocumenten`/`beleid.html`
  * (die blijven onaangeroerd). Tabel `public.beleid_documenten` (uuid PK =
- * BS2 document-id), Storage-bucket `beleid-documenten` (privé).
+ * BS2 document-id), Storage-bucket `beleid-documenten` (publiek).
  * Source-of-truth = Supabase. Cache in localStorage["beleid_documenten_v1"].
  *
  * Public API (window.beleidDocumentenDB):
  *  - ready / refresh() / getAllSync() / getByIdSync(id)
  *  - getRawBs2(id) → Promise (on-demand volledige BS2-raw)
- *  - getFileUrl(id) → Promise<string|null> (signed URL, 10 min)
+ *  - getFileUrl(id) → Promise<string|null> (publieke URL)
  *  - add / update / archive / restore / delete
  * Event: `besa:beleid-documenten-updated`. DATA-SLIM `_mem`.
  */
@@ -126,15 +126,18 @@
     } catch (err) { reportSilent("getRawBs2", err); return null; }
   }
 
-  // Privé bucket → signed URL (10 min) voor bekijken/downloaden.
+  // Publieke bucket → publieke URL voor bekijken/downloaden.
+  // De bucket 'beleid-documenten' staat public=true (net als client-documents /
+  // medewerker-documenten). getPublicUrl heeft geen RLS-leesrecht of sessie
+  // nodig; createSignedUrl zou dat wél vereisen en faalde met "Object not
+  // found" omdat er geen storage-SELECT-policy voor deze bucket was.
   async function getFileUrl(id) {
     if (!global.besaSupabase || id == null) return null;
     var row = getByIdSync(id);
     if (!row || !row.storagePath) return null;
     try {
-      var res = await global.besaSupabase.storage.from(BUCKET).createSignedUrl(row.storagePath, 600);
-      if (res.error) throw res.error;
-      return (res.data && (res.data.signedUrl || res.data.signedURL)) || null;
+      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(row.storagePath);
+      return (res && res.data && res.data.publicUrl) || null;
     } catch (err) { reportSilent("getFileUrl", err); return null; }
   }
 

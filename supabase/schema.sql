@@ -4315,3 +4315,39 @@ create policy "auth kan offboarding_trajecten bewerken"
 drop policy if exists "auth kan offboarding_trajecten verwijderen" on public.offboarding_trajecten;
 create policy "auth kan offboarding_trajecten verwijderen"
   on public.offboarding_trajecten for delete to authenticated using (true);
+
+-- =============================================================================
+-- Fix 2026-06-08: Storage-bucket 'beleid-documenten' (top-bar Beleid)
+-- =============================================================================
+-- De bucket werd bij de BS2-port (2026-05-18) aangemaakt zonder enige
+-- storage.objects-policy én als privé. Gevolg: de ingelogde gebruiker kon
+-- geen signed URL maken → Storage gaf "Object not found" → de UI toonde
+-- "document niet gevonden". Net als client-documents / medewerker-documenten /
+-- incident-documenten zetten we de bucket op public en gebruiken we in de
+-- data-laag getPublicUrl (zie beleid-documenten-data.js). De policies hieronder
+-- maken de bucket consistent met de rest (RLS-pad blijft beschikbaar).
+
+insert into storage.buckets (id, name, public)
+values ('beleid-documenten', 'beleid-documenten', true)
+on conflict (id) do update set public = excluded.public;
+
+drop policy if exists "auth kan beleid-documenten lezen" on storage.objects;
+create policy "auth kan beleid-documenten lezen"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'beleid-documenten');
+
+drop policy if exists "auth kan beleid-documenten uploaden" on storage.objects;
+create policy "auth kan beleid-documenten uploaden"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'beleid-documenten');
+
+drop policy if exists "auth kan beleid-documenten bewerken" on storage.objects;
+create policy "auth kan beleid-documenten bewerken"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'beleid-documenten')
+  with check (bucket_id = 'beleid-documenten');
+
+drop policy if exists "auth kan beleid-documenten verwijderen" on storage.objects;
+create policy "auth kan beleid-documenten verwijderen"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'beleid-documenten');
