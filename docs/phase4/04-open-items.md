@@ -114,7 +114,7 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 **Regel**: NOOIT in code, repo, of chat. Alleen via `$env:SUPABASE_SERVICE_KEY` env-var in PowerShell sessie. Wis na gebruik met `$env:SUPABASE_SERVICE_KEY = $null`.
 
-**Locatie**: te halen via `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api`.
+**Locatie**: te halen via `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api`.
 
 ### 14. Cliënt-detail 4 placeholder-tabs (feature gap)
 

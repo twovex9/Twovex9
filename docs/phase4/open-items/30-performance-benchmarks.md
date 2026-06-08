@@ -23,7 +23,7 @@ Baseline page-load timings gemeten voor 7 key pages na PR #1 (cache-busting) act
 
 Niet kritiek nu (huidige volumes prima):
 - Bij > 1000 actieve records per hoofdtabel: virtualisatie of pagination overwegen
-- Preconnect `<link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">` kan 50-100ms DNS+TLS besparen
+- Preconnect `<link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">` kan 50-100ms DNS+TLS besparen
 
 ## Volgende meting
 

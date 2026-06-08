@@ -15,7 +15,7 @@ Dit is **BS1** — eigen ontwikkeling die feature-parity heeft met BS2 (`https:/
 ## Tech stack
 
 - **Frontend**: vanilla HTML/CSS/JS — `index.html` is stijl-bron, design tokens in `:root` in `styles.css`
-- **Backend**: Supabase (project `boscwvojcggkbdxhlfys`)
+- **Backend**: Supabase (project `ukjflilnhigozfoxowmj`)
 - **Auth**: Supabase Auth (`auth-guard.js` op elke pagina)
 - **Storage**: Supabase Storage buckets (`client-documents`, `medewerker-documenten`)
 - **Deploy**: Vercel (GitHub `main` → auto-deploy)
@@ -83,7 +83,7 @@ Supabase config is hardcoded in `supabase-client.js` (anon key — public, RLS b
 ### 4. Database wijzigingen
 
 ```sql
--- Via Supabase Studio: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/sql/new
+-- Via Supabase Studio: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/sql/new
 -- OF via Supabase MCP (Claude): mcp__supabase__apply_migration / execute_sql
 -- NOOIT supabase/schema.sql overschrijven — alleen uitbreiden via migrations
 ```

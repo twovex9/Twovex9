@@ -11,7 +11,7 @@
 `scripts/add-preconnect.mjs` voegt aan alle 53 HTML files toe:
 
 ```html
-<link rel="preconnect" href="https://boscwvojcggkbdxhlfys.supabase.co">
+<link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 ```
 

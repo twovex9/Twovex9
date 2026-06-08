@@ -63,7 +63,7 @@ Bevinding tijdens S10 review: alle PII-tabellen (medewerkers, clienten, beschikk
 
 ### Hoe service_role key kopiëren
 
-1. <https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api>
+1. <https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api>
 2. Onder **Project API keys** → naast `service_role` → **Reveal** → Copy
 3. Plak in PowerShell `$env:SUPABASE_SERVICE_KEY = "..."`
 

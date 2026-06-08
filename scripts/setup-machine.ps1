@@ -112,7 +112,7 @@ if (Test-Path "package.json") {
 # 7. Externe services checklist (user-actie nodig)
 Write-Host ""
 Write-Host "## Externe services — handmatige login vereist" -ForegroundColor Cyan
-Write-Host "  [ ] Supabase Dashboard: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys" -ForegroundColor Gray
+Write-Host "  [ ] Supabase Dashboard: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj" -ForegroundColor Gray
 Write-Host "  [ ] Vercel Dashboard:   https://vercel.com/etfalkmaars-projects/besa-suite" -ForegroundColor Gray
 Write-Host "  [ ] BS2 (sandbox):       https://etf.acceptance.besasuite.nl" -ForegroundColor Gray
 Write-Host "  [ ] GitHub repo:         https://github.com/ETFalkmaar/besa-suite-" -ForegroundColor Gray

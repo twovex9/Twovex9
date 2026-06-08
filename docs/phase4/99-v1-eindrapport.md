@@ -16,7 +16,7 @@ Dit document is de **single source of truth** voor de huidige status van BS1. He
 ## Wat is BS1?
 
 In-house herbouw van BESA-suite 2 (BS2 — productie-demo `https://etf.acceptance.besasuite.nl`) in **eigen vanilla HTML/JS/CSS stack** met:
-- Eigen Supabase Postgres + Storage backend (`boscwvojcggkbdxhlfys`)
+- Eigen Supabase Postgres + Storage backend (`ukjflilnhigozfoxowmj`)
 - Auto-deploy via Vercel uit GitHub `main` branch
 - Live op `https://besa-suite.vercel.app`
 - Eigen huisstijl + UX (zie `.claude/huisstijl.md`)

@@ -14,7 +14,7 @@ Volledige port van alle 15 BS2 resources (5497 records) naar BS1 Supabase.
 
 ## Stap 1 — Haal je Supabase service_role key
 
-1. Open: <https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api>
+1. Open: <https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api>
 2. Scroll naar **"Project API keys"**
 3. Naast **`service_role`** → klik **"Reveal"** (oogje)
 4. **Kopieer** de hele lange JWT-token (`eyJ...`)
@@ -101,7 +101,7 @@ node scripts/bs2-full-import.mjs --verbose
 
 ## Verzuim (medische data) — apart
 
-Voor verzuim (9 records inclusief verzuim van medewerkers) is `scripts/bs2-exports/verzuim-manual-insert.sql` apart klaargezet. Run die in **Supabase Studio SQL Editor**: <https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/sql/new>
+Voor verzuim (9 records inclusief verzuim van medewerkers) is `scripts/bs2-exports/verzuim-manual-insert.sql` apart klaargezet. Run die in **Supabase Studio SQL Editor**: <https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/sql/new>
 
 ## Na succesvolle import
 

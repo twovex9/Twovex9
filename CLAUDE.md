@@ -114,7 +114,7 @@ Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerst
 | Site | URL | Mag | Mag NIET |
 |---|---|---|---|
 | **BS2 (target, sandbox)** | `https://etf.acceptance.besasuite.nl/home` | Alles: klikken, toevoegen, wijzigen, **verwijderen** — bedoeld voor inspectie | — |
-| Supabase dashboard | `https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys` | Lezen, navigeren | **Nooit** verwijderen via dashboard; gebruik Supabase MCP voor wijzigingen |
+| Supabase dashboard | `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj` | Lezen, navigeren | **Nooit** verwijderen via dashboard; gebruik Supabase MCP voor wijzigingen |
 | Vercel dashboard | `https://vercel.com/etfalkmaars-projects/besa-suite` | Lezen, deploys/logs bekijken | **Nooit** verwijderen (project, deploys, env, domains) |
 | GitHub repo | `https://github.com/ETFalkmaar/besa-suite-` | Lezen, push naar `main` (geautoriseerd in werkpatronen sec. 7) | Geen `--force` push, geen branch/release-deletes |
 | BS1 lokaal | `besa-suite-etf/` | Volledige write conform huisstijl + werkpatronen | — |
