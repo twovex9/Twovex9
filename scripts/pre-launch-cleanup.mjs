@@ -20,13 +20,13 @@
  *   node scripts/pre-launch-cleanup.mjs --live        # daadwerkelijk verwijderen
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://boscwvojcggkbdxhlfys.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ukjflilnhigozfoxowmj.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const LIVE = process.argv.includes('--live');
 
 if (!SERVICE_KEY) {
   console.error('FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt.');
-  console.error('Haal de key uit: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api');
+  console.error('Haal de key uit: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api');
   process.exit(1);
 }
 
