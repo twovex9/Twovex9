@@ -123,10 +123,22 @@ function readJsonArray(key) {
 }
 
 function writePlanningItems(items) {
-  try {
-    window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    /* demo */
+  // Bron van waarheid is de in-memory store van planningDB (overleeft de
+  // localStorage-quota bij grote planning). setLocalCache werkt geheugen +
+  // localStorage best-effort bij; val terug op een directe localStorage-write
+  // wanneer de data-laag (nog) niet geladen is.
+  if (window.planningDB && typeof window.planningDB.setLocalCache === "function") {
+    try {
+      window.planningDB.setLocalCache(items);
+    } catch (e) {
+      try { window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(items)); } catch (_e) { /* */ }
+    }
+  } else {
+    try {
+      window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      /* demo */
+    }
   }
   // Fire-and-forget bulk-sync naar Supabase via data-laag (planning-data.js).
   if (window.planningDB && typeof window.planningDB.pushFullCache === "function") {
@@ -154,8 +166,23 @@ function normalizeItem(raw) {
   return o;
 }
 
+// Bron van waarheid voor de ruwe planning-array: de in-memory store van
+// planningDB. Die overleeft de localStorage-quota — een grote planning
+// (> ~5MB) past niet in localStorage, waardoor de cache-write stil faalt en
+// een directe localStorage-lees [] zou opleveren. Val alleen terug op
+// localStorage als de data-laag (nog) niet geladen is.
+function getStoredPlanningRaw() {
+  if (window.planningDB && typeof window.planningDB.getAllSync === "function") {
+    try {
+      const mem = window.planningDB.getAllSync();
+      if (Array.isArray(mem)) return mem;
+    } catch (e) { /* fallback hieronder */ }
+  }
+  return readJsonArray(PLANNING_STORAGE_KEY);
+}
+
 function readPlanningItems() {
-  return readJsonArray(PLANNING_STORAGE_KEY).map(normalizeItem);
+  return getStoredPlanningRaw().map(normalizeItem);
 }
 
 function getEmployeeName(emp) {
@@ -748,6 +775,12 @@ function buildDataState() {
 }
 
 function ensurePlanningSeed(dataState) {
+  // Met de Supabase-data-laag is Supabase de bron van waarheid. De demo-seed
+  // mag dan NOOIT draaien: via writePlanningItems → pushFullCache (diff-delete)
+  // zou hij de echte planning kunnen wissen zodra de cache leeg lijkt (bv. bij
+  // localStorage-quota of vlak na inloggen). De seed is uitsluitend bedoeld
+  // voor de standalone demo zonder backend.
+  if (window.planningDB) return getStoredPlanningRaw();
   const existing = readJsonArray(PLANNING_STORAGE_KEY);
   if (existing.length > 0) return existing;
   try {
@@ -1419,7 +1452,7 @@ function buildShiftCardEl(it, gi, overlapIds) {
         }
         confirmFn.then(function (ok) {
           if (!ok) return;
-          const arr = readJsonArray(PLANNING_STORAGE_KEY).filter((x) => x.id !== it.id);
+          const arr = getStoredPlanningRaw().filter((x) => x.id !== it.id);
           writePlanningItems(arr);
           ui.selectedId = null;
           renderAllViews();
@@ -1447,7 +1480,7 @@ function copyItem(it) {
   s.setTime(s.getTime() + 3600000);
   e.setTime(s.getTime() + dur);
   const n = { ...it, id: makePlanningId(), start: toIsoLocal(s), einde: toIsoLocal(e) };
-  const arr = readJsonArray(PLANNING_STORAGE_KEY);
+  const arr = getStoredPlanningRaw().slice();
   arr.unshift(n);
   writePlanningItems(arr);
   renderAllViews();
@@ -2786,7 +2819,7 @@ function initDienstPanel() {
       sterren: 0,
       conflict: false,
     };
-    const items = readJsonArray(PLANNING_STORAGE_KEY);
+    const items = getStoredPlanningRaw().slice();
     if (ui.editingId) {
       const updated = items.map((x) =>
         x.id === ui.editingId
@@ -3042,7 +3075,7 @@ function initAddModal() {
       return;
     }
     if (ui.editingId) {
-      const items = readJsonArray(PLANNING_STORAGE_KEY).map((x) =>
+      const items = getStoredPlanningRaw().map((x) =>
         x.id === ui.editingId
           ? normalizeItem({
               ...x,
@@ -3052,7 +3085,7 @@ function initAddModal() {
       );
       writePlanningItems(items);
     } else {
-      const items = readJsonArray(PLANNING_STORAGE_KEY);
+      const items = getStoredPlanningRaw().slice();
       items.unshift(
         normalizeItem({ id: makePlanningId(), ...f })
       );

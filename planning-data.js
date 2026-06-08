@@ -16,16 +16,27 @@
   var CACHE_KEY = "planningItems";
   var MIGRATION_FLAG_KEY = "planningMigratedToSupabase.v1";
 
+  // In-memory store = bron van waarheid binnen de sessie. localStorage is
+  // best-effort cache: bij grote datasets (planning > ~5MB) faalt
+  // localStorage.setItem met een QuotaExceededError. De UI mag daar nooit van
+  // afhangen — memItems houdt de volledige set vast ongeacht de quota.
+  var memItems = null;
+
   function readCache() {
+    if (Array.isArray(memItems)) return memItems;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return [];
       var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
+      memItems = Array.isArray(p) ? p : [];
+      return memItems;
     } catch (e) { return []; }
   }
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    memItems = Array.isArray(items) ? items : [];
+    // Best-effort: bij quota-overschrijding faalt dit stil; memItems blijft de
+    // volledige dataset bevatten zodat de planning toch rendert.
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(memItems)); } catch (e) { /* quota — memory is source of truth */ }
   }
   function dispatchUpdated() {
     try { global.dispatchEvent(new CustomEvent("besa:planning-updated")); } catch (e) { /* */ }
@@ -230,7 +241,7 @@
     }
   }
 
-  function getAllSync() { return readCache(); }
+  function getAllSync() { return readCache().slice(); }
 
   function getByIdSync(id) {
     return readCache().find(function (r) { return String(r.id) === String(id); }) || null;
@@ -285,6 +296,7 @@
   global.planningDB = {
     get ready() { return readyPromise || bootstrap(); },
     pushFullCache: pushFullCache,
+    setLocalCache: writeCache,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     add: add,
