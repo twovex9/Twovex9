@@ -57,7 +57,7 @@ declare
   v_ids     uuid[] := '{}';
   v_chunk   uuid[];
   v_secret  text;
-  v_url     text := 'https://boscwvojcggkbdxhlfys.supabase.co/functions/v1/kilometer-werkwerk-push';
+  v_url     text := 'https://ukjflilnhigozfoxowmj.supabase.co/functions/v1/kilometer-werkwerk-push';
   v_maanden text[] := array['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 begin
   if coalesce(NEW.type,'') <> 'werkwerk' then

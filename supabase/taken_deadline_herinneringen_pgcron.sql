@@ -56,7 +56,7 @@ declare
   v_notif_id   uuid;
   v_ids        uuid[] := '{}';
   v_secret     text;
-  v_url        text := 'https://boscwvojcggkbdxhlfys.supabase.co/functions/v1/taken-herinnering-push';
+  v_url        text := 'https://ukjflilnhigozfoxowmj.supabase.co/functions/v1/taken-herinnering-push';
 begin
   for r in
     select

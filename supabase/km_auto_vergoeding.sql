@@ -146,7 +146,7 @@ declare
   v_notif_id     uuid;
   v_notif_ids    uuid[] := '{}';
   v_secret       text;
-  v_url          text := 'https://boscwvojcggkbdxhlfys.supabase.co/functions/v1/km-declaratie-push';
+  v_url          text := 'https://ukjflilnhigozfoxowmj.supabase.co/functions/v1/km-declaratie-push';
 
   c_mw     integer := 0;
   c_day    integer := 0;
