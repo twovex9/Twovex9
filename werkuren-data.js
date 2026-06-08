@@ -35,11 +35,17 @@
     try { console.error("[" + domain + "] " + action + " mislukt:", err); } catch (e) { /* */ }
     if (global.besaReportSyncFailure) global.besaReportSyncFailure(domain + " — " + action, err);
   }
+  // In-memory store per cache-sleutel overleeft de localStorage-quota: een
+  // grote dataset (> ~5MB) past niet in localStorage → setItem faalt stil;
+  // mem[key] blijft de volledige set bevatten zodat de pagina toch rendert.
+  var mem = Object.create(null);
   function readCache(key) {
-    try { var raw = localStorage.getItem(key); if (!raw) return []; var p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch (e) { return []; }
+    if (Array.isArray(mem[key])) return mem[key];
+    try { var raw = localStorage.getItem(key); if (!raw) return []; var p = JSON.parse(raw); mem[key] = Array.isArray(p) ? p : []; return mem[key]; } catch (e) { return []; }
   }
   function writeCache(key, items) {
-    try { localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    mem[key] = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(key, JSON.stringify(mem[key])); } catch (e) { /* quota — memory is source of truth */ }
   }
   function dispatchEvt(name, source) {
     try { global.dispatchEvent(new CustomEvent(name, { detail: { source: source || "werkuren-data" } })); } catch (e) { /* */ }

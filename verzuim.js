@@ -175,8 +175,13 @@
 
   var rowsLang = loadRows(STORAGE_LANG, defaultLangRows);
   var rowsKort = loadRows(STORAGE_KORT, defaultKortRows);
-  if (!localStorage.getItem(STORAGE_LANG)) saveRows(STORAGE_LANG, rowsLang);
-  if (!localStorage.getItem(STORAGE_KORT)) saveRows(STORAGE_KORT, rowsKort);
+  // Demo-seed alleen zonder data-laag (standalone demo). Met verzuimDB is
+  // Supabase de bron van waarheid — nooit demo-rijen wegschrijven/pushen
+  // (zou via pushType de echte verzuim-rijen kunnen overschrijven).
+  if (!window.verzuimDB) {
+    if (!localStorage.getItem(STORAGE_LANG)) saveRows(STORAGE_LANG, rowsLang);
+    if (!localStorage.getItem(STORAGE_KORT)) saveRows(STORAGE_KORT, rowsKort);
+  }
 
   function getActiveRows() {
     return vzType === "lang" ? rowsLang : rowsKort;

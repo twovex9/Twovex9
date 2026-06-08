@@ -183,6 +183,7 @@
     }
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -190,6 +191,7 @@
       try {
         await maybeMigrateLocalToSupabase();
         var schalen = await fetchAllScales();
+        serverLoaded = true;
         if (schalen && schalen.length) {
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schalen)); } catch (e) { /* */ }
         }
@@ -211,6 +213,7 @@
   async function pushAllScalesAsync(list) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(list)) return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       var payload = list.map(function (s, i) {
         return {

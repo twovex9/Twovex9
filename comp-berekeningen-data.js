@@ -59,6 +59,7 @@
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -66,6 +67,7 @@
       try {
         var items = await fetchAll();
         writeCache(items);
+        serverLoaded = true;
         dispatchUpdated();
       } catch (err) {
         console.error("[compBerekeningenDB] Bootstrap mislukt:", err);
@@ -82,6 +84,7 @@
   async function pushAll(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       var existingHead = await global.besaSupabase.from(TABLE).select("id");
       if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }

@@ -15,16 +15,23 @@
   var TABLE = "urendeclaraties";
   var CACHE_KEY = "urendeclaraties_v1";
 
+  // In-memory store overleeft de localStorage-quota: een grote dataset
+  // (> ~5MB) past niet in localStorage → setItem faalt stil; memItems blijft
+  // de volledige set bevatten zodat de pagina toch rendert.
+  var memItems = null;
   function readCache() {
+    if (Array.isArray(memItems)) return memItems;
     try {
       var raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return [];
       var p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
+      memItems = Array.isArray(p) ? p : [];
+      return memItems;
     } catch (e) { return []; }
   }
   function writeCache(items) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
+    memItems = Array.isArray(items) ? items : [];
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(memItems)); } catch (e) { /* quota — memory is source of truth */ }
   }
   function dispatchUpdated() {
     try { global.dispatchEvent(new CustomEvent("besa:urendeclaraties-updated")); } catch (e) { /* */ }
@@ -80,6 +87,7 @@
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -87,6 +95,7 @@
       try {
         var items = await fetchAll();
         writeCache(items);
+        serverLoaded = true;
         dispatchUpdated();
       } catch (err) {
         console.error("[urendeclaratiesDB] Bootstrap mislukt:", err);
@@ -103,6 +112,7 @@
   async function pushAll(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       var existingHead = await global.besaSupabase.from(TABLE).select("id");
       if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }
@@ -168,7 +178,7 @@
   global.urendeclaratiesDB = {
     get ready() { return readyPromise || bootstrap(); },
     pushAll: pushAll,
-    getAllSync: function () { return readCache(); },
+    getAllSync: function () { return readCache().slice(); },
     refresh: async function () {
       var items = await fetchAll();
       writeCache(items);

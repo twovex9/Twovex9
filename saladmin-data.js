@@ -117,6 +117,7 @@
     }
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -125,6 +126,7 @@
         await maybeMigrateLocalToSupabase();
         var history = await fetchAllHistory();
         writeCache(CACHE_HISTORY, history);
+        serverLoaded = true;
         var ort = await fetchOrt(ORT_DEFAULT_JAAR);
         if (ort) writeCache(CACHE_ORT, ort);
         dispatchUpdated();
@@ -144,6 +146,7 @@
   async function pushHistory(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       var existingHead = await global.besaSupabase.from(TABLE_HISTORY).select("id");
       if (existingHead.error) { reportSilent("pushHistory select", existingHead.error); return; }

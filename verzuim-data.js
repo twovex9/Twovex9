@@ -98,6 +98,7 @@
     }
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -109,6 +110,7 @@
         var kortItems = items.filter(function (i) { return i.type === "kort"; });
         writeCache("lang", langItems);
         writeCache("kort", kortItems);
+        serverLoaded = true;
         dispatchUpdated();
       } catch (err) {
         console.error("[verzuimDB] Bootstrap mislukt:", err);
@@ -127,6 +129,7 @@
     if (!global.besaSupabase) return;
     if (!type || !Array.isArray(items)) return;
     if (type !== "lang" && type !== "kort") return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       var existingHead = await global.besaSupabase.from(TABLE).select("id").eq("type", type);
       if (existingHead.error) { reportSilent("pushType select", existingHead.error); return; }
