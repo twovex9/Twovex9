@@ -10695,6 +10695,247 @@ select.cd-config-select {
 }
 
 /* ==========================================================================
+   Home — Totaaloverzicht-dashboard (KPI-tegels + inline drill-down)
+   ========================================================================== */
+.home-news-section { margin-top: 4px; }
+
+.hdash { margin: 4px 0 24px; }
+.hdash-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.hdash-title {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.hdash-hint {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+
+/* Tegelgrid */
+.hdash-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1100px) { .hdash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { .hdash-grid { grid-template-columns: 1fr; } }
+
+/* Tegel — model op .id-kpi, maar volledig klikbaar (button) */
+.hdash-tile {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+.hdash-tile:hover { box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06); transform: translateY(-1px); }
+.hdash-tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.hdash-tile::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--blue);
+  opacity: 0.9;
+}
+.hdash-tile.is-active {
+  border-color: var(--blue);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+.hdash-tile--blue::before   { background: var(--blue); }
+.hdash-tile--red::before    { background: var(--red); }
+.hdash-tile--green::before  { background: var(--green); }
+.hdash-tile--yellow::before { background: var(--yellow); }
+.hdash-tile--orange::before { background: var(--red); }
+
+.hdash-tile-ico {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: var(--r-xs);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.hdash-tile-ico svg { width: 18px; height: 18px; }
+.hdash-tile--red    .hdash-tile-ico { background: var(--red-soft);    color: var(--red); }
+.hdash-tile--green  .hdash-tile-ico { background: var(--green-soft);  color: var(--green); }
+.hdash-tile--yellow .hdash-tile-ico { background: var(--yellow-soft); color: var(--yellow); }
+.hdash-tile--orange .hdash-tile-ico { background: var(--red-soft);    color: var(--red); }
+
+.hdash-tile-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.hdash-tile-val {
+  font-size: var(--font-h1);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--text);
+}
+.hdash-tile-lbl {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.hdash-tile-sub {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hdash-tile-chev {
+  flex-shrink: 0;
+  width: 8px; height: 8px;
+  margin-top: 8px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+  opacity: 0.7;
+}
+.hdash-tile.is-active .hdash-tile-chev { transform: rotate(-135deg); }
+
+/* Inline drill-down-paneel */
+.hdash-drill {
+  margin-top: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.hdash-drill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+}
+.hdash-drill-title {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+.hdash-drill-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-h1);
+  line-height: 1;
+  color: var(--text-muted);
+  width: 32px; height: 32px;
+  border-radius: var(--r-xs);
+  display: flex; align-items: center; justify-content: center;
+}
+.hdash-drill-close:hover { background: var(--bg-muted); color: var(--text); }
+
+.hdash-drill-empty {
+  padding: 18px 16px;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+.hdash-drill-list {
+  max-height: 460px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hdash-gwrap { border-bottom: 1px solid var(--line); }
+.hdash-gwrap:last-child { border-bottom: none; }
+
+.hdash-grow {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+}
+.hdash-grow--flat { cursor: default; }
+.hdash-grow:not(.hdash-grow--flat):hover { background: var(--bg-muted); }
+.hdash-grow-lbl {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hdash-grow-meta {
+  flex-shrink: 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.hdash-grow-chev {
+  flex-shrink: 0;
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+.hdash-grow.is-open .hdash-grow-chev { transform: rotate(45deg); }
+
+.hdash-gsub {
+  background: var(--surface-alt);
+  border-top: 1px solid var(--line);
+}
+.hdash-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 8px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.hdash-item:last-child { border-bottom: none; }
+.hdash-item-lbl {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hdash-item-meta {
+  flex-shrink: 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
    Mijn notificaties — per-user toggle per notification_type
    Phase 2 follow-up: profile_notification_preferences M2M tabel
    ========================================================================== */

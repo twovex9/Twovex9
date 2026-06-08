@@ -112,10 +112,21 @@
     <main class="content content--home">
       <section class="home-welcome">
         <h1 id="home-greeting">Welkom</h1>
-        <p class="home-subtitle">Nieuws &amp; Mededelingen</p>
       </section>
 
-      <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
+      <section class="hdash" id="home-dashboard" aria-label="Totaaloverzicht">
+        <div class="hdash-head">
+          <h2 class="hdash-title">Totaaloverzicht</h2>
+          <span class="hdash-hint">Klik op een tegel om in te zoomen</span>
+        </div>
+        <div class="hdash-grid" id="hdash-grid"></div>
+        <div class="hdash-drill" id="hdash-drill" hidden></div>
+      </section>
+
+      <div class="home-news-section">
+        <p class="home-subtitle">Nieuws &amp; Mededelingen</p>
+        <section class="home-news-grid" id="home-news-grid" aria-label="Nieuwsberichten"></section>
+      </div>
     </main>
   </div>
 
@@ -161,7 +172,17 @@
   <script src="notifications-data.js"></script>
   <script src="notification-bell.js?v=nb2" defer></script>
   <script src="nieuws-data.js?v=memfix1"></script>
+  <!-- Totaaloverzicht-dashboard: data-lagen (clienten eerst i.v.m. beschikkingen-verrijking) -->
+  <script src="clienten-data.js" defer></script>
+  <script src="locaties-data.js" defer></script>
+  <script src="incidenten-data.js" defer></script>
+  <script src="facturen-data.js" defer></script>
+  <script src="beschikkingen-data.js" defer></script>
+  <script src="medewerkers-data.js" defer></script>
+  <script src="medewerker-verzuim-data.js" defer></script>
   <script src="top-nav-overflow.js?v=imcols9"></script>
   <script src="home.js"></script>
+  <!-- defer: draait ná de (eveneens deferred) data-lagen, zodat window.*DB bestaan -->
+  <script src="home-dashboard.js?v=hd2" defer></script>
 </body>
 </html>
