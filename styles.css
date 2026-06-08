@@ -871,9 +871,33 @@ body.page-medewerker-detail .content--emp-detail {
   gap: 3px;
   min-width: 0;
   flex: 1;
-  overflow-x: clip;
-  overflow-y: visible;
+  /* Horizontaal scrollen i.p.v. items verbergen: de onderwerpen blijven ALTIJD
+     in dezelfde volgorde staan en verdwijnen nooit. De dropdowns staan op
+     position:fixed (zie .top-dropdown) zodat ze niet door deze scroll-container
+     worden afgekapt. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* GEEN scroll-behavior:smooth — anders animeert het herstellen van de
+     scrollpositie bij elke paginalaad (zou eruitzien als "verspringen"). */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
   padding: 0;
+}
+
+.top-nav::-webkit-scrollbar {
+  height: 6px;
+}
+.top-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.top-nav::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-pill);
+}
+.top-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* Overflow chevron */
@@ -1026,28 +1050,17 @@ body.page-medewerker-detail .content--emp-detail {
   align-items: center;
 }
 
-/* Hover-bridge tussen knop en dropdown voorkomt "verdwijnen" tijdens muisbeweging */
-.top-nav-item--dropdown::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 10px;
-}
-
 .top-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  /* Default: anker links t.o.v. parent. JS in top-nav-overflow.js flipt
-     individuele dropdowns naar `right: 0` als hij anders rechts uit de
-     viewport zou vallen. Zo overflowen left-side items (Planning) niet
-     naar links én right-side items (HR/Cliënten) niet naar rechts. */
+  /* position:fixed zodat de dropdown NIET door de horizontaal-scrollende
+     .top-nav wordt afgekapt. Coördinaten (top/left) worden door
+     top-nav-overflow.js gezet bij hover/focus en bijgewerkt bij scroll/resize.
+     Geen voorouder met transform/filter → fixed is viewport-relatief. */
+  position: fixed;
+  top: 0;
   left: 0;
   right: auto;
   min-width: 200px;
-  /* Hard plafond op breedte: nooit breder dan viewport-32px, en hoogstens
-     380px zodat hij ook op brede schermen niet overdreven groot wordt. */
+  /* Hard plafond op breedte: nooit breder dan viewport-32px. */
   max-width: min(380px, calc(100vw - 32px));
   padding: 8px;
   border-radius: var(--r-sm);
@@ -1062,7 +1075,19 @@ body.page-medewerker-detail .content--emp-detail {
   transform: translateY(-4px);
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
-  z-index: 40;
+  z-index: 260;
+}
+
+/* Onzichtbare hover-brug: overbrugt het kleine gat tussen de knop en de
+   (fixed) dropdown zodat de muis er naartoe kan zonder dat de hover wegvalt.
+   De brug is een kind van de dropdown → onderdeel van :hover van het item. */
+.top-dropdown::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 10px;
 }
 
 .top-dropdown-link {
@@ -1112,7 +1137,11 @@ body.page-medewerker-detail .content--emp-detail {
 }
 
 .top-dropdown--hr {
-  min-width: 240px;
+  /* Vaste breedte → deterministische meting voor de viewport-klem in
+     top-nav-overflow.js (anders wisselt de breedte met de positie door
+     wrappende subtitels en kan de klem net naast schieten). */
+  width: 300px;
+  max-width: calc(100vw - 16px);
   gap: 0;
   padding: 6px;
 }
@@ -1125,8 +1154,67 @@ body.page-medewerker-detail .content--emp-detail {
   border-radius: 8px;
 }
 
-.top-nav-item--dropdown:hover .top-dropdown,
-.top-nav-item--dropdown:focus-within .top-dropdown {
+/* ==========================================================================
+   Mega-menu (HR & Cliënten) — veel opties in meerdere kolommen met groepkoppen
+   zodat ALLE opties zichtbaar zijn zonder onderaan het scherm afgekapt te
+   worden. Compacte titel-only links; groepkoppen mirroren de linker-sidebar.
+   ========================================================================== */
+.top-dropdown--mega {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 10px;
+  min-width: 0;
+  /* Vaste breedte (geklemd op de viewport) → deterministische meting voor de
+     viewport-klem; de kolommen wrappen binnen deze breedte. */
+  width: min(760px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  padding: 10px;
+}
+
+.top-dropdown-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+.top-dropdown-group-title {
+  display: block;
+  padding: 8px 10px 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* Tweede+ groepkop in dezelfde kolom krijgt extra ruimte erboven. */
+.top-dropdown-col .top-dropdown-group-title + .top-dropdown-link,
+.top-dropdown-col .top-dropdown-link + .top-dropdown-group-title {
+  margin-top: 0;
+}
+.top-dropdown-col .top-dropdown-link + .top-dropdown-group-title {
+  margin-top: 6px;
+}
+
+.top-dropdown--mega .top-dropdown-link {
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.top-dropdown--mega .top-dropdown-link:hover {
+  background: var(--bg-muted);
+}
+
+/* Zichtbaarheid wordt door top-nav-overflow.js gezet via .is-open op het item
+   (pas nádat de dropdown gepositioneerd is). :hover/:focus-within bepalen dit
+   bewust NIET meer — dat voorkomt een flits op de default-positie en maakt de
+   sluitvertraging mogelijk. */
+.top-nav-item--dropdown.is-open .top-dropdown {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
