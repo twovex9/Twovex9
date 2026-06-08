@@ -134,6 +134,25 @@
     if (req === null) return;                 // expliciet open
     if (req === undefined) return;            // niet-gemapt → default open
 
+    // Rol-uitsluiting (deniedRoles): bepaalde rollen mogen deze pagina NIET openen —
+    // geldt ook voor admin-tier (Eigenaar/Directeur), dus vóór de admin-bypass.
+    if (Array.isArray(req.deniedRoles)) {
+      try {
+        var dRoles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
+          ? (global.besaPermissions.getRoleNames() || []) : [];
+        for (var di = 0; di < req.deniedRoles.length; di++) {
+          if (dRoles.indexOf(req.deniedRoles[di]) !== -1) {
+            setFlash("Deze functie is niet beschikbaar voor jouw rol.");
+            try { global.location.replace("home.html"); }
+            catch (e2) { global.location.href = "home.html"; }
+            return;
+          }
+        }
+      } catch (e) { /* doorgaan */ }
+      // Niet uitgesloten én geen verdere allowedRoles/action-eis → open voor de rest.
+      if (!Array.isArray(req.allowedRoles) && !req.action) return;
+    }
+
     // Admin-tier wint altijd — BEHALVE bij strict-gemarkeerde pagina's (bv. Financiën),
     // waar uitsluitend de opgegeven allowedRoles tellen (geen admin-bypass).
     try {
