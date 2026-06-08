@@ -1201,9 +1201,13 @@ body.page-medewerker-detail .content--emp-detail {
 .top-dropdown--mega .top-dropdown-link {
   padding: 7px 10px;
   border-radius: 8px;
-  font-size: var(--font-base);
-  font-weight: 600;
-  color: var(--text);
+  /* Zelfde typografie als de oude selectiemenu's (.top-dropdown-title) zodat de
+     mega-menu's HR/Cliënten qua lettertype identiek zijn aan de andere
+     dropdowns. */
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--pt-26262d);
   white-space: nowrap;
 }
 .top-dropdown--mega .top-dropdown-link:hover {
