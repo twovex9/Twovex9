@@ -113,9 +113,24 @@
 
     async function fetchAll() {
       if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false });
-      if (res.error) throw res.error;
-      return (res.data || []).map(rowToObj).filter(Boolean);
+      // Chunked fetch: PostgREST geeft standaard max 1000 rijen per query.
+      // werkuren kan duizenden rijen hebben → loop via .range() tot er minder
+      // dan chunkSize terugkomt, anders mist de cache de oudere records.
+      var chunkSize = 1000;
+      var all = [];
+      var offset = 0;
+      while (true) {
+        var res = await global.besaSupabase.from(TABLE).select("*")
+          .order("datum", { ascending: false })
+          .range(offset, offset + chunkSize - 1);
+        if (res.error) throw res.error;
+        var batch = res.data || [];
+        all = all.concat(batch);
+        if (batch.length < chunkSize) break;
+        offset += chunkSize;
+        if (offset > 50000) break;
+      }
+      return all.map(rowToObj).filter(Boolean);
     }
     var readyPromise = null;
     function bootstrap() {
