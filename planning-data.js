@@ -189,6 +189,7 @@
     }
   }
 
+  var serverLoaded = false;
   var readyPromise = null;
   function bootstrap() {
     if (readyPromise) return readyPromise;
@@ -197,6 +198,7 @@
         await maybeMigrateLocalToSupabase();
         var items = await fetchAll();
         writeCache(items);
+        serverLoaded = true;
         dispatchUpdated();
       } catch (err) {
         console.error("[planningDB] Bootstrap mislukt:", err);
@@ -218,6 +220,7 @@
   async function pushFullCache(items) {
     if (!global.besaSupabase) return;
     if (!Array.isArray(items)) return;
+    if (!serverLoaded) return; // veiligheid: nooit syncen vanuit een niet-geladen cache (voorkomt mass-delete)
     try {
       // Diff-strategie: upsert alle records (id is primary key) en delete wat
       // niet meer in de lijst staat.
