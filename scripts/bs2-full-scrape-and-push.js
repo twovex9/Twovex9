@@ -28,7 +28,7 @@
  *   2. F12 -> Console
  *   3. (alleen voor pushen) zet je service_role key:
  *        window.__SVC = "eyJhbG...service_role..."
- *      Ophalen: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api
+ *      Ophalen: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api
  *      -> "service_role" -> Reveal -> kopieer.  (Bypasst RLS; niet delen/committen.)
  *   4. (optioneel) kies modus:  window.__BS2_MODE = "dry"   // 'diag' | 'dry' | 'push'
  *      - 'diag' : alleen 1 pagina ophalen + structuur tonen (geen schrijven)
@@ -46,7 +46,7 @@
 
   // ===================== CONFIG =====================
   const BS2_API = "https://api.etf.besasuite.nl";
-  const SB_URL  = "https://boscwvojcggkbdxhlfys.supabase.co";
+  const SB_URL  = "https://ukjflilnhigozfoxowmj.supabase.co";
   const MODE    = window.__BS2_MODE || "push";          // 'diag' | 'dry' | 'push'
   const SVC     = window.__SVC || null;                 // service_role key (alleen push)
   const ENABLED = window.__BS2_ONLY ? [].concat(window.__BS2_ONLY) : ["planning"];

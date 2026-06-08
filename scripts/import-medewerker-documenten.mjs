@@ -34,7 +34,7 @@ if (typeof fetch !== "function") {
 }
 
 const API = "https://api.etf.besasuite.nl/api";
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const BUCKET = "medewerker-documenten";
 const TABLE = "medewerker_documenten";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));

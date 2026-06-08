@@ -23,7 +23,7 @@ console.log("Node:", process.version, "| cwd:", process.cwd());
 
 if (typeof fetch !== "function") { console.error("FOUT: Node 18+ nodig (geen global fetch). Versie: " + process.version); process.exit(1); }
 
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 console.log("SUPABASE_SERVICE_ROLE_KEY:", KEY ? "aanwezig (len " + KEY.length + ")" : "ONTBREEKT");
 if (!KEY) { console.error("FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt. Draai met:  node --env-file=scripts/.env scripts/write-beleid-documenten.mjs"); process.exit(1); }

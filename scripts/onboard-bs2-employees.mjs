@@ -28,7 +28,7 @@
 
 import fs from "fs";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://ukjflilnhigozfoxowmj.supabase.co";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DRY_RUN = process.argv.includes("--dry-run");
 const DEFAULT_PASSWORD = "Welkom123";
@@ -36,7 +36,7 @@ const ADMIN_TIER_SLUGS = ["Eigenaar", "Admin", "Directeur"];
 
 if (!SERVICE_KEY) {
   console.error("❌ SUPABASE_SERVICE_ROLE_KEY env-var ontbreekt.");
-  console.error("   Haal de key uit: https://supabase.com/dashboard/project/boscwvojcggkbdxhlfys/settings/api");
+  console.error("   Haal de key uit: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj/settings/api");
   process.exit(1);
 }
 

@@ -15,7 +15,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!KEY) { console.error("FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt (--env-file=scripts/.env)."); process.exit(1); }
 

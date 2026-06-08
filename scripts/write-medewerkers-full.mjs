@@ -12,7 +12,7 @@
  * - Sub-tabellen (notities/documenten/verzuim) NIET hier — aparte STAP 5.
  */
 import fs from "fs";
-const SUPABASE_URL = "https://boscwvojcggkbdxhlfys.supabase.co";
+const SUPABASE_URL = "https://ukjflilnhigozfoxowmj.supabase.co";
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INPUT = "C:/Users/sonck/Downloads/bs2-medewerkers-full.json";
 if (!KEY) { console.error("FOUT: SUPABASE_SERVICE_ROLE_KEY ontbreekt (--env-file=scripts/.env)."); process.exit(1); }
