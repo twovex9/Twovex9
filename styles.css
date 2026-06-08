@@ -11707,8 +11707,28 @@ button.btn-dienst-aanmaken:hover {
    (video-eis eigenaar 2026-06-07). Zie applyPlanningRoleMode() in planning.js. */
 .planning-readonly #planning-dienst-aanmaken-btn,
 .planning-readonly #planning-summary,
-.planning-readonly #planning-besch-banner {
+.planning-readonly #planning-besch-banner,
+.planning-readonly .planning-filters-card,
+.planning-readonly .planning-erm-locselwrap,
+.planning-readonly #planning-gen-btn {
   display: none !important;
+}
+
+/* Scroll-fix werkvloer-rooster: de "statische planning" (overflow:hidden +
+   intern paneel-scroll, gebruikerseis 2026-06-02) is ontworpen voor de
+   VOLLEDIGE planner met vaste toolbars. In read-only modus liep de pagina
+   daardoor vast (video-feedback eigenaar 2026-06-07: "kan je niets scrollen").
+   Voor de werkvloer schakelen we terug naar een normale pagina-scroll, zodat
+   het eigen-diensten-rooster altijd volledig bereikbaar is. */
+.planning-readonly .content--planning-erm {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+}
+.planning-readonly .planning-main-card--v3,
+.planning-readonly .planning-main-card--v3 > .planning-view-panel:not([hidden]) {
+  height: auto !important;
+  min-height: 0;
+  overflow: visible !important;
 }
 
 .planning-erm-clear-plan {
@@ -20338,6 +20358,13 @@ button.besc-dtl-tab:hover {
   margin: 0 0 6px;
   font-size: 12px;
   color: var(--text-muted);
+}
+/* Read-only afhandel-velden: melder ziet status/feedback maar wijzigt niet. */
+.im-readonly,
+.im-readonly:focus {
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+  cursor: not-allowed;
 }
 .im-mini-label {
   font-size: 11px;

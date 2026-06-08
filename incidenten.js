@@ -37,6 +37,25 @@
     sortDir: "desc",       // 'asc' | 'desc' | null
   };
 
+  // Rol-scope: een pure zorgmedewerker (rol Medewerker) heeft WEL view-incidents
+  // (mag melden + eigen meldingen zien) maar GEEN incident-oversight. Office/kwaliteit-
+  // rollen (Beleid, Finance, Facilitair, Zorgcoördinator, Gedragswetenschapper, admin-tier)
+  // hebben view-incident-dashboard en/of handle-incidents → die zien álle incidenten.
+  // Default true zodat we bij ontbrekende permissie-data niets onbedoeld dichtzetten;
+  // applyIncidentScope() zet 'm authoritatief zodra de permissies geladen zijn.
+  // (Video-feedback eigenaar 2026-06-07: "medewerker ziet alleen zijn eigen incidenten".)
+  var canSeeAllIncidents = true;
+
+  function computeIncidentScope() {
+    try {
+      var adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
+      var can = (typeof window.besaCan === "function");
+      return !!(adminTier
+        || (can && window.besaCan("view", "incident-dashboard"))
+        || (can && window.besaCan("handle", "incidents")));
+    } catch (e) { return true; } // bij twijfel niets verbergen
+  }
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -184,6 +203,13 @@
     var filtered = all
       .filter(function (i) { return i && (state.showArchived ? i.archived : !i.archived); })
       .filter(function (i) {
+        // Defense-in-depth: een rol zonder incident-oversight ziet ALTIJD alleen
+        // eigen meldingen, ongeacht state.tab (de "Alle"-tab is voor die rol
+        // verborgen, maar dit blokkeert ook omzeilen via console/URL).
+        if (!canSeeAllIncidents) {
+          if (!myMedId) return false;
+          return String(i.melderId || "") === myMedId;
+        }
         if (state.tab !== "mijn") return true;
         // Stage 9d: "Mijn cliënten" = incidenten DOOR de ingelogde gebruiker
         // gemeld (= melder, NIET ook beoordelaar). Vereist gekoppelde
@@ -258,6 +284,12 @@
   // ---------------------------------------------------------------------------
   function renderStats() {
     var all = getAllIncidenten().filter(function (i) { return i && !i.archived; });
+    // Scope de stat-cards mee voor een rol zonder oversight: anders ziet de
+    // medewerker "145 totaal" terwijl de tabel alleen zijn eigen meldingen toont.
+    if (!canSeeAllIncidents) {
+      var myMedId = getCurrentMedewerkerId();
+      all = all.filter(function (i) { return myMedId && String(i.melderId || "") === myMedId; });
+    }
     $("inc-stat-total").textContent = String(all.length);
     $("inc-stat-afwachting").textContent = String(all.filter(function (i) { return i.status === "in_afwachting"; }).length);
     $("inc-stat-behandeling").textContent = String(all.filter(function (i) { return i.status === "in_behandeling"; }).length);
@@ -569,8 +601,30 @@
       alle.setAttribute("aria-selected", tabName === "alle" ? "true" : "false");
     }
     var t = $("inc-section-title");
-    if (t) t.textContent = tabName === "mijn" ? "Mijn cliënten" : "Alle incidenten";
+    if (t) t.textContent = !canSeeAllIncidents
+      ? "Mijn incidenten"
+      : (tabName === "mijn" ? "Mijn cliënten" : "Alle incidenten");
     renderTable();
+  }
+
+  // Past de rol-scope toe op de UI: voor een rol zonder incident-oversight
+  // wordt de pagina vergrendeld op de eigen meldingen (tab "Mijn incidenten"),
+  // de "Alle incidenten"-tab verborgen en de label/section-titel aangepast.
+  function applyIncidentScope() {
+    canSeeAllIncidents = computeIncidentScope();
+    if (canSeeAllIncidents) return;
+    state.tab = "mijn";
+    state.page = 1;
+    var alle = $("inc-tab-alle");
+    if (alle) { alle.style.display = "none"; alle.setAttribute("aria-hidden", "true"); }
+    var mijn = $("inc-tab-mijn");
+    if (mijn) {
+      mijn.textContent = "Mijn incidenten";
+      mijn.classList.add("is-active");
+      mijn.setAttribute("aria-selected", "true");
+    }
+    var t = $("inc-section-title");
+    if (t) t.textContent = "Mijn incidenten";
   }
 
   // ---------------------------------------------------------------------------
@@ -740,7 +794,20 @@
   function init() {
     buildColumnsPanel();
     wireUp();
+    // Warm-cache pad: als de permissies al geladen zijn, direct scopen (geen flash).
+    applyIncidentScope();
     renderAll();
+    // Authoritatief: na DB-load van de permissies de scope (her)toepassen.
+    try {
+      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+        window.besaPermissionsReady.then(function () {
+          var before = canSeeAllIncidents;
+          applyIncidentScope();
+          // Alleen herrenderen als de scope wijzigde (bv. koude cache → nu vergrendeld).
+          if (before !== canSeeAllIncidents || !canSeeAllIncidents) renderAll();
+        });
+      }
+    } catch (e) { /* bij twijfel: status quo (volledige view) */ }
   }
 
   if (document.readyState === "loading") {

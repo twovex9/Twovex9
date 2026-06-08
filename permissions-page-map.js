@@ -155,7 +155,14 @@
     "kilometers.html": { action: "browse", entity: "mileage-declarations" },
 
     // ─── Beleid ───────────────────────────────────────────────────────────────
-    "beleid-documenten.html": { action: "manage", entity: "admins-documents" },
+    // beleid-documenten.html = de read-/downloadbare documentenlijst (topnav "Beleid").
+    // Iedere medewerker moet het organisatiebeleid kunnen ZIEN (video-feedback eigenaar
+    // 2026-06-07). Daarom een allowedRoles-lijst i.p.v. de manage-eis: de bestaande
+    // viewers (admin-tier + Beleid + Zorgcoördinator, die manage-admins-documents hadden)
+    // behouden toegang, en Medewerker(/Test) komt erbij — read-only. De beheer-knoppen
+    // (uploaden/bewerken/verwijderen) worden in beleid-documenten.js verborgen voor wie
+    // geen manage-admins-documents heeft. beleid.html blijft de beheer-only pagina.
+    "beleid-documenten.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Beleid", "Zorgcoördinator", "Medewerker", "Medewerker Test"] },
     "beleid.html": { action: "manage", entity: "admins-documents" },
 
     // ─── SharePoint (interne documentbibliotheek) — alleen kantoor ────────────
