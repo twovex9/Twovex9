@@ -1,5 +1,47 @@
 /* Minimal + hoog contrast — primaire kleuren, zachte vormen */
 
+/* ───────────────────────────────────────────────────────────────────────────
+   Anti-FOUC voor rol-zichtbaarheid (permissions-nav-hide.js / permissions-gate.js).
+   Verberg de topnav + de paginacontent tot de permissie-laag is toegepast, zodat
+   niet-toegekende menu-items of pagina-inhoud NOOIT — ook niet een fractie van een
+   seconde — zichtbaar flitsen. `visibility` (niet `display`) = geen layout-shift.
+   De scripts zetten direct (synchroon uit de cache) html.besa-nav-ready /
+   html.besa-page-ready; bij koude cache na de DB-load. Een fail-safe timeout in de
+   scripts zet beide classes sowieso, zodat een scriptfout de UI nooit permanent
+   verbergt. login.html heeft geen .top-nav / main.content → blijft onaangeroerd.
+   ─────────────────────────────────────────────────────────────────────────── */
+.top-nav { visibility: hidden; }
+html.besa-nav-ready .top-nav { visibility: visible; }
+main.content { visibility: hidden; }
+html.besa-page-ready main.content { visibility: visible; }
+
+/* "Geen toegang"-scherm dat permissions-gate.js direct toont bij een geblokkeerde
+   pagina (i.p.v. eerst de inhoud te renderen). Volledig over de viewport zodat er
+   nooit content doorheen flitst. Tokens uit :root (geen losse hex/px-kleuren). */
+.besa-denied-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-muted);
+}
+.besa-denied-card {
+  max-width: min(440px, 92vw);
+  width: 100%;
+  text-align: center;
+  padding: 34px 28px;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+}
+.besa-denied-ico { font-size: 34px; line-height: 1; margin-bottom: 12px; }
+.besa-denied-card h1 { margin: 0 0 8px; font-size: var(--font-h1); color: var(--text); }
+.besa-denied-card p { margin: 0 0 22px; color: var(--text-secondary); font-size: var(--font-base); line-height: 1.5; }
+
 :root {
   --bg: #ffffff;
   --bg-muted: #f4f4f5;
