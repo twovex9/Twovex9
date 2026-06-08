@@ -927,8 +927,63 @@ function rowMatchesFilters(row) {
   return hay.includes(q);
 }
 
+/* ── Eigen-diensten-scope voor de werkvloer (video-eis eigenaar 2026-06-07) ───
+ * Een zuivere Medewerker-rol (géén kantoor-/planner-/admin-rol) mag in de
+ * planning UITSLUITEND zijn eigen diensten zien — een read-only rooster, niet
+ * de volledige planner-view. Kantoor/planner/admin houden de volledige planning.
+ * Fail-safe: kan de eigen naam niet bepaald worden (ontkoppeld profiel of rollen
+ * nog niet geladen) → geen scope-filter (status quo), zodat niemand met een lege
+ * planning achterblijft. RLS blijft op termijn de echte muur. */
+var PLANNING_FULL_ROLES = [
+  "Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator",
+  "Finance", "Salarisadministratie", "Beleid", "Facilitair",
+  "Gedragswetenschapper", "Cliëntbeheer",
+];
+
+function planningIsFullPlanner() {
+  try {
+    if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+    var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
+      ? (window.besaPermissions.getRoleNames() || []) : [];
+    if (!roles.length) return true; // rollen nog niet geladen → niet onterecht afschermen
+    for (var i = 0; i < roles.length; i++) {
+      if (PLANNING_FULL_ROLES.indexOf(roles[i]) !== -1) return true;
+    }
+    return false;
+  } catch (e) { return true; }
+}
+
+function planningOwnName() {
+  if (planningIsFullPlanner()) return "";
+  try {
+    var prof = (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function")
+      ? window.profilesDB.getCurrentSync() : null;
+    var medId = prof && (prof.medewerkerId || prof.medewerker_id);
+    if (!medId || !window.medewerkersDB || typeof window.medewerkersDB.getByIdSync !== "function") return "";
+    var mw = window.medewerkersDB.getByIdSync(medId);
+    if (!mw) return "";
+    var naam = [mw.voornaam, mw.achternaam].filter(Boolean).join(" ").trim() || String(mw.naam || "").trim();
+    return naam.toLowerCase();
+  } catch (e) { return ""; }
+}
+
+/* Toggelt de read-only-rooster-modus (verbergt planner-UI: dienst aanmaken,
+ * KPI-strip, beschikking-overschrijdingsbanner) voor niet-planner-rollen. */
+function applyPlanningRoleMode() {
+  try {
+    document.body.classList.toggle("planning-readonly", !planningIsFullPlanner());
+  } catch (e) { /* */ }
+}
+
 function getBaseFiltered() {
-  return readPlanningItems().filter(rowMatchesFilters);
+  var rows = readPlanningItems().filter(rowMatchesFilters);
+  var own = planningOwnName();
+  if (own) {
+    rows = rows.filter(function (row) {
+      return String(row.teamlid || "").toLowerCase().trim() === own;
+    });
+  }
+  return rows;
 }
 
 function getItemsForView() {
@@ -4246,6 +4301,15 @@ function initPlanningPage() {
   const ax = document.querySelector('input[name="planning-row-axis"]:checked');
   if (ax) ui.rowAxis = ax.value;
   renderAllViews();
+  applyPlanningRoleMode();
+  // Eigen-diensten-scope: zodra rollen/profiel async geladen zijn, de read-only-
+  // modus opnieuw bepalen en her-renderen (getBaseFiltered scoopt dan op eigen naam).
+  try {
+    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); renderAllViews(); });
+    }
+  } catch (e) { /* */ }
+  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); renderAllViews(); });
   initDienstPanel();
   initViewModal();
   initNav();
@@ -4291,7 +4355,7 @@ function initPlanningPage() {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:medewerkers-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    try { applyPlanningRoleMode(); renderAllViews(); } catch (e) { /* */ }
   });
   // Locaties bepalen welke medewerkers planbaar zijn (kantoor/overhead = verborgen);
   // her-render zodra de locatie-data laadt of wijzigt.

@@ -11610,6 +11610,15 @@ button.btn-dienst-aanmaken:hover {
   border-color: var(--pb-1d4ed8);
 }
 
+/* Read-only rooster-modus voor de werkvloer (Medewerker zonder planner-rol):
+   verberg planner-only UI zodat alleen het eigen-diensten-rooster overblijft
+   (video-eis eigenaar 2026-06-07). Zie applyPlanningRoleMode() in planning.js. */
+.planning-readonly #planning-dienst-aanmaken-btn,
+.planning-readonly #planning-summary,
+.planning-readonly #planning-besch-banner {
+  display: none !important;
+}
+
 .planning-erm-clear-plan {
   border-color: var(--pb-b91c1c);
   color: var(--pt-b91c1c);
