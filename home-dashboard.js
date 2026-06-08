@@ -64,13 +64,28 @@
   // O(1)-indexen op id — één keer per render herbouwd (rebuildIndexes in
   // buildTiles). Voorkomt herhaalde O(n) Array.find + clone over honderden
   // facturen/beschikkingen/incidenten.
-  var _clientIdx = {}, _mwIdx = {}, _locIdx = {};
+  var _clientIdx = {}, _numIdx = {}, _nameIdx = {}, _mwIdx = {}, _locIdx = {};
   function rebuildIndexes() {
-    _clientIdx = {}; clientsAll().forEach(function (c) { if (c) _clientIdx[String(c.id)] = c; });
+    _clientIdx = {}; _numIdx = {}; _nameIdx = {};
+    clientsAll().forEach(function (c) {
+      if (!c) return;
+      _clientIdx[String(c.id)] = c;
+      if (c.clientnummer != null && String(c.clientnummer).trim()) _numIdx[String(c.clientnummer).trim()] = c;
+      var nm = ((c.voornaam || "") + " " + (c.achternaam || "")).trim().toLowerCase();
+      if (nm) _nameIdx[nm] = c;
+    });
     _mwIdx = {}; mwAll().forEach(function (m) { if (m) _mwIdx[String(m.id)] = m; });
     _locIdx = {}; locatiesAll().forEach(function (l) { if (l) _locIdx[String(l.id)] = l; });
   }
   function clientById(id) { return id ? (_clientIdx[String(id)] || null) : null; }
+  // Facturen/beschikkingen verwijzen vaak met een BS2-UUID die NIET in clienten
+  // staat; val dan terug op clientnummer of naam (matcht ~95% i.p.v. ~4%).
+  function clientResolve(id, nummer, naam) {
+    if (id && _clientIdx[String(id)]) return _clientIdx[String(id)];
+    if (nummer != null && String(nummer).trim() && _numIdx[String(nummer).trim()]) return _numIdx[String(nummer).trim()];
+    if (naam) { var k = String(naam).trim().toLowerCase(); if (k && _nameIdx[k]) return _nameIdx[k]; }
+    return null;
+  }
   function mwById(id) { return id ? (_mwIdx[String(id)] || null) : null; }
   function locatieNaamById(id) {
     if (!id) return "";
@@ -155,15 +170,29 @@
   }
   async function fetchOpenDiensten() {
     if (!window.besaSupabase) return [];
-    var r = await window.besaSupabase
-      .from("planning")
-      .select("id, start_iso, einde_iso, diensttype, locatie, client, teamlid, vereist_aantal_medewerkers, open_voor_aanmelding, archived")
-      .eq("open_voor_aanmelding", true)
-      .eq("archived", false)
-      .gte("start_iso", todayStr())
-      .order("start_iso", { ascending: true });
-    if (r.error) throw r.error;
-    return r.data || [];
+    // Gepagineerde fetch in chunks van 1000 — PostgREST kapt anders stil af op
+    // 1000 rijen (productie heeft >2000 open diensten), waardoor de telling +
+    // het aantal locaties te laag zou zijn.
+    var all = [];
+    var chunk = 1000;
+    var offset = 0;
+    while (true) {
+      var r = await window.besaSupabase
+        .from("planning")
+        .select("id, start_iso, diensttype, locatie, client")
+        .eq("open_voor_aanmelding", true)
+        .eq("archived", false)
+        .gte("start_iso", todayStr())
+        .order("start_iso", { ascending: true })
+        .range(offset, offset + chunk - 1);
+      if (r.error) throw r.error;
+      var batch = r.data || [];
+      all = all.concat(batch);
+      if (batch.length < chunk) break;
+      offset += chunk;
+      if (offset > 50000) break; // veiligheidsgrens
+    }
+    return all;
   }
 
   // ── iconen (compact, currentColor) ──────────────────────────────────────────
@@ -289,7 +318,7 @@
       });
       var totaal = rows.reduce(function (a, r) { return a + (Number(r.bedragNum) || 0); }, 0);
       var groups = groupBy(rows, function (r) {
-        return clientGemeente(clientById(r.clientId));
+        return clientGemeente(clientResolve(r.clientId, r.nr, r.client));
       }).map(function (g) {
         var som = g.rows.reduce(function (a, r) { return a + (Number(r.bedragNum) || 0); }, 0);
         var betaald = g.rows.filter(factIsBetaald).length;
@@ -327,7 +356,7 @@
         return normFase(b.fase) === "in_aanvraag";
       });
       var groups = groupBy(rows, function (b) {
-        return clientGemeente(clientById(b.clientId));
+        return clientGemeente(clientResolve(b.clientId, b.clientnummer, b.clientLabel || b.naam));
       }).map(function (g) {
         return {
           id: "aw:" + g.key,
@@ -335,7 +364,7 @@
           meta: plural(g.rows.length, "beschikking", "beschikkingen"),
           count: g.rows.length,
           items: g.rows.map(function (b) {
-            var c = clientById(b.clientId);
+            var c = clientResolve(b.clientId, b.clientnummer, b.clientLabel || b.naam);
             return {
               label: c ? clientLabel(c) : (b.clientLabel || b.naam || "Onbekende cliënt"),
               meta: (b.zorgsoortLabel && String(b.zorgsoortLabel).trim()) || "Beschikking in aanvraag",
