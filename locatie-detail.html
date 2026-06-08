@@ -45,7 +45,7 @@
                 <a href="locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Beheer locaties</span></a>
                 <a href="hr-diensttypes" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Diensttypes</span><span class="top-dropdown-subtitle">Beheer eigen diensttypes</span></a>
                 <a href="beschikbaarheid-overzicht" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikbaarheid ZZP'ers</span><span class="top-dropdown-subtitle">Wie vulde zijn beschikbaarheid in</span></a>
-                <a href="planning" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
+                <a href="planning-beheer" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beheer planningbeheer</span><span class="top-dropdown-subtitle">Beheer planninginstellingen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -56,31 +56,80 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="hr" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="HR opties">
-                <a href="hr" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Medewerkers</span><span class="top-dropdown-subtitle">Beheer je medewerkers</span></a>
-                <a href="competenties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Competenties</span><span class="top-dropdown-subtitle">Beheer competenties</span></a>
-                <a href="contract-sjablonen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Contractsjablonen</span><span class="top-dropdown-subtitle">Beheer contractsjablonen</span></a>
-                <a href="inwerk-items" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Inwerken</span><span class="top-dropdown-subtitle">Beheer inwerk-onderdelen</span></a>
-                <a href="salarishuis" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Salarishuis</span><span class="top-dropdown-subtitle">Beheer het salarishuis</span></a>
-                <a href="bureaus" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Bureau's</span><span class="top-dropdown-subtitle">Beheer bureau's</span></a>
+              <a href="hr" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="HR opties">
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Medewerkers</span>
+                  <a href="hr" class="top-dropdown-link" role="menuitem">Medewerkers</a>
+                  <a href="competenties" class="top-dropdown-link" role="menuitem">Competenties</a>
+                  <a href="opleidingen" class="top-dropdown-link" role="menuitem">Opleidingen</a>
+                  <a href="contract-sjablonen" class="top-dropdown-link" role="menuitem">Contractsjablonen</a>
+                  <a href="inwerk-items" class="top-dropdown-link" role="menuitem">Inwerken</a>
+                </div>
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Salarishuis</span>
+                  <a href="salarishuis" class="top-dropdown-link" role="menuitem">Salarishuis</a>
+                  <a href="salarishuis-wijzigingsgeschiedenis" class="top-dropdown-link" role="menuitem">Wijzigingsgeschiedenis</a>
+                  <a href="bureaus" class="top-dropdown-link" role="menuitem">Bureau's</a>
+                  <a href="salarisadministratie-exporter" class="top-dropdown-link" role="menuitem">Salarisadministratie</a>
+                  <a href="loonstroken" class="top-dropdown-link" role="menuitem">Loonstroken</a>
+                </div>
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Verlof</span>
+                  <a href="verlof" class="top-dropdown-link" role="menuitem">Verlofaanvragen</a>
+                  <a href="verlofstanden" class="top-dropdown-link" role="menuitem">Verlofstanden</a>
+                  <a href="verlof-uitdienst" class="top-dropdown-link" role="menuitem">Uitdiensttreding</a>
+                  <a href="plus-minuren" class="top-dropdown-link" role="menuitem">Plus-/minuren</a>
+                  <a href="verloftypes" class="top-dropdown-link" role="menuitem">Verloftypes</a>
+                </div>
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Compensatie</span>
+                  <a href="compensatie-saldi" class="top-dropdown-link" role="menuitem">Saldi</a>
+                  <a href="compensatie-berekeningen" class="top-dropdown-link" role="menuitem">Berekeningen</a>
+                  <a href="compensatie-feestdagen" class="top-dropdown-link" role="menuitem">Feestdagen</a>
+                  <a href="compensatie-diensttypes" class="top-dropdown-link" role="menuitem">Diensttypes</a>
+                  <span class="top-dropdown-group-title">Overig</span>
+                  <a href="verzuim" class="top-dropdown-link" role="menuitem">Verzuim</a>
+                  <a href="nieuws" class="top-dropdown-link" role="menuitem">Nieuws</a>
+                </div>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="clienten" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
-              <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Cliënten opties">
-                <a href="clienten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Cliënten</span><span class="top-dropdown-subtitle">Cliëntbeheer</span></a>
-                <a href="zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Beheer Zorgsoorten</span></a>
-                <a href="beschikkingen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Beschikkingen</span><span class="top-dropdown-subtitle">Beschikkingen overzicht</span></a>
-                <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Facturen</span><span class="top-dropdown-subtitle">Factuuroverzicht</span></a>
-                <a href="incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten</span><span class="top-dropdown-subtitle">Incidenten overzicht</span></a>
-                <a href="klachten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Klachten</span><span class="top-dropdown-subtitle">Klachtenregister &amp; afhandeling</span></a>
+              <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="Cliënten opties">
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Cliënten</span>
+                  <a href="clienten" class="top-dropdown-link" role="menuitem">Cliënten</a>
+                  <a href="zorgsoorten" class="top-dropdown-link" role="menuitem">Zorgsoorten</a>
+                  <a href="organisatie" class="top-dropdown-link" role="menuitem">Organisaties</a>
+                  <a href="gemeenten" class="top-dropdown-link" role="menuitem">Gemeenten</a>
+                </div>
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Beschikkingen</span>
+                  <a href="beschikkingen-dashboard" class="top-dropdown-link" role="menuitem">Dashboard</a>
+                  <a href="beschikkingen" class="top-dropdown-link" role="menuitem">Overzicht</a>
+                  <a href="facturen" class="top-dropdown-link" role="menuitem">Facturen</a>
+                  <span class="top-dropdown-group-title">Uren &amp; facturatie</span>
+                  <a href="urendeclaraties" class="top-dropdown-link" role="menuitem">Uren declaraties</a>
+                  <a href="uren-budgettering" class="top-dropdown-link" role="menuitem">Uren budgettering</a>
+                  <a href="facturen-importeren" class="top-dropdown-link" role="menuitem">Facturen importeren</a>
+                </div>
+                <div class="top-dropdown-col">
+                  <span class="top-dropdown-group-title">Incidenten &amp; klachten</span>
+                  <a href="incidenten" class="top-dropdown-link" role="menuitem">Incidenten overzicht</a>
+                  <a href="incidenten-dashboard" class="top-dropdown-link" role="menuitem">Dashboard</a>
+                  <a href="incidenten-categorieen" class="top-dropdown-link" role="menuitem">Categorieën</a>
+                  <a href="verbeteringsmaatregelen" class="top-dropdown-link" role="menuitem">Verbeteringsmaatregelen</a>
+                  <a href="klachten" class="top-dropdown-link" role="menuitem">Klachten</a>
+                </div>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
                 <a href="kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
+                <a href="km-afstanden" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Woon-werk afstanden</span><span class="top-dropdown-subtitle">Beheer woon-werk afstanden</span></a>
+                <a href="km-afwijkingen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Afwijkingen</span><span class="top-dropdown-subtitle">Kilometer-afwijkingen beoordelen</span></a>
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
@@ -91,14 +140,19 @@
                 <a href="zzp-reconciliatie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Reconciliatie per locatie</span><span class="top-dropdown-subtitle">Verwacht vs binnen/goedgekeurd/nog te komen</span></a>
                 <a href="zzp-bureau-facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Detacheringsbureaus</span><span class="top-dropdown-subtitle">Bureau-portaal: uren per locatie + accorderen</span></a>
                 <a href="facturen-te-beoordelen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Te beoordelen</span><span class="top-dropdown-subtitle">Bekijk en beheer facturen te beoordelen</span></a>
-                <a href="facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Maandelijkse facturen bekijken en beheren</span></a>
+                <a href="facturen-alle" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Alle facturen</span><span class="top-dropdown-subtitle">Alle medewerker-facturen bekijken en beheren</span></a>
+                <a href="facturen-indiening" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Indiening per maand</span><span class="top-dropdown-subtitle">Wie heeft wel/niet ingediend + reconciliatie</span></a>
               </div>
-            </div>            <a href="taken" class="top-link">Taken</a>            <a href="beleid-documenten" class="top-link">Beleid</a>            <a href="sharepoint" class="top-link">SharePoint</a>
+            </div>
+            <a href="taken" class="top-link">Taken</a>
+            <a href="beleid-documenten" class="top-link">Beleid</a>
+            <a href="sharepoint" class="top-link">SharePoint</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="financien-locaties" class="top-link top-link--dropdown">Financiën<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Financiën opties">
                 <a href="financien-locaties" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Locaties</span><span class="top-dropdown-subtitle">Kosten, opbrengst &amp; resultaat per locatie</span></a>
                 <a href="financien-overhead" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overhead / kantoor</span><span class="top-dropdown-subtitle">Personeel &amp; kantoorkosten buiten de groepen</span></a>
+                <a href="financien-zorgsoorten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Zorgsoorten</span><span class="top-dropdown-subtitle">Kosten, opbrengst &amp; resultaat per zorgsoort</span></a>
               </div>
             </div>
             <a href="audit" class="top-link">Audit</a>

@@ -1,152 +1,36 @@
-/* top-nav-overflow.js — overflow menu for top navigation */
+/* top-nav-overflow.js — top-navigatie controller.
+ *
+ * Historie: dit bestand verborg vroeger "overlopende" top-nav items in een
+ * "meer"-menu. Dat veroorzaakte het verspringen/verdwijnen/flikkeren van
+ * onderwerpen bij navigatie (welke items werden verborgen hing af van de
+ * paginabreedte én de actieve-item-breedte, en gebeurde ná de eerste paint).
+ *
+ * Nieuw gedrag (stabiel):
+ *   - De top-nav verbergt NIETS meer. Alle onderwerpen staan altijd in dezelfde
+ *     volgorde. Past niet alles op het scherm? Dan scrollt de balk horizontaal
+ *     (CSS overflow-x:auto). De scrollpositie wordt bewaard in sessionStorage
+ *     zodat de balk bij elke paginawissel op exact dezelfde plek blijft staan.
+ *   - Dropdowns staan op position:fixed (CSS) en worden hier bij hover/focus
+ *     correct gepositioneerd en binnen de viewport geklemd, zodat ze niet door
+ *     de scroll-container worden afgekapt.
+ *   - De actieve top-link wordt o.b.v. de huidige pagina gemarkeerd, vóór de
+ *     eerste paint (dit script laadt non-defer onderaan de body).
+ */
 (function () {
   "use strict";
 
   const nav = document.querySelector(".top-nav");
-  const btn = document.getElementById("top-nav-overflow-btn");
-  const panel = document.getElementById("top-nav-overflow-panel");
-  if (!nav || !btn || !panel) return;
+  if (!nav) return;
 
-  const navItems = Array.from(nav.children);
+  const SCROLL_KEY = "besa-topnav-scroll";
 
   function normalizeFileName(pathname) {
     const cleaned = String(pathname || "").split("?")[0].split("#")[0];
     const parts = cleaned.split("/").filter(Boolean);
     let last = (parts[parts.length - 1] || "index.html").toLowerCase();
-    // Clean-URL (vercel cleanUrls): /taken -> taken.html zodat de
-    // actieve-nav-detectie blijft werken zonder .html in de URL.
+    // Clean-URL (vercel cleanUrls): /taken -> taken.html
     if (last && last.indexOf(".") === -1) last += ".html";
     return last || "index.html";
-  }
-
-  function normalizeHash(value) {
-    const v = String(value || "").trim().toLowerCase();
-    if (!v) return "";
-    return v.startsWith("#") ? v : `#${v}`;
-  }
-
-  function parseHrefParts(href) {
-    const raw = String(href || "").trim();
-    if (!raw || raw === "#") return { file: "", hash: "" };
-    const [filePart, hashPart] = raw.split("#");
-    return {
-      file: normalizeFileName(filePart),
-      hash: normalizeHash(hashPart || ""),
-    };
-  }
-
-  function syncTopNavActiveState() {
-    const currentFile = normalizeFileName(window.location.pathname);
-    const hrPages = new Set([
-      "index.html",
-      "hr.html",
-      "nieuws.html",
-      "competenties.html",
-      "competentie-detail.html",
-      "opleidingen.html",
-      "opleiding-detail.html",
-      "locaties.html",
-      "locatie-detail.html",
-      "salarishuis.html",
-      "salarishuis-wijzigingsgeschiedenis.html",
-      "bureaus.html",
-      "bureau-detail.html",
-      "salarisadministratie-exporter.html",
-      "compensatie-saldi.html",
-      "compensatie-berekeningen.html",
-      "compensatie-feestdagen.html",
-      "compensatie-diensttypes.html",
-      "hr-diensttypes.html",
-      "verzuim.html",
-      "medewerker.html"
-    ]);
-    const planningPages = new Set([
-      "planning.html",
-      "planning-beheer.html",
-      "beschikbaarheid-overzicht.html"
-    ]);
-
-    const links = Array.from(nav.querySelectorAll(".top-link"));
-    links.forEach((link) => link.classList.remove("is-active"));
-
-    let activeLink = links.find((link) => {
-      const href = (link.getAttribute("href") || "").trim();
-      if (!href || href === "#") return false;
-      const parsed = parseHrefParts(href);
-      if (parsed.file !== currentFile) return false;
-      return true;
-    });
-
-    if (!activeLink && currentFile === "home.html") {
-      activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
-    }
-
-    if (!activeLink && planningPages.has(currentFile)) {
-      activeLink = links.find((link) => {
-        const label = getTopLinkLabel(link);
-        return label === "Planning";
-      }) || null;
-    }
-
-    if (!activeLink && hrPages.has(currentFile)) {
-      activeLink = links.find((link) => {
-        return getTopLinkLabel(link) === "HR";
-      }) || null;
-    }
-
-
-    if (!activeLink && (
-      currentFile === "clienten.html" ||
-      currentFile === "client-detail.html" ||
-      currentFile === "zorgsoorten.html" ||
-      currentFile === "zorgsoort-detail.html" ||
-      currentFile === "beschikkingen.html" ||
-      currentFile === "beschikkingen-dashboard.html" ||
-      currentFile === "beschikking-detail.html" ||
-      currentFile === "facturen.html" ||
-      currentFile === "facturen-importeren.html" ||
-      currentFile === "organisatie.html" ||
-      currentFile === "organisatie-detail.html" ||
-      currentFile === "gemeenten.html" ||
-      currentFile === "gemeente-detail.html" ||
-      currentFile === "urendeclaraties.html" ||
-      currentFile === "uren-budgettering.html" ||
-      currentFile === "incidenten.html" ||
-      currentFile === "incidenten-dashboard.html" ||
-      currentFile === "incidenten-categorieen.html" ||
-      currentFile === "incident-melden.html" ||
-      currentFile === "verbeteringsmaatregelen.html"
-    )) {
-      activeLink = links.find((link) => getTopLinkLabel(link) === "Cliënten") || null;
-    }
-
-    if (!activeLink && (
-      currentFile === "facturen-te-beoordelen.html" ||
-      currentFile === "facturen-alle.html" ||
-      currentFile === "invoice-detail.html"
-    )) {
-      activeLink = links.find((link) => getTopLinkLabel(link) === "Facturen") || null;
-    }
-
-    // TOP-BAR Organisatie (Rollen / Teams / Gebruikers + rol-detail).
-    // Zonder dit valt rol-detail.html terug op de Home-fallback hieronder
-    // → de top-bar sprong van "Organisatie" naar "Home" bij het openen van
-    // een rol. rollen/teams/gebruikers matchen al op href, maar staan hier
-    // expliciet zodat de hele Organisatie-sectie de tab actief houdt.
-    if (!activeLink && (
-      currentFile === "rollen.html" ||
-      currentFile === "rol-detail.html" ||
-      currentFile === "teams.html" ||
-      currentFile === "gebruikers.html"
-    )) {
-      activeLink = links.find((link) => getTopLinkLabel(link) === "Organisatie") || null;
-    }
-
-    if (!activeLink) {
-      activeLink = links.find((link) => link.textContent.trim().startsWith("Home")) || null;
-    }
-
-    if (activeLink) activeLink.classList.add("is-active");
   }
 
   function getTopLinkLabel(link) {
@@ -155,437 +39,339 @@
     return clone.textContent.trim();
   }
 
-  const FALLBACK_ROUTE = "home.html";
-  const TOP_ROUTE_BY_LABEL = {
-      Home: "home.html",
-      Planning: "planning.html",
-      Urenregistratie: "werkuren.html",
-      HR: "hr.html",
-      Cliënten: "clienten.html",
-      Kilometers: "kilometers.html",
-      Taken: "taken.html",
-      Verlof: "verlof.html",
-      Beleid: "beleid-documenten.html",
-      Audit: "audit.html",
-      Organisatie: "teams.html",
-      Instellingen: "instellingen.html",
-    };
-  const DROPDOWN_ROUTE_BY_TITLE = {
-      "Overzicht planning": "planning.html",
-      "Beheer planningbeheer": "planning.html",
-      "Geregistreerde uren": "werkuren.html",
-      "Labels": "werkuren-labels.html",
-      "Medewerkers": "hr.html",
-      Cliënten: "clienten.html",
-      Zorgsoorten: "zorgsoorten.html",
-      Beschikkingen: "beschikkingen.html",
-      Facturen: "facturen.html",
-      Incidenten: "incidenten.html",
-      "Kilometer declaraties": "kilometers.html",
-      "Verlofaanvragen": "verlof.html",
-      "Rollen": "rollen.html",
-      "Teams": "teams.html",
-    };
+  // -------------------------------------------------------------------------
+  // 1) Actieve-markering — pagina → onderwerp (label van de top-link).
+  // -------------------------------------------------------------------------
+  // Eén bron-van-waarheid; labels moeten EXACT matchen met de top-link teksten.
+  const PAGE_TOPIC = {
+    // Home
+    "home.html": "Home",
+    "index.html": "Home",
+    // Dashboard
+    "management-dashboard.html": "Dashboard",
+    // Persoonlijk
+    "mijn-proforma-facturen.html": "Mijn facturen",
+    "mijn-beschikbaarheid.html": "Mijn beschikbaarheid",
+    "mijn-uitnodigingen.html": "Mijn beschikbaarheid",
+    "medewerker-agenda.html": "Mijn beschikbaarheid",
+    "mijn-uren.html": "Mijn uren",
+    // Planning
+    "planning.html": "Planning",
+    "planning-beheer.html": "Planning",
+    "beschikbaarheid-overzicht.html": "Planning",
+    "open-diensten.html": "Planning",
+    "locaties.html": "Planning",
+    "locatie-detail.html": "Planning",
+    "hr-diensttypes.html": "Planning",
+    // Urenregistratie
+    "werkuren.html": "Urenregistratie",
+    "werkuren-labels.html": "Urenregistratie",
+    // HR
+    "hr.html": "HR",
+    "medewerker.html": "HR",
+    "medewerker-detail.html": "HR",
+    "medewerkers-overzicht.html": "HR",
+    "competenties.html": "HR",
+    "competentie-detail.html": "HR",
+    "opleidingen.html": "HR",
+    "opleiding-detail.html": "HR",
+    "contract-sjablonen.html": "HR",
+    "inwerk-items.html": "HR",
+    "salarishuis.html": "HR",
+    "salarishuis-wijzigingsgeschiedenis.html": "HR",
+    "bureaus.html": "HR",
+    "bureau-detail.html": "HR",
+    "salarisadministratie-exporter.html": "HR",
+    "loonstroken.html": "HR",
+    "verlof.html": "HR",
+    "verlofstanden.html": "HR",
+    "verlof-uitdienst.html": "HR",
+    "plus-minuren.html": "HR",
+    "verloftypes.html": "HR",
+    "compensatie-saldi.html": "HR",
+    "compensatie-berekeningen.html": "HR",
+    "compensatie-feestdagen.html": "HR",
+    "compensatie-diensttypes.html": "HR",
+    "verzuim.html": "HR",
+    "nieuws.html": "HR",
+    // Cliënten
+    "clienten.html": "Cliënten",
+    "client-detail.html": "Cliënten",
+    "zorgsoorten.html": "Cliënten",
+    "zorgsoort-detail.html": "Cliënten",
+    "organisatie.html": "Cliënten",
+    "organisatie-detail.html": "Cliënten",
+    "gemeenten.html": "Cliënten",
+    "gemeente-detail.html": "Cliënten",
+    "beschikkingen.html": "Cliënten",
+    "beschikkingen-dashboard.html": "Cliënten",
+    "beschikking-detail.html": "Cliënten",
+    "facturen.html": "Cliënten",
+    "factuur-detail.html": "Cliënten",
+    "urendeclaraties.html": "Cliënten",
+    "uren-budgettering.html": "Cliënten",
+    "facturen-importeren.html": "Cliënten",
+    "incidenten.html": "Cliënten",
+    "incidenten-dashboard.html": "Cliënten",
+    "incidenten-categorieen.html": "Cliënten",
+    "incident-melden.html": "Cliënten",
+    "verbeteringsmaatregelen.html": "Cliënten",
+    "klachten.html": "Cliënten",
+    // Kilometers
+    "kilometers.html": "Kilometers",
+    "km-afstanden.html": "Kilometers",
+    "km-afwijkingen.html": "Kilometers",
+    // Facturen (top)
+    "facturen-te-beoordelen.html": "Facturen",
+    "facturen-alle.html": "Facturen",
+    "facturen-indiening.html": "Facturen",
+    "invoice-detail.html": "Facturen",
+    "zzp-facturen.html": "Facturen",
+    "zzp-overuren.html": "Facturen",
+    "zzp-reconciliatie.html": "Facturen",
+    "zzp-bureau-facturen.html": "Facturen",
+    "zzp-factuur-detail.html": "Facturen",
+    // Taken / Beleid / SharePoint
+    "taken.html": "Taken",
+    "beleid-documenten.html": "Beleid",
+    "beleid.html": "Beleid",
+    "sharepoint.html": "SharePoint",
+    // Financiën
+    "financien-locaties.html": "Financiën",
+    "financien-overhead.html": "Financiën",
+    "financien-zorgsoorten.html": "Financiën",
+    // Audit
+    "audit.html": "Audit",
+    // Organisatie (top)
+    "teams.html": "Organisatie",
+    "rollen.html": "Organisatie",
+    "rol-detail.html": "Organisatie",
+    "gebruikers.html": "Organisatie",
+    // Instellingen
+    "instellingen.html": "Instellingen",
+    "mijn-gegevens.html": "Instellingen",
+    "notifications.html": "Instellingen",
+  };
+
+  function syncTopNavActiveState() {
+    const currentFile = normalizeFileName(window.location.pathname);
+    const links = Array.from(nav.querySelectorAll(".top-link"));
+    links.forEach((link) => link.classList.remove("is-active"));
+
+    // 1. Directe href-match (clean-URL genormaliseerd).
+    let activeLink = links.find((link) => {
+      const href = (link.getAttribute("href") || "").trim();
+      if (!href || href === "#") return false;
+      return normalizeFileName(href) === currentFile;
+    });
+
+    // 2. Pagina → onderwerp-map (sub-pagina's zonder eigen top-link).
+    if (!activeLink) {
+      const topic = PAGE_TOPIC[currentFile];
+      if (topic) {
+        activeLink = links.find((link) => getTopLinkLabel(link) === topic) || null;
+      }
+    }
+
+    if (activeLink) activeLink.classList.add("is-active");
+  }
+
+  // -------------------------------------------------------------------------
+  // 2) Failsafe-navigatie + directe routes (veiligheidsnet voor `#`-hrefs).
+  // -------------------------------------------------------------------------
+  const FALLBACK_ROUTE = "home";
 
   function resolveTopRoute(link) {
-    const label = getTopLinkLabel(link);
-    let targetHref = TOP_ROUTE_BY_LABEL[label];
-    if (targetHref) return targetHref;
-
     const parentNavItem = link.closest(".top-nav-item");
-    const firstRealSubLink = parentNavItem?.querySelector('.top-dropdown-link[href]:not([href="#"])');
+    const firstRealSubLink = parentNavItem?.querySelector(
+      '.top-dropdown-link[href]:not([href="#"])'
+    );
     return firstRealSubLink?.getAttribute("href") || FALLBACK_ROUTE;
   }
 
-  function resolveDropdownRoute(link) {
-    const title = link.querySelector(".top-dropdown-title")?.textContent?.trim() || "";
-    if (DROPDOWN_ROUTE_BY_TITLE[title]) return DROPDOWN_ROUTE_BY_TITLE[title];
-
-    const parentNavItem = link.closest(".top-nav-item");
-    const topLink = parentNavItem?.querySelector(".top-link");
-    return topLink ? resolveTopRoute(topLink) : FALLBACK_ROUTE;
-  }
-
-  function wireTopDropdownDirectRoutes() {
-
-    nav.querySelectorAll(".top-link").forEach((link) => {
-      const currentHref = (link.getAttribute("href") || "").trim();
-      if (currentHref && currentHref !== "#") return;
-
-      const targetHref = resolveTopRoute(link);
-      link.setAttribute("href", targetHref);
-    });
-
-    nav.querySelectorAll(".top-dropdown-link").forEach((link) => {
-      const currentHref = (link.getAttribute("href") || "").trim();
-      if (currentHref && currentHref !== "#") return;
-      link.setAttribute("href", resolveDropdownRoute(link));
-    });
-  }
-
   function wireFailsafeNavigation() {
-    nav.addEventListener("click", (event) => {
-      const target = event.target instanceof Element ? event.target : null;
-      if (!target) return;
-
-      const topLink = target.closest(".top-link");
-      if (topLink && nav.contains(topLink)) {
-        const href = (topLink.getAttribute("href") || "").trim();
+    nav.addEventListener(
+      "click",
+      (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target) return;
+        const link = target.closest(".top-link, .top-dropdown-link");
+        if (!link || !nav.contains(link)) return;
+        const href = (link.getAttribute("href") || "").trim();
         if (href === "" || href === "#") {
           event.preventDefault();
-          window.location.href = resolveTopRoute(topLink);
-          return;
+          const dest = link.classList.contains("top-link")
+            ? resolveTopRoute(link)
+            : FALLBACK_ROUTE;
+          window.location.href = dest;
         }
-      }
-
-      const ddLink = target.closest(".top-dropdown-link");
-      if (ddLink && nav.contains(ddLink)) {
-        const href = (ddLink.getAttribute("href") || "").trim();
-        if (href === "" || href === "#") {
-          event.preventDefault();
-          window.location.href = resolveDropdownRoute(ddLink);
-        }
-      }
-    }, true);
+      },
+      true
+    );
   }
 
-  function getLabel(el) {
-    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
-    if (!link) return "";
-    const clone = link.cloneNode(true);
-    clone.querySelectorAll(".top-link-chev").forEach(c => c.remove());
-    return clone.textContent.trim();
+  // -------------------------------------------------------------------------
+  // 3) Dropdown-positionering (position:fixed → viewport-klem, niet afgekapt).
+  // -------------------------------------------------------------------------
+  const dropdownItems = Array.from(nav.querySelectorAll(".top-nav-item--dropdown"));
+  let openItem = null;
+  let closeTimer = null;
+
+  function positionDropdown(item) {
+    const dd = item.querySelector(".top-dropdown");
+    if (!dd) return;
+    const margin = 8;
+    const gap = 4;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const r = item.getBoundingClientRect();
+    // Reset zodat we de natuurlijke maten meten.
+    dd.style.left = "0px";
+    dd.style.right = "auto";
+    dd.style.maxHeight = "";
+    dd.style.overflowX = "";
+    dd.style.overflowY = "";
+    // Horizontale klem. Gebruik de VISUELE breedte (getBoundingClientRect),
+    // consistent met de trigger-positie r — zo klopt de klem ook als de pagina
+    // geschaald/gezoomd wordt.
+    const w = dd.getBoundingClientRect().width || 300;
+    let left = r.left;
+    if (left + w > vw - margin) left = vw - margin - w;
+    if (left < margin) left = margin;
+    dd.style.left = Math.round(left) + "px";
+    // Verticale klem: past het menu onder de knop? Zo niet → tegen de knop
+    // plakken (geen brug nodig) en interne scroll, zodat het NOOIT onderaan
+    // het scherm wordt afgekapt (belangrijk voor de hoge HR/Cliënten mega-menu's
+    // op korte of ingezoomde schermen).
+    const avail = vh - (r.bottom + gap) - margin;
+    if (dd.scrollHeight > avail) {
+      dd.style.top = Math.round(r.bottom) + "px";
+      dd.style.maxHeight = Math.max(140, vh - r.bottom - margin) + "px";
+      dd.style.overflowX = "hidden";
+      dd.style.overflowY = "auto";
+    } else {
+      dd.style.top = Math.round(r.bottom + gap) + "px";
+    }
   }
 
-  function getHref(el) {
-    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
-    return link ? (link.getAttribute("href") || "#") : "#";
+  // Zichtbaarheid wordt in JS beheerd (.is-open op het item), NIET via pure CSS
+  // :hover. Reden: (1) de dropdown wordt pas getoond nádat hij correct is
+  // gepositioneerd (geen flits op top:0/left:0); (2) een kleine sluitvertraging
+  // overbrugt het gaatje tussen knop en dropdown — ook als de dropdown door de
+  // viewport-klem horizontaal van de knop is verschoven (rechtse onderwerpen).
+  function openDropdown(item) {
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+    if (openItem && openItem !== item) openItem.classList.remove("is-open");
+    openItem = item;
+    positionDropdown(item);
+    item.classList.add("is-open");
   }
 
-  function isActive(el) {
-    const link = el.classList.contains("top-link") ? el : el.querySelector(".top-link");
-    return link ? link.classList.contains("is-active") : false;
+  function closeOpenDropdown() {
+    closeTimer = null;
+    if (openItem) {
+      openItem.classList.remove("is-open");
+      openItem = null;
+    }
   }
 
-  function getSubLinks(el) {
-    const dd = el.querySelector(".top-dropdown");
-    if (!dd) return null;
-    const links = [];
-    dd.querySelectorAll(".top-dropdown-link").forEach(a => {
-      const title = a.querySelector(".top-dropdown-title");
-      links.push({
-        label: title ? title.textContent.trim() : a.textContent.trim(),
-        href: a.getAttribute("href") || "#"
+  function scheduleClose() {
+    if (closeTimer) clearTimeout(closeTimer);
+    closeTimer = setTimeout(closeOpenDropdown, 160);
+  }
+
+  function setupDropdowns() {
+    dropdownItems.forEach((item) => {
+      item.addEventListener("mouseenter", () => openDropdown(item));
+      item.addEventListener("mouseleave", scheduleClose);
+      item.addEventListener("focusin", () => openDropdown(item));
+      item.addEventListener("focusout", (e) => {
+        if (!item.contains(e.relatedTarget)) scheduleClose();
       });
     });
-    return links.length ? links : null;
   }
 
-  function resetVisibility() {
-    navItems.forEach(item => {
-      item.classList.remove("top-nav-hidden");
+  let repositionScheduled = false;
+  function scheduleReposition() {
+    if (repositionScheduled) return;
+    repositionScheduled = true;
+    requestAnimationFrame(() => {
+      repositionScheduled = false;
+      if (openItem) positionDropdown(openItem);
     });
   }
 
-  let rafId = null;
-  // Laatst verwerkte nav-breedte. De ResizeObserver levert óók een initiële
-  // callback bij elke observe én bij de visibility-mutaties die update() zelf
-  // maakt. Zonder deze breedte-vergelijking ontstond een oneindige
-  // observe→callback→update-lus die het overflow-paneel ~continu herbouwde
-  // (panel.innerHTML = "") en zo elk geopend submenu meteen weer dichtklapte.
-  // De nav-breedte is flex-bepaald (flex:1, overflow-x:clip), dus stabiel zolang
-  // de beschikbare ruimte niet wijzigt — alleen een ECHTE breedte-wijziging
-  // (venster-/sidebar-resize) hoort een herberekening te triggeren.
-  let lastObservedWidth = -1;
-  const ro = new ResizeObserver((entries) => {
-    const entry = entries && entries[0];
-    const width = entry ? Math.round(entry.contentRect.width) : -1;
-    if (width === lastObservedWidth) return;
-    lastObservedWidth = width;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(update);
-  });
-
-  let updating = false;
-
-  function update() {
-    if (updating) return;
-    updating = true;
-
-    resetVisibility();
-
-    const navRight = nav.getBoundingClientRect().right;
-    const btnWidth = 38;
-    const threshold = navRight - btnWidth;
-    const hiddenItems = [];
-
-    for (let i = navItems.length - 1; i >= 0; i--) {
-      const item = navItems[i];
-      const rect = item.getBoundingClientRect();
-      if (rect.right > navRight + 1) {
-        hiddenItems.unshift(item);
-      }
+  // -------------------------------------------------------------------------
+  // 4) Scrollpositie bewaren zodat de balk op dezelfde plek blijft staan.
+  // -------------------------------------------------------------------------
+  function restoreScroll() {
+    try {
+      const saved = parseInt(sessionStorage.getItem(SCROLL_KEY) || "0", 10);
+      if (saved > 0) nav.scrollLeft = saved;
+    } catch (e) {
+      /* sessionStorage onbeschikbaar → geen restore */
     }
-
-    if (hiddenItems.length === 0) {
-      btn.classList.remove("is-visible");
-      closePanel();
-      updating = false;
-      return;
-    }
-
-    hiddenItems.forEach(item => item.classList.add("top-nav-hidden"));
-
-    let stillOverflows = true;
-    while (stillOverflows) {
-      stillOverflows = false;
-      for (const item of navItems) {
-        if (item.classList.contains("top-nav-hidden")) continue;
-        const rect = item.getBoundingClientRect();
-        if (rect.right > threshold) {
-          item.classList.add("top-nav-hidden");
-          hiddenItems.push(item);
-          stillOverflows = true;
-          break;
-        }
-      }
-    }
-
-    btn.classList.add("is-visible");
-    buildPanel(navItems.filter(i => i.classList.contains("top-nav-hidden")));
-
-    updating = false;
   }
 
-  function buildPanel(hiddenItems) {
-    panel.innerHTML = "";
-    hiddenItems.forEach(item => {
-      const label = getLabel(item);
-      if (!label) return;
-
-      const href = getHref(item);
-      const active = isActive(item);
-      const subLinks = getSubLinks(item);
-
-      if (subLinks) {
-        const wrapper = document.createElement("div");
-
-        const trigger = document.createElement("button");
-        trigger.type = "button";
-        trigger.className = "top-nav-overflow-item" + (active ? " is-active" : "");
-        trigger.innerHTML = label + ' <span style="margin-left:auto;opacity:0.5;font-size:10px">▸</span>';
-        wrapper.appendChild(trigger);
-
-        const sub = document.createElement("div");
-        sub.style.display = "none";
-        sub.style.paddingLeft = "14px";
-
-        subLinks.forEach(sl => {
-          const a = document.createElement("a");
-          a.href = sl.href;
-          a.className = "top-nav-overflow-item";
-          a.textContent = sl.label;
-          sub.appendChild(a);
-        });
-
-        wrapper.appendChild(sub);
-
-        trigger.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const open = sub.style.display !== "none";
-          panel.querySelectorAll("[data-sub-open]").forEach(s => {
-            s.style.display = "none";
-            s.removeAttribute("data-sub-open");
-          });
-          if (!open) {
-            sub.style.display = "block";
-            sub.setAttribute("data-sub-open", "");
-          }
-        });
-
-        panel.appendChild(wrapper);
-      } else {
-        const a = document.createElement("a");
-        a.href = href;
-        a.className = "top-nav-overflow-item" + (active ? " is-active" : "");
-        a.textContent = label;
-        panel.appendChild(a);
+  let saveScheduled = false;
+  function saveScrollSoon() {
+    if (saveScheduled) return;
+    saveScheduled = true;
+    requestAnimationFrame(() => {
+      saveScheduled = false;
+      try {
+        sessionStorage.setItem(SCROLL_KEY, String(Math.round(nav.scrollLeft)));
+      } catch (e) {
+        /* negeren */
       }
     });
   }
 
-  function closePanel() {
-    panel.classList.remove("is-open");
-    btn.setAttribute("aria-expanded", "false");
+  // Verticaal muiswiel boven de balk → horizontaal scrollen (alleen als nodig).
+  function wireWheelScroll() {
+    nav.addEventListener(
+      "wheel",
+      (e) => {
+        if (nav.scrollWidth <= nav.clientWidth) return;
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        const atStart = nav.scrollLeft <= 0;
+        const atEnd = nav.scrollLeft >= nav.scrollWidth - nav.clientWidth - 1;
+        // Aan de rand: blokkeer niet, laat de pagina gewoon verticaal scrollen.
+        if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+        nav.scrollLeft += e.deltaY;
+        e.preventDefault();
+      },
+      { passive: false }
+    );
   }
 
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const open = panel.classList.contains("is-open");
-    if (open) {
-      closePanel();
-    } else {
-      panel.classList.add("is-open");
-      btn.setAttribute("aria-expanded", "true");
-    }
-  });
+  // -------------------------------------------------------------------------
+  // Publieke hook: permissions-nav-hide.js roept dit aan na het verbergen van
+  // rol-beperkte items, zodat actieve-markering + dropdownpositie kloppen.
+  // -------------------------------------------------------------------------
+  window.recomputeTopNavOverflow = function () {
+    syncTopNavActiveState();
+    if (openItem) positionDropdown(openItem);
+  };
 
-  panel.addEventListener("click", (e) => e.stopPropagation());
-  document.addEventListener("click", closePanel);
-
-  // ---------------------------------------------------------------------------
-  // Top-dropdown viewport clamp (drielaagse aanpak)
-  // ---------------------------------------------------------------------------
-  // De .top-dropdown elementen openen standaard `left: 0` t.o.v. hun parent.
-  // Bij smalle viewports kunnen ze rechts over de viewport-rand vallen — vooral
-  // de HR/Cliënten dropdowns die ~300-380px breed zijn. Drie veiligheidslagen:
-  //   1) Anker-flip op init en resize: we meten elk dropdown-item en als de
-  //      dropdown rechts zou overflowen, ankeren we op `right:0` zodat hij
-  //      naar links groeit i.p.v. naar rechts.
-  //   2) Live klem op mouseenter/focusin: re-meten en zo nodig finetune
-  //      met inline left/right pixels.
-  //   3) CSS max-width: 100vw - 16px (in styles.css) als laatste vangnet.
-  // ---------------------------------------------------------------------------
-
-  function getDropdownLayoutWidth(dd) {
-    // Met visibility:hidden wordt offsetWidth wél correct berekend.
-    // Forceer een sync layout met void offsetWidth, dan lees terug.
-    void dd.offsetWidth;
-    const w = dd.offsetWidth;
-    if (w > 0) return w;
-    // Fallback: lees min-width uit computed style (CSS-defined).
-    const cs = window.getComputedStyle(dd);
-    const min = parseFloat(cs.minWidth) || 0;
-    return min || 300;
-  }
-
-  function applyAnchorFlip(item) {
-    const dd = item.querySelector(".top-dropdown");
-    if (!dd) return;
-    // Reset eerst zodat we de natuurlijke breedte meten.
-    dd.style.left = "";
-    dd.style.right = "";
-    const itemRect = item.getBoundingClientRect();
-    const ddWidth = getDropdownLayoutWidth(dd);
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const margin = 8;
-    // Zou de dropdown rechts overflowen als hij left:0 blijft?
-    if (itemRect.left + ddWidth > vw - margin) {
-      // Anker rechts: dropdown groeit naar links vanaf rechter parent-rand.
-      dd.style.left = "auto";
-      dd.style.right = "0";
-      // Als hij dan links zou overflowen (dropdown wijder dan parent_right tot 0),
-      // schuif rechts iets in zodat hij niet links over de viewport valt.
-      const newLeft = itemRect.right - ddWidth;
-      if (newLeft < margin) {
-        const shift = margin - newLeft;
-        dd.style.right = "-" + Math.ceil(shift) + "px";
-      }
-    }
-  }
-
-  function clampDropdownToViewport(dd) {
-    if (!dd) return;
-    // Forceer layout vóór meten.
-    void dd.offsetWidth;
-    const rect = dd.getBoundingClientRect();
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const margin = 8;
-    if (rect.right > vw - margin) {
-      // Dropdown overflowt rechts ondanks anker-flip → schuif extra naar links.
-      const overflow = rect.right - (vw - margin);
-      const currentLeft = parseFloat(dd.style.left) || 0;
-      dd.style.left = (currentLeft - Math.ceil(overflow)) + "px";
-      dd.style.right = "auto";
-    }
-    if (rect.left < margin) {
-      // Dropdown overflowt links → klem aan linker viewport-rand.
-      const parentRect = dd.parentElement.getBoundingClientRect();
-      dd.style.left = (margin - parentRect.left) + "px";
-      dd.style.right = "auto";
-    }
-  }
-
-  function setupTopDropdownClamping() {
-    const items = Array.from(nav.querySelectorAll(".top-nav-item--dropdown"));
-    if (items.length === 0) return;
-
-    function applyAllAnchors() {
-      items.forEach(applyAnchorFlip);
-    }
-
-    items.forEach((item) => {
-      const dd = item.querySelector(".top-dropdown");
-      if (!dd) return;
-      const onShow = () => {
-        // Eerst anker-flippen voor het geval viewport is gewijzigd, dan finetune.
-        applyAnchorFlip(item);
-        clampDropdownToViewport(dd);
-      };
-      item.addEventListener("mouseenter", onShow);
-      item.addEventListener("focusin", onShow);
-    });
-
-    // Initieel + bij resize: anker-flip toepassen.
-    applyAllAnchors();
-    let resizeTimer = null;
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(applyAllAnchors, 100);
-    });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Top-dropdown anker-decider (left:0 vs right:0)
-  // ---------------------------------------------------------------------------
-  // CSS-default is `left: 0`. Voor elk dropdown-item meten we of hij met
-  // left:0 binnen de viewport past. Zo niet, flippen we naar `right: 0`
-  // (dropdown groeit dan naar links vanaf parent's rechterrand).
-  //
-  // Resultaat:
-  //   - Planning (links in nav): left:0 → groeit naar rechts, past prima.
-  //   - HR / Cliënten / Kilometers (rechts in nav): right:0 → groeit naar
-  //     links, valt nooit rechts uit de viewport.
-  //
-  // Wordt herberekend bij window-resize zodat het ook bij grootte-wijzigingen
-  // klopt.
-  function decideDropdownAnchor(item) {
-    const dd = item.querySelector(".top-dropdown");
-    if (!dd) return;
-    // Reset eerst zodat we de natuurlijke breedte meten.
-    dd.style.left = "";
-    dd.style.right = "";
-    // Forceer layout (visibility:hidden behoudt layout, dus offsetWidth klopt).
-    void dd.offsetWidth;
-    const itemRect = item.getBoundingClientRect();
-    const ddWidth = dd.offsetWidth || 240;
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const margin = 8;
-    if (itemRect.left + ddWidth > vw - margin) {
-      // Overflowt rechts met left:0 → flip naar right:0
-      dd.style.left = "auto";
-      dd.style.right = "0";
-    } else {
-      // Past met left:0 — gebruik default
-      dd.style.left = "0";
-      dd.style.right = "auto";
-    }
-  }
-
-  function decideAllDropdownAnchors() {
-    nav.querySelectorAll(".top-nav-item--dropdown").forEach(decideDropdownAnchor);
-  }
-
-  decideAllDropdownAnchors();
-  let dropdownResizeTimer = null;
-  window.addEventListener("resize", () => {
-    clearTimeout(dropdownResizeTimer);
-    dropdownResizeTimer = setTimeout(decideAllDropdownAnchors, 100);
-  });
-
-  wireTopDropdownDirectRoutes();
-  wireFailsafeNavigation();
+  // --- init ---
+  restoreScroll();
+  // Nogmaals ná de eerste layout/fontlading: bij init kan de nav nog niet
+  // scrollbaar zijn (breedte nog niet definitief), waardoor de browser de
+  // herstelde scrollLeft naar 0 zou klemmen.
+  requestAnimationFrame(restoreScroll);
   syncTopNavActiveState();
-  ro.observe(nav);
-  update();
+  setupDropdowns();
+  wireFailsafeNavigation();
+  wireWheelScroll();
+
+  nav.addEventListener("scroll", () => {
+    saveScrollSoon();
+    scheduleReposition();
+  });
+  window.addEventListener("scroll", scheduleReposition, true);
+  window.addEventListener("resize", scheduleReposition);
 })();
