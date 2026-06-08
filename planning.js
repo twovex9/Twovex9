@@ -1645,6 +1645,19 @@ function renderWeekGrid() {
     groups = items.length > 0 ? groupItems(items) : getEmptyWeekGroups();
   }
   groups.forEach((g) => byGroup.set(g, items.filter((x) => getRowKey(x) === g)));
+  // Werkvloer (read-only): toon alleen de groepen waar de medewerker zélf is
+  // ingeroosterd — geen lege locatierijen en geen "Openstaande diensten"-groep
+  // (planner-clutter; video-eis eigenaar 2026-06-07: "open diensten / onnodig te
+  // veel info moet een medewerker niet zien"). De diensten zijn al op eigen naam
+  // gescoopt via getBaseFiltered(); we verbergen hier alleen de lege rijen.
+  if (document.body.classList.contains("planning-readonly")) {
+    groups = groups.filter((g) => (byGroup.get(g) || []).length > 0);
+    if (groups.length === 0) {
+      host.innerHTML = "";
+      if (empty) empty.hidden = false;
+      return;
+    }
+  }
   const colTotals = getDayHourTotals(cols, items);
   const totalWeek = colTotals.reduce((a, b) => a + b, 0);
   /* Korte dagcodes voor board-weergave ("ma 20", "di 21", …). */
