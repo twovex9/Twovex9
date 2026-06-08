@@ -90,103 +90,145 @@
     else if (doc) doc.addEventListener("DOMContentLoaded", function () { renderFlash(msg); });
   }
 
-  async function run() {
-    var page = currentPageName();
-    if (!page) return;                        // root / onbekend → laat door
-    if (page === "login.html") return;        // login mag nooit redirecten
-
-    // Toon een eventuele geen-toegang-melding die op een vorige (geblokkeerde)
-    // pagina is gezet en die naar hier (home) heeft geredirect.
-    showAccessFlash();
-
-    // Wacht op auth + permissions
+  // ── Helpers voor de flash-vrije gate ──────────────────────────────────────
+  function getRoleNames() {
     try {
-      if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-        await global.besaSupabaseReady;
-      }
-    } catch (e) { /* doorgaan; permissions.js handelt eigen exceptie */ }
-    try {
-      if (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function") {
-        await global.besaPermissionsReady;
-      }
-    } catch (e) { /* doorgaan */ }
-
-    // auth-guard.js doet de login-redirect bij geen sessie. Wij gaten alleen
-    // op rol/permissie. Als er geen rollen geladen zijn en de pagina is gevoelig,
-    // dan blokkeren we tenzij admin.
-
-    // Detacheringsbureau-account = UITSLUITEND de bureau-factuurpagina. Iemand met
-    // ENKEL de rol "Detacheringsbureau" wordt overal vandaan teruggestuurd naar z'n
-    // eigen pagina. (De RLS-lockout is de echte muur; dit is UX + defense-in-depth.)
-    try {
-      var rnames = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
+      return (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
         ? (global.besaPermissions.getRoleNames() || []) : [];
-      var isBureauOnly = rnames.length === 1 && rnames[0] === "Detacheringsbureau";
-      if (isBureauOnly && page !== "zzp-bureau-facturen.html") {
-        try { global.location.replace("zzp-bureau-facturen"); }
-        catch (e) { global.location.href = "zzp-bureau-facturen"; }
-        return;
+    } catch (e) { return []; }
+  }
+
+  // Onthul de paginacontent (zet de visibility:hidden uit styles.css uit).
+  function revealPage() {
+    try { global.document.documentElement.classList.add("besa-page-ready"); } catch (e) {}
+  }
+
+  // Zijn de permissies al geladen (cache of DB)? Zo ja → synchrone beslissing
+  // mogelijk vóór de eerste paint (geen flits van geblokkeerde content).
+  function permsLoaded() {
+    try {
+      return !!(global.besaPermissions && typeof global.besaPermissions.debug === "function"
+        && global.besaPermissions.debug().loaded);
+    } catch (e) { return false; }
+  }
+
+  function removeDenyPanel() {
+    try {
+      var p = global.document.getElementById("besa-denied-panel");
+      if (p && p.parentNode) p.parentNode.removeChild(p);
+    } catch (e) {}
+  }
+
+  // Toon DIRECT een nette "Geen toegang"-pagina i.p.v. de inhoud — de content
+  // blijft verborgen (visibility:hidden), dus er is nooit een flits van de
+  // pagina-inhoud gevolgd door een melding/redirect.
+  function denyPage() {
+    var doc = global.document;
+    if (!doc) return;
+    if (!doc.body) { doc.addEventListener("DOMContentLoaded", denyPage); return; }
+    if (doc.getElementById("besa-denied-panel")) return;
+    var wrap = doc.createElement("div");
+    wrap.id = "besa-denied-panel";
+    wrap.className = "besa-denied-panel";
+    wrap.setAttribute("role", "alert");
+    wrap.innerHTML =
+      '<div class="besa-denied-card">' +
+        '<div class="besa-denied-ico" aria-hidden="true">🔒</div>' +
+        '<h1>Geen toegang</h1>' +
+        '<p>Je hebt geen toegang tot deze pagina.</p>' +
+        '<a href="home" class="btn-primary">Terug naar home</a>' +
+      '</div>';
+    doc.body.appendChild(wrap);
+  }
+
+  // Synchrone toegangsbeslissing op basis van de (reeds geladen) permissies.
+  // Retourneert "ok" | "denied" | { redirect: "<url>" }.
+  function decide() {
+    var page = currentPageName();
+    if (!page || page === "login.html") return "ok";
+
+    // Detacheringsbureau-account = UITSLUITEND de bureau-factuurpagina.
+    try {
+      var rnames = getRoleNames();
+      if (rnames.length === 1 && rnames[0] === "Detacheringsbureau" && page !== "zzp-bureau-facturen.html") {
+        return { redirect: "zzp-bureau-facturen" };
       }
     } catch (e) { /* doorgaan */ }
 
     var map = global.BESA_PAGE_PERMISSIONS || {};
     var req = map[page];
-    if (req === null) return;                 // expliciet open
-    if (req === undefined) return;            // niet-gemapt → default open
+    if (req === null || req === undefined) return "ok";   // expliciet/standaard open
 
-    // Rol-uitsluiting (deniedRoles): bepaalde rollen mogen deze pagina NIET openen —
-    // geldt ook voor admin-tier (Eigenaar/Directeur), dus vóór de admin-bypass.
+    // Rol-uitsluiting (deniedRoles) — geldt ook voor admin-tier, dus vóór de bypass.
     if (Array.isArray(req.deniedRoles)) {
-      try {
-        var dRoles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
-          ? (global.besaPermissions.getRoleNames() || []) : [];
-        for (var di = 0; di < req.deniedRoles.length; di++) {
-          if (dRoles.indexOf(req.deniedRoles[di]) !== -1) {
-            setFlash("Deze functie is niet beschikbaar voor jouw rol.");
-            try { global.location.replace("home.html"); }
-            catch (e2) { global.location.href = "home.html"; }
-            return;
-          }
-        }
-      } catch (e) { /* doorgaan */ }
-      // Niet uitgesloten én geen verdere allowedRoles/action-eis → open voor de rest.
-      if (!Array.isArray(req.allowedRoles) && !req.action) return;
+      var dRoles = getRoleNames();
+      for (var di = 0; di < req.deniedRoles.length; di++) {
+        if (dRoles.indexOf(req.deniedRoles[di]) !== -1) return "denied";
+      }
+      if (!Array.isArray(req.allowedRoles) && !req.action) return "ok";
     }
 
-    // Admin-tier wint altijd — BEHALVE bij strict-gemarkeerde pagina's (bv. Financiën),
-    // waar uitsluitend de opgegeven allowedRoles tellen (geen admin-bypass).
+    // Admin-tier wint — behalve bij strict-pagina's (bv. Financiën).
     try {
-      if (!req.strict && typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return;
-    } catch (e) { /* doorgaan met normale check */ }
-
-    var allowed = false;
+      if (!req.strict && typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return "ok";
+    } catch (e) { /* doorgaan */ }
 
     // Mode A: allowedRoles
     if (Array.isArray(req.allowedRoles)) {
-      try {
-        var roles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
-          ? global.besaPermissions.getRoleNames()
-          : [];
-        for (var i = 0; i < req.allowedRoles.length; i++) {
-          if (roles.indexOf(req.allowedRoles[i]) !== -1) { allowed = true; break; }
-        }
-      } catch (e) { allowed = false; }
+      var roles = getRoleNames();
+      for (var i = 0; i < req.allowedRoles.length; i++) {
+        if (roles.indexOf(req.allowedRoles[i]) !== -1) return "ok";
+      }
+      return "denied";
     }
     // Mode B: besaCan(action, entity)
-    else if (req.action && (req.entity || req.action)) {
+    if (req.action) {
       try {
-        allowed = (typeof global.besaCan === "function") && global.besaCan(req.action, req.entity);
-      } catch (e) { allowed = false; }
+        return ((typeof global.besaCan === "function") && global.besaCan(req.action, req.entity)) ? "ok" : "denied";
+      } catch (e) { return "denied"; }
     }
+    return "ok";
+  }
 
-    if (!allowed) {
-      setFlash("Deze functie is niet beschikbaar voor jouw rol.");
-      try {
-        global.location.replace("home.html");
-      } catch (e) {
-        global.location.href = "home.html";
-      }
+  var decided = null; // "ok" | "denied" | "redirect"
+  function act(d) {
+    if (d && d.redirect) {
+      if (decided === "redirect") return;
+      decided = "redirect";
+      try { global.location.replace(d.redirect); } catch (e) { global.location.href = d.redirect; }
+      return;
     }
+    if (d === "denied") {
+      if (decided === "denied") return;
+      decided = "denied";
+      denyPage();
+      return;
+    }
+    // "ok": als de cache eerder (onterecht) blokkeerde maar de DB toegang geeft,
+    // herstel dan: paneel weg en content tonen.
+    if (decided === "denied") removeDenyPanel();
+    decided = "ok";
+    revealPage();
+  }
+
+  function run() {
+    var page = currentPageName();
+    if (!page || page === "login.html") { revealPage(); return; }
+    showAccessFlash(); // backward-compat (oude flash-meldingen); nieuwe flow zet geen flash meer
+
+    // 1) Warme cache: beslis SYNCHROON vóór de eerste paint.
+    if (permsLoaded()) act(decide());
+
+    // 2) Autoritatief na auth + permissie-DB-load (koude cache beslist hier).
+    Promise.resolve()
+      .then(function () { return global.besaSupabaseReady; })
+      .then(function () { return global.besaPermissionsReady; })
+      .then(function () { act(decide()); })
+      .catch(function () { if (decided === null) revealPage(); });
+
+    // 3) Fail-safe: als er na korte tijd nog niets beslist is (DB hangt), de
+    //    content alsnog tonen i.p.v. eindeloos blanco te blijven.
+    try { global.setTimeout(function () { if (decided === null) revealPage(); }, 3000); } catch (e) {}
   }
 
   // Start zodra het script geladen is — de Promises binnen run() wachten zelf.

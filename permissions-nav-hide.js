@@ -84,13 +84,22 @@
     return pageAccessible(normalizeFileName(href), adminTier);
   }
 
-  async function run() {
-    try {
-      if (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function") {
-        await global.besaPermissionsReady;
-      }
-    } catch (e) { /* doorgaan */ }
+  // Onthul de topnav (zet de visibility:hidden uit styles.css uit). Idempotent.
+  function reveal() {
+    try { global.document.documentElement.classList.add("besa-nav-ready"); } catch (e) {}
+  }
 
+  // Zijn de permissies al geladen (uit de localStorage-cache of de DB)? Zo ja,
+  // dan kunnen we de nav SYNCHROON — vóór de eerste paint — opschonen, zodat er
+  // geen niet-toegekende items flitsen.
+  function permsLoaded() {
+    try {
+      return !!(global.besaPermissions && typeof global.besaPermissions.debug === "function"
+        && global.besaPermissions.debug().loaded);
+    } catch (e) { return false; }
+  }
+
+  function applyHiding() {
     // Admin-tier ziet alles — behalve strict-gemarkeerde pagina's, die hieronder
     // per link alsnog op rol worden gecontroleerd (zie pageAccessible).
     var adminTier = false;
@@ -162,6 +171,22 @@
       if (typeof global.recomputeTopNavOverflow === "function") global.recomputeTopNavOverflow();
       else global.dispatchEvent(new Event("resize"));
     } catch (e) {}
+  }
+
+  function run() {
+    // 1) Warme cache: pas de afscherming DIRECT (synchroon) toe vóór de eerste
+    //    paint en onthul de nav. Geen `await` → geen flits van extra items.
+    if (permsLoaded()) { applyHiding(); reveal(); }
+    // 2) Na de DB-load opnieuw toepassen (bij koude cache wordt hier voor het eerst
+    //    afgeschermd + onthuld) en altijd onthullen.
+    try {
+      if (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function") {
+        global.besaPermissionsReady.then(function () { applyHiding(); reveal(); });
+      } else { reveal(); }
+    } catch (e) { reveal(); }
+    // 3) Fail-safe: onthul sowieso na korte tijd, zodat een eventuele scriptfout
+    //    de topnav nooit permanent verborgen laat.
+    try { global.setTimeout(reveal, 3000); } catch (e) {}
   }
 
   if (global.document && global.document.readyState === "loading") {
