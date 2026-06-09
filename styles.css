@@ -26773,3 +26773,10 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .md-metric--ok .md-metric-val { color: var(--green); }
 .md-metric--warn .md-metric-val { color: var(--yellow); }
 .md-metric--bad .md-metric-val { color: var(--red); }
+
+/* ─── HR Functioneren-tab (medewerker-functioneren.js) ─────────────────────── */
+.cf-section { margin-bottom: 16px; }
+.cf-form { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+.cf-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.cf-table td[data-col="acties"] { width: 1%; white-space: nowrap; text-align: right; }
+.cf-err { margin-top: 8px; }

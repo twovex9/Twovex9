@@ -32,13 +32,13 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G47 — verzuim.medewerker_id text + index toegevoegd. Backfill via naam-match volgt bij KPI-bouw (Fase 5/6).
 
 ### Fase 1 — Nieuwe HR-datalagen + tabellen  [ ]
-- [ ] G40 — opleidingen-catalogus uitbreiden (type/categorie/geldigheidsduur/skj_punten) + koppeltabel medewerker_opleidingen
-- [ ] G41 — SKJ-punten registratie + saldo + herregistratie-deadline
+- [x] G40 — opleidingen-catalogus uitgebreid (categorie/geldigheidsduur_maanden/skj_punten/is_academy) + koppeltabel medewerker_opleidingen (certificaat/herhaaldatum). `hr_v4_addons.sql`. UI in Functioneren-tab.
+- [~] G41 — SKJ-punten per opleiding-koppeling (veld). Saldo-aggregatie + herregistratie-overzicht nog te doen.
 - [ ] G26 — beleid_kennisname (gelezen+ondertekend+datum) + seed 9 vaste beleidsdocs
-- [ ] G36 — functioneringsgesprekken-tabel + data-laag
-- [ ] G37 — functionering_doelen
-- [ ] G38 — verbetertrajecten
-- [ ] G39 — medewerker_waarschuwingen
+- [x] G36 — functioneringsgesprekken-tabel + UI (Functioneren-tab medewerker-functioneren.js).
+- [x] G37 — functionering_doelen (Ontwikkeldoelen-sectie).
+- [x] G38 — verbetertrajecten (sectie + CRUD).
+- [x] G39 — medewerker_waarschuwingen (sectie + CRUD).
 - [ ] G20 — jaaropgaven (tabel + bucket + RLS + HR-upload)
 - [ ] G28 — onboarding documentcontrole-status (HR verificatie/akkoord per doc) + VOG max-3mnd
 - ~~G52~~ — vacatures: GEDROPT (user-keuze)
