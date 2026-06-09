@@ -885,6 +885,10 @@ function loadEmployeeIntoForm() {
   if (typeof window.__loadBureauKeuze === "function") window.__loadBureauKeuze(emp);
   setValue("emp-uur-diensttype", "Boventallig");
   setValue("emp-uur-tarief", emp.uurTarief);
+  setValue("emp-zzp-btw-pct", emp.zzpBtwPct);
+  setValue("emp-zzp-uren-week", emp.zzpUrenWeek);
+  if (typeof window.recomputeLoondienstSalaris === "function") window.recomputeLoondienstSalaris();
+  if (typeof window.recomputeZzpKosten === "function") window.recomputeZzpKosten();
   setDateValue("emp-beoordelingsdatum", emp.beoordelingsdatum);
   const selectedLocaties = normalizeLocatieNames(
     Array.isArray(emp.locatiesSelected)
@@ -2675,8 +2679,20 @@ function initFunctieScrollableDropdown() {
   window.__syncFunctieDropdown();
 }
 
+function getSalarisschaalOptions() {
+  try {
+    if (typeof window.getSalarisschalen === "function") {
+      var titles = window.getSalarisschalen()
+        .map(function (s) { return s && s.title ? String(s.title) : ""; })
+        .filter(Boolean);
+      if (titles.length) return titles;
+    }
+  } catch (e) { /* val terug op statische lijst */ }
+  return SALARISSCHAAL_OPTIONS.slice();
+}
+
 function initLoondienstSalaryDropdowns() {
-  function initSingle(hiddenId, btnId, panelId, listId, valueId, options, placeholder) {
+  function initSingle(hiddenId, btnId, panelId, listId, valueId, options, placeholder, onSelect) {
     const hiddenInput = document.getElementById(hiddenId);
     const btn = document.getElementById(btnId);
     const panel = document.getElementById(panelId);
@@ -2707,6 +2723,7 @@ function initLoondienstSalaryDropdowns() {
           renderList();
           panel.setAttribute("hidden", "");
           btn.setAttribute("aria-expanded", "false");
+          if (typeof onSelect === "function") onSelect(opt);
         });
         list.appendChild(li);
       });
@@ -2742,8 +2759,9 @@ function initLoondienstSalaryDropdowns() {
     "emp-loondienst-salarisschaal-panel",
     "emp-loondienst-salarisschaal-list",
     "emp-loondienst-salarisschaal-value",
-    SALARISSCHAAL_OPTIONS,
-    "Selecteer Salarisschaal"
+    getSalarisschaalOptions(),
+    "Selecteer Salarisschaal",
+    () => { if (typeof window.recomputeLoondienstSalaris === "function") window.recomputeLoondienstSalaris(); }
   );
   const trede = initSingle(
     "emp-loondienst-salaristrede",
@@ -2752,7 +2770,8 @@ function initLoondienstSalaryDropdowns() {
     "emp-loondienst-salaristrede-list",
     "emp-loondienst-salaristrede-value",
     SALARISTREDE_OPTIONS,
-    "Selecteer Salaristrede"
+    "Selecteer Salaristrede",
+    () => { if (typeof window.recomputeLoondienstSalaris === "function") window.recomputeLoondienstSalaris(); }
   );
 
   window.__syncLoondienstSalaryDropdowns = () => {
@@ -2761,6 +2780,65 @@ function initLoondienstSalaryDropdowns() {
     trede?.syncValueText();
     trede?.renderList();
   };
+}
+
+// ── HR salaris-/kostenberekening (Fase 2, spec §5) ──────────────────────────
+// Vult de readonly-velden uit schaal/trede/contracturen (loondienst) en
+// uurtarief/BTW%/uren (ZZP) via window.HRSalaris. Geen opslag hier; gather leest
+// de berekende waarden uit de velden.
+function recomputeLoondienstSalaris() {
+  if (!window.HRSalaris) return;
+  var schaalEl = document.getElementById("emp-loondienst-salarisschaal");
+  var tredeEl = document.getElementById("emp-loondienst-salaristrede");
+  var urenEl = document.getElementById("emp-loondienst-contracturen");
+  if (!schaalEl) return;
+  var res = window.HRSalaris.computeLoondienst({
+    schaalTitle: schaalEl.value || "",
+    trede: tredeEl ? tredeEl.value : "",
+    contracturen: urenEl ? urenEl.value : 0,
+  });
+  function set(id, num) { var el = document.getElementById(id); if (el) el.value = window.HRSalaris.formatEuro(num); }
+  set("emp-loondienst-36uur-salaris", res.bruto36);
+  set("emp-loondienst-salaris", res.brutoMaand);
+  set("emp-loondienst-werkgeverslasten", res.werkgeverslasten);
+  set("emp-loondienst-uurkostprijs", res.uurkostprijs);
+  set("emp-loondienst-netto", res.nettoIndicatief);
+}
+window.recomputeLoondienstSalaris = recomputeLoondienstSalaris;
+
+function recomputeZzpKosten() {
+  if (!window.HRSalaris) return;
+  var tariefEl = document.getElementById("emp-uur-algemeen");
+  var tariefFallback = document.getElementById("emp-uur-tarief");
+  var btwEl = document.getElementById("emp-zzp-btw-pct");
+  var urenEl = document.getElementById("emp-zzp-uren-week");
+  var tariefRaw = (tariefEl && String(tariefEl.value).trim()) ? tariefEl.value : (tariefFallback ? tariefFallback.value : "");
+  var res = window.HRSalaris.computeZzp({
+    uurtarief: tariefRaw,
+    btwPct: btwEl ? btwEl.value : "",
+    urenPerWeek: urenEl ? urenEl.value : 0,
+  });
+  function set(id, num) { var el = document.getElementById(id); if (el) el.value = window.HRSalaris.formatEuro(num); }
+  set("emp-zzp-kostprijs-uur", res.kostprijsUur);
+  set("emp-zzp-kosten-week", res.kostenWeek);
+  set("emp-zzp-kosten-maand", res.kostenMaand);
+}
+window.recomputeZzpKosten = recomputeZzpKosten;
+
+function initHrSalarisBerekening() {
+  var urenEl = document.getElementById("emp-loondienst-contracturen");
+  if (urenEl) {
+    urenEl.addEventListener("input", recomputeLoondienstSalaris);
+    urenEl.addEventListener("change", recomputeLoondienstSalaris);
+  }
+  ["emp-uur-algemeen", "emp-uur-tarief", "emp-zzp-btw-pct", "emp-zzp-uren-week"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", recomputeZzpKosten);
+    el.addEventListener("change", recomputeZzpKosten);
+  });
+  // Herbereken zodra het salarishuis (asynchroon) geladen is.
+  try { window.addEventListener("besa:salarishuis-updated", recomputeLoondienstSalaris); } catch (e) { /* */ }
 }
 
 function initLoondienstContracturenValidation() {
@@ -3996,6 +4074,10 @@ function gatherFormData() {
     })(),
     salaris36uur: val("emp-loondienst-36uur-salaris") || "€ 0,00",
     salaris: val("emp-loondienst-salaris") || "€ 0,00",
+    salarisWerkgeverslasten: val("emp-loondienst-werkgeverslasten") || "€ 0,00",
+    salarisUurkostprijs: val("emp-loondienst-uurkostprijs") || "€ 0,00",
+    salarisNettoIndicatief: val("emp-loondienst-netto") || "€ 0,00",
+    uurkostprijsNum: (window.HRSalaris ? window.HRSalaris.parseEuro(val("emp-loondienst-uurkostprijs")) : null),
     rooster,
     roosterWeekend,
     weekendVoorkeur,
@@ -4005,6 +4087,11 @@ function gatherFormData() {
     tariefHandmatig: bool("emp-tarief-handmatig"),
     uurDiensttype: "Boventallig",
     uurTarief: val("emp-uur-tarief"),
+    zzpBtwPct: val("emp-zzp-btw-pct"),
+    zzpUrenWeek: val("emp-zzp-uren-week"),
+    zzpKostprijsUur: val("emp-zzp-kostprijs-uur") || "€ 0,00",
+    zzpKostenWeek: val("emp-zzp-kosten-week") || "€ 0,00",
+    zzpKostenMaand: val("emp-zzp-kosten-maand") || "€ 0,00",
     locatiesSelected: selectedLocaties,
     locatiesTags: selectedLocaties.join(", "),
     locatiesCoreMap,
@@ -5299,6 +5386,7 @@ applyVerzuimTabVisibility();
 initLocatiesSection();
 initFunctieScrollableDropdown();
 initLoondienstSalaryDropdowns();
+initHrSalarisBerekening();
 initLoondienstPeriodiekeMaandDropdown();
 initLoondienstContracturenValidation();
 initRoosterWeekendAfwisseling();
