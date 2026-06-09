@@ -98,8 +98,18 @@ function buildNav(active) {
     { href: "planning-beheer", title: "Beheer planningbeheer", sub: "Beheer planninginstellingen" },
   ], active);
 
+  // "Uren declaraties" en "Uren budgettering" stonden eerder in de Cliënten-mega
+  // (kolom "Uren & facturatie"). Ze keyen echter op de urenregistratie-permissies
+  // (view-employee-hour-registrations / manage-employee-registered-hours) — exact de
+  // rollen die ook deze Urenregistratie-dropdown zien — en niet op een cliënt-recht.
+  // Voor een zuivere Planner waren dit de énige toegankelijke Cliënten-items, waardoor
+  // de Cliënten-kop bleef hangen en naar "Uren declaraties" herrouteerde (misleidend).
+  // Hier ondergebracht is logischer én laat de Cliënten-kop netjes verdwijnen voor wie
+  // alleen de uren-pagina's mag. (Video-feedback eigenaar: Planner-topbar opschonen.)
   const URENREGISTRATIE = smallDropdown("werkuren", "Urenregistratie", "Urenregistratie opties", [
     { href: "werkuren", title: "Geregistreerde uren", sub: "Overzicht geregistreerde uren" },
+    { href: "urendeclaraties", title: "Uren declaraties", sub: "Urendeclaraties per medewerker" },
+    { href: "uren-budgettering", title: "Uren budgettering", sub: "Standaard uren &amp; wekelijkse budgetten" },
     { href: "werkuren-labels", title: "Labels", sub: "Beheer labels voor urenregistraties" },
   ], active);
 
@@ -153,12 +163,12 @@ function buildNav(active) {
       { href: "beschikkingen-dashboard", title: "Dashboard" },
       { href: "beschikkingen", title: "Overzicht" },
       { href: "facturen", title: "Facturen" },
-      { group: "Uren &amp; facturatie" },
-      { href: "urendeclaraties", title: "Uren declaraties" },
-      { href: "uren-budgettering", title: "Uren budgettering" },
       { href: "facturen-importeren", title: "Facturen importeren" },
     ],
   ], active);
+  // NB: "Uren declaraties" + "Uren budgettering" zijn naar de Urenregistratie-dropdown
+  // verhuisd (zie hierboven) — ze hoorden permissie-technisch bij urenregistratie, niet
+  // bij cliënten, en hielden de Cliënten-kop onterecht overeind voor de Planner.
 
   // Incidenten als eigen top-level onderwerp (was een kolom in de Cliënten-mega).
   // Reden: een pure Medewerker ziet alleen "Incidenten overzicht" (view-incidents) en
@@ -246,6 +256,8 @@ const TOPIC_BY_PAGE = {
   "hr-diensttypes.html": "Planning",
   "werkuren.html": "Urenregistratie",
   "werkuren-labels.html": "Urenregistratie",
+  "urendeclaraties.html": "Urenregistratie",
+  "uren-budgettering.html": "Urenregistratie",
   "hr.html": "HR",
   "medewerker.html": "HR",
   "medewerker-detail.html": "HR",
@@ -286,8 +298,6 @@ const TOPIC_BY_PAGE = {
   "beschikking-detail.html": "Cliënten",
   "facturen.html": "Cliënten",
   "factuur-detail.html": "Cliënten",
-  "urendeclaraties.html": "Cliënten",
-  "uren-budgettering.html": "Cliënten",
   "facturen-importeren.html": "Cliënten",
   "incidenten.html": "Incidenten",
   "incidenten-dashboard.html": "Incidenten",
