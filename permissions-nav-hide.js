@@ -115,6 +115,14 @@
   var ZZP_SELF_SERVICE = ["mijn-proforma-facturen.html", "mijn-beschikbaarheid.html", "mijn-uitnodigingen.html"];
 
   function applyHiding() {
+    // Niet draaien vóór de permissies geladen zijn: besaCan() geeft dan false voor
+    // álles, en de destructieve dropdown-item-removal (a.remove() in stap 1) zou
+    // toegankelijke items definitief slopen — onherstelbaar bij een latere re-run.
+    // De normale callers draaien pas ná besaPermissionsReady; deze guard beschermt
+    // vooral de besa:profile-updated-listener, die vóór de perm-load kan vuren
+    // (het profiel laadt soms eerder dan de permissies bij een koude cache).
+    if (!permsLoaded()) return;
+
     // Admin-tier ziet alles — behalve strict-gemarkeerde pagina's, die hieronder
     // per link alsnog op rol worden gecontroleerd (zie pageAccessible).
     var adminTier = false;
