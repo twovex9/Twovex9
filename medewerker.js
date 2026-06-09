@@ -780,6 +780,9 @@ function loadEmployeeIntoForm() {
   setValue("emp-roepnaam", emp.roepnaam || emp.voornaam);
   setValue("emp-initialen", emp.initialen || ((emp.voornaam?.[0] || "") + (emp.achternaam?.[0] || "")));
   setValue("emp-bsn", emp.bsn);
+  setValue("emp-nationaliteit", emp.nationaliteit);
+  setValue("emp-bankrekening", emp.bankrekening);
+  setValue("emp-afdeling", emp.afdeling);
   const caoValue = document.getElementById("emp-cao-value");
   if (caoValue && emp.cao) caoValue.textContent = emp.cao;
   setValue("emp-postcode", emp.postcode);
@@ -4007,6 +4010,9 @@ function gatherFormData() {
     roepnaam: val("emp-roepnaam"),
     initialen: val("emp-initialen"),
     bsn: val("emp-bsn"),
+    nationaliteit: val("emp-nationaliteit"),
+    bankrekening: val("emp-bankrekening"),
+    afdeling: val("emp-afdeling"),
     verjaardag: gebDDMMYYYY,
     taal: (() => {
       // Save als code ("NL"/"ENG"/"FR"/"DE"), niet als label
