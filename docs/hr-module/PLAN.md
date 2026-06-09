@@ -48,7 +48,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G2 — werkgeverslasten% (config localStorage, default 30%; Supabase-settings-UI volgt Fase 5) + uurkostprijs.
 - [x] G3 — indicatief netto (factor 0,70 default, instelbaar).
 - [x] G4 — ZZP BTW% + uren/week → kostprijs/uur + kosten/week + kosten/maand. Unit-getest.
-- [ ] (G1–G4 nog LIVE te verifiëren via Chrome op echte medewerker)
+- [x] G1–G4 LIVE geverifieerd (Adriana Malovan Schaal7/trede4/36u → bruto €3.209,22 / wgl €962,77 / uurkost €26,76 / netto €2.246,45, geen app-console-fouten).
 - [ ] G5 — planning-kosten op echte uurkostprijs + configureerbare wgl
 - [ ] G6 — geaggregeerd dag/week/maand-personeelskosten-overzicht
 - [ ] G7 — Loket-XLSX uitbreiden (overuren/ziekte/contract/salaris) + auto-mail
@@ -75,6 +75,8 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 
 ### Fase 5 — Dashboards + KPI's + rol-gating  [~]
 - [x] G49 — `hr_compliance_overzicht()` + `hr_compliance_kpis()` RPC's (office-only gate), `hr_v4_compliance_rpc.sql`. Server-getest: 106 mw, 73 ZZP, 96% VOG geldig, 67 verlopen docs.
+- [x] G48 — `compliance-dashboard.html` + `-data.js` + `.js`: KPI-tegels (VOG%, verlopen, onboarding%, ZZP%) + grids + per-medewerker drill-down-tabel (klik → dossier) + filters/zoek. Page-map (HR/admin-tier) + topnav HR-mega-menu. (LIVE te verifiëren)
+- [x] G53 (deels) — VOG geldig%/aanwezig%, onboarding%, contract%, ZZP% op het dashboard. (Beleid% + SKJ% volgen met G26/G10.)
 - [ ] G48 — Compliance(HR)-dashboard met KPI-tegels + HR-rol in page-map
 - [ ] G50 — personeelskosten + ZZP%-KPI op bestuur-dashboard
 - [ ] G51 — verlooppercentage-KPI

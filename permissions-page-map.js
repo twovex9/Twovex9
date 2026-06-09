@@ -55,6 +55,11 @@
     // het. De RPC management_dashboard_v1 gate't server-side via can_view_management().
     "management-dashboard.html": { allowedRoles: ["Eigenaar", "Directeur"], strict: true },
 
+    // ─── HR Compliance-dashboard (G48) — HR + admin-tier ──────────────────────
+    // Compliance-overzicht (verloopbewaking docs, onboarding, VOG%) + drill-down naar
+    // het dossier. Server-side gate't hr_compliance_overzicht()/-kpis() via is_office_staff().
+    "compliance-dashboard.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
+
     // ─── HR-domein (employees-groep) ──────────────────────────────────────────
     "hr.html": { action: "browse", entity: "employees" },
     "medewerker.html": { action: "view", entity: "employees" },

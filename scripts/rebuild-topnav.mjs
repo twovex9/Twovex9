@@ -119,6 +119,7 @@ function buildNav(active) {
     [
       { group: "Medewerkers" },
       { href: "hr", title: "Medewerkers" },
+      { href: "compliance-dashboard", title: "Compliance-dashboard" },
       { href: "competenties", title: "Competenties" },
       { href: "opleidingen", title: "Opleidingen" },
       { href: "contract-sjablonen", title: "Contractsjablonen" },
@@ -265,6 +266,7 @@ const TOPIC_BY_PAGE = {
   "urendeclaraties.html": "Urenregistratie",
   "uren-budgettering.html": "Urenregistratie",
   "hr.html": "HR",
+  "compliance-dashboard.html": "HR",
   "medewerker.html": "HR",
   "medewerker-detail.html": "HR",
   "medewerkers-overzicht.html": "HR",
