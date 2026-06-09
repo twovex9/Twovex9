@@ -58,8 +58,8 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G14 — nationaliteit · G15 — afdeling · G16 — leidinggevende · G18 — IBAN in Details (loondienst)
 - [ ] G17 — Mijn Profiel leesbare cards (adres/telefoon/geboortedatum/startdatum/contract)
 - [~] G19 — Mijn Salaris: loonstroken-view. PC ✅ (mijn-loonstroken.js + sectie in mijn-gegevens.html, RLS-gescoped, download via signed URL). Mobiel + jaaropgaven(G20)/historie(G21) nog te doen.
-- [ ] G22 — eigen verlofsaldo self-service (PC + mobiel)
-- [ ] G23 — verlof aanvragen voor zuivere Medewerker-rol (PC + mobiel)
+- [~] G22 — eigen verlofsaldo self-service: PC ✅ (mijn-verlof.js, sectie in hub). Mobiel nog.
+- [~] G23 — verlof aanvragen self-service: PC ✅ (form → verlofDB.add+indienen, route teamleider→HR). Mobiel nog.
 - [ ] G24 — mobiel verlof-statusmapping fix
 - [ ] G25 — verloftypes-beheer (verloftypes.js + tabel)
 - [ ] G27 — onboarding toegangschecklist 5 spec-items
