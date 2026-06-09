@@ -100,6 +100,7 @@
     ev.preventDefault();
     var id = meId();
     var err = $("md-error");
+    if (err) { err.hidden = true; err.textContent = ""; }
     function fail(msg) { if (err) { err.hidden = false; err.textContent = msg; } }
     if (!id) { fail("Je account is niet aan een medewerker gekoppeld."); return; }
     var naam = ($("md-naam").value || "").trim();
