@@ -422,6 +422,9 @@
   function updateLockButton() {
     var btn = $("wu-lock-btn"); var label = $("wu-lock-btn-label");
     if (!btn || !label) return;
+    // Kijkfunctie (HR/Facilitair): geen vergrendel-/ontgrendel-knop.
+    if (!wuCanEdit()) { btn.style.display = "none"; return; }
+    btn.style.display = "";
     var monthLabel = capMonth(state.month - 1);
     var profile = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
     var medId = profile ? (profile.medewerkerId || profile.medewerker_id || null) : null;
@@ -454,6 +457,17 @@
   var CAL_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
   var COLSPAN = 10;
 
+  // Bewerk-recht voor urenregistratie: alleen wie manage-employee-registered-hours heeft
+  // (= dezelfde 6 rollen die view-employee-hour-registrations hebben: admin-tier + Finance/
+  // Planner/Zorgcoördinator). HR + Facilitair krijgen view-only → kijkfunctie i.p.v.
+  // bewerkfunctie (video-eis eigenaar 2026-06-07).
+  function wuCanEdit() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      return (typeof window.besaCan === "function") && window.besaCan("manage", "employee-registered-hours");
+    } catch (e) { return false; }
+  }
+
   function entryRowHtml(r, monthLocked) {
     var clientLabel = r.client_label || getClientNaam(r.client_id, "—");
     var medNaam = getMedewerkerNaam(r.medewerker_id);
@@ -471,10 +485,12 @@
       + '<td data-col="label">' + escHtml(r.label || "—") + '</td>'
       + '<td data-col="beschrijving">' + escHtml(beschr || "—") + '</td>'
       + '<td data-col="acties" class="wu-row-actions">'
-      +   (monthLocked
-            ? '<span class="wu-row-locked" title="Maand vergrendeld">' + LOCK_SVG + '</span>'
-            : ('<button type="button" class="wu-row-edit" data-id="' + escHtml(r.id) + '" aria-label="Bewerken">' + EDIT_SVG + '</button>'
-               + '<button type="button" class="employee-delete-btn wu-row-purge" data-id="' + escHtml(r.id) + '" aria-label="Verwijderen">' + TRASH_SVG + '</button>'))
+      +   (!wuCanEdit()
+            ? '<span class="wu-row-readonly" title="Alleen-lezen">—</span>'
+            : (monthLocked
+              ? '<span class="wu-row-locked" title="Maand vergrendeld">' + LOCK_SVG + '</span>'
+              : ('<button type="button" class="wu-row-edit" data-id="' + escHtml(r.id) + '" aria-label="Bewerken">' + EDIT_SVG + '</button>'
+                 + '<button type="button" class="employee-delete-btn wu-row-purge" data-id="' + escHtml(r.id) + '" aria-label="Verwijderen">' + TRASH_SVG + '</button>')))
       + '</td>'
       + '</tr>';
   }
@@ -821,6 +837,7 @@
   }
 
   function openEdit(id) {
+    if (!wuCanEdit()) { toast("error", "Je hebt alleen een kijkfunctie voor de urenregistratie"); return; }
     if (isCurrentMonthGloballyLocked()) { toast("error", "Deze maand is vergrendeld — wijzigen niet mogelijk"); return; }
     var rec = window.werkurenDB.getByIdSync(id);
     if (!rec) return;
@@ -882,6 +899,7 @@
   }
 
   function openPurge(id) {
+    if (!wuCanEdit()) { toast("error", "Je hebt alleen een kijkfunctie voor de urenregistratie"); return; }
     if (isCurrentMonthGloballyLocked()) { toast("error", "Deze maand is vergrendeld — verwijderen niet mogelijk"); return; }
     var rec = window.werkurenDB.getByIdSync(id);
     if (!rec) return;
@@ -1015,6 +1033,7 @@
 
     // Lock/unlock
     $("wu-lock-btn").addEventListener("click", async function () {
+      if (!wuCanEdit()) { toast("error", "Je hebt alleen een kijkfunctie voor de urenregistratie"); return; }
       var profile = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
       var medId = profile ? (profile.medewerkerId || profile.medewerker_id || null) : null;
       if (!medId) { toast("error", "Geen gekoppelde medewerker bij dit profiel"); return; }
@@ -1069,6 +1088,9 @@
     window.addEventListener("beschikkingen:changed", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
     window.addEventListener("besa:locaties-updated", function () { rebuildLookups(); renderAll(); });
     window.addEventListener("besa:werkuren-labels-updated", refreshAllOptions);
+    // Re-render zodra permissies geladen zijn → kijkfunctie (HR/Facilitair) krijgt geen
+    // bewerk-knoppen, bewerkers (manage-employee-registered-hours) wél.
+    try { if (window.besaPermissionsReady && window.besaPermissionsReady.then) window.besaPermissionsReady.then(renderAll); } catch (e) { /* */ }
   }
 
   function init() {

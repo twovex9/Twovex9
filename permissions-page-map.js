@@ -31,7 +31,12 @@
     // Beleid mee in deniedRoles: een beleidsmedewerker is kantoor/overhead, wordt niet
     // op een locatie ingeroosterd en registreert dus geen eigen dienst-uren (video-feedback
     // eigenaar 2026-06-07, beleidsmedewerker-rondleiding). Multi-rol blijft veilig.
-    "mijn-uren.html": { deniedRoles: ["Eigenaar", "Directeur", "Beleid"] },        // self-service: eigen werkuren registreren (RLS-gescoped)
+    // HR + Facilitair toegevoegd aan deniedRoles (video-feedback eigenaar 2026-06-07,
+    // HR-medewerker- en hoofdfacilitair-rondleiding): beide zijn kantoor/overhead en
+    // worden niet op een locatie ingeroosterd → registreren geen eigen dienst-uren. Zij
+    // krijgen Urenregistratie wél als KIJK-overzicht (view-employee-hour-registrations),
+    // maar niet de persoonlijke "Mijn uren"-self-service.
+    "mijn-uren.html": { deniedRoles: ["Eigenaar", "Directeur", "Beleid", "HR", "Facilitair"] },        // self-service: eigen werkuren registreren (RLS-gescoped)
 
     "mijn-proforma-facturen.html": { deniedRoles: ["Eigenaar", "Directeur"] },   // ZZP self-service: eigen proforma's (RLS-gescoped)
     "mijn-uitnodigingen.html": { deniedRoles: ["Eigenaar", "Directeur"] },       // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
@@ -39,7 +44,9 @@
     // op een locatie ingeroosterd, dus hebben geen eigen-beschikbaarheid-tab nodig
     // (video-feedback eigenaar 2026-06-07; Beleid toegevoegd via de beleidsmedewerker-
     // rondleiding). Multi-rol blijft veilig: huidige Planner/Beleid-users zijn kantoor/bestuur.
-    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur", "Planner", "Beleid"] }, // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
+    // HR + Facilitair toegevoegd (video-feedback eigenaar 2026-06-07): kantoor/overhead,
+    // staan niet op de groepen → geen eigen-beschikbaarheid-tab nodig.
+    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur", "Planner", "Beleid", "HR", "Facilitair"] }, // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 
@@ -118,7 +125,10 @@
     "teams.html": { action: "browse", entity: "teams" },
 
     // ─── Taken ────────────────────────────────────────────────────────────────
-    "taken.html": { action: "view", entity: "tasks" },
+    // Spraakmemo eigenaar 2026-06-07: "De taken moeten voor iedereen zichtbaar zijn."
+    // → open voor elke ingelogde gebruiker (was view-tasks). Detacheringsbureau-accounts
+    // blijven via permissions-gate.js naar hun eigen portaal geleid.
+    "taken.html": null,
 
     // ─── Werkuren / time-registrations ───────────────────────────────────────
     "werkuren.html": { action: "view", entity: "employee-hour-registrations" },
@@ -141,13 +151,16 @@
     // FF-native ZZP-proforma-facturatie (zzp_facturen) — zelfde invoices-permissie.
     "zzp-facturen.html": { action: "view", entity: "invoices" },
     "zzp-factuur-detail.html": { action: "view", entity: "invoices" },
-    // Overuren-goedkeuring → teamleider (Zorgcoördinator) + admin-tier/HR/Finance. RPC gate't ook server-side.
-    "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "HR", "Finance"] },
+    // Overuren-goedkeuring → teamleider (Zorgcoördinator) + admin-tier/Finance. RPC gate't ook server-side.
+    // HR verwijderd (video-feedback eigenaar 2026-06-07): het hele Facturen-kopje hoeft niet
+    // zichtbaar te zijn voor HR.
+    "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Finance"] },
     "zzp-reconciliatie.html": { action: "view", entity: "invoices" },
     // Detacheringsbureau-portaal: het bureau-account (rol Detacheringsbureau) ziet hier
     // ALLEEN z'n eigen mensen/facturen (server-side via RPC + RLS-lockout). Reviewers
     // mogen previewen. permissions-gate.js stuurt een bureau-only account hier altijd heen.
-    "zzp-bureau-facturen.html": { allowedRoles: ["Detacheringsbureau", "Eigenaar", "Admin", "Directeur", "HR", "Finance", "Salarisadministratie", "Zorgcoördinator"] },
+    // HR verwijderd (video-feedback eigenaar 2026-06-07): Facturen-kopje niet voor HR.
+    "zzp-bureau-facturen.html": { allowedRoles: ["Detacheringsbureau", "Eigenaar", "Admin", "Directeur", "Finance", "Salarisadministratie", "Zorgcoördinator"] },
     "facturen-alle.html": { action: "browse", entity: "invoices" },
     "facturen-te-beoordelen.html": { action: "view", entity: "invoices" },
     "facturen-indiening.html": { action: "view", entity: "invoices" },
@@ -155,9 +168,14 @@
     "facturen-importeren.html": { action: "import", entity: "invoices" },
 
     // ─── Kilometers ───────────────────────────────────────────────────────────
-    // kilometers.html (Kilometer declaraties) staat op browse-mileage-declarations:
-    // óók de Medewerker heeft die permissie en ziet z'n eigen km-declaraties (RLS-gescoped).
-    "kilometers.html": { action: "browse", entity: "mileage-declarations" },
+    // kilometers.html (Kilometer declaraties): spraakmemo eigenaar 2026-06-07 — "De
+    // kilometers moeten voor iedereen zichtbaar zijn. Ook met de mogelijkheid om die in
+    // te voeren." → open voor elke ingelogde gebruiker. Scoping gebeurt in kilometers.js:
+    // wie GEEN view-all-mileage-declarations heeft ziet (en bewerkt) alléén z'n EIGEN
+    // declaraties (RLS scopet de Medewerker server-side óók al naar eigen); HR/Planner/
+    // admin (view-all) zien álle declaraties als overzicht/dashboard. Detacheringsbureau
+    // blijft via permissions-gate.js naar het bureau-portaal geleid.
+    "kilometers.html": null,
     // De twee subpagina's zijn kantoor/beheer-tools, GEEN werkvloer:
     //   • km-afstanden  = woon-werk-afstanden-matrix (loondienst × locatie) die de
     //     km-vergoeding/salaris-export voedt (zelfde isLoondienst-regel als
@@ -181,7 +199,11 @@
     // behouden toegang, en Medewerker(/Test) komt erbij — read-only. De beheer-knoppen
     // (uploaden/bewerken/verwijderen) worden in beleid-documenten.js verborgen voor wie
     // geen manage-admins-documents heeft. beleid.html blijft de beheer-only pagina.
-    "beleid-documenten.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Beleid", "Zorgcoördinator", "Medewerker", "Medewerker Test"] },
+    // Spraakmemo eigenaar 2026-06-07: "Net als het beleid, dat voor iedereen zichtbaar
+    // moet zijn." → open voor elke ingelogde gebruiker (read-only). De beheer-knoppen
+    // (uploaden/bewerken/verwijderen) blijven in beleid-documenten.js verborgen voor wie
+    // geen manage-admins-documents heeft. beleid.html blijft de beheer-only pagina.
+    "beleid-documenten.html": null,
     "beleid.html": { action: "manage", entity: "admins-documents" },
 
     // ─── SharePoint (interne documentbibliotheek) — alleen kantoor ────────────
@@ -205,7 +227,13 @@
     "rollen.html": { action: "view", entity: "roles" },
     "rol-detail.html": { action: "view", entity: "roles" },
     "gebruikers.html": { action: "manage", entity: "users" },
-    "instellingen.html": { action: "edit", entity: "settings" },
+    // Instellingen: open voor elke ingelogde gebruiker zodat iedereen z'n eigen profiel +
+    // notificatie-voorkeuren kan beheren (ook de avatar-link "Mijn profiel" wijst hierheen).
+    // Video-feedback eigenaar 2026-06-07 (HR-rondleiding): "instellingen, ja dat kan wel".
+    // De BEHEER-tabs (Gebruikers, Notificatietypes, Entiteiten) worden in instellingen.js
+    // verborgen voor wie geen edit-settings heeft → admin-tier + bestaande edit-settings-
+    // rollen behouden ze; HR e.a. zien alleen Mijn profiel + Mijn notificaties.
+    "instellingen.html": null,
   };
 
   global.BESA_PAGE_PERMISSIONS = PAGE_PERMISSIONS;

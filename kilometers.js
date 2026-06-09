@@ -153,8 +153,46 @@
     detail: { sortKey: "datum", sortDir: "asc", page: 1, pageSize: 50, decl: null },
   };
 
+  // Wie GEEN view-all-mileage-declarations (en geen admin-tier) heeft, ziet alléén
+  // z'n eigen declaraties — video-eis Facilitair "alleen je eigen kilometers" +
+  // spraakmemo "iedereen ... eigen invoeren". HR/Planner/Salarisadministratie/admin
+  // (view-all) krijgen het volledige overzicht/dashboard van álle medewerkers.
+  function canSeeAllKm() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      return (typeof window.besaCan === "function") && window.besaCan("view-all", "mileage-declarations");
+    } catch (e) { return false; }
+  }
+  function ownMedewerkerId() {
+    try {
+      var p = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
+      return p ? (p.medewerkerId || p.medewerker_id || null) : null;
+    } catch (e) { return null; }
+  }
   function getDecls() {
-    return window.kilometerDeclaratiesDB ? (window.kilometerDeclaratiesDB.getAllSync() || []) : [];
+    var all = window.kilometerDeclaratiesDB ? (window.kilometerDeclaratiesDB.getAllSync() || []) : [];
+    if (canSeeAllKm()) return all;
+    // Geen view-all → alleen eigen (de Medewerker is server-side via RLS al naar eigen
+    // gescoped; office-rollen zonder view-all krijgen via RLS wél alles terug, dus hier
+    // client-side filteren). Geen gekoppelde medewerker → niets tonen (privacy-veilig).
+    var medId = ownMedewerkerId();
+    if (!medId) return [];
+    return all.filter(function (d) { return d && String(d.medewerkerId) === String(medId); });
+  }
+
+  // Werk-werk km vs woon-werk km per declaratie, gesommeerd uit de records.
+  // Echte record-types in de data: 'werkwerk' (cliëntvervoer tijdens werktijd) versus
+  // 'office'/'automatic'/'manual' (woon-werk/kantoor/handmatig). We splitsen op werkwerk
+  // vs de rest, zodat de twee kolommen samen het ingevoerde maandtotaal vormen.
+  function kmByTypeForDecl(declId) {
+    var recs = (window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync)
+      ? (window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(declId) || []) : [];
+    var werk = 0, woon = 0;
+    recs.forEach(function (r) {
+      var k = Number(r && r.kilometers) || 0;
+      if (r && r.type === "werkwerk") werk += k; else woon += k;
+    });
+    return { werk: Math.round(werk * 100) / 100, woon: Math.round(woon * 100) / 100 };
   }
 
   // ---------------------------------------------------------------------------
@@ -206,7 +244,7 @@
 
     var tbody = $("km-overview-tbody");
     if (pageRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="incident-empty">Geen kilometer-declaraties gevonden</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="incident-empty">Geen kilometer-declaraties gevonden</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(function (a) {
         var naam = declNaam(a);
@@ -214,11 +252,14 @@
         var statusPill = '<span class="km-status-pill km-status-pill--' + sm.color + '">'
           + statusIconSvg(sm.icon) + ' ' + escHtml(statusShortLabel(sm)) + '</span>';
         var ingOp = a.submittedAt ? formatNlDate(a.submittedAt) : "-";
+        var split = kmByTypeForDecl(a.id);
         return '<tr class="km-overview-row" data-decl="' + escAttr(a.id) + '" tabindex="0" role="link">'
           + '<td data-col="medewerker">' + escHtml(naam) + '</td>'
           + '<td data-col="periode">' + escHtml(a.monthDisplay || formatPeriod(a.jaar, a.maand)) + '</td>'
           + '<td data-col="status">' + statusPill + '</td>'
           + '<td data-col="ingediend">' + escHtml(ingOp) + '</td>'
+          + '<td data-col="werkkm" class="td-num">' + formatKm(split.werk) + '</td>'
+          + '<td data-col="woonwerkkm" class="td-num">' + formatKm(split.woon) + '</td>'
           + '<td data-col="km" class="td-num">' + formatKm(a.totalKilometers) + '</td>'
           + '<td data-col="bedrag" class="td-num">' + formatEur(a.totalReimbursement) + '</td>'
           + '</tr>';
@@ -252,6 +293,8 @@
     { id: "periode", label: "Periode", defaultOn: true },
     { id: "status", label: "Status", defaultOn: true },
     { id: "ingediend", label: "Ingediend op", defaultOn: true },
+    { id: "werkkm", label: "Werk-werk km", defaultOn: true },
+    { id: "woonwerkkm", label: "Woon-werk km", defaultOn: true },
     { id: "km", label: "Totale kilometers", defaultOn: true },
     { id: "bedrag", label: "Totale vergoeding", defaultOn: true },
   ];
@@ -333,6 +376,11 @@
     var declId = state.detail.decl;
     if (!declId) return;
     var d = window.kilometerDeclaratiesDB.getByIdSync(declId);
+    // Zonder view-all mag je alleen je EIGEN declaratie-detail openen (ook niet via URL).
+    if (d && !canSeeAllKm()) {
+      var ownId = ownMedewerkerId();
+      if (!ownId || String(d.medewerkerId) !== String(ownId)) d = null;
+    }
     if (!d) { $("km-detail-subtitle").textContent = "Declaratie niet gevonden"; return; }
     var recs = window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(declId) || [];
 
@@ -1276,6 +1324,14 @@
       var s = getRouteState();
       if (s.mode === "detail") showDetail(s.decl); else showOverview();
     });
+    // Re-render zodra permissies of profiel geladen zijn → own-scoping (view-all) en de
+    // werk/woon-werk-kolommen kloppen ook bij koude cache.
+    function reRenderActive() {
+      if ($("km-overview-view") && $("km-overview-view").hidden === false) renderOverview();
+      if ($("km-detail-view") && $("km-detail-view").hidden === false) renderDetail();
+    }
+    try { if (window.besaPermissionsReady && window.besaPermissionsReady.then) window.besaPermissionsReady.then(reRenderActive); } catch (e) { /* */ }
+    window.addEventListener("besa:profile-updated", reRenderActive);
   }
 
   async function init() {

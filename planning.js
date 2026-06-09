@@ -940,6 +940,36 @@ var PLANNING_FULL_ROLES = [
   "Gedragswetenschapper", "Cliëntbeheer",
 ];
 
+/* ── Bewerk-recht los van zie-recht (video-eis eigenaar 2026-06-07) ───────────
+ * HR + Facilitair moeten de planning als KIJK-overzicht van álle medewerkers
+ * zien ("een overzicht van alle medewerkers op de locaties, meer een kijkfunctie
+ * in plaats van een bewerkfunctie" / "alleen overzicht van de planning, wie er
+ * werkt"). Daarom blijven ze in PLANNING_FULL_ROLES (volledige SCOPE = alles
+ * zien) maar staan ze NIET in PLANNING_EDIT_ROLES, zodat de read-only-modus
+ * aangaat: dienst aanmaken/genereren + de detail-paneel-acties (toewijzen/
+ * uitnodigen/bewerken/verwijderen) worden verborgen en gegate. Alle overige
+ * full-planner-rollen behouden hun huidige bewerk-UI (geen regressie). */
+var PLANNING_EDIT_ROLES = [
+  "Eigenaar", "Admin", "Directeur", "Planner", "Zorgcoördinator",
+  "Finance", "Salarisadministratie", "Beleid",
+  "Gedragswetenschapper", "Cliëntbeheer",
+];
+
+function planningCanEdit() {
+  try {
+    if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+    var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
+      ? (window.besaPermissions.getRoleNames() || []) : [];
+    if (!roles.length) return true; // rollen nog niet geladen → niet onterecht afschermen
+    for (var i = 0; i < roles.length; i++) {
+      if (PLANNING_EDIT_ROLES.indexOf(roles[i]) !== -1) return true;
+    }
+    return false;
+  } catch (e) { return true; }
+}
+// Globaal beschikbaar zodat dienst-detail.js de paneel-acties kan gaten.
+try { window.besaPlanningCanEdit = planningCanEdit; } catch (e) { /* */ }
+
 function planningIsFullPlanner() {
   try {
     if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
@@ -968,10 +998,12 @@ function planningOwnName() {
 }
 
 /* Toggelt de read-only-rooster-modus (verbergt planner-UI: dienst aanmaken,
- * KPI-strip, beschikking-overschrijdingsbanner) voor niet-planner-rollen. */
+ * KPI-strip, beschikking-overschrijdingsbanner én de detail-paneel-acties) voor
+ * rollen zonder bewerk-recht. SCOPE (alles vs eigen) blijft op planningIsFullPlanner
+ * (HR/Facilitair zien alles); BEWERKEN op planningCanEdit (HR/Facilitair niet). */
 function applyPlanningRoleMode() {
   try {
-    document.body.classList.toggle("planning-readonly", !planningIsFullPlanner());
+    document.body.classList.toggle("planning-readonly", !planningCanEdit());
   } catch (e) { /* */ }
 }
 
@@ -4295,6 +4327,12 @@ function initViewModal() {
     if (e.target === m) close();
   });
   editBtn?.addEventListener("click", () => {
+    // Read-only rollen (HR/Facilitair/werkvloer) mogen niet bewerken — de knop is in
+    // .planning-readonly al verborgen; deze guard blokkeert ook bij DOM-manipulatie.
+    if (!planningCanEdit()) {
+      if (window.showError) window.showError("Je hebt alleen een kijkfunctie voor de planning.");
+      return;
+    }
     const id = ui.viewingId;
     if (id) {
       closeViewModal();

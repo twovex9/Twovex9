@@ -53,6 +53,28 @@
     else if (name === "gebruikers") renderGebruikers();
   }
 
+  // Beheer-tabs (Gebruikers / Notificatietypes / Entiteiten) zijn admin-only. Sinds de
+  // pagina open is voor elke ingelogde gebruiker (iedereen moet z'n eigen profiel +
+  // notificaties kunnen beheren — video-feedback eigenaar 2026-06-07) moeten deze tabs
+  // hier verborgen worden voor wie geen edit-settings heeft. Admin-tier wint via besaCan.
+  function canManageSettings() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      return (typeof window.besaCan === "function") && window.besaCan("edit", "settings");
+    } catch (e) { return false; }
+  }
+  function applyAdminTabVisibility() {
+    var allowed = canManageSettings();
+    ["inst-tab-gebruikers", "inst-tab-notificaties", "inst-tab-entiteiten"].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.style.display = allowed ? "" : "none";
+    });
+    // Stond een verborgen beheer-tab toch actief (bv. uit URL/cache) → terug naar profiel.
+    if (!allowed && ["gebruikers", "notificaties", "entiteiten"].indexOf(state.activeTab) !== -1) {
+      setTab("profiel");
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Sprint 18 / S18 — Tab: Gebruikers (BS2 parity met /settings/users)
   // ---------------------------------------------------------------------------
@@ -625,6 +647,15 @@
     window.addEventListener("besa:profile-updated", function () {
       if (state.activeTab === "gebruikers") renderGebruikers();
     });
+
+    // Beheer-tabs verbergen voor niet-admins. Direct (warme permissie-cache) + opnieuw
+    // zodra de permissie-DB-load klaar is (koude cache).
+    applyAdminTabVisibility();
+    try {
+      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+        window.besaPermissionsReady.then(applyAdminTabVisibility);
+      }
+    } catch (e) { /* */ }
 
     // Mijn notificaties: toggle handler (delegated)
     var mnList = document.getElementById("inst-mn-list");
