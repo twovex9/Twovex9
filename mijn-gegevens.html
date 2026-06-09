@@ -213,6 +213,30 @@
         </div>
       </section>
 
+      <section class="mijn-gegevens-section">
+        <div class="md-head">
+          <h2>Mijn documenten</h2>
+          <button type="button" class="btn-primary" id="md-add-btn">+ Document toevoegen</button>
+        </div>
+        <p>De documenten in je eigen dossier (bijvoorbeeld je ID-kaart, VOG of diploma's). Je kunt zelf nieuwe documenten toevoegen — bijvoorbeeld een vernieuwde ID-kaart of VOG. Verwijderen kan niet zelf; neem daarvoor contact op met HR.</p>
+        <div class="table-wrapper">
+          <table class="employees-table" id="md-table">
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>Type</th>
+                <th>Vervaldatum</th>
+                <th>Toegevoegd</th>
+                <th>Bestand</th>
+              </tr>
+            </thead>
+            <tbody id="md-tbody">
+              <tr><td colspan="5" class="mu-empty">Documenten laden…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="mijn-gegevens-section mm-section-wrap">
         <h2>Mijn maandstaat</h2>
         <p>Indicatief overzicht van je ORT-uren, gewerkte uren, kilometers en opgenomen verlof per maand. De officiële loonstrook ontvang je via Loket.</p>
@@ -253,6 +277,47 @@
     </main>
   </div>
 
+  <!-- Document toevoegen modal -->
+  <div class="modal-overlay" id="md-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="md-modal-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="md-modal-title">Document toevoegen</h2>
+        <button type="button" class="modal-close" id="md-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="md-form" class="modal-body" novalidate>
+        <div class="modal-field">
+          <label class="modal-label" for="md-naam">Naam <span class="im-req">*</span></label>
+          <input class="modal-input" type="text" id="md-naam" placeholder="Bijv. ID-kaart (vernieuwd)" required />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="md-type">Type</label>
+          <select class="modal-input" id="md-type">
+            <option value="">— Kies type —</option>
+            <option value="ID-kaart">ID-kaart</option>
+            <option value="Paspoort">Paspoort</option>
+            <option value="VOG">VOG</option>
+            <option value="Diploma">Diploma</option>
+            <option value="Certificaat">Certificaat</option>
+            <option value="Overig">Overig</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="md-vervaldatum">Vervaldatum (optioneel)</label>
+          <input class="modal-input" type="date" id="md-vervaldatum" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="md-file">Bestand <span class="im-req">*</span></label>
+          <input class="modal-input" type="file" id="md-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic" required />
+        </div>
+        <p class="im-error" id="md-error" role="alert" hidden></p>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="md-cancel">Annuleren</button>
+        <button type="submit" form="md-form" class="btn-primary" id="md-submit">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=918f1ad"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
@@ -272,12 +337,14 @@
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="medewerkers-data.js?v=918f1ad" defer></script>
+  <script src="medewerker-documenten-data.js?v=918f1ad" defer></script>
   <script src="werkuren-data.js?v=918f1ad" defer></script>
   <script src="kilometer-declaraties-data.js?v=918f1ad" defer></script>
   <script src="verlof-data.js?v=918f1ad" defer></script>
   <script src="ort-engine.js?v=918f1ad" defer></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
   <script src="mijn-gegevens.js?v=918f1ad" defer></script>
+  <script src="mijn-documenten.js?v=918f1ad" defer></script>
   <script src="mijn-maandstaat.js?v=918f1ad" defer></script>
 </body>
 </html>
