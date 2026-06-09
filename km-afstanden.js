@@ -264,7 +264,7 @@
       });
     });
     if (!pairs.length) {
-      if (window.showSaveModal) window.showSaveModal({ title: "Niets te berekenen", message: "Alle afstanden zijn al bekend." });
+      if (window.showSaveModal) window.showSaveModal("Alle afstanden zijn al bekend.", "Niets te berekenen");
       else if (window.showActionFeedback) window.showActionFeedback("saved", "Afstanden");
       return;
     }
@@ -287,7 +287,7 @@
     setBusy(false);
     render();
     var msg = ok + " afstand(en) berekend" + (fail ? ", " + fail + " mislukt (kaartservice/adres)." : ".");
-    if (window.showSaveModal) window.showSaveModal({ title: "Klaar", message: msg });
+    if (window.showSaveModal) window.showSaveModal(msg, "Klaar");
     else if (window.showActionFeedback) window.showActionFeedback("saved", "Afstanden");
   }
 

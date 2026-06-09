@@ -61,7 +61,7 @@
   function showError(msg) { var e = $("fdtl-error"); if (e) { e.textContent = msg; e.hidden = false; } }
   function feedback(kind, msg) {
     try {
-      if (kind === "ok" && typeof window.showSaveModal === "function") { window.showSaveModal({ title: msg || "Opgeslagen" }); return; }
+      if (kind === "ok" && typeof window.showSaveModal === "function") { window.showSaveModal(undefined, msg || "Opgeslagen"); return; }
       if (kind === "ok" && typeof window.showActionFeedback === "function") { window.showActionFeedback("saved", "Factuur"); return; }
     } catch (e) { /* */ }
     if (kind === "err") showError(msg);

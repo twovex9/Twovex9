@@ -288,7 +288,16 @@
           // de auth-guard? Zo ja, daarheen. Anders home.
           var params = new URLSearchParams(window.location.search);
           var next = params.get("next");
-          var safeNext = (next && /^[a-zA-Z0-9_\-./?=&]+$/.test(next)) ? next : "home";
+          // Alleen same-origin doelen toestaan. Weiger protocol-relatieve URLs
+          // (//evil.com) en backslash-varianten: die voldoen aan de tekenset maar
+          // sturen na login naar een externe site (open-redirect/phishing).
+          var safeNext =
+            next &&
+            /^[a-zA-Z0-9_\-./?=&]+$/.test(next) &&
+            !/^\/\//.test(next) &&
+            next.indexOf("\\") === -1
+              ? next
+              : "home";
           window.location.replace(safeNext);
         } catch (err) {
           showError(err && err.message ? err.message : "Er ging iets mis bij het inloggen.");

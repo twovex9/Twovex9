@@ -201,7 +201,7 @@
     try {
       if (idInput.value) {
         await window.beleidsdocumentenDB.update(idInput.value, payload);
-        if (window.showSaveModal) window.showSaveModal({ title: "Bijgewerkt", message: payload.naam });
+        if (window.showSaveModal) window.showSaveModal(payload.naam, "Bijgewerkt");
       } else {
         await window.beleidsdocumentenDB.add(payload);
         if (window.showActionFeedback) window.showActionFeedback("saved", payload.naam);

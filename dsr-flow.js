@@ -76,7 +76,7 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      if (window.showSaveModal) window.showSaveModal({ title: "GDPR-export voltooid", message: "JSON-bestand gedownload (AVG Art. 20)." });
+      if (window.showSaveModal) window.showSaveModal("JSON-bestand gedownload (AVG Art. 20).", "GDPR-export voltooid");
     } catch (err) {
       console.error("[dsr-flow] export failed:", err);
       if (window.showError) window.showError("GDPR-export mislukt: " + (err.message || err));

@@ -7950,6 +7950,18 @@ select.modal-select.modal-select--chevron-right {
   transform: translateY(0);
 }
 
+/* Dark-thema: de toast-tekst (--pt-1f2937) flipt naar licht, dus de
+   hardcoded witte achtergrond moet mee-flippen, anders wit-op-wit. */
+[data-theme="dark"] .app-toast,
+[data-theme="dark"] .app-toast--centered {
+  background: rgba(26, 31, 40, 0.97);
+  border-color: var(--line-strong);
+}
+
+[data-theme="dark"] .app-toast-backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
 .app-toast-backdrop {
   position: fixed;
   inset: 0;
@@ -15801,8 +15813,11 @@ button.planning-erm-new {
 .inv-pdf-grand { border-top: 2px solid var(--line-strong); font-weight: 800; margin-top: 4px; }
 .inv-btn-reject { color: var(--red); }
 @media print {
-  body * { visibility: hidden !important; }
-  .inv-pdf-sheet, .inv-pdf-sheet * { visibility: visible !important; }
+  /* Alleen isoleren op de factuur-PDF-pagina zelf; anders zou body *{hidden}
+     ELKE andere pagina leeg printen (de regel staat in de globale stylesheet). */
+  body:has(.inv-pdf-sheet) * { visibility: hidden !important; }
+  body:has(.inv-pdf-sheet) .inv-pdf-sheet,
+  body:has(.inv-pdf-sheet) .inv-pdf-sheet * { visibility: visible !important; }
   .inv-pdf-sheet {
     position: absolute; left: 0; top: 0; width: 100%;
     padding: 0; background: var(--surface); overflow: visible;
@@ -24989,8 +25004,11 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 
 /* Print: verberg alles behalve de maandstaat-card */
 @media print {
-  body * { visibility: hidden !important; }
-  .mm-card, .mm-card * { visibility: visible !important; }
+  /* Alleen isoleren op de mijn-gegevens-pagina zelf; anders zou body *{hidden}
+     elke andere pagina leeg printen (globale stylesheet). */
+  body:has(.mm-card) * { visibility: hidden !important; }
+  body:has(.mm-card) .mm-card,
+  body:has(.mm-card) .mm-card * { visibility: visible !important; }
   .mm-card {
     position: absolute;
     left: 0; top: 0;
