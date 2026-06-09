@@ -34,7 +34,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 ### Fase 1 — Nieuwe HR-datalagen + tabellen  [ ]
 - [x] G40 — opleidingen-catalogus uitgebreid (categorie/geldigheidsduur_maanden/skj_punten/is_academy) + koppeltabel medewerker_opleidingen (certificaat/herhaaldatum). `hr_v4_addons.sql`. UI in Functioneren-tab.
 - [~] G41 — SKJ-punten per opleiding-koppeling (veld). Saldo-aggregatie + herregistratie-overzicht nog te doen.
-- [ ] G26 — beleid_kennisname (gelezen+ondertekend+datum) + seed 9 vaste beleidsdocs
+- [x] G26 — beleid_kennisname-tabel + RPC hr_beleid_kennisname_pct + "Verplicht beleid"-sectie in hub (mijn-beleid.js): 9 vaste docs, gelezen+ondertekend+datum. `hr_v4_beleid_kennisname.sql`.
 - [x] G36 — functioneringsgesprekken-tabel + UI (Functioneren-tab medewerker-functioneren.js).
 - [x] G37 — functionering_doelen (Ontwikkeldoelen-sectie).
 - [x] G38 — verbetertrajecten (sectie + CRUD).
