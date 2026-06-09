@@ -73,8 +73,8 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G13 — vervaldatum-veld in publieke onboarding-upload form
 - [ ] G30 — automatische mail teken-/upload-/inwerklink
 
-### Fase 5 — Dashboards + KPI's + rol-gating  [ ]
-- [ ] G49 — hr_compliance_overzicht() RPC (per medewerker aggregatie)
+### Fase 5 — Dashboards + KPI's + rol-gating  [~]
+- [x] G49 — `hr_compliance_overzicht()` + `hr_compliance_kpis()` RPC's (office-only gate), `hr_v4_compliance_rpc.sql`. Server-getest: 106 mw, 73 ZZP, 96% VOG geldig, 67 verlopen docs.
 - [ ] G48 — Compliance(HR)-dashboard met KPI-tegels + HR-rol in page-map
 - [ ] G50 — personeelskosten + ZZP%-KPI op bestuur-dashboard
 - [ ] G51 — verlooppercentage-KPI
