@@ -25,10 +25,28 @@
   var TABLE = "taken";
   var CACHE_KEY = "taken_v2";
 
-  // 1-op-1 BS2 (/api/tasks) — verbatim status/priority-waarden.
+  // 1-op-1 BS2 (/api/tasks) — verbatim status/priority-waarden voor TAKEN.
   var STATUS_VALUES = ["--", "In behandeling", "Voltooid"];
   var PRIORITEIT_VALUES = ["Low", "Medium", "High"];
   var PRIORITEIT_RANK = { High: 0, Medium: 1, Low: 2 };
+
+  // Takenmodule v2 — drie itemtypes met elk hun eigen status-vocabulaire.
+  // Voor TAAK blijven de BS2-waarden de opslag ("--"/"In behandeling"/"Voltooid")
+  // met vriendelijke labels (Nieuw/Afgerond) + twee extra states. De opslagwaarde
+  // van "voltooid" blijft bewust "Voltooid" zodat de bestaande trigger/cron werkt.
+  var STATUS_BY_TYPE = {
+    taak:        ["--", "In behandeling", "Wacht op reactie", "Voltooid", "Geannuleerd"],
+    verzoek:     ["Ingediend", "In beoordeling", "Goedgekeurd", "Afgewezen", "Teruggestuurd"],
+    goedkeuring: ["Open", "In behandeling", "Goedgekeurd", "Afgekeurd"],
+  };
+  var TYPE_VALUES = ["taak", "verzoek", "goedkeuring"];
+  // Afdeling-taxonomie — identiek aan public.taken_user_afdelingen() server-side.
+  var AFDELINGEN = ["HR", "Facilitair", "Beleid & Kwaliteit", "Financiën",
+    "Gedragswetenschap", "Planning & Zorg", "Directie", "Algemeen"];
+
+  function statusValuesFor(type) {
+    return STATUS_BY_TYPE[type] || STATUS_BY_TYPE.taak;
+  }
 
   function stripHtml(s) {
     return String(s == null ? "" : s).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")
@@ -65,6 +83,11 @@
       collaborators: Array.isArray(row.collaborators) ? row.collaborators : [],
       incident: row.incident || null,
       isPrivate: !!row.is_private,
+      // Takenmodule v2 — itemtype + afdeling + verzoek↔taak-koppeling.
+      type: TYPE_VALUES.indexOf(row.type) >= 0 ? row.type : "taak",
+      afdeling: row.afdeling || null,
+      omgezetNaarTaakId: row.omgezet_naar_taak_id || null,
+      verzoekVanId: row.verzoek_van_id || null,
       status: row.status_bs2 || row.status || "--",
       prioriteit: row.priority_bs2 || row.prioriteit || "Low",
       deadline: row.due_date || row.deadline || null,
@@ -79,7 +102,9 @@
 
   function objToPayload(o) {
     var safe = o || {};
-    var status = STATUS_VALUES.indexOf(safe.status) >= 0 ? safe.status : "--";
+    var type = TYPE_VALUES.indexOf(safe.type) >= 0 ? safe.type : "taak";
+    var allowed = statusValuesFor(type);
+    var status = allowed.indexOf(safe.status) >= 0 ? safe.status : allowed[0];
     var prioriteit = PRIORITEIT_VALUES.indexOf(safe.prioriteit) >= 0 ? safe.prioriteit : "Low";
     var title = String(safe.naam || "").trim();
     var descr = String(safe.beschrijving || "");
@@ -92,6 +117,11 @@
       naam: title,
       description: descr,
       beschrijving: descr,
+      // Takenmodule v2 — itemtype + afdeling + verzoek↔taak-koppeling.
+      type: type,
+      afdeling: safe.afdeling || null,
+      omgezet_naar_taak_id: safe.omgezetNaarTaakId || null,
+      verzoek_van_id: safe.verzoekVanId || null,
       status_bs2: status,
       priority_bs2: prioriteit,
       due_date: safe.deadline || null,
@@ -249,6 +279,82 @@
     return update(id, { status: "In behandeling", goedgekeurdOp: null, goedgekeurdDoor: null });
   }
 
+  // ─── Takenmodule v2: verzoeken & besluitpunten ─────────────────────────────
+
+  // Verzoek indienen (medewerker → afdeling). Type=verzoek, status=Ingediend.
+  // De server-trigger meldt de afdeling-managers (branch E).
+  async function submitVerzoek(rec) {
+    var doc = Object.assign({}, rec || {}, { type: "verzoek", status: "Ingediend", toegewezenAanId: null });
+    return add(doc);
+  }
+
+  // Besluitpunt aanmaken (management+ → directie/eigenaar). Type=goedkeuring, status=Open.
+  async function addBesluit(rec) {
+    var doc = Object.assign({}, rec || {}, { type: "goedkeuring", status: "Open" });
+    return add(doc);
+  }
+
+  // Verzoek beoordelen:
+  //  - "goedkeuren": maak een NIEUWE taak (omgezet) + markeer verzoek 'Goedgekeurd'
+  //    en koppel beide (omgezet_naar_taak_id ↔ verzoek_van_id). Trigger F meldt de indiener.
+  //  - "afwijzen":   status 'Afgewezen'.
+  //  - "terugsturen": status 'Teruggestuurd'.
+  // Een optionele toelichting wordt door de UI als opmerking in de draad gezet.
+  async function beoordeelVerzoek(id, actie, opts) {
+    opts = opts || {};
+    var verzoek = getByIdSync(id);
+    if (!verzoek) throw new Error("Verzoek niet gevonden");
+    if (actie === "goedkeuren") {
+      var taak = await add({
+        type: "taak",
+        naam: verzoek.naam,
+        beschrijving: verzoek.beschrijving,
+        afdeling: verzoek.afdeling || null,
+        prioriteit: verzoek.prioriteit || "Low",
+        deadline: opts.deadline || verzoek.deadline || null,
+        toegewezenAanId: opts.toegewezenAanId || null,
+        status: "--",
+        verzoekVanId: id,
+      });
+      await update(id, { status: "Goedgekeurd", omgezetNaarTaakId: taak.id });
+      return taak;
+    }
+    if (actie === "afwijzen")   return update(id, { status: "Afgewezen" });
+    if (actie === "terugsturen") return update(id, { status: "Teruggestuurd" });
+    throw new Error("Onbekende verzoek-actie: " + actie);
+  }
+
+  // Besluit nemen op een besluitpunt (goedkeuring). besluit ∈ Goedgekeurd|Afgekeurd|In behandeling.
+  // Bij een definitief besluit leggen we de beslisser + tijd vast; trigger G meldt de maker.
+  async function neemBesluit(id, besluit) {
+    var allowed = STATUS_BY_TYPE.goedkeuring;
+    if (allowed.indexOf(besluit) < 0) throw new Error("Ongeldig besluit: " + besluit);
+    var patch = { status: besluit };
+    if (besluit === "Goedgekeurd" || besluit === "Afgekeurd") {
+      var uid = await getCurrentUserId();
+      patch.goedgekeurdOp = isoNow();
+      patch.goedgekeurdDoor = uid || null;
+    } else {
+      patch.goedgekeurdOp = null;
+      patch.goedgekeurdDoor = null;
+    }
+    return update(id, patch);
+  }
+
+  // UI-context (niveau, afdelingen, kan_beheren, is_directie) uit de server-RPC.
+  var _context = null;
+  async function getContext() {
+    if (_context) return _context;
+    try {
+      if (global.besaSupabase) {
+        var r = await global.besaSupabase.rpc("taken_mijn_context");
+        if (!r.error && r.data) { _context = r.data; return _context; }
+      }
+    } catch (e) { /* val terug op null → UI gebruikt client-side rol-heuristiek */ }
+    return null;
+  }
+  function getContextSync() { return _context; }
+
   async function remove(id) {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
@@ -287,10 +393,20 @@
     approve: approve,
     reject: reject,
     delete: remove,
+    // Takenmodule v2
+    submitVerzoek: submitVerzoek,
+    addBesluit: addBesluit,
+    beoordeelVerzoek: beoordeelVerzoek,
+    neemBesluit: neemBesluit,
+    getContext: getContext,
+    getContextSync: getContextSync,
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     getForMedewerkerSync: getForMedewerkerSync,
     STATUS_VALUES: STATUS_VALUES,
+    STATUS_BY_TYPE: STATUS_BY_TYPE,
+    TYPE_VALUES: TYPE_VALUES,
+    AFDELINGEN: AFDELINGEN,
     PRIORITEIT_VALUES: PRIORITEIT_VALUES,
   };
 

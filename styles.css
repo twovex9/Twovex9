@@ -26615,3 +26615,55 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .kl-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 @media (max-width: 560px) { .kl-stats { grid-template-columns: 1fr 1fr; } .kl-field-row { grid-template-columns: 1fr; } }
 
+/* =======================================================================
+   Takenmodule v2 — view-tabs, type-filter, managementoverzicht, KPI-dashboard
+   ======================================================================= */
+/* Direct kind van de kolom-flex main.content: niet verticaal uitrekken
+   (de geërfde .filter-chips flex-basis:100% zou anders de volle hoogte pakken). */
+.taken-viewtabs { flex: 0 0 auto; margin-bottom: 12px; }
+.taken-typefilter { margin-right: 8px; }
+.taken-typepick { margin-top: 4px; }
+.taken-type-locklabel { display: inline-block; margin-top: 4px; font-size: var(--font-table-cell); color: var(--text-secondary); }
+
+/* Achterstallig-badge naast de status-pill (hergebruikt taak-wacht-badge stijl) */
+.taak-late-badge { color: var(--red) !important; background: var(--red-soft) !important; }
+
+/* Managementoverzicht — kaart-grid met compacte item-lijsten */
+.taken-mgmt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.taken-mgmt-card { display: flex; flex-direction: column; padding: 0; }
+.taken-mgmt-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.taken-mgmt-title { font-size: var(--font-table-cell); font-weight: 700; color: var(--text); }
+.taken-mgmt-count { min-width: 24px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--r-pill); background: var(--blue-soft); color: var(--blue); font-size: var(--font-ui-badge); font-weight: 700; }
+.taken-mgmt-list { display: flex; flex-direction: column; max-height: 360px; overflow-y: auto; }
+.taken-mgmt-item { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; width: 100%; padding: 11px 16px; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; font: inherit; }
+.taken-mgmt-item:hover { background: var(--blue-soft); }
+.taken-mgmt-item:last-child { border-bottom: 0; }
+.taken-mgmt-item-name { font-weight: 600; color: var(--text); font-size: var(--font-table-cell); }
+.taken-mgmt-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.taken-mgmt-chip { padding: 2px 8px; border-radius: var(--r-pill); background: var(--line); color: var(--text-secondary); font-size: var(--font-ui-badge); font-weight: 600; }
+.taken-mgmt-status { padding: 2px 8px; border-radius: var(--r-pill); font-size: var(--font-ui-badge); font-weight: 600; }
+.taken-mgmt-date { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.taken-mgmt-empty { padding: 18px 16px; color: var(--text-muted); font-size: var(--font-table-cell); }
+
+/* Organisatie-dashboard — KPI-kaarten (huisstijl-tokens, kleur-accentlijn links) */
+.tk-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tk-kpi { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: var(--r-xl); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.tk-kpi-body { display: flex; flex-direction: column; gap: 2px; }
+.tk-kpi-label { font-size: var(--font-table-cell); color: var(--text-secondary); }
+.tk-kpi-value { font-size: var(--font-h1); font-weight: 800; color: var(--text); line-height: 1.1; }
+.tk-kpi-sub { font-size: var(--font-ui-badge); color: var(--text-muted); }
+.tk-kpi--blue { border-left-color: var(--blue); }
+.tk-kpi--green { border-left-color: var(--green); }
+.tk-kpi--red { border-left-color: var(--red); }
+.tk-kpi--orange { border-left-color: var(--yellow); }
+.tk-kpi--purple { border-left-color: var(--blue); }
+.tk-kpi--teal { border-left-color: var(--green); }
+
+@media (max-width: 900px) {
+  .taken-mgmt-grid { grid-template-columns: 1fr; }
+  .tk-kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .tk-kpi-grid { grid-template-columns: 1fr; }
+}
+

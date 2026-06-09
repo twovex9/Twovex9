@@ -183,100 +183,158 @@
     <main class="content">
       <div class="content-header">
         <h1>Taken</h1>
-        <div class="header-actions">
-          <button class="btn-primary" type="button" id="taken-add-btn">+ Taak toevoegen</button>
+        <div class="header-actions" id="taken-header-actions">
+          <!-- Rol-bewuste actieknop(pen) — gevuld door taken.js -->
         </div>
       </div>
 
-      <div class="toolbar">
-        <div class="filter-chips" role="tablist" aria-label="Taken filter">
-          <button type="button" class="filter-chip" role="tab" id="taken-tab-mine" aria-selected="false">Mijn taken</button>
-          <button type="button" class="filter-chip filter-chip--active" role="tab" id="taken-tab-all" aria-selected="true">Alle taken</button>
-        </div>
-        <input class="search" type="search" id="taken-search" placeholder="Zoeken..." autocomplete="off" />
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="taken-archived-toggle" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Gearchiveerd</span>
-        </label>
-        <label class="switch">
-          <input type="checkbox" id="taken-hide-done-toggle" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Voltooide verbergen</span>
-        </label>
-        <select class="search" id="taken-filter-status" style="max-width:180px">
-          <option value="">Alle statussen</option>
-          <option value="--">—</option>
-          <option value="In behandeling">In behandeling</option>
-          <option value="Voltooid">Voltooid</option>
-        </select>
-        <select class="search" id="taken-filter-prioriteit" style="max-width:180px">
-          <option value="">Alle prioriteiten</option>
-          <option value="High">Hoog</option>
-          <option value="Medium">Middel</option>
-          <option value="Low">Laag</option>
-        </select>
-        <select class="search" id="taken-filter-teamlid" style="max-width:200px" aria-label="Filter op teamlid">
-          <option value="">Alle teamleden</option>
-        </select>
-        <label class="taken-date-filter" title="Filter op deadline-datum">
-          <span class="taken-date-filter-label">Deadline</span>
-          <input type="date" class="search" id="taken-filter-deadline" aria-label="Filter op deadline" />
-        </label>
-        <label class="taken-date-filter" title="Filter op aanmaakdatum">
-          <span class="taken-date-filter-label">Aanmaakdatum</span>
-          <input type="date" class="search" id="taken-filter-aanmaakdatum" aria-label="Filter op aanmaakdatum" />
-        </label>
-        <button type="button" class="btn-outline taken-reset-btn" id="taken-filter-reset" title="Alle filters wissen">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-          Reset
-        </button>
+      <!-- Hoofd-views (rol-gegate). Mijn taken voor iedereen; de overige drie
+           alleen voor management en hoger (niveau <= 3). -->
+      <div class="filter-chips taken-viewtabs" role="tablist" aria-label="Taken weergave">
+        <button type="button" class="filter-chip filter-chip--active" role="tab" data-view="mijn" id="taken-view-mijn" aria-selected="true">Mijn taken</button>
+        <button type="button" class="filter-chip" role="tab" data-view="afdeling" id="taken-view-afdeling" aria-selected="false" hidden>Afdelingstaken</button>
+        <button type="button" class="filter-chip" role="tab" data-view="management" id="taken-view-management" aria-selected="false" hidden>Managementoverzicht</button>
+        <button type="button" class="filter-chip" role="tab" data-view="organisatie" id="taken-view-organisatie" aria-selected="false" hidden>Organisatie</button>
       </div>
 
-      <section class="table-card table-card--compact">
-        <div class="table-wrapper">
-          <table class="employees-table" id="taken-table">
-            <thead>
-              <tr>
-                <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Taaknaam</span></div></th>
-                <th data-col="toegewezen"><div class="th-sort-inner"><span class="th-label">Toegewezen aan</span></div></th>
-                <th data-col="aangemaakt_door"><div class="th-sort-inner"><span class="th-label">Aangemaakt door</span></div></th>
-                <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
-                <th data-col="deadline"><div class="th-sort-inner"><span class="th-label">Deadline</span></div></th>
-                <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="taken-tbody"></tbody>
-          </table>
-        </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="taken-pager-range" class="pager-range">0 van 0</span>
+      <!-- ============ LIJST-VIEW (Mijn taken / Afdelingstaken) ============ -->
+      <div id="taken-list-view">
+        <div class="toolbar">
+          <div class="filter-chips taken-typefilter" role="group" aria-label="Filter op type">
+            <button type="button" class="filter-chip filter-chip--active" data-type="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-type="taak" aria-pressed="false">Taken</button>
+            <button type="button" class="filter-chip" data-type="verzoek" aria-pressed="false">Verzoeken</button>
+            <button type="button" class="filter-chip" data-type="goedkeuring" aria-pressed="false">Besluitpunten</button>
           </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="taken-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="taken-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="30" selected>30</option>
-                <option value="50">50</option>
-              </select>
-            </label>
-            <span id="taken-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="taken-pager-first" disabled>&laquo;</button>
-              <button type="button" class="pager-btn" id="taken-pager-prev" disabled>&lsaquo;</button>
-              <button type="button" class="pager-btn" id="taken-pager-next" disabled>&rsaquo;</button>
-              <button type="button" class="pager-btn" id="taken-pager-last" disabled>&raquo;</button>
-            </span>
-          </div>
+          <input class="search" type="search" id="taken-search" placeholder="Zoeken..." autocomplete="off" />
+          <label class="switch switch--yellow">
+            <input type="checkbox" id="taken-archived-toggle" />
+            <span class="switch-slider"></span>
+            <span class="switch-label">Gearchiveerd</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="taken-hide-done-toggle" />
+            <span class="switch-slider"></span>
+            <span class="switch-label">Afgeronde verbergen</span>
+          </label>
+          <select class="search" id="taken-filter-status" style="max-width:180px">
+            <option value="">Alle statussen</option>
+          </select>
+          <select class="search" id="taken-filter-prioriteit" style="max-width:180px">
+            <option value="">Alle prioriteiten</option>
+            <option value="High">Hoog</option>
+            <option value="Medium">Middel</option>
+            <option value="Low">Laag</option>
+          </select>
+          <select class="search" id="taken-filter-afdeling" style="max-width:200px" aria-label="Filter op afdeling">
+            <option value="">Alle afdelingen</option>
+          </select>
+          <select class="search" id="taken-filter-teamlid" style="max-width:200px" aria-label="Filter op teamlid">
+            <option value="">Alle teamleden</option>
+          </select>
+          <label class="taken-date-filter" title="Filter op deadline-datum">
+            <span class="taken-date-filter-label">Deadline</span>
+            <input type="date" class="search" id="taken-filter-deadline" aria-label="Filter op deadline" />
+          </label>
+          <button type="button" class="btn-outline taken-reset-btn" id="taken-filter-reset" title="Alle filters wissen">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Reset
+          </button>
         </div>
-      </section>
+
+        <section class="table-card table-card--compact">
+          <div class="table-wrapper">
+            <table class="employees-table" id="taken-table">
+              <thead>
+                <tr>
+                  <th data-col="type"><div class="th-sort-inner"><span class="th-label">Type</span></div></th>
+                  <th data-col="naam"><div class="th-sort-inner"><span class="th-label">Titel</span></div></th>
+                  <th data-col="afdeling"><div class="th-sort-inner"><span class="th-label">Afdeling</span></div></th>
+                  <th data-col="toegewezen"><div class="th-sort-inner"><span class="th-label">Toegewezen aan</span></div></th>
+                  <th data-col="aangemaakt_door"><div class="th-sort-inner"><span class="th-label">Aangemaakt door</span></div></th>
+                  <th data-col="status"><div class="th-sort-inner"><span class="th-label">Status</span></div></th>
+                  <th data-col="deadline"><div class="th-sort-inner"><span class="th-label">Deadline</span></div></th>
+                  <th data-col="prioriteit"><div class="th-sort-inner"><span class="th-label">Prioriteit</span></div></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="taken-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer table-footer--pagebar">
+            <div class="footer-left">
+              <span id="taken-pager-range" class="pager-range">0 van 0</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ MANAGEMENTOVERZICHT ============ -->
+      <div id="taken-mgmt-view" hidden>
+        <div class="taken-mgmt-grid">
+          <section class="table-card taken-mgmt-card" data-bucket="verzoeken">
+            <header class="taken-mgmt-head"><span class="taken-mgmt-title">Verzoeken te beoordelen</span><span class="taken-mgmt-count" data-count="verzoeken">0</span></header>
+            <div class="taken-mgmt-list" id="taken-mgmt-verzoeken"></div>
+          </section>
+          <section class="table-card taken-mgmt-card" data-bucket="besluiten">
+            <header class="taken-mgmt-head"><span class="taken-mgmt-title">Open besluitpunten</span><span class="taken-mgmt-count" data-count="besluiten">0</span></header>
+            <div class="taken-mgmt-list" id="taken-mgmt-besluiten"></div>
+          </section>
+          <section class="table-card taken-mgmt-card" data-bucket="achterstallig">
+            <header class="taken-mgmt-head"><span class="taken-mgmt-title">Achterstallige taken</span><span class="taken-mgmt-count" data-count="achterstallig">0</span></header>
+            <div class="taken-mgmt-list" id="taken-mgmt-achterstallig"></div>
+          </section>
+          <section class="table-card taken-mgmt-card" data-bucket="kritiek">
+            <header class="taken-mgmt-head"><span class="taken-mgmt-title">Kritieke taken (hoge prioriteit, open)</span><span class="taken-mgmt-count" data-count="kritiek">0</span></header>
+            <div class="taken-mgmt-list" id="taken-mgmt-kritiek"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ============ ORGANISATIE-DASHBOARD ============ -->
+      <div id="taken-org-view" hidden>
+        <section class="tk-kpi-grid" aria-label="Kerngetallen taken">
+          <div class="tk-kpi tk-kpi--blue">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Openstaande taken</span><span class="tk-kpi-value" id="tk-kpi-open">0</span><span class="tk-kpi-sub">niet afgerond/geannuleerd</span></div>
+          </div>
+          <div class="tk-kpi tk-kpi--green">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Afgeronde taken</span><span class="tk-kpi-value" id="tk-kpi-afgerond">0</span><span class="tk-kpi-sub">totaal afgerond</span></div>
+          </div>
+          <div class="tk-kpi tk-kpi--red">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Achterstallig</span><span class="tk-kpi-value" id="tk-kpi-achterstallig">0</span><span class="tk-kpi-sub">over de deadline</span></div>
+          </div>
+          <div class="tk-kpi tk-kpi--orange">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Kritiek open</span><span class="tk-kpi-value" id="tk-kpi-kritiek">0</span><span class="tk-kpi-sub">hoge prioriteit, open</span></div>
+          </div>
+          <div class="tk-kpi tk-kpi--purple">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Verzoeken te beoordelen</span><span class="tk-kpi-value" id="tk-kpi-verzoeken">0</span><span class="tk-kpi-sub">wacht op beoordeling</span></div>
+          </div>
+          <div class="tk-kpi tk-kpi--teal">
+            <div class="tk-kpi-body"><span class="tk-kpi-label">Gem. afhandeltijd</span><span class="tk-kpi-value" id="tk-kpi-afhandeltijd">—</span><span class="tk-kpi-sub">dagen tot afronding</span></div>
+          </div>
+        </section>
+
+        <section class="table-card table-card--compact" style="margin-top:16px">
+          <header class="taken-mgmt-head"><span class="taken-mgmt-title">Taken per afdeling</span></header>
+          <div class="table-wrapper">
+            <table class="employees-table">
+              <thead>
+                <tr>
+                  <th data-col="afdeling"><span class="th-label">Afdeling</span></th>
+                  <th data-col="open"><span class="th-label">Open</span></th>
+                  <th data-col="achterstallig"><span class="th-label">Achterstallig</span></th>
+                  <th data-col="afgerond"><span class="th-label">Afgerond</span></th>
+                  <th data-col="verzoeken"><span class="th-label">Open verzoeken</span></th>
+                </tr>
+              </thead>
+              <tbody id="taken-org-afdeling-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
@@ -289,28 +347,42 @@
       <form id="taken-add-form" novalidate>
         <input type="hidden" id="taken-edit-id" value="" />
         <div class="emp-verzuim-modal-body">
+          <!-- Type-keuze (alleen bij aanmaken). Medewerkers kunnen enkel verzoeken indienen. -->
+          <div class="emp-verzuim-modal-field" id="taken-type-field">
+            <span>Type</span>
+            <div class="filter-chips taken-typepick" role="group" aria-label="Itemtype">
+              <button type="button" class="filter-chip filter-chip--active" data-mtype="taak" aria-pressed="true">Taak</button>
+              <button type="button" class="filter-chip" data-mtype="verzoek" aria-pressed="false">Verzoek</button>
+              <button type="button" class="filter-chip" data-mtype="goedkeuring" aria-pressed="false">Besluitpunt</button>
+            </div>
+            <span class="taken-type-locklabel" id="taken-type-locklabel" hidden></span>
+          </div>
           <label class="emp-verzuim-modal-field">
-            <span>Taaknaam</span>
+            <span id="taken-add-naam-label">Titel</span>
             <input type="text" id="taken-add-naam" class="comp-modal-input" required placeholder="bv. CAO controle Q2">
           </label>
           <label class="emp-verzuim-modal-field">
-            <span>Beschrijving</span>
+            <span id="taken-add-beschrijving-label">Beschrijving</span>
             <textarea id="taken-add-beschrijving" class="comp-modal-input" rows="3" placeholder="Toelichting / sub-stappen"></textarea>
-          </label>
-          <label class="emp-verzuim-modal-field">
-            <span>Toegewezen aan</span>
-            <select id="taken-add-toegewezen" class="comp-modal-input">
-              <option value="">— Niemand —</option>
-            </select>
           </label>
           <div style="display:flex;gap:12px;">
             <label class="emp-verzuim-modal-field" style="flex:1">
-              <span>Status</span>
-              <select id="taken-add-status" class="comp-modal-input">
-                <option value="--">—</option>
-                <option value="In behandeling">In behandeling</option>
-                <option value="Voltooid">Voltooid</option>
+              <span>Afdeling</span>
+              <select id="taken-add-afdeling" class="comp-modal-input">
+                <option value="">— Kies afdeling —</option>
               </select>
+            </label>
+            <label class="emp-verzuim-modal-field" style="flex:1" id="taken-toegewezen-field">
+              <span>Toegewezen aan</span>
+              <select id="taken-add-toegewezen" class="comp-modal-input">
+                <option value="">— Niemand —</option>
+              </select>
+            </label>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <label class="emp-verzuim-modal-field" style="flex:1" id="taken-status-field">
+              <span>Status</span>
+              <select id="taken-add-status" class="comp-modal-input"></select>
             </label>
             <label class="emp-verzuim-modal-field" style="flex:1">
               <span>Prioriteit</span>
@@ -321,7 +393,7 @@
               </select>
             </label>
             <label class="emp-verzuim-modal-field" style="flex:1">
-              <span>Deadline</span>
+              <span id="taken-add-deadline-label">Deadline</span>
               <input type="date" id="taken-add-deadline" class="comp-modal-input">
             </label>
           </div>
@@ -348,6 +420,47 @@
             <textarea id="taken-reject-reason" class="comp-modal-input" rows="2" placeholder="Wat moet er nog gebeuren?"></textarea>
           </label>
           <button type="button" class="btn-outline taken-reject-confirm" id="taken-reject-confirm-btn">Bevestig afkeuren</button>
+        </div>
+      </section>
+
+      <!-- Verzoek beoordelen (alleen voor afdeling-management / directie) -->
+      <section class="taken-approve-block taken-verzoek-block" id="taken-verzoek-block" hidden>
+        <div class="taken-approve-head">
+          <span class="taken-approve-icon" aria-hidden="true">📥</span>
+          <span>Dit verzoek wacht op beoordeling.</span>
+        </div>
+        <p class="taken-approve-hint">Keur goed om het verzoek om te zetten naar een taak (en wijs eventueel direct iemand toe), wijs af, of stuur terug voor aanvullende informatie.</p>
+        <label class="emp-verzuim-modal-field">
+          <span>Toewijzen aan (bij goedkeuren — optioneel)</span>
+          <select id="taken-verzoek-toegewezen" class="comp-modal-input">
+            <option value="">— Niemand —</option>
+          </select>
+        </label>
+        <label class="emp-verzuim-modal-field">
+          <span>Toelichting (optioneel — komt als opmerking in de draad)</span>
+          <textarea id="taken-verzoek-reden" class="comp-modal-input" rows="2" placeholder="Reden / aanvullende vraag"></textarea>
+        </label>
+        <div class="taken-approve-actions">
+          <button type="button" class="btn-primary" id="taken-verzoek-approve-btn">Goedkeuren &amp; omzetten naar taak</button>
+          <button type="button" class="btn-outline" id="taken-verzoek-return-btn">Terugsturen</button>
+          <button type="button" class="btn-outline" id="taken-verzoek-reject-btn">Afwijzen</button>
+        </div>
+      </section>
+
+      <!-- Besluitpunt afhandelen (alleen voor directie/eigenaar of de aanmaker) -->
+      <section class="taken-approve-block taken-besluit-block" id="taken-besluit-block" hidden>
+        <div class="taken-approve-head">
+          <span class="taken-approve-icon" aria-hidden="true">⚖️</span>
+          <span>Dit besluitpunt wacht op een formele beslissing.</span>
+        </div>
+        <label class="emp-verzuim-modal-field">
+          <span>Toelichting bij het besluit (optioneel — komt als opmerking in de draad)</span>
+          <textarea id="taken-besluit-reden" class="comp-modal-input" rows="2" placeholder="Onderbouwing van het besluit"></textarea>
+        </label>
+        <div class="taken-approve-actions">
+          <button type="button" class="btn-primary" id="taken-besluit-approve-btn">Goedkeuren</button>
+          <button type="button" class="btn-outline" id="taken-besluit-reject-btn">Afkeuren</button>
+          <button type="button" class="btn-outline" id="taken-besluit-progress-btn">In behandeling nemen</button>
         </div>
       </section>
 
