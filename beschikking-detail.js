@@ -522,7 +522,7 @@
         var bd = document.createElement("div");
         bd.className = "bdtl-note-body bdtl-note-body--in-list";
         bd.setAttribute("data-note-id", n.id);
-        bd.innerHTML = n.bodyHtml || "<p>—</p>";
+        bd.innerHTML = window.besaSanitizeHtml(n.bodyHtml || "<p>—</p>");
         li.appendChild(bd);
         ul.appendChild(li);
       }
@@ -1721,7 +1721,7 @@
             if (all0[j2] && all0[j2].id === bid) {
               bdtlNoteEditingId = bid;
               var ed2 = document.getElementById("bdtl-note-editor");
-              if (ed2) ed2.innerHTML = all0[j2].bodyHtml || "";
+              if (ed2) ed2.innerHTML = window.besaSanitizeHtml(all0[j2].bodyHtml || "");
               var h2b = document.getElementById("bdtl-note-composer-h2");
               if (h2b) h2b.textContent = "Notitie bewerken";
               var hih2 = document.getElementById("bdtl-note-editing-hint");

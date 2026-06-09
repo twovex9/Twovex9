@@ -223,7 +223,7 @@ function initNewsModal() {
     title.textContent = item.titel || "Nieuwsbericht";
     author.textContent = item.auteur || "HR team";
     date.textContent = formatNlShortDate(item.aanmaakdatum);
-    content.innerHTML = item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>";
+    content.innerHTML = window.besaSanitizeHtml(item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>");
     if (item.image) {
       image.src = item.image;
       image.hidden = false;
