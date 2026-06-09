@@ -57,10 +57,10 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 ### Fase 3 — Dossier + portaal-UI (PC + mobiel)  [ ]
 - [ ] G14 — nationaliteit · G15 — afdeling · G16 — leidinggevende · G18 — IBAN in Details (loondienst)
 - [x] G17 — Mijn Profiel leesbare cards (telefoon/adres/geboortedatum/startdatum/contract/afdeling/personeelsnummer) in mijn-gegevens.js renderSummary.
-- [~] G19 — Mijn Salaris: loonstroken-view. PC ✅ (mijn-loonstroken.js + sectie in mijn-gegevens.html, RLS-gescoped, download via signed URL). Mobiel + jaaropgaven(G20)/historie(G21) nog te doen.
-- [~] G22 — eigen verlofsaldo self-service: PC ✅ (mijn-verlof.js, sectie in hub). Mobiel nog.
-- [~] G23 — verlof aanvragen self-service: PC ✅ (form → verlofDB.add+indienen, route teamleider→HR). Mobiel nog.
-- [ ] G24 — mobiel verlof-statusmapping fix
+- [x] G19 — Mijn Salaris: loonstroken-view. PC ✅ (mijn-loonstroken.js + sectie in mijn-gegevens.html, RLS-gescoped, download via signed URL). Mobiel ✅ (route /salaris, salaris.ts, future-flow-mobile PR #2, live-geverifieerd qa-medewerker licht+donker: Mei 2026 + signed-URL OK). Historie(G21) apart.
+- [x] G22 — eigen verlofsaldo self-service: PC ✅ (mijn-verlof.js, sectie in hub). Mobiel ✅ (/verlof kpi-tegels wet/bovenwet).
+- [x] G23 — verlof aanvragen self-service: PC ✅ (form → verlofDB.add+indienen, route teamleider→HR). Mobiel ✅ (dienVerlofIn → status ingediend + route Zorgcoördinator + notify; live end-to-end getest: aanvraag → "In behandeling", opgeruimd).
+- [x] G24 — mobiel verlof-statusmapping fix: STATUS_NL 1-op-1 met desktop (concept/ingediend/goedgekeurd/afgewezen/geannuleerd; in_afwachting=legacy-alias). Live: 'ingediend' → "In behandeling".
 - [ ] G25 — verloftypes-beheer (verloftypes.js + tabel)
 - [ ] G27 — onboarding toegangschecklist 5 spec-items
 - [ ] G29 — gestructureerde inwerkgesprekken/evaluatiemomenten
@@ -78,10 +78,10 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G48 — `compliance-dashboard.html` + `-data.js` + `.js`: KPI-tegels (VOG%, verlopen, onboarding%, ZZP%) + grids + per-medewerker drill-down-tabel (klik → dossier) + filters/zoek. Page-map (HR/admin-tier) + topnav HR-mega-menu. (LIVE te verifiëren)
 - [x] G53 (deels) — VOG geldig%/aanwezig%, onboarding%, contract%, ZZP% op het dashboard. (Beleid% + SKJ% volgen met G26/G10.)
 - [ ] G48 — Compliance(HR)-dashboard met KPI-tegels + HR-rol in page-map
-- [ ] G50 — personeelskosten + ZZP%-KPI op bestuur-dashboard
-- [ ] G51 — verlooppercentage-KPI
-- [ ] G53 — Geldige VOG%/SKJ%/voltooide onboarding%/ondertekende beleid%  (zonder vacature-KPI's)
-- [ ] G54 — samengestelde compliance-score
+- [x] G50 — personeelskosten (indicatief) + ZZP%-KPI op management-dashboard via `hr_bestuur_kpis()` (can_view_management). Personeelskosten eerlijk gelabeld met "N van M dossiers" (salaris-data dun, 19/106). `hr_v4_bestuur_compliance_kpis.sql`.
+- [x] G51 — verlooppercentage-KPI (uit dienst / totaal) op management-dashboard via hr_bestuur_kpis. Eerlijk: thin data (1 uit dienst → 0,9%).
+- [x] G53 — Geldige VOG% + onboarding% + contract% + beleid%-tegels op compliance-dashboard. SKJ als absoluut aantal "geldige SKJ-registraties" (geen misleidend % zonder duidelijke noemer; SKJ-bron = education-doc met 'skj' in naam). Vacature-KPI's bewust weggelaten.
+- [x] G54 — samengestelde compliance-score (transparant: 30% VOG + 20% onboarding + 25% contract + 25% beleid) op compliance-dashboard én management-dashboard. Server-getest qa-hr=29, qa-eigenaar bestuur-KPI's OK, qa-medewerker gated=0.
 - [x] G44 — server-side rol-RLS HR-kerntabellen. `hr_v4_rls_hardening.sql` toegepast op prod. medewerkers (writes office-only, SELECT open), verlof_aanvragen (SELECT/INSERT/UPDATE office-of-eigen, DELETE office), medewerker_notities (SELECT office-only), medewerker_verzuim_perioden (SELECT office-of-eigen), medewerker_verlof_overgedragen (SELECT office-of-eigen, writes office). Server-geverifieerd via role-impersonatie: medewerker ziet eigen verlof/0 notities, cross-write + medewerker-insert → 42501 geweigerd; office ziet alles. bureau_lockout (RESTRICTIVE) composeert AND.
 - [ ] G55 — per-rol slug-plan (scripts/<rol>-rol-permissies.mjs)
 - [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry

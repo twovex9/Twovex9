@@ -11,6 +11,7 @@
   "use strict";
 
   var _data = null;
+  var _bestuur = null;
   var readyPromise = null;
 
   function reportSilent(action, err) {
@@ -32,6 +33,12 @@
       var res = await global.besaSupabase.rpc("management_dashboard_v1", { p_month: month || null });
       if (res.error) throw res.error;
       _data = res.data || null;
+      // Bestuurs-KPI's (G50/G51/G54) los: can_view_management-gated RPC. Mag de
+      // hoofd-render nooit breken — bij een fout blijft _bestuur gewoon null.
+      try {
+        var bk = await global.besaSupabase.rpc("hr_bestuur_kpis");
+        if (!bk.error) _bestuur = (bk.data && bk.data[0]) || null;
+      } catch (e) { /* bestuurs-KPI's optioneel */ }
       try {
         global.dispatchEvent(new CustomEvent("besa:management-dashboard-updated", { detail: { source: "load" } }));
       } catch (e) { /* */ }
@@ -51,6 +58,7 @@
     get ready() { return readyPromise || bootstrap(); },
     load: load,
     getData: function () { return _data; },
+    getBestuurKpis: function () { return _bestuur; },
     refresh: function () { return load(null); },
   };
 
