@@ -11756,6 +11756,11 @@ button.btn-dienst-aanmaken:hover {
 .planning-readonly #planning-opt-btn,
 .planning-readonly #planning-ai-btn,
 .planning-readonly .planning-erm-glabel-sum,
+/* Overlap-/conflict-banner ("X medewerkers dubbel ingeroosterd … Toon in lijst") is
+   een planner-actie om dubbele inroostering op te lossen — niet relevant voor de
+   read-only KIJKFUNCTIE (HR/Facilitair) en rendert daar bovendien als smalle kapotte
+   kolom bij volledige scope. Verbergen in read-only modus. */
+.planning-readonly #planning-overlap-banner,
 /* Detail-paneel bewerk-acties: in read-only modus (HR/Facilitair/werkvloer) is de
    dienst-detail een puur KIJK-paneel — verberg verwijderen/bewerken/toewijzen/uitnodigen.
    De handlers in dienst-detail.js zijn bovendien gegate op besaPlanningCanEdit(). */
