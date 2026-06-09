@@ -29,15 +29,18 @@
     return (mnd.charAt(0).toUpperCase() + mnd.slice(1)) + " " + r.jaar;
   }
 
+  function midOf(p) {
+    // profilesDB normaliseert naar camelCase medewerkerId; val terug op snake_case.
+    return p ? (p.medewerkerId || p.medewerker_id || null) : null;
+  }
   function currentMedewerkerId() {
     try {
       if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") {
-        var p = window.profilesDB.getCurrentSync();
-        if (p && p.medewerker_id) return p.medewerker_id;
+        var mid = midOf(window.profilesDB.getCurrentSync());
+        if (mid) return mid;
       }
-      if (window.besaCurrentProfile && window.besaCurrentProfile.medewerker_id) return window.besaCurrentProfile.medewerker_id;
-    } catch (e) { /* */ }
-    return null;
+      return midOf(window.besaCurrentProfile);
+    } catch (e) { return null; }
   }
 
   function render(rows) {
