@@ -90,7 +90,7 @@
     var addBtn = $("mu-add-btn"); if (addBtn) addBtn.hidden = locked || !state.meId;
 
     if (!state.meId) {
-      tb.innerHTML = '<tr><td colspan="8" class="mu-empty">Je account is nog niet aan een medewerker gekoppeld. Vraag de planner of HR om je te koppelen, dan kun je hier je uren registreren.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="9" class="mu-empty">Je account is nog niet aan een medewerker gekoppeld. Vraag de planner of HR om je te koppelen, dan kun je hier je uren registreren.</td></tr>';
       $("mu-total-uren").textContent = "0";
       $("mu-total-aantal").textContent = "0";
       return;
@@ -98,7 +98,7 @@
 
     var rows = ownRows();
     if (!rows.length) {
-      tb.innerHTML = '<tr><td colspan="8" class="mu-empty">Nog geen geregistreerde uren in ' + esc(monthLabel()) + '. Klik op "+ Uren toevoegen" om te beginnen.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="9" class="mu-empty">Nog geen geregistreerde uren in ' + esc(monthLabel()) + '. Klik op "+ Uren toevoegen" om te beginnen.</td></tr>';
     } else {
       var html = "";
       rows.forEach(function (r) {
@@ -111,6 +111,7 @@
           "<td>" + esc(fmtTime(r.eindtijd)) + "</td>" +
           '<td class="mu-num">' + esc(formatDuur(r.duur_minuten)) + "</td>" +
           "<td>" + esc(r.client_label || getClientNaam(r.client_id) || "") + "</td>" +
+          "<td>" + esc(r.begeleidingstype || "") + "</td>" +
           "<td>" + esc(r.label || "") + "</td>" +
           "<td>" + esc(r.beschrijving || "") + "</td>" +
           '<td data-col="acties" class="mu-acties-cell">' + actie + "</td>" +
@@ -182,6 +183,7 @@
     $("mu-edit-start").value = "";
     $("mu-edit-eind").value = "";
     $("mu-edit-duur").value = "";
+    $("mu-edit-begeleiding").value = "";
     $("mu-edit-beschr").value = "";
     fillEmp();
     populateClientSelect("");
@@ -201,6 +203,7 @@
     $("mu-edit-start").value = fmtTime(rec.starttijd);
     $("mu-edit-eind").value = fmtTime(rec.eindtijd);
     $("mu-edit-duur").value = rec.duur_minuten ? durHoursDecimal(rec.duur_minuten) : "";
+    $("mu-edit-begeleiding").value = rec.begeleidingstype || "";
     $("mu-edit-beschr").value = rec.beschrijving || "";
     fillEmp();
     populateClientSelect(rec.client_id);
@@ -231,6 +234,7 @@
     var client_id = $("mu-edit-client").value || null;
     var clientNaam = client_id ? getClientNaam(client_id) : "";
     var label = $("mu-edit-label").value || "";
+    var begeleiding = $("mu-edit-begeleiding").value || "";
     var beschr = $("mu-edit-beschr").value || "";
     var err = $("mu-edit-error");
     if (!datum) { err.hidden = false; err.textContent = "Datum is verplicht."; return; }
@@ -241,6 +245,7 @@
     var payload = {
       datum: datum, starttijd: start || null, eindtijd: eind || null, duur_minuten: duur_minuten,
       client_id: client_id, client_label: clientNaam, label: label, beschrijving: beschr,
+      begeleidingstype: begeleiding,
     };
     try {
       if (state.editingId) {

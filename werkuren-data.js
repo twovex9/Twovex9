@@ -71,6 +71,7 @@
         client_label: row.client_label || "",
         dienst: row.dienst || "",
         label: row.label || "",
+        begeleidingstype: row.begeleidingstype || "",
         beschrijving: row.beschrijving || "",
         vergrendeld: !!row.vergrendeld,
         aanmaakdatum: row.aanmaakdatum,
@@ -89,6 +90,7 @@
         client_label: String(safe.client_label || ""),
         dienst: String(safe.dienst || ""),
         label: String(safe.label || ""),
+        begeleidingstype: String(safe.begeleidingstype || ""),
         beschrijving: String(safe.beschrijving || ""),
         vergrendeld: !!safe.vergrendeld,
       };
@@ -101,7 +103,7 @@
       ["medewerker_id", "datum", "starttijd", "eindtijd", "client_id"].forEach(function (k) {
         if (Object.prototype.hasOwnProperty.call(safe, k)) p[k] = safe[k] || null;
       });
-      ["client_label", "dienst", "label", "beschrijving"].forEach(function (k) {
+      ["client_label", "dienst", "label", "begeleidingstype", "beschrijving"].forEach(function (k) {
         if (Object.prototype.hasOwnProperty.call(safe, k)) p[k] = String(safe[k] || "");
       });
       if (Object.prototype.hasOwnProperty.call(safe, "duur_minuten")) p.duur_minuten = Number(safe.duur_minuten || 0);
