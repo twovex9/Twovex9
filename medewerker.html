@@ -640,6 +640,13 @@
                 <input id="emp-loondienst-salaris" type="text" value="€ 0,00" readonly>
               </label>
 
+              <div class="emp-form-grid emp-loondienst-salary-grid emp-loondienst-salary-calc">
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Werkgeverslasten (p/m)</span><input id="emp-loondienst-werkgeverslasten" type="text" value="€ 0,00" readonly></label>
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Uurkostprijs</span><input id="emp-loondienst-uurkostprijs" type="text" value="€ 0,00" readonly></label>
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Indicatief netto (p/m)</span><input id="emp-loondienst-netto" type="text" value="€ 0,00" readonly></label>
+              </div>
+              <small class="emp-field-hint emp-salary-calc-hint">Automatisch berekend uit schaal, trede en contracturen (36-uur-bruto × uren/36). Werkgeverslasten en netto zijn indicatief en instelbaar onder Instellingen.</small>
+
               <label class="emp-field emp-field--full emp-geo-field">
                 <span>Woon-werk afstand (enkele reis, km)</span>
                 <div class="emp-geo-row">
@@ -984,6 +991,16 @@
                 <div class="emp-prof-fixed-value">Boventallig</div>
                 <input id="emp-uur-diensttype" type="hidden" value="Boventallig">
                 <label class="emp-field"><input id="emp-uur-tarief" type="text" placeholder=""></label>
+              </div>
+
+              <h4 class="emp-prof-subtitle emp-prof-subtitle--spaced">Kostenindicatie (ZZP)</h4>
+              <p class="emp-prof-rate-desc emp-prof-rate-desc--wide">Berekend op basis van het algemene uurtarief, het BTW-percentage en de indicatieve uren per week.</p>
+              <div class="emp-form-grid emp-zzp-kosten-grid">
+                <label class="emp-field"><span>BTW-percentage (%)</span><input id="emp-zzp-btw-pct" type="number" step="1" min="0" max="100" placeholder="21"></label>
+                <label class="emp-field"><span>Indicatieve uren per week</span><input id="emp-zzp-uren-week" type="number" step="1" min="0" max="100" placeholder="0"></label>
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Kostprijs per uur (incl. BTW)</span><input id="emp-zzp-kostprijs-uur" type="text" value="€ 0,00" readonly></label>
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Totale kosten per week</span><input id="emp-zzp-kosten-week" type="text" value="€ 0,00" readonly></label>
+                <label class="emp-field emp-loondienst-salary-readonly"><span>Totale kosten per maand</span><input id="emp-zzp-kosten-maand" type="text" value="€ 0,00" readonly></label>
               </div>
 
               <div class="emp-section-footer card_footer bg-[#fcfcfd]"><button type="button" class="btn-primary emp-save-section button" data-section="professioneel-uurtarieven">Wijzigingen opslaan</button></div>
@@ -2027,10 +2044,12 @@
   <script src="inwerk-items-data.js?v=918f1ad"></script>
   <script src="inwerk-voortgang-data.js?v=918f1ad"></script>
   <script src="medewerker-warnings.js?v=918f1ad"></script>
+  <script src="salarishuis-data.js?v=918f1ad-hr1"></script>
+  <script src="hr-salaris-berekening.js?v=918f1ad-hr1"></script>
   <script src="locaties-data.js?v=918f1ad" defer></script>
   <script src="geo-distance.js?v=918f1ad" defer></script>
   <script src="besa-adres-autofill.js?v=918f1ad" defer></script>
-  <script src="medewerker.js?v=918f1ad"></script>
+  <script src="medewerker.js?v=918f1ad-hr1"></script>
   <script src="medewerker-geo-hook.js?v=918f1ad" defer></script>
   <script src="read-audit.js?v=918f1ad" defer></script>
   <script>
