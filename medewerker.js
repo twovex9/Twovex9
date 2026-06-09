@@ -783,6 +783,7 @@ function loadEmployeeIntoForm() {
   setValue("emp-nationaliteit", emp.nationaliteit);
   setValue("emp-bankrekening", emp.bankrekening);
   setValue("emp-afdeling", emp.afdeling);
+  setValue("emp-leidinggevende", emp.leidinggevende);
   const caoValue = document.getElementById("emp-cao-value");
   if (caoValue && emp.cao) caoValue.textContent = emp.cao;
   setValue("emp-postcode", emp.postcode);
@@ -4013,6 +4014,7 @@ function gatherFormData() {
     nationaliteit: val("emp-nationaliteit"),
     bankrekening: val("emp-bankrekening"),
     afdeling: val("emp-afdeling"),
+    leidinggevende: val("emp-leidinggevende"),
     verjaardag: gebDDMMYYYY,
     taal: (() => {
       // Save als code ("NL"/"ENG"/"FR"/"DE"), niet als label
