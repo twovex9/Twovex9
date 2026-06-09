@@ -55,7 +55,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G21 — salarishistorie self-service view
 
 ### Fase 3 — Dossier + portaal-UI (PC + mobiel)  [ ]
-- [ ] G14 — nationaliteit · G15 — afdeling · G16 — leidinggevende · G18 — IBAN in Details (loondienst)
+- [x] G14 — nationaliteit · G15 — afdeling · G18 — IBAN (PR #587) · **G16 — leidinggevende** (Details-tab veld emp-leidinggevende → medewerkers.data, mirror G14/15/18-patroon)
 - [x] G17 — Mijn Profiel leesbare cards (telefoon/adres/geboortedatum/startdatum/contract/afdeling/personeelsnummer) in mijn-gegevens.js renderSummary.
 - [x] G19 — Mijn Salaris: loonstroken-view. PC ✅ (mijn-loonstroken.js + sectie in mijn-gegevens.html, RLS-gescoped, download via signed URL). Mobiel ✅ (route /salaris, salaris.ts, future-flow-mobile PR #2, live-geverifieerd qa-medewerker licht+donker: Mei 2026 + signed-URL OK). Historie(G21) apart.
 - [x] G22 — eigen verlofsaldo self-service: PC ✅ (mijn-verlof.js, sectie in hub). Mobiel ✅ (/verlof kpi-tegels wet/bovenwet).
@@ -83,6 +83,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G53 — Geldige VOG% + onboarding% + contract% + beleid%-tegels op compliance-dashboard. SKJ als absoluut aantal "geldige SKJ-registraties" (geen misleidend % zonder duidelijke noemer; SKJ-bron = education-doc met 'skj' in naam). Vacature-KPI's bewust weggelaten.
 - [x] G54 — samengestelde compliance-score (transparant: 30% VOG + 20% onboarding + 25% contract + 25% beleid) op compliance-dashboard én management-dashboard. Server-getest qa-hr=29, qa-eigenaar bestuur-KPI's OK, qa-medewerker gated=0.
 - [x] G44 — server-side rol-RLS HR-kerntabellen. `hr_v4_rls_hardening.sql` toegepast op prod. medewerkers (writes office-only, SELECT open), verlof_aanvragen (SELECT/INSERT/UPDATE office-of-eigen, DELETE office), medewerker_notities (SELECT office-only), medewerker_verzuim_perioden (SELECT office-of-eigen), medewerker_verlof_overgedragen (SELECT office-of-eigen, writes office). Server-geverifieerd via role-impersonatie: medewerker ziet eigen verlof/0 notities, cross-write + medewerker-insert → 42501 geweigerd; office ziet alles. bureau_lockout (RESTRICTIVE) composeert AND.
+- [x] G45 — `management_dashboard_v1` RPC gespiegeld naar `supabase/migrations/management_dashboard_v1.sql` (auditeerbaar; idempotent gevalideerd op prod). RLS-helpers al in Fase 0; bs2_*=datatabellen.
 - [ ] G55 — per-rol slug-plan (scripts/<rol>-rol-permissies.mjs)
 - [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry
 - [ ] G57 — herbruikbare besaApplyReadOnly(roles) helper
@@ -96,7 +97,20 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G35 — acties-entiteit + uitgevoerd_door op contactmoment
 - [ ] G46 — medewerker-documenten bucket PRIVATE + signed URLs
 - [ ] G58 — scripts/deploy-functions.mjs + scripts/apply-migrations.mjs
-- [ ] G59 — README/CLAUDE.md DDL-route + canonieke URL bijwerken
+- [ ] G58 — scripts/deploy-functions.mjs + scripts/apply-migrations.mjs
+- [x] G59 — DDL-route + canonieke URL's gedocumenteerd in `docs/hr-module/DEPLOY.md` (db-exec, web/mobiel-deploy incl. twovex9-credential-truc, RLS-impersonatie-test, edge-blocker-noot).
+
+## ⏳ RESTERENDE GAPS — status & reden (na sessie 2026-06-09 #2)
+**Data-geblokkeerd** (code zou kloppen maar brondata ontbreekt → toont leeg/0; vergt HR-invoer):
+- G41 SKJ-saldo + G42 recertificering/agressie → `medewerker_opleidingen`-koppeltabel is leeg (0 rijen).
+- (personeelskosten/verloop al "indicatief" gelabeld in G50/G51.)
+
+**Infra-geblokkeerd** (vergt edge-function-deploy + secrets; G58 deploy-script bestaat nog niet):
+- G7-auto-mail (`salarisexport-mail`), G13 onboarding-upload doc-types (ALLOWED_TYPES in edge), G30 auto-mail teken/upload/inwerklink.
+
+**Groot/risicovol — eigen sessie aanbevolen** (niet half doen vóór de clean runs):
+- G46 docs-bucket PRIVATE + signed URLs (blast-radius: medewerker.js/mijn-documenten/doc-status/warnings → moet doc-viewing app-breed ombouwen).
+- G21 salarishistorie self-service · G25 verloftypes-beheerpagina · G27/G29 onboarding-checklist/gesprekken · G31 Bradford-verzuim · G33/G34/G35 verzuim-WP-uitbreidingen · G11/G12 doc-type-model · G56/G57 gate-robustheid+besaApplyReadOnly.
 
 ## Test-eindeis
 2 opeenvolgende clean Chrome-runs (licht + donker) via QA-accounts per rol op futureflow-etf.vercel.app —
