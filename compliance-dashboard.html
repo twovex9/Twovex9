@@ -5,13 +5,12 @@
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Gebruikers — Organisatie</title>
-  <link rel="stylesheet" href="styles.css?v=918f1ad">
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
+  <title>Compliance Dashboard</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -20,7 +19,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
 </head>
-<body>
+<body class="page-management-dashboard">
   <script src="save-feedback.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
 
@@ -60,7 +59,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="hr" class="top-link top-link--dropdown">HR<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="hr" class="top-link top-link--dropdown is-active">HR<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="HR opties">
                 <div class="top-dropdown-col">
                   <span class="top-dropdown-group-title">Medewerkers</span>
@@ -161,7 +160,7 @@
             </div>
             <a href="audit" class="top-link">Audit</a>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="teams" class="top-link top-link--dropdown is-active">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="teams" class="top-link top-link--dropdown">Organisatie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Organisatie opties">
                 <a href="rollen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Rollen</span><span class="top-dropdown-subtitle">Beheer rollen en permissies</span></a>
                 <a href="teams" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Teams</span><span class="top-dropdown-subtitle">Team structuur beheer</span></a>
@@ -183,142 +182,111 @@
       </div>
     </header>
 
-    <main class="content">
-      <div class="content-header">
-        <h1>Gebruikers</h1>
-        <div class="header-actions">
-          <button type="button" class="btn-primary" id="gebr-add-btn">+ Nieuwe medewerker</button>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Compliance dashboard">
+      <nav class="side-nav" aria-label="Compliance secties">
+        <a href="#md-top" class="side-link is-active" aria-current="page">Overzicht</a>
+        <a href="#md-compliance" class="side-link">Compliance &amp; documenten</a>
+        <a href="#md-onboarding" class="side-link">Onboarding &amp; contracten</a>
+        <a href="#md-medewerkers" class="side-link">Medewerkers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="side-nav-exit" href="home">← Home</a>
+      </div>
+    </aside>
+
+    <main class="content content--mgmt-dashboard" id="md-top">
+      <div class="content-header md-header">
+        <div>
+          <h1>Compliance Dashboard</h1>
+          <p class="md-subtitle" id="cd-date">Documentbewaking, onboarding en personeelscompliance</p>
+        </div>
+        <div class="header-actions md-header-actions">
+          <span class="md-updated" id="cd-updated"></span>
+          <button type="button" class="btn-outline md-refresh" id="cd-refresh">Vernieuwen</button>
         </div>
       </div>
 
-      <div class="toolbar gebr-toolbar">
-        <input class="search" type="search" id="gebr-search" placeholder="Zoek op naam of email…" autocomplete="off" />
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="gebr-show-archived" />
-          <span class="switch-label">Gearchiveerd</span>
-        </label>
-        <div class="gebr-totaal" id="gebr-totaal" aria-live="polite">— gebruikers</div>
-      </div>
+      <!-- Snelle statistieken -->
+      <section class="md-quickstats" aria-label="Compliance kerncijfers">
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="cd-qs-vog">—</span>
+          <span class="md-qstat-lbl">Geldige VOG</span>
+        </div>
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="cd-qs-verlopen">—</span>
+          <span class="md-qstat-lbl">Verlopen documenten</span>
+        </div>
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="cd-qs-onboarding">—</span>
+          <span class="md-qstat-lbl">Onboarding voltooid</span>
+        </div>
+        <div class="md-qstat">
+          <span class="md-qstat-val" id="cd-qs-zzp">—</span>
+          <span class="md-qstat-lbl">ZZP-aandeel</span>
+        </div>
+      </section>
 
-      <section class="table-card table-card--compact">
+      <!-- Domein: Compliance & documenten -->
+      <section class="table-card md-domain" id="md-compliance" aria-label="Compliance &amp; documenten">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Compliance &amp; documenten</h2>
+        </div>
+        <div class="md-metric-grid" id="cd-compliance-grid"></div>
+        <p class="md-note" id="cd-compliance-note"></p>
+      </section>
+
+      <!-- Domein: Onboarding & contracten -->
+      <section class="table-card md-domain" id="md-onboarding" aria-label="Onboarding &amp; contracten">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Onboarding &amp; contracten</h2>
+          <a href="hr" class="md-domain-link">Naar medewerkers →</a>
+        </div>
+        <div class="md-metric-grid" id="cd-onboarding-grid"></div>
+      </section>
+
+      <!-- Compliance per medewerker (drill-down) -->
+      <section class="table-card md-domain" id="md-medewerkers" aria-label="Compliance per medewerker">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Compliance per medewerker</h2>
+          <div class="toolbar md-mw-toolbar">
+            <label class="search">
+              <input type="search" id="cd-search" placeholder="Zoek medewerker…" autocomplete="off">
+            </label>
+            <div class="filter-chips" id="cd-filters" role="group" aria-label="Filter compliance">
+              <button type="button" class="filter-chip is-active" data-filter="alle">Alle</button>
+              <button type="button" class="filter-chip" data-filter="verlopen">Met verlopen docs</button>
+              <button type="button" class="filter-chip" data-filter="geen-vog">VOG ontbreekt/verlopen</button>
+            </div>
+          </div>
+        </div>
         <div class="table-wrapper">
-          <table class="employees-table gebr-table">
+          <table class="employees-table cd-table">
             <thead>
               <tr>
-                <th>Naam</th>
-                <th>Email</th>
-                <th>Rollen</th>
-                <th>2FA</th>
-                <th>Wachtwoord</th>
-                <th>Status</th>
-                <th>Acties</th>
+                <th>Medewerker</th>
+                <th>Dienstverband</th>
+                <th>VOG</th>
+                <th>Verlopen docs</th>
+                <th>Binnenkort (&le;90d)</th>
+                <th>Onboarding</th>
+                <th>Contract</th>
               </tr>
             </thead>
-            <tbody id="gebr-tbody">
-              <tr><td colspan="7" class="gebr-loading">Gebruikers laden…</td></tr>
+            <tbody id="cd-tbody">
+              <tr><td colspan="7" class="cd-empty">Laden…</td></tr>
             </tbody>
           </table>
         </div>
       </section>
-
-      <p class="gebr-foot">
-        Tijdelijk wachtwoord bij reset of nieuwe medewerker: <strong>Welkom123</strong>. Geef deze mondeling door — BS1 verstuurt geen e-mails.
-      </p>
     </main>
   </div>
 
-  <!-- Add-user modal -->
-  <div id="gebr-add-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-add-title" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 id="gebr-add-title">Nieuwe medewerker</h2>
-        <button type="button" class="modal-close" id="gebr-add-close" aria-label="Sluiten">×</button>
-      </div>
-      <form id="gebr-add-form" class="gebr-add-form">
-        <label class="gebr-add-label">
-          Voornaam
-          <input type="text" id="gebr-add-voornaam" required autocomplete="off" />
-        </label>
-        <label class="gebr-add-label">
-          Achternaam
-          <input type="text" id="gebr-add-achternaam" required autocomplete="off" />
-        </label>
-        <label class="gebr-add-label">
-          E-mailadres
-          <input type="email" id="gebr-add-email" required autocomplete="off" />
-        </label>
-        <div class="gebr-add-label">
-          <span>Rollen <small>(één of meer — de permissies zijn de optelsom)</small></span>
-          <div id="gebr-add-roles" class="gebr-roles-checklist"></div>
-        </div>
-        <p id="gebr-add-err" class="gebr-add-err" hidden></p>
-        <p class="gebr-add-info">Initieel wachtwoord wordt <strong>Welkom123</strong>. Bij eerste login moet de gebruiker dit wijzigen en 2FA instellen.</p>
-        <div class="gebr-add-actions">
-          <button type="button" class="btn-outline" id="gebr-add-cancel">Annuleren</button>
-          <button type="submit" class="btn-primary" id="gebr-add-submit">Aanmaken</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Confirm modal voor reset password / reset 2FA -->
-  <div id="gebr-confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-confirm-title" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 id="gebr-confirm-title">Bevestigen</h2>
-        <button type="button" class="modal-close" id="gebr-confirm-close" aria-label="Sluiten">×</button>
-      </div>
-      <div class="gebr-confirm-body">
-        <p id="gebr-confirm-text"></p>
-      </div>
-      <div class="gebr-add-actions">
-        <button type="button" class="btn-outline" id="gebr-confirm-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="gebr-confirm-ok">Bevestigen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rollen-editor modal (multi-rol per gebruiker) -->
-  <div id="gebr-roles-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gebr-roles-modal-title" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 id="gebr-roles-modal-title">Rollen toewijzen</h2>
-        <button type="button" class="modal-close" id="gebr-roles-modal-close" aria-label="Sluiten">×</button>
-      </div>
-      <p class="gebr-roles-modal-sub" id="gebr-roles-modal-sub"></p>
-      <p class="gebr-roles-modal-help">Vink de rollen aan die deze gebruiker moet hebben. De permissies zijn automatisch de optelsom van alle aangevinkte rollen. Wijzigingen worden direct opgeslagen.</p>
-      <div id="gebr-roles-modal-list" class="gebr-roles-checklist"></div>
-      <div class="gebr-add-actions">
-        <button type="button" class="btn-primary" id="gebr-roles-modal-done">Klaar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- "Geen toegang" overlay voor non-admin-tier users -->
-  <div id="gebr-no-access" class="modal-overlay" role="dialog" aria-modal="true" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>Geen toegang</h2>
-      </div>
-      <div class="gebr-confirm-body">
-        <p>De Gebruikers-tab is alleen toegankelijk voor de rollen <strong>Eigenaar</strong>, <strong>Admin</strong> en <strong>Directeur</strong>.</p>
-        <p>Klik op de knop hieronder om terug te keren naar de home-pagina.</p>
-      </div>
-      <div class="gebr-add-actions">
-        <a href="home" class="btn-primary">Terug naar home</a>
-      </div>
-    </div>
-  </div>
-
   <script src="top-nav-overflow.js?v=918f1ad"></script>
+  <script src="sidebar-nav.js?v=918f1ad"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
   <script src="besa-sync-reporter.js?v=918f1ad"></script>
-  <script src="optimistic-lock.js?v=918f1ad" defer></script>
-  <script src="realtime-sync.js?v=918f1ad" defer></script>
-  <script src="bulk-actions.js?v=918f1ad" defer></script>
-  <script src="pdf-export.js?v=918f1ad" defer></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
@@ -330,8 +298,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="bs2-roles-data.js?v=918f1ad" defer></script>
-  <script src="gebruikers-data.js?v=918f1ad" defer></script>
-  <script src="gebruikers.js?v=918f1ad" defer></script>
+  <script src="compliance-dashboard-data.js?v=hr1" defer></script>
+  <script src="compliance-dashboard.js?v=hr1" defer></script>
 </body>
 </html>

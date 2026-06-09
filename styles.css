@@ -26753,3 +26753,23 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 /* Forecast — heatmap-cel */
 .wf-fc-table th { vertical-align: bottom; }
 .wf-fc-cell { display: inline-block; min-width: 52px; padding: 3px 8px; border-radius: var(--r-pill); font-size: var(--font-ui-badge); font-weight: 700; }
+
+/* ─── HR Compliance-dashboard (compliance-dashboard.html) ─────────────────── */
+.md-mw-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cd-table tbody tr.cd-row { cursor: pointer; }
+.cd-table tbody tr.cd-row:hover { background: var(--blue-soft); }
+.cd-table tbody tr.cd-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.cd-empty { text-align: center; padding: 28px 16px; color: var(--text-secondary); }
+.cd-badge { display: inline-block; font-size: var(--font-ui-badge); font-weight: 700; }
+.cd-badge--ok { background: var(--green-soft); color: var(--green); }
+.cd-badge--warn { background: var(--yellow-soft); color: var(--yellow); }
+.cd-badge--bad { background: var(--red-soft); color: var(--red); }
+.cd-check { font-weight: 700; }
+.cd-check--ok { color: var(--green); }
+.cd-check--no { color: var(--text-muted); }
+.cd-num { font-weight: 700; }
+.cd-num--bad { color: var(--red); }
+.cd-num--warn { color: var(--yellow); }
+.md-metric--ok .md-metric-val { color: var(--green); }
+.md-metric--warn .md-metric-val { color: var(--yellow); }
+.md-metric--bad .md-metric-val { color: var(--red); }
