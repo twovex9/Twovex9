@@ -152,7 +152,23 @@
     "facturen-importeren.html": { action: "import", entity: "invoices" },
 
     // ─── Kilometers ───────────────────────────────────────────────────────────
+    // kilometers.html (Kilometer declaraties) staat op browse-mileage-declarations:
+    // óók de Medewerker heeft die permissie en ziet z'n eigen km-declaraties (RLS-gescoped).
     "kilometers.html": { action: "browse", entity: "mileage-declarations" },
+    // De twee subpagina's zijn kantoor/beheer-tools, GEEN werkvloer:
+    //   • km-afstanden  = woon-werk-afstanden-matrix (loondienst × locatie) die de
+    //     km-vergoeding/salaris-export voedt (zelfde isLoondienst-regel als
+    //     salarisadministratie-exporter.js).
+    //   • km-afwijkingen = HR/kantoor-review van rit-afwijkingen.
+    // Zonder mapping waren ze "default open" → lekten naar ELKE ingelogde user (incl. pure
+    // Medewerker) in de Kilometers-dropdown. allowedRoles = exact de mileage-declaration-
+    // permissiehouders in BS2 (browse/manage) MINUS de pure Medewerker (werkvloer): zo blijft
+    // de dropdown coherent — al deze 7 office-rollen hebben ook browse-mileage-declarations,
+    // dus zien naast de subpagina's ook "Kilometer declaraties". Finance bewust NIET: heeft in
+    // BS2 geen enkele mileage-permissie, zou anders een halve dropdown (subpagina's zonder
+    // declaraties) krijgen. Admin-tier (Eigenaar/Admin/Directeur) wint sowieso via bypass.
+    "km-afstanden.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator", "Salarisadministratie"] },
+    "km-afwijkingen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator", "Salarisadministratie"] },
 
     // ─── Beleid ───────────────────────────────────────────────────────────────
     // beleid-documenten.html = de read-/downloadbare documentenlijst (topnav "Beleid").
