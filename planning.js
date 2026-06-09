@@ -1000,11 +1000,24 @@ function planningOwnName() {
 /* Toggelt de read-only-rooster-modus (verbergt planner-UI: dienst aanmaken,
  * KPI-strip, beschikking-overschrijdingsbanner én de detail-paneel-acties) voor
  * rollen zonder bewerk-recht. SCOPE (alles vs eigen) blijft op planningIsFullPlanner
- * (HR/Facilitair zien alles); BEWERKEN op planningCanEdit (HR/Facilitair niet). */
+ * (HR/Facilitair zien alles); BEWERKEN op planningCanEdit (HR/Facilitair niet).
+ *
+ * VEILIGE DEFAULT: zolang de permissies nog NIET geladen zijn (koude cache /
+ * eerste login) blijft de planning READ-ONLY. Pas wanneer de DB-permissies geladen
+ * zijn ÉN bewerk-recht bevestigen, wordt read-only opgeheven. Zo kan een rol zonder
+ * bewerk-recht (HR/Facilitair/werkvloer) NOOIT — ook niet kortstondig tijdens de
+ * async permissie-load — de planner-bewerk-UI te zien krijgen. De functie wordt
+ * her-aangeroepen zodra permissies/planning-data binnen zijn (besaPermissionsReady,
+ * besa:planning-updated, besa:profile-updated, besa:medewerkers-updated). */
 function applyPlanningRoleMode() {
   try {
-    document.body.classList.toggle("planning-readonly", !planningCanEdit());
-  } catch (e) { /* */ }
+    var loaded = !!(window.besaPermissions && typeof window.besaPermissions.debug === "function"
+      && window.besaPermissions.debug().loaded);
+    var canEdit = loaded ? planningCanEdit() : false; // niet-geladen → read-only (veilig)
+    document.body.classList.toggle("planning-readonly", !canEdit);
+  } catch (e) {
+    try { document.body.classList.add("planning-readonly"); } catch (e2) { /* */ }
+  }
 }
 
 function getBaseFiltered() {
@@ -4396,7 +4409,9 @@ function initPlanningPage() {
   // Wanneer de Supabase-bootstrap of een externe sync de planning-cache
   // vernieuwt, vragen we het rooster opnieuw te tekenen.
   window.addEventListener("besa:planning-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    // Her-evalueer ook het read-only-recht: bij koude cache zijn de permissies vaak
+    // pas geladen tegen de tijd dat de planning-data binnenkomt → betrouwbare re-apply.
+    try { applyPlanningRoleMode(); renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:comp-diensttypes-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
