@@ -116,12 +116,20 @@
     var isContract = function (d) { return typeOf(d) === "contract"; };
     var isId = function (d) { return typeOf(d) === "id"; };
     var isBhv = function (d) { return typeOf(d) === "education" && nameOf(d).indexOf("bhv") !== -1; };
-    var isOtherEdu = function (d) { return typeOf(d) === "education" && nameOf(d).indexOf("bhv") === -1; };
+    var isSkj = function (d) { return typeOf(d) === "skj" || nameOf(d).indexOf("skj") !== -1; };
+    var isVerzekering = function (d) { var n = nameOf(d) + " " + typeOf(d); return n.indexOf("verzeker") !== -1 || n.indexOf("aansprakelijk") !== -1; };
+    // Overige opleiding/training: education die GEEN BHV/SKJ/verzekering is (anders dubbel geteld).
+    var isOtherEdu = function (d) { return typeOf(d) === "education" && nameOf(d).indexOf("bhv") === -1 && nameOf(d).indexOf("skj") === -1 && !isVerzekering(d); };
 
     var vog = evalCat(isVog);
     var con = evalCat(isContract);
     var idc = evalCat(isId);
     var bhv = evalCat(isBhv);
+    var skj = evalCat(isSkj);
+    var verz = evalCat(isVerzekering);
+
+    // 90/60/30-gelaagdheid (G10): bepaal de drempel-bucket voor een soon-warning.
+    function tierOf(dd) { return dd <= 30 ? 30 : (dd <= 60 ? 60 : 90); }
 
     // Regel conform BS2 (zie [[project_besa_hr_doc_status_bs2]]):
     //  ROOD   = VOG ontbreekt, of contract ontbreekt/verlopen.
@@ -155,27 +163,40 @@
     function pushSoon(cat, label) {
       if (cat.exists && cat.soon) {
         warnings.push({ id: cat.soon.it && cat.soon.it.id, type: label, kind: "expiry-soon",
+          tier: tierOf(cat.soon.dd), dagen: cat.soon.dd,
           label: label, naam: (cat.soon.it && cat.soon.it.naam) || label,
           datum: cat.soon.it && cat.soon.it.vervaldatum, datumLabel: fmtDate(cat.soon.vd),
           reden: "Verloopt op " + fmtDate(cat.soon.vd) + " (over " + cat.soon.dd + " dagen)" });
       }
     }
+    function pushExpiredOrSoon(cat, label, expiredReden) {
+      if (cat.exists && cat.expired) {
+        warnings.push({ id: null, type: label, kind: "expired", label: label, naam: label,
+          datum: null, datumLabel: "", reden: expiredReden });
+      } else {
+        pushSoon(cat, label);
+      }
+    }
     pushSoon(vog, "VOG");
     pushSoon(con, "Arbeidsovereenkomst / contract");
     pushSoon(idc, "ID-kaart");
-    if (bhv.exists && bhv.expired) {
-      warnings.push({ id: null, type: "BHV", kind: "expired", label: "BHV",
-        naam: "BHV", datum: null, datumLabel: "", reden: "BHV-certificaat is verlopen" });
-    } else {
-      pushSoon(bhv, "BHV");
-    }
-    // Verlopen opleidingen/trainingen (niet-BHV education) → waarschuwing.
+    pushExpiredOrSoon(bhv, "BHV", "BHV-certificaat is verlopen");
+    pushExpiredOrSoon(skj, "SKJ-registratie", "SKJ-registratie is verlopen");
+    pushExpiredOrSoon(verz, "Verzekering", "Verzekering is verlopen");
+    // Overige opleidingen/trainingen: waarschuw zowel bij verloop als 90/60/30 vooraf.
     list.filter(isOtherEdu).forEach(function (d) {
       var vd = parseDate(d.vervaldatum);
-      if (vd && daysBetween(now, vd) < 0) {
+      if (!vd) return;
+      var dd = daysBetween(now, vd);
+      if (dd < 0) {
         warnings.push({ id: d.id, type: "expired_education", kind: "expired",
           label: "Opleiding/training", naam: d.naam || "Opleiding/training",
           datum: d.vervaldatum, datumLabel: fmtDate(vd), reden: "Opleiding/training is verlopen" });
+      } else if (dd <= WARN_DAYS) {
+        warnings.push({ id: d.id, type: "education_soon", kind: "expiry-soon",
+          tier: tierOf(dd), dagen: dd, label: "Opleiding/training", naam: d.naam || "Opleiding/training",
+          datum: d.vervaldatum, datumLabel: fmtDate(vd),
+          reden: "Verloopt op " + fmtDate(vd) + " (over " + dd + " dagen)" });
       }
     });
 
