@@ -35,14 +35,27 @@
     }
     const profile = data.profile || {};
     const med = data.medewerker || {};
+    const D = med.data || {};
+    const adres = [
+      [D.straat, D.huisnummer, D.toevoeging].filter(Boolean).join(" ").trim(),
+      [D.postcode, (D.woonplaats || D.stad || D.plaats)].filter(Boolean).join("  ").trim(),
+    ].filter(Boolean).join(", ");
+    const contractParts = [med.dienstverband || D.dienstverband, D.contracturen ? (D.contracturen + " uur/week") : "", D.salarisschaal ? ("schaal " + D.salarisschaal + (D.salaristrede ? " / trede " + D.salaristrede : "")) : ""].filter(Boolean);
     const fields = [
       { label: "Naam", value: ((profile.voornaam || "") + " " + (profile.achternaam || med.achternaam || "")).trim() || "—" },
       { label: "E-mail", value: profile.email || med.email || "—" },
+      { label: "Telefoon", value: D.profTel || D.tel || "—" },
+      { label: "Adres", value: adres || "—" },
+      { label: "Geboortedatum", value: D.geboortedatum || D.verjaardag || "—" },
       { label: "Rollen", value: (Array.isArray(data.rollen) && data.rollen.length) ? data.rollen.join(", ") : (profile.rol || "—") },
+      { label: "Personeelsnummer", value: med.personeelsnummer || "—" },
       { label: "Medewerker-ID", value: profile.medewerker_id || "(geen koppeling)" },
       { label: "Functie", value: med.functie || "—" },
+      { label: "Afdeling", value: D.afdeling || "—" },
       { label: "Fase", value: med.fase || "—" },
+      { label: "Startdatum", value: D.startdatum || "—" },
       { label: "Dienstverband", value: med.dienstverband || "—" },
+      { label: "Contract", value: contractParts.length ? contractParts.join(" · ") : "—" },
       { label: "Notities (HR)", value: data.medewerker_notities_count || 0 },
       { label: "Documenten", value: data.medewerker_documenten_count || 0 },
       { label: "Verzuim-perioden", value: data.verzuim_count || 0 },
