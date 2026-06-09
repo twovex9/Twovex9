@@ -119,6 +119,22 @@
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
 
+  // Dienstverband van de aan dit profiel gekoppelde medewerker (Loondienst / Stagiair /
+  // Inhuur / …). Bepaalt of de ZZP-self-service-tabs (Mijn facturen / Mijn beschikbaarheid)
+  // relevant zijn: loondienst/stagiair worden via het rooster ingepland en hebben die
+  // tabs niet nodig (video-feedback eigenaar 2026-06-07). Leeg = onbekend/niet gekoppeld.
+  async function fetchDienstverband(medewerkerId) {
+    if (!medewerkerId || !global.besaSupabase) return "";
+    try {
+      var r = await global.besaSupabase
+        .from("medewerkers")
+        .select("dienstverband")
+        .eq("id", medewerkerId)
+        .maybeSingle();
+      return (r && r.data && r.data.dienstverband) ? String(r.data.dienstverband) : "";
+    } catch (e) { return ""; }
+  }
+
   async function fetchCurrent() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
     var sess = await global.besaSupabase.auth.getSession();
@@ -130,7 +146,9 @@
       .eq("id", user.id)
       .maybeSingle();
     if (res.error) throw res.error;
-    return rowToObj(res.data);
+    var profile = rowToObj(res.data);
+    if (profile) profile.dienstverband = await fetchDienstverband(profile.medewerkerId);
+    return profile;
   }
 
   var readyPromise = null;
@@ -142,6 +160,7 @@
         if (current) {
           writeCurrent(current);
           global.besaCurrentProfile = current;
+          global.besaCurrentDienstverband = current.dienstverband || "";
         }
         var all = await fetchAll();
         writeCache(all);
@@ -179,6 +198,8 @@
     var list = readCache().map(function (p) { return p && p.id === id ? updated : p; });
     writeCache(list);
     if (global.besaCurrentProfile && global.besaCurrentProfile.id === id) {
+      // Dienstverband zit niet op de profiles-rij; behoud de eerder opgehaalde waarde.
+      updated.dienstverband = global.besaCurrentProfile.dienstverband || "";
       global.besaCurrentProfile = updated;
       writeCurrent(updated);
     }
@@ -203,8 +224,15 @@
     return !!(p && p.rol === "admin");
   }
 
+  function getDienstverbandSync() {
+    if (global.besaCurrentDienstverband) return global.besaCurrentDienstverband;
+    var p = getCurrentSync();
+    return (p && p.dienstverband) || "";
+  }
+
   // Initiele cache uit localStorage zodat sync-getters meteen iets hebben.
   global.besaCurrentProfile = readCurrent();
+  global.besaCurrentDienstverband = (global.besaCurrentProfile && global.besaCurrentProfile.dienstverband) || "";
 
   global.profilesDB = {
     get ready() { return readyPromise || bootstrap(); },
@@ -214,6 +242,7 @@
     getAllSync: getAllSync,
     getByIdSync: getByIdSync,
     getCurrentSync: getCurrentSync,
+    getDienstverbandSync: getDienstverbandSync,
     isAdmin: isAdmin,
     displayName: displayName,
   };
