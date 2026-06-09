@@ -51,6 +51,20 @@
       metricCell("Medewerkers (totaal)", (k.totaal != null ? k.totaal : "—"), (k.loondienst || 0) + " loondienst · " + (k.zzp || 0) + " ZZP", ""),
       metricCell("ZZP-aandeel", pct(k.zzp_pct), "", ""),
     ].join("");
+
+    // G53/G54 — Compliance-score (gewogen samenstelling) + beleid% + SKJ.
+    var scoreGrid = $("cd-score-grid");
+    if (scoreGrid) {
+      scoreGrid.innerHTML = [
+        metricCell("Compliance-score", pct(k.compliance_score), "gewogen totaalindex", accentForPct(k.compliance_score, true)),
+        metricCell("Beleid kennisgenomen", pct(k.beleid_pct), "verplichte documenten ondertekend", accentForPct(k.beleid_pct, true)),
+        metricCell("Geldige SKJ-registraties", (k.skj_geldig_aantal != null ? k.skj_geldig_aantal : "—"), "medewerkers met geldige SKJ", ""),
+      ].join("");
+    }
+    var scoreNote = $("cd-score-note");
+    if (scoreNote) {
+      scoreNote.textContent = "Compliance-score = gewogen samenstelling: 30% geldige VOG · 20% onboarding afgerond · 25% contract getekend · 25% beleid kennisgenomen.";
+    }
   }
 
   function vogBadge(r) {

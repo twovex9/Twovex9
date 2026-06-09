@@ -178,12 +178,25 @@
     var trend = hr.verzuim_trend === "stijgend" ? "▲ stijgend" : hr.verzuim_trend === "dalend" ? "▼ dalend" : "● stabiel";
     var grid = $("md-hr-grid");
     if (!grid) return;
-    grid.innerHTML = [
+    var cards = [
       metricCard("Actieve medewerkers", intl(hr.actief_totaal), intl(hr.loondienst) + " loondienst · " + intl(hr.zzp) + " inhuur · " + intl(hr.stage) + " stage"),
       metricCard("Ziekteverzuim", intl(hr.verzuim_pct) + "%", trend + " · vorige maand " + intl(hr.verzuim_pct_vorige) + "%", num(hr.verzuim_pct) > 8 ? "rood" : num(hr.verzuim_pct) >= 5 ? "oranje" : "groen"),
       metricCard("Contracten verlopen", intl(hr.contract_30d), "binnen 30 dagen · " + intl(hr.contract_7d) + " binnen 7 dagen", hr.contract_7d > 0 ? "rood" : hr.contract_30d > 0 ? "oranje" : null),
       metricCard("Verlof deze week", intl(hr.verlof_deze_week), "goedgekeurd in de lopende week"),
-    ].join("");
+    ];
+    // Bestuurs-KPI's (G50/G51/G54) — alleen als de gegate RPC data teruggaf.
+    var bk = (window.managementDashboardDB && window.managementDashboardDB.getBestuurKpis) ? window.managementDashboardDB.getBestuurKpis() : null;
+    if (bk) {
+      var dossierSub = intl(bk.salaris_dossiers_compleet) + " van " + intl(bk.salaris_dossiers_totaal) + " dossiers met salarisgegevens";
+      var scoreAcc = num(bk.compliance_score) >= 90 ? "groen" : num(bk.compliance_score) >= 70 ? "oranje" : "rood";
+      cards.push(
+        metricCard("Personeelskosten / maand (indicatief)", eur(bk.personeelskosten_maand_indicatief), dossierSub, bk.salaris_dossiers_compleet < bk.salaris_dossiers_totaal ? "oranje" : null),
+        metricCard("ZZP-aandeel", intl(bk.zzp_pct) + "%", intl(bk.zzp) + " inhuur van " + intl(bk.actief) + " actief", num(bk.zzp_pct) >= 60 ? "oranje" : null),
+        metricCard("Verloop (uit dienst)", intl(bk.verloop_pct) + "%", intl(bk.uit_dienst_aantal) + " medewerker(s) uit dienst", null),
+        metricCard("Compliance-score", intl(bk.compliance_score) + "%", "gewogen index — zie compliance-dashboard", scoreAcc)
+      );
+    }
+    grid.innerHTML = cards.join("");
   }
 
   // ─── Domein: Planning ────────────────────────────────────────────────────
