@@ -53,7 +53,7 @@ function reportNewsError(action, err) {
   const msg = err && err.message ? err.message : String(err || "onbekende fout");
   console.error(`[nieuws] ${action} mislukt:`, err);
   if (typeof window.showSaveModal === "function") {
-    window.showSaveModal({ title: `Opslaan in database mislukt`, message: msg });
+    window.showSaveModal(msg, `Opslaan in database mislukt`);
   } else {
     showNewsToast(`Opslaan mislukt: ${msg}`);
   }

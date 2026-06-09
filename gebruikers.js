@@ -205,7 +205,7 @@
     if (window.showActionFeedback) {
       window.showActionFeedback(kind, msg);
     } else if (window.showSaveModal) {
-      window.showSaveModal({ title: msg });
+      window.showSaveModal(undefined, msg);
     } else {
       console.log("[gebr toast]", kind, msg);
     }

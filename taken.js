@@ -617,7 +617,7 @@
     try {
       if (idVal) {
         await window.takenDB.update(idVal, payload);
-        if (window.showSaveModal) window.showSaveModal({ title: "Bijgewerkt", message: payload.naam });
+        if (window.showSaveModal) window.showSaveModal(payload.naam, "Bijgewerkt");
       } else if (type === "verzoek") {
         await window.takenDB.submitVerzoek(payload);
         if (window.showActionFeedback) window.showActionFeedback("saved", "Verzoek ingediend");
