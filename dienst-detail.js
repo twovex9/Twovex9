@@ -731,6 +731,18 @@
 
   function invalidatePickerCache() { pickerCache = { overlapByMid: null, verzuimByMid: null, dienstId: null }; }
 
+  // Mag de huidige rol de planning bewerken? HR/Facilitair (kijkfunctie) niet —
+  // video-eis eigenaar 2026-06-07. De knoppen zijn in read-only modus al verborgen
+  // (.planning-readonly CSS); deze guard blokkeert de actie ook bij DOM-manipulatie.
+  function canEditPlanning() {
+    try { return (typeof window.besaPlanningCanEdit !== "function") || window.besaPlanningCanEdit(); }
+    catch (e) { return true; }
+  }
+  function denyEdit() {
+    if (window.showError) window.showError("Je hebt alleen een kijkfunctie voor de planning.");
+    return false;
+  }
+
   function attachEvents() {
     // Close X / scrim-click + Escape
     var panel = document.getElementById("planning-view-modal");
@@ -766,6 +778,7 @@
     // Toewijzen
     var toewijzenBtn = document.getElementById("planning-detail-toewijzen-btn");
     toewijzenBtn && toewijzenBtn.addEventListener("click", function () {
+      if (!canEditPlanning()) return denyEdit();
       populateMedewerkerSelect(document.getElementById("planning-toewijzen-select"));
       var bulk = document.getElementById("planning-toewijzen-bulk");
       if (bulk) bulk.checked = false;
@@ -774,6 +787,7 @@
     document.getElementById("planning-toewijzen-cancel") && document.getElementById("planning-toewijzen-cancel").addEventListener("click", function () { closeSideModal("planning-toewijzen-modal"); });
     document.getElementById("planning-toewijzen-close") && document.getElementById("planning-toewijzen-close").addEventListener("click", function () { closeSideModal("planning-toewijzen-modal"); });
     document.getElementById("planning-toewijzen-submit") && document.getElementById("planning-toewijzen-submit").addEventListener("click", async function () {
+      if (!canEditPlanning()) return denyEdit();
       var sel = document.getElementById("planning-toewijzen-select");
       var mid = sel && sel.value;
       if (!mid || !currentDienstId) return;
@@ -804,6 +818,7 @@
     attachUitnodigenPickerEvents();
     var uitnodigenBtn = document.getElementById("planning-detail-uitnodigen-btn");
     uitnodigenBtn && uitnodigenBtn.addEventListener("click", function () {
+      if (!canEditPlanning()) return denyEdit();
       openSideModal("planning-uitnodigen-modal");
       // Async: rendert eerst loading-state, dan list met warnings na fetch
       renderUitnodigenPicker(currentDienst).catch(function (e) {
@@ -813,6 +828,7 @@
     document.getElementById("planning-uitnodigen-cancel") && document.getElementById("planning-uitnodigen-cancel").addEventListener("click", function () { closeSideModal("planning-uitnodigen-modal"); });
     document.getElementById("planning-uitnodigen-close") && document.getElementById("planning-uitnodigen-close").addEventListener("click", function () { closeSideModal("planning-uitnodigen-modal"); });
     document.getElementById("planning-uitnodigen-submit") && document.getElementById("planning-uitnodigen-submit").addEventListener("click", async function () {
+      if (!canEditPlanning()) return denyEdit();
       var sel = document.getElementById("planning-uitnodigen-select");
       var mid = sel && sel.value;
       if (!mid || !currentDienstId) return;
@@ -829,10 +845,11 @@
 
     // Verwijderen
     var deleteBtn = document.getElementById("planning-view-delete-btn");
-    deleteBtn && deleteBtn.addEventListener("click", function () { openSideModal("planning-delete-modal"); });
+    deleteBtn && deleteBtn.addEventListener("click", function () { if (!canEditPlanning()) return denyEdit(); openSideModal("planning-delete-modal"); });
     document.getElementById("planning-delete-cancel") && document.getElementById("planning-delete-cancel").addEventListener("click", function () { closeSideModal("planning-delete-modal"); });
     document.getElementById("planning-delete-close") && document.getElementById("planning-delete-close").addEventListener("click", function () { closeSideModal("planning-delete-modal"); });
     document.getElementById("planning-delete-confirm") && document.getElementById("planning-delete-confirm").addEventListener("click", async function () {
+      if (!canEditPlanning()) return denyEdit();
       if (!currentDienstId) return;
       var scope = document.querySelector('input[name="planning-delete-scope"]:checked');
       var scopeVal = scope ? scope.value : "single";

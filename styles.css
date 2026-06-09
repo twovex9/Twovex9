@@ -11755,7 +11755,14 @@ button.btn-dienst-aanmaken:hover {
 .planning-readonly #planning-gen-btn,
 .planning-readonly #planning-opt-btn,
 .planning-readonly #planning-ai-btn,
-.planning-readonly .planning-erm-glabel-sum {
+.planning-readonly .planning-erm-glabel-sum,
+/* Detail-paneel bewerk-acties: in read-only modus (HR/Facilitair/werkvloer) is de
+   dienst-detail een puur KIJK-paneel — verberg verwijderen/bewerken/toewijzen/uitnodigen.
+   De handlers in dienst-detail.js zijn bovendien gegate op besaPlanningCanEdit(). */
+.planning-readonly #planning-view-delete-btn,
+.planning-readonly #planning-view-edit-btn,
+.planning-readonly #planning-detail-toewijzen-btn,
+.planning-readonly #planning-detail-uitnodigen-btn {
   display: none !important;
 }
 

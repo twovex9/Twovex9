@@ -15,6 +15,16 @@
   var colsPanel = document.getElementById("ud-cols-panel");
   var table = document.getElementById("ud-table");
 
+  // Bewerk-recht: alleen manage-employee-registered-hours (= admin-tier + Finance/Planner/
+  // Zorgcoördinator). HR + Facilitair krijgen view-only → kijkfunctie i.p.v. bewerkfunctie
+  // (video-eis eigenaar 2026-06-07): geen override-knop en geen maand-vergrendelen.
+  function udCanEdit() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      return (typeof window.besaCan === "function") && window.besaCan("manage", "employee-registered-hours");
+    } catch (e) { return false; }
+  }
+
   function fmtEuro(num) {
     var n = Number(num);
     if (!isFinite(n)) n = 0;
@@ -68,7 +78,7 @@
       var canOverride = isAmbulantIntern(r.zorgsoort);
       var hasOverride = (r.overrideUren != null);
       var overrideCellHtml;
-      if (canOverride) {
+      if (canOverride && udCanEdit()) {
         var btnClass = hasOverride ? "ud-override-btn ud-override-btn--active" : "ud-override-btn";
         var btnTitle = hasOverride
           ? ("Override actief: " + r.overrideUren + " uur — klik om aan te passen")
@@ -77,8 +87,11 @@
           ? ('<span class="ud-override-badge">' + fmtUren(r.overrideUren) + ' u</span>')
           : ('<span class="ud-override-btn-lbl">' + EDIT_SVG + '</span>');
         overrideCellHtml = '<button type="button" class="' + btnClass + '" data-ud-id="' + escapeHtml(String(r.id || "")) + '" title="' + escapeHtml(btnTitle) + '" aria-label="' + escapeHtml(btnTitle) + '">' + btnLabel + '</button>';
+      } else if (canOverride && hasOverride) {
+        // Kijkfunctie: toon de override-waarde read-only (geen knop).
+        overrideCellHtml = '<span class="ud-override-badge" title="Override actief (alleen-lezen)">' + fmtUren(r.overrideUren) + ' u</span>';
       } else {
-        overrideCellHtml = '<span class="ud-override-na" title="Alleen voor Ambulant intern beschikkingen">—</span>';
+        overrideCellHtml = '<span class="ud-override-na" title="' + (canOverride ? 'Alleen-lezen' : 'Alleen voor Ambulant intern beschikkingen') + '">—</span>';
       }
 
       // Ingediende-uren cel — PR #7 (over) heeft voorrang; daarna PR #6 (override-hint)
@@ -198,6 +211,7 @@
   function onOverrideClick(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (!udCanEdit()) { showToast("Je hebt alleen een kijkfunctie voor de urenregistratie"); return; }
     var btn = e.currentTarget;
     var id = btn.getAttribute("data-ud-id");
     if (!id || !window.urendeclaratiesDB) return;
@@ -402,6 +416,9 @@
 
   function setLockUi(locked) {
     if (!lockBtn) return;
+    // Kijkfunctie (HR/Facilitair): geen maand-vergrendel-knop.
+    if (!udCanEdit()) { lockBtn.style.display = "none"; return; }
+    lockBtn.style.display = "";
     lockBtn.setAttribute("aria-pressed", locked ? "true" : "false");
     lockBtn.classList.toggle("btn-primary", locked);
     lockBtn.classList.toggle("btn-outline", !locked);
@@ -443,6 +460,7 @@
 
   if (lockBtn) {
     lockBtn.addEventListener("click", async function () {
+      if (!udCanEdit()) { showToast("Je hebt alleen een kijkfunctie voor de urenregistratie"); return; }
       if (!window.lockedMonthsDB) {
         if (window.showError) window.showError("Maand-vergrendeling-laag niet geladen");
         return;
@@ -557,4 +575,14 @@
       filterRows();
     } catch (e) { /* */ }
   });
+
+  // Re-render zodra permissies geladen zijn → override-knop + maand-vergrendelen
+  // tonen/verbergen volgens bewerk-recht (kijkfunctie HR/Facilitair).
+  try {
+    if (window.besaPermissionsReady && window.besaPermissionsReady.then) {
+      window.besaPermissionsReady.then(function () {
+        try { renderRows(); applyColumnToggles(); filterRows(); refreshLockUiFromDb(); } catch (e) { /* */ }
+      });
+    }
+  } catch (e) { /* */ }
 })();
