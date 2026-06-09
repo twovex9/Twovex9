@@ -39,7 +39,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G37 — functionering_doelen (Ontwikkeldoelen-sectie).
 - [x] G38 — verbetertrajecten (sectie + CRUD).
 - [x] G39 — medewerker_waarschuwingen (sectie + CRUD).
-- [ ] G20 — jaaropgaven (tabel + bucket + RLS + HR-upload)
+- [x] G20 — jaaropgaven: tabel + private bucket + RLS (eigen/HR) + "Mijn jaaropgaven"-sectie in hub (mijn-jaaropgaven.js). `hr_v4_jaaropgaven.sql`. HR-upload-UI nog (kan via loonstroken-patroon).
 - [ ] G28 — onboarding documentcontrole-status (HR verificatie/akkoord per doc) + VOG max-3mnd
 - ~~G52~~ — vacatures: GEDROPT (user-keuze)
 
