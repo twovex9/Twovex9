@@ -295,8 +295,14 @@
       ? window.kilometerDeclaratiesDB.getRecordsForDeclaratieSync(decl.id)
       : [];
     (recs || []).forEach(function (r) {
-      // Werk-werk telt pas mee na goedkeuring door de zorgcoördinator.
-      if (r.type === "werkwerk" && (r.approvalStatus || "pending") !== "approved") return;
+      // Werk-werk dat op goedkeuring wacht (pending) of is afgewezen telt NIET
+      // mee; woon-werk en goedgekeurd/legacy (approval_status NULL) wél —
+      // spiegelt exact recCountsTowardTotal() in kilometer-declaraties-data.js.
+      // Voorheen toetste de gate op type "werkwerk" (bestaat niet; de types zijn
+      // office/manual/automatic), waardoor de goedkeurings-gate dood was en ook
+      // pending/afgewezen werk-werk-km in de Loket-export terechtkwam.
+      var st = r.approvalStatus != null ? r.approvalStatus : (r.approval_status || null);
+      if (st === "pending" || st === "rejected") return;
       var km = Number(r.kilometers || 0);
       if (r.type === "office") out.woonKm += km;
       else out.werkKm += km;

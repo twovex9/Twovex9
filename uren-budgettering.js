@@ -1,9 +1,22 @@
-/* Uren budgettering — weken 1–52, cliënten, localStorage, bulk, sorteren */
+/* Uren budgettering — weken 1–52/53 (ISO, afh. van jaar), cliënten, localStorage, bulk, sorteren */
 (function () {
   "use strict";
 
   var STORAGE = "besaUrenBudgetV1";
-  var WEEKS = 52;
+  // ISO-weken per jaar: 52 of 53. 28 december valt altijd in de laatste
+  // ISO-week, dus de week van 28-dec geeft het aantal weken. Voorheen stond dit
+  // hard op 52 → in 53-weken-jaren (bv. 2026, 2020, 2032) was week 53 niet te
+  // budgetteren.
+  function isoWeeksInYear(year) {
+    var y = parseInt(String(year), 10);
+    if (!isFinite(y)) return 52;
+    var d = new Date(y, 11, 28);
+    var day = (d.getDay() + 6) % 7;
+    var thu = new Date(d); thu.setDate(d.getDate() - day + 3);
+    var ft = new Date(thu.getFullYear(), 0, 4);
+    var fday = (ft.getDay() + 6) % 7; ft.setDate(ft.getDate() - fday + 3);
+    return 1 + Math.round((thu - ft) / (7 * 24 * 3600 * 1000));
+  }
   var tbody = document.getElementById("ub-tbody");
   var selClient = document.getElementById("ub-sel-client");
   var selYear = document.getElementById("ub-sel-year");
@@ -95,7 +108,8 @@
   function buildWeekMetas(year) {
     var y = parseInt(String(year), 10);
     var list = [];
-    for (var w = 1; w <= WEEKS; w++) {
+    var maxWeek = isoWeeksInYear(y);
+    for (var w = 1; w <= maxWeek; w++) {
       var mon = mondayOfIsoWeek(y, w);
       list.push({ week: w, monday: mon, rangeText: formatRangeEn(mon) });
     }
