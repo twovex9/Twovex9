@@ -726,6 +726,35 @@
   document.getElementById("cl-pager-last") && document.getElementById("cl-pager-last").addEventListener("click", pagerLast);
 
   document.getElementById("cl-add-open-btn") && document.getElementById("cl-add-open-btn").addEventListener("click", openAdd);
+
+  // Read-only-modus voor rollen die cliënten WEL mogen zien maar NIET beheren — bv. de
+  // locatie-gescopede Medewerker (video-feedback eigenaar 2026-06-07: cliënten zien om op
+  // te rapporteren). Verberg de "+ Cliënt toevoegen"-knop en de acties-kolom (archiveren/
+  // verwijderen). De clienten-RLS blokkeert schrijven door deze rollen sowieso server-side;
+  // dit houdt de UI schoon. De rollenlijst spiegelt public.is_office_clientviewer.
+  function besaCanWriteClients() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
+        ? window.besaPermissions.getRoleNames() : [];
+      var office = ["Eigenaar", "Directeur", "Admin", "HR", "Planner", "Cliëntbeheer", "Zorgcoördinator", "Gedragswetenschapper"];
+      for (var i = 0; i < roles.length; i++) { if (office.indexOf(roles[i]) !== -1) return true; }
+      return false;
+    } catch (e) { return true; } // bij twijfel niets verbergen (RLS beschermt toch)
+  }
+  function besaApplyClientReadonly() {
+    var ro = !besaCanWriteClients();
+    try { document.body.classList.toggle("besa-clienten-readonly", ro); } catch (e) {}
+    var addBtn = document.getElementById("cl-add-open-btn");
+    if (addBtn) addBtn.style.display = ro ? "none" : "";
+  }
+  besaApplyClientReadonly();
+  try {
+    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+      window.besaPermissionsReady.then(besaApplyClientReadonly);
+    }
+  } catch (e) { /* */ }
+
   document.getElementById("cl-add-close") && document.getElementById("cl-add-close").addEventListener("click", closeAdd);
   document.getElementById("cl-add-cancel") && document.getElementById("cl-add-cancel").addEventListener("click", closeAdd);
   document.getElementById("cl-add-form") &&
