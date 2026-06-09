@@ -26721,3 +26721,35 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
   .prod-verdeling-row { grid-template-columns: 1fr 60px; }
   .prod-verdeling-row .prod-bar { display: none; }
 }
+
+/* ====================================================================
+   Module 3 — Workforce Planning + AI-engine (/workforce-planning).
+   Hergebruikt tk-kpi-grid / filter-chips / table-card / prod-* (status-pill,
+   dot, bar, period, loading, empty, mini-btn). Alleen module-eigen aanvullingen.
+   ==================================================================== */
+.wf-intro { color: var(--text-secondary); font-size: var(--font-table-cell); margin: 0 0 14px; max-width: 920px; line-height: 1.5; }
+.wf-toggle { display: inline-flex; align-items: center; gap: 7px; font-size: var(--font-table-cell); color: var(--text-secondary); cursor: pointer; }
+.wf-toggle input { width: 15px; height: 15px; accent-color: var(--blue); cursor: pointer; }
+
+/* AI-aanbevelingen — kaarten */
+.wf-rec-list { display: flex; flex-direction: column; gap: 12px; }
+.wf-rec { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line-strong, var(--line)); border-radius: var(--r-lg); padding: 14px 16px; }
+.wf-rec--hoog   { border-left-color: var(--red); }
+.wf-rec--midden { border-left-color: var(--yellow); }
+.wf-rec--laag   { border-left-color: var(--blue); }
+.wf-rec-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.wf-rec-tags { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.wf-rec-type { font-size: var(--font-ui-badge); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); }
+.wf-rec-loc { font-size: var(--font-table-cell); font-weight: 600; color: var(--text-secondary); }
+.wf-rec-actions { flex: 0 0 auto; }
+.wf-rec-title { font-size: var(--font-base); font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.wf-rec-body { font-size: var(--font-table-cell); color: var(--text-secondary); line-height: 1.5; }
+.wf-rec-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: var(--font-table-cell); color: var(--text-muted); }
+.wf-rec-impact { font-weight: 700; color: var(--text); }
+.wf-rec-beslis { color: var(--text-secondary); }
+.wf-rec-note { font-style: italic; color: var(--text-secondary); }
+.wf-rec-empty { text-align: center; padding: 40px 16px; }
+
+/* Forecast — heatmap-cel */
+.wf-fc-table th { vertical-align: bottom; }
+.wf-fc-cell { display: inline-block; min-width: 52px; padding: 3px 8px; border-radius: var(--r-pill); font-size: var(--font-ui-badge); font-weight: 700; }
