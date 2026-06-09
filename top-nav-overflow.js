@@ -111,13 +111,13 @@
     "facturen.html": "Cliënten",
     "factuur-detail.html": "Cliënten",
     "facturen-importeren.html": "Cliënten",
-    // Incidenten
-    "incidenten.html": "Incidenten",
-    "incidenten-dashboard.html": "Incidenten",
-    "incidenten-categorieen.html": "Incidenten",
-    "incident-melden.html": "Incidenten",
-    "verbeteringsmaatregelen.html": "Incidenten",
-    "klachten.html": "Incidenten",
+    // Incidenten en klachten (één gecombineerde top-level dropdown)
+    "incidenten.html": "Incidenten en klachten",
+    "incidenten-dashboard.html": "Incidenten en klachten",
+    "incidenten-categorieen.html": "Incidenten en klachten",
+    "incident-melden.html": "Incidenten en klachten",
+    "verbeteringsmaatregelen.html": "Incidenten en klachten",
+    "klachten.html": "Incidenten en klachten",
     // Kilometers
     "kilometers.html": "Kilometers",
     "km-afstanden.html": "Kilometers",

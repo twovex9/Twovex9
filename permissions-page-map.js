@@ -28,15 +28,18 @@
     // Het bestuur wordt niet ingeroosterd en voert zelf geen facturen/beschikbaarheid in;
     // zij gebruiken de kantooroverzichten (Facturen / Beschikbaarheid ZZP'ers). deniedRoles
     // weert ook de admin-tier-bypass (zie permissions-nav-hide.js / permissions-gate.js).
-    "mijn-uren.html": { deniedRoles: ["Eigenaar", "Directeur"] },                 // self-service: eigen werkuren registreren (RLS-gescoped)
+    // Beleid mee in deniedRoles: een beleidsmedewerker is kantoor/overhead, wordt niet
+    // op een locatie ingeroosterd en registreert dus geen eigen dienst-uren (video-feedback
+    // eigenaar 2026-06-07, beleidsmedewerker-rondleiding). Multi-rol blijft veilig.
+    "mijn-uren.html": { deniedRoles: ["Eigenaar", "Directeur", "Beleid"] },        // self-service: eigen werkuren registreren (RLS-gescoped)
 
     "mijn-proforma-facturen.html": { deniedRoles: ["Eigenaar", "Directeur"] },   // ZZP self-service: eigen proforma's (RLS-gescoped)
     "mijn-uitnodigingen.html": { deniedRoles: ["Eigenaar", "Directeur"] },       // ZZP self-service: eigen dienst-uitnodigingen (RLS-gescoped)
-    // Planner mee in deniedRoles: een planner is overhead en wordt zelf niet op een
-    // locatie ingeroosterd, dus heeft geen eigen-beschikbaarheid-tab nodig (video-feedback
-    // eigenaar 2026-06-07). Multi-rol blijft veilig: alle huidige Planner-users zijn
-    // kantoor/bestuur (HR/Beleid/Directeur/Eigenaar) — geen ingeroosterde zorgmedewerker.
-    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur", "Planner"] }, // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
+    // Planner + Beleid mee in deniedRoles: beide zijn kantoor/overhead en worden zelf niet
+    // op een locatie ingeroosterd, dus hebben geen eigen-beschikbaarheid-tab nodig
+    // (video-feedback eigenaar 2026-06-07; Beleid toegevoegd via de beleidsmedewerker-
+    // rondleiding). Multi-rol blijft veilig: huidige Planner/Beleid-users zijn kantoor/bestuur.
+    "mijn-beschikbaarheid.html": { deniedRoles: ["Eigenaar", "Directeur", "Planner", "Beleid"] }, // ZZP self-service: eigen beschikbaarheid + tijden (RLS-gescoped)
     "notifications.html": null,
     "nieuws.html": { action: "view", entity: "announcements" },
 

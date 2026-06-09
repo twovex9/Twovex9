@@ -170,12 +170,14 @@ function buildNav(active) {
   // verhuisd (zie hierboven) — ze hoorden permissie-technisch bij urenregistratie, niet
   // bij cliënten, en hielden de Cliënten-kop onterecht overeind voor de Planner.
 
-  // Incidenten als eigen top-level onderwerp (was een kolom in de Cliënten-mega).
-  // Reden: een pure Medewerker ziet alleen "Incidenten overzicht" (view-incidents) en
-  // GEEN cliënten-items; door incidenten los te trekken verdwijnt de Cliënten-kop netjes
-  // voor de Medewerker i.p.v. dat de kop naar incidenten zou herrouteren. Office-rollen
-  // krijgen een nette eigen "Incidenten"-sectie. (Video-feedback eigenaar 2026-06-07.)
-  const INCIDENTEN = smallDropdown("incidenten", "Incidenten", "Incidenten opties", [
+  // Incidenten + klachten als één eigen top-level onderwerp (was een kolom in de
+  // Cliënten-mega). Reden: een pure Medewerker ziet alleen "Incidenten overzicht"
+  // (view-incidents) en GEEN cliënten-items; door dit los te trekken verdwijnt de
+  // Cliënten-kop netjes voor de Medewerker i.p.v. dat de kop naar incidenten zou
+  // herrouteren. De eigenaar wil incidenten én klachten samen onder één knop
+  // "Incidenten en klachten" (beleidsmedewerker-rondleiding 2026-06-07). Klachten staat
+  // daarom in deze dropdown (niet meer onder Cliënten); per rol gate't de page-map elk item.
+  const INCIDENTEN = smallDropdown("incidenten", "Incidenten en klachten", "Incidenten en klachten opties", [
     { href: "incidenten", title: "Incidenten overzicht", sub: "Bekijk en meld incidenten" },
     { href: "incidenten-dashboard", title: "Dashboard", sub: "Incidenten-statistieken" },
     { href: "incidenten-categorieen", title: "Categorieën", sub: "Beheer incidentcategorieën" },
@@ -299,12 +301,12 @@ const TOPIC_BY_PAGE = {
   "facturen.html": "Cliënten",
   "factuur-detail.html": "Cliënten",
   "facturen-importeren.html": "Cliënten",
-  "incidenten.html": "Incidenten",
-  "incidenten-dashboard.html": "Incidenten",
-  "incidenten-categorieen.html": "Incidenten",
-  "incident-melden.html": "Incidenten",
-  "verbeteringsmaatregelen.html": "Incidenten",
-  "klachten.html": "Incidenten",
+  "incidenten.html": "Incidenten en klachten",
+  "incidenten-dashboard.html": "Incidenten en klachten",
+  "incidenten-categorieen.html": "Incidenten en klachten",
+  "incident-melden.html": "Incidenten en klachten",
+  "verbeteringsmaatregelen.html": "Incidenten en klachten",
+  "klachten.html": "Incidenten en klachten",
   "kilometers.html": "Kilometers",
   "km-afstanden.html": "Kilometers",
   "km-afwijkingen.html": "Kilometers",
