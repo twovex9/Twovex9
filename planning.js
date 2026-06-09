@@ -3418,7 +3418,7 @@ function fillDienstPanelForItem(item) {
   setVal("dienst-aantal", item.vereistAantalMedewerkers ?? 1);
   setVal("dienst-competentie", item.competenties || "");
   const rt = document.getElementById("dienst-beschrijving");
-  if (rt) rt.innerHTML = item.beschrijving || "";
+  if (rt) rt.innerHTML = window.besaSanitizeHtml(item.beschrijving || "");
   const h = document.getElementById("dienst-herhaal");
   if (h) h.checked = Boolean(item.herhaal);
   // Reset hints; daarna heroverwegen

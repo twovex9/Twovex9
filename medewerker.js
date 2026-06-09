@@ -3236,7 +3236,7 @@ function initVerzuimSection() {
               span.textContent = item.status || "Actief";
               td.appendChild(span);
             } else if (col === "beschrijving") {
-              td.innerHTML = item.beschrijving || "";
+              td.innerHTML = window.besaSanitizeHtml(item.beschrijving || "");
             } else {
               td.textContent = isoToDisplay(item[col]) || "";
             }
@@ -3809,7 +3809,7 @@ function initNotitiesSection() {
 
       const content = document.createElement("div");
       content.className = "emp-notitie-item-content";
-      content.innerHTML = note.bodyHtml || "";
+      content.innerHTML = window.besaSanitizeHtml(note.bodyHtml || "");
 
       item.append(head, content);
       itemsEl.appendChild(item);

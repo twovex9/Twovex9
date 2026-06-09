@@ -896,7 +896,7 @@ function initNewsEditPanel() {
     naamInput.value = title;
 
     const inhoud = tr.getAttribute("data-news-inhoud");
-    editor.innerHTML = inhoud && inhoud.trim() ? inhoud : NEWS_EDIT_DEFAULT_HTML;
+    editor.innerHTML = inhoud && inhoud.trim() ? window.besaSanitizeHtml(inhoud) : NEWS_EDIT_DEFAULT_HTML;
     syncEditEditorEmpty();
 
     clearEditImages();
