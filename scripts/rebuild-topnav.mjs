@@ -108,6 +108,7 @@ function buildNav(active) {
   // alleen de uren-pagina's mag. (Video-feedback eigenaar: Planner-topbar opschonen.)
   const URENREGISTRATIE = smallDropdown("werkuren", "Urenregistratie", "Urenregistratie opties", [
     { href: "werkuren", title: "Geregistreerde uren", sub: "Overzicht geregistreerde uren" },
+    { href: "productie-urenregistratie", title: "Productie &amp; bewaking", sub: "Beschikkingsbewaking, kosten &amp; maandafsluiting" },
     { href: "urendeclaraties", title: "Uren declaraties", sub: "Urendeclaraties per medewerker" },
     { href: "uren-budgettering", title: "Uren budgettering", sub: "Standaard uren &amp; wekelijkse budgetten" },
     { href: "werkuren-labels", title: "Labels", sub: "Beheer labels voor urenregistraties" },
@@ -258,6 +259,7 @@ const TOPIC_BY_PAGE = {
   "hr-diensttypes.html": "Planning",
   "werkuren.html": "Urenregistratie",
   "werkuren-labels.html": "Urenregistratie",
+  "productie-urenregistratie.html": "Urenregistratie",
   "urendeclaraties.html": "Urenregistratie",
   "uren-budgettering.html": "Urenregistratie",
   "hr.html": "HR",

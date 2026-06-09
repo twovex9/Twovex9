@@ -132,6 +132,11 @@
 
     // ─── Werkuren / time-registrations ───────────────────────────────────────
     "werkuren.html": { action: "view", entity: "employee-hour-registrations" },
+    // Module 2 — Productie & Urenregistratie (management-overzicht). De pagina zelf
+    // is voor office/management-rollen; binnen de pagina gate't productie_mijn_context
+    // (niveau) de views (Directie-KPI's = niveau<=2) en zijn de RPC's SECURITY DEFINER
+    // met een harde niveau<=3-check. Medewerkers gebruiken Mijn uren (self-service).
+    "productie-urenregistratie.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Finance", "Salarisadministratie", "Planner", "Zorgcoördinator", "HR"] },
     "werkuren-labels.html": { action: "browse", entity: "labels" },
     "urendeclaraties.html": { action: "view", entity: "employee-hour-registrations" },
     // plus-minuren staat in het HR-mega-menu (HR-domein), maar keyde op de generieke

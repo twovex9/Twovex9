@@ -1,17 +1,16 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Beschikkingen — HR</title>
-  <link rel="stylesheet" href="styles.css?v=918f1ad" />
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
+  <title>Productie &amp; Urenregistratie</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad">
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -22,13 +21,12 @@
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
-  <script src="besa-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
 
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -50,7 +48,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="werkuren" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="werkuren" class="top-link top-link--dropdown is-active">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
                 <a href="werkuren" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
                 <a href="productie-urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Productie &amp; bewaking</span><span class="top-dropdown-subtitle">Beschikkingsbewaking, kosten &amp; maandafsluiting</span></a>
@@ -99,7 +97,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="clienten" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="clienten" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="Cliënten opties">
                 <div class="top-dropdown-col">
                   <span class="top-dropdown-group-title">Cliënten</span>
@@ -182,313 +180,242 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
-      <nav class="side-nav" aria-label="Cliënten module">
-        <a href="clienten" class="side-link">Cliënten</a>
-        <a href="zorgsoorten" class="side-link">Zorgsoorten</a>
-        <div class="side-group is-open" data-side-group="cl-beschikkingen">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-beschikkingen-btn" aria-expanded="true" aria-controls="besc-nav-beschikkingen-sub" aria-label="Beschikkingen, submenu">
-            <span class="side-group__label">Beschikkingen</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="besc-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen">
-            <a href="beschikkingen-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="beschikkingen" class="side-link side-link--nested is-active" aria-current="page">Overzicht</a>
-            <a href="facturen" class="side-link side-link--nested">Facturen</a>
-          </div>
-        </div>
-        <a href="organisatie" class="side-link">Organisatie</a>
-        <a href="gemeenten" class="side-link">Gemeenten</a>
-        <a href="urendeclaraties" class="side-link">Uren declaraties</a>
-        <a href="uren-budgettering" class="side-link">Uren budgetering</a>
-        <a href="facturen-importeren" class="side-link">Facturen importeren</a>
-        <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="besc-nav-incidenten-btn" aria-expanded="false" aria-controls="besc-nav-incidenten-sub" aria-label="Incidenten, open submenu">
-            <span class="side-group__label">Incidenten</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="besc-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
-            <a href="incidenten" class="side-link side-link--nested">Incidenten overzicht</a>
-            <a href="incidenten-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="incidenten-categorieen" class="side-link side-link--nested">Categorieën</a>
-            <a href="verbeteringsmaatregelen" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
-          </div>
-        </div>
-      </nav>
-      <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
-      </div>
-    </aside>
-
-    <main class="content content--besc-ov">
+    <main class="content">
       <div class="content-header">
-        <h1>Beschikkingen</h1>
+        <h1>Productie &amp; Urenregistratie</h1>
         <div class="header-actions">
-          <div class="columns-dropdown besc-ov-cols">
-            <button class="btn-outline columns-btn" type="button" aria-expanded="false" id="besc-cols-btn" aria-haspopup="true" aria-label="Kolommen">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              Kolommen
-            </button>
-            <div class="columns-panel" id="besc-cols-panel" role="menu" hidden>
-              <div class="columns-panel-title">Kolommen weergeven</div>
-              <ul class="columns-list" id="besc-cols-list" role="none"></ul>
-            </div>
+          <div class="prod-period" role="group" aria-label="Periode">
+            <button type="button" class="btn-outline prod-period-step" id="prod-period-prev" aria-label="Vorige maand">‹</button>
+            <select class="search prod-period-select" id="prod-period-maand" aria-label="Maand"></select>
+            <select class="search prod-period-select" id="prod-period-jaar" aria-label="Jaar" style="max-width:96px"></select>
+            <button type="button" class="btn-outline prod-period-step" id="prod-period-next" aria-label="Volgende maand">›</button>
           </div>
-          <button class="btn-outline" type="button" id="besc-export-btn" aria-label="Exporteren">Exporteren</button>
-          <button class="btn-primary" type="button" id="besc-add-open">+ Beschikking toevoegen</button>
         </div>
       </div>
 
-      <div class="toolbar besc-ov-toolbar">
-        <input class="search" type="search" id="besc-search" placeholder="Zoeken…" autocomplete="off" aria-label="Zoeken in beschikkingen" />
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="besc-arch" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Gearchiveerd</span>
-        </label>
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="besc-f-60" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Verloopt binnen 60d</span>
-        </label>
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="besc-f-ted" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Heeft te declareren lopende maand</span>
-        </label>
-        <label class="switch switch--yellow">
-          <input type="checkbox" id="besc-f-ng" />
-          <span class="switch-slider"></span>
-          <span class="switch-label">Heeft nog niet gedeclareerd</span>
-        </label>
-      </div>
-      <div class="besc-ov-filters toolbar">
-        <div class="besc-ov-sels" role="group" aria-label="Filter op categorie">
-          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Zorgsoort</span>
-            <select class="modal-input modal-select besc-ov-sel" id="besc-sel-zorg" aria-label="Filter zorgsoort">
-              <option value="">Alle zorgsoorten</option>
-            </select>
-          </label>
-            <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Fase</span>
-            <select class="modal-input modal-select besc-ov-sel" id="besc-sel-fase" aria-label="Filter fase">
-              <option value="">Alle fasen</option>
-              <option value="Actief">Actief</option>
-              <option value="In aanvraag">In aanvraag</option>
-              <option value="In zorg">In zorg</option>
-              <option value="Verlopen">Verlopen</option>
-            </select>
-          </label>
-          <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Status (betaling)</span>
-            <select class="modal-input modal-select besc-ov-sel" id="besc-sel-pay" aria-label="Filter betalingsstatus">
-              <option value="">Alle</option>
-              <option value="betaald">Betaald</option>
-              <option value="outstanding">outstanding</option>
-            </select>
-          </label>
-            <label class="besc-ov-selwrap"><span class="besc-ov-sel-lbl">Declaratie methode</span>
-            <select class="modal-input modal-select besc-ov-sel" id="besc-sel-dec" aria-label="Filter declaratie">
-              <option value="">Alle</option>
-              <option value="Handmatig">Handmatig</option>
-              <option value="ONS">ONS</option>
-              <option value="WLZ">WLZ</option>
-              <option value="SVB">SVB</option>
-              <option value="Overig">Overig</option>
-            </select>
-          </label>
-        </div>
-        <button type="button" class="besc-ov-reset" id="besc-reset">Reset</button>
+      <!-- Rol-gegate weergave-tabs. Bewaking/Kosten/Maandafsluiting voor management
+           (niveau <= 3); Directie-KPI's alleen voor directie/eigenaar (niveau <= 2). -->
+      <div class="filter-chips prod-viewtabs" role="tablist" aria-label="Productie weergave">
+        <button type="button" class="filter-chip filter-chip--active" role="tab" data-view="bewaking" id="prod-view-bewaking" aria-selected="true">Beschikkingsbewaking</button>
+        <button type="button" class="filter-chip" role="tab" data-view="kosten" id="prod-view-kosten" aria-selected="false">Kosten &amp; inhuur</button>
+        <button type="button" class="filter-chip" role="tab" data-view="maand" id="prod-view-maand" aria-selected="false">Maandafsluiting</button>
+        <button type="button" class="filter-chip" role="tab" data-view="kpi" id="prod-view-kpi" aria-selected="false" hidden>Directie-KPI's</button>
       </div>
 
-      <section class="table-card besc-ov-card table-card--compact">
-        <div class="table-wrapper">
-          <table class="employees-table besc-ov-table" id="besc-table" data-page-size="15">
-            <thead>
-              <tr>
-                <th class="th-check" data-col="sel" data-besc-colid="sel"></th>
-                <th data-col="client" data-besc-colid="client">Cliënt</th>
-                <th data-col="naam" data-besc-colid="naam">Naam</th>
-                <th data-col="zorg" data-besc-colid="zorg">Zorgsoort</th>
-                <th data-col="fase" data-besc-colid="fase">Fase</th>
-                <th data-col="per" data-besc-colid="per">Periode</th>
-                <th data-col="tarf" data-besc-colid="tarf">Tarief</th>
-                <th data-col="ted" data-besc-colid="ted" class="besc-ov-th--eur">Te declareren LM</th>
-                <th data-col="ng" data-besc-colid="ng" class="besc-ov-th--eur besc-ov-th--red">Nog niet gedeclareerd</th>
-                <th data-col="dm" data-besc-colid="dm">Declaratie methode</th>
-                <th data-col="st" data-besc-colid="st">Status</th>
-                <th data-col="acties" class="besc-ov-act" data-besc-colid="act" aria-label="Acties">Acties</th>
-              </tr>
-            </thead>
-            <tbody id="besc-tbody"></tbody>
-          </table>
+      <!-- Niveau-te-laag melding (medewerker opent de pagina) -->
+      <div id="prod-no-access" class="table-card" hidden>
+        <div class="prod-empty">
+          <p class="prod-empty-title">Geen productie-overzicht beschikbaar</p>
+          <p class="prod-empty-sub">Deze module toont productie- en kostenoverzichten voor management. Registreer je eigen uren via <a href="mijn-uren" class="prod-inline-link">Mijn uren</a>.</p>
         </div>
-        <div class="table-footer table-footer--pagebar besc-ov-footer">
-          <div class="footer-left">
-            <span id="besc-pager-range" class="pager-range">0 van 0 in totaal</span>
+      </div>
+
+      <!-- ============ BESCHIKKINGSBEWAKING ============ -->
+      <div id="prod-bewaking-view">
+        <div class="toolbar">
+          <div class="filter-chips prod-statusfilter" role="group" aria-label="Filter op status">
+            <button type="button" class="filter-chip filter-chip--active" data-status="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-status="rood" aria-pressed="false">Rood</button>
+            <button type="button" class="filter-chip" data-status="oranje" aria-pressed="false">Oranje</button>
+            <button type="button" class="filter-chip" data-status="groen" aria-pressed="false">Groen</button>
+            <button type="button" class="filter-chip" data-status="onbekend" aria-pressed="false">Onbekend</button>
           </div>
-          <div class="footer-right">
-            <label class="footer-rows-wrap" for="besc-rows-per-page">
-              <span class="footer-rows-label">Rijen per pagina</span>
-              <select id="besc-rows-per-page" class="footer-rows-select" aria-label="Rijen per pagina">
-                <option value="15" selected>15</option>
-                <option value="30">30</option>
-                <option value="50">50</option>
-              </select>
-            </label>
-            <span id="besc-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-            <span class="pager" role="navigation" aria-label="Paginatie">
-              <button type="button" class="pager-btn" id="besc-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-              <button type="button" class="pager-btn" id="besc-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-              <button type="button" class="pager-btn" id="besc-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-              <button type="button" class="pager-btn" id="besc-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
-            </span>
-          </div>
+          <input class="search" type="search" id="prod-bewaking-search" placeholder="Zoek cliënt / beschikking..." autocomplete="off" />
+          <select class="search" id="prod-bewaking-zorgsoort" style="max-width:200px" aria-label="Filter op zorgsoort">
+            <option value="">Alle zorgsoorten</option>
+          </select>
         </div>
-        <p class="besc-ov-empty" id="besc-empty" hidden>Geen beschikkingen. Voeg er een toe of pas de filters aan.</p>
-      </section>
+        <section class="table-card table-card--compact">
+          <div class="table-wrapper">
+            <table class="employees-table" id="prod-bewaking-table">
+              <thead>
+                <tr>
+                  <th data-col="client"><span class="th-label">Cliënt</span></th>
+                  <th data-col="beschikking"><span class="th-label">Beschikking</span></th>
+                  <th data-col="zorgsoort"><span class="th-label">Zorgsoort</span></th>
+                  <th data-col="locatie"><span class="th-label">Locatie</span></th>
+                  <th data-col="toegekend"><span class="th-label">Toegekend</span></th>
+                  <th data-col="verbruik"><span class="th-label">Verbruik</span></th>
+                  <th data-col="benutting"><span class="th-label">Benutting</span></th>
+                  <th data-col="status"><span class="th-label">Status</span></th>
+                  <th data-col="goedkeuring"><span class="th-label">Overschrijding</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="prod-bewaking-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer table-footer--pagebar">
+            <div class="footer-left"><span id="prod-bewaking-range" class="pager-range">0 van 0</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ KOSTEN & INHUUR ============ -->
+      <div id="prod-kosten-view" hidden>
+        <div class="toolbar">
+          <div class="filter-chips prod-kostentab" role="group" aria-label="Kostensoort">
+            <button type="button" class="filter-chip filter-chip--active" data-kosten="zzp" aria-pressed="true">ZZP / inhuur</button>
+            <button type="button" class="filter-chip" data-kosten="loondienst" aria-pressed="false">Loondienst</button>
+          </div>
+          <input class="search" type="search" id="prod-kosten-search" placeholder="Zoek medewerker..." autocomplete="off" />
+        </div>
+
+        <section class="tk-kpi-grid prod-kosten-kpi" aria-label="Kosten kerngetallen">
+          <div class="tk-kpi tk-kpi--blue"><div class="tk-kpi-body"><span class="tk-kpi-label" id="prod-kosten-kpi1-label">Totale inhuurkosten</span><span class="tk-kpi-value" id="prod-kosten-kpi1">€ 0</span><span class="tk-kpi-sub" id="prod-kosten-kpi1-sub">deze periode</span></div></div>
+          <div class="tk-kpi tk-kpi--green"><div class="tk-kpi-body"><span class="tk-kpi-label" id="prod-kosten-kpi2-label">Gewerkte uren</span><span class="tk-kpi-value" id="prod-kosten-kpi2">0</span><span class="tk-kpi-sub" id="prod-kosten-kpi2-sub">totaal</span></div></div>
+          <div class="tk-kpi tk-kpi--orange"><div class="tk-kpi-body"><span class="tk-kpi-label" id="prod-kosten-kpi3-label">Aantal</span><span class="tk-kpi-value" id="prod-kosten-kpi3">0</span><span class="tk-kpi-sub" id="prod-kosten-kpi3-sub">met productie</span></div></div>
+        </section>
+
+        <section class="table-card table-card--compact" style="margin-top:16px">
+          <div class="table-wrapper">
+            <table class="employees-table" id="prod-kosten-table">
+              <thead id="prod-kosten-thead"></thead>
+              <tbody id="prod-kosten-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer table-footer--pagebar">
+            <div class="footer-left"><span id="prod-kosten-range" class="pager-range">0 van 0</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ MAANDAFSLUITING ============ -->
+      <div id="prod-maand-view" hidden>
+        <section class="table-card table-card--compact">
+          <header class="taken-mgmt-head">
+            <span class="taken-mgmt-title">Maandafsluiting</span>
+            <button type="button" class="btn-primary" id="prod-maand-afsluit-btn">Huidige maand afsluiten</button>
+          </header>
+          <p class="prod-maand-hint">Sluit een maand af om de productie- en kostencijfers vast te leggen (snapshot + audit). Een afgesloten maand markeert de periode als definitief. Alleen directie/eigenaar kan een afgesloten maand heropenen.</p>
+          <div class="table-wrapper">
+            <table class="employees-table" id="prod-maand-table">
+              <thead>
+                <tr>
+                  <th data-col="maand"><span class="th-label">Maand</span></th>
+                  <th data-col="status"><span class="th-label">Status</span></th>
+                  <th data-col="uren"><span class="th-label">Productie-uren</span></th>
+                  <th data-col="zzp"><span class="th-label">ZZP-kosten</span></th>
+                  <th data-col="rood"><span class="th-label">Overschrijdingen</span></th>
+                  <th data-col="door"><span class="th-label">Afgesloten door</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="prod-maand-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ DIRECTIE-KPI'S ============ -->
+      <div id="prod-kpi-view" hidden>
+        <section class="tk-kpi-grid" aria-label="Productie kerngetallen">
+          <div class="tk-kpi tk-kpi--blue"><div class="tk-kpi-body"><span class="tk-kpi-label">Geregistreerde productie-uren</span><span class="tk-kpi-value" id="prod-kpi-uren">0</span><span class="tk-kpi-sub">deze periode</span></div></div>
+          <div class="tk-kpi tk-kpi--red"><div class="tk-kpi-body"><span class="tk-kpi-label">Beschikkingen in overschrijding</span><span class="tk-kpi-value" id="prod-kpi-rood">0</span><span class="tk-kpi-sub" id="prod-kpi-rood-sub">rood t.o.v. gemonitord</span></div></div>
+          <div class="tk-kpi tk-kpi--orange"><div class="tk-kpi-body"><span class="tk-kpi-label">ZZP-inhuurkosten</span><span class="tk-kpi-value" id="prod-kpi-zzp">€ 0</span><span class="tk-kpi-sub">deze periode</span></div></div>
+          <div class="tk-kpi tk-kpi--green"><div class="tk-kpi-body"><span class="tk-kpi-label">Loondienst-benuttingsgraad</span><span class="tk-kpi-value" id="prod-kpi-benutting">—</span><span class="tk-kpi-sub">gemiddeld declarabel/contract</span></div></div>
+        </section>
+
+        <section class="table-card table-card--compact" style="margin-top:16px">
+          <header class="taken-mgmt-head"><span class="taken-mgmt-title">Beschikkingsbewaking — verdeling</span></header>
+          <div class="prod-verdeling" id="prod-kpi-verdeling"></div>
+        </section>
+      </div>
     </main>
   </div>
 
-  <div class="modal-overlay" id="besc-add-modal" hidden aria-hidden="true">
-    <div class="modal-card modal-card--besc-add" role="dialog" aria-modal="true" aria-labelledby="besc-add-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="besc-add-title">Beschikking toevoegen</h2>
-        <button type="button" class="modal-close" id="besc-add-x" aria-label="Sluiten">×</button>
+  <!-- Modal: toegekende omvang instellen -->
+  <div class="emp-verzuim-modal-overlay" id="prod-toegekend-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:460px">
+      <div class="emp-verzuim-modal-head">
+        <h3>Toegekende omvang instellen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="prod-toegekend-close">&times;</button>
       </div>
-      <form class="modal-form" id="besc-add-form" novalidate>
-        <div class="modal-body client-detail-form-grid cdb-add-besc-grid besc-ov-form besc-add-form">
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-cl">Cliënt <span class="form-req" aria-label="verplicht">*</span></label>
-            <select class="modal-input modal-select" id="besc-add-cl" name="besc_cl" required aria-label="Cliënt">
+      <div class="emp-verzuim-modal-body">
+        <p class="prod-modal-context" id="prod-toegekend-context"></p>
+        <div style="display:flex;gap:12px;">
+          <label class="emp-verzuim-modal-field" style="flex:1">
+            <span>Toegekende uren</span>
+            <input type="number" id="prod-toegekend-uren" class="comp-modal-input" min="0" step="0.25" placeholder="bv. 14">
+          </label>
+          <label class="emp-verzuim-modal-field" style="flex:1">
+            <span>Per</span>
+            <select id="prod-toegekend-eenheid" class="comp-modal-input">
+              <option value="week">week</option>
+              <option value="maand">maand</option>
+              <option value="totaal">hele looptijd</option>
             </select>
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-naam">Naam</label>
-            <input class="modal-input" type="text" id="besc-add-naam" name="besc_na" autocomplete="off" placeholder="" />
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-dm">Declaratie methode</label>
-            <select class="modal-input modal-select" id="besc-add-dm" name="besc_dm" aria-label="Declaratie methode" required>
-            </select>
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-s">Startdatum</label>
-            <input class="modal-input" type="date" id="besc-add-s" name="besc_s" />
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-e">Einddatum</label>
-            <input class="modal-input" type="date" id="besc-add-e" name="besc_e" />
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-z">Zorgsoort</label>
-            <select class="modal-input modal-select" id="besc-add-z" name="besc_zk" aria-label="Zorgsoort" required>
-            </select>
-          </div>
-          <div class="modal-field">
-            <label class="modal-label" for="besc-add-fas">Fase</label>
-            <select class="modal-input modal-select" id="besc-add-fas" name="besc_fase" aria-label="Fase" required>
-            </select>
-          </div>
-          <div class="modal-field cdb-add-besc-placeholder" aria-hidden="true"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" id="besc-add-cancel">Annuleren</button>
-          <button type="submit" class="btn-primary" id="besc-add-ok">Toevoegen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="besc-export-modal" hidden aria-hidden="true">
-    <div class="modal-card modal-card--besc-export" role="dialog" aria-modal="true" aria-labelledby="besc-export-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="besc-export-title">Exporteren</h2>
-        <button type="button" class="modal-close" id="besc-export-x" aria-label="Sluiten">×</button>
-      </div>
-      <div class="modal-body">
-        <p class="besc-export-intro">Selecteer de kolommen die je wilt opnemen in je export. Gebruik de zoekfunctie om kolommen te filteren en de selectievakjes om ze te selecteren.</p>
-        <div class="besc-export-toolbar">
-          <div class="besc-export-search-wrap">
-            <svg class="besc-export-search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input class="modal-input besc-export-search" type="search" id="besc-export-search" placeholder="Kolommen zoeken..." autocomplete="off" aria-label="Kolommen zoeken" />
-          </div>
-          <label class="besc-export-selall">
-            <input type="checkbox" id="besc-export-all" checked aria-label="Selecteer alle kolommen" />
-            <span class="besc-export-selall-lbl">Selecteer alles</span>
           </label>
         </div>
-        <div class="besc-export-grid" id="besc-export-grid" role="group" aria-label="Te exporteren kolommen"></div>
-        <div class="modal-field besc-export-format-field">
-          <label class="modal-label" for="besc-export-format">Bestandsformaat</label>
-          <select class="modal-input modal-select" id="besc-export-format" aria-label="Bestandsformaat">
-            <option value="pdf">PDF (.pdf)</option>
-            <option value="txt">Tekstbestand (.txt)</option>
-            <option value="xlsx" selected>Excel (.xlsx)</option>
-            <option value="csv">Spreadsheet (.csv)</option>
-          </select>
-        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="besc-export-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="besc-export-confirm">Exporteren</button>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="prod-toegekend-cancel">Annuleren</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="prod-toegekend-save">Opslaan</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay modal-overlay--confirm" id="besc-purge-modal" hidden aria-hidden="true">
-    <div class="modal-dialog employee-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="besc-purge-title" tabindex="-1">
-      <div class="modal-header">
-        <h2 id="besc-purge-title" class="modal-title">Beschikking definitief verwijderen</h2>
-        <button type="button" class="modal-close" id="besc-purge-close" aria-label="Sluiten">×</button>
+  <!-- Modal: overschrijding behandelen -->
+  <div class="emp-verzuim-modal-overlay" id="prod-oversch-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:520px">
+      <div class="emp-verzuim-modal-head">
+        <h3>Overschrijding behandelen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="prod-oversch-close">&times;</button>
       </div>
-      <div class="modal-body">
-        <p class="employee-delete-msg">Dit neemt de rij permanent uit de lijst. Het dashboard wordt mee geüpdatet.</p>
-        <p class="employee-delete-preview" id="besc-purge-preview" aria-live="polite"></p>
-        <div class="employee-delete-slider-block">
-          <label class="employee-delete-slider-label" for="besc-purge-slider">Schuif helemaal naar rechts om te bevestigen</label>
-          <div class="employee-delete-slider-wrap">
-            <input type="range" id="besc-purge-slider" class="employee-delete-slider" min="0" max="100" value="0" step="1" aria-label="Bevestig verwijderen" />
-          </div>
-        </div>
+      <div class="emp-verzuim-modal-body">
+        <p class="prod-modal-context" id="prod-oversch-context"></p>
+        <div class="prod-oversch-meta" id="prod-oversch-meta"></div>
+        <label class="emp-verzuim-modal-field">
+          <span>Toelichting / onderbouwing</span>
+          <textarea id="prod-oversch-reden" class="comp-modal-input" rows="3" placeholder="Waarom is de overschrijding (niet) akkoord?"></textarea>
+        </label>
+        <div class="prod-oversch-current" id="prod-oversch-current" hidden></div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="besc-purge-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="besc-purge-confirm" disabled>Verwijderen</button>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="prod-oversch-cancel">Annuleren</button>
+        <button type="button" class="btn-outline" id="prod-oversch-afwijzen">Afwijzen</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="prod-oversch-goedkeuren">Goedkeuren</button>
       </div>
     </div>
   </div>
 
-  <div class="app-toast app-toast--clienten" id="besc-toast" role="status" aria-live="polite" hidden></div>
+  <!-- Modal: maand afsluiten (met notitie) -->
+  <div class="emp-verzuim-modal-overlay" id="prod-afsluit-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:480px">
+      <div class="emp-verzuim-modal-head">
+        <h3 id="prod-afsluit-title">Maand afsluiten</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="prod-afsluit-close">&times;</button>
+      </div>
+      <div class="emp-verzuim-modal-body">
+        <p class="prod-modal-context" id="prod-afsluit-context"></p>
+        <label class="emp-verzuim-modal-field">
+          <span>Notitie (optioneel)</span>
+          <textarea id="prod-afsluit-notitie" class="comp-modal-input" rows="2" placeholder="bv. Cijfers gecontroleerd en akkoord."></textarea>
+        </label>
+      </div>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="prod-afsluit-cancel">Annuleren</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="prod-afsluit-confirm">Maand afsluiten</button>
+      </div>
+    </div>
+  </div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
-  <script src="sidebar-nav.js?v=918f1ad"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous" defer></script>
-  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" defer></script>
-  <script src="export-formats.js?v=918f1ad" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
   <script src="besa-sync-reporter.js?v=918f1ad"></script>
-  <script src="optimistic-lock.js?v=918f1ad" defer></script>
-  <script src="realtime-sync.js?v=918f1ad" defer></script>
-  <script src="bulk-actions.js?v=918f1ad" defer></script>
-  <script src="pdf-export.js?v=918f1ad" defer></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
   <script src="helpdesk-modal.js?v=918f1ad" defer></script>
-  <script src="onboarding-flow.js?v=918f1ad" defer></script>
   <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="clienten-data.js?v=918f1ad" defer></script>
-  <script src="fase-ui.js?v=918f1ad" defer></script>
-  <script src="beschikkingen-besc-bulk.js?v=918f1ad" defer></script>
-  <script src="beschikkingen-data.js?v=918f1ad" defer></script>
-  <script src="beschikkingen-overzicht.js?v=918f1ad" defer></script>
+  <script src="productie-data.js?v=918f1ad"></script>
+  <script src="productie.js?v=918f1ad"></script>
 </body>
 </html>

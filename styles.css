@@ -26667,3 +26667,57 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
   .tk-kpi-grid { grid-template-columns: 1fr; }
 }
 
+
+/* =====================================================================
+   Module 2 — Productie & Urenregistratie (productie-urenregistratie.html)
+   Hergebruikt tk-kpi-grid / filter-chips / table-card; alleen module-eigen
+   onderdelen (statusdot, benuttingsbalk, periode-stepper) hieronder.
+   ===================================================================== */
+.prod-viewtabs { flex: 0 0 auto; margin-bottom: 12px; }
+.prod-period { display: inline-flex; align-items: center; gap: 6px; }
+.prod-period-step { padding: 6px 12px; font-size: var(--font-base); line-height: 1; }
+.prod-period-select { max-width: 150px; }
+
+.prod-muted { color: var(--text-muted); }
+.prod-inline-link { color: var(--blue); text-decoration: underline; }
+.prod-loading, .prod-empty-cell { text-align: center; color: var(--text-muted); padding: 22px 12px; }
+
+.prod-empty { text-align: center; padding: 40px 16px; }
+.prod-empty-title { font-size: var(--font-h1); font-weight: 800; color: var(--text); margin: 0 0 6px; }
+.prod-empty-sub { color: var(--text-secondary); margin: 0; }
+
+/* Status-stip (groen/oranje/rood/grijs) — kleurklasse herbruikt voor balk-fill. */
+.prod-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.prod-dot--groen  { background: var(--green); }
+.prod-dot--oranje { background: var(--yellow); }
+.prod-dot--rood   { background: var(--red); }
+.prod-dot--grijs  { background: var(--line-strong, var(--line)); }
+.prod-status-pill { display: inline-flex; align-items: center; gap: 7px; }
+
+/* Benuttingsbalk */
+.prod-bar { position: relative; height: 16px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; min-width: 90px; }
+.prod-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--r-pill); transition: width .2s ease; }
+.prod-bar-label, .prod-bar-over { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); font-size: var(--font-ui-badge); font-weight: 700; }
+.prod-bar-label { color: var(--text-secondary); }
+.prod-bar-over { color: var(--red); }
+
+/* Compacte rij-acties */
+.prod-acties-cell { white-space: nowrap; }
+.prod-mini-btn { padding: 4px 10px; font-size: var(--font-table-cell); line-height: 1.2; }
+.prod-mini-btn--warn { color: var(--red); border-color: var(--red); }
+
+/* Modal-context + meta */
+.prod-modal-context { font-weight: 600; color: var(--text); margin: 0 0 10px; }
+.prod-oversch-meta { background: var(--line); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 12px; color: var(--text-secondary); font-size: var(--font-table-cell); }
+.prod-oversch-current { background: var(--yellow-soft); border-radius: var(--r-md); padding: 8px 12px; margin-top: 8px; color: var(--text); font-size: var(--font-table-cell); }
+.prod-maand-hint { color: var(--text-secondary); font-size: var(--font-table-cell); padding: 0 16px 12px; margin: 0; }
+
+/* KPI-verdeling */
+.prod-verdeling { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.prod-verdeling-row { display: grid; grid-template-columns: 220px 1fr 44px; align-items: center; gap: 12px; }
+.prod-verdeling-label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--font-table-cell); color: var(--text); }
+.prod-verdeling-n { text-align: right; font-weight: 700; color: var(--text); }
+@media (max-width: 560px) {
+  .prod-verdeling-row { grid-template-columns: 1fr 60px; }
+  .prod-verdeling-row .prod-bar { display: none; }
+}
