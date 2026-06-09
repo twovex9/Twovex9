@@ -85,9 +85,9 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry
 - [ ] G57 — herbruikbare besaApplyReadOnly(roles) helper
 
-### Fase 6 — Notificatie-cron + infra  [ ]
-- [ ] G8  — notify_vervallende_documenten() pg_cron 90/60/30 + verlopen (KERN-DIFFERENTIATOR)
-- [ ] G32 — poortwachter-signalering cron (naderende/te-late mijlpalen → HR)
+### Fase 6 — Notificatie-cron + infra  [~]
+- [x] G8  — `notify_vervallende_documenten()` dagelijkse digest-cron (verlopen/30/60/90) → HR. Server-getest (dedup OK). `hr_v4_verloop_documenten_cron.sql`. KERN-DIFFERENTIATOR.
+- [x] G32 — `notify_poortwachter_deadlines()` dagelijkse digest-cron (te laat/binnen 14d) → HR. Server-getest. `hr_v4_poortwachter_signalering_cron.sql`.
 - [ ] G31 — frequent verzuim (Bradford/teller + KPI)
 - [ ] G33 — week-1-mijlpaal + 42e-week UWV los van eerstejaarsevaluatie
 - [ ] G34 — traject auto bij ziekmelding
