@@ -297,6 +297,7 @@ as $function$
       jsonb_agg(jsonb_build_object('naam',naam,'benutting',benutting,'slack',slack) order by benutting)
     from loon_util2
     where benutting is not null and benutting < 60 and slack > 8
+      and (select tot_open from org) > 0   -- alleen zinvol als er open vraag is om naar te herverdelen
     having count(*) > 0
 
     union all
