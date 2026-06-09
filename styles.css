@@ -3159,6 +3159,14 @@ h1 {
   flex-wrap: wrap;
 }
 .md-head h2 { margin: 0; }
+
+/* Read-only cliënten-overzicht (locatie-gescopede Medewerker, video-feedback 2026-06-07):
+   verberg de beheer-affordances — acties-kolom (archiveren/verwijderen) en selectie-checkboxes.
+   De clienten-RLS blokkeert schrijven door deze rollen sowieso server-side. */
+.besa-clienten-readonly th[data-col="acties"],
+.besa-clienten-readonly td[data-col="acties"],
+.besa-clienten-readonly .cl-row-check,
+.besa-clienten-readonly .cl-check-col { display: none !important; }
 .mijn-gegevens-rights {
   margin: 0;
   padding-left: 20px;
