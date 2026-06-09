@@ -109,6 +109,7 @@ function buildNav(active) {
   const URENREGISTRATIE = smallDropdown("werkuren", "Urenregistratie", "Urenregistratie opties", [
     { href: "werkuren", title: "Geregistreerde uren", sub: "Overzicht geregistreerde uren" },
     { href: "productie-urenregistratie", title: "Productie &amp; bewaking", sub: "Beschikkingsbewaking, kosten &amp; maandafsluiting" },
+    { href: "workforce-planning", title: "Workforce planning", sub: "Personeelsbehoefte, capaciteit &amp; AI-aanbevelingen" },
     { href: "urendeclaraties", title: "Uren declaraties", sub: "Urendeclaraties per medewerker" },
     { href: "uren-budgettering", title: "Uren budgettering", sub: "Standaard uren &amp; wekelijkse budgetten" },
     { href: "werkuren-labels", title: "Labels", sub: "Beheer labels voor urenregistraties" },
@@ -260,6 +261,7 @@ const TOPIC_BY_PAGE = {
   "werkuren.html": "Urenregistratie",
   "werkuren-labels.html": "Urenregistratie",
   "productie-urenregistratie.html": "Urenregistratie",
+  "workforce-planning.html": "Urenregistratie",
   "urendeclaraties.html": "Urenregistratie",
   "uren-budgettering.html": "Urenregistratie",
   "hr.html": "HR",

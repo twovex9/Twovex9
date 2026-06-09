@@ -137,6 +137,10 @@
     // (niveau) de views (Directie-KPI's = niveau<=2) en zijn de RPC's SECURITY DEFINER
     // met een harde niveau<=3-check. Medewerkers gebruiken Mijn uren (self-service).
     "productie-urenregistratie.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Finance", "Salarisadministratie", "Planner", "Zorgcoördinator", "HR"] },
+    // Module 3 — Workforce Planning + AI (management-overzicht). Zelfde tier als
+    // Productie: de pagina gate't intern via workforce_mijn_context (niveau) — Forecast
+    // & directie = niveau<=2 — en de RPC's zijn SECURITY DEFINER met harde niveau<=3-check.
+    "workforce-planning.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Finance", "Salarisadministratie", "Planner", "Zorgcoördinator", "HR"] },
     "werkuren-labels.html": { action: "browse", entity: "labels" },
     "urendeclaraties.html": { action: "view", entity: "employee-hour-registrations" },
     // plus-minuren staat in het HR-mega-menu (HR-domein), maar keyde op de generieke

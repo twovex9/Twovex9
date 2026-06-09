@@ -5,106 +5,28 @@
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
-  <title>Proforma-factuur — Future Flow</title>
-  <link rel="stylesheet" href="styles.css?v=918f1ad" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Workforce planning</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad">
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
-  <style>
-    .zf-back{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-muted,#64748b);text-decoration:none;margin:0 0 8px;}
-    .zf-back:hover{color:var(--accent,#2563eb);}
-    .zd-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--text-muted,#64748b);margin-top:3px;}
-    .zd-meta strong{color:var(--text);font-weight:600;}
-    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:999px;font-size:12px;font-weight:650;}
-    .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
-    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
-    .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
-    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
-    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
-    .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
-    [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
-    [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
-    [data-theme="dark"] .zf-pill--in_behandeling{background:rgba(168,85,247,.24);color:#d8b4fe;}
-    [data-theme="dark"] .zf-pill--goedgekeurd{background:rgba(34,197,94,.22);color:#86efac;}
-    [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
-    [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
-    .zd-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zd-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px 24px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--text);}
-    .zd-foot .zd-foot-lbl{color:var(--text-muted,#64748b);font-weight:600;}
-    .zd-afw{color:#b45309;}
-    [data-theme="dark"] .zd-afw{color:#fbbf24;}
-    /* ZZP-invoer-kaart */
-    .zd-zzpcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;}
-    .zd-zzpcard h2{grid-column:1/-1;font-size:13px;font-weight:700;margin:0 0 2px;color:var(--text);}
-    .zd-field{display:flex;flex-direction:column;gap:4px;}
-    .zd-field--full{grid-column:1/-1;}
-    .zd-field label{font-size:11.5px;font-weight:600;color:var(--text-muted,#64748b);}
-    .zd-field input[type=text],.zd-field textarea{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card,var(--surface));color:var(--text);}
-    .zd-field textarea{min-height:54px;resize:vertical;}
-    .zd-field .zd-readonly{font-size:13px;color:var(--text);padding:6px 0;}
-    .zd-logo-prev{max-height:54px;max-width:160px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:3px;}
-    /* edit-inputs in regels */
-    .zd-inp{width:74px;font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;text-align:right;background:var(--card,var(--surface));color:var(--text);font-variant-numeric:tabular-nums;}
-    tr.zd-removed{opacity:.5;}
-    tr.zd-removed .zd-omschrijving{text-decoration:line-through;}
-    tr.zd-changed td{background:rgba(220,38,38,.05);}
-    .zd-del-btn{font:inherit;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card,var(--surface));color:#b91c1c;cursor:pointer;}
-    .zd-del-btn.is-removed{color:#15803d;}
-    .zd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-    .zd-sig-note{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
-    .zd-sig{display:inline-block;width:10px;height:10px;border-radius:50%;}
-    .zd-sig--rood{background:#dc2626;} .zd-sig--oranje{background:#f59e0b;}
-    .zd-hint{font-size:11.5px;color:var(--text-muted,#64748b);grid-column:1/-1;}
-    /* [hidden] moet winnen van display:grid/inline-flex (bekende valkuil) */
-    .zd-zzpcard[hidden]{display:none;}
-    #zd-foot-afw[hidden]{display:none;}
-    /* side-by-side vergelijking proforma ↔ ingediend */
-    .zd-grp{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
-    .zd-grp--pf{color:var(--text-muted,#64748b);}
-    .zd-grp--ing{color:#1d4ed8;}
-    [data-theme="dark"] .zd-grp--ing{color:#93c5fd;}
-    td.zd-ing{background:rgba(37,99,235,.05);}
-    [data-theme="dark"] td.zd-ing{background:rgba(59,130,246,.10);}
-    td.zd-chg{color:#b91c1c;font-weight:700;}
-    [data-theme="dark"] td.zd-chg{color:#fca5a5;}
-    .zd-banner{border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px;}
-    .zd-banner--afgewezen{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.25);}
-    .zd-banner--goedgekeurd{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.25);}
-    .zd-banner--ingediend{background:rgba(37,99,235,.07);color:#1d4ed8;border:1px solid rgba(37,99,235,.22);}
-    .zd-betaalveld{margin-top:10px;}
-    .zd-betaalveld label{display:block;font-size:12px;margin-bottom:4px;font-weight:600;}
-    .zd-termijn-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-    .zd-termijn-opts button{padding:4px 12px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:transparent;cursor:pointer;font:inherit;font-size:13px;color:var(--text,inherit);}
-    .zd-termijn-opts button.is-active{background:#2563eb;color:#fff;border-color:#2563eb;}
-    .zd-betaalveld input{width:120px;box-sizing:border-box;padding:7px 8px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:var(--bg,#fff);color:var(--text,inherit);font:inherit;}
-    .zd-betaalveld .zd-betaaldatum-prev{font-size:12px;margin-top:6px;opacity:.85;}
-    .zd-opm-card{border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:14px 16px;margin-top:16px;background:var(--surface,#fff);color:var(--text,inherit);}
-    .zd-opm-card h3{margin:0 0 4px;font-size:15px;}
-    .zd-opm-card .zd-opm-sub{font-size:12px;opacity:.7;margin:0 0 12px;}
-    .zd-opm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-    .zd-opm{border-radius:10px;padding:8px 12px;font-size:13px;border:1px solid var(--border,#e5e7eb);}
-    .zd-opm--zzp{background:rgba(37,99,235,.12);}
-    .zd-opm--controleur{background:rgba(22,163,74,.12);}
-    .zd-opm-head{font-size:11px;opacity:.7;margin-bottom:3px;display:flex;justify-content:space-between;gap:10px;}
-    .zd-opm-empty{font-size:13px;opacity:.65;margin-bottom:12px;}
-    .zd-opm-form{display:flex;flex-direction:column;gap:6px;}
-    .zd-opm-form textarea{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:var(--bg,#fff);color:var(--text,inherit);font:inherit;min-height:62px;resize:vertical;}
-    .zd-opm-form .zd-opm-actions{display:flex;justify-content:flex-end;}
-    .zd-reden{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:8px;}
-    .zd-reden textarea{font:inherit;font-size:13px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card,var(--surface));color:var(--text);min-height:48px;}
-    .zd-reden-row{display:flex;gap:8px;}
-  </style>
 </head>
 <body>
+  <script src="save-feedback.js?v=918f1ad" defer></script>
+  <script src="floating-panels.js?v=918f1ad" defer></script>
+
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -126,7 +48,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="werkuren" class="top-link top-link--dropdown">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="werkuren" class="top-link top-link--dropdown is-active">Urenregistratie<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Urenregistratie opties">
                 <a href="werkuren" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Geregistreerde uren</span><span class="top-dropdown-subtitle">Overzicht geregistreerde uren</span></a>
                 <a href="productie-urenregistratie" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Productie &amp; bewaking</span><span class="top-dropdown-subtitle">Beschikkingsbewaking, kosten &amp; maandafsluiting</span></a>
@@ -213,7 +135,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="facturen-te-beoordelen" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="facturen-te-beoordelen" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
                 <a href="zzp-facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Proforma's per locatie</span><span class="top-dropdown-subtitle">ZZP-proforma's o.b.v. de planning</span></a>
                 <a href="zzp-overuren" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overuren te beoordelen</span><span class="top-dropdown-subtitle">Uren-wijzigingen → planning</span></a>
@@ -259,105 +181,167 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
-      <nav class="side-nav" aria-label="Facturen module">
-        <a href="zzp-facturen" class="side-link is-active" aria-current="page">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
-          Proforma's
-        </a>
-        <a href="facturen-te-beoordelen" class="side-link">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Te beoordelen
-        </a>
-        <a href="facturen-indiening" class="side-link">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Indiening per maand
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <a class="side-nav-exit" href="zzp-facturen">← Proforma's</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">FA</span>
-      </div>
-    </aside>
-
-    <main class="content content--fact-tb">
-      <a class="zf-back" id="zd-back" href="zzp-facturen">‹ Terug</a>
+    <main class="content">
       <div class="content-header">
-        <div>
-          <h1 id="zd-titel">Proforma-factuur</h1>
-          <div class="zd-meta" id="zd-meta"></div>
+        <h1>Workforce planning</h1>
+        <div class="header-actions">
+          <div class="prod-period" role="group" aria-label="Periode">
+            <button type="button" class="btn-outline prod-period-step" id="wf-period-prev" aria-label="Vorige maand">‹</button>
+            <select class="search prod-period-select" id="wf-period-maand" aria-label="Maand"></select>
+            <select class="search prod-period-select" id="wf-period-jaar" aria-label="Jaar" style="max-width:96px"></select>
+            <button type="button" class="btn-outline prod-period-step" id="wf-period-next" aria-label="Volgende maand">›</button>
+          </div>
         </div>
-        <div class="header-actions zd-actions" id="zd-actions"></div>
       </div>
 
-      <div id="zd-banner"></div>
+      <!-- Rol-gegate weergave-tabs. Capaciteit/Aanbevelingen/Skills voor management
+           (niveau <= 3); Forecast & directie alleen voor directie/eigenaar (niveau <= 2). -->
+      <div class="filter-chips prod-viewtabs" role="tablist" aria-label="Workforce weergave">
+        <button type="button" class="filter-chip filter-chip--active" role="tab" data-view="capaciteit" id="wf-view-capaciteit" aria-selected="true">Capaciteit &amp; tekorten</button>
+        <button type="button" class="filter-chip" role="tab" data-view="aanbevelingen" id="wf-view-aanbevelingen" aria-selected="false">AI-aanbevelingen</button>
+        <button type="button" class="filter-chip" role="tab" data-view="skills" id="wf-view-skills" aria-selected="false">Skills &amp; dekking</button>
+        <button type="button" class="filter-chip" role="tab" data-view="forecast" id="wf-view-forecast" aria-selected="false" hidden>Forecast &amp; directie</button>
+      </div>
 
-      <!-- ZZP-invoer (eigen factuurnummer / logo / extra) -->
-      <section class="zd-zzpcard" id="zd-zzpcard" hidden>
-        <h2>Mijn factuurgegevens</h2>
-        <div class="zd-field">
-          <label for="zd-nummer">Eigen factuurnummer</label>
-          <input type="text" id="zd-nummer" placeholder="bv. 2026-014" autocomplete="off" />
-          <span class="zd-readonly" id="zd-nummer-ro" hidden></span>
+      <!-- Niveau-te-laag melding (medewerker opent de pagina) -->
+      <div id="wf-no-access" class="table-card" hidden>
+        <div class="prod-empty">
+          <p class="prod-empty-title">Geen workforce-overzicht beschikbaar</p>
+          <p class="prod-empty-sub">Deze module toont personeelsbehoefte- en capaciteitsplanning voor management. Bekijk je eigen rooster via <a href="planning" class="prod-inline-link">Planning</a> of vul je beschikbaarheid in via <a href="mijn-beschikbaarheid" class="prod-inline-link">Mijn beschikbaarheid</a>.</p>
         </div>
-        <div class="zd-field">
-          <label for="zd-logo">Eigen logo</label>
-          <input type="file" id="zd-logo" accept="image/png,image/jpeg,image/webp,image/gif" />
-          <img id="zd-logo-prev" class="zd-logo-prev" alt="Logo" hidden />
-        </div>
-        <div class="zd-field zd-field--full">
-          <label for="zd-extra">Extra gegevens (adres, IBAN, btw-nummer, opmerking…)</label>
-          <textarea id="zd-extra" placeholder="Optioneel — verschijnt op je factuur"></textarea>
-          <span class="zd-readonly" id="zd-extra-ro" hidden></span>
-        </div>
-        <p class="zd-hint" id="zd-edit-hint">De diensten hieronder zijn ingevuld zoals gepland. Pas alleen aan wat afwijkt — wij zien automatisch wat je hebt gewijzigd (🔴) of verwijderd (🟠).</p>
-      </section>
+      </div>
 
-      <section class="fzz-overview" aria-label="Proforma-totalen">
-        <div class="fzz-card fzz-card--hero">
-          <span class="fzz-card-lbl">Totaal proforma</span>
-          <span class="fzz-card-val" id="zd-totaal">€ 0,00</span>
-          <span class="fzz-card-sub" id="zd-totaal-sub">excl. btw</span>
-        </div>
-        <div class="fzz-card">
-          <span class="fzz-card-lbl">Uren</span>
-          <span class="fzz-card-val" id="zd-uren">0</span>
-          <span class="fzz-card-sub">netto-uren (− pauze)</span>
-        </div>
-        <div class="fzz-card">
-          <span class="fzz-card-lbl">Uurtarief</span>
-          <span class="fzz-card-val" id="zd-tarief">€ 0</span>
-          <span class="fzz-card-sub">per uur</span>
-        </div>
-        <div class="fzz-card">
-          <span class="fzz-card-lbl">Diensten</span>
-          <span class="fzz-card-val" id="zd-diensten">0</span>
-          <span class="fzz-card-sub">geplande diensten</span>
-        </div>
-      </section>
+      <!-- ============ CAPACITEIT & TEKORTEN ============ -->
+      <div id="wf-capaciteit-view">
+        <section class="tk-kpi-grid wf-cap-kpi" aria-label="Capaciteit kerngetallen">
+          <div class="tk-kpi tk-kpi--red"><div class="tk-kpi-body"><span class="tk-kpi-label">Open diensten</span><span class="tk-kpi-value" id="wf-cap-kpi-open">0</span><span class="tk-kpi-sub" id="wf-cap-kpi-open-sub">nog in te vullen</span></div></div>
+          <div class="tk-kpi tk-kpi--orange"><div class="tk-kpi-body"><span class="tk-kpi-label">Onbezette uren (tekort)</span><span class="tk-kpi-value" id="wf-cap-kpi-uren">0</span><span class="tk-kpi-sub">deze periode</span></div></div>
+          <div class="tk-kpi tk-kpi--blue"><div class="tk-kpi-body"><span class="tk-kpi-label">Geschatte inhuurkosten</span><span class="tk-kpi-value" id="wf-cap-kpi-eur">€ 0</span><span class="tk-kpi-sub">om tekort via ZZP te vullen</span></div></div>
+        </section>
 
-      <section class="table-card table-card--compact">
-        <div class="table-wrapper">
-          <table class="employees-table" id="zd-table">
-            <thead id="zd-thead"></thead>
-            <tbody id="zd-regels"></tbody>
-          </table>
+        <div class="toolbar" style="margin-top:16px">
+          <div class="filter-chips wf-statusfilter" role="group" aria-label="Filter op status">
+            <button type="button" class="filter-chip filter-chip--active" data-status="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-status="rood" aria-pressed="false">Rood</button>
+            <button type="button" class="filter-chip" data-status="oranje" aria-pressed="false">Oranje</button>
+            <button type="button" class="filter-chip" data-status="groen" aria-pressed="false">Groen</button>
+          </div>
+          <input class="search" type="search" id="wf-cap-search" placeholder="Zoek locatie..." autocomplete="off" />
         </div>
-        <div class="zd-foot" id="zd-foot">
-          <span><span class="zd-foot-lbl">Totaal uren:</span> <span id="zd-foot-uren">0</span></span>
-          <span><span class="zd-foot-lbl">Totaal bedrag:</span> <span id="zd-foot-bedrag">€ 0,00</span></span>
-          <span id="zd-foot-afw" hidden></span>
-        </div>
-      </section>
+        <section class="table-card table-card--compact">
+          <div class="table-wrapper">
+            <table class="employees-table" id="wf-cap-table">
+              <thead>
+                <tr>
+                  <th data-col="locatie"><span class="th-label">Locatie</span></th>
+                  <th data-col="diensten"><span class="th-label">Diensten (open/totaal)</span></th>
+                  <th data-col="vraag"><span class="th-label">Vraag-uren</span></th>
+                  <th data-col="gevuld"><span class="th-label">Gevuld</span></th>
+                  <th data-col="open"><span class="th-label">Open (tekort)</span></th>
+                  <th data-col="loon"><span class="th-label">Loondienst-capaciteit</span></th>
+                  <th data-col="dekking"><span class="th-label">Dekkingsgraad</span></th>
+                  <th data-col="status"><span class="th-label">Status</span></th>
+                </tr>
+              </thead>
+              <tbody id="wf-cap-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer table-footer--pagebar">
+            <div class="footer-left"><span id="wf-cap-range" class="pager-range">0 van 0</span></div>
+          </div>
+        </section>
+      </div>
 
-      <section class="zd-opm-card" id="zd-opmerkingen" hidden></section>
+      <!-- ============ AI-AANBEVELINGEN ============ -->
+      <div id="wf-aanbevelingen-view" hidden>
+        <p class="wf-intro">De AI-engine analyseert vraag (geplande diensten) versus aanbod (loondienst-capaciteit, ZZP-inhuur, skills) en stelt geprioriteerde, onderbouwde acties voor. Markeer een advies als <strong>opgevolgd</strong> of <strong>afgewezen</strong> — directie wordt automatisch geïnformeerd.</p>
+        <div class="toolbar">
+          <div class="filter-chips wf-priofilter" role="group" aria-label="Filter op prioriteit">
+            <button type="button" class="filter-chip filter-chip--active" data-prio="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-prio="hoog" aria-pressed="false">Hoog</button>
+            <button type="button" class="filter-chip" data-prio="midden" aria-pressed="false">Midden</button>
+            <button type="button" class="filter-chip" data-prio="laag" aria-pressed="false">Laag</button>
+          </div>
+          <label class="wf-toggle"><input type="checkbox" id="wf-aanb-verberg-afgehandeld"> <span>Verberg afgehandelde</span></label>
+        </div>
+        <div id="wf-aanb-list" class="wf-rec-list"></div>
+      </div>
+
+      <!-- ============ SKILLS & DEKKING ============ -->
+      <div id="wf-skills-view" hidden>
+        <p class="wf-intro">Per locatie: teamgrootte, verdeling loondienst/ZZP, kernteam en certificering (BHV / medicatie). Een locatie met 0-1 BHV-gecertificeerde medewerkers vormt een uitvalrisico.</p>
+        <section class="table-card table-card--compact">
+          <div class="table-wrapper">
+            <table class="employees-table" id="wf-skills-table">
+              <thead>
+                <tr>
+                  <th data-col="locatie"><span class="th-label">Locatie</span></th>
+                  <th data-col="team"><span class="th-label">Team</span></th>
+                  <th data-col="loon"><span class="th-label">Loondienst</span></th>
+                  <th data-col="zzp"><span class="th-label">ZZP / inhuur</span></th>
+                  <th data-col="kern"><span class="th-label">Kernteam</span></th>
+                  <th data-col="bhv"><span class="th-label">BHV</span></th>
+                  <th data-col="med"><span class="th-label">Medicatie</span></th>
+                  <th data-col="risico"><span class="th-label">BHV-risico</span></th>
+                </tr>
+              </thead>
+              <tbody id="wf-skills-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer table-footer--pagebar">
+            <div class="footer-left"><span id="wf-skills-range" class="pager-range">0 van 0</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ FORECAST & DIRECTIE ============ -->
+      <div id="wf-forecast-view" hidden>
+        <section class="tk-kpi-grid" aria-label="Strategische kerngetallen">
+          <div class="tk-kpi tk-kpi--blue"><div class="tk-kpi-body"><span class="tk-kpi-label">Dekkingsgraad</span><span class="tk-kpi-value" id="wf-kpi-dekking">—</span><span class="tk-kpi-sub">gevuld / vraag deze periode</span></div></div>
+          <div class="tk-kpi tk-kpi--red"><div class="tk-kpi-body"><span class="tk-kpi-label">Onbezette uren</span><span class="tk-kpi-value" id="wf-kpi-open">0</span><span class="tk-kpi-sub" id="wf-kpi-open-sub">over alle locaties</span></div></div>
+          <div class="tk-kpi tk-kpi--orange"><div class="tk-kpi-body"><span class="tk-kpi-label">Geschatte inhuurkosten</span><span class="tk-kpi-value" id="wf-kpi-eur">€ 0</span><span class="tk-kpi-sub">tekort × gem. ZZP-tarief</span></div></div>
+          <div class="tk-kpi tk-kpi--green"><div class="tk-kpi-body"><span class="tk-kpi-label">Onbenutte loondienst</span><span class="tk-kpi-value" id="wf-kpi-onbenut">0</span><span class="tk-kpi-sub" id="wf-kpi-benut-sub">uur · gem. benutting —</span></div></div>
+        </section>
+
+        <section class="table-card table-card--compact" style="margin-top:16px">
+          <header class="taken-mgmt-head"><span class="taken-mgmt-title">Forecast — dekkingsgraad per locatie per week</span></header>
+          <p class="wf-intro" style="padding:0 16px 8px">Vooruitblik op de komende weken: per locatie de dekkingsgraad (gevuld ÷ vraag). Groen ≥90% · oranje 70-90% · rood &lt;70%.</p>
+          <div class="table-wrapper">
+            <table class="employees-table wf-fc-table" id="wf-forecast-table">
+              <thead><tr id="wf-forecast-head"></tr></thead>
+              <tbody id="wf-forecast-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
-  <div class="app-toast" id="zd-toast" role="status" aria-live="polite" hidden></div>
+  <!-- Modal: AI-aanbeveling beoordelen -->
+  <div class="emp-verzuim-modal-overlay" id="wf-beslis-modal" style="display:none">
+    <div class="emp-verzuim-modal" style="width:520px">
+      <div class="emp-verzuim-modal-head">
+        <h3 id="wf-beslis-title">Advies beoordelen</h3>
+        <button type="button" class="emp-verzuim-modal-close" id="wf-beslis-close">&times;</button>
+      </div>
+      <div class="emp-verzuim-modal-body">
+        <p class="prod-modal-context" id="wf-beslis-context"></p>
+        <div class="prod-oversch-meta" id="wf-beslis-meta"></div>
+        <label class="emp-verzuim-modal-field">
+          <span>Toelichting (optioneel)</span>
+          <textarea id="wf-beslis-notitie" class="comp-modal-input" rows="3" placeholder="Bijv. extra ZZP ingezet / werving gestart / advies niet van toepassing."></textarea>
+        </label>
+        <div class="prod-oversch-current" id="wf-beslis-current" hidden></div>
+      </div>
+      <div class="emp-verzuim-modal-footer">
+        <button type="button" class="emp-verzuim-modal-cancel" id="wf-beslis-cancel">Annuleren</button>
+        <button type="button" class="btn-outline" id="wf-beslis-afwijzen">Afwijzen</button>
+        <button type="button" class="emp-verzuim-modal-submit" id="wf-beslis-opvolgen">Opvolgen</button>
+      </div>
+    </div>
+  </div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
-  <script src="sidebar-nav.js?v=918f1ad"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
@@ -366,10 +350,13 @@
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
+  <script src="helpdesk-modal.js?v=918f1ad" defer></script>
+  <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="zzp-facturen-data.js?v=918f1ad" defer></script>
-  <script src="zzp-factuur-detail.js?v=918f1ad" defer></script>
+  <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="workforce-data.js?v=918f1ad"></script>
+  <script src="workforce.js?v=918f1ad"></script>
 </body>
 </html>
