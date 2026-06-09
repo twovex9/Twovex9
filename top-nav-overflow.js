@@ -66,6 +66,8 @@
     // Urenregistratie
     "werkuren.html": "Urenregistratie",
     "werkuren-labels.html": "Urenregistratie",
+    "urendeclaraties.html": "Urenregistratie",
+    "uren-budgettering.html": "Urenregistratie",
     // HR
     "hr.html": "HR",
     "medewerker.html": "HR",
@@ -108,8 +110,6 @@
     "beschikking-detail.html": "Cliënten",
     "facturen.html": "Cliënten",
     "factuur-detail.html": "Cliënten",
-    "urendeclaraties.html": "Cliënten",
-    "uren-budgettering.html": "Cliënten",
     "facturen-importeren.html": "Cliënten",
     // Incidenten
     "incidenten.html": "Incidenten",
