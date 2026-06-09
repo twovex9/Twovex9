@@ -144,16 +144,11 @@
   function formatEuroFromInput(input) {
     var t = String(input || "").trim();
     if (!t) return "€ 0,00";
-    t = t.replace(/€/gi, "").replace(/\s/g, "");
-    var normalized = t.replace(/\./g, "").replace(",", ".");
-    var n = parseFloat(normalized);
-    if (!isNaN(n) && isFinite(n)) {
-      var fixed = n.toFixed(2);
-      var parts = fixed.split(".");
-      var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      return "€ " + intPart + "," + parts[1];
-    }
-    return "€ 0,00";
+    // Parse via dezelfde robuuste logica als parseEuroToNumber (handelt zowel
+    // NL "1.234,56" als punt-decimaal "1234.56" correct af) en formatteer dan.
+    // Voorheen strippte deze functie ÁLLE punten en nam de komma als decimaal —
+    // bij invoer "1234.56" werd dat € 123.456,00 (100x te hoog).
+    return formatEuroFromNumber(parseEuroToNumber(t));
   }
 
   /** Parseert een opgeslagen bedragstring (€ 1.234,56 of € 1234.56) naar een getal. */

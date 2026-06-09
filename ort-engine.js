@@ -175,23 +175,32 @@
   // ---------------------------------------------------------------------------
   function pctForMoment(dateObj, weekday, minOfDay, compiledRules, feestdagSet) {
     var isFeestdag = !!feestdagSet[isoDateOnly(dateObj)];
+    // Een nachtregel (bv. 22:00–06:00) compileert in twee segmenten: de helft
+    // vóór middernacht (huidige dag) en de _nextDay-helft ná middernacht. Die
+    // tweede helft hoort bij de regel die de VORIGE dag actief was — anders
+    // krijgen de uren 00:00–06:00 van een nachtdienst onterecht 100%.
+    var prevDate = new Date(dateObj.getTime() - 24 * 60 * 60 * 1000);
+    var prevIsFeestdag = !!feestdagSet[isoDateOnly(prevDate)];
+    var prevWeekday = (weekday + 6) % 7;
     var bestPct = 100;       // basisloon-percentage als geen regel matcht
     var bestPriority = -1;   // sentinel: elke matchende regel wint hiervan
     for (var i = 0; i < compiledRules.length; i++) {
       var r = compiledRules[i];
       var isFeestdagRule = r.weekdays === "feestdag";
-      // Feestdag-prioriteit: op feestdag tellen ALLEEN feestdag-regels;
-      // op niet-feestdag tellen ALLEEN niet-feestdag-regels.
-      if (isFeestdag !== isFeestdagRule) continue;
-      // Weekday-match (alleen voor niet-feestdag-regels)
-      if (!isFeestdagRule) {
-        if (r.weekdays.indexOf(weekday) === -1) continue;
-      }
-      // Tijdsvenster
+      // Tijdsvenster — dag-conditie per segment evalueren (huidige vs. vorige dag)
       var inWindow = false;
       for (var j = 0; j < r.segments.length; j++) {
         var seg = r.segments[j];
-        if (seg._nextDay) continue; // wrap-helft hoort bij volgende dag — daar evalueren we apart
+        var dayWk = seg._nextDay ? prevWeekday : weekday;
+        var dayFd = seg._nextDay ? prevIsFeestdag : isFeestdag;
+        // Feestdag-prioriteit: op een feestdag tellen ALLEEN feestdag-regels,
+        // op een niet-feestdag ALLEEN niet-feestdag-regels (per relevante dag).
+        if (isFeestdagRule) {
+          if (dayFd !== true) continue;
+        } else {
+          if (dayFd) continue;
+          if (r.weekdays.indexOf(dayWk) === -1) continue;
+        }
         if (minOfDay >= seg.startMin && minOfDay < seg.endMin) { inWindow = true; break; }
       }
       if (!inWindow) continue;
