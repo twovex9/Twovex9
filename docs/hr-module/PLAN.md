@@ -49,9 +49,9 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G3 — indicatief netto (factor 0,70 default, instelbaar).
 - [x] G4 — ZZP BTW% + uren/week → kostprijs/uur + kosten/week + kosten/maand. Unit-getest.
 - [x] G1–G4 LIVE geverifieerd (Adriana Malovan Schaal7/trede4/36u → bruto €3.209,22 / wgl €962,77 / uurkost €26,76 / netto €2.246,45, geen app-console-fouten).
-- [ ] G5 — planning-kosten op echte uurkostprijs + configureerbare wgl
-- [ ] G6 — geaggregeerd dag/week/maand-personeelskosten-overzicht
-- [ ] G7 — Loket-XLSX uitbreiden (overuren/ziekte/contract/salaris) + auto-mail
+- [x] G5 — planning-kosten op echte uurkostprijs: nieuwe getPersoneelsUurkostForName (loondienst=uurkostprijsNum, ZZP=uurAlgemeen) → "Personeelskosten (indicatief)"-KPI in planning-overzicht, naast het bestaande diensttype-charge-tariefmodel. Toont "—" tot er uurkostprijs-data is (sparse: 1/106; groeit met HR-invoer).
+- [x] G6 — geaggregeerd personeelskosten-overzicht: het planning-summary-paneel aggregeert al over de actieve (dag/week/maand-gescopte) view → de KPI's (incl. nieuwe personeelskosten) zijn het periode-totaal. Aparte breakdown-tabel niet nodig.
+- [x] G7 — Loket-XLSX uitbreid: +kolommen Overuren (indicatief, gewerkt boven maandnorm), Ziekteverzuim (uren, uit verzuim-perioden), Contractvorm, Bruto maandsalaris (uit dossier; sparse). Achteraan toegevoegd zodat BS2-kolomblok ongewijzigd. medewerker-verzuim-data.js bijgeladen. ⏳ auto-mail uitgesteld (vereist edge-functie-deploy `salarisexport-mail` + SMTP-config = infra-blocker, zie G58).
 - [ ] G21 — salarishistorie self-service view
 
 ### Fase 3 — Dossier + portaal-UI (PC + mobiel)  [ ]

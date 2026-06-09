@@ -249,6 +249,12 @@
     geen: "Geen ploegendiensttype (uren)",
     waak: "Waakdienst (uren)",
     totaalGewerkt: "Totaal gewerkte uren",
+    // G7 — extra kolommen voor de salarisadministratie (achteraan toegevoegd zodat
+    // het bestaande BS2-kolomblok ongewijzigd blijft).
+    overuren: "Overuren (uren) - indicatief",
+    ziekteUren: "Ziekteverzuim (uren)",
+    contractvorm: "Contractvorm",
+    brutoMaand: "Bruto maandsalaris (€)",
   };
 
   function isLoondienst(emp) {
@@ -338,6 +344,53 @@
     return out;
   }
 
+  // G7 — Ziekteverzuim-uren per medewerker × maand. Telt overlap van verzuim-
+  // perioden (kort/lang) met de maand × contracturen/5. Einde = werkelijke terug,
+  // anders verwachte terug, anders einde maand (nog ziek).
+  function aggregateZiekte(medewerker, year, month) {
+    var out = { ziekteUren: 0 };
+    if (!window.medewerkerVerzuimDB || !medewerker || !window.medewerkerVerzuimDB.getForMedewerkerSync) return out;
+    var list = window.medewerkerVerzuimDB.getForMedewerkerSync(medewerker.id) || [];
+    var contracturen = Number(medewerker.contracturen || 36);
+    if (!isFinite(contracturen) || contracturen <= 0) contracturen = 36;
+    var urenPerDag = contracturen / 5;
+    var monthStart = new Date(year, month - 1, 1);
+    var monthEnd = new Date(year, month, 0, 23, 59, 59);
+    list.forEach(function (p) {
+      if (!p || !p.eerstZiektedag) return;
+      var s = new Date(p.eerstZiektedag);
+      if (isNaN(s.getTime())) return;
+      var endStr = p.werkelijkeTerug || p.verwachteTerug || "";
+      var e = endStr ? new Date(endStr) : monthEnd; // nog ziek → loopt door
+      if (isNaN(e.getTime())) e = monthEnd;
+      if (e < monthStart || s > monthEnd) return;
+      var overlapStart = s < monthStart ? monthStart : s;
+      var overlapEnd = e > monthEnd ? monthEnd : e;
+      // werkdagen (ma-vr) in de overlap tellen
+      var werkdagen = 0;
+      var d = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate());
+      while (d <= overlapEnd) {
+        var wd = d.getDay();
+        if (wd !== 0 && wd !== 6) werkdagen++;
+        d.setDate(d.getDate() + 1);
+      }
+      out.ziekteUren += werkdagen * urenPerDag;
+    });
+    out.ziekteUren = Math.round(out.ziekteUren * 100) / 100;
+    return out;
+  }
+
+  // G7 — Bruto maandsalaris uit het dossier (loondienst). Sparse data: leeg laten
+  // als niet ingevuld. Accepteert "3132.66" en "€ 0,00"-achtige strings.
+  function brutoMaandSalaris(mw) {
+    var raw = (mw && (mw.salaris != null ? mw.salaris : (mw.data && mw.data.salaris))) || "";
+    var s = String(raw).replace(/[^0-9.,]/g, "").replace(/\.(?=\d{3}\b)/g, "");
+    if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+    var n = parseFloat(s);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
   function getCurrentUserDisplayName() {
     try {
       if (window.besaCurrentProfile && (window.besaCurrentProfile.voornaam || window.besaCurrentProfile.achternaam)) {
@@ -374,7 +427,13 @@
         : { ortUren: {}, diensttypeUren: {}, totaalGewerkteUren: 0 };
       var km = aggregateKilometers(mw.id, yearInt, monthInt);
       var verlof = aggregateVerlof(mw, yearInt, monthInt);
-      return { mw: mw, ort: ort, km: km, verlof: verlof };
+      var ziekte = aggregateZiekte(mw, yearInt, monthInt);
+      // Overuren (indicatief): gewerkt boven de maandnorm (contracturen × 52/12).
+      var cu = Number(mw.contracturen || 36);
+      if (!isFinite(cu) || cu <= 0) cu = 36;
+      var maandnorm = cu * 52 / 12;
+      var overuren = Math.max(0, Math.round(((ort.totaalGewerkteUren || 0) - maandnorm) * 100) / 100);
+      return { mw: mw, ort: ort, km: km, verlof: verlof, ziekte: ziekte, overuren: overuren };
     });
 
     // Bepaal dynamische ORT-percentage-kolommen (alleen >0 in deze maand).
@@ -407,6 +466,7 @@
     headerRow.push(LOET_HEADERS_FIXED.vakantieverlof, LOET_HEADERS_FIXED.totaalVerlof);
     headerRow.push(LOET_HEADERS_FIXED.vroege, LOET_HEADERS_FIXED.late, LOET_HEADERS_FIXED.geen, LOET_HEADERS_FIXED.waak);
     headerRow.push(LOET_HEADERS_FIXED.totaalGewerkt);
+    headerRow.push(LOET_HEADERS_FIXED.overuren, LOET_HEADERS_FIXED.ziekteUren, LOET_HEADERS_FIXED.contractvorm, LOET_HEADERS_FIXED.brutoMaand);
     rows.push(headerRow);
 
     // Sort medewerkers op medewerkersnummer (asc), null laatst
@@ -436,6 +496,12 @@
       row.push(dt["Geen ploegendiensttype"] ? nlNum2(dt["Geen ploegendiensttype"]) : "0,00");
       row.push(dt["Waakdienst"] ? nlNum2(dt["Waakdienst"]) : "0,00");
       row.push(ort.totaalGewerkteUren > 0 ? nlNum2(ort.totaalGewerkteUren) : "0,00");
+      // G7 — extra kolommen: overuren, ziekte-uren, contractvorm, bruto maandsalaris.
+      row.push(a.overuren > 0 ? nlNum2(a.overuren) : "0,00");
+      row.push(a.ziekte && a.ziekte.ziekteUren > 0 ? nlNum2(a.ziekte.ziekteUren) : "0,00");
+      row.push(mw.dienstverband || "Loondienst");
+      var bruto = brutoMaandSalaris(mw);
+      row.push(bruto != null ? nlNum2(bruto) : "");
       rows.push(row);
     });
 
@@ -461,6 +527,7 @@
     ws["!cols"].push({ wch: 26 }, { wch: 26 }, { wch: 26 }); // werk km, woon km, vergoeding
     ws["!cols"].push({ wch: 38 }, { wch: 18 }); // vakantie, totaal verlof
     ws["!cols"].push({ wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 20 }, { wch: 20 }); // dienst-typen + totaal
+    ws["!cols"].push({ wch: 22 }, { wch: 20 }, { wch: 16 }, { wch: 22 }); // overuren, ziekte, contractvorm, bruto
 
     var wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, ws, "Payroll " + monthStr);

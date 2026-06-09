@@ -1097,6 +1097,27 @@ function getZzpHourlyRateForName(name) {
   return isFinite(r) && r > 0 ? r : 0;
 }
 
+// G5: personeelskostprijs per uur per medewerker (werkelijke werkgeverskost, niet
+// het diensttype-charge-tarief). Loondienst: uurkostprijsNum (bruto × werkgevers-
+// lasten / uren). ZZP: uurAlgemeen/uurTarief. 0 als onbekend → die uren tellen niet
+// mee in de personeelskosten (indicatief; groeit naarmate HR salarisdata invult).
+function getPersoneelsUurkostForName(name) {
+  if (!name) return 0;
+  const list = readEmployees();
+  const want = String(name).trim().toLowerCase();
+  if (!want) return 0;
+  const emp = list.find((e) => getEmployeeName(e).toLowerCase() === want);
+  if (!emp) return 0;
+  const dv = getDienstverbandForName(name);
+  if (dv === "inhuur") {
+    const r = Number(emp.uurAlgemeen != null ? emp.uurAlgemeen : (emp.uurTarief || 0));
+    return isFinite(r) && r > 0 ? r : 0;
+  }
+  // loondienst (of onbekend): werkelijke uurkostprijs uit het dossier
+  const k = Number(emp.uurkostprijsNum != null ? emp.uurkostprijsNum : (emp.data && emp.data.uurkostprijsNum));
+  return isFinite(k) && k > 0 ? k : 0;
+}
+
 /* De functie in de planning moet de HR-functie van de ingeroosterde medewerker
  * zijn (zoals ingevoerd bij HR onder Professioneel), niet een los dienst-veld.
  * Bouw één keer per render een naam→functie-index uit de canonieke medewerkers-
@@ -1135,6 +1156,8 @@ function getMetrics(items) {
   let openCount = 0;
   let zzpRateWeighted = 0;   // F8: som(uren × medewerker.uurAlgemeen) voor ZZP'ers
   let zzpRateHours = 0;      // F8: som(uren waar medewerker-tarief bekend)
+  let personeelsKosten = 0;  // G5: werkelijke werkgeverskost (uurkostprijsNum / ZZP-tarief)
+  let personeelsKostenHours = 0; // uren met bekende uurkostprijs (voor dekkingsindicatie)
 
   // Diensttype-tarief lookup via comp_diensttypes.basis (per-type uurtarief).
   function tariefForDiensttype(dtNaam) {
@@ -1168,6 +1191,14 @@ function getMetrics(items) {
         zzpRateHours += net;
       }
     }
+    // G5: werkelijke personeelskosten op basis van uurkostprijs per medewerker.
+    if (r.teamlid && String(r.teamlid).trim()) {
+      const pk = getPersoneelsUurkostForName(r.teamlid);
+      if (pk > 0 && net > 0) {
+        personeelsKosten += net * pk;
+        personeelsKostenHours += net;
+      }
+    }
     if (!r.teamlid || !String(r.teamlid).trim()) {
       openHours += net;
       openCount += 1;
@@ -1199,6 +1230,8 @@ function getMetrics(items) {
     per,
     gemTarief,
     gemZzpTarief,
+    personeelsKosten,
+    personeelsKostenHours,
     tarief: ui.tarief,
   };
 }
@@ -1258,6 +1291,13 @@ function renderSummary(items) {
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">Gem. ZZP-tarief</span>
         <strong class="planning-stat-value planning-stat-value--money">${m.gemZzpTarief != null ? formatEuro(m.gemZzpTarief) : "—"}</strong>
+      </div>
+    </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--personeelskosten" title="Werkelijke werkgeverskost op basis van de ingevulde uurkostprijs per medewerker (indicatief; groeit naarmate salarisgegevens compleet zijn).">
+      <span class="planning-kpi-ico" aria-hidden="true">€</span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Personeelskosten (indicatief)</span>
+        <strong class="planning-stat-value planning-stat-value--money">${m.personeelsKostenHours > 0 ? formatEuro(m.personeelsKosten) : "—"}</strong>
       </div>
     </div>
   `;
