@@ -3165,8 +3165,8 @@ h1 {
    De clienten-RLS blokkeert schrijven door deze rollen sowieso server-side. */
 .besa-clienten-readonly th[data-col="acties"],
 .besa-clienten-readonly td[data-col="acties"],
-.besa-clienten-readonly .cl-row-check,
-.besa-clienten-readonly .cl-check-col { display: none !important; }
+.besa-clienten-readonly th[data-col="select"],
+.besa-clienten-readonly td[data-col="select"] { display: none !important; }
 .mijn-gegevens-rights {
   margin: 0;
   padding-left: 20px;
