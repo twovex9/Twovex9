@@ -134,7 +134,12 @@
     "werkuren.html": { action: "view", entity: "employee-hour-registrations" },
     "werkuren-labels.html": { action: "browse", entity: "labels" },
     "urendeclaraties.html": { action: "view", entity: "employee-hour-registrations" },
-    "plus-minuren.html": { action: "view", entity: "employee-hour-registrations" },
+    // plus-minuren staat in het HR-mega-menu (HR-domein), maar keyde op de generieke
+    // view-employee-hour-registrations. Sinds HR + Facilitair die slug kregen voor de
+    // Urenregistratie-KIJKFUNCTIE (video 2026-06-07) lekte de HR-kop naar Facilitair
+    // (enige bereikbare HR-item = Plus-/minuren). Daarom expliciete allowedRoles =
+    // de bestaande slug-houders + HR, ZONDER Facilitair (die hoort geen HR-kop te zien).
+    "plus-minuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Finance", "Planner", "Zorgcoördinator"] },
     "uren-budgettering.html": { action: "manage", entity: "employee-registered-hours" },
 
     // ─── Incidenten ───────────────────────────────────────────────────────────
