@@ -66,6 +66,7 @@
     // Urenregistratie
     "werkuren.html": "Urenregistratie",
     "werkuren-labels.html": "Urenregistratie",
+    "productie-urenregistratie.html": "Urenregistratie",
     "urendeclaraties.html": "Urenregistratie",
     "uren-budgettering.html": "Urenregistratie",
     // HR
