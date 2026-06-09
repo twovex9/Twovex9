@@ -99,6 +99,21 @@
     } catch (e) { return false; }
   }
 
+  // ZZP-self-service-tabs (Mijn facturen / Mijn beschikbaarheid / Mijn uitnodigingen)
+  // zijn niet relevant voor loondienst/stagiair: zij worden via het rooster ingepland
+  // en voeren geen eigen proforma/beschikbaarheid in. Hun pagina's gate'n al op
+  // dienstverband; hier verbergen we ook de top-links. (Video-feedback eigenaar
+  // 2026-06-07, loondienst-medewerker-rondleiding.) Onbekend dienstverband (bv. een
+  // niet-gekoppeld account) → niets verbergen, niet onterecht blokkeren.
+  function isLoondienstLike() {
+    try {
+      var dv = global.besaCurrentDienstverband
+        || (global.besaCurrentProfile && global.besaCurrentProfile.dienstverband) || "";
+      return dv === "Loondienst" || dv === "Stagiair";
+    } catch (e) { return false; }
+  }
+  var ZZP_SELF_SERVICE = ["mijn-proforma-facturen.html", "mijn-beschikbaarheid.html", "mijn-uitnodigingen.html"];
+
   function applyHiding() {
     // Admin-tier ziet alles — behalve strict-gemarkeerde pagina's, die hieronder
     // per link alsnog op rol worden gecontroleerd (zie pageAccessible).
@@ -164,6 +179,20 @@
       }
     });
 
+    // 4b. Dienstverband-afscherming: verberg de ZZP-self-service top-links voor
+    //     loondienst/stagiair (los van rol/permissie — een loondienst-Medewerker en
+    //     een ingehuurde ZZP'er delen dezelfde rol, maar alleen de ZZP'er heeft deze
+    //     tabs nodig). Geldt ook voor admin-tier-loondienst: zij hebben evenmin eigen
+    //     proforma's/beschikbaarheid. Bestuur is daarnaast al via deniedRoles geweerd.
+    if (isLoondienstLike()) {
+      doc.querySelectorAll(".top-nav > .top-link[href]").forEach(function (a) {
+        if (ZZP_SELF_SERVICE.indexOf(normalizeFileName(a.getAttribute("href"))) !== -1) hideEl(a);
+      });
+      doc.querySelectorAll(".side-link[href], .side-link--sub[href], .side-link--nested[href]").forEach(function (a) {
+        if (ZZP_SELF_SERVICE.indexOf(normalizeFileName(a.getAttribute("href"))) !== -1) hideEl(a);
+      });
+    }
+
     // 5. Top-nav overflow opnieuw laten meten (links/dropdowns zijn gewijzigd).
     //    top-nav-overflow.js luistert op resize + ResizeObserver; een resize-tik
     //    laat het z'n "meer"-menu herbouwen uit de overgebleven items.
@@ -176,14 +205,23 @@
   function run() {
     // 1) Warme cache: pas de afscherming DIRECT (synchroon) toe vóór de eerste
     //    paint en onthul de nav. Geen `await` → geen flits van extra items.
+    //    (besaCurrentDienstverband staat na de eerste bootstrap óók in de cache,
+    //    dus ook de dienstverband-afscherming is hier al meegenomen.)
     if (permsLoaded()) { applyHiding(); reveal(); }
     // 2) Na de DB-load opnieuw toepassen (bij koude cache wordt hier voor het eerst
-    //    afgeschermd + onthuld) en altijd onthullen.
+    //    afgeschermd + onthuld). We wachten óók op profilesDB.ready zodat het
+    //    dienstverband bekend is vóór de eerste reveal → geen flits van de
+    //    ZZP-self-service-tabs bij een koude cache.
     try {
-      if (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function") {
-        global.besaPermissionsReady.then(function () { applyHiding(); reveal(); });
-      } else { reveal(); }
+      var navReady = (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function")
+        ? global.besaPermissionsReady : global.Promise.resolve();
+      var profReady = (global.profilesDB && global.profilesDB.ready && typeof global.profilesDB.ready.then === "function")
+        ? global.profilesDB.ready : global.Promise.resolve();
+      global.Promise.all([navReady, profReady]).then(function () { applyHiding(); reveal(); });
     } catch (e) { reveal(); }
+    // 2b) Dienstverband kan ná de eerste afscherming binnenkomen (koude cache); pas
+    //     dan opnieuw toe zodat de ZZP-tabs alsnog verdwijnen voor loondienst.
+    try { global.addEventListener("besa:profile-updated", function () { applyHiding(); }); } catch (e) {}
     // 3) Fail-safe: onthul sowieso na korte tijd, zodat een eventuele scriptfout
     //    de topnav nooit permanent verborgen laat.
     try { global.setTimeout(reveal, 3000); } catch (e) {}
