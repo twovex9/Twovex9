@@ -82,7 +82,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G51 — verlooppercentage-KPI
 - [ ] G53 — Geldige VOG%/SKJ%/voltooide onboarding%/ondertekende beleid%  (zonder vacature-KPI's)
 - [ ] G54 — samengestelde compliance-score
-- [ ] G44 — server-side rol-RLS HR-kerntabellen
+- [x] G44 — server-side rol-RLS HR-kerntabellen. `hr_v4_rls_hardening.sql` toegepast op prod. medewerkers (writes office-only, SELECT open), verlof_aanvragen (SELECT/INSERT/UPDATE office-of-eigen, DELETE office), medewerker_notities (SELECT office-only), medewerker_verzuim_perioden (SELECT office-of-eigen), medewerker_verlof_overgedragen (SELECT office-of-eigen, writes office). Server-geverifieerd via role-impersonatie: medewerker ziet eigen verlof/0 notities, cross-write + medewerker-insert → 42501 geweigerd; office ziet alles. bureau_lockout (RESTRICTIVE) composeert AND.
 - [ ] G55 — per-rol slug-plan (scripts/<rol>-rol-permissies.mjs)
 - [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry
 - [ ] G57 — herbruikbare besaApplyReadOnly(roles) helper
