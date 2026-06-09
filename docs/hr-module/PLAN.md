@@ -115,3 +115,18 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 ## Test-eindeis
 2 opeenvolgende clean Chrome-runs (licht + donker) via QA-accounts per rol op futureflow-etf.vercel.app —
 geen enkele bug/console-fout. Per-rol verificatie (Medewerker/HR/Directeur/Eigenaar) van de spec-rolmatrix.
+
+### ✅ Acceptatie-resultaat 2026-06-09 (sessie #2) — GEHAALD voor het geleverde scope
+Alle 4 rollen, elk 2 runs (licht + donker), **geen enkele app-console-fout** (alleen de Chrome-
+extensie-`vendor.js` "No Listener"-melding, die niet van de app is):
+- **qa-medewerker** ✅✅ — nav-gating correct (HR verborgen; Cliënten zichtbaar = correct: loondienst-test, locatie-gescoped); mijn-gegevens (loonstroken/jaaropgaven/verlof/beleid), planning, mijn-uren.
+- **qa-hr** ✅✅ — HR-nav; hr (106 rijen); compliance-dashboard score-tegels [29% / 0% / 5]; medewerker-detail + nieuw leidinggevende-veld + Functioneren-tab; salarisadministratie-exporter (verzuim-laag geladen).
+- **qa-directeur** ✅✅ & **qa-eigenaar** ✅✅ — management-dashboard 8 HR-kaarten incl. bestuurs-KPI's (personeelskosten €85.372 indicatief / ZZP 68,9% / verloop 0,9% / compliance-score 29%); compliance-dashboard score-sectie.
+
+Mobiel (future-flow-mobile.vercel.app, qa-medewerker, licht+donker): /salaris (loonstroken+jaaropgaven+signed-URL) en /verlof (saldo + aanvraag → "In behandeling") end-to-end getest.
+
+⚠️ qa-identity-switch in één tab: na cache-wis toont de 1e load alle nav-links; 1× reload → nav-hide
+pruned correct uit `besa-permissions-v2`. Echte gebruikers (persistente sessie) hebben dit niet.
+
+NB: de loonstrook-mei-2026 + jaaropgave-2025 + bucketbestanden op test-medewerker `fa11c0de-…0001`
+zijn bewust NIET verwijderd (QA-demo-fixtures; verwijderen = destructief → eigenaarskeuze).
