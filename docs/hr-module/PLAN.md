@@ -73,8 +73,8 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G13 — vervaldatum-veld in publieke onboarding-upload form
 - [ ] G30 — automatische mail teken-/upload-/inwerklink
 
-### Fase 5 — Dashboards + KPI's + rol-gating  [ ]
-- [ ] G49 — hr_compliance_overzicht() RPC (per medewerker aggregatie)
+### Fase 5 — Dashboards + KPI's + rol-gating  [~]
+- [x] G49 — `hr_compliance_overzicht()` + `hr_compliance_kpis()` RPC's (office-only gate), `hr_v4_compliance_rpc.sql`. Server-getest: 106 mw, 73 ZZP, 96% VOG geldig, 67 verlopen docs.
 - [ ] G48 — Compliance(HR)-dashboard met KPI-tegels + HR-rol in page-map
 - [ ] G50 — personeelskosten + ZZP%-KPI op bestuur-dashboard
 - [ ] G51 — verlooppercentage-KPI
@@ -85,9 +85,9 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry
 - [ ] G57 — herbruikbare besaApplyReadOnly(roles) helper
 
-### Fase 6 — Notificatie-cron + infra  [ ]
-- [ ] G8  — notify_vervallende_documenten() pg_cron 90/60/30 + verlopen (KERN-DIFFERENTIATOR)
-- [ ] G32 — poortwachter-signalering cron (naderende/te-late mijlpalen → HR)
+### Fase 6 — Notificatie-cron + infra  [~]
+- [x] G8  — `notify_vervallende_documenten()` dagelijkse digest-cron (verlopen/30/60/90) → HR. Server-getest (dedup OK). `hr_v4_verloop_documenten_cron.sql`. KERN-DIFFERENTIATOR.
+- [x] G32 — `notify_poortwachter_deadlines()` dagelijkse digest-cron (te laat/binnen 14d) → HR. Server-getest. `hr_v4_poortwachter_signalering_cron.sql`.
 - [ ] G31 — frequent verzuim (Bradford/teller + KPI)
 - [ ] G33 — week-1-mijlpaal + 42e-week UWV los van eerstejaarsevaluatie
 - [ ] G34 — traject auto bij ziekmelding
