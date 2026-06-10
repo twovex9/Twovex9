@@ -68,14 +68,20 @@
   }
 
   // ── Periode ──────────────────────────────────────────────────────────────────
+  // Default-bereik: 1e van de vorige maand t/m vandaag (toont recente activiteit
+  // i.p.v. een lege "deze maand" vroeg in de maand). De vandaag/week/maand-KPI's
+  // in de Financieel-view blijven los hiervan altijd actueel.
+  function defaultRange() {
+    var now = new Date();
+    return {
+      van: isoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+      tot: isoDate(now),
+    };
+  }
   function periode() {
     var f = ($("mob-date-from") || {}).value || "";
     var t = ($("mob-date-to") || {}).value || "";
-    if (!f || !t) {
-      var now = new Date();
-      f = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
-      t = isoDate(now);
-    }
+    if (!f || !t) return defaultRange();
     return { van: f, tot: t };
   }
 
@@ -356,11 +362,11 @@
     // Datumrange
     var box = $("mob-period-range"), sEl = $("mob-date-from"), eEl = $("mob-date-to");
     if (box && sEl && eEl) {
-      var now = new Date();
-      sEl.value = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
-      eEl.value = isoDate(now);
+      var dr = defaultRange();
+      sEl.value = dr.van;
+      eEl.value = dr.tot;
       if (global.BesaDateRange) {
-        global.BesaDateRange.mount({ container: box, startInput: sEl, endInput: eEl, allowEmpty: false, year: now.getFullYear() });
+        global.BesaDateRange.mount({ container: box, startInput: sEl, endInput: eEl, allowEmpty: false, year: new Date().getFullYear() });
       }
       sEl.addEventListener("change", reloadPeriodViews);
       eEl.addEventListener("change", reloadPeriodViews);
