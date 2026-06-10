@@ -143,8 +143,25 @@
       }).join("");
     }
     var formFields = ent.fields.map(function (f) { return fieldInputHtml(ent, f); }).join("");
+    // G41 — SKJ-saldo: som van skj_punten over niet-verlopen opleidingen.
+    var saldoHtml = "";
+    if (ent.key === "opleiding") {
+      var vandaag = new Date(); vandaag.setHours(0, 0, 0, 0);
+      var saldo = 0;
+      rows.forEach(function (r) {
+        var p = Number(r.skj_punten);
+        if (!isFinite(p) || p <= 0) return;
+        if (r.verloopdatum) {
+          var vd = new Date(r.verloopdatum);
+          if (!isNaN(vd.getTime()) && vd < vandaag) return; // verlopen telt niet mee
+        }
+        saldo += p;
+      });
+      saldoHtml = '<span class="cf-skj-saldo" title="Som van SKJ-punten van geldige (niet-verlopen) opleidingen">SKJ-saldo: '
+        + esc(String(Math.round(saldo * 10) / 10)) + " punten</span>";
+    }
     return '<section class="emp-section card rounded-lg border bg-card text-card-foreground shadow-sm cf-section" data-ent="' + ent.key + '">'
-      + '<div class="md-head"><h3>' + esc(ent.titel) + '</h3><button type="button" class="btn-primary cf-add" data-ent="' + ent.key + '">' + esc(ent.addLabel) + "</button></div>"
+      + '<div class="md-head"><h3>' + esc(ent.titel) + "</h3>" + saldoHtml + '<button type="button" class="btn-primary cf-add" data-ent="' + ent.key + '">' + esc(ent.addLabel) + "</button></div>"
       + '<div class="cf-form" data-ent="' + ent.key + '" hidden><div class="emp-form-grid">' + formFields + "</div>"
       + '<div class="cf-form-actions"><button type="button" class="btn-outline cf-cancel" data-ent="' + ent.key + '">Annuleren</button>'
       + '<button type="button" class="btn-primary cf-save" data-ent="' + ent.key + '">Opslaan</button></div>'

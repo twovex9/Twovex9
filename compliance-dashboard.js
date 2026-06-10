@@ -134,6 +134,13 @@
         if (tr) { e.preventDefault(); openDossier(tr.getAttribute("data-mid")); }
       });
     }
+    var recertTb = $("cd-recert-tbody");
+    if (recertTb) {
+      recertTb.addEventListener("click", function (e) {
+        var tr = e.target.closest && e.target.closest("tr.cd-row");
+        if (tr) openDossier(tr.getAttribute("data-mid"));
+      });
+    }
     var search = $("cd-search");
     if (search) search.addEventListener("input", function () { query = search.value || ""; renderTable(); });
     var filters = $("cd-filters");
@@ -152,6 +159,39 @@
     if (refresh) refresh.addEventListener("click", function () { load(true); });
   }
 
+  // G42 — recertificering & trainingen.
+  function renderRecert(list, agressieN, totaal) {
+    var kpiBox = $("cd-recert-kpis");
+    if (kpiBox) {
+      var verlopenN = list.filter(function (r) { return r.dagen_tot_verval < 0; }).length;
+      var binnenkortN = list.length - verlopenN;
+      kpiBox.innerHTML = [
+        metricCell("Verlopen certificaten/VOG's", String(verlopenN), "", verlopenN > 0 ? "bad" : "ok"),
+        metricCell("Verloopt binnen 90 dagen", String(binnenkortN), "", binnenkortN > 0 ? "warn" : "ok"),
+        metricCell("Agressietraining geldig", String(agressieN), totaal ? "van " + totaal + " medewerkers" : "", ""),
+      ].join("");
+    }
+    var tb = $("cd-recert-tbody");
+    if (!tb) return;
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="5" class="cd-empty">Geen certificaten die (binnenkort) verlopen. 🎉</td></tr>';
+      return;
+    }
+    tb.innerHTML = list.map(function (r) {
+      var dagen = Number(r.dagen_tot_verval);
+      var status = dagen < 0
+        ? '<span class="cl-fase-pill cd-badge cd-badge--bad">Verlopen</span>'
+        : '<span class="cl-fase-pill cd-badge cd-badge--warn">Over ' + dagen + 'd</span>';
+      var typeLabel = r.doc_type === "vog" ? "VOG" : (r.doc_type === "education" ? "Opleiding" : r.doc_type);
+      return '<tr class="cd-row" data-mid="' + escHtml(r.medewerker_id) + '" tabindex="0" role="button">'
+        + "<td>" + escHtml(r.medewerker_naam) + "</td>"
+        + "<td>" + escHtml(r.doc_naam || "—") + "</td>"
+        + "<td>" + escHtml(typeLabel) + "</td>"
+        + "<td>" + escHtml(r.vervaldatum || "—") + "</td>"
+        + "<td>" + status + "</td></tr>";
+    }).join("");
+  }
+
   async function load(isRefresh) {
     try {
       if (!window.complianceDashboardDB) return;
@@ -159,6 +199,16 @@
       renderKpis(k);
       rows = await window.complianceDashboardDB.overzicht();
       renderTable();
+      // G42 — los geladen; een fout hier mag de hoofdtabel niet blokkeren.
+      try {
+        var recert = await window.complianceDashboardDB.recertificering();
+        var agressieN = await window.complianceDashboardDB.agressieAantal();
+        renderRecert(recert, agressieN, k && k.totaal);
+      } catch (errR) {
+        console.error("[compliance-dashboard] recertificering laden mislukt:", errR);
+        var tbR = $("cd-recert-tbody");
+        if (tbR) tbR.innerHTML = '<tr><td colspan="5" class="cd-empty">Kon de recertificeringsgegevens niet laden.</td></tr>';
+      }
       var upd = $("cd-updated");
       if (upd) {
         var d = new Date();

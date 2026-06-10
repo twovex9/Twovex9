@@ -23,5 +23,18 @@
     return Array.isArray(res.data) ? res.data : [];
   }
 
-  global.complianceDashboardDB = { kpis: kpis, overzicht: overzicht };
+  // G42 — recertificering-overzicht (verlopen/≤90d) + agressietraining-dekking.
+  async function recertificering() {
+    var res = await client().rpc("hr_recertificering_overzicht");
+    if (res.error) throw res.error;
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  async function agressieAantal() {
+    var res = await client().rpc("hr_agressie_training_aantal");
+    if (res.error) throw res.error;
+    return Number(res.data) || 0;
+  }
+
+  global.complianceDashboardDB = { kpis: kpis, overzicht: overzicht, recertificering: recertificering, agressieAantal: agressieAantal };
 })(typeof window !== "undefined" ? window : globalThis);
