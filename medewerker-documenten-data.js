@@ -74,13 +74,37 @@
     }
   }
 
-  function getPublicUrl(storagePath) {
-    if (!storagePath || !global.besaSupabase) return "";
-    try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
-      if (res && res.data && res.data.publicUrl) return res.data.publicUrl;
-    } catch (e) { /* */ }
-    return "";
+  // G46 — de bucket is PRIVATE: bestanden zijn alleen bereikbaar via een
+  // tijdelijke signed URL (1 uur). attachSignedUrls vult fileData per batch ná
+  // elke fetch/mutatie; de URL wordt bij elke pagina-load opnieuw gegenereerd,
+  // dus een verlopen URL in een oude cache herstelt zichzelf bij de refresh.
+  var SIGNED_URL_TTL = 3600;
+  function reportSilent(action, err) {
+    console.error("[medewerkerDocsDB] " + action + " mislukt:", err);
+    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medewerker-documenten — " + action, err);
+  }
+  function attachSignedUrls(items) {
+    var list = Array.isArray(items) ? items : [];
+    var withPath = list.filter(function (d) { return d && d.storagePath; });
+    if (!withPath.length || !global.besaSupabase) return Promise.resolve(list);
+    var paths = withPath.map(function (d) { return d.storagePath; });
+    return global.besaSupabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var byPath = {};
+        (res.data || []).forEach(function (r) {
+          if (r && r.path && r.signedUrl && !r.error) byPath[r.path] = r.signedUrl;
+        });
+        withPath.forEach(function (d) {
+          d.fileData = byPath[d.storagePath] || "";
+        });
+        return list;
+      })
+      .catch(function (err) {
+        // Bestanden blijven dan even zonder link; de metadata-weergave werkt door.
+        reportSilent("signed URLs ophalen", err);
+        return list;
+      });
   }
 
   function uploadToStorage(path, blob, mime) {
@@ -117,10 +141,10 @@
 
   function rowToObj(row) {
     if (!row) return null;
+    // G46: voor storage-bestanden wordt fileData ná de fetch gevuld met een
+    // signed URL (attachSignedUrls) — de bucket is private, geen publicUrl meer.
     var fileUrl = "";
-    if (row.storage_path) {
-      fileUrl = getPublicUrl(row.storage_path);
-    } else if (row.file_data) {
+    if (!row.storage_path && row.file_data) {
       fileUrl = row.file_data;
     }
     return {
@@ -231,7 +255,8 @@
       .order("uploaddatum", { ascending: false })
       .then(function (res) {
         if (res.error) throw res.error;
-        return (res.data || []).map(rowToObj).filter(Boolean);
+        var items = (res.data || []).map(rowToObj).filter(Boolean);
+        return attachSignedUrls(items);
       });
   }
 
@@ -243,7 +268,7 @@
       .single()
       .then(function (res) {
         if (res.error) throw res.error;
-        return rowToObj(res.data);
+        return attachSignedUrls([rowToObj(res.data)]).then(function (a) { return a[0]; });
       });
   }
 
@@ -256,7 +281,7 @@
       .single()
       .then(function (res) {
         if (res.error) throw res.error;
-        return rowToObj(res.data);
+        return attachSignedUrls([rowToObj(res.data)]).then(function (a) { return a[0]; });
       });
   }
 
@@ -304,10 +329,12 @@
           .single()
           .then(function (res) {
             if (res.error) throw res.error;
-            var updated = rowToObj(res.data);
-            cacheUpsertOne(updated);
-            dispatchUpdated(updated.medewerkerId);
-            return true;
+            return attachSignedUrls([rowToObj(res.data)]).then(function (a) {
+              var updated = a[0];
+              cacheUpsertOne(updated);
+              dispatchUpdated(updated.medewerkerId);
+              return true;
+            });
           });
       })
       .catch(function (err) {
