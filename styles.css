@@ -14440,6 +14440,18 @@ button.planning-erm-new {
   }
 }
 
+/* Read-only modus (HR/Facilitair/eigenaar-kijkfunctie/werkvloer): de linker
+   filterkolom is verborgen (.planning-readonly .planning-filters-card =
+   display:none). Zonder deze override blijft de layout-grid op
+   "220px minmax(0,1fr)" staan, waardoor de — dan enige — planningskaart in de
+   smalle 220px-track terechtkomt en de hele week (ma–zo) in ±180px geperst
+   wordt → onnodige horizontale schuif. We laten de planningskaart hier de volle
+   breedte vullen zodat alle 7 dagen tegelijk passen. Hogere specificiteit dan
+   de basis- en media-query-regels, dus geldt op elke schermbreedte > 1040px. */
+.planning-readonly .planning-layout--erm {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* ---- Toolbar bovenaan grid (Selecteer Locatie, vandaag, < >, periode, knoppen) ---- */
 .planning-main-card--v3 {
   padding: 12px 14px 14px;
