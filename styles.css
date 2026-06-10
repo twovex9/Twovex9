@@ -21921,6 +21921,46 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   color: var(--text-muted);
   margin: 0;
 }
+/* GPS web-check-in kaart (mobiliteitsmodule) */
+.km-checkin-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.km-checkin-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.km-checkin-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-lg);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.km-checkin-text { flex: 1 1 220px; min-width: 0; }
+.km-checkin-title { font-size: var(--font-base); font-weight: 600; color: var(--text); margin: 0 0 2px; }
+.km-checkin-sub { font-size: var(--font-table-head); color: var(--text-muted); margin: 0; }
+.km-checkin-btn { flex: 0 0 auto; white-space: nowrap; }
+.km-checkin-status {
+  font-size: var(--font-table-head);
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+}
+.km-checkin-status:empty { display: none; }
+.km-checkin-status--busy { color: var(--text-secondary); }
+.km-checkin-status--ok { color: var(--green); }
+.km-checkin-status--warn { color: var(--yellow); }
+.km-checkin-status--err { color: var(--red); }
+
 /* Zakelijke-rit: route-berekening (mobiliteitsmodule) */
 .km-route-field {
   display: flex;
