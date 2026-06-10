@@ -501,7 +501,12 @@
   }
 
   async function loadAvailabilityData(dienst) {
-    if (!dienst || !dienst.start_iso || !dienst.einde_iso) {
+    // De planningDB-objecten leveren start/einde (rowToObj), niet start_iso/einde_iso;
+    // val daarop terug zodat de beschikbaarheid-warnings (overlap/verzuim/verlof/rooster)
+    // daadwerkelijk berekend worden i.p.v. stilletjes te worden overgeslagen.
+    var startIso = dienst && (dienst.start_iso || dienst.start);
+    var eindeIso = dienst && (dienst.einde_iso || dienst.einde);
+    if (!dienst || !startIso || !eindeIso) {
       return { overlapByMid: {}, verzuimByMid: {} };
     }
     if (pickerCache.dienstId === dienst.id && pickerCache.overlapByMid && pickerCache.verzuimByMid) {
@@ -511,9 +516,9 @@
     var overlapByMid = {};
     var verzuimByMid = {};
     var verlofByMid = {};
-    var dienstDateStr = new Date(dienst.start_iso).toISOString().slice(0, 10);
-    var dS = new Date(dienst.start_iso).getTime();
-    var dE = new Date(dienst.einde_iso).getTime();
+    var dienstDateStr = new Date(startIso).toISOString().slice(0, 10);
+    var dS = new Date(startIso).getTime();
+    var dE = new Date(eindeIso).getTime();
 
     if (supa) {
       try {
@@ -602,21 +607,24 @@
       warnings.push({ type: "locatie", text: "Medewerker is niet toegewezen aan deze locatie" });
     }
 
-    var dienstStart = new Date(dienst.start_iso);
-    var dienstEinde = new Date(dienst.einde_iso);
+    // De dienst-tijd wordt als fake-UTC wandklok opgeslagen (planning-conventie); lees de
+    // wandklok daarom via de UTC-methodes (getUTCDay/Hours/Minutes), anders schuift de
+    // lokale tijdzone de dag/tijd en zou de rooster-check onterechte warnings tonen.
+    var dienstStart = new Date(dienst.start_iso || dienst.start);
+    var dienstEinde = new Date(dienst.einde_iso || dienst.einde);
 
     // 2. Rooster-check (rooster is stringified JSON met per-dag enabled/start/end; top-level na rowToObj)
     var rooster = parseRooster(med.rooster);
-    if (rooster) {
-      var dag = WEEKDAY_SLUGS[dienstStart.getDay()];
+    if (rooster && !isNaN(dienstStart.getTime())) {
+      var dag = WEEKDAY_SLUGS[dienstStart.getUTCDay()];
       var rd = rooster[dag];
       if (!rd || !rd.enabled) {
         warnings.push({ type: "rooster_dag", text: "Niet ingeroosterd op " + WEEKDAY_NAMES[dag] });
       } else {
         var rStart = parseTimeToMinutes(rd.start);
         var rEnd = parseTimeToMinutes(rd.end);
-        var dStartMin = dienstStart.getHours() * 60 + dienstStart.getMinutes();
-        var dEndMin = dienstEinde.getHours() * 60 + dienstEinde.getMinutes();
+        var dStartMin = dienstStart.getUTCHours() * 60 + dienstStart.getUTCMinutes();
+        var dEndMin = dienstEinde.getUTCHours() * 60 + dienstEinde.getUTCMinutes();
         if (rStart !== null && rEnd !== null && (dStartMin < rStart || dEndMin > rEnd)) {
           warnings.push({ type: "rooster_tijd", text: "Dienst valt buiten werkuren (" + rd.start + "–" + rd.end + ")" });
         }
