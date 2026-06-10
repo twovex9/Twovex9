@@ -1,13 +1,15 @@
 // Supabase Edge Function: salarisexport-mail
 // Verstuurt de salarisexport (Loket-XLSX, base64) als e-mailbijlage naar de
-// salarisadministratie via SMTP (Office 365 / eigen mailserver). Aangeroepen
-// vanuit de salarisadministratie-pagina door office-staff (HR/Finance/Eigenaar).
+// salarisadministratie. PRIMAIR via Microsoft Graph (OAuth2 client-credentials —
+// futureproof, geen basis-SMTP), met SMTP als fallback. Aangeroepen vanuit de
+// salarisadministratie-pagina door office-staff (HR/Finance/Eigenaar).
 //
 // Authz: verify_jwt=true (gateway) + her-check is_office_staff() op de caller.
-// Config (incl. SMTP-wachtwoord) staat in public.saladmin_mail_config (DENY-ALL
-// RLS) en wordt hier via service_role gelezen — de frontend kan het wachtwoord
-// niet lezen. dry_run=true valideert de config en bouwt het bericht ZONDER
-// daadwerkelijk te versturen (zodat de hele flow testbaar is zonder echte mail).
+// Graph-secrets staan als EDGE-SECRETS (niet in de DB):
+//   GRAPH_TENANT_ID / GRAPH_CLIENT_ID / GRAPH_CLIENT_SECRET / GRAPH_MAIL_FROM
+// Niet-geheime instellingen (ontvanger/cc/onderwerp/bericht) blijven in
+// public.saladmin_mail_config. SMTP-fallback gebruikt smtp_* uit die tabel.
+// dry_run=true valideert de config + bouwt het bericht ZONDER te versturen.
 
 // @ts-expect-error Deno-only remote import
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -37,6 +39,71 @@ interface Body {
   dry_run?: boolean;
 }
 
+// ── Microsoft Graph helpers ────────────────────────────────────────────────
+function graphConfig() {
+  const tenant = Deno.env.get("GRAPH_TENANT_ID") || "";
+  const clientId = Deno.env.get("GRAPH_CLIENT_ID") || "";
+  const clientSecret = Deno.env.get("GRAPH_CLIENT_SECRET") || "";
+  const from = Deno.env.get("GRAPH_MAIL_FROM") || "";
+  return { tenant, clientId, clientSecret, from, complete: !!(tenant && clientId && clientSecret && from) };
+}
+
+async function graphToken(cfg: { tenant: string; clientId: string; clientSecret: string }): Promise<string> {
+  const body = new URLSearchParams({
+    client_id: cfg.clientId,
+    client_secret: cfg.clientSecret,
+    scope: "https://graph.microsoft.com/.default",
+    grant_type: "client_credentials",
+  });
+  const r = await fetch(`https://login.microsoftonline.com/${cfg.tenant}/oauth2/v2.0/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const j = await r.json();
+  if (!r.ok || !j.access_token) throw new Error("Graph-token mislukt: " + (j.error_description || j.error || r.status));
+  return j.access_token as string;
+}
+
+async function graphSendMail(
+  token: string,
+  from: string,
+  to: string,
+  cc: string,
+  subject: string,
+  text: string,
+  filename: string,
+  xlsxBase64: string,
+): Promise<void> {
+  const toRecipients = to.split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+    .map((address) => ({ emailAddress: { address } }));
+  const ccRecipients = (cc || "").split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+    .map((address) => ({ emailAddress: { address } }));
+  const message: Record<string, unknown> = {
+    subject,
+    body: { contentType: "Text", content: text },
+    toRecipients,
+    attachments: [{
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: filename,
+      contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      contentBytes: xlsxBase64,
+    }],
+  };
+  if (ccRecipients.length) message.ccRecipients = ccRecipients;
+
+  const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(from)}/sendMail`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message, saveToSentItems: true }),
+  });
+  if (!(r.status === 202 || r.ok)) {
+    let msg = String(r.status);
+    try { const j = await r.json(); msg = j.error?.message || JSON.stringify(j); } catch { /* */ }
+    throw new Error("Graph sendMail mislukt: " + msg);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -53,7 +120,7 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: userErr } = await userClient.auth.getUser();
   if (userErr || !user) return json({ error: "Niet geautoriseerd" }, 401);
 
-  // 2. Office-staff check (HR/Finance/Eigenaar/Directeur/… — niet werkvloer)
+  // 2. Office-staff check
   const { data: isOffice, error: offErr } = await userClient.rpc("is_office_staff");
   if (offErr) return json({ error: "Autorisatiecheck mislukt: " + offErr.message }, 500);
   if (!isOffice) return json({ error: "Geen toegang — alleen kantoor/HR mag de salarisexport versturen." }, 403);
@@ -66,17 +133,18 @@ Deno.serve(async (req: Request) => {
   const aantal = Number(body.aantal || 0);
   const filename = String(body.filename || ("Salarisexport_" + periode.replace(/\s+/g, "_") + ".xlsx"));
 
-  // 4. Config lezen (service_role — RLS-bypass)
+  // 4. Niet-geheime config lezen (service_role)
   const { data: cfg, error: cfgErr } = await admin
     .from("saladmin_mail_config").select("*").eq("id", 1).maybeSingle();
   if (cfgErr) return json({ error: "Config lezen mislukt: " + cfgErr.message }, 500);
   if (!cfg) return json({ error: "E-mailinstellingen ontbreken. Stel ze eerst in." }, 400);
 
   const ontvanger = String(cfg.ontvanger || "").trim();
-  const fromEmail = String(cfg.afzender_email || cfg.smtp_user || "").trim();
+  const graph = graphConfig();
+  const useGraph = graph.complete;
+  const fromEmail = useGraph ? graph.from : String(cfg.afzender_email || cfg.smtp_user || "").trim();
   const fromName = String(cfg.afzender_naam || "Embrace the Future").trim();
 
-  // Template-vervanging
   const fill = (t: string) => String(t || "")
     .split("{periode}").join(periode)
     .split("{aantal}").join(String(aantal))
@@ -84,78 +152,86 @@ Deno.serve(async (req: Request) => {
   const subject = fill(cfg.onderwerp || "Salarisexport {periode}");
   const message = fill(cfg.bericht || "Bijgevoegd de salarisexport voor {periode}.");
 
-  // Validatie van vereiste instellingen
+  // Validatie — afhankelijk van transport
   const missing: string[] = [];
   if (!ontvanger) missing.push("ontvanger");
-  if (!cfg.smtp_host) missing.push("SMTP-host");
-  if (!cfg.smtp_user) missing.push("SMTP-gebruikersnaam");
-  if (!cfg.smtp_pass) missing.push("SMTP-wachtwoord");
-  if (!fromEmail) missing.push("afzender-e-mail");
+  if (useGraph) {
+    if (!graph.from) missing.push("GRAPH_MAIL_FROM");
+  } else {
+    if (!cfg.smtp_host) missing.push("SMTP-host");
+    if (!cfg.smtp_user) missing.push("SMTP-gebruikersnaam");
+    if (!cfg.smtp_pass) missing.push("SMTP-wachtwoord");
+    if (!fromEmail) missing.push("afzender-e-mail");
+    // Als noch Graph-secrets noch SMTP volledig: meld de Graph-route als voorkeur.
+    if (!graph.tenant && !graph.clientId && !graph.clientSecret && !cfg.smtp_host) {
+      missing.push("Microsoft-Graph-secrets (GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET/MAIL_FROM) óf SMTP-instellingen");
+    }
+  }
 
   if (dryRun) {
     return json({
       ok: true, dry_run: true,
+      transport: useGraph ? "microsoft-graph" : "smtp",
       zou_versturen_naar: ontvanger, cc: cfg.cc || "", onderwerp: subject,
       afzender: fromName + " <" + fromEmail + ">",
       bijlage: filename,
       bijlage_bytes: body.xlsx_base64 ? Math.round(body.xlsx_base64.length * 0.75) : 0,
       ontbrekende_instellingen: missing,
-      smtp: {
-        host: cfg.smtp_host, port: cfg.smtp_port, secure: cfg.smtp_secure,
-        gebruiker_ingesteld: !!cfg.smtp_user, wachtwoord_ingesteld: !!cfg.smtp_pass,
-      },
+      graph_geconfigureerd: useGraph,
     });
   }
 
   if (missing.length) {
-    return json({ error: "E-mailinstellingen onvolledig: " + missing.join(", ") + " ontbreekt. Open ‘E-mailinstellingen’ en vul deze aan." }, 400);
+    return json({ error: "E-mailinstellingen onvolledig: " + missing.join(", ") + ". Vul deze aan." }, 400);
   }
   if (!body.xlsx_base64) return json({ error: "Geen exportbestand meegegeven." }, 400);
-
-  // 5. Versturen via SMTP (Office 365: STARTTLS op 587, of impliciete TLS op 465)
-  const client = new SMTPClient({
-    connection: {
-      hostname: String(cfg.smtp_host),
-      port: Number(cfg.smtp_port) || 587,
-      tls: String(cfg.smtp_secure) === "ssl", // ssl=465 (impliciete TLS); starttls=587 (upgrade)
-      auth: { username: String(cfg.smtp_user), password: String(cfg.smtp_pass) },
-    },
-  });
 
   async function writeAudit(status: string, extra: Record<string, unknown>) {
     try {
       await admin.from("audit_log").insert({
         resource: "Salarisadministratie", resource_id: "mail", actie: "SalarisexportVerstuurd",
         gebruiker_id: user.id, gebruiker_label: user.email || user.id,
-        details: JSON.stringify({ periode, ontvanger, cc: cfg.cc || "", filename, aantal, ...extra }),
+        details: JSON.stringify({ periode, ontvanger, cc: cfg.cc || "", filename, aantal, transport: useGraph ? "graph" : "smtp", ...extra }),
         status,
         ip: req.headers.get("x-forwarded-for") || "", user_agent: req.headers.get("user-agent") || "",
       });
     } catch (_e) { /* audit mag nooit de hoofdactie breken */ }
   }
 
+  // 5. Versturen — Graph (voorkeur) of SMTP-fallback
   try {
-    await client.send({
-      from: fromName + " <" + fromEmail + ">",
-      to: ontvanger,
-      cc: cfg.cc ? String(cfg.cc) : undefined,
-      subject,
-      content: message,
-      attachments: [{
-        filename,
-        encoding: "base64",
-        content: String(body.xlsx_base64),
-        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }],
-    });
-    await client.close();
+    if (useGraph) {
+      const token = await graphToken(graph);
+      await graphSendMail(token, graph.from, ontvanger, String(cfg.cc || ""), subject, message, filename, String(body.xlsx_base64));
+    } else {
+      const client = new SMTPClient({
+        connection: {
+          hostname: String(cfg.smtp_host),
+          port: Number(cfg.smtp_port) || 587,
+          tls: String(cfg.smtp_secure) === "ssl",
+          auth: { username: String(cfg.smtp_user), password: String(cfg.smtp_pass) },
+        },
+      });
+      try {
+        await client.send({
+          from: fromName + " <" + fromEmail + ">",
+          to: ontvanger,
+          cc: cfg.cc ? String(cfg.cc) : undefined,
+          subject,
+          content: message,
+          attachments: [{
+            filename, encoding: "base64", content: String(body.xlsx_base64),
+            contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          }],
+        });
+      } finally { try { await client.close(); } catch (_e) { /* */ } }
+    }
   } catch (err) {
-    try { await client.close(); } catch (_e) { /* */ }
     const msg = (err as Error).message || String(err);
     await writeAudit("fout", { error: msg });
     return json({ error: "Versturen mislukt: " + msg }, 502);
   }
 
   await writeAudit("succes", {});
-  return json({ ok: true, verstuurd_naar: ontvanger, cc: cfg.cc || "", onderwerp: subject, bijlage: filename });
+  return json({ ok: true, transport: useGraph ? "microsoft-graph" : "smtp", verstuurd_naar: ontvanger, cc: cfg.cc || "", onderwerp: subject, bijlage: filename });
 });
