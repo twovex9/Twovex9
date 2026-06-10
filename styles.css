@@ -26855,3 +26855,50 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .cf-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 .cf-table td[data-col="acties"] { width: 1%; white-space: nowrap; text-align: right; }
 .cf-err { margin-top: 8px; }
+
+/* ====================================================================
+   Incidentanalyse, risico & kwaliteit (/incidenten-analyse).
+   Hergebruikt tk-kpi-grid / filter-chips / table-card / wf-rec / prod-*.
+   Alleen module-eigen aanvullingen (token-based, geen losse hex/px-magic).
+   ==================================================================== */
+.ia-lead { color: var(--text-secondary); font-size: var(--font-table-cell); margin: 0 0 14px; max-width: 1040px; line-height: 1.55; }
+.ia-period-label { font-size: var(--font-table-head); color: var(--text-muted); margin-right: 2px; align-self: center; }
+.ia-section-h { font-size: var(--font-base); font-weight: 700; color: var(--text); margin: 20px 0 10px; }
+
+/* Signaal-kaarten (variant op wf-rec, eigen niveau-randen) */
+.ia-rec--hoog   { border-left-color: var(--red); }
+.ia-rec--let_op { border-left-color: var(--yellow); }
+.ia-rec--info   { border-left-color: var(--blue); }
+.ia-rec-advies { margin-top: 10px; font-size: var(--font-table-cell); color: var(--text); background: var(--blue-soft); border-radius: var(--r-md); padding: 8px 12px; line-height: 1.5; }
+.ia-rec-acties { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.ia-actie-chip { font-size: var(--font-ui-badge); font-weight: 600; color: var(--text-secondary); background: var(--line); border-radius: var(--r-pill); padding: 4px 10px; }
+.ia-beslis-advies { font-size: var(--font-table-cell); color: var(--text); background: var(--blue-soft); border-radius: var(--r-md); padding: 8px 12px; margin: 10px 0; line-height: 1.5; }
+
+/* Top-10 grid (3 kaarten naast elkaar, responsive) */
+.ia-top-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.ia-dim-note { font-size: var(--font-table-cell); color: var(--text-muted); margin: 0 0 12px; max-width: 920px; line-height: 1.5; }
+
+/* Risicoscore-balk */
+.ia-score-bar { position: relative; height: 18px; min-width: 92px; background: var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.ia-score-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--r-pill); }
+.ia-score-fill--rood   { background: var(--red); }
+.ia-score-fill--oranje { background: var(--yellow); }
+.ia-score-fill--groen  { background: var(--green); }
+.ia-score-label { position: relative; z-index: 1; display: block; text-align: center; font-size: var(--font-ui-badge); font-weight: 700; line-height: 18px; color: var(--text); }
+
+/* Rapportage-document */
+.ia-rap-inner { padding: 24px; }
+.ia-rap-head { display: flex; align-items: flex-start; gap: 20px; border-bottom: 2px solid var(--line-strong, var(--line)); padding-bottom: 16px; margin-bottom: 18px; }
+.ia-rap-logo { flex: 0 0 auto; }
+.ia-rap-title { font-size: var(--font-h1); color: var(--text); margin: 0 0 4px; }
+.ia-rap-sub { font-size: var(--font-table-cell); color: var(--text-secondary); margin: 2px 0; line-height: 1.5; }
+.ia-rap-h { font-size: var(--font-base); font-weight: 700; color: var(--text); margin: 20px 0 8px; }
+.ia-rap-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.ia-rap-table th { text-align: left; font-size: var(--font-table-head); color: var(--text-muted); border-bottom: 1px solid var(--line); padding: 6px 10px; }
+.ia-rap-table td { font-size: var(--font-table-cell); color: var(--text); border-bottom: 1px solid var(--line); padding: 6px 10px; vertical-align: top; }
+.ia-rap-foot { font-size: var(--font-table-head); color: var(--text-muted); margin-top: 18px; line-height: 1.5; font-style: italic; }
+
+@media print {
+  .topbar, .sidebar, .prod-viewtabs, .prod-period, .ia-lead, .content-header .header-actions { display: none !important; }
+  .ia-rap-inner { padding: 0; }
+}
