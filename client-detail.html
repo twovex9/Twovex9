@@ -337,6 +337,7 @@
             <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="t" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-t">Tijdlijn</button>
             <button type="button" class="client-detail-tab" data-cd-panel="k" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-k">Intake</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="h" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-h">Geschiedenis</button>
           </div>
 
           <div class="client-detail-panels table-card" id="cd-panels">
@@ -1542,6 +1543,26 @@
               </div>
             </section>
 
+            <!-- Geschiedenis (fase 6, §23) — audit_log + tijdlijn samengevoegd -->
+            <section class="client-detail-pan" id="cd-pan-h" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Geschiedenis (audit + tijdlijn)</h3>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead><tr>
+                      <th data-col="ts">Wanneer</th>
+                      <th data-col="bron">Bron</th>
+                      <th data-col="wie">Wie</th>
+                      <th data-col="wat">Wat</th>
+                      <th data-col="detail">Details</th>
+                    </tr></thead>
+                    <tbody id="cd-hist-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-hist-empty" hidden>Nog geen geschiedenis.</div>
+              </div>
+            </section>
+
             <!-- Fase E.14 DSR-flow — alleen admin-tier zichtbaar -->
             <section class="client-detail-pan client-detail-pan--dsr" id="cd-dsr-section" hidden>
               <h3 class="client-detail-pan-h">Gegevensbescherming (AVG)</h3>
@@ -1568,6 +1589,81 @@
   </div>
 
   <div class="app-toast app-toast--clienten" id="cd-toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Modal: uitstroom starten (fase 6, §24) -->
+  <div class="modal-overlay" id="cd-uit-modal" aria-hidden="true" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title">Uitstroom starten</h2>
+        <button type="button" class="modal-close" id="cd-uit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-body" id="cd-uit-form" novalidate>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-uit-f-reden">Reden *</label>
+          <input class="modal-input" id="cd-uit-f-reden" type="text" required autocomplete="off" placeholder="Bijv. zelfstandig wonen, doorverwezen, verhuizing" />
+        </div>
+        <div class="modal-field cd-rap-f-row">
+          <div class="modal-field cd-rap-f-half">
+            <label class="modal-label" for="cd-uit-f-datum">Uitstroomdatum</label>
+            <input class="modal-input" id="cd-uit-f-datum" type="date" />
+          </div>
+          <div class="modal-field cd-rap-f-half">
+            <label class="modal-label" for="cd-uit-f-vervolg">Vervolgplek</label>
+            <input class="modal-input" id="cd-uit-f-vervolg" type="text" autocomplete="off" placeholder="Bijv. 18+ traject, andere zorgaanbieder" />
+          </div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-uit-f-afspraken">Nazorgafspraken (optioneel)</label>
+          <textarea class="modal-input cd-zp-f-area" id="cd-uit-f-afspraken" rows="3" placeholder="Bijv. wekelijks belmoment, evaluatie na 6 weken"></textarea>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="cd-uit-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="cd-uit-save">Uitstroom vastleggen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: nazorg starten (fase 6, §25) -->
+  <div class="modal-overlay" id="cd-naz-modal" aria-hidden="true" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title">Nazorgtraject starten</h2>
+        <button type="button" class="modal-close" id="cd-naz-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-body" id="cd-naz-form" novalidate>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-naz-f-afspraken">Nazorgafspraken</label>
+          <textarea class="modal-input cd-zp-f-area" id="cd-naz-f-afspraken" rows="4" placeholder="Welke afspraken zijn er voor de nazorg?"></textarea>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="cd-naz-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="cd-naz-save">Nazorg starten</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: dossier sluiten (fase 6) -->
+  <div class="modal-overlay" id="cd-slt-modal" aria-hidden="true" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title">Dossier definitief sluiten</h2>
+        <button type="button" class="modal-close" id="cd-slt-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-body" id="cd-slt-form" novalidate>
+        <p class="client-detail-hint">Na sluiten kunnen alleen office-rollen het dossier nog lezen.</p>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-slt-f-reden">Toelichting (optioneel)</label>
+          <input class="modal-input" id="cd-slt-f-reden" type="text" autocomplete="off" />
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="cd-slt-cancel">Annuleren</button>
+        <button type="button" class="btn-primary" id="cd-slt-save">Dossier sluiten</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: teamlid koppelen (fase 3, client_medewerkers) -->
   <div class="modal-overlay" id="cd-team-modal" aria-hidden="true" hidden>
