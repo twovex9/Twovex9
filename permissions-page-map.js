@@ -113,6 +113,11 @@
     // Wachtlijst (Cliëntmodule 2.0 §5): zelfde beoordelaars-set; server-side
     // gegate via wachtlijst_overzicht() (clientreis_kan_beoordelen).
     "wachtlijst.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Gedragswetenschapper"] },
+    // Cliëntmodule-dashboard (fase 5): per-view rolgating gebeurt server-side
+    // via clientdash_context()/clientdash_*-RPC's. UI-toegang voor management/
+    // GW/zorgcoörd + admin-tier; Beleid en HR mogen lezen (eigenaar-view
+    // gegate't binnen de pagina via context). Medewerker geen toegang.
+    "clientmodule-dashboard.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Gedragswetenschapper", "Beleid", "HR", "Finance"] },
     "client-detail.html": { action: "view", entity: "clients" },
     "beschikkingen.html": { action: "browse", entity: "dispositions" },
     "beschikking-detail.html": { action: "view", entity: "dispositions" },

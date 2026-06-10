@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
@@ -7,18 +7,11 @@
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Incidenten dashboard — HR</title>
+  <title>Cliëntmodule-dashboard — Cliënten</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad" />
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
-  <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Future Flow">
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
@@ -27,7 +20,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -100,7 +93,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="clienten" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="clienten" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="Cliënten opties">
                 <div class="top-dropdown-col">
                   <span class="top-dropdown-group-title">Cliënten</span>
@@ -122,7 +115,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="incidenten" class="top-link top-link--dropdown is-active">Incidenten en klachten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="incidenten" class="top-link top-link--dropdown">Incidenten en klachten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Incidenten en klachten opties">
                 <a href="incidenten" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Incidenten overzicht</span><span class="top-dropdown-subtitle">Bekijk en meld incidenten</span></a>
                 <a href="incidenten-dashboard" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Dashboard</span><span class="top-dropdown-subtitle">Incidenten-statistieken</span></a>
@@ -187,272 +180,114 @@
         </button>
       </div>
     </header>
-
     <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
       <nav class="side-nav" aria-label="Cliënten module">
         <a href="clienten" class="side-link">Cliënten</a>
-        <a href="zorgsoorten" class="side-link">Zorgsoorten</a>
-        <div class="side-group" data-side-group="cl-beschikkingen">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
-            <span class="side-group__label">Beschikkingen</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
-            <a href="beschikkingen-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="beschikkingen" class="side-link side-link--nested">Overzicht</a>
-            <a href="facturen" class="side-link side-link--nested">Facturen</a>
-          </div>
-        </div>
-        <a href="organisatie" class="side-link">Organisatie</a>
-        <a href="gemeenten" class="side-link">Gemeenten</a>
-        <a href="urendeclaraties" class="side-link">Uren declaraties</a>
-        <a href="uren-budgettering" class="side-link">Uren budgetering</a>
-        <a href="facturen-importeren" class="side-link">Facturen importeren</a>
-        <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="true" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, sluit submenu">
-            <span class="side-group__label">Incidenten</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten">
-            <a href="incidenten" class="side-link side-link--nested">Incidenten overzicht</a>
-            <a href="incidenten-dashboard" class="side-link side-link--nested is-active" aria-current="page">Dashboard</a>
-            <a href="incidenten-categorieen" class="side-link side-link--nested">Categorieën</a>
-            <a href="verbeteringsmaatregelen" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
-          </div>
-        </div>
+        <a href="clientmodule-dashboard" class="side-link is-active" aria-current="page">Dashboard</a>
+        <a href="aanmeldingen" class="side-link">Aanmeldingen</a>
+        <a href="wachtlijst" class="side-link">Wachtlijst</a>
       </nav>
       <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+        <a class="side-nav-exit" href="home">← Home</a>
       </div>
     </aside>
-
-    <main class="content content--inc-dashboard">
-      <div class="content-header content-header--incidenten">
-        <div>
-          <h1>Incidenten dashboard</h1>
-          <p class="content-subtitle">Live overzicht en statistieken — automatisch bijgewerkt</p>
-        </div>
-        <div class="header-actions">
-          <button type="button" class="btn-outline id-report-btn" id="id-report-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
-            Genereer 3-maanden rapport
-          </button>
-          <div class="id-daterange" role="group" aria-label="Datumbereik">
-            <div class="id-daterange-wrap">
-              <div id="id-period-range"></div>
-              <input type="hidden" id="id-date-from" />
-              <input type="hidden" id="id-date-to" />
-            </div>
-            <button type="button" class="id-range-preset" data-range="7">7d</button>
-            <button type="button" class="id-range-preset is-active" data-range="30">30d</button>
-            <button type="button" class="id-range-preset" data-range="90">90d</button>
-            <button type="button" class="id-range-preset" data-range="365">1j</button>
-            <button type="button" class="id-range-preset" data-range="all">Alles</button>
-          </div>
-        </div>
+    <main class="content">
+      <div class="content-header">
+        <h1>Cliëntmodule-dashboard</h1>
+        <div class="header-actions"></div>
       </div>
 
-      <!-- Filterbalk -->
-      <div class="id-filterbar">
-        <select class="incident-filter" id="id-filter-client" aria-label="Filter op cliënt">
-          <option value="">Filter op cliënt</option>
-        </select>
-        <select class="incident-filter" id="id-filter-medewerker" aria-label="Filter op medewerker">
-          <option value="">Filter op medewerker</option>
-        </select>
-        <select class="incident-filter" id="id-filter-locatie" aria-label="Filter op locatie">
-          <option value="">Filter op locatie</option>
-        </select>
-        <select class="incident-filter" id="id-filter-categorie" aria-label="Filter op categorie">
-          <option value="">Filter op categorie</option>
-        </select>
-        <button type="button" class="incident-reset-btn" id="id-filter-reset">
-          <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Reset
-        </button>
+      <div class="toolbar">
+        <div class="filter-chips" id="cmd-viewchips" role="tablist" aria-label="Dashboard-views"></div>
       </div>
 
-      <!-- KPI strip -->
-      <section class="id-kpi-grid" aria-label="Kerngetallen">
-        <div class="id-kpi id-kpi--blue">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 20 2 20 12 2"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">Totaal incidenten</span>
-            <span class="id-kpi-value" id="id-kpi-total">0</span>
-            <span class="id-kpi-sub" id="id-kpi-total-sub">in geselecteerde periode</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--yellow">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">In afwachting</span>
-            <span class="id-kpi-value" id="id-kpi-afwachting">0</span>
-            <span class="id-kpi-sub" id="id-kpi-afwachting-sub">0% van totaal</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--blue2">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="7 14 12 9 16 13 21 8"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">In behandeling</span>
-            <span class="id-kpi-value" id="id-kpi-behandeling">0</span>
-            <span class="id-kpi-sub" id="id-kpi-behandeling-sub">0% van totaal</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--green">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">Opgelost</span>
-            <span class="id-kpi-value" id="id-kpi-opgelost">0</span>
-            <span class="id-kpi-sub" id="id-kpi-opgelost-sub">0% van totaal</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--purple">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">Oplosrate</span>
-            <span class="id-kpi-value" id="id-kpi-rate">0%</span>
-            <span class="id-kpi-sub">opgelost / totaal</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--orange">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">Trend (laatste 7d)</span>
-            <span class="id-kpi-value" id="id-kpi-week">0</span>
-            <span class="id-kpi-sub" id="id-kpi-week-sub">vs. vorige 7d</span>
-          </div>
-        </div>
-        <div class="id-kpi id-kpi--teal">
-          <div class="id-kpi-ico" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div class="id-kpi-body">
-            <span class="id-kpi-label">Gem. verwerkingstijd</span>
-            <span class="id-kpi-value" id="id-kpi-resolution">—</span>
-            <span class="id-kpi-sub" id="id-kpi-resolution-sub">Geen afgehandelde incidenten</span>
-          </div>
-        </div>
+      <section class="table-card" id="cmd-loading"><div class="table-wrapper"><p class="client-detail-placeholder">Dashboard laden…</p></div></section>
+
+      <!-- Caseload GW (§17) -->
+      <section class="cmd-view" id="cmd-view-caseload_gw" hidden>
+        <div class="cmd-kpis" id="cmd-gw-kpis"></div>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table">
+            <thead><tr>
+              <th>Cliënt</th><th>Locatie</th><th>Status</th>
+              <th>Zorgplan</th><th>Evaluatie</th>
+              <th>Sign.plan</th><th>Issues</th>
+            </tr></thead>
+            <tbody id="cmd-gw-tbody"></tbody>
+          </table>
+        </div></div>
       </section>
 
-      <!-- Trend lijn (full width) -->
-      <section class="id-card id-card--trend" aria-label="Trendlijn">
-        <header class="id-card-head">
-          <div>
-            <h2 class="id-card-title">Incidenten per dag</h2>
-            <p class="id-card-sub" id="id-trend-sub">Laatste 30 dagen</p>
-          </div>
-          <div class="id-trend-summary" id="id-trend-summary"></div>
-        </header>
-        <div class="id-trend-wrap" id="id-trend-wrap"></div>
+      <!-- Zorgcoördinator (§18) -->
+      <section class="cmd-view" id="cmd-view-zorgcoordinator" hidden>
+        <h2 class="cmd-h2">Cliënten per locatie</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table">
+            <thead><tr>
+              <th>Locatie</th><th>Totaal</th><th>Actief</th>
+              <th>Gepauzeerd</th><th>Wachtlijst</th><th>Intake gepland</th>
+            </tr></thead>
+            <tbody id="cmd-zc-loc-tbody"></tbody>
+          </table>
+        </div></div>
+        <h2 class="cmd-h2">Top 20 cliënten met openstaande dossier-issues</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table">
+            <thead><tr><th>Cliënt</th><th>Rood</th><th>Oranje</th><th>Totaal</th></tr></thead>
+            <tbody id="cmd-zc-issues-tbody"></tbody>
+          </table>
+        </div></div>
       </section>
 
-      <!-- Donut + categorieën + locaties (3-kolom op groot, 1-kolom op klein) -->
-      <section class="id-grid id-grid--3">
-        <div class="id-card">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Statusverdeling</h2>
-            <p class="id-card-sub">Aandeel per status</p>
-          </header>
-          <div class="id-donut-wrap" id="id-donut-wrap"></div>
-        </div>
-        <div class="id-card">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Incidenten per categorie</h2>
-            <p class="id-card-sub">Top categorieën</p>
-          </header>
-          <div class="id-bars" id="id-bars-categorie"></div>
-        </div>
-        <div class="id-card">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Incidenten per locatie</h2>
-            <p class="id-card-sub">Top locaties</p>
-          </header>
-          <div class="id-bars" id="id-bars-locatie"></div>
-        </div>
+      <!-- Directeur (§19) -->
+      <section class="cmd-view" id="cmd-view-directeur" hidden>
+        <div class="cmd-kpis" id="cmd-dir-kpis"></div>
+        <h2 class="cmd-h2">Cliëntreis (funnel)</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table"><thead><tr><th>Status</th><th>Aantal</th></tr></thead><tbody id="cmd-dir-funnel-tbody"></tbody></table>
+        </div></div>
+        <h2 class="cmd-h2" id="cmd-dir-omzet-h" hidden>Omzet per gemeente (laatste 12 maanden)</h2>
+        <div class="table-card" id="cmd-dir-omzet-card" hidden><div class="table-wrapper">
+          <table class="employees-table"><thead><tr><th>Gemeente</th><th>Facturen</th><th>Omzet (€)</th></tr></thead><tbody id="cmd-dir-omzet-tbody"></tbody></table>
+        </div></div>
       </section>
 
-      <!-- Heatmap + top cliënten + top melders -->
-      <section class="id-grid id-grid--3">
-        <div class="id-card id-card--heatmap">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Wanneer gebeuren incidenten?</h2>
-            <p class="id-card-sub">Heatmap per dagdeel × dag van de week</p>
-          </header>
-          <div class="id-heatmap" id="id-heatmap"></div>
-        </div>
-        <div class="id-card">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Top 5 cliënten</h2>
-            <p class="id-card-sub">Meeste incidenten</p>
-          </header>
-          <div class="id-toplist" id="id-top-clienten"></div>
-        </div>
-        <div class="id-card">
-          <header class="id-card-head">
-            <h2 class="id-card-title">Top 5 melders</h2>
-            <p class="id-card-sub">Meest gemeld door</p>
-          </header>
-          <div class="id-toplist" id="id-top-melders"></div>
-        </div>
+      <!-- Eigenaar (§20) -->
+      <section class="cmd-view" id="cmd-view-eigenaar" hidden>
+        <div class="cmd-kpis" id="cmd-eig-demo"></div>
+        <h2 class="cmd-h2">Aanmeldingen per maand (laatste 12)</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table"><thead><tr><th>Maand</th><th>Aanmeldingen</th></tr></thead><tbody id="cmd-eig-maand-tbody"></tbody></table>
+        </div></div>
+        <h2 class="cmd-h2">Producten (lopende beschikkingen)</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table"><thead><tr><th>Productcode / naam</th><th>Aantal</th></tr></thead><tbody id="cmd-eig-prod-tbody"></tbody></table>
+        </div></div>
       </section>
 
-      <!-- Recente activiteit -->
-      <section class="id-card id-card--recent">
-        <header class="id-card-head">
-          <div>
-            <h2 class="id-card-title">Recente activiteit</h2>
-            <p class="id-card-sub">Laatste 8 incidenten</p>
-          </div>
-          <a class="id-card-link" href="incidenten">Naar overzicht →</a>
-        </header>
-        <div class="id-recent" id="id-recent"></div>
+      <!-- KPI (§21) -->
+      <section class="cmd-view" id="cmd-view-kpi" hidden>
+        <div class="cmd-kpis" id="cmd-kpi-kpis"></div>
+        <h2 class="cmd-h2">Cliëntreis (funnel)</h2>
+        <div class="table-card"><div class="table-wrapper">
+          <table class="employees-table"><thead><tr><th>Status</th><th>Aantal</th></tr></thead><tbody id="cmd-kpi-funnel-tbody"></tbody></table>
+        </div></div>
       </section>
+
+      <p class="client-detail-placeholder" id="cmd-geen-toegang" hidden>U heeft geen toegang tot de cliëntmodule-dashboards.</p>
     </main>
   </div>
 
-  <div class="app-toast" id="id-toast" role="status" aria-live="polite" hidden></div>
-
-  <script src="top-nav-overflow.js?v=918f1ad"></script>
   <script src="sidebar-nav.js?v=918f1ad"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
-  <script src="error-reporter.js?v=918f1ad"></script>
-  <script src="besa-sync-reporter.js?v=918f1ad"></script>
-  <script src="optimistic-lock.js?v=918f1ad" defer></script>
-  <script src="realtime-sync.js?v=918f1ad" defer></script>
-  <script src="bulk-actions.js?v=918f1ad" defer></script>
-  <script src="pdf-export.js?v=918f1ad" defer></script>
+  <script src="besa-sync-reporter.js?v=918f1ad" defer></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
-  <script src="helpdesk-modal.js?v=918f1ad" defer></script>
-  <script src="onboarding-flow.js?v=918f1ad" defer></script>
-  <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
-  <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="clienten-data.js?v=918f1ad" defer></script>
-  <script src="medewerkers-data.js?v=918f1ad" defer></script>
-  <script src="locaties-data.js?v=918f1ad" defer></script>
-  <script src="incident-categorieen-data.js?v=918f1ad" defer></script>
-  <script src="incidenten-data.js?v=918f1ad" defer></script>
-  <script src="incident-taken-data.js?v=918f1ad" defer></script>
-  <script src="besa-daterange.js?v=918f1ad" defer></script>
-  <script src="incidenten-dashboard.js?v=918f1ad" defer></script>
+  <script src="clientmodule-dashboard.js?v=918f1ad" defer></script>
 </body>
 </html>

@@ -157,6 +157,7 @@ function buildNav(active) {
     [
       { group: "Cliënten" },
       { href: "clienten", title: "Cliënten" },
+      { href: "clientmodule-dashboard", title: "Dashboard" },
       { href: "aanmeldingen", title: "Aanmeldingen" },
       { href: "wachtlijst", title: "Wachtlijst" },
       { href: "zorgsoorten", title: "Zorgsoorten" },
@@ -300,6 +301,7 @@ const TOPIC_BY_PAGE = {
   "clienten.html": "Cliënten",
   "aanmeldingen.html": "Cliënten",
   "wachtlijst.html": "Cliënten",
+  "clientmodule-dashboard.html": "Cliënten",
   "client-detail.html": "Cliënten",
   "zorgsoorten.html": "Cliënten",
   "zorgsoort-detail.html": "Cliënten",
