@@ -100,17 +100,10 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G58 — scripts/deploy-functions.mjs (Management-API edge-deploy, bewezen) + scripts/apply-migrations.mjs. PR #603.
 - [x] G59 — DDL-route + canonieke URL's gedocumenteerd in `docs/hr-module/DEPLOY.md` (db-exec, web/mobiel-deploy incl. twovex9-credential-truc, RLS-impersonatie-test, edge-blocker-noot).
 
-## ⏳ RESTERENDE GAPS — status & reden (na sessie 2026-06-09 #2)
-**Data-geblokkeerd** (code zou kloppen maar brondata ontbreekt → toont leeg/0; vergt HR-invoer):
-- G41 SKJ-saldo + G42 recertificering/agressie → `medewerker_opleidingen`-koppeltabel is leeg (0 rijen).
-- (personeelskosten/verloop al "indicatief" gelabeld in G50/G51.)
-
-**Infra-geblokkeerd** (vergt edge-function-deploy + secrets; G58 deploy-script bestaat nog niet):
-- G7-auto-mail (`salarisexport-mail`), G13 onboarding-upload doc-types (ALLOWED_TYPES in edge), G30 auto-mail teken/upload/inwerklink.
-
-**Groot/risicovol — eigen sessie aanbevolen** (niet half doen vóór de clean runs):
-- G46 docs-bucket PRIVATE + signed URLs (blast-radius: medewerker.js/mijn-documenten/doc-status/warnings → moet doc-viewing app-breed ombouwen).
-- G21 salarishistorie self-service · G25 verloftypes-beheerpagina · G27/G29 onboarding-checklist/gesprekken · G31 Bradford-verzuim · G33/G34/G35 verzuim-WP-uitbreidingen · G11/G12 doc-type-model · G56/G57 gate-robustheid+besaApplyReadOnly.
+## ✅ EINDSTATUS 2026-06-10 — ALLE 58 GAPS AFGEROND (G52 gedropt door eigenaar)
+Geen open gaps meer. Enige acties die op de eigenaar wachten (geen code):
+- SMTP-wachtwoord + afzender-e-mail invullen (Salarisadministratie → E-mailinstellingen) → activeert salarisexport-mail (G7) en onboarding-mail (G30); beide functies valideren en melden dit nu netjes.
+- Salarisdata (schaal/trede/uurkostprijs) en opleidings-koppelingen vullen → personeelskosten-KPI's en SKJ-saldi worden vanzelf representatief (alles is al "eerlijk-bij-dunne-data" gelabeld).
 
 ## Test-eindeis
 2 opeenvolgende clean Chrome-runs (licht + donker) via QA-accounts per rol op futureflow-etf.vercel.app —
@@ -130,3 +123,23 @@ pruned correct uit `besa-permissions-v2`. Echte gebruikers (persistente sessie) 
 
 NB: de loonstrook-mei-2026 + jaaropgave-2025 + bucketbestanden op test-medewerker `fa11c0de-…0001`
 zijn bewust NIET verwijderd (QA-demo-fixtures; verwijderen = destructief → eigenaarskeuze).
+
+### ✅ Acceptatie-resultaat 2026-06-10 (sessie #3, 100%-afronding) — GEHAALD
+Alle 4 rollen, elk 2 runs (licht + donker), geen app-console-fouten (alleen de bekende
+Chrome-extensie-vendor.js-melding). Nieuwe features end-to-end live getest:
+- **qa-hr** ✅✅ — verloftypes-CRUD (toevoegen→toggle→slider-delete), compliance recert-sectie
+  (19 verlopen / 18 ≤90d / agressie 4, 37 rijen), verzuim Bradford-KPI (3 frequente, tooltip),
+  acties-CRUD (toevoegen→afvinken→verwijderen, "door <naam>"), dossier-onboarding (7 stappen
+  incl. Inwerkgesprekken & evaluatie, 5-items-toegang, mail-knop, gesprek-afvink+datum
+  persisteert in traject.data), SKJ-saldo-badge, documenten = signed URLs (G46),
+  loonstroken-pagina met jaaropgaven-upload-sectie (28 mw-opties).
+- **qa-medewerker** ✅✅ — Mijn salarisontwikkeling-sectie (correcte lege staat), verlof-form
+  dynamisch uit de verloftypes-tabel (7), loonstrook signed-URL OK.
+- **qa-directeur** ✅✅ & **qa-eigenaar** ✅✅ — management-dashboard 8 HR-kaarten, strikte
+  salarispagina's toegankelijk voor de juiste rollen, planning-personeelskosten-KPI.
+- **Publieke onboarding-upload** ✅ — verloopdatum-veld + canonical types met NL-labels.
+- 1 bug gevonden in de live-run (acties-knoppen misten in de delegation-selector) →
+  gefixt (PR #608) → flow volledig clean herhaald.
+
+**Sessie #3 PR's:** #603 (G11-13/27-30/58 onboarding+infra) · #604 (G46 bucket private) ·
+#605 (G21/25/41/42) · #606 (G31/33/34/35 verzuim) · #607 (G55/56/57 + G20-rest) · #608 (fix).
