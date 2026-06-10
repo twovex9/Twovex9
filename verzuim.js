@@ -122,8 +122,12 @@
   // ---------------------------------------------------------------------------
   var WP_TEMPLATES = [
     { templateId: 1, type: "notification", week: 0,    naam: "Ziekmelding" },
+    // G33 — week-1-melding bij arbodienst/bedrijfsarts als eigen mijlpaal.
+    { templateId: 10, type: "notification", week: 1,   naam: "Ziekmelding arbodienst / bedrijfsarts (week 1)" },
     { templateId: 2, type: "action_plan",  week: 6,    naam: "Probleemanalyse" },
     { templateId: 3, type: "action_plan",  week: 8,    naam: "Plan van Aanpak" },
+    // G33 — de wettelijke 42e-weeksmelding UWV los van de eerstejaarsevaluatie.
+    { templateId: 11, type: "report",      week: 42,   naam: "42e-weeksmelding UWV" },
     { templateId: 4, type: "evaluation",   week: 42,   naam: "Eerstejaarsevaluatie" },
     { templateId: 5, type: "evaluation",   week: 52,   naam: "Eindevaluatie Eerste Ziektejaar" },
     { templateId: 6, type: "evaluation",   week: 88,   naam: "Tweedejaarsevaluatie" },
@@ -234,6 +238,30 @@
       });
     });
     var hersteld = cases.filter(isHersteld).length;
+
+    // G31 — Bradford-factor per medewerker over de laatste 52 weken:
+    // B = S² × D (S = aantal ziekmeldingen, D = totaal ziektedagen).
+    // "Frequent verzuim" = medewerkers met B ≥ 125 (gangbare aandachtsdrempel).
+    var grens = new Date(todayMid().getTime() - 365 * 86400000);
+    var perMw = {};
+    cases.forEach(function (c) {
+      var start = parseISO(c.eerstZiektedag);
+      if (!start || start < grens) return;
+      var naam = String(c.medewerker || "").trim().toLowerCase();
+      if (!naam) return;
+      if (!perMw[naam]) perMw[naam] = { s: 0, d: 0, label: String(c.medewerker || "").trim() };
+      perMw[naam].s += 1;
+      perMw[naam].d += Math.max(1, dagenZiek(c) || 1);
+    });
+    var frequent = [];
+    Object.keys(perMw).forEach(function (k) {
+      var e = perMw[k];
+      var b = e.s * e.s * e.d;
+      if (b >= 125) frequent.push(e.label + " (B=" + b + ")");
+    });
+    setText("vz-kpi-bradford", frequent.length);
+    var bfTile = $("vz-kpi-bradford-tile");
+    if (bfTile) bfTile.title = frequent.length ? ("Frequent verzuim: " + frequent.join(", ")) : "Geen medewerkers boven de Bradford-drempel.";
 
     setText("vz-kpi-actief", actief);
     setText("vz-kpi-langdurig", langdurig);
@@ -362,7 +390,25 @@
     renderCaseHead();
     renderPoort();
     renderContacts();
+    renderActies();
     renderDocs();
+  }
+
+  // G35 — naam-lookup voor uitgevoerd_door (profiel-uuid → weergavenaam).
+  function profielNaamById(uid) {
+    if (!uid) return "";
+    try {
+      var all = (window.profilesDB && window.profilesDB.getAllSync) ? (window.profilesDB.getAllSync() || []) : [];
+      var p = all.find(function (x) { return x && String(x.id) === String(uid); });
+      if (p) return ((p.voornaam || "") + " " + (p.achternaam || "")).trim() || p.email || "";
+    } catch (e) { /* */ }
+    return "";
+  }
+  function currentUserId() {
+    try {
+      var p = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : window.besaCurrentProfile;
+      return p && p.id ? p.id : null;
+    } catch (e) { return null; }
   }
 
   function renderCaseHead() {
@@ -457,11 +503,15 @@
     }
     listEl.innerHTML = items.map(function (it) {
       var note = it.notitie ? '<p class="vz-cm-note">' + escHtml(it.notitie) + '</p>' : '';
+      // G35 — toon wie het contactmoment heeft uitgevoerd/geregistreerd.
+      var doorNaam = profielNaamById(it.uitgevoerdDoor);
+      var doorHtml = doorNaam ? '<span class="vz-cm-date">door ' + escHtml(doorNaam) + '</span>' : '';
       return ''
         + '<div class="vz-cm-item">'
         + '  <div class="vz-cm-itop">'
         + '    <span class="vz-cm-type">' + escHtml(CM_LABELS[it.type] || it.type) + '</span>'
         + '    <span class="vz-cm-date">' + fmtNl(it.datum) + '</span>'
+        + doorHtml
         + '    <span class="vz-cm-acts">'
         + '      <button type="button" class="vz-icon-btn" title="Bewerken" data-cm-edit="' + escHtml(it.id) + '" aria-label="Contactmoment bewerken">' + ICON_EDIT + '</button>'
         + '      <button type="button" class="vz-icon-btn vz-icon-btn--del" title="Verwijderen" data-cm-del="' + escHtml(it.id) + '" aria-label="Contactmoment verwijderen">' + ICON_DEL + '</button>'
@@ -470,6 +520,84 @@
         + note
         + '</div>';
     }).join("");
+  }
+
+  // G35 — Acties (re-integratie-acties met deadline en eigenaar).
+  function actiesFor(id) {
+    try {
+      var arr = (window.verzuimActiesDB && window.verzuimActiesDB.getForVerzuimSync(id)) || [];
+      return arr.slice().sort(function (a, b) {
+        if (!!a.voltooidOp !== !!b.voltooidOp) return a.voltooidOp ? 1 : -1;
+        return String(a.deadline || "9999").localeCompare(String(b.deadline || "9999"));
+      });
+    } catch (e) { return []; }
+  }
+  function renderActies() {
+    var listEl = $("vz-act-list");
+    if (!listEl) return;
+    var items = actiesFor(currentId);
+    if (!items.length) {
+      listEl.innerHTML = '<div class="vz-inline-empty">Nog geen acties vastgelegd. Leg afgesproken re-integratie-acties vast via <b>+ Actie</b>.</div>';
+      return;
+    }
+    listEl.innerHTML = items.map(function (it) {
+      var status;
+      if (it.voltooidOp) {
+        status = '<span class="vz-cm-date">✓ uitgevoerd ' + fmtNl(it.voltooidOp) + '</span>';
+      } else if (it.deadline) {
+        var du = daysUntil(it.deadline);
+        status = du != null && du < 0
+          ? '<span class="vz-cm-date" title="Deadline verstreken">⚠ deadline ' + fmtNl(it.deadline) + '</span>'
+          : '<span class="vz-cm-date">deadline ' + fmtNl(it.deadline) + '</span>';
+      } else {
+        status = '<span class="vz-cm-date">geen deadline</span>';
+      }
+      var doorNaam = profielNaamById(it.uitgevoerdDoor);
+      var doorHtml = doorNaam ? '<span class="vz-cm-date">door ' + escHtml(doorNaam) + '</span>' : '';
+      return ''
+        + '<div class="vz-cm-item">'
+        + '  <div class="vz-cm-itop">'
+        + '    <span class="vz-cm-type">' + escHtml(it.omschrijving) + '</span>'
+        + status
+        + doorHtml
+        + '    <span class="vz-cm-acts">'
+        + (it.voltooidOp ? '' : '      <button type="button" class="vz-icon-btn" title="Markeer uitgevoerd" data-act-done="' + escHtml(it.id) + '" aria-label="Actie uitgevoerd">✓</button>')
+        + '      <button type="button" class="vz-icon-btn" title="Bewerken" data-act-edit="' + escHtml(it.id) + '" aria-label="Actie bewerken">' + ICON_EDIT + '</button>'
+        + '      <button type="button" class="vz-icon-btn vz-icon-btn--del" title="Verwijderen" data-act-del="' + escHtml(it.id) + '" aria-label="Actie verwijderen">' + ICON_DEL + '</button>'
+        + '    </span>'
+        + '  </div>'
+        + '</div>';
+    }).join("");
+  }
+  function openActModal(it) {
+    var isNew = !it;
+    $("vz-act-title").textContent = isNew ? "Actie toevoegen" : "Actie bewerken";
+    $("vz-act-id").value = isNew ? "" : it.id;
+    $("vz-act-omschrijving").value = isNew ? "" : (it.omschrijving || "");
+    $("vz-act-deadline").value = isNew ? "" : (it.deadline || "");
+    $("vz-act-voltooid").value = isNew ? "" : (it.voltooidOp || "");
+    openModal("vz-act-modal");
+    setTimeout(function () { $("vz-act-omschrijving").focus(); }, 30);
+  }
+  async function submitActie(e) {
+    e.preventDefault();
+    if (!currentId || !window.verzuimActiesDB) return;
+    var id = $("vz-act-id").value;
+    var omschrijving = ($("vz-act-omschrijving").value || "").trim();
+    if (!omschrijving) { $("vz-act-omschrijving").focus(); return; }
+    var payload = {
+      verzuimId: currentId,
+      omschrijving: omschrijving,
+      deadline: $("vz-act-deadline").value || null,
+      voltooidOp: $("vz-act-voltooid").value || null,
+    };
+    if (!id) payload.uitgevoerdDoor = currentUserId();
+    try {
+      if (id) { await window.verzuimActiesDB.update(id, payload); if (window.showActionFeedback) window.showActionFeedback("saved", "Actie"); }
+      else { await window.verzuimActiesDB.add(payload); if (window.showActionFeedback) window.showActionFeedback("added", "Actie"); }
+      closeModal("vz-act-modal");
+      renderActies();
+    } catch (err) { if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err)); }
   }
 
   function fileIcon() {
@@ -580,6 +708,13 @@
         var saved = await window.verzuimDB.add(payload);
         if (window.showActionFeedback) window.showActionFeedback("added", "Verzuimcasus");
         currentId = saved && saved.id ? saved.id : currentId;
+        // G34 — Wet-Poortwachter-traject automatisch aanmaken bij de ziekmelding
+        // (geen confirm: dit ís de wettelijke verplichting; HR kan losse
+        // mijlpalen daarna gewoon bewerken/verwijderen).
+        if (saved && saved.id && payload.eerstZiektedag) {
+          try { await seedTraject(saved.id, payload.eerstZiektedag); }
+          catch (errSeed) { console.error("[verzuim] auto-traject mislukt:", errSeed); }
+        }
       }
       closeModal("vz-case-modal");
       if (currentId && !detailView.hidden) renderDetail();
@@ -642,6 +777,25 @@
       renderDash();
     } catch (err) { if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err)); }
   }
+  // G34 — seed ontbrekende WP-mijlpalen voor een casus (zonder confirm; wordt
+  // automatisch aangeroepen bij de ziekmelding en hergebruikt door de knop).
+  async function seedTraject(caseId, eersteZiektedag) {
+    if (!caseId || !window.verzuimMijlpalenDB) return 0;
+    var existing = milestonesFor(caseId);
+    var have = {};
+    existing.forEach(function (x) { var t = x.data && (x.data.template_id || x.data.templateId); if (t) have[Number(t)] = true; });
+    var toAdd = WP_TEMPLATES.filter(function (t) { return !have[t.templateId]; });
+    for (var i = 0; i < toAdd.length; i++) {
+      var t = toAdd[i];
+      await window.verzuimMijlpalenDB.add({
+        verzuimId: caseId, mijlpaalType: t.type,
+        deadlineDatum: wpDeadlineFor(eersteZiektedag, t.week) || null, voltooidOp: null,
+        data: { naam: t.naam, week_number: t.week, template_id: t.templateId },
+      });
+    }
+    return toAdd.length;
+  }
+
   async function generateTraject() {
     if (!currentId || !window.verzuimMijlpalenDB) return;
     var c = caseById(currentId);
@@ -664,15 +818,8 @@
     }
     if (!ok) return;
     try {
-      for (var i = 0; i < toAdd.length; i++) {
-        var t = toAdd[i];
-        await window.verzuimMijlpalenDB.add({
-          verzuimId: currentId, mijlpaalType: t.type,
-          deadlineDatum: wpDeadlineFor(c.eerstZiektedag, t.week) || null, voltooidOp: null,
-          data: { naam: t.naam, week_number: t.week, template_id: t.templateId },
-        });
-      }
-      if (window.showActionFeedback) window.showActionFeedback("added",toAdd.length + " mijlpalen");
+      var n = await seedTraject(currentId, c.eerstZiektedag);
+      if (window.showActionFeedback) window.showActionFeedback("added", n + " mijlpalen");
       renderPoort();
       renderDash();
     } catch (err) { if (window.showError) window.showError("Genereren mislukt: " + (err && err.message || err)); }
@@ -708,6 +855,8 @@
       verzuimId: currentId, type: $("vz-cm-type").value,
       datum: datum, notitie: ($("vz-cm-notitie").value || "").trim(),
     };
+    // G35 — registreer wie het contactmoment uitvoert (de ingelogde gebruiker).
+    if (!id) payload.uitgevoerdDoor = currentUserId();
     try {
       if (id) { await window.verzuimContactmomentenDB.update(id, payload); if (window.showActionFeedback) window.showActionFeedback("saved", "Contactmoment"); }
       else { await window.verzuimContactmomentenDB.add(payload); if (window.showActionFeedback) window.showActionFeedback("added","Contactmoment"); }
@@ -851,6 +1000,23 @@
         function () { return window.verzuimContactmomentenDB.delete(id).then(function () { renderContacts(); renderDash(); }); });
       return;
     }
+    // G35 — acties
+    if ((id = t.getAttribute("data-act-done"))) {
+      window.verzuimActiesDB.update(id, { voltooidOp: todayMid().toISOString().slice(0, 10) })
+        .then(function () { if (window.showActionFeedback) window.showActionFeedback("saved", "Actie uitgevoerd"); renderActies(); })
+        .catch(function (err) { if (window.showError) window.showError("Bijwerken mislukt: " + (err && err.message || err)); });
+      return;
+    }
+    if ((id = t.getAttribute("data-act-edit"))) {
+      var act = actiesFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      if (act) openActModal(act); return;
+    }
+    if ((id = t.getAttribute("data-act-del"))) {
+      var actD = actiesFor(currentId).find(function (x) { return String(x.id) === String(id); });
+      confirmDelete({ title: "Actie verwijderen?", preview: actD ? actD.omschrijving : "", label: "Actie" },
+        function () { return window.verzuimActiesDB.delete(id).then(function () { renderActies(); }); });
+      return;
+    }
     if ((id = t.getAttribute("data-doc-open"))) { openDoc(id); return; }
     if ((id = t.getAttribute("data-doc-del"))) {
       var doc = docsFor(currentId).find(function (x) { return String(x.id) === String(id); });
@@ -871,6 +1037,8 @@
   wireModal("vz-case-modal", "vz-case-close", "vz-case-cancel", "vz-case-form", submitCase);
   wireModal("vz-mp-modal", "vz-mp-close", "vz-mp-cancel", "vz-mp-form", submitMp);
   wireModal("vz-cm-modal", "vz-cm-close", "vz-cm-cancel", "vz-cm-form", submitCm);
+  wireModal("vz-act-modal", "vz-act-close", "vz-act-cancel", "vz-act-form", submitActie);
+  var actAddBtn = $("vz-act-add"); if (actAddBtn) actAddBtn.addEventListener("click", function () { openActModal(null); });
 
   var beschrTa = $("vz-case-beschrijving");
   if (beschrTa) beschrTa.addEventListener("input", updateBeschrCounter);
@@ -883,7 +1051,7 @@
   // Escape sluit een open modal (en anders de detail-weergave)
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    var modals = ["vz-case-modal", "vz-mp-modal", "vz-cm-modal"];
+    var modals = ["vz-case-modal", "vz-mp-modal", "vz-cm-modal", "vz-act-modal"];
     for (var i = 0; i < modals.length; i++) {
       var m = $(modals[i]);
       if (m && !m.hidden) { closeModal(modals[i]); e.stopPropagation(); return; }
@@ -910,6 +1078,9 @@
   window.addEventListener("besa:verzuim-documenten-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderDocs();
     if (dashView && !dashView.hidden) renderCaseList();
+  });
+  window.addEventListener("besa:verzuim-acties-updated", function () {
+    if (currentId && detailView && !detailView.hidden) renderActies();
   });
 
   // ---------------------------------------------------------------------------
