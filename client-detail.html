@@ -22,6 +22,7 @@
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
+  <script src="besa-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
 
   <div class="app-shell">
@@ -106,6 +107,7 @@
                   <span class="top-dropdown-group-title">Cliënten</span>
                   <a href="clienten" class="top-dropdown-link" role="menuitem">Cliënten</a>
                   <a href="aanmeldingen" class="top-dropdown-link" role="menuitem">Aanmeldingen</a>
+                  <a href="wachtlijst" class="top-dropdown-link" role="menuitem">Wachtlijst</a>
                   <a href="zorgsoorten" class="top-dropdown-link" role="menuitem">Zorgsoorten</a>
                   <a href="organisatie" class="top-dropdown-link" role="menuitem">Organisaties</a>
                   <a href="gemeenten" class="top-dropdown-link" role="menuitem">Gemeenten</a>
@@ -248,6 +250,7 @@
               <p class="client-detail-kv"><span class="client-detail-kv-k">In zorg</span><span class="client-detail-kv-v" id="cd-aside-inzorg">—</span></p>
               <p class="client-detail-kv"><span class="client-detail-kv-k">Uit zorg</span><span class="client-detail-kv-v" id="cd-aside-uitzorg">—</span></p>
               <p class="client-detail-kv"><span class="client-detail-kv-k">Cliëntreis</span><span class="client-detail-kv-v"><span class="cr-pill" id="cd-reis-pill">—</span></span></p>
+              <div id="cd-reis-acties" hidden></div>
             </div>
             <div class="client-detail-block">
               <h3 class="client-detail-h3">Medewerker</h3>
@@ -301,6 +304,7 @@
             <button type="button" class="client-detail-tab" data-cd-panel="q" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-q">Vragenlijsten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="t" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-t">Tijdlijn</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="k" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-k">Intake</button>
           </div>
 
           <div class="client-detail-panels table-card" id="cd-panels">
@@ -417,17 +421,17 @@
                       <ul class="columns-list" id="cdb-columns-list" role="none">
                         <li role="none">
                           <button type="button" class="column-toggle is-checked" data-col="naam" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Naam
+                            <span class="column-check" aria-hidden="true">✓</span> Naam / product
                           </button>
                         </li>
                         <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="zorg" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Zorgsoort
+                          <button type="button" class="column-toggle" data-col="productcode" role="menuitemcheckbox" aria-checked="false">
+                            <span class="column-check" aria-hidden="true">✓</span> Productcode
                           </button>
                         </li>
                         <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="fase" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Fase
+                          <button type="button" class="column-toggle is-checked" data-col="gemeente" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Gemeente
                           </button>
                         </li>
                         <li role="none">
@@ -436,23 +440,8 @@
                           </button>
                         </li>
                         <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="tarief" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Tarief
-                          </button>
-                        </li>
-                        <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="tedecl" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Te declareren LN
-                          </button>
-                        </li>
-                        <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="nogdecl" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Nog niet gedeclareerd
-                          </button>
-                        </li>
-                        <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="decmeth" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Declaratie methode
+                          <button type="button" class="column-toggle is-checked" data-col="uren" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Uren
                           </button>
                         </li>
                         <li role="none">
@@ -461,8 +450,13 @@
                           </button>
                         </li>
                         <li role="none">
-                          <button type="button" class="column-toggle is-checked" data-col="acties" role="menuitemcheckbox" aria-checked="true">
-                            <span class="column-check" aria-hidden="true">✓</span> Rij
+                          <button type="button" class="column-toggle is-checked" data-col="verloop" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Verloop
+                          </button>
+                        </li>
+                        <li role="none" id="cdb-coltoggle-tarief">
+                          <button type="button" class="column-toggle is-checked" data-col="tarief" role="menuitemcheckbox" aria-checked="true">
+                            <span class="column-check" aria-hidden="true">✓</span> Tarief
                           </button>
                         </li>
                       </ul>
@@ -482,32 +476,29 @@
 
               <div class="client-detail-besc-tableblock">
                 <div class="table-wrapper">
-                  <table class="employees-table client-detail-besc-table" id="cdb-table" data-page-size="15">
+                  <table class="employees-table client-detail-besc-table" id="cdb-table">
                     <thead>
                       <tr>
-                        <th class="th-check" data-col="select">
-                          <input type="checkbox" class="table-checkbox" id="cdb-check-all" aria-label="Selecteer alles" />
-                        </th>
                         <th data-col="naam" class="th-sort">
                           <div class="th-sort-inner">
-                            <span class="th-label">Naam</span>
+                            <span class="th-label">Naam / product</span>
                             <button type="button" class="th-sort-trigger" aria-label="Sorteren op naam">
                               <span class="th-sort-arrows" aria-hidden="true"></span>
                             </button>
                           </div>
                         </th>
-                        <th data-col="zorg" class="th-sort">
+                        <th data-col="productcode" class="th-sort">
                           <div class="th-sort-inner">
-                            <span class="th-label">Zorgsoort</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op zorgsoort">
+                            <span class="th-label">Productcode</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op productcode">
                               <span class="th-sort-arrows" aria-hidden="true"></span>
                             </button>
                           </div>
                         </th>
-                        <th data-col="fase" class="th-sort">
+                        <th data-col="gemeente" class="th-sort">
                           <div class="th-sort-inner">
-                            <span class="th-label">Fase</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op fase">
+                            <span class="th-label">Gemeente</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op gemeente">
                               <span class="th-sort-arrows" aria-hidden="true"></span>
                             </button>
                           </div>
@@ -520,34 +511,10 @@
                             </button>
                           </div>
                         </th>
-                        <th data-col="tarief" class="th-sort">
+                        <th data-col="uren" class="th-sort">
                           <div class="th-sort-inner">
-                            <span class="th-label">Tarief</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op tarief">
-                              <span class="th-sort-arrows" aria-hidden="true"></span>
-                            </button>
-                          </div>
-                        </th>
-                        <th data-col="tedecl" class="th-sort">
-                          <div class="th-sort-inner">
-                            <span class="th-label">Te declareren LN</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op te declareren">
-                              <span class="th-sort-arrows" aria-hidden="true"></span>
-                            </button>
-                          </div>
-                        </th>
-                        <th data-col="nogdecl" class="th-sort">
-                          <div class="th-sort-inner">
-                            <span class="th-label">Nog niet gedeclareerd</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op nog niet gedeclareerd">
-                              <span class="th-sort-arrows" aria-hidden="true"></span>
-                            </button>
-                          </div>
-                        </th>
-                        <th data-col="decmeth" class="th-sort">
-                          <div class="th-sort-inner">
-                            <span class="th-label">Declaratie methode</span>
-                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op declaratie methode">
+                            <span class="th-label">Uren</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op uren">
                               <span class="th-sort-arrows" aria-hidden="true"></span>
                             </button>
                           </div>
@@ -560,74 +527,29 @@
                             </button>
                           </div>
                         </th>
-                        <th data-col="acties" class="cd-besc-acties-th" aria-label="Rijacties"></th>
+                        <th data-col="verloop">
+                          <span class="th-label">Verloop</span>
+                        </th>
+                        <th data-col="tarief" class="th-sort" id="cdb-th-tarief">
+                          <div class="th-sort-inner">
+                            <span class="th-label">Tarief</span>
+                            <button type="button" class="th-sort-trigger" aria-label="Sorteren op tarief">
+                              <span class="th-sort-arrows" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody id="cdb-tbody">
-                      <tr
-                        class="cdb-data-row"
-                        data-besc-naam="ambulant"
-                        data-besc-binnen-60="0"
-                        data-besc-naam-norm="ambulant ambulant intens ons"
-                      >
-                        <td data-col="select">
-                          <input type="checkbox" class="table-checkbox cdb-row-check" aria-label="Selecteer rij" data-id="b1" />
-                        </td>
-                        <td data-col="naam">Ambulant</td>
-                        <td data-col="zorg"><span class="cd-besc-zorgtag">Ambulant intens</span></td>
-                        <td data-col="fase"><span class="cd-besc-fase cd-besc-fase--actief">Actief</span></td>
-                        <td data-col="periode">
-                          <span class="cd-besc-periode-ico" aria-hidden="true">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <rect x="3" y="4" width="18" height="18" rx="2" />
-                              <line x1="16" y1="2" x2="16" y2="6" />
-                              <line x1="8" y1="2" x2="8" y2="6" />
-                              <line x1="3" y1="10" x2="21" y2="10" />
-                            </svg>
-                          </span>
-                          6 jan 2024 - 5 jan 2026
-                        </td>
-                        <td data-col="tarief">€ 60,60 / uur</td>
-                        <td data-col="tedecl">—</td>
-                        <td data-col="nogdecl">—</td>
-                        <td data-col="decmeth">ONS</td>
-                        <td data-col="status"><span class="cd-besc-stat cd-besc-stat--betaald">Betaald</span></td>
-                        <td data-col="acties" class="cd-besc-actions-cell">
-                          <button type="button" class="cd-besc-more" aria-label="Rijacties" title="Meer">
-                            <svg class="cd-besc-more-ico" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <circle cx="5" cy="12" r="2" />
-                              <circle cx="12" cy="12" r="2" />
-                              <circle cx="19" cy="12" r="2" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
                       <tr id="cdb-filter-empty" class="cdb-besc-filter-empty" style="display: none">
-                        <td class="cdb-besc-filter-empty-td" colspan="11">Geen resultaten. Pas zoek- of filterinstellingen aan.</td>
+                        <td class="cdb-besc-filter-empty-td" colspan="8">Geen resultaten. Pas zoek- of filterinstellingen aan.</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <div class="table-footer table-footer--pagebar cl-table-footer" id="cdb-table-footer" role="navigation" aria-label="Paginatie">
+                <div class="table-footer table-footer--pagebar cl-table-footer" id="cdb-table-footer">
                   <div class="footer-left">
-                    <span id="cdb-pager-range" class="pager-range">1-1 van 1 totaal</span>
-                  </div>
-                  <div class="footer-right">
-                    <label class="footer-rows-wrap" for="cdb-rows">
-                      <span class="footer-rows-label">Rijen per pagina</span>
-                      <select id="cdb-rows" class="footer-rows-select" name="rows" aria-label="Rijen per pagina">
-                        <option value="15" selected>15</option>
-                        <option value="30">30</option>
-                        <option value="50">50</option>
-                      </select>
-                    </label>
-                    <span id="cdb-pager-page" class="pager-page-label">Pagina 1 van 1</span>
-                    <span class="pager" role="navigation" aria-label="Paginatie">
-                      <button type="button" class="pager-btn" id="cdb-pager-first" disabled aria-label="Eerste pagina">&laquo;</button>
-                      <button type="button" class="pager-btn" id="cdb-pager-prev" disabled aria-label="Vorige pagina">&lsaquo;</button>
-                      <button type="button" class="pager-btn" id="cdb-pager-next" disabled aria-label="Volgende pagina">&rsaquo;</button>
-                      <button type="button" class="pager-btn" id="cdb-pager-last" disabled aria-label="Laatste pagina">&raquo;</button>
-                    </span>
+                    <span id="cdb-pager-range" class="pager-range">0 van 0 totaal</span>
                   </div>
                 </div>
               </div>
@@ -1185,6 +1107,53 @@
               <p class="client-detail-placeholder" id="cd-tijdlijn-empty" hidden>Nog geen gebeurtenissen.</p>
             </section>
 
+            <section class="client-detail-pan" id="cd-pan-k" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Intake</h3>
+              <div id="cd-intake-root"></div>
+
+              <!-- Modal: ondertekening aanvragen (fase 2) -->
+              <div class="modal-overlay" id="cd-ond-modal" aria-hidden="true" hidden>
+                <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-ond-modal-title">Ondertekening aanvragen</h2>
+                    <button type="button" class="modal-close" id="cd-ond-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-ond-form" novalidate>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-ond-f-verklaring">Verklaring *</label>
+                      <select class="modal-input modal-select" id="cd-ond-f-verklaring"></select>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-ond-f-ondtype">Ondertekenaar *</label>
+                      <select class="modal-input modal-select" id="cd-ond-f-ondtype">
+                        <option value="client">Cliënt</option>
+                        <option value="ouder">Ouder</option>
+                        <option value="gezaghebbende">Gezaghebbende</option>
+                        <option value="voogd">Voogd</option>
+                      </select>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-ond-f-naam">Naam ondertekenaar *</label>
+                      <input class="modal-input" id="cd-ond-f-naam" type="text" required autocomplete="off" list="cd-ond-naam-list" />
+                      <datalist id="cd-ond-naam-list"></datalist>
+                    </div>
+                  </form>
+                  <div class="cdo-resultaat" id="cd-ond-result" hidden>
+                    <p class="cdo-resultaat-titel">Verzoek aangemaakt. Deel deze link met de ondertekenaar:</p>
+                    <div class="cdo-resultaat-rij">
+                      <label class="visually-hidden" for="cd-ond-result-link">Deel-link</label>
+                      <input class="modal-input" id="cd-ond-result-link" type="text" readonly />
+                      <button type="button" class="btn-outline" id="cd-ond-result-copy">Kopiëren</button>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-ond-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-ond-save-btn">Aanvragen</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <!-- Fase E.14 DSR-flow — alleen admin-tier zichtbaar -->
             <section class="client-detail-pan client-detail-pan--dsr" id="cd-dsr-section" hidden>
               <h3 class="client-detail-pan-h">Gegevensbescherming (AVG)</h3>
@@ -1211,184 +1180,6 @@
   </div>
 
   <div class="app-toast app-toast--clienten" id="cd-toast" role="status" aria-live="polite" hidden></div>
-
-  <div class="modal-overlay" id="cdb-export-modal" hidden aria-hidden="true">
-    <div class="modal-dialog cdb-export-dialog" role="dialog" aria-modal="true" aria-labelledby="cdb-export-title" aria-describedby="cdb-export-desc" tabindex="-1">
-      <div class="modal-header">
-        <h2 class="modal-title" id="cdb-export-title">Exporteren</h2>
-        <button type="button" class="modal-close" id="cdb-export-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body cdb-export-body">
-        <p class="cdb-export-desc" id="cdb-export-desc">
-          Selecteer de kolommen die je wilt opnemen in je export. Gebruik de zoekfunctie om kolommen te filteren en de selectievakjes om ze te selecteren.
-        </p>
-        <div class="cdb-export-toolbar">
-          <div class="cdb-export-searchwrap">
-            <input
-              type="search"
-              class="search cdb-export-search"
-              id="cdb-export-search"
-              placeholder="Kolommen zoeken…"
-              autocomplete="off"
-              aria-label="Kolommen zoeken"
-            />
-          </div>
-          <label class="cdb-export-selall" for="cdb-export-selall">
-            <input type="checkbox" class="table-checkbox" id="cdb-export-selall" />
-            <span class="cdb-export-selall-text">Selecteer alles</span>
-          </label>
-        </div>
-        <div class="cdb-export-cols" id="cdb-export-cols" role="group" aria-label="Kolommen kiezen">
-          <ul class="cdb-export-list" id="cdb-export-list-l" role="list">
-            <li class="cdb-export-item" data-cdb-exp-filter="id">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="id" />
-                <span>ID</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="achternaam">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="achternaam" />
-                <span>Achternaam</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="locatie">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="locatie" />
-                <span>Locatie</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="organisatie">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="organisatie" />
-                <span>Organisatie</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer telefoon nummer">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_tel" />
-                <span>Verwijzer telefoonnummer</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="datum in zorg">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="datum_in_zorg" />
-                <span>Datum in zorg</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="zorgsoort">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="zorgsoort" />
-                <span>Zorgsoort</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="declaratiemethode declaratie">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="decl_meth" />
-                <span>Declaratiemethode</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="einddatum">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="einddatum" />
-                <span>Einddatum</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="openstaand bedrag">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="open_bedrag" />
-                <span>Openstaand bedrag</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="ambulant uren week">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="amb_uren" />
-                <span>Ambulante uren per week</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="tarief uur uurtarief">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="tarief_uur" />
-                <span>Tarief per uur</span>
-              </label>
-            </li>
-          </ul>
-          <ul class="cdb-export-list" id="cdb-export-list-r" role="list">
-            <li class="cdb-export-item" data-cdb-exp-filter="voornaam">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="voornaam" />
-                <span>Voornaam</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="cliëntnummer client nummer">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="clientnummer" />
-                <span>Cliëntnummer</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="gemeente">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="gemeente" />
-                <span>Gemeente</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer naam">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_naam" />
-                <span>Verwijzer naam</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="verwijzer e-mail e-mailadres">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="verw_email" />
-                <span>Verwijzer e-mailadres</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="fase">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="fase" />
-                <span>Fase</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="naam">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="naam" />
-                <span>Naam</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="startdatum start">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="startdatum" />
-                <span>Startdatum</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="status">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="status" />
-                <span>Status</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="huidig maandbedrag">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="maandbedrag" />
-                <span>Huidig maandbedrag</span>
-              </label>
-            </li>
-            <li class="cdb-export-item" data-cdb-exp-filter="tarief dag">
-              <label class="cdb-export-row">
-                <input type="checkbox" class="table-checkbox" name="cdb_exp_col" value="tarief_dag" />
-                <span>Tarief per dag</span>
-              </label>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" id="cdb-export-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="cdb-export-confirm">Exporteren</button>
-      </div>
-    </div>
-  </div>
 
   <div class="modal-overlay" id="cdb-add-modal" hidden aria-hidden="true">
     <div class="modal-dialog cdb-add-dialog" role="dialog" aria-modal="true" aria-labelledby="cdb-add-title" tabindex="-1">
@@ -1520,6 +1311,8 @@
   <script src="client-vragenlijsten-data.js?v=918f1ad" defer></script>
   <script src="clientreis-ui.js?v=918f1ad" defer></script>
   <script src="client-tijdlijn-data.js?v=918f1ad" defer></script>
+  <script src="client-intake-data.js?v=918f1ad" defer></script>
+  <script src="client-ondertekeningen-data.js?v=918f1ad" defer></script>
   <script src="client-detail.js?v=918f1ad" defer></script>
   <script src="read-audit.js?v=918f1ad" defer></script>
   <script src="dsr-flow.js?v=918f1ad" defer></script>

@@ -115,6 +115,11 @@
     var locatie = row.locatie && String(row.locatie).trim()
       ? String(row.locatie).trim()
       : (cl && cl.locatie ? String(cl.locatie).trim() : "—");
+    // Gemeente: eigen kolom op de beschikking (fase 2), fallback = gemeente
+    // van de gekoppelde cliënt (zelfde patroon als locatie hierboven).
+    var gemeente = row.gemeente && String(row.gemeente).trim()
+      ? String(row.gemeente).trim()
+      : (cl && cl.gemeente ? String(cl.gemeente).trim() : "");
 
     return {
       id: row.id,
@@ -122,6 +127,13 @@
       clientId: row.client_id || "",
       clientLabel: clientLabel,
       naam: row.naam || "",
+      gemeente: gemeente,
+      productcode: row.productcode ? String(row.productcode).trim() : "",
+      // Toegekende uren (productie-module-kolommen) — read-only meegegeven
+      // voor weergave; gaan bewust NIET mee in het insert/update-payload
+      // (toegekend_bron 'auto' blijft server-side beheerd).
+      toegekendUren: row.toegekend_uren != null ? Number(row.toegekend_uren) : null,
+      toegekendEenheid: row.toegekend_eenheid || "",
       zorgsoortKey: row.zorgsoort_key || "overig",
       zorgsoortLabel: zorgLabel(row.zorgsoort_key || "overig"),
       locatie: locatie || "—",
@@ -157,10 +169,16 @@
       // expliciet gezet in `_data`.
     }
     var locatie = safe.locatie && safe.locatie !== "—" ? String(safe.locatie) : null;
+    var gemeente = safe.gemeente && String(safe.gemeente).trim() && safe.gemeente !== "—"
+      ? String(safe.gemeente).trim() : null;
+    var productcode = safe.productcode && String(safe.productcode).trim() && safe.productcode !== "—"
+      ? String(safe.productcode).trim() : null;
     return {
       id: safe.id || genId(),
       client_id: safe.clientId || null,
       naam: String(safe.naam || ""),
+      gemeente: gemeente,
+      productcode: productcode,
       zorgsoort_key: safe.zorgsoortKey || "overig",
       fase: safe.fase || "actief",
       locatie: locatie,
@@ -506,40 +524,27 @@
     var f0 = String(p.fase || "").toLowerCase();
     var fase = f0;
     if (fase === "aangevraagd") fase = "in_aanvraag";
+    if (fase === "afgehandeld") fase = "actief";
     if (!fase) fase = "actief";
-    var bStat = "outstanding";
-    var tLM = 0;
-    var nNG = 0;
-    var bC = 0;
 
-    function simpleHash(s) {
-      s = String(s == null ? "" : s);
-      var h = 0;
-      for (var i = 0; i < s.length; i += 1) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-      return Math.abs(h);
+    // Gemeente: default = gemeente van de gekoppelde cliënt.
+    var gemeente = p.gemeente && String(p.gemeente).trim() ? String(p.gemeente).trim() : "";
+    if (!gemeente && p.clientId && typeof global.getClientenById === "function") {
+      try {
+        var cl0 = global.getClientenById(p.clientId);
+        if (cl0 && cl0.gemeente) gemeente = String(cl0.gemeente).trim();
+      } catch (e) { /* */ }
     }
 
-    var base = simpleHash((p.clientId || "") + "|" + (p.naam || "x")) % 80000;
-    base = n2(base);
-    if (fase === "in_aanvraag") {
-      bStat = "outstanding";
-    } else if (f0 === "afgehandeld") {
-      fase = "actief";
-      bStat = "betaald";
-      bC = base + 1000;
-    } else if (f0 === "verlopen") {
-      tLM = 0;
-      nNG = n2(base * 0.5);
-    } else {
-      tLM = n2(base * 0.2);
-      nNG = n2(base * 0.6);
-    }
-
+    // Geen pseudo-random demo-financiën meer: nieuwe beschikkingen starten met
+    // tarief 0 en alle financiële velden 0 (zelfde als de overzicht-add-modal).
     var row = {
       id: genId(),
       clientId: p.clientId || "",
       clientLabel: p.clientLabel || "—",
       naam: (p.naam == null ? "" : String(p.naam)).trim(),
+      gemeente: gemeente,
+      productcode: "",
       zorgsoortKey: p.zorgsoortKey || "overig",
       zorgsoortLabel: zorgLabel(p.zorgsoortKey || "overig"),
       fase: fase,
@@ -548,12 +553,12 @@
       eindISO: p.eindISO || "",
       declMeth: p.declMeth || "ONS",
       gearchiveerd: false,
-      teDeclarerenLM: tLM,
-      nogNietGedeclareerd: fase === "in_aanvraag" ? 0 : nNG,
+      teDeclarerenLM: 0,
+      nogNietGedeclareerd: 0,
       gedeclGemeenteInBehandeling: 0,
-      betaaldCumulatief: bC,
-      betalingsStatus: bStat,
-      tariefEur: 86 + (simpleHash((p.clientId || "") + (p.naam || "")) % 200),
+      betaaldCumulatief: 0,
+      betalingsStatus: "outstanding",
+      tariefEur: 0,
       tariefEenheid: "uur",
       betalingRefMaand: p.startISO ? ymdToMonth(p.startISO) : ymdToMonth(isoYMD(new Date())),
     };

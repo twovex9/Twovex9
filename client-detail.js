@@ -327,6 +327,110 @@
   syncReisPill();
   window.addEventListener("besa:clienten-updated", syncReisPill);
 
+  // ── Cliëntreis-acties (fase 2): volgende-stap-knoppen in de vcard.
+  // Alleen zichtbaar voor beoordelaars (rpc clientreis_context); de echte
+  // poort is de allowlist in de SECURITY DEFINER-RPC clientreis_zet_status.
+  var reisActies = document.getElementById("cd-reis-acties");
+  var craCtxPromise = null;
+  // Context 1× per page-load laden; gedeeld met de Intake-tab (renderIntake).
+  function ensureReisContext() {
+    if (!craCtxPromise) {
+      craCtxPromise = (window.clientIntakeDB && typeof window.clientIntakeDB.getContext === "function")
+        ? window.clientIntakeDB.getContext()
+        : Promise.resolve({ kan_beoordelen: false });
+    }
+    return craCtxPromise;
+  }
+  // Knoppenset per huidige reis_status → p_status (allowlist-overgangen).
+  var CRA_KNOPPEN = {
+    intake_afgerond: [
+      { label: "Plaatsing plannen", status: "plaatsing_gepland" },
+      { label: "Op wachtlijst", status: "wachtlijst" },
+    ],
+    wachtlijst: [{ label: "Plaatsing plannen", status: "plaatsing_gepland" }],
+    plaatsing_gepland: [
+      { label: "Plaatsing starten", status: "actief" },
+      { label: "Op wachtlijst", status: "wachtlijst" },
+    ],
+    actief: [{ label: "Tijdelijk pauzeren", status: "tijdelijk_gepauzeerd" }],
+    tijdelijk_gepauzeerd: [{ label: "Hervatten", status: "actief" }],
+  };
+  // [hidden]-valkuil: classes met expliciete display overschrijven het
+  // UA-stylesheet [hidden]{display:none} — zet daarom altijd beide.
+  function craSetVisible(el, show) {
+    if (!el) return;
+    el.style.display = show ? "" : "none";
+    el.hidden = !show;
+  }
+  async function syncReisActies() {
+    if (!reisActies) return;
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    if (!ctx || !ctx.kan_beoordelen) {
+      reisActies.innerHTML = "";
+      craSetVisible(reisActies, false);
+      return;
+    }
+    var cur = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    var slug = cur && cur.reisStatus ? String(cur.reisStatus) : "";
+    var knoppen = CRA_KNOPPEN[slug] || [];
+    if (!knoppen.length) {
+      reisActies.innerHTML = "";
+      craSetVisible(reisActies, false);
+      return;
+    }
+    reisActies.innerHTML = knoppen.map(function (kn) {
+      return '<button type="button" class="btn-outline cra-btn" data-cra-status="' + escapeAttr(kn.status) + '" data-cra-label="' + escapeAttr(kn.label) + '">' + escapeHtml(kn.label) + '</button>';
+    }).join("");
+    craSetVisible(reisActies, true);
+  }
+  // Inline bevestig-strookje in de vcard (geen modal) met optionele toelichting.
+  function craRenderConfirm(status, label) {
+    var statusLabel = (window.besaClientreis && typeof window.besaClientreis.label === "function")
+      ? window.besaClientreis.label(status)
+      : status;
+    reisActies.innerHTML =
+      '<div class="cra-confirm">' +
+        '<p class="cra-confirm-titel">' + escapeHtml(label) + ' — status wordt "' + escapeHtml(statusLabel) + '". Doorgaan?</p>' +
+        '<label class="visually-hidden" for="cra-toelichting">Toelichting (optioneel)</label>' +
+        '<input class="modal-input cra-toelichting" id="cra-toelichting" type="text" placeholder="Toelichting (optioneel)" autocomplete="off" />' +
+        '<div class="cra-confirm-knoppen">' +
+          '<button type="button" class="btn-primary cra-btn" data-cra-bevestig="' + escapeAttr(status) + '">Bevestigen</button>' +
+          '<button type="button" class="btn-outline cra-btn" data-cra-annuleer="1">Annuleren</button>' +
+        '</div>' +
+      '</div>';
+  }
+  if (reisActies) {
+    reisActies.addEventListener("click", async function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("[data-cra-status],[data-cra-bevestig],[data-cra-annuleer]") : null;
+      if (!btn) return;
+      if (btn.hasAttribute("data-cra-annuleer")) { syncReisActies(); return; }
+      if (btn.hasAttribute("data-cra-status")) {
+        craRenderConfirm(btn.getAttribute("data-cra-status"), btn.getAttribute("data-cra-label") || "");
+        return;
+      }
+      // Bevestigen → RPC (allowlist server-side), daarna pill/knoppen/tijdlijn verversen.
+      var status = btn.getAttribute("data-cra-bevestig");
+      var toelichtingEl = document.getElementById("cra-toelichting");
+      var cur = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+      btn.disabled = true;
+      try {
+        await window.clientIntakeDB.zetStatus(cur.id, status, toelichtingEl ? toelichtingEl.value : "");
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Cliëntreis-status");
+        if (window.clientenDB && typeof window.clientenDB.refresh === "function") await window.clientenDB.refresh();
+        syncReisPill();
+        syncReisActies();
+        if (pans.t && !pans.t.hidden) renderTijdlijn();
+        if (pans.k && !pans.k.hidden) renderIntake();
+      } catch (err) {
+        if (window.showError) window.showError("Status wijzigen mislukt: " + (err && err.message || err));
+        syncReisActies();
+      }
+    });
+  }
+  syncReisActies();
+  window.addEventListener("besa:clienten-updated", syncReisActies);
+
   document.getElementById("cd-f-vn").value = c.voornaam != null ? String(c.voornaam) : "";
   document.getElementById("cd-f-an").value = c.achternaam != null ? String(c.achternaam) : "";
   document.getElementById("cd-f-nr").value = c.clientnummer != null ? String(c.clientnummer) : "";
@@ -564,8 +668,13 @@
     q: document.getElementById("cd-pan-q"),
     i: document.getElementById("cd-pan-i"),
     t: document.getElementById("cd-pan-t"),
+    k: document.getElementById("cd-pan-k"),
   };
-  var panOrder = "dbpcnjrmqit";
+  var panOrder = "dbpcnjrmqitk";
+
+  // Wordt gezet door initClientBeschikkingen (verderop) — render-hook voor de
+  // Beschikkingen-tab zodat tab-activatie altijd verse data toont.
+  var renderClientBeschikkingenTab = null;
 
   function setTab(k) {
     if (!pans[k]) k = "d";
@@ -596,6 +705,8 @@
     if (k === "m") renderMedicatie();
     if (k === "q") renderVragenlijsten();
     if (k === "t") renderTijdlijn();
+    if (k === "k") renderIntake();
+    if (k === "b" && typeof renderClientBeschikkingenTab === "function") renderClientBeschikkingenTab();
   }
 
   /**
@@ -768,6 +879,385 @@
       );
     }).join("");
   }
+
+  // ============================================================
+  // INTAKE-tab (fase 2): 7 onderdelen-editor + intake afronden +
+  // digitale ondertekening (clientIntakeDB / clientOndertekeningenDB)
+  // ============================================================
+
+  var CDI_ONDERDEEL_LABELS = {
+    intakegesprek: "Intakegesprek",
+    veiligheidsanalyse: "Veiligheidsanalyse",
+    risicoanalyse: "Risicoanalyse",
+    gezinsanalyse: "Gezinsanalyse",
+    onderwijsanalyse: "Onderwijsanalyse",
+    netwerkanalyse: "Netwerkanalyse",
+    hulpvraaganalyse: "Hulpvraaganalyse",
+  };
+  var CDO_TYPE_LABELS = { client: "Cliënt", ouder: "Ouder", gezaghebbende: "Gezaghebbende", voogd: "Voogd" };
+  var CDO_STATUS_LABELS = { open: "Open", ondertekend: "Ondertekend", verlopen: "Verlopen", ingetrokken: "Ingetrokken" };
+
+  // DD-MM-YYYY in LOKALE tijd (nooit toISOString — UTC-datumshift).
+  function cdiFormatDatum(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return String(d.getDate()).padStart(2, "0") + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + d.getFullYear();
+  }
+
+  function cdiOnderdeelLabel(slug) {
+    var s = String(slug == null ? "" : slug).trim().toLowerCase();
+    if (CDI_ONDERDEEL_LABELS[s]) return CDI_ONDERDEEL_LABELS[s];
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
+  }
+
+  function cdiDeelLink(token) {
+    return window.location.origin + "/onderteken?token=" + encodeURIComponent(String(token == null ? "" : token));
+  }
+
+  async function cdiKopieerLink(token) {
+    var link = cdiDeelLink(token);
+    try {
+      await navigator.clipboard.writeText(link);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Link gekopieerd");
+    } catch (err) {
+      if (window.showError) window.showError("Kopiëren mislukt — kopieer handmatig: " + link);
+    }
+  }
+
+  // Race-guard: alleen het resultaat van de laatste fetch wordt gerenderd
+  // (snelle tab-wissels kunnen anders een oudere respons overschrijven).
+  var cdiRenderSeq = 0;
+  var cdiIntake = null; // laatst geladen intake (voor afronden + modal-koppeling)
+
+  async function renderIntake() {
+    var rootEl = document.getElementById("cd-intake-root");
+    if (!rootEl) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var seq = ++cdiRenderSeq;
+    rootEl.innerHTML = '<div class="cdi-loading">Intake laden…</div>';
+
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    var kanBeoordelen = !!(ctx && ctx.kan_beoordelen);
+    var data = (window.clientIntakeDB && typeof window.clientIntakeDB.fetchVoorClient === "function")
+      ? await window.clientIntakeDB.fetchVoorClient(cl.id)
+      : { intake: null, onderdelen: [] };
+    var onds = (window.clientOndertekeningenDB && typeof window.clientOndertekeningenDB.fetchVoorClient === "function")
+      ? await window.clientOndertekeningenDB.fetchVoorClient(cl.id)
+      : [];
+    var verkl = (window.clientOndertekeningenDB && typeof window.clientOndertekeningenDB.verklaringen === "function")
+      ? await window.clientOndertekeningenDB.verklaringen()
+      : [];
+    if (seq !== cdiRenderSeq) return; // verouderd resultaat — nieuwere render onderweg
+
+    cdiIntake = data.intake || null;
+    var html = "";
+
+    if (!data.intake) {
+      html += '<div class="cdi-leeg">' +
+        '<p class="cdi-leeg-titel">Nog geen intake gestart</p>' +
+        '<p class="cdi-leeg-uitleg">De intake wordt automatisch aangemaakt zodra de aanmelding van deze cliënt is goedgekeurd.</p>' +
+        '</div>';
+    } else {
+      var onderdelen = data.onderdelen || [];
+      var klaar = onderdelen.filter(function (o) { return o && o.afgerond; }).length;
+      var totaal = onderdelen.length || 7;
+      var intakeAfgerond = String(data.intake.status || "") === "afgerond";
+      var locked = !kanBeoordelen || intakeAfgerond;
+      var badge = intakeAfgerond
+        ? '<span class="cdi-badge cdi-badge--afgerond">Afgerond' +
+          (data.intake.afgerond_door_naam ? " door " + escapeHtml(data.intake.afgerond_door_naam) : "") +
+          (data.intake.afgerond_op ? " op " + escapeHtml(cdiFormatDatum(data.intake.afgerond_op)) : "") + "</span>"
+        : '<span class="cdi-badge cdi-badge--lopend">Lopend</span>';
+      html += '<div class="cdi-kop"><p class="cdi-voortgang">' + klaar + " van " + totaal + " onderdelen afgerond</p>" + badge + "</div>";
+
+      html += onderdelen.map(function (o) {
+        if (!o) return "";
+        var label = cdiOnderdeelLabel(o.onderdeel);
+        var meta = o.ingevuld_door_naam
+          ? '<p class="cdi-meta">Laatst ingevuld door ' + escapeHtml(o.ingevuld_door_naam) +
+            (o.laatst_gewijzigd ? " op " + escapeHtml(cdiFormatDatum(o.laatst_gewijzigd)) : "") + "</p>"
+          : "";
+        return '<div class="cdi-kaart" data-cdi-id="' + escapeAttr(o.id) + '">' +
+          '<div class="cdi-kaart-kop"><h4 class="cdi-kaart-titel">' + escapeHtml(label) + "</h4>" +
+            (o.afgerond ? '<span class="cdi-badge cdi-badge--afgerond">Afgerond</span>' : "") + "</div>" +
+          '<label class="visually-hidden" for="cdi-inhoud-' + escapeAttr(o.id) + '">' + escapeHtml(label) + "</label>" +
+          '<textarea class="cdi-inhoud" id="cdi-inhoud-' + escapeAttr(o.id) + '" rows="4" placeholder="Nog niet ingevuld…"' + (locked ? " disabled" : "") + ">" + escapeHtml(o.inhoud || "") + "</textarea>" +
+          '<div class="cdi-kaart-voet">' +
+            '<label class="cdi-afgerond-lab"><input type="checkbox" class="cdi-afgerond"' + (o.afgerond ? " checked" : "") + (locked ? " disabled" : "") + ' /><span>Afgerond</span></label>' +
+            (locked ? "" : '<button type="button" class="btn-outline" data-cdi-act="opslaan">Opslaan</button>') +
+          "</div>" + meta +
+          "</div>";
+      }).join("");
+
+      if (kanBeoordelen && !intakeAfgerond) {
+        var compleet = klaar >= 7;
+        html += '<div class="cdi-afronden-wrap" id="cdi-afronden-wrap">' +
+          '<button type="button" class="btn-primary" data-cdi-act="afronden"' +
+          (compleet ? "" : ' disabled title="Alle 7 onderdelen moeten afgerond zijn voordat de intake kan worden afgerond."') +
+          ">Intake afronden</button></div>";
+      }
+    }
+
+    // ── Ondertekeningen-subsectie (ondertekenen mag ook na afronding) ────────
+    var titelByType = {};
+    (verkl || []).forEach(function (v) { if (v && v.type) titelByType[v.type] = v.titel || v.type; });
+    html += '<div class="cdo-sectie">' +
+      '<div class="cdo-kop"><h4 class="cdo-titel">Digitale ondertekening</h4>' +
+      (kanBeoordelen ? '<button type="button" class="btn-primary" data-cdo-act="nieuw">+ Ondertekening aanvragen</button>' : "") +
+      "</div>";
+    if (!onds.length) {
+      html += '<p class="client-detail-placeholder">Nog geen ondertekeningsverzoeken.</p>';
+    } else {
+      html += '<div class="table-wrapper cdo-tabelwrap"><table class="employees-table cdo-tabel"><thead><tr>' +
+        "<th>Verklaring</th><th>Ondertekenaar</th><th>Status</th><th>Aangevraagd op</th><th>Ondertekend op</th><th>Acties</th>" +
+        "</tr></thead><tbody>" +
+        onds.map(function (o) {
+          if (!o) return "";
+          var st = String(o.status || "open");
+          var acties = "";
+          if (st === "open") {
+            acties += '<button type="button" class="btn-outline cdo-knopje" data-cdo-act="copy" data-cdo-token="' + escapeAttr(o.token || "") + '">Link kopiëren</button>';
+            if (kanBeoordelen) {
+              acties += '<button type="button" class="btn-outline cdo-knopje" data-cdo-act="intrek" data-cdo-id="' + escapeAttr(o.id) + '">Intrekken</button>';
+            }
+          } else if (st === "ondertekend" && o.storage_path_pdf) {
+            acties += '<button type="button" class="btn-outline cdo-knopje" data-cdo-act="pdf" data-cdo-path="' + escapeAttr(o.storage_path_pdf) + '">Akte (PDF)</button>';
+          }
+          return "<tr>" +
+            '<td data-col="verklaring">' + escapeHtml(titelByType[o.verklaring_type] || o.verklaring_type || "—") + "</td>" +
+            '<td data-col="ondertekenaar">' + escapeHtml(o.ondertekenaar_naam || "—") + ' <span class="cdo-ondtype">(' + escapeHtml(CDO_TYPE_LABELS[o.ondertekenaar_type] || o.ondertekenaar_type || "—") + ")</span></td>" +
+            '<td data-col="status"><span class="cdo-pill cdo-pill--' + escapeAttr(st) + '">' + escapeHtml(CDO_STATUS_LABELS[st] || st) + "</span></td>" +
+            '<td data-col="aangevraagd">' + escapeHtml(cdiFormatDatum(o.aanmaakdatum)) + "</td>" +
+            '<td data-col="ondertekend">' + (o.ondertekend_op ? escapeHtml(cdiFormatDatum(o.ondertekend_op)) : "—") + "</td>" +
+            '<td data-col="acties" class="cdo-acties">' + (acties || "—") + "</td>" +
+            "</tr>";
+        }).join("") +
+        "</tbody></table></div>";
+    }
+    html += "</div>";
+
+    rootEl.innerHTML = html;
+  }
+
+  // Klik-afhandeling via delegatie: #cd-intake-root blijft bestaan over
+  // renders heen, dus de listener hoeft maar één keer gekoppeld te worden.
+  var cdiRoot = document.getElementById("cd-intake-root");
+  if (cdiRoot) {
+    cdiRoot.addEventListener("click", async function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("[data-cdi-act],[data-cdo-act]") : null;
+      if (!btn) return;
+      var act = btn.getAttribute("data-cdi-act") || "";
+      var oact = btn.getAttribute("data-cdo-act") || "";
+
+      if (act === "opslaan") {
+        var kaart = btn.closest("[data-cdi-id]");
+        if (!kaart) return;
+        var ta = kaart.querySelector(".cdi-inhoud");
+        var cb = kaart.querySelector(".cdi-afgerond");
+        btn.disabled = true;
+        try {
+          await window.clientIntakeDB.onderdeelOpslaan(kaart.getAttribute("data-cdi-id"), ta ? ta.value : "", !!(cb && cb.checked));
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Intake-onderdeel");
+          // her-render volgt via besa:client-intake-updated
+        } catch (err) {
+          if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
+          btn.disabled = false;
+        }
+        return;
+      }
+
+      if (act === "afronden") {
+        // Inline bevestig-strook (geen modal).
+        var wrap = document.getElementById("cdi-afronden-wrap");
+        if (!wrap) return;
+        wrap.innerHTML = '<div class="cdi-confirm">' +
+          '<p class="cdi-confirm-titel">Intake afronden? De onderdelen worden vergrendeld en de cliëntreis-status gaat naar "Intake afgerond".</p>' +
+          '<div class="cdi-confirm-knoppen">' +
+            '<button type="button" class="btn-primary" data-cdi-act="afronden-bevestig">Ja, afronden</button>' +
+            '<button type="button" class="btn-outline" data-cdi-act="afronden-annuleer">Annuleren</button>' +
+          "</div></div>";
+        return;
+      }
+      if (act === "afronden-annuleer") { renderIntake(); return; }
+      if (act === "afronden-bevestig") {
+        if (!cdiIntake) return;
+        btn.disabled = true;
+        try {
+          await window.clientIntakeDB.afronden(cdiIntake.id);
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Intake afgerond");
+          // reis_status is server-side gewijzigd → cache + pill + acties verversen
+          // (zelfde patroon als syncReisPill na de Details-save).
+          if (window.clientenDB && typeof window.clientenDB.refresh === "function") await window.clientenDB.refresh();
+          syncReisPill();
+          syncReisActies();
+          renderIntake();
+          if (pans.t && !pans.t.hidden) renderTijdlijn();
+        } catch (err) {
+          if (window.showError) window.showError("Afronden mislukt: " + (err && err.message || err));
+          renderIntake();
+        }
+        return;
+      }
+
+      if (oact === "copy") { cdiKopieerLink(btn.getAttribute("data-cdo-token") || ""); return; }
+      if (oact === "intrek") {
+        // Inline confirm in de acties-cel.
+        var cel = btn.closest("td");
+        if (!cel) return;
+        cel.innerHTML = '<span class="cdo-confirm-txt">Intrekken?</span>' +
+          '<button type="button" class="btn-outline cdo-knopje" data-cdo-act="intrek-bevestig" data-cdo-id="' + escapeAttr(btn.getAttribute("data-cdo-id") || "") + '">Ja, intrekken</button>' +
+          '<button type="button" class="btn-outline cdo-knopje" data-cdo-act="intrek-annuleer">Annuleren</button>';
+        return;
+      }
+      if (oact === "intrek-annuleer") { renderIntake(); return; }
+      if (oact === "intrek-bevestig") {
+        btn.disabled = true;
+        try {
+          await window.clientOndertekeningenDB.intrekken(btn.getAttribute("data-cdo-id"));
+          if (window.showActionFeedback) window.showActionFeedback("saved", "Ondertekening ingetrokken");
+          // her-render volgt via besa:client-ondertekeningen-updated
+        } catch (err) {
+          if (window.showError) window.showError("Intrekken mislukt: " + (err && err.message || err));
+          renderIntake();
+        }
+        return;
+      }
+      if (oact === "pdf") {
+        // Lazy signed URL (PRIVATE bucket): pas ophalen bij klik, daarna openen.
+        btn.disabled = true;
+        var url = await window.clientOndertekeningenDB.signedUrl(btn.getAttribute("data-cdo-path"));
+        btn.disabled = false;
+        if (url) window.open(url, "_blank", "noopener");
+        else if (window.showError) window.showError("De akte kon niet geopend worden (geen toegang of bestand ontbreekt).");
+        return;
+      }
+      if (oact === "nieuw") { openOndModal(); return; }
+    });
+  }
+
+  // ── Modal "+ Ondertekening aanvragen" (kopie .modal-overlay-patroon) ───────
+  var ondModal = document.getElementById("cd-ond-modal");
+  var ondForm = document.getElementById("cd-ond-form");
+  var ondVerk = document.getElementById("cd-ond-f-verklaring");
+  var ondType = document.getElementById("cd-ond-f-ondtype");
+  var ondNaam = document.getElementById("cd-ond-f-naam");
+  var ondNaamList = document.getElementById("cd-ond-naam-list");
+  var ondResult = document.getElementById("cd-ond-result");
+  var ondResultLink = document.getElementById("cd-ond-result-link");
+  var ondSaveBtn = document.getElementById("cd-ond-save-btn");
+  var ondCancelBtn = document.getElementById("cd-ond-cancel-btn");
+
+  async function openOndModal() {
+    if (!ondModal) return;
+    // Verklaring-select vullen uit ondertekening_verklaringen.
+    var verkl = (window.clientOndertekeningenDB && typeof window.clientOndertekeningenDB.verklaringen === "function")
+      ? await window.clientOndertekeningenDB.verklaringen()
+      : [];
+    if (ondVerk) {
+      ondVerk.innerHTML = "";
+      verkl.forEach(function (v) {
+        if (!v || !v.type) return;
+        var o = document.createElement("option");
+        o.value = v.type;
+        o.textContent = v.titel || v.type;
+        ondVerk.appendChild(o);
+      });
+    }
+    // Datalist met contactnamen (indien beschikbaar).
+    if (ondNaamList) {
+      ondNaamList.innerHTML = "";
+      var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+      var contacten = (cl && window.clientContactenDB && typeof window.clientContactenDB.getForClientSync === "function")
+        ? window.clientContactenDB.getForClientSync(cl.id)
+        : [];
+      contacten.forEach(function (r) {
+        if (!r || r.archived || !r.naam) return;
+        var o = document.createElement("option");
+        o.value = String(r.naam);
+        ondNaamList.appendChild(o);
+      });
+    }
+    if (ondForm) ondForm.reset();
+    if (ondType) ondType.value = "client";
+    cdtSetVisible(ondForm, true);
+    cdtSetVisible(ondResult, false);
+    cdtSetVisible(ondSaveBtn, true);
+    if (ondCancelBtn) ondCancelBtn.textContent = "Annuleren";
+    ondModal.hidden = false;
+    ondModal.setAttribute("aria-hidden", "false");
+    try { if (ondNaam) ondNaam.focus(); } catch (e) { /* */ }
+  }
+  function closeOndModal() {
+    if (!ondModal) return;
+    ondModal.hidden = true;
+    ondModal.setAttribute("aria-hidden", "true");
+  }
+  if (ondSaveBtn) {
+    ondSaveBtn.addEventListener("click", async function () {
+      var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+      if (!cl) return;
+      var naam = ((ondNaam && ondNaam.value) || "").trim();
+      if (!naam) { try { ondNaam.focus(); } catch (e) { /* */ } return; }
+      ondSaveBtn.disabled = true;
+      try {
+        var res = await window.clientOndertekeningenDB.maakVerzoek({
+          clientId: cl.id,
+          verklaringType: ondVerk ? ondVerk.value : "",
+          ondertekenaarType: ondType ? ondType.value : "client",
+          ondertekenaarNaam: naam,
+          intakeId: cdiIntake ? cdiIntake.id : null,
+        });
+        if (window.showActionFeedback) window.showActionFeedback("added", "Ondertekeningsverzoek");
+        // Toon direct de deel-link met kopieer-knop in de modal.
+        if (ondResultLink) ondResultLink.value = cdiDeelLink(res && res.token ? res.token : "");
+        cdtSetVisible(ondForm, false);
+        cdtSetVisible(ondSaveBtn, false);
+        cdtSetVisible(ondResult, true);
+        if (ondCancelBtn) ondCancelBtn.textContent = "Sluiten";
+        // tabel her-rendert via besa:client-ondertekeningen-updated
+      } catch (err) {
+        if (window.showError) window.showError("Aanvragen mislukt: " + (err && err.message || err));
+      } finally {
+        ondSaveBtn.disabled = false;
+      }
+    });
+  }
+  var ondResultCopy = document.getElementById("cd-ond-result-copy");
+  if (ondResultCopy) {
+    ondResultCopy.addEventListener("click", async function () {
+      var link = ondResultLink ? ondResultLink.value : "";
+      if (!link) return;
+      try {
+        await navigator.clipboard.writeText(link);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Link gekopieerd");
+      } catch (err) {
+        if (window.showError) window.showError("Kopiëren mislukt — kopieer handmatig uit het tekstveld.");
+      }
+    });
+  }
+  if (ondCancelBtn) ondCancelBtn.addEventListener("click", closeOndModal);
+  var ondCloseBtn = document.getElementById("cd-ond-modal-close");
+  if (ondCloseBtn) ondCloseBtn.addEventListener("click", closeOndModal);
+  if (ondModal) {
+    ondModal.addEventListener("click", function (e) { if (e.target === ondModal) closeOndModal(); });
+  }
+  if (ondForm) {
+    ondForm.addEventListener("submit", function (e) { e.preventDefault(); if (ondSaveBtn) ondSaveBtn.click(); });
+  }
+
+  // Live-refresh (alleen renderen als de Intake-tab actief is)
+  window.addEventListener("besa:client-intake-updated", function () {
+    var panK = document.getElementById("cd-pan-k");
+    if (panK && !panK.hidden) renderIntake();
+  });
+  window.addEventListener("besa:client-ondertekeningen-updated", function () {
+    var panK = document.getElementById("cd-pan-k");
+    if (panK && !panK.hidden) renderIntake();
+  });
 
   // ============================================================
   // CONTACTEN-tab: render + CRUD via clientContactenDB
@@ -1989,25 +2479,146 @@
     var cdb60 = document.getElementById("cdb-60d");
     var cdbColBtn = document.getElementById("cdb-columns-btn");
     var cdbColPanel = document.getElementById("cdb-columns-panel");
-    var cdbCheckAll = document.getElementById("cdb-check-all");
     var cdbExport = document.getElementById("cdb-export-btn");
     var cdbAdd = document.getElementById("cdb-add-btn");
     var cdbRange = document.getElementById("cdb-pager-range");
-    var cdbPageLab = document.getElementById("cdb-pager-page");
     var cdbEmpty = document.getElementById("cdb-filter-empty");
+    var cdbThead = cdbTable.querySelector("thead");
     var bescSortKey = "periode";
     var bescSortDir = "asc";
-    var cdbThead = cdbTable.querySelector("thead");
 
+    // Tarief-kolom is rol-gegate (Finance/Cliëntbeheer/admin-tier).
+    // Fail-closed: tot besaPermissionsReady besloten heeft renderen we niets,
+    // daarna wordt de kolom (incl. header + kolomkiezer-item) definitief
+    // verwijderd wanneer de gebruiker hem niet mag zien.
+    var cdbKanTariefZien = false;
+    var cdbTariefBeslist = false;
+
+    var CDB_FASE_LABELS = {
+      in_aanvraag: "In aanvraag",
+      verlopen: "Verlopen",
+      in_zorg: "In zorg",
+      uit_zorg: "Uit zorg",
+      in_dienst: "In dienst",
+      uit_dienst: "Uit dienst",
+      actief: "Actief",
+    };
+
+    function cdbFaseLabel(f) {
+      var s = String(f || "").toLowerCase();
+      return CDB_FASE_LABELS[s] || (f != null && String(f).trim() !== "" ? String(f).trim() : "—");
+    }
+
+    function cdbFaseDotClass(f) {
+      return (typeof window.besaFaseBescDotClass === "function")
+        ? window.besaFaseBescDotClass(f)
+        : "bdtl-fase-dot bdtl-fase-dot--fase-onbekend";
+    }
+
+    // Lokale yyyy-mm-dd — bewust geen toISOString (UTC-datumshift-valkuil).
+    function cdbIsoLocal(d) {
+      var m = d.getMonth() + 1;
+      var dd = d.getDate();
+      return d.getFullYear() + "-" + (m < 10 ? "0" + m : m) + "-" + (dd < 10 ? "0" + dd : dd);
+    }
+
+    function cdbFmtDateNl(iso) {
+      if (!iso) return "—";
+      var s = String(iso).slice(0, 10);
+      var p = s.split("-");
+      if (p.length !== 3) return s;
+      return p[2] + "-" + p[1] + "-" + p[0];
+    }
+
+    function cdbFmtPeriode(b) {
+      if (!b.startISO && !b.eindISO) return "—";
+      return cdbFmtDateNl(b.startISO) + " – " + cdbFmtDateNl(b.eindISO);
+    }
+
+    // Verloop-badge: verlopen of <=30 dagen rood, <=60 oranje, <=90 geel,
+    // anders geen badge. Vergelijking op lokale iso-strings/dag-delta.
+    function cdbVerloop(eindISO) {
+      if (!eindISO) return null;
+      var eind = String(eindISO).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(eind)) return null;
+      var vandaag = cdbIsoLocal(new Date());
+      if (eind < vandaag) return { cls: "cdb2-verloop--rood", label: "Verlopen", dagen: -1 };
+      var pe = eind.split("-");
+      var pv = vandaag.split("-");
+      var de = new Date(parseInt(pe[0], 10), parseInt(pe[1], 10) - 1, parseInt(pe[2], 10));
+      var dv = new Date(parseInt(pv[0], 10), parseInt(pv[1], 10) - 1, parseInt(pv[2], 10));
+      var diff = Math.round((de.getTime() - dv.getTime()) / 86400000);
+      if (diff <= 30) return { cls: "cdb2-verloop--rood", label: "≤ 30 d", dagen: diff };
+      if (diff <= 60) return { cls: "cdb2-verloop--oranje", label: "≤ 60 d", dagen: diff };
+      if (diff <= 90) return { cls: "cdb2-verloop--geel", label: "≤ 90 d", dagen: diff };
+      return null;
+    }
+
+    function cdbEindBinnen60(eindISO) {
+      var v = cdbVerloop(eindISO);
+      return !!(v && v.dagen >= 0 && v.dagen <= 60);
+    }
+
+    function cdbFmtUren(b) {
+      var u = b.toegekendUren;
+      if (u == null || isNaN(Number(u))) return "—";
+      var n = Math.round(Number(u) * 100) / 100;
+      var s = String(n).replace(".", ",");
+      var een = String(b.toegekendEenheid || "").toLowerCase();
+      var suffix = een === "week" ? "p/w" : een === "maand" ? "p/mnd" : een === "totaal" ? "totaal" : "";
+      return s + " u" + (suffix ? " " + suffix : "");
+    }
+
+    function cdbFmtTarief(b) {
+      var t = Number(b.tariefEur || 0);
+      if (!t || isNaN(t)) return "—";
+      var u = b.tariefEenheid || "uur";
+      return "€ " + t.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " /" + u;
+    }
+
+    function cdbZoekNorm(b) {
+      return ((b.naam || "") + " " + (b.productcode || "") + " " + (b.gemeente || "") + " " +
+        (b.zorgsoortLabel || "") + " " + (b.declMeth || "")).toLowerCase();
+    }
+
+    // Beschikkingen van deze cliënt: match op clienten.id én (voor
+    // BS2-geïmporteerde rijen) op de bs2-uuid die plat op het cliënt-object
+    // staat (clienten-data.js spreidt data-jsonb top-level → cl.bs2_id).
+    function cdbGetRows() {
+      var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+      if (!cl) return [];
+      var bs2 = cl.bs2_id ? String(cl.bs2_id) : (cl.data && cl.data.bs2_id ? String(cl.data.bs2_id) : "");
+      var all = (window.beschikkingenDB && typeof window.beschikkingenDB.getAllSync === "function")
+        ? window.beschikkingenDB.getAllSync()
+        : (typeof getBeschikkingenItems === "function" ? getBeschikkingenItems() : []);
+      return (all || []).filter(function (b) {
+        if (!b || b.gearchiveerd) return false;
+        var cid = String(b.clientId || "");
+        if (!cid) return false;
+        return cid === String(cl.id) || (bs2 && cid === bs2);
+      });
+    }
+
+    function cdbGefilterd() {
+      var q = cdbSearch && cdbSearch.value ? cdbSearch.value.toLowerCase().trim() : "";
+      var only60 = cdb60 && cdb60.checked;
+      return cdbGetRows().filter(function (b) {
+        if (q && cdbZoekNorm(b).indexOf(q) === -1) return false;
+        if (only60 && !cdbEindBinnen60(b.eindISO)) return false;
+        return true;
+      });
+    }
+
+    // --- Sorteren (op de gerenderde rijen) ------------------------------------
     function bescGetCellSortValue(tr, col) {
+      if (col === "periode") return tr.getAttribute("data-besc-start") || "";
       var td = tr.querySelector('td[data-col="' + col + '"]');
       if (!td) return "";
-      var raw = (td.textContent || "").replace(/\s+/g, " ").replace(/\u00a0/g, " ").trim();
-      if (col === "tarief") {
-        var t = (td.textContent || "").replace(/[^\d.,-]/g, " ").replace(/\s+/g, " ").trim();
-        var m = t.match(/(\d+)[,.](\d{1,2})/);
-        if (m) return parseFloat(m[1] + "." + m[2], 10);
-        return 0;
+      var raw = (td.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
+      if (col === "tarief" || col === "uren") {
+        var m = raw.replace(/\./g, "").match(/(\d+)(?:,(\d+))?/);
+        if (m) return parseFloat(m[1] + "." + (m[2] || "0"));
+        return -1;
       }
       if (raw === "—" || raw === "-") return "";
       return raw.toLowerCase();
@@ -2026,29 +2637,27 @@
       if (!cdbTbody) return;
       var rows = Array.prototype.slice.call(cdbTbody.querySelectorAll("tr.cdb-data-row"));
       if (!rows.length) return;
-      var empty = document.getElementById("cdb-filter-empty");
       rows.sort(function (a, b) {
         var av = bescGetCellSortValue(a, bescSortKey);
         var bv = bescGetCellSortValue(b, bescSortKey);
-        var c = bescCmp(av, bv);
-        return bescSortDir === "desc" ? -c : c;
+        var cv = bescCmp(av, bv);
+        return bescSortDir === "desc" ? -cv : cv;
       });
-      rows.forEach(function (r) {
-        cdbTbody.appendChild(r);
-      });
-      if (empty) cdbTbody.appendChild(empty);
+      rows.forEach(function (r) { cdbTbody.appendChild(r); });
+      if (cdbEmpty) cdbTbody.appendChild(cdbEmpty);
     }
 
     function bescSyncSortTh() {
       cdbTable.querySelectorAll("thead th.th-sort").forEach(function (th) {
         th.classList.remove("th-sort--asc", "th-sort--desc", "th-sort-open");
-        var c = th.getAttribute("data-col");
-        if (c && c === bescSortKey) {
+        var cn = th.getAttribute("data-col");
+        if (cn && cn === bescSortKey) {
           th.classList.add(bescSortDir === "desc" ? "th-sort--desc" : "th-sort--asc");
         }
       });
     }
 
+    // --- Kolomkiezer ----------------------------------------------------------
     function setBescColVisible(colId, vis) {
       cdbTable.querySelectorAll('[data-col="' + colId + '"]').forEach(function (el) {
         el.classList.toggle("col-hidden", !vis);
@@ -2066,41 +2675,125 @@
       });
     }
 
+    // --- Zoeken + 60d-toggle (filtert de gerenderde rijen client-side) -------
     function updateBescFilterUi() {
       if (!cdbTbody) return;
       var q = cdbSearch && cdbSearch.value ? cdbSearch.value.toLowerCase().trim() : "";
       var only60 = cdb60 && cdb60.checked;
       var nVis = 0;
+      var nTot = 0;
       cdbTbody.querySelectorAll("tr.cdb-data-row").forEach(function (tr) {
+        nTot += 1;
         var t = (tr.getAttribute("data-besc-naam-norm") || tr.textContent || "").toLowerCase();
         var mSearch = !q || t.indexOf(q) !== -1;
         var binnen = tr.getAttribute("data-besc-binnen-60") === "1";
         var m60 = !only60 || binnen;
         var on = mSearch && m60;
         tr.style.display = on ? "" : "none";
-        if (on) nVis++;
+        if (on) nVis += 1;
       });
       if (cdbEmpty) cdbEmpty.style.display = nVis === 0 ? "table-row" : "none";
-      if (cdbRange) cdbRange.textContent = nVis === 0 ? "0 van 0" : nVis === 1 ? "1-1 van 1 totaal" : "1-" + nVis + " van " + nVis + " totaal";
-      if (cdbPageLab) cdbPageLab.textContent = nVis === 0 ? "Pagina 0 van 0" : "Pagina 1 van 1";
+      if (cdbRange) cdbRange.textContent = nVis + " van " + nTot + " totaal";
     }
+
+    // --- Render (live uit beschikkingenDB) ------------------------------------
+    function cdbRender() {
+      if (!cdbTbody) return;
+      cdbTbody.querySelectorAll("tr.cdb-data-row").forEach(function (tr) { tr.remove(); });
+      var rows = cdbGetRows();
+      rows.forEach(function (b) {
+        var tr = document.createElement("tr");
+        tr.className = "cdb-data-row cdb2-row";
+        tr.setAttribute("data-besc-id", b.id || "");
+        tr.setAttribute("data-besc-start", b.startISO || "");
+        tr.setAttribute("data-besc-binnen-60", cdbEindBinnen60(b.eindISO) ? "1" : "0");
+        tr.setAttribute("data-besc-naam-norm", cdbZoekNorm(b));
+        tr.setAttribute("tabindex", "0");
+        var verloop = cdbVerloop(b.eindISO);
+        var html =
+          '<td data-col="naam">' + escapeHtml(b.naam || "—") + "</td>" +
+          '<td data-col="productcode">' + escapeHtml(b.productcode || "—") + "</td>" +
+          '<td data-col="gemeente">' + escapeHtml(b.gemeente || "—") + "</td>" +
+          '<td data-col="periode">' + escapeHtml(cdbFmtPeriode(b)) + "</td>" +
+          '<td data-col="uren">' + escapeHtml(cdbFmtUren(b)) + "</td>" +
+          '<td data-col="status"><span class="cdb2-fase"><span class="' + escapeHtml(cdbFaseDotClass(b.fase)) + '" aria-hidden="true"></span>' + escapeHtml(cdbFaseLabel(b.fase)) + "</span></td>" +
+          '<td data-col="verloop">' + (verloop ? '<span class="cdb2-verloop ' + verloop.cls + '">' + escapeHtml(verloop.label) + "</span>" : "") + "</td>";
+        if (cdbKanTariefZien) {
+          html += '<td data-col="tarief">' + escapeHtml(cdbFmtTarief(b)) + "</td>";
+        }
+        tr.innerHTML = html;
+        cdbTbody.insertBefore(tr, cdbEmpty || null);
+      });
+      bescSortDataRows();
+      applyBescColumns();
+      updateBescFilterUi();
+    }
+
+    renderClientBeschikkingenTab = function () {
+      if (cdbTariefBeslist) cdbRender();
+    };
+
+    // --- Tarief-gate (na besaPermissionsReady; fail-closed) -------------------
+    function cdbApplyTariefGate() {
+      if (cdbKanTariefZien) return;
+      var th = document.getElementById("cdb-th-tarief");
+      if (th) th.remove();
+      var li = document.getElementById("cdb-coltoggle-tarief");
+      if (li) li.remove();
+      var td = cdbEmpty && cdbEmpty.querySelector("td");
+      if (td) td.setAttribute("colspan", "7");
+    }
+
+    (function cdbInitTariefGate() {
+      var ready = (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function")
+        ? window.besaPermissionsReady
+        : Promise.resolve();
+      ready.then(function () {
+        cdbKanTariefZien = !!(
+          (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) ||
+          (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function" &&
+            window.besaPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
+        );
+      }).catch(function () {
+        cdbKanTariefZien = false;
+      }).then(function () {
+        cdbTariefBeslist = true;
+        cdbApplyTariefGate();
+        cdbRender();
+      });
+    })();
+
+    // Live verversen wanneer de beschikkingen-data wijzigt (alleen als de tab
+    // zichtbaar is; bij tab-activatie rendert setTab sowieso opnieuw).
+    window.addEventListener("besa:beschikkingen-updated", function () {
+      if (!cdbTariefBeslist) return;
+      var pan = document.getElementById("cd-pan-b");
+      if (pan && !pan.hidden) cdbRender();
+    });
 
     if (cdbSearch) cdbSearch.addEventListener("input", updateBescFilterUi);
     if (cdb60) cdb60.addEventListener("change", updateBescFilterUi);
-    if (cdbCheckAll) {
-      cdbCheckAll.addEventListener("change", function () {
-        var on = cdbCheckAll.checked;
-        cdbTbody.querySelectorAll(".cdb-row-check").forEach(function (c) {
-          c.checked = on;
-        });
+
+    // Rij-klik → beschikking-detail
+    if (cdbTbody) {
+      cdbTbody.addEventListener("click", function (e) {
+        var t = e.target;
+        if (t && t.closest && t.closest("button, input, a")) return;
+        var tr = t && t.closest && t.closest("tr.cdb-data-row");
+        if (!tr) return;
+        var id = tr.getAttribute("data-besc-id");
+        if (id) window.location.href = "beschikking-detail.html?id=" + encodeURIComponent(id);
+      });
+      cdbTbody.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        var tr = e.target && e.target.closest && e.target.closest("tr.cdb-data-row");
+        if (!tr) return;
+        var id = tr.getAttribute("data-besc-id");
+        if (id) window.location.href = "beschikking-detail.html?id=" + encodeURIComponent(id);
       });
     }
-    cdbTbody && cdbTbody.addEventListener("change", function (e) {
-      if (e.target && e.target.classList && e.target.classList.contains("cdb-row-check")) {
-        if (cdbCheckAll) cdbCheckAll.checked = false;
-      }
-    });
 
+    // --- Kolomkiezer-panel open/dicht -----------------------------------------
     function closeCdbColPanel() {
       if (!cdbColPanel) return;
       cdbColPanel.setAttribute("hidden", "");
@@ -2118,8 +2811,6 @@
       });
       cdbColPanel.addEventListener("click", function (e) {
         e.stopPropagation();
-      });
-      cdbColPanel.addEventListener("click", function (e) {
         var t = e.target && e.target.closest && e.target.closest(".column-toggle");
         if (!t) return;
         t.classList.toggle("is-checked");
@@ -2132,58 +2823,51 @@
       closeCdbColPanel();
     });
 
-    var cdbExportModal = document.getElementById("cdb-export-modal");
-    var cdbExportSearch = document.getElementById("cdb-export-search");
-    var cdbExportSelAll = document.getElementById("cdb-export-selall");
-    var cdbExportClose = document.getElementById("cdb-export-close");
-    var cdbExportCancel = document.getElementById("cdb-export-cancel");
-    var cdbExportConfirm = document.getElementById("cdb-export-confirm");
+    // --- Export (echt, via window.besaExport) ---------------------------------
+    var CDB_EXPORT_COLS = [
+      { col: "naam", label: "Naam / product", get: function (b) { return b.naam || ""; } },
+      { col: "productcode", label: "Productcode", get: function (b) { return b.productcode || ""; } },
+      { col: "gemeente", label: "Gemeente", get: function (b) { return b.gemeente || ""; } },
+      { col: "periode", label: "Periode", get: function (b) { return cdbFmtPeriode(b); } },
+      { col: "uren", label: "Uren", get: function (b) { return cdbFmtUren(b); } },
+      { col: "status", label: "Status", get: function (b) { return cdbFaseLabel(b.fase); } },
+      { col: "verloop", label: "Verloop", get: function (b) { var v = cdbVerloop(b.eindISO); return v ? v.label : ""; } },
+      { col: "tarief", label: "Tarief", get: function (b) { return cdbFmtTarief(b); } },
+    ];
 
-    function cdbOpenExportModal() {
-      if (!cdbExportModal) return;
-      cdbExportModal.removeAttribute("hidden");
-      cdbExportModal.setAttribute("aria-hidden", "false");
-      if (cdbExportSearch) {
-        cdbExportSearch.value = "";
-        cdbFilterExportList("");
-        setTimeout(function () {
-          cdbExportSearch.focus();
-        }, 10);
-      }
-    }
-
-    function cdbCloseExportModal() {
-      if (!cdbExportModal) return;
-      cdbExportModal.setAttribute("hidden", "");
-      cdbExportModal.setAttribute("aria-hidden", "true");
-    }
-
-    function cdbFilterExportList(q) {
-      var nq = (q || "").toLowerCase().trim();
-      cdbExportModal && cdbExportModal.querySelectorAll(".cdb-export-item").forEach(function (li) {
-        var f = (li.getAttribute("data-cdb-exp-filter") || "") + " " + (li.textContent || "");
-        f = f.toLowerCase();
-        if (!nq || f.indexOf(nq) !== -1) {
-          li.removeAttribute("hidden");
-        } else {
-          li.setAttribute("hidden", "");
+    function cdbDoExport() {
+      if (typeof window.besaExport !== "function") {
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Export", "Export-module is niet geladen.");
         }
+        return;
+      }
+      var cols = CDB_EXPORT_COLS.filter(function (cdef) {
+        return cdef.col !== "tarief" || cdbKanTariefZien;
+      });
+      var rows = cdbGefilterd();
+      var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+      var nm = cl ? ((cl.voornaam || "") + " " + (cl.achternaam || "")).trim() : "";
+      var data = rows.map(function (b) {
+        var o = {};
+        cols.forEach(function (cdef) { o[cdef.label] = cdef.get(b); });
+        return o;
+      });
+      window.besaExport({
+        filename: "beschikkingen" + (nm ? "-" + nm.toLowerCase().replace(/\s+/g, "-") : ""),
+        title: "Beschikkingen" + (nm ? " — " + nm : ""),
+        data: data,
+        columns: cols.map(function (cdef) { return cdef.label; }),
+      });
+    }
+    if (cdbExport) {
+      cdbExport.addEventListener("click", function (e) {
+        e.preventDefault();
+        cdbDoExport();
       });
     }
 
-    function cdbUpdateExportSelAll() {
-      if (!cdbExportSelAll) return;
-      var cbs = cdbExportModal ? cdbExportModal.querySelectorAll('input[name="cdb_exp_col"]') : [];
-      var n = 0;
-      var on = 0;
-      cbs.forEach(function (c) {
-        n++;
-        if (c.checked) on++;
-      });
-      cdbExportSelAll.checked = n > 0 && on === n;
-      cdbExportSelAll.indeterminate = on > 0 && on < n;
-    }
-
+    // --- "+ Beschikking toevoegen"-modal (bestaand gedrag) ---------------------
     var cdbAddModal = document.getElementById("cdb-add-modal");
     var cdbAddForm = document.getElementById("cdb-add-besc-form");
     var cdbAddClose = document.getElementById("cdb-add-close");
@@ -2275,6 +2959,7 @@
               eindISO: ei && ei.value ? ei.value : "",
               declMeth: d && d.value ? d.value : "",
             });
+            if (cdbTariefBeslist) cdbRender();
           }
         }
         cdbCloseAddBescModal();
@@ -2285,44 +2970,9 @@
     [cdbAddClose, cdbAddCancel].forEach(function (btn) {
       if (btn) btn.addEventListener("click", function () { cdbCloseAddBescModal(); });
     });
-
-    if (cdbExport) cdbExport.addEventListener("click", function (e) {
-      e.preventDefault();
-      cdbOpenExportModal();
-    });
-    if (cdbExportSearch) cdbExportSearch.addEventListener("input", function () {
-      cdbFilterExportList(cdbExportSearch.value);
-    });
-    if (cdbExportSelAll) {
-      cdbExportSelAll.addEventListener("change", function () {
-        var on = cdbExportSelAll.checked;
-        cdbExportModal && cdbExportModal.querySelectorAll('input[name="cdb_exp_col"]').forEach(function (c) {
-          c.checked = on;
-        });
-        cdbExportSelAll.indeterminate = false;
-      });
-    }
-    if (cdbExportModal) {
-      cdbExportModal.addEventListener("change", function (e) {
-        if (e.target && e.target.name === "cdb_exp_col") cdbUpdateExportSelAll();
-      });
-      cdbExportModal.addEventListener("click", function (e) {
-        if (e.target === cdbExportModal) cdbCloseExportModal();
-      });
-    }
-    [cdbExportClose, cdbExportCancel].forEach(function (btn) {
-      if (btn) btn.addEventListener("click", function () { cdbCloseExportModal(); });
-    });
-    if (cdbExportConfirm) {
-      cdbExportConfirm.addEventListener("click", function () {
-        cdbCloseExportModal();
-        showToast("Export gestart");
-      });
-    }
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
       if (cdbAddModal && !cdbAddModal.hasAttribute("hidden")) cdbCloseAddBescModal();
-      else if (cdbExportModal && !cdbExportModal.hasAttribute("hidden")) cdbCloseExportModal();
     });
     if (cdbAdd) {
       cdbAdd.addEventListener("click", function (e) {
@@ -2331,6 +2981,7 @@
       });
     }
 
+    // --- Sorteren via header-klik ----------------------------------------------
     if (cdbThead) {
       cdbThead.addEventListener("click", function (e) {
         var th = e.target && e.target.closest && e.target.closest("th.th-sort");
@@ -2350,7 +3001,6 @@
     }
 
     bescSyncSortTh();
-    updateBescFilterUi();
   })();
 
   initClientDocumentenSection();

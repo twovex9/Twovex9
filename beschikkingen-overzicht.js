@@ -20,6 +20,7 @@
     { k: "fase", label: "Fase" },
     { k: "zorgsoort", label: "Zorgsoort" },
     { k: "naam", label: "Naam" },
+    { k: "productcode", label: "Productcode" },
     { k: "decl_meth", label: "Declaratiemethode" },
     { k: "start_dt", label: "Startdatum" },
     { k: "eind_dt", label: "Einddatum" },
@@ -125,10 +126,12 @@
       });
     });
   }
-  var colState = { client: true, naam: true, zorg: true, fase: true, per: true, tarf: true, ted: true, ng: true, dm: true, st: true, act: true, sel: true };
+  var colState = { client: true, naam: true, productcode: false, gemeente: true, zorg: true, fase: true, per: true, tarf: true, ted: true, ng: true, dm: true, st: true, act: true, sel: true };
   var COLS_ORDER = [
     { id: "client", label: "Cliënt" },
     { id: "naam", label: "Naam" },
+    { id: "productcode", label: "Productcode" },
+    { id: "gemeente", label: "Gemeente" },
     { id: "zorg", label: "Zorgsoort" },
     { id: "fase", label: "Fase" },
     { id: "per", label: "Periode" },
@@ -140,6 +143,12 @@
   ];
 
   var TRASH_SVG = '<svg class="cl-trash-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+  function escHtmlOv(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
 
   function n2(x) {
     if (x == null || x === "") return 0;
@@ -263,7 +272,8 @@
       case "tarief_uur": return een === "uur" ? fmtTarief(r.tariefEur, "uur") : "—";
       case "voornaam": return String(c.voornaam || "");
       case "clientnr": return c.clientnummer != null && c.clientnummer !== "" ? String(c.clientnummer) : "—";
-      case "gemeente": return String(c.gemeente || "").trim() || "—";
+      case "gemeente": return String(r.gemeente || "").trim() || String(c.gemeente || "").trim() || "—";
+      case "productcode": return String(r.productcode || "").trim() || "—";
       case "verw_naam": return verwNaam;
       case "verw_mail": return verwMail;
       case "fase": return faseTextExport(r.fase);
@@ -525,7 +535,9 @@
       String(r.clientLabel || "").toLowerCase().indexOf(q) >= 0 ||
       String(r.naam || "").toLowerCase().indexOf(q) >= 0 ||
       String(r.zorgsoortLabel || "").toLowerCase().indexOf(q) >= 0 ||
-      String(r.locatie || "").toLowerCase().indexOf(q) >= 0
+      String(r.locatie || "").toLowerCase().indexOf(q) >= 0 ||
+      String(r.gemeente || "").toLowerCase().indexOf(q) >= 0 ||
+      String(r.productcode || "").toLowerCase().indexOf(q) >= 0
     );
   }
 
@@ -706,6 +718,8 @@
       "<td data-col=\"sel\" data-besc-colid=\"sel\" class=\"th-check\"><input type=\"checkbox\" class=\"table-checkbox besc-rchk\" data-id=\"" + (r.id || "") + "\" aria-label=\"Selecteer rij\" /></td>" +
       "<td data-besc-colid=\"client\" data-col=\"client\">" + (r.clientLabel || "—") + "</td>" +
       "<td data-besc-colid=\"naam\" data-col=\"naam\">" + (r.naam || "—") + "</td>" +
+      "<td data-besc-colid=\"productcode\" data-col=\"productcode\">" + (r.productcode ? escHtmlOv(r.productcode) : "—") + "</td>" +
+      "<td data-besc-colid=\"gemeente\" data-col=\"gemeente\">" + (r.gemeente ? escHtmlOv(r.gemeente) : "—") + "</td>" +
       "<td data-besc-colid=\"zorg\" data-col=\"zorg\"><span class=\"cd-besc-zorgtag\">" + (r.zorgsoortLabel || "—") + "</span></td>" +
       "<td data-besc-colid=\"fase\" data-col=\"fase\" data-besc-rawf=\"" + (r.fase || "") + "\">" + fasePill(r.fase) + "</td>" +
       "<td data-besc-colid=\"per\" data-col=\"per\" class=\"besc-ov-per\">" + warn + fmtPeriode(r.startISO, r.eindISO) + "</td>" +

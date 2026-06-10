@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
+  <title>Verklaring ondertekenen — Embrace the Future</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad">
+  <link rel="icon" type="image/png" href="assets/app-icon-192.png">
+</head>
+<body class="ond-body">
+  <main class="ond-wrap">
+    <section class="ond-card" aria-labelledby="ond-title">
+      <p class="ond-logo" aria-hidden="true">Embrace <span>the Future</span></p>
+
+      <!-- laadstate -->
+      <div class="ond-loading" id="ond-loading">Verklaring laden…</div>
+
+      <!-- foutstate (ongeldig / verlopen / al ondertekend / ingetrokken / netwerk) -->
+      <div class="ond-state" id="ond-state" hidden>
+        <div class="ond-state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01"/><path d="M12 12v4"/></svg>
+        </div>
+        <h1 class="ond-state-title" id="ond-state-title">—</h1>
+        <p class="ond-state-text" id="ond-state-text">—</p>
+      </div>
+
+      <!-- verklaring + ondertekenen -->
+      <div id="ond-content" hidden>
+        <h1 class="ond-title" id="ond-title">—</h1>
+        <p class="ond-meta" id="ond-meta">—</p>
+
+        <div class="ond-verklaring" id="ond-verklaring"></div>
+
+        <div class="ond-sign">
+          <p class="ond-sign-label">Handtekening <em class="ond-req">*</em></p>
+          <div class="ond-canvas-wrap">
+            <canvas id="ond-canvas" class="ond-canvas" aria-label="Tekenveld voor uw handtekening"></canvas>
+            <p class="ond-canvas-hint" id="ond-canvas-hint">Teken hier uw handtekening met muis of vinger</p>
+          </div>
+          <div class="ond-canvas-actions">
+            <button type="button" class="btn-outline" id="ond-clear">Wissen</button>
+          </div>
+
+          <label class="ond-akkoord">
+            <input type="checkbox" id="ond-akkoord-check">
+            <span>Ik heb de verklaring gelezen en onderteken deze digitaal <em class="ond-req">*</em></span>
+          </label>
+
+          <div class="ond-error" id="ond-form-error" role="alert" hidden></div>
+
+          <div class="ond-actions">
+            <button type="button" class="btn-primary" id="ond-submit">Ondertekenen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- succes-scherm -->
+      <div class="ond-success" id="ond-success" hidden>
+        <div class="ond-success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h2 class="ond-success-title">Ondertekening vastgelegd</h2>
+        <p class="ond-success-text" id="ond-success-text">—</p>
+        <p class="ond-success-sub">U kunt dit venster nu sluiten.</p>
+      </div>
+    </section>
+    <p class="ond-foot">Embrace the Future — digitale ondertekening</p>
+  </main>
+
+  <script src="besa-sanitize.js?v=918f1ad" defer></script>
+  <script src="onderteken.js?v=918f1ad" defer></script>
+</body>
+</html>

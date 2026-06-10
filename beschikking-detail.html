@@ -106,6 +106,7 @@
                   <span class="top-dropdown-group-title">Cliënten</span>
                   <a href="clienten" class="top-dropdown-link" role="menuitem">Cliënten</a>
                   <a href="aanmeldingen" class="top-dropdown-link" role="menuitem">Aanmeldingen</a>
+                  <a href="wachtlijst" class="top-dropdown-link" role="menuitem">Wachtlijst</a>
                   <a href="zorgsoorten" class="top-dropdown-link" role="menuitem">Zorgsoorten</a>
                   <a href="organisatie" class="top-dropdown-link" role="menuitem">Organisaties</a>
                   <a href="gemeenten" class="top-dropdown-link" role="menuitem">Gemeenten</a>
@@ -352,6 +353,11 @@
               <p class="besc-dtl-kv"><span class="besc-dtl-kk">Einddatum</span> <span id="bdtl-side-e">—</span></p>
             </div>
             <div class="besc-dtl-aside-blk">
+              <h2 class="besc-dtl-aside-h2">Gegevens</h2>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Gemeente</span> <span id="bdtl-side-gem">—</span></p>
+              <p class="besc-dtl-kv"><span class="besc-dtl-kk">Productcode</span> <span id="bdtl-side-pc">—</span></p>
+            </div>
+            <div class="besc-dtl-aside-blk">
               <h2 class="besc-dtl-aside-h2">Notities</h2>
               <p class="besc-dtl-hint besc-dtl-side-notes" id="bdtl-side-notes">Er zijn nog geen notities</p>
             </div>
@@ -397,6 +403,14 @@
                     <label class="visually-hidden" for="bdtl-fase-besc">Fase beschikking</label>
                     <select class="modal-input modal-select" id="bdtl-fase-besc" name="fase" aria-labelledby="bdtl-fas-lb"></select>
                   </div>
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-gemeente">Gemeente <span class="bdtl-optional">(standaard de gemeente van de cliënt)</span></label>
+                  <input class="modal-input" type="text" id="bdtl-gemeente" name="gemeente" autocomplete="off" />
+                </div>
+                <div class="modal-field">
+                  <label class="modal-label" for="bdtl-productcode">Productcode</label>
+                  <input class="modal-input" type="text" id="bdtl-productcode" name="productcode" autocomplete="off" placeholder="Bijv. 45A04" />
                 </div>
                 <div class="modal-field">
                   <label class="modal-label" for="bdtl-weekt">Tarief <span class="bdtl-optional" id="bdtl-tar-unit">(€ / week)</span></label>
