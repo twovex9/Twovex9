@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Proforma-facturen (ZZP) — Future Flow</title>
+  <title>Bezetting &amp; kamerbeheer</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -18,42 +18,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Future Flow">
-  <style>
-    /* ── ZZP proforma-overzicht: nieuwe componenten (var()-tokens → dark-mode gratis) ── */
-    .zf-loc-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 14px;}
-    .zf-loc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s,box-shadow .12s;text-align:left;}
-    .zf-loc:hover,.zf-loc:focus-visible{border-color:var(--accent,#2563eb);box-shadow:0 1px 8px rgba(37,99,235,.10);outline:none;}
-    .zf-loc.is-active{border-color:var(--accent,#2563eb);box-shadow:0 0 0 1px var(--accent,#2563eb) inset;}
-    .zf-loc-naam{display:block;font-size:12.5px;font-weight:650;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .zf-loc-bedrag{display:block;font-size:16px;font-weight:750;color:var(--text);letter-spacing:-.01em;}
-    .zf-loc-sub{display:block;font-size:11px;color:var(--text-muted,#64748b);margin-top:2px;}
-    .zf-loc--all .zf-loc-naam{color:var(--accent,#2563eb);}
-    .zf-sec-t{font-size:14px;font-weight:700;color:var(--text);margin:0;}
-    .zf-sec-s{font-size:12px;color:var(--text-muted,#64748b);margin:2px 0 0;}
-    .zf-strip-head{display:flex;align-items:baseline;justify-content:space-between;margin:4px 0 9px;gap:12px;flex-wrap:wrap;}
-    /* status-pills */
-    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.7;white-space:nowrap;}
-    .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
-    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
-    .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
-    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
-    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
-    .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
-    [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
-    [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
-    [data-theme="dark"] .zf-pill--in_behandeling{background:rgba(168,85,247,.24);color:#d8b4fe;}
-    [data-theme="dark"] .zf-pill--goedgekeurd{background:rgba(34,197,94,.22);color:#86efac;}
-    [data-theme="dark"] .zf-pill--afgewezen{background:rgba(248,113,113,.22);color:#fca5a5;}
-    [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
-    /* signaal-stip 🔴/🟠 */
-    .zf-sig{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:middle;}
-    .zf-sig--rood{background:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.18);}
-    .zf-sig--oranje{background:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18);}
-    .zf-row{cursor:pointer;}
-    .zf-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zf-bureau-tag{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,#64748b);background:var(--chip-bg,rgba(100,116,139,.10));border-radius:5px;padding:1px 6px;margin-left:6px;}
-    .zf-gen-note{font-size:11.5px;color:var(--text-muted,#64748b);}
-  </style>
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
@@ -63,7 +27,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -157,7 +121,7 @@
                 </div>
               </div>
             </div>
-            <a href="bezetting" class="top-link">Bezetting</a>
+            <a href="bezetting" class="top-link is-active">Bezetting</a>
             <div class="top-nav-item top-nav-item--dropdown">
               <a href="incidenten" class="top-link top-link--dropdown">Incidenten en klachten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Incidenten en klachten opties">
@@ -179,7 +143,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="facturen-te-beoordelen" class="top-link top-link--dropdown is-active">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="facturen-te-beoordelen" class="top-link top-link--dropdown">Facturen<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Facturen opties">
                 <a href="zzp-facturen" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Proforma's per locatie</span><span class="top-dropdown-subtitle">ZZP-proforma's o.b.v. de planning</span></a>
                 <a href="zzp-overuren" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Overuren te beoordelen</span><span class="top-dropdown-subtitle">Uren-wijzigingen → planning</span></a>
@@ -225,121 +189,298 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Facturen">
-      <nav class="side-nav" aria-label="Facturen module">
-        <a href="zzp-facturen" class="side-link is-active" aria-current="page">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
-          Proforma's
-        </a>
-        <a href="facturen-te-beoordelen" class="side-link">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Te beoordelen
-        </a>
-        <a href="facturen-alle" class="side-link">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Alle facturen
-        </a>
-        <a href="facturen-indiening" class="side-link">
-          <svg class="side-link-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Indiening per maand
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">FA</span>
-      </div>
-    </aside>
-
-    <main class="content content--fact-tb">
+    <main class="content" id="bz-main">
       <div class="content-header">
-        <div>
-          <h1>Proforma-facturen (ZZP)</h1>
-          <p class="content-subtitle">Per werk-maand staan de proforma's klaar — Σ geplande diensten × uurtarief, <strong>per locatie gesplitst</strong>. Bron = de planning van Future Flow.</p>
-        </div>
+        <h1>Bezetting &amp; kamerbeheer</h1>
         <div class="header-actions">
-          <div class="bd-periode" id="zf-periode">
-            <div class="bd-pick" id="zf-pick-maand">
-              <button type="button" class="bd-nav" id="zf-prev" aria-label="Vorige maand">‹</button>
-              <select id="zf-maand" class="bd-select" aria-label="Kies maand"></select>
-              <button type="button" class="bd-nav" id="zf-next" aria-label="Volgende maand">›</button>
-            </div>
-            <button type="button" class="btn-outline" id="zf-genereer" aria-label="Proforma's genereren voor deze maand">
-              <svg class="btn-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-              Genereer
-            </button>
-          </div>
+          <button type="button" class="btn-outline" id="bz-refresh">Verversen</button>
+          <button type="button" class="btn-outline" id="bz-export" hidden>Exporteer lijst</button>
+          <button type="button" class="btn-primary" id="bz-add-kamer" hidden>+ Kamer toevoegen</button>
         </div>
       </div>
 
-      <!-- KPI's voor de geselecteerde maand -->
-      <section class="fzz-overview" aria-label="Proforma-totalen voor de geselecteerde maand">
-        <div class="fzz-card fzz-card--hero" id="zf-card-totaal">
-          <span class="fzz-card-lbl">Totaal proforma <span class="fzz-period" id="zf-lbl-maand"></span></span>
-          <span class="fzz-card-val" id="zf-v-totaal">€ 0,00</span>
-          <span class="fzz-card-sub" id="zf-sub-totaal">0 proforma's · 0 ZZP'ers · 0 uur</span>
+      <div class="toolbar bz-tabs" role="tablist" aria-label="Bezetting-weergaven" id="bz-tabs">
+        <div class="filter-chips">
+          <button type="button" class="filter-chip filter-chip--active" role="tab" data-view="overzicht" id="bz-tab-overzicht" aria-selected="true" hidden>Overzicht</button>
+          <button type="button" class="filter-chip" role="tab" data-view="lijst" id="bz-tab-lijst" aria-selected="false" hidden>Bezettingslijst</button>
+          <button type="button" class="filter-chip" role="tab" data-view="kamerbeheer" id="bz-tab-kamerbeheer" aria-selected="false" hidden>Kamerbeheer</button>
         </div>
-        <div class="fzz-card" id="zf-card-klaar">
-          <span class="fzz-card-lbl">Klaargezet</span>
-          <span class="fzz-card-val" id="zf-v-klaar">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zf-c-klaar">0</span> wachten op indiening</span>
-        </div>
-        <div class="fzz-card fzz-card--blue" id="zf-card-ingediend">
-          <span class="fzz-card-lbl">Ingediend</span>
-          <span class="fzz-card-val" id="zf-v-ingediend">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zf-c-ingediend">0</span> ingediend door ZZP'er</span>
-        </div>
-        <div class="fzz-card fzz-card--green" id="zf-card-ok">
-          <span class="fzz-card-lbl">Goedgekeurd</span>
-          <span class="fzz-card-val" id="zf-v-ok">€ 0,00</span>
-          <span class="fzz-card-sub"><span id="zf-c-ok">0</span> klaar voor betaling</span>
-        </div>
+      </div>
+
+      <p class="bz-noaccess" id="bz-noaccess" hidden>Je hebt geen toegang tot de bezettingsmodule.</p>
+
+      <!-- ============ KPI's (gedeeld door Overzicht + Bezettingslijst) ============ -->
+      <section class="bz-kpis" id="bz-kpis" hidden>
+        <div class="bz-kpi"><div class="bz-kpi-label">Kamers</div><div class="bz-kpi-value" id="bz-kpi-kamers">0</div><div class="bz-kpi-sub" id="bz-kpi-kamers-sub">0 bedden capaciteit</div></div>
+        <div class="bz-kpi"><div class="bz-kpi-label">Bezettingsgraad</div><div class="bz-kpi-value" id="bz-kpi-graad">0%</div><div class="bz-kpi-sub" id="bz-kpi-graad-sub">0 van 0 bedden</div></div>
+        <div class="bz-kpi"><div class="bz-kpi-label">Vrije plekken</div><div class="bz-kpi-value" id="bz-kpi-vrij">0</div><div class="bz-kpi-sub" id="bz-kpi-vrij-sub">0 vrije kamers</div></div>
+        <div class="bz-kpi"><div class="bz-kpi-label">Schoonmaak nodig</div><div class="bz-kpi-value" id="bz-kpi-schoonmaak">0</div><div class="bz-kpi-sub">housekeeping</div></div>
+        <div class="bz-kpi"><div class="bz-kpi-label">Onderhoud (facilitair)</div><div class="bz-kpi-value" id="bz-kpi-onderhoud">0</div><div class="bz-kpi-sub" id="bz-kpi-onderhoud-sub">0 buiten gebruik</div></div>
+        <div class="bz-kpi"><div class="bz-kpi-label">In zorg zonder kamer</div><div class="bz-kpi-value" id="bz-kpi-zonder">0</div><div class="bz-kpi-sub" id="bz-kpi-zonder-sub">van 0 in zorg</div></div>
       </section>
 
-      <!-- Per-locatie splitsing (kostensplitsing per locatie) -->
-      <div class="zf-strip-head">
-        <div>
-          <h2 class="zf-sec-t">Per locatie</h2>
-          <p class="zf-sec-s">Kosten per locatie — klik om de tabel te filteren</p>
-        </div>
-        <span class="zf-gen-note" id="zf-gen-note"></span>
-      </div>
-      <div class="zf-loc-strip" id="zf-loc-strip" role="list" aria-label="Proforma per locatie"></div>
-
-      <div class="toolbar fact-tb-toolbar">
-        <input class="search" type="search" id="zf-search" placeholder="Zoek medewerker, bureau of locatie..." autocomplete="off" aria-label="Zoeken in proforma-facturen" />
-        <span class="fzz-table-hint" id="zf-table-hint"></span>
-      </div>
-
-      <section class="table-card table-card--compact">
-        <div class="table-wrapper">
-          <table class="employees-table" id="zf-table">
-            <thead>
-              <tr>
-                <th data-col="medewerker">Medewerker</th>
-                <th data-col="locatie">Locatie</th>
-                <th data-col="diensten" class="zf-num">Diensten</th>
-                <th data-col="uren" class="zf-num">Uren</th>
-                <th data-col="tarief" class="zf-num">Tarief</th>
-                <th data-col="bedrag" class="zf-num">Bedrag</th>
-                <th data-col="status">Status</th>
-              </tr>
-            </thead>
-            <tbody id="zf-tbody"></tbody>
-          </table>
-        </div>
-        <div class="table-footer table-footer--pagebar">
-          <div class="footer-left">
-            <span id="zf-range" class="pager-range">0 van 0</span>
+      <!-- ============ OVERZICHT (board) ============ -->
+      <section class="bz-view" id="bz-view-overzicht" hidden>
+        <div class="toolbar bz-board-toolbar">
+          <div class="filter-chips bz-status-chips" role="group" aria-label="Filter op status">
+            <button type="button" class="filter-chip filter-chip--active" data-status="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-status="bezet" aria-pressed="false">Bezet</button>
+            <button type="button" class="filter-chip" data-status="vrij" aria-pressed="false">Vrij</button>
+            <button type="button" class="filter-chip" data-status="schoonmaak_nodig" aria-pressed="false">Schoonmaak</button>
+            <button type="button" class="filter-chip" data-status="onderhoud_nodig" aria-pressed="false">Onderhoud</button>
+            <button type="button" class="filter-chip" data-status="buiten_gebruik" aria-pressed="false">Buiten gebruik</button>
           </div>
-          <div class="footer-right">
-            <span id="zf-foot-totaal" class="pager-page-label"></span>
-          </div>
+          <select class="search bz-loc-filter" id="bz-board-loc" aria-label="Filter op locatie"><option value="">Alle locaties</option></select>
+          <input class="search bz-search" type="search" id="bz-board-search" placeholder="Zoek kamer of cliënt…" autocomplete="off" />
         </div>
+        <div class="bz-board" id="bz-board"></div>
+        <p class="bz-empty" id="bz-board-empty" hidden>Nog geen kamers ingericht. Ga naar <strong>Kamerbeheer</strong> om kamers toe te voegen.</p>
+      </section>
+
+      <!-- ============ BEZETTINGSLIJST (tabel) ============ -->
+      <section class="bz-view" id="bz-view-lijst" hidden>
+        <div class="toolbar bz-board-toolbar">
+          <div class="filter-chips bz-status-chips" role="group" aria-label="Filter op status">
+            <button type="button" class="filter-chip filter-chip--active" data-status="" aria-pressed="true">Alles</button>
+            <button type="button" class="filter-chip" data-status="bezet" aria-pressed="false">Bezet</button>
+            <button type="button" class="filter-chip" data-status="vrij" aria-pressed="false">Vrij</button>
+            <button type="button" class="filter-chip" data-status="schoonmaak_nodig" aria-pressed="false">Schoonmaak</button>
+            <button type="button" class="filter-chip" data-status="onderhoud_nodig" aria-pressed="false">Onderhoud</button>
+            <button type="button" class="filter-chip" data-status="buiten_gebruik" aria-pressed="false">Buiten gebruik</button>
+          </div>
+          <select class="search bz-loc-filter" id="bz-list-loc" aria-label="Filter op locatie"><option value="">Alle locaties</option></select>
+          <input class="search bz-search" type="search" id="bz-list-search" placeholder="Zoek kamer of cliënt…" autocomplete="off" />
+        </div>
+        <section class="table-card">
+          <div class="table-wrapper">
+            <table class="employees-table bz-table">
+              <thead>
+                <tr>
+                  <th>Locatie</th>
+                  <th>Kamer</th>
+                  <th>Verdieping</th>
+                  <th class="bz-num">Capaciteit</th>
+                  <th>Bewoner(s)</th>
+                  <th class="bz-num">Vrij</th>
+                  <th>Status</th>
+                  <th>Sinds</th>
+                  <th>Acties</th>
+                </tr>
+              </thead>
+              <tbody id="bz-list-tbody"></tbody>
+            </table>
+          </div>
+          <div class="bz-empty" id="bz-list-empty" hidden>Geen kamers gevonden voor de huidige filters.</div>
+        </section>
+      </section>
+
+      <!-- ============ KAMERBEHEER ============ -->
+      <section class="bz-view" id="bz-view-kamerbeheer" hidden>
+        <p class="bz-intro">Beheer kamers per locatie. Voeg kamers los of in bulk toe, pas verdieping/capaciteit aan, of archiveer kamers die niet meer in gebruik zijn.</p>
+        <div class="toolbar bz-board-toolbar">
+          <button type="button" class="btn-primary" id="bz-beheer-add">+ Kamer toevoegen</button>
+          <button type="button" class="btn-outline" id="bz-beheer-bulk">Meerdere kamers toevoegen</button>
+          <select class="search bz-loc-filter" id="bz-beheer-loc" aria-label="Filter op locatie"><option value="">Alle locaties</option></select>
+          <label class="switch switch--yellow bz-arch-toggle">
+            <input type="checkbox" id="bz-show-archived" />
+            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+            <span class="switch-label">Gearchiveerd</span>
+          </label>
+        </div>
+        <section class="table-card">
+          <div class="table-wrapper">
+            <table class="employees-table bz-table">
+              <thead>
+                <tr>
+                  <th>Locatie</th>
+                  <th>Kamer</th>
+                  <th>Verdieping</th>
+                  <th class="bz-num">Capaciteit</th>
+                  <th>Bewoner(s)</th>
+                  <th>Status</th>
+                  <th>Acties</th>
+                </tr>
+              </thead>
+              <tbody id="bz-beheer-tbody"></tbody>
+            </table>
+          </div>
+          <div class="bz-empty" id="bz-beheer-empty" hidden>Geen kamers.</div>
+        </section>
       </section>
     </main>
   </div>
 
-  <div class="app-toast" id="zf-toast" role="status" aria-live="polite" hidden></div>
+  <!-- ============ MODAL: kamer-detail / acties (hub) ============ -->
+  <div class="modal-overlay" id="bz-room-modal" hidden aria-hidden="true">
+    <div class="modal-dialog bz-room-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-room-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bz-room-title">Kamer</h2>
+        <button type="button" class="modal-close" id="bz-room-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="bz-room-meta" id="bz-room-meta"></div>
+        <h3 class="bz-room-subh">Bewoner(s)</h3>
+        <div class="bz-room-bewoners" id="bz-room-bewoners"></div>
+      </div>
+      <div class="modal-footer bz-room-footer" id="bz-room-footer"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: cliënt toewijzen / verplaatsen ============ -->
+  <div class="modal-overlay" id="bz-assign-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-assign-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bz-assign-title">Cliënt toewijzen</h2>
+        <button type="button" class="modal-close" id="bz-assign-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="bz-assign-form" novalidate>
+        <div class="modal-body">
+          <p class="bz-modal-context" id="bz-assign-context"></p>
+          <div class="modal-field">
+            <label class="modal-label" for="bz-assign-client">Cliënt (in zorg)</label>
+            <select class="modal-input modal-select" id="bz-assign-client" required>
+              <option value="">— Kies cliënt —</option>
+            </select>
+            <p class="bz-field-hint" id="bz-assign-hint"></p>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bz-assign-datum">Ingangsdatum</label>
+            <input class="modal-input" type="date" id="bz-assign-datum" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bz-assign-notitie">Notitie <span class="bz-opt">(optioneel)</span></label>
+            <textarea class="modal-input" id="bz-assign-notitie" rows="2" placeholder="Bijv. tijdelijke plaatsing"></textarea>
+          </div>
+          <p class="bz-form-err" id="bz-assign-err" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bz-assign-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bz-assign-save">Toewijzen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: status wijzigen (housekeeping/facilitair) ============ -->
+  <div class="modal-overlay" id="bz-status-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-status-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bz-status-title">Status wijzigen</h2>
+        <button type="button" class="modal-close" id="bz-status-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="bz-status-form" novalidate>
+        <div class="modal-body">
+          <p class="bz-modal-context" id="bz-status-context"></p>
+          <div class="modal-field">
+            <label class="modal-label" for="bz-status-select">Kamerstatus</label>
+            <select class="modal-input modal-select" id="bz-status-select">
+              <option value="gereed">Gereed (schoon &amp; klaar)</option>
+              <option value="schoonmaak_nodig">Schoonmaak nodig (housekeeping)</option>
+              <option value="onderhoud_nodig">Onderhoud nodig (facilitair)</option>
+              <option value="buiten_gebruik">Buiten gebruik</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="bz-status-notitie">Toelichting <span class="bz-opt">(optioneel)</span></label>
+            <textarea class="modal-input" id="bz-status-notitie" rows="2" placeholder="Bijv. lekkage badkamer, wachten op schilder"></textarea>
+          </div>
+          <p class="bz-form-err" id="bz-status-err" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bz-status-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bz-status-save">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: kamer toevoegen / bewerken ============ -->
+  <div class="modal-overlay" id="bz-kamer-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-kamer-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bz-kamer-title">Kamer toevoegen</h2>
+        <button type="button" class="modal-close" id="bz-kamer-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="bz-kamer-form" novalidate>
+        <div class="modal-body">
+          <div class="bz-kamer-grid">
+            <div class="modal-field">
+              <label class="modal-label" for="bz-kamer-loc">Locatie</label>
+              <select class="modal-input modal-select" id="bz-kamer-loc" required>
+                <option value="">— Kies locatie —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-kamer-nummer">Kamernummer / -naam</label>
+              <input class="modal-input" type="text" id="bz-kamer-nummer" required placeholder="Bijv. 12 of Kamer A2" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-kamer-verdieping">Verdieping <span class="bz-opt">(optioneel)</span></label>
+              <input class="modal-input" type="text" id="bz-kamer-verdieping" placeholder="Bijv. Begane grond, 1e" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-kamer-cap">Capaciteit (bedden)</label>
+              <input class="modal-input" type="number" id="bz-kamer-cap" min="1" max="50" value="1" />
+            </div>
+            <div class="modal-field bz-kamer-notitie-field">
+              <label class="modal-label" for="bz-kamer-notitie">Notitie <span class="bz-opt">(optioneel)</span></label>
+              <textarea class="modal-input" id="bz-kamer-notitie" rows="2"></textarea>
+            </div>
+          </div>
+          <p class="bz-form-err" id="bz-kamer-err" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bz-kamer-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bz-kamer-save">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: bulk kamers toevoegen ============ -->
+  <div class="modal-overlay" id="bz-bulk-modal" hidden aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-bulk-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="bz-bulk-title">Meerdere kamers toevoegen</h2>
+        <button type="button" class="modal-close" id="bz-bulk-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="bz-bulk-form" novalidate>
+        <div class="modal-body">
+          <p class="bz-modal-context">Maak in één keer een reeks genummerde kamers aan. Bestaande kamernummers worden overgeslagen.</p>
+          <div class="bz-kamer-grid">
+            <div class="modal-field">
+              <label class="modal-label" for="bz-bulk-loc">Locatie</label>
+              <select class="modal-input modal-select" id="bz-bulk-loc" required>
+                <option value="">— Kies locatie —</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-bulk-prefix">Voorvoegsel</label>
+              <input class="modal-input" type="text" id="bz-bulk-prefix" value="Kamer " placeholder="Bijv. 'Kamer '" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-bulk-start">Startnummer</label>
+              <input class="modal-input" type="number" id="bz-bulk-start" min="0" value="1" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-bulk-aantal">Aantal kamers</label>
+              <input class="modal-input" type="number" id="bz-bulk-aantal" min="1" max="200" value="10" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="bz-bulk-cap">Capaciteit per kamer</label>
+              <input class="modal-input" type="number" id="bz-bulk-cap" min="1" max="50" value="1" />
+            </div>
+          </div>
+          <p class="bz-field-hint" id="bz-bulk-preview"></p>
+          <p class="bz-form-err" id="bz-bulk-err" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="bz-bulk-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary" id="bz-bulk-save">Kamers aanmaken</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
   <script src="sidebar-nav.js?v=918f1ad"></script>
@@ -347,18 +488,17 @@
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
   <script src="besa-sync-reporter.js?v=918f1ad"></script>
+  <script src="realtime-sync.js?v=918f1ad"></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
   <script src="helpdesk-modal.js?v=918f1ad" defer></script>
-  <script src="onboarding-flow.js?v=918f1ad" defer></script>
   <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="zzp-facturen-data.js?v=918f1ad" defer></script>
-  <script src="zzp-facturen.js?v=918f1ad" defer></script>
+  <script src="bezetting-data.js?v=918f1ad"></script>
+  <script src="bezetting.js?v=918f1ad" defer></script>
 </body>
 </html>

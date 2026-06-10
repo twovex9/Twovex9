@@ -114,6 +114,7 @@
     "facturen.html": "Cliënten",
     "factuur-detail.html": "Cliënten",
     "facturen-importeren.html": "Cliënten",
+    "bezetting.html": "Bezetting",
     // Incidenten en klachten (één gecombineerde top-level dropdown)
     "incidenten.html": "Incidenten en klachten",
     "incidenten-dashboard.html": "Incidenten en klachten",
