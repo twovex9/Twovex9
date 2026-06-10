@@ -192,6 +192,9 @@
         <a href="#md-top" class="side-link is-active" aria-current="page">Overzicht</a>
         <a href="#md-compliance" class="side-link">Compliance &amp; documenten</a>
         <a href="#md-onboarding" class="side-link">Onboarding &amp; contracten</a>
+        <a href="#md-score" class="side-link">Compliance-score</a>
+        <a href="#md-recert" class="side-link">Recertificering</a>
+        <a href="#md-periodieken" class="side-link">Periodieken</a>
         <a href="#md-medewerkers" class="side-link">Medewerkers</a>
       </nav>
       <div class="sidebar-footer">
@@ -277,6 +280,42 @@
         <p class="md-note">Certificaten en VOG's die verlopen zijn of binnen 90 dagen verlopen. Agressietraining-dekking telt medewerkers met een geldig agressie-certificaat.</p>
       </section>
 
+      <!-- Periodieken — jaarlijkse trede-verhogingen loondienst -->
+      <section class="table-card md-domain" id="md-periodieken" aria-label="Periodieken — jaarlijkse trede-verhogingen">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Periodieken — jaarlijkse trede-verhogingen</h2>
+          <a href="salarishuis" class="md-domain-link">Salarishuis →</a>
+        </div>
+        <div class="md-metric-grid" id="cd-periodieken-kpis"></div>
+        <div class="toolbar md-mw-toolbar">
+          <div class="filter-chips" id="cd-periodieken-filters" role="group" aria-label="Filter periodieken">
+            <button type="button" class="filter-chip is-active" data-filter="alle">Alle</button>
+            <button type="button" class="filter-chip" data-filter="te_laat">Te laat</button>
+            <button type="button" class="filter-chip" data-filter="urgent">Urgent (&le;30 d)</button>
+            <button type="button" class="filter-chip" data-filter="binnenkort">Binnenkort (&le;60 d)</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="employees-table" id="cd-periodieken-table">
+            <thead>
+              <tr>
+                <th>Medewerker</th>
+                <th>Schaal</th>
+                <th>Trede</th>
+                <th>Laatste verhoging</th>
+                <th>Volgende periodiek</th>
+                <th>Dagen tot</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="cd-periodieken-tbody">
+              <tr><td colspan="7" class="cd-empty">Laden…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="md-note">Loondienst-medewerkers met ingevulde salarisschaal. De periodiek-datum is gebaseerd op de laatste vastgelegde trede-wijziging (of startdatum bij geen salarishistorie). Te laat = datum verstreken; Urgent = ≤ 30 dagen; Binnenkort = ≤ 60 dagen.</p>
+      </section>
+
       <!-- Compliance per medewerker (drill-down) -->
       <section class="table-card md-domain" id="md-medewerkers" aria-label="Compliance per medewerker">
         <div class="md-domain-head">
@@ -331,7 +370,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="compliance-dashboard-data.js?v=hr1" defer></script>
-  <script src="compliance-dashboard.js?v=hr2" defer></script>
+  <script src="compliance-dashboard-data.js?v=hr3" defer></script>
+  <script src="compliance-dashboard.js?v=hr3" defer></script>
 </body>
 </html>

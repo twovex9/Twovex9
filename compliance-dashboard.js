@@ -10,6 +10,10 @@
   var filter = "alle";
   var query = "";
 
+  // Periodieken state
+  var periodiekenRows = [];
+  var periodiekenFilter = "alle";
+
   function $(id) { return document.getElementById(id); }
   function escHtml(s) {
     var t = document.createElement("div");
@@ -141,6 +145,25 @@
         if (tr) openDossier(tr.getAttribute("data-mid"));
       });
     }
+    var periodiekenTb = $("cd-periodieken-tbody");
+    if (periodiekenTb) {
+      periodiekenTb.addEventListener("click", function (e) {
+        var tr = e.target.closest && e.target.closest("tr.cd-row");
+        if (tr) openDossier(tr.getAttribute("data-mid"));
+      });
+    }
+    var periodiekenFiltersEl = $("cd-periodieken-filters");
+    if (periodiekenFiltersEl) {
+      periodiekenFiltersEl.addEventListener("click", function (e) {
+        var btn = e.target.closest && e.target.closest(".filter-chip");
+        if (!btn) return;
+        periodiekenFilter = btn.getAttribute("data-filter") || "alle";
+        Array.prototype.forEach.call(periodiekenFiltersEl.querySelectorAll(".filter-chip"), function (b) {
+          b.classList.toggle("is-active", b === btn);
+        });
+        renderPeriodiekenTable();
+      });
+    }
     var search = $("cd-search");
     if (search) search.addEventListener("input", function () { query = search.value || ""; renderTable(); });
     var filters = $("cd-filters");
@@ -157,6 +180,71 @@
     }
     var refresh = $("cd-refresh");
     if (refresh) refresh.addEventListener("click", function () { load(true); });
+  }
+
+  // Datum-formatter die UTC-datumshift vermijdt (ISO YYYY-MM-DD → DD-MM-YYYY).
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return String(iso);
+    return m[3] + "-" + m[2] + "-" + m[1];
+  }
+
+  // Periodieken — jaarlijkse trede-verhogingen loondienst.
+  function renderPeriodiekenTable() {
+    var tbody = $("cd-periodieken-tbody");
+    if (!tbody) return;
+    var list = periodiekenFilter === "alle"
+      ? periodiekenRows
+      : periodiekenRows.filter(function (r) { return r.status === periodiekenFilter; });
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="cd-empty">'
+        + (periodiekenFilter === "alle"
+          ? "Geen loondienst-medewerkers met ingevulde salarisschaal gevonden."
+          : "Geen medewerkers in deze categorie.")
+        + "</td></tr>";
+      return;
+    }
+    var statusBadges = {
+      te_laat:    '<span class="cl-fase-pill cd-badge cd-badge--bad">Te laat</span>',
+      urgent:     '<span class="cl-fase-pill cd-badge cd-badge--bad">Urgent</span>',
+      binnenkort: '<span class="cl-fase-pill cd-badge cd-badge--warn">Binnenkort</span>',
+      ok:         '<span class="cl-fase-pill cd-badge cd-badge--ok">Op tijd</span>',
+    };
+    tbody.innerHTML = list.map(function (r) {
+      var d = Number(r.dagen_tot_periodiek);
+      var dagenHtml = d < 0
+        ? '<span class="cd-num cd-num--bad">' + Math.abs(d) + " d over</span>"
+        : '<span class="cd-num' + (d <= 30 ? " cd-num--bad" : (d <= 60 ? " cd-num--warn" : "")) + '">' + d + " d</span>";
+      var badge = statusBadges[r.status] || '<span class="cl-fase-pill">' + escHtml(r.status) + "</span>";
+      return '<tr class="cd-row" data-mid="' + escHtml(r.medewerker_id) + '" tabindex="0" role="button" aria-label="Open dossier van ' + escHtml(r.naam) + '">'
+        + "<td>" + escHtml(r.naam) + "</td>"
+        + "<td>" + escHtml(r.schaal || "—") + "</td>"
+        + "<td>" + escHtml(r.trede || "—") + "</td>"
+        + "<td>" + fmtDate(r.laatste_ingangsdatum) + "</td>"
+        + "<td>" + fmtDate(r.volgende_periodiek) + "</td>"
+        + "<td>" + dagenHtml + "</td>"
+        + "<td>" + badge + "</td>"
+        + "</tr>";
+    }).join("");
+  }
+
+  function renderPeriodieken(list) {
+    var kpiBox = $("cd-periodieken-kpis");
+    if (kpiBox) {
+      var telaat     = list.filter(function (r) { return r.status === "te_laat"; }).length;
+      var urgent     = list.filter(function (r) { return r.status === "urgent"; }).length;
+      var binnenkort = list.filter(function (r) { return r.status === "binnenkort"; }).length;
+      var ok         = list.filter(function (r) { return r.status === "ok"; }).length;
+      kpiBox.innerHTML = [
+        metricCell("Te laat", String(telaat), "direct actie vereist", telaat > 0 ? "bad" : "ok"),
+        metricCell("Urgent (≤ 30 dagen)", String(urgent), "", urgent > 0 ? "warn" : "ok"),
+        metricCell("Binnenkort (≤ 60 dagen)", String(binnenkort), "", binnenkort > 0 ? "warn" : "ok"),
+        metricCell("Op tijd (> 60 dagen)", String(ok), "", ""),
+      ].join("");
+    }
+    periodiekenRows = list;
+    renderPeriodiekenTable();
   }
 
   // G42 — recertificering & trainingen.
@@ -208,6 +296,15 @@
         console.error("[compliance-dashboard] recertificering laden mislukt:", errR);
         var tbR = $("cd-recert-tbody");
         if (tbR) tbR.innerHTML = '<tr><td colspan="5" class="cd-empty">Kon de recertificeringsgegevens niet laden.</td></tr>';
+      }
+      // Periodieken — los geladen zodat fouten de rest niet blokkeren.
+      try {
+        var periodieken = await window.complianceDashboardDB.periodieken();
+        renderPeriodieken(periodieken);
+      } catch (errP) {
+        console.error("[compliance-dashboard] periodieken laden mislukt:", errP);
+        var tbP = $("cd-periodieken-tbody");
+        if (tbP) tbP.innerHTML = '<tr><td colspan="7" class="cd-empty">Kon de periodiekengegevens niet laden.</td></tr>';
       }
       var upd = $("cd-updated");
       if (upd) {
