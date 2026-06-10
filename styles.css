@@ -21035,6 +21035,10 @@ button.besc-dtl-tab:hover {
   background: rgba(192, 57, 43, 0.08);
   border-color: var(--pb-c0392b);
 }
+/* De .btn-outline-display (flex) overschrijft het [hidden]-attribuut, waardoor
+   de Archiveren-knop ten onrechte zichtbaar blijft bij een nieuw incident
+   (add-mode). JS zet hidden al correct; deze regel laat dat ook echt werken. */
+.im-archive-btn[hidden] { display: none !important; }
 
 /* === Incident melden — uitgebreid (Bijlagen / Ouders / Feedback / Notificaties) === */
 
