@@ -157,6 +157,7 @@ function buildNav(active) {
     [
       { group: "Cliënten" },
       { href: "clienten", title: "Cliënten" },
+      { href: "aanmeldingen", title: "Aanmeldingen" },
       { href: "zorgsoorten", title: "Zorgsoorten" },
       { href: "organisatie", title: "Organisaties" },
       { href: "gemeenten", title: "Gemeenten" },
@@ -296,6 +297,7 @@ const TOPIC_BY_PAGE = {
   "verzuim.html": "HR",
   "nieuws.html": "HR",
   "clienten.html": "Cliënten",
+  "aanmeldingen.html": "Cliënten",
   "client-detail.html": "Cliënten",
   "zorgsoorten.html": "Cliënten",
   "zorgsoort-detail.html": "Cliënten",

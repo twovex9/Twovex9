@@ -59,6 +59,12 @@
     "organisatie",
     "hoofdaannemer",
     "archived",
+    // reis_status (Cliëntmodule 2.0) is een echte DB-kolom, read-only in de UI:
+    // de fase-sync-trigger beheert 'm server-side. Beide spellingen staan hier
+    // zodat geen van beide ooit in data-jsonb belandt; objToInsertPayload
+    // stuurt 'm bewust NIET mee zodat de DB-waarde altijd blijft staan.
+    "reis_status",
+    "reisStatus",
   ];
 
   function rowToObj(row) {
@@ -71,6 +77,7 @@
       clientnummer: row.clientnummer == null ? "" : Number(row.clientnummer),
       locatie: row.locatie || "",
       fase: row.fase || "in zorg",
+      reisStatus: row.reis_status || "",
       gemeente: row.gemeente || "",
       organisatie: row.organisatie || "",
       hoofdaannemer: row.hoofdaannemer || "",
@@ -90,6 +97,8 @@
       data[k] = safe[k];
     });
     var nr = parseInt(safe.clientnummer, 10);
+    // Bewust GEEN reis_status in de payload: PostgREST update't alleen
+    // meegestuurde kolommen, dus de server-side beheerde waarde blijft staan.
     return {
       id: safe.id || generateClientenId(),
       voornaam: String(safe.voornaam || "").trim(),
@@ -117,6 +126,7 @@
   function ensureClientDetailFields(c) {
     if (!c || typeof c !== "object") return c;
     if (c.requiredForms == null) c.requiredForms = "";
+    if (c.reisStatus == null) c.reisStatus = "";
     if (c.uitZorgDatum == null) c.uitZorgDatum = "";
     if (c.inZorgDatum == null) c.inZorgDatum = "";
     if (c.medewerkerZoek == null) c.medewerkerZoek = "";

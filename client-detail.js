@@ -307,6 +307,26 @@
   if (aIn) aIn.textContent = formatDateNl(c.inZorgDatum);
   if (aOut) aOut.textContent = c.uitZorgDatum ? formatDateNl(c.uitZorgDatum) : "—";
 
+  // Cliëntreis-pill in de vcard (read-only; kolom clienten.reis_status wordt
+  // server-side beheerd door de fase-sync-trigger). Re-sync op
+  // besa:clienten-updated zodat een koude load met verouderde cache (zonder
+  // reisStatus) na de bootstrap-fetch alsnog de juiste status toont.
+  var reisPill = document.getElementById("cd-reis-pill");
+  function syncReisPill() {
+    if (!reisPill) return;
+    var cur = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    var slug = cur && cur.reisStatus ? String(cur.reisStatus) : "";
+    if (slug && window.besaClientreis && typeof window.besaClientreis.label === "function") {
+      reisPill.textContent = window.besaClientreis.label(slug);
+      reisPill.className = window.besaClientreis.pillClass(slug);
+    } else {
+      reisPill.textContent = "—";
+      reisPill.className = "cr-pill cr-pill--onbekend";
+    }
+  }
+  syncReisPill();
+  window.addEventListener("besa:clienten-updated", syncReisPill);
+
   document.getElementById("cd-f-vn").value = c.voornaam != null ? String(c.voornaam) : "";
   document.getElementById("cd-f-an").value = c.achternaam != null ? String(c.achternaam) : "";
   document.getElementById("cd-f-nr").value = c.clientnummer != null ? String(c.clientnummer) : "";
@@ -543,8 +563,9 @@
     m: document.getElementById("cd-pan-m"),
     q: document.getElementById("cd-pan-q"),
     i: document.getElementById("cd-pan-i"),
+    t: document.getElementById("cd-pan-t"),
   };
-  var panOrder = "dbpcnjrmqi";
+  var panOrder = "dbpcnjrmqit";
 
   function setTab(k) {
     if (!pans[k]) k = "d";
@@ -574,6 +595,7 @@
     if (k === "r") renderRapportages();
     if (k === "m") renderMedicatie();
     if (k === "q") renderVragenlijsten();
+    if (k === "t") renderTijdlijn();
   }
 
   /**
@@ -674,6 +696,78 @@
     var panP = document.getElementById("cd-pan-p");
     if (panP && !panP.hidden) renderBetalingen();
   });
+
+  // ============================================================
+  // TIJDLIJN-tab: verticale read-only tijdlijn uit client_tijdlijn
+  // (events worden uitsluitend server-side geschreven)
+  // ============================================================
+
+  // [hidden]-valkuil: classes met expliciete display overschrijven het
+  // UA-stylesheet [hidden]{display:none} — zet daarom altijd beide.
+  function cdtSetVisible(el, show) {
+    if (!el) return;
+    el.style.display = show ? "" : "none";
+    el.hidden = !show;
+  }
+
+  // DD-MM-YYYY HH:MM in LOKALE tijd (nooit toISOString — UTC-datumshift).
+  function cdtFormatDatumTijd(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    var dd = String(d.getDate()).padStart(2, "0");
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var hh = String(d.getHours()).padStart(2, "0");
+    var mi = String(d.getMinutes()).padStart(2, "0");
+    return dd + "-" + mm + "-" + d.getFullYear() + " " + hh + ":" + mi;
+  }
+
+  // Race-guard: alleen het resultaat van de laatste fetch wordt gerenderd
+  // (snelle tab-wissels kunnen anders een oudere respons overschrijven).
+  var cdtRenderSeq = 0;
+  async function renderTijdlijn() {
+    var list = document.getElementById("cd-tijdlijn-list");
+    var empty = document.getElementById("cd-tijdlijn-empty");
+    if (!list || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var seq = ++cdtRenderSeq;
+    cdtSetVisible(empty, false);
+    list.innerHTML = '<div class="cdt-loading">Tijdlijn laden…</div>';
+
+    var events = (window.clientTijdlijnDB && typeof window.clientTijdlijnDB.fetchVoorClient === "function")
+      ? await window.clientTijdlijnDB.fetchVoorClient(cl.id)
+      : [];
+    if (seq !== cdtRenderSeq) return; // verouderd resultaat — nieuwere render onderweg
+
+    if (!events.length) {
+      list.innerHTML = "";
+      cdtSetVisible(empty, true);
+      return;
+    }
+
+    // Chronologisch nieuwste boven (data-laag sorteert al desc), geen groepering.
+    list.innerHTML = events.map(function (ev) {
+      if (!ev) return "";
+      var icoon = (window.besaClientreis && typeof window.besaClientreis.icoon === "function")
+        ? window.besaClientreis.icoon(ev.event_type)
+        : "";
+      var meta = [];
+      if (ev.created_by_naam) meta.push("door " + escapeHtml(ev.created_by_naam));
+      meta.push(escapeHtml(cdtFormatDatumTijd(ev.created_at)));
+      return (
+        '<div class="cdt-item">' +
+          '<span class="cdt-dot" aria-hidden="true">' + icoon + '</span>' +
+          '<div class="cdt-card">' +
+            '<p class="cdt-titel">' + escapeHtml(ev.titel || "—") + '</p>' +
+            (ev.omschrijving ? '<p class="cdt-omschrijving">' + escapeHtml(ev.omschrijving) + '</p>' : "") +
+            '<p class="cdt-meta">' + meta.join(" · ") + '</p>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
 
   // ============================================================
   // CONTACTEN-tab: render + CRUD via clientContactenDB
@@ -1882,6 +1976,9 @@
     }
     var nrEl = document.getElementById("cd-hero-nr");
     if (nrEl && c.clientnummer != null) nrEl.textContent = String(c.clientnummer);
+    // reis_status kan server-side gewijzigd zijn door de fase-sync-trigger;
+    // re-render de pill uit de actuele cache (update() ververst die na de save).
+    syncReisPill();
   });
 
   (function initClientBeschikkingen() {

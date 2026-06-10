@@ -107,6 +107,9 @@
 
     // ─── Cliënten + beschikkingen (clients-groep) ─────────────────────────────
     "clienten.html": { action: "browse", entity: "clients" },
+    // Aanmeldingen (Cliëntmodule 2.0): beoordelaars per spec §3 — GW/Zorgcoördinator/
+    // Directeur (+ admin-tier). Server-side gegate via clientreis_kan_beoordelen().
+    "aanmeldingen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Gedragswetenschapper"] },
     "client-detail.html": { action: "view", entity: "clients" },
     "beschikkingen.html": { action: "browse", entity: "dispositions" },
     "beschikking-detail.html": { action: "view", entity: "dispositions" },

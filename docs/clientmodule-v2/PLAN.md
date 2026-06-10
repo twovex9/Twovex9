@@ -1,0 +1,127 @@
+# ETF Cliëntmodule 2.0 — bouwplan & spec-mapping
+
+**Bron:** user-spec "ETF Cliëntmodule 2.0 — Complete Functionele Uitwerking" (2026-06-10), 26 secties.
+**Doel:** volledig digitaal cliëntvolgsysteem: Aanmelding → Beoordeling → Intake → Wachtlijst → Plaatsing → Begeleiding → Evaluatie → Uitstroom → Nazorg.
+**Status:** dit document is de source of truth voor voortgang over meerdere sessies. Per fase: bouwen → DB via `node scripts/db-exec.mjs --file ...` → PR + merge (Vercel-deploy) → live-verificatie met qa-accounts (2 clean runs, licht+donker).
+
+## Bestaande situatie (verkenning 2026-06-10, 6-agent audit)
+
+**Bestaat al (NIET opnieuw bouwen):**
+- `clienten` (86, `id text`!, fase: in zorg/in aanvraag/uit zorg, rest in `data` jsonb) + lijst (clienten.html) + dossier (client-detail.html, 11 tabs: Details/Beschikkingen/Betalingen/Contacten/Notities/Documenten/Rapportages/Medicatie/Vragenlijsten/Incidenten/AVG).
+- `client_contacten` (relatie vrij tekstveld, is_primair; GEEN gezaghebbend/adres/organisatie), `client_documents` (bucket `client-documents` = PUBLIC ⚠️, 7 categorieën), `client_rapportages` (leeg; RLS volledig open ⚠️; auteur_id wordt niet geschreven), `client_vragenlijsten` (3 hard-coded templates: intake/evaluatie/afsluiting), `client_medicatie` (+ aftekenlijst via RPC + uurlijkse cron).
+- `beschikkingen` (151; geen gemeente/productcode-kolommen — gemeente komt van cliënt; `toegekend_uren`; fase-tekst). Verloop-herinneringen BESTAAN al: `beschikking_verloop_herinneringen()` (cron 07:00, mijlpalen 60/30/14/7/0 → notificaties directeur+zorgcoördinator+gekoppelde GW, log in `beschikking_verloop_log`). ⚠️ Dashboard-RPC's joinen via `clienten.data->>'bs2_id'`; frontend joint op `clienten.id` (dual-key).
+- `incidenten` (146, client_id text) + incidenten-analyse-module (7 rol-gegate views, deterministische heuristiek), `klachten` (0; client_id bestaat maar UI vult 'm niet).
+- Audit: `audit_log` + `trg_audit_clienten/beschikkingen/incidenten` + `besa-audit.js` (automatisch) + read-audit (AVG art. 15) + `anonymize_client`/`export_client_data`.
+- Notificaties: `notifications`+`notification_reads`+bel; melding aanmaken = server-side insert vanuit SECURITY DEFINER fn/cron. pg_cron-patroon gevestigd (10 jobs). Edge-deploy via `scripts/deploy-functions.mjs`.
+- Rollen (bs2_roles; let op name≠slug): Eigenaar/eigenaar(1), Admin/admin(2), Directeur/directeur(2), Cliëntbeheer/**beschikkingen-test**(3), Planner/planner(3), Zorgcoördinator/**teamleider**(3), Facilitair, Finance, Gedragswetenschapper, HR, Salarisadministratie(4), Beleid, Medewerker(5), Detacheringsbureau. Resolutie via profiles.email→bs2_role_users→bs2_roles.slug.
+- Module-patroon (incidenten-analyse/mobiliteit): single-page + filter-chip viewtabs + `setVisible()` (style.display ÉN hidden), data-laag `callRpc` met fallback, SECURITY DEFINER RPC's met harde rol-check (fail-closed, UI cosmetisch), page-map-entry verplicht, topnav alleen via `scripts/rebuild-topnav.mjs`.
+
+**Kern-valkuilen:** `clienten.id`/`beschikkingen.id`/`client_documents.id` = **text** → alle nieuwe tabellen `client_id text`. Locatie = naamstring. `[hidden]` vs class-display → `setVisible`-helper. `toISOString()` UTC-shift → lokale isoDate. qa-identity-switch → eerst `besa-permissions-v2`-cache wissen. plpgsql: geen geneste functies; `max(uuid)` bestaat niet. schema.sql ≠ productie; DDL via db-exec.mjs. Topnav nooit per pagina bewerken. Nieuwe pagina ALTIJD in permissions-page-map.js (anders default open).
+
+## Architectuurkeuzes (defaults, gekozen 2026-06-10)
+
+1. **Cliëntreis-status** = nieuwe kolom `clienten.reis_status text` met 13 canonieke slugs:
+   `nieuwe_aanmelding, in_beoordeling, meer_info_nodig, intake_gepland, intake_afgerond, wachtlijst, plaatsing_gepland, actief, tijdelijk_gepauzeerd, uitstroom_gepland, uitgestroomd, nazorg, dossier_gesloten`.
+   Legacy `fase` blijft bestaan en wordt bidirectioneel gesynct via trigger (reis→fase: aanmeld-/intake-/wachtlijststatussen→'in aanvraag', actief/pauze/uitstroom_gepland→'in zorg', uitgestroomd/nazorg/gesloten→'uit zorg'; fase-wijziging door legacy UI→reis_status alleen bijwerken als inconsistent). Backfill: in zorg→actief, in aanvraag→in_beoordeling, uit zorg→uitgestroomd. Statuslabels + pill-kleuren centraal in `clientreis-ui.js`.
+2. **Tijdlijn** = `client_tijdlijn` (uuid, client_id text, event_type, titel, omschrijving, bron_tabel, bron_id, created_by, created_by_naam, created_at). Gevuld door triggers (statuswijziging, beschikking, incident, rapportage, zorgplan, evaluatie, uitstroom …) + handmatige events via RPC. Read via RPC met clienten-toegangscheck.
+3. **Aanmelding** = `client_aanmeldingen`-tabel (uuid; alle §2-velden incl. verwijzer + aanmeldinfo jsonb-vrij) + bij indienen direct voorlopig clienten-record (reis_status='nieuwe_aanmelding', persoonsvelden ook naar clienten.data zoals bestaande dossiers). Contactpersonen → `client_contacten` + nieuwe kolommen `gezaghebbend bool`, `adres text`, `organisatie text`, `functie text`, `contact_rol text` (ouder/voogd/gezaghebbende/verwijzer/overig). Uploads → nieuwe PRIVATE bucket `aanmelding-documenten` (signed URLs; patroon medewerker-documenten PR #604).
+4. **Publiek aanmeldportaal** = standalone `aanmeld-portaal.html` (geen auth-guard/topbar) → edge function `client-aanmelding` (verify_jwt=false, service-role): validatie, honeypot, rate-limit per IP (tabel `aanmeld_rate_limits`), bestands-allowlist, max 10MB/bestand. Intern bereikbaar via Cliënten-menu.
+5. **Beoordeling** = interne pagina `aanmeldingen.html`; acties (goedkeuren/afwijzen/meer info/wachtlijst) via SECURITY DEFINER RPC `aanmelding_beoordeel` met harde rol-check in SQL: gedragswetenschapper/teamleider/directeur/admin/eigenaar (spec §3 + admin-tier). Elke beslissing → tijdlijn + notificatie + audit.
+6. **Zorgplannen/signaleringsplannen/evaluaties** (fase 3) = eigen tabellen met workflow-status + ondertekening-records (patroon contract-sign: token-gevalideerde edge function, ook voor intake-verklaringen §4).
+7. **AI-cliëntsamenvatting** (fase 3) = deterministische heuristiek-RPC (geen LLM), zoals incidentanalyse/workforce.
+8. **Autorisatie-matrix (spec §16)** server-side waar het telt: nieuwe RPC's fail-closed; tarieven nooit in medewerker-RPC-payloads; `client_rapportages`-RLS aanscherpen in fase 3 (koppeling medewerker↔cliënt vereist voor INSERT; read office+gekoppeld).
+9. **Dashboards** (fase 5) = één `clientmodule-dashboard.html` met rol-gegate views (Caseload GW §17 / Zorgcoördinator §18 / Directeur §19 / Eigenaar §20 / KPI §21) + drill-down (§22) naar lijst/dossier via bestaande querystring-patronen.
+10. **Ouder-/voogdportaal (§26)** = expliciet TOEKOMSTIGE fase, buiten scope van dit plan (alleen voorbereid door tekenflow-tokens generiek te houden).
+
+## Spec-mapping → fasen
+
+| § | Onderdeel | Bestaat? | Fase |
+|---|---|---|---|
+| 1 | Cliëntreis 13 statussen + vastlegging in tijdlijn | fase-veld (3 waardes) | **1** |
+| 2 | Aanmeldportaal (gegevens/verwijzer/contactpersonen/aanmeldinfo/uploads) | nee | **1** |
+| 3 | Beoordelingsmodule (GW/zorgcoörd/directeur; 4 acties) | nee | **1** |
+| 15 | Tijdlijn (auto, chronologisch) | nee | **1** (basis) + events groeien mee in 2–6 |
+| 23 | Audittrail | audit_log+triggers bestaan | **1** (nieuwe tabellen aanhaken; UI-tab fase 6) |
+| 4 | Intakemodule (7 analyses + 4 verklaringen + digitale ondertekening) | vragenlijst-template 'intake' | **2** |
+| 5 | Wachtlijstmodule + dashboard | nee | **2** |
+| 11 | Beschikkingsmodule (gemeente/product/productcode/uren/status + 90/60/30/verlopen) | grotendeels; geen productcode, mijlpalen 60/30/14/7/0, dossier-tab is demo-rij | **2** (kolommen+90d+dossier-tab live) |
+| 6 | Actief dossier (zorginhoudelijk/organisatorisch/kwaliteit/documenten) | deels | **3** |
+| 7 | AI-cliëntsamenvatting | nee | **3** |
+| 8 | Rapportagemodule (5 typen, alleen gekoppelde medewerkers) | client_rapportages basis | **3** |
+| 9 | Zorgplannen + workflow | nee | **3** |
+| 10 | Signaleringsplannen | nee | **3** |
+| 14 | Contactlogboek (6 typen) | nee | **3** |
+| 12 | Automatische dossiercontrole (dagelijks, 7 checks) | nee | **4** |
+| 13 | Evaluatiemodule (30/14/verlopen → GW+zorgcoörd) | nee | **4** |
+| 17 | Caseload-dashboard GW | nee | **5** |
+| 18 | Dashboard zorgcoördinator | nee | **5** |
+| 19 | Dashboard directeur | nee | **5** |
+| 20 | Dashboard eigenaar (cliënten/gemeenten/demografie/producten) | nee | **5** |
+| 21 | KPI-dashboard | nee | **5** |
+| 22 | Drill-down | querystring-patronen bestaan | **5** |
+| 16 | Autorisaties-matrix | deels (RLS clienten) | doorlopend; eindcontrole **6** |
+| 24 | Uitstroommodule | uitZorgDatum only | **6** |
+| 25 | Nazorgmodule | nee | **6** |
+| 26 | Ouderportaal | nee | toekomstig (buiten scope) |
+
+## Fase 1 — Cliëntreis-fundament + aanmeldportaal + beoordeling  [ ]
+- [ ] SQL `supabase/migrations/clientmodule_v2_fase1.sql` (idempotent):
+  - [ ] `clienten.reis_status` + backfill + check-constraint (13 slugs) + index + bidirectionele fase-sync-trigger + tijdlijn-trigger op statuswijziging.
+  - [ ] `client_tijdlijn` + RLS (read via clienten-toegang; insert alleen definer) + RPC `client_tijdlijn_lijst(p_client_id)` + `client_tijdlijn_voeg_toe(...)`.
+  - [ ] `client_aanmeldingen` (persoons-/verwijzer-/aanmeldvelden + status nieuw/in_beoordeling/meer_info/goedgekeurd/afgewezen/wachtlijst + besluit/beoordelaar/toelichting + client_id-koppeling) + `aanmeld_rate_limits` + RLS (office-read; geen anon).
+  - [ ] `client_contacten` +kolommen gezaghebbend/adres/organisatie/functie/contact_rol.
+  - [ ] RPC's: `aanmeldingen_lijst(p_status)`, `aanmelding_detail(p_id)` (incl. signed-url-paden), `aanmelding_beoordeel(p_id,p_actie,p_toelichting,p_reden_wachtlijst)` — rol-gates hard in SQL; notificaties naar beoordelaars bij nieuwe aanmelding (en naar GW'ers bij goedkeuring).
+  - [ ] private bucket `aanmelding-documenten` + storage-policies (office-read; insert alleen service-role).
+- [ ] Edge function `client-aanmelding` (verify_jwt=false): POST JSON+files(base64) → valideer → rate-limit → insert aanmelding + voorlopig clienten-record + contacten + uploads + notificatie. Deploy via deploy-functions.mjs.
+- [ ] `aanmeld-portaal.html` + `.js`: publiek formulier, alle §2-velden, meerdere contactpersonen, uploads, succes-scherm met referentienummer. Geen auth; eigen sobere styling op bestaande tokens.
+- [ ] `aanmeldingen.html` + `.js` + `aanmeldingen-data.js`: lijst (statusfilter-chips, teller), detail-modal (alle gegevens + documenten via signed URLs + tijdlijn) en 4 beoordeel-acties met slider-confirm; rol-gate page-map `{allowedRoles:[Eigenaar,Admin,Directeur,Zorgcoördinator,Gedragswetenschapper,Cliëntbeheer]}`.
+- [ ] `clientreis-ui.js` (status→label/pill-class, gedeeld) + reis-status-pill in client-detail vcard + Tijdlijn-tab in client-detail (chronologisch, event-iconen).
+- [ ] Topnav: "Aanmeldingen" in Cliënten-dropdown via rebuild-topnav.mjs (+ TOPIC_BY_PAGE); aanmeld-portaal NIET in nav (publieke URL).
+- [ ] Permissie-slugs `browse-aanmeldingen`/`beoordeel-aanmeldingen` (bs2_permissions + meta + rol-toekenning via scripts/rol-permissies.mjs).
+- [ ] Verificatie: RPC's server-side per rol getest + live 2 clean runs (licht+donker): qa-gedragswetenschapper, qa-zorgcoordinator, qa-directeur (beoordelen werkt), qa-medewerker + qa-finance (géén toegang aanmeldingen), publieke aanmelding end-to-end → verschijnt in lijst + dossier aangemaakt + tijdlijn-event. PR + merge.
+
+## Fase 2 — Intake + ondertekening + wachtlijst + beschikking-uitbreiding  [ ]
+- [ ] `client_intakes` (7 onderdelen §4 als secties: intakegesprek/veiligheids-/risico-/gezins-/onderwijs-/netwerk-/hulpvraaganalyse; status per onderdeel) — start automatisch bij goedkeuring; statusflow intake_gepland→intake_afgerond.
+- [ ] Digitale ondertekening: `client_ondertekeningen` (verklaring-type: privacy/toestemming/huisregels/informatieverstrekking; ondertekenaar-type: client/ouder/gezaghebbende/voogd; token-flow via edge function patroon contract-sign; PDF-vastlegging).
+- [ ] Wachtlijst: velden op clienten/aanmelding (urgentie, gewenst product, verwachte startdatum, reden wachtlijst) + `wachtlijst.html`-view (per cliënt §5) + dashboard-kaarten (aantal, gem. wachttijd, per gemeente, per product).
+- [ ] Beschikkingen: kolommen `gemeente`, `productcode` (+ UI detail/overzicht), 90-dagen-mijlpaal toevoegen aan `beschikking_verloop_herinneringen`, dossier-tab "Beschikkingen" ECHT maken (demo-rij eruit, live render uit beschikkingenDB incl. status §11; export-knop echt of weg).
+- [ ] Plaatsing: actie "Plaatsing plannen/starten" (reis_status plaatsing_gepland→actief, tijdlijn).
+- [ ] Verificatie idem fase 1.
+
+## Fase 3 — Actief dossier: zorgplannen, signalering, rapportages, contactlogboek, AI-samenvatting  [ ]
+- [ ] `zorgplannen` (hulpvraag/doelen jsonb/acties/evaluatiemoment/risicoanalyse/signalering + workflow concept→gw_akkoord→ter_ondertekening→actief→geevalueerd→vervangen; §9) + dossier-tab + tekenflow hergebruik fase 2.
+- [ ] `signaleringsplannen` (triggers/spanningssignalen/escalatiefases jsonb/interventies/veiligheidsafspraken; §10) + dossier-tab.
+- [ ] Rapportages-uitbreiding (§8): typen dag/ambulant/evaluatie/contact/incident; auteur_id verplicht schrijven; tijd-veld; doelen-koppeling (zorgplan-doel-id's); RLS aanscherpen: INSERT alleen gekoppelde medewerkers (medewerker↔cliënt via medewerkerEmpId/locatie) + office; SELECT idem.
+- [ ] `client_medewerkers`-koppeltabel (meerdere gekoppelde medewerkers + zorgcoördinator + GW expliciet; §6 organisatorisch) — vcard-UI uitbreiden.
+- [ ] Contactlogboek (§14): `client_contactlog` (typen oudergesprek/verwijzersoverleg/gemeentecontact/schoolcontact/MDO/casusoverleg) + dossier-tab.
+- [ ] Kwaliteit in dossier (§6): incidenten-tab ECHT (cliënt-gefilterde lijst), klachten-sectie (klacht-UI krijgt cliënt-picker), verbetermaatregelen-koppeling.
+- [ ] AI-samenvatting (§7): RPC `client_ai_samenvatting(p_client_id)` (hulpvraag/risico's/actieve doelen/laatste incidenten/laatste evaluatie/aandachtspunten, deterministisch) + kaart bovenaan dossier.
+- [ ] Verificatie idem.
+
+## Fase 4 — Automatische bewaking  [ ]
+- [ ] Dossiercontrole (§12): RPC `client_dossier_controle()` — checks: beschikking ontbreekt/verlopen, zorgplan ontbreekt/verlopen, evaluatie ontbreekt/te laat, handtekeningen ontbreken, signaleringsplan ontbreekt, verplichte documenten ontbreken → `client_dossier_issues`-tabel + dagelijkse cron + dashboardmelding "N dossiers incompleet" + notificaties.
+- [ ] Evaluatiebewaking (§13): evaluatiemoment uit zorgplan; meldingen 30/14/0 dagen → GW + zorgcoördinator (patroon beschikking_verloop met eigen log-tabel).
+- [ ] Beschikkingsbewaking-UI (§11): waarschuwingsbadges 90/60/30/verlopen in dossier-tab + overzicht.
+- [ ] Verificatie idem (incl. cron dry-run server-side).
+
+## Fase 5 — Dashboards + KPI + drill-down  [ ]
+- [ ] `clientmodule-dashboard.html`: rol-gegate views — GW-caseload (§17), Zorgcoördinator (§18), Directeur (§19), Eigenaar (§20: cliënten/gemeenten incl. omzet per gemeente via beschikkingen+facturen/demografie (geslacht+leeftijd uit aanmeld-/dossierdata)/producten), KPI-view (§21: aanmeldtrechter, actieve cliënten, verblijfsduur, gemeente-groei, zorginhoudelijke %'s).
+- [ ] RPC's `clientdash_*` SECURITY DEFINER met rolcontext-RPC (patroon incident_analyse_context); Finance-view tarieven (§16) alleen finance/admin-tier.
+- [ ] Drill-down (§22): dashboard → gefilterde cliëntenlijst (querystring) → dossier.
+- [ ] Verificatie: per rol juiste view, 2 clean runs.
+
+## Fase 6 — Uitstroom + nazorg + audittrail-UI + eindcontrole  [ ]
+- [ ] Uitstroom (§24): uitstroom-flow in dossier (datum/reden/vervolgplek/eindrapportage-link/nazorgafspraken) → reis_status uitgestroomd; tijdlijn.
+- [ ] Nazorg (§25): optioneel traject (contactmomenten/evaluaties/afspraken) → reis_status nazorg → dossier_gesloten.
+- [ ] Audittrail-UI (§23): "Geschiedenis"-tab in dossier op audit_log/tijdlijn met oude→nieuwe waarde (trg_audit-details).
+- [ ] Autorisatie-eindcontrole (§16): volledige matrix-test per rol (medewerker ziet géén tarieven/financieel/gemeentecontracten; GW caseload; zorgcoörd; finance; directeur/eigenaar alles) — server-side checks + live.
+- [ ] Eindverificatie hele cliëntreis end-to-end: aanmelding → … → dossier gesloten, 2 clean runs, alle rollen.
+
+## Test-/verificatieplan (elke fase)
+1. Server-side: RPC's per rol via qa-account-JWT's (password grant, anon-key) — bevoegd én onbevoegd.
+2. Live via Claude Chrome-extensie op https://futureflow-etf.vercel.app: qa-accounts per rol, licht+donker, 2 opeenvolgende clean runs (één fout = fixen en opnieuw beginnen met run 1). ⚠️ Vóór identity-switch: localStorage `besa-permissions-v2` wissen.
+3. Elke knop/modal/validatie van nieuwe UI aanraken; console-fouten = fail.
+4. Geen echte e-mails (alleen dry_run); admin-omgevingen read-only.
+
+## Voortgangslog
+- 2026-06-10: verkenning afgerond (6-agent audit); plan opgesteld; fase 1 gestart.
