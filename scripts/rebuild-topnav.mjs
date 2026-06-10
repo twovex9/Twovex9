@@ -183,6 +183,7 @@ function buildNav(active) {
   const INCIDENTEN = smallDropdown("incidenten", "Incidenten en klachten", "Incidenten en klachten opties", [
     { href: "incidenten", title: "Incidenten overzicht", sub: "Bekijk en meld incidenten" },
     { href: "incidenten-dashboard", title: "Dashboard", sub: "Incidenten-statistieken" },
+    { href: "incidenten-analyse", title: "Analyse &amp; kwaliteit", sub: "AI-signalering, risico's &amp; kwaliteit" },
     { href: "incidenten-categorieen", title: "Categorieën", sub: "Beheer incidentcategorieën" },
     { href: "verbeteringsmaatregelen", title: "Verbeteringsmaatregelen", sub: "Maatregelen n.a.v. incidenten" },
     { href: "klachten", title: "Klachten", sub: "Klachtenregister" },
@@ -309,6 +310,7 @@ const TOPIC_BY_PAGE = {
   "facturen-importeren.html": "Cliënten",
   "incidenten.html": "Incidenten en klachten",
   "incidenten-dashboard.html": "Incidenten en klachten",
+  "incidenten-analyse.html": "Incidenten en klachten",
   "incidenten-categorieen.html": "Incidenten en klachten",
   "incident-melden.html": "Incidenten en klachten",
   "verbeteringsmaatregelen.html": "Incidenten en klachten",

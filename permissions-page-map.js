@@ -161,6 +161,11 @@
     // ─── Incidenten ───────────────────────────────────────────────────────────
     "incidenten.html": { action: "view", entity: "incidents" },
     "incidenten-dashboard.html": { action: "view", entity: "incident-dashboard" },
+    // Incidentanalyse, risico & kwaliteit — management + kwaliteit/beleid +
+    // gedragswetenschapper. De pagina gate't intern via incident_analyse_context
+    // (niveau): Directie-view = niveau<=1, Eigenaar-view = eigenaar/admin. De
+    // RPC's zijn SECURITY DEFINER; de beoordeel-actie heeft een harde niveau<=3-check.
+    "incidenten-analyse.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Beleid", "Gedragswetenschapper", "Zorgcoördinator", "HR", "Planner"] },
     "incident-melden.html": { action: "view", entity: "incidents" },
     "incidenten-categorieen.html": { action: "view", entity: "incident-categories" },
     "verbeteringsmaatregelen.html": { action: "view", entity: "improvement-measures" },
