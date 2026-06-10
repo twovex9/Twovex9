@@ -384,14 +384,29 @@
     m.setAttribute("aria-hidden", "true");
   }
 
-  function populateMedewerkerSelect(selectEl) {
-    if (!selectEl || !global.medewerkersDB) return;
-    var all = global.medewerkersDB.getAllSync ? global.medewerkersDB.getAllSync() : [];
-    selectEl.innerHTML = '<option value="">Selecteer een teamlid</option>'
-      + all.filter(function (m) { return m && !m.archived; }).map(function (m) {
-        var naam = ((m.voornaam || "") + " " + (m.achternaam || "")).trim();
-        return '<option value="' + escapeHtml(m.id) + '">' + escapeHtml(naam) + '</option>';
-      }).join("");
+  // Houd planning.teamlid in sync met de toegewezen medewerker, zodat de dienst-tegel
+  // in de grid én de teamlid-kolom in de tabel de toewijzing direct tonen (anders blijft
+  // de tegel leeg en lijkt het toewijzen "mislukt"). De legacy single-teamlid-kolom toont
+  // de eerst-toegewezen medewerker; de detail-sectie "Toegewezen (N/M)" blijft de volledige
+  // lijst tonen. planningDB.update() dispatcht besa:planning-updated → grid + tabel re-renderen.
+  async function syncTeamlidColumn(dienstId) {
+    if (!dienstId || !global.planningDB || !global.dienstUitnodigingenDB) return;
+    var dienst = getDienst(dienstId);
+    if (!dienst) return;
+    var inv = global.dienstUitnodigingenDB.getForDienstSync(dienstId) || [];
+    var toegewezen = inv.filter(function (u) { return u.status === "toegewezen"; });
+    var nieuw = "";
+    if (toegewezen.length) {
+      var m = getMedewerker(toegewezen[0].medewerker_id);
+      nieuw = m ? ((m.voornaam || "") + " " + (m.achternaam || "")).trim() : "";
+    }
+    if (nieuw === String(dienst.teamlid || "").trim()) return;
+    try {
+      await global.planningDB.update(dienstId, { teamlid: nieuw });
+      if (currentDienst && String(currentDienst.id) === String(dienstId)) currentDienst.teamlid = nieuw;
+    } catch (e) {
+      console.error("[dienstDetail] teamlid-sync mislukt:", e);
+    }
   }
 
   // ===== BS2-parity rijke uitnodigen-picker (sub-task 2026-05-15) =====
@@ -399,7 +414,28 @@
   // Warnings: locatie-mismatch, niet-ingeroosterd, planning-overlap, verzuim.
 
   var pickerCache = { overlapByMid: null, verzuimByMid: null, dienstId: null };
-  var pickerEventsBound = false;
+
+  // De rijke picker wordt gedeeld door "Uitnodigen" en "Toewijzen". cfg bepaalt de
+  // element-id's + welke reeds-gekoppelde medewerkers uit de lijst gefilterd worden.
+  var PICKER_UITNODIGEN = {
+    key: "uitnodigen",
+    listId: "planning-uitnodigen-list",
+    hiddenId: "planning-uitnodigen-select",
+    submitId: "planning-uitnodigen-submit",
+    searchId: "planning-uitnodigen-search",
+    excludeStatuses: null, // null = élke bestaande uitnodiging/toewijzing uitsluiten
+    emptyMsg: "Alle actieve medewerkers zijn al uitgenodigd of toegewezen.",
+  };
+  var PICKER_TOEWIJZEN = {
+    key: "toewijzen",
+    listId: "planning-toewijzen-list",
+    hiddenId: "planning-toewijzen-select",
+    submitId: "planning-toewijzen-submit",
+    searchId: "planning-toewijzen-search",
+    excludeStatuses: ["toegewezen"], // alleen reeds-toegewezen medewerkers uitsluiten
+    emptyMsg: "Alle actieve medewerkers zijn al toegewezen.",
+  };
+  var pickerBound = {};
   var WEEKDAY_SLUGS = ["zo", "ma", "di", "wo", "do", "vr", "za"];
   var WEEKDAY_NAMES = { zo: "zondag", ma: "maandag", di: "dinsdag", wo: "woensdag", do: "donderdag", vr: "vrijdag", za: "zaterdag" };
 
@@ -649,11 +685,11 @@
       + '</div>';
   }
 
-  async function renderUitnodigenPicker(dienst) {
-    var listEl = document.getElementById("planning-uitnodigen-list");
-    var hiddenEl = document.getElementById("planning-uitnodigen-select");
-    var submitBtn = document.getElementById("planning-uitnodigen-submit");
-    var searchEl = document.getElementById("planning-uitnodigen-search");
+  async function renderMedewerkerPicker(dienst, cfg) {
+    var listEl = document.getElementById(cfg.listId);
+    var hiddenEl = document.getElementById(cfg.hiddenId);
+    var submitBtn = document.getElementById(cfg.submitId);
+    var searchEl = document.getElementById(cfg.searchId);
     if (!listEl || !hiddenEl || !global.medewerkersDB || !dienst) return;
 
     // Reset state per opening
@@ -673,16 +709,21 @@
 
     var data;
     try { data = await loadAvailabilityData(dienst); }
-    catch (e) { console.error("[uitnodigen-picker] data-load mislukt:", e); data = { overlapByMid: {}, verzuimByMid: {} }; }
+    catch (e) { console.error("[medewerker-picker] data-load mislukt:", e); data = { overlapByMid: {}, verzuimByMid: {} }; }
 
-    // Filter out medewerkers die al uitgenodigd/toegewezen voor DEZE dienst
+    // Filter reeds-gekoppelde medewerkers voor DEZE dienst. Uitnodigen sluit élke
+    // bestaande koppeling uit; toewijzen sluit alleen de reeds-toegewezen medewerkers
+    // uit (een uitgenodigde mag je nog steeds direct toewijzen).
     var existing = global.dienstUitnodigingenDB ? global.dienstUitnodigingenDB.getForDienstSync(dienst.id) : [];
-    var alreadyIds = {};
-    existing.forEach(function (inv) { alreadyIds[inv.medewerker_id] = true; });
-    active = active.filter(function (m) { return !alreadyIds[m.id]; });
+    var blockedIds = {};
+    existing.forEach(function (inv) {
+      if (!cfg.excludeStatuses) blockedIds[inv.medewerker_id] = true;
+      else if (cfg.excludeStatuses.indexOf(inv.status) !== -1) blockedIds[inv.medewerker_id] = true;
+    });
+    active = active.filter(function (m) { return !blockedIds[m.id]; });
 
     if (active.length === 0) {
-      listEl.innerHTML = '<div class="planning-picker-empty">Alle actieve medewerkers zijn al uitgenodigd of toegewezen.</div>';
+      listEl.innerHTML = '<div class="planning-picker-empty">' + escapeHtml(cfg.emptyMsg) + '</div>';
       return;
     }
 
@@ -694,12 +735,12 @@
     listEl.innerHTML = html;
   }
 
-  function attachUitnodigenPickerEvents() {
-    if (pickerEventsBound) return;
-    var listEl = document.getElementById("planning-uitnodigen-list");
-    var hiddenEl = document.getElementById("planning-uitnodigen-select");
-    var submitBtn = document.getElementById("planning-uitnodigen-submit");
-    var searchEl = document.getElementById("planning-uitnodigen-search");
+  function attachMedewerkerPickerEvents(cfg) {
+    if (pickerBound[cfg.key]) return;
+    var listEl = document.getElementById(cfg.listId);
+    var hiddenEl = document.getElementById(cfg.hiddenId);
+    var submitBtn = document.getElementById(cfg.submitId);
+    var searchEl = document.getElementById(cfg.searchId);
 
     if (listEl) {
       listEl.addEventListener("click", function (e) {
@@ -726,7 +767,7 @@
       });
     }
 
-    pickerEventsBound = true;
+    pickerBound[cfg.key] = true;
   }
 
   function invalidatePickerCache() { pickerCache = { overlapByMid: null, verzuimByMid: null, dienstId: null }; }
@@ -775,14 +816,18 @@
     // de UI (sub-task v3-2026-05-15). De DB-kolom `planning.open_voor_aanmelding`
     // blijft bestaan voor evt. toekomstige feature-mapping; geen UI-pad meer.
 
-    // Toewijzen
+    // Toewijzen — zelfde rijke picker als Uitnodigen (zoekveld + warnings + uurtarief)
+    attachMedewerkerPickerEvents(PICKER_TOEWIJZEN);
     var toewijzenBtn = document.getElementById("planning-detail-toewijzen-btn");
     toewijzenBtn && toewijzenBtn.addEventListener("click", function () {
       if (!canEditPlanning()) return denyEdit();
-      populateMedewerkerSelect(document.getElementById("planning-toewijzen-select"));
       var bulk = document.getElementById("planning-toewijzen-bulk");
       if (bulk) bulk.checked = false;
       openSideModal("planning-toewijzen-modal");
+      // Async: rendert eerst loading-state, dan de zoekbare lijst met warnings
+      renderMedewerkerPicker(currentDienst, PICKER_TOEWIJZEN).catch(function (e) {
+        console.error("[toewijzen] renderMedewerkerPicker mislukt:", e);
+      });
     });
     document.getElementById("planning-toewijzen-cancel") && document.getElementById("planning-toewijzen-cancel").addEventListener("click", function () { closeSideModal("planning-toewijzen-modal"); });
     document.getElementById("planning-toewijzen-close") && document.getElementById("planning-toewijzen-close").addEventListener("click", function () { closeSideModal("planning-toewijzen-modal"); });
@@ -794,6 +839,7 @@
       var bulk = document.getElementById("planning-toewijzen-bulk");
       try {
         await global.dienstUitnodigingenDB.add({ dienst_id: currentDienstId, medewerker_id: mid, status: "toegewezen" });
+        await syncTeamlidColumn(currentDienstId);
         if (bulk && bulk.checked && currentDienst.parent_dienst_id) {
           // Bulk: alle gerelateerde diensten met zelfde parent
           var allDiensten = global.planningDB.getAllSync();
@@ -802,7 +848,10 @@
               && d.id !== currentDienstId;
           });
           for (var i = 0; i < related.length; i++) {
-            try { await global.dienstUitnodigingenDB.add({ dienst_id: related[i].id, medewerker_id: mid, status: "toegewezen" }); } catch (e) { /* */ }
+            try {
+              await global.dienstUitnodigingenDB.add({ dienst_id: related[i].id, medewerker_id: mid, status: "toegewezen" });
+              await syncTeamlidColumn(related[i].id);
+            } catch (e) { /* */ }
           }
         }
         if (global.showActionFeedback) global.showActionFeedback("saved", "Medewerker toegewezen");
@@ -814,15 +863,15 @@
       }
     });
 
-    // Uitnodigen — BS2-parity rijke picker met avatar/warnings/uurtarief (vervangt populateMedewerkerSelect)
-    attachUitnodigenPickerEvents();
+    // Uitnodigen — BS2-parity rijke picker met avatar/warnings/uurtarief
+    attachMedewerkerPickerEvents(PICKER_UITNODIGEN);
     var uitnodigenBtn = document.getElementById("planning-detail-uitnodigen-btn");
     uitnodigenBtn && uitnodigenBtn.addEventListener("click", function () {
       if (!canEditPlanning()) return denyEdit();
       openSideModal("planning-uitnodigen-modal");
       // Async: rendert eerst loading-state, dan list met warnings na fetch
-      renderUitnodigenPicker(currentDienst).catch(function (e) {
-        console.error("[uitnodigen] renderUitnodigenPicker mislukt:", e);
+      renderMedewerkerPicker(currentDienst, PICKER_UITNODIGEN).catch(function (e) {
+        console.error("[uitnodigen] renderMedewerkerPicker mislukt:", e);
       });
     });
     document.getElementById("planning-uitnodigen-cancel") && document.getElementById("planning-uitnodigen-cancel").addEventListener("click", function () { closeSideModal("planning-uitnodigen-modal"); });
@@ -887,6 +936,7 @@
       var mid = btn.dataset.medewerkerId;
       try {
         await global.dienstUitnodigingenDB.add({ dienst_id: currentDienstId, medewerker_id: mid, status: "toegewezen" });
+        await syncTeamlidColumn(currentDienstId);
         if (global.showActionFeedback) global.showActionFeedback("saved", "Toegewezen via AI");
         await global.dienstUitnodigingenDB.fetchForDienst(currentDienstId);
         refreshAllSections();
@@ -904,6 +954,7 @@
       if (!uid) return;
       try {
         await global.dienstUitnodigingenDB.remove(uid, currentDienstId);
+        await syncTeamlidColumn(currentDienstId);
         if (global.showActionFeedback) global.showActionFeedback("deleted", "Toewijzing verwijderd");
       } catch (err) {
         if (global.showError) global.showError("Verwijderen mislukt: " + err.message);

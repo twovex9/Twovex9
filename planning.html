@@ -777,19 +777,26 @@
 
   <!-- Toewijzen modal (over view-modal) -->
   <div class="modal-overlay planning-side-modal" id="planning-toewijzen-modal" hidden aria-hidden="true">
-    <div class="modal-dialog modal-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="planning-toewijzen-title">
+    <div class="modal-dialog planning-toewijzen-dialog" role="dialog" aria-modal="true" aria-labelledby="planning-toewijzen-title">
       <div class="modal-header">
         <h2 class="modal-title" id="planning-toewijzen-title">Medewerker Toewijzen</h2>
         <button type="button" class="modal-close" id="planning-toewijzen-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="modal-text">Selecteer een medewerker om aan deze dienst toe te wijzen. Toegewezen medewerkers worden onmiddellijk aan de dienst toegevoegd.</p>
-        <select id="planning-toewijzen-select" class="modal-input modal-select" required></select>
+        <p class="modal-text">Zoek en selecteer een medewerker om aan deze dienst toe te wijzen. Toegewezen medewerkers worden onmiddellijk aan de dienst toegevoegd.</p>
+        <div class="planning-medewerker-picker">
+          <div class="planning-medewerker-picker__search">
+            <svg class="planning-picker-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="planning-toewijzen-search" placeholder="Zoeken op naam..." class="planning-picker-search-input" autocomplete="off" />
+          </div>
+          <div class="planning-medewerker-picker__list" id="planning-toewijzen-list" role="listbox" aria-label="Beschikbare medewerkers"></div>
+          <input type="hidden" id="planning-toewijzen-select" value="" />
+        </div>
         <label class="modal-label planning-checkbox" style="margin-top:12px"><input type="checkbox" id="planning-toewijzen-bulk" /> Toepassen op vergelijkbare diensten</label>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-outline" id="planning-toewijzen-cancel">Annuleren</button>
-        <button type="button" class="btn-primary" id="planning-toewijzen-submit">Toewijzen</button>
+        <button type="button" class="btn-primary" id="planning-toewijzen-submit" disabled>Toewijzen</button>
       </div>
     </div>
   </div>

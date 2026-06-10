@@ -11213,7 +11213,8 @@ select.cd-config-select {
 
 /* Rijke medewerker-picker voor uitnodigen-modal (BS2-parity):
    zoekveld + verticale lijst met avatar, naam, warnings, uurtarief */
-.planning-uitnodigen-dialog { width: min(520px, 100% - 32px); }
+.planning-uitnodigen-dialog,
+.planning-toewijzen-dialog { width: min(520px, 100% - 32px); }
 .planning-medewerker-picker {
   display: flex;
   flex-direction: column;
