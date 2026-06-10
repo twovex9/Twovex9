@@ -64,21 +64,21 @@
 | 25 | Nazorgmodule | nee | **6** |
 | 26 | Ouderportaal | nee | toekomstig (buiten scope) |
 
-## Fase 1 — Cliëntreis-fundament + aanmeldportaal + beoordeling  [ ]
-- [ ] SQL `supabase/migrations/clientmodule_v2_fase1.sql` (idempotent):
-  - [ ] `clienten.reis_status` + backfill + check-constraint (13 slugs) + index + bidirectionele fase-sync-trigger + tijdlijn-trigger op statuswijziging.
-  - [ ] `client_tijdlijn` + RLS (read via clienten-toegang; insert alleen definer) + RPC `client_tijdlijn_lijst(p_client_id)` + `client_tijdlijn_voeg_toe(...)`.
-  - [ ] `client_aanmeldingen` (persoons-/verwijzer-/aanmeldvelden + status nieuw/in_beoordeling/meer_info/goedgekeurd/afgewezen/wachtlijst + besluit/beoordelaar/toelichting + client_id-koppeling) + `aanmeld_rate_limits` + RLS (office-read; geen anon).
-  - [ ] `client_contacten` +kolommen gezaghebbend/adres/organisatie/functie/contact_rol.
-  - [ ] RPC's: `aanmeldingen_lijst(p_status)`, `aanmelding_detail(p_id)` (incl. signed-url-paden), `aanmelding_beoordeel(p_id,p_actie,p_toelichting,p_reden_wachtlijst)` — rol-gates hard in SQL; notificaties naar beoordelaars bij nieuwe aanmelding (en naar GW'ers bij goedkeuring).
-  - [ ] private bucket `aanmelding-documenten` + storage-policies (office-read; insert alleen service-role).
-- [ ] Edge function `client-aanmelding` (verify_jwt=false): POST JSON+files(base64) → valideer → rate-limit → insert aanmelding + voorlopig clienten-record + contacten + uploads + notificatie. Deploy via deploy-functions.mjs.
-- [ ] `aanmeld-portaal.html` + `.js`: publiek formulier, alle §2-velden, meerdere contactpersonen, uploads, succes-scherm met referentienummer. Geen auth; eigen sobere styling op bestaande tokens.
-- [ ] `aanmeldingen.html` + `.js` + `aanmeldingen-data.js`: lijst (statusfilter-chips, teller), detail-modal (alle gegevens + documenten via signed URLs + tijdlijn) en 4 beoordeel-acties met slider-confirm; rol-gate page-map `{allowedRoles:[Eigenaar,Admin,Directeur,Zorgcoördinator,Gedragswetenschapper,Cliëntbeheer]}`.
-- [ ] `clientreis-ui.js` (status→label/pill-class, gedeeld) + reis-status-pill in client-detail vcard + Tijdlijn-tab in client-detail (chronologisch, event-iconen).
-- [ ] Topnav: "Aanmeldingen" in Cliënten-dropdown via rebuild-topnav.mjs (+ TOPIC_BY_PAGE); aanmeld-portaal NIET in nav (publieke URL).
-- [ ] Permissie-slugs `browse-aanmeldingen`/`beoordeel-aanmeldingen` (bs2_permissions + meta + rol-toekenning via scripts/rol-permissies.mjs).
-- [ ] Verificatie: RPC's server-side per rol getest + live 2 clean runs (licht+donker): qa-gedragswetenschapper, qa-zorgcoordinator, qa-directeur (beoordelen werkt), qa-medewerker + qa-finance (géén toegang aanmeldingen), publieke aanmelding end-to-end → verschijnt in lijst + dossier aangemaakt + tijdlijn-event. PR + merge.
+## Fase 1 — Cliëntreis-fundament + aanmeldportaal + beoordeling  [x] ✅ AFGEROND 2026-06-10 (PR #617)
+- [x] SQL `supabase/migrations/clientmodule_v2_fase1.sql` (idempotent):
+  - [x] `clienten.reis_status` + backfill + check-constraint (13 slugs) + index + bidirectionele fase-sync-trigger + tijdlijn-trigger op statuswijziging.
+  - [x] `client_tijdlijn` + RLS (read via clienten-toegang; insert alleen definer) + RPC `client_tijdlijn_lijst(p_client_id)` + `client_tijdlijn_voeg_toe(...)`.
+  - [x] `client_aanmeldingen` (persoons-/verwijzer-/aanmeldvelden + status nieuw/in_beoordeling/meer_info/goedgekeurd/afgewezen/wachtlijst + besluit/beoordelaar/toelichting + client_id-koppeling) + `aanmeld_rate_limits` + RLS (office-read; geen anon).
+  - [x] `client_contacten` +kolommen gezaghebbend/adres/organisatie/functie/contact_rol.
+  - [x] RPC's: `aanmeldingen_lijst(p_status)`, `aanmelding_detail(p_id)` (incl. signed-url-paden), `aanmelding_beoordeel(p_id,p_actie,p_toelichting,p_reden_wachtlijst)` — rol-gates hard in SQL; notificaties naar beoordelaars bij nieuwe aanmelding (en naar GW'ers bij goedkeuring).
+  - [x] private bucket `aanmelding-documenten` + storage-policies (office-read; insert alleen service-role).
+- [x] Edge function `client-aanmelding` (verify_jwt=false): POST JSON+files(base64) → valideer → rate-limit → insert aanmelding + voorlopig clienten-record + contacten + uploads + notificatie. Deploy via deploy-functions.mjs.
+- [x] `aanmeld-portaal.html` + `.js`: publiek formulier, alle §2-velden, meerdere contactpersonen, uploads, succes-scherm met referentienummer. Geen auth; eigen sobere styling op bestaande tokens.
+- [x] `aanmeldingen.html` + `.js` + `aanmeldingen-data.js`: lijst (statusfilter-chips, teller), detail-modal (alle gegevens + documenten via signed URLs + tijdlijn) en 4 beoordeel-acties met slider-confirm; rol-gate page-map `{allowedRoles:[Eigenaar,Admin,Directeur,Zorgcoördinator,Gedragswetenschapper,Cliëntbeheer]}`.
+- [x] `clientreis-ui.js` (status→label/pill-class, gedeeld) + reis-status-pill in client-detail vcard + Tijdlijn-tab in client-detail (chronologisch, event-iconen).
+- [x] Topnav: "Aanmeldingen" in Cliënten-dropdown via rebuild-topnav.mjs (+ TOPIC_BY_PAGE); aanmeld-portaal NIET in nav (publieke URL).
+- [x] Permissie-slugs `browse-aanmeldingen`/`beoordeel-aanmeldingen` (bs2_permissions + meta + rol-toekenning via scripts/rol-permissies.mjs).
+- [x] Verificatie: RPC's server-side per rol getest + live 2 clean runs (licht+donker): qa-gedragswetenschapper, qa-zorgcoordinator, qa-directeur (beoordelen werkt), qa-medewerker + qa-finance (géén toegang aanmeldingen), publieke aanmelding end-to-end → verschijnt in lijst + dossier aangemaakt + tijdlijn-event. PR + merge.
 
 ## Fase 2 — Intake + ondertekening + wachtlijst + beschikking-uitbreiding  [ ]
 - [ ] `client_intakes` (7 onderdelen §4 als secties: intakegesprek/veiligheids-/risico-/gezins-/onderwijs-/netwerk-/hulpvraaganalyse; status per onderdeel) — start automatisch bij goedkeuring; statusflow intake_gepland→intake_afgerond.
@@ -125,3 +125,5 @@
 
 ## Voortgangslog
 - 2026-06-10: verkenning afgerond (6-agent audit); plan opgesteld; fase 1 gestart.
+- 2026-06-10: **Fase 1 AFGEROND + live** (PR #617). Server-side rolmatrix 17/17 PASS; edge end-to-end (PDF→private bucket, honeypot, validatie); live 2 clean runs (run 1 licht / run 2 donker): portaal→AM-2026-0003/0004, GW meer-info(+verplichte-toelichting-validatie)→zorgcoörd goedkeuren→dossier pill+tijdlijn+contacten, directeur wachtlijst+signed-PDF-check, medewerker+finance fail-closed Geen toegang, audit_log met echte gebruikers. QA-fixtures AM-2026-0001..0004 (cliënten cl_*, reis_status intake_gepland/wachtlijst) BEWUST laten staan: nodig als instroom voor fase 2 (intake/wachtlijst). Bekend cosmetisch punt: clienten.html-sidebar heeft (per-pagina statisch) nog geen Aanmeldingen-link; topnav-dropdown wél — meenemen in fase 2.
+- Valkuil-notitie: CDP-screenshots timen soms uit direct na een klik (extensie-glitch); pagina zelf is gezond — verifieer dan via javascript_tool.
