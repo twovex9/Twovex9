@@ -25397,6 +25397,18 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   cursor: pointer;
 }
 .emp-onb-doc--found .emp-onb-doc-check-label { color: var(--text-secondary); }
+/* G41 — SKJ-saldo-badge in de Functioneren-tab (opleidingen-sectie) */
+.cf-skj-saldo {
+  display: inline-block;
+  margin-left: auto;
+  margin-right: 12px;
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: var(--font-table-head);
+  font-weight: 600;
+}
 .emp-onb-gesprek-datum {
   margin-left: 8px;
   border: 1px solid var(--line);

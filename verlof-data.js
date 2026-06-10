@@ -62,10 +62,22 @@
     };
   }
 
+  // G25 — een type is geldig als het in de klassieke lijst staat ÓF als
+  // beheerbaar verloftype (verloftypesDB) bestaat. Onbekend → "wettelijk".
+  function isKnownType(t) {
+    if (TYPE_VALUES.indexOf(t) >= 0) return true;
+    try {
+      if (global.verloftypesDB && global.verloftypesDB.getAllSync) {
+        return global.verloftypesDB.getAllSync().some(function (vt) { return vt && vt.code === t; });
+      }
+    } catch (e) { /* */ }
+    return false;
+  }
+
   function objToPayload(o) {
     var safe = o || {};
     var status = STATUS_VALUES.indexOf(safe.status) >= 0 ? safe.status : "concept";
-    var type = TYPE_VALUES.indexOf(safe.type) >= 0 ? safe.type : "wettelijk";
+    var type = isKnownType(safe.type) ? safe.type : "wettelijk";
     var payload = {
       id: safe.id,
       medewerker_id: safe.medewerkerId || null,

@@ -235,26 +235,57 @@
     <main class="content">
       <div class="content-header">
         <h1>Verloftypes</h1>
+        <div class="header-actions">
+          <button class="btn-primary" type="button" id="vt-add-btn">+ Verloftype toevoegen</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search" type="search" id="vt-search" placeholder="Zoeken..." autocomplete="off" />
       </div>
 
       <section class="table-card table-card--compact">
-        <div style="padding:48px 24px;text-align:center;">
-          <div style="max-width:480px;margin:0 auto;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:0.55;">
-              <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-              <line x1="7" y1="7" x2="7.01" y2="7"></line>
-            </svg>
-            <h2 style="font-size:18px;margin:0 0 12px;color:var(--text);">Verloftypes — gereserveerd</h2>
-            <p style="font-size:14px;color:var(--text-secondary);margin:0 0 8px;">
-              Deze functionaliteit komt in een volgende module/fase.
-            </p>
-            <p style="font-size:13px;color:var(--text-muted);margin:0;">
-              De pagina is gereserveerd in de structuur conform BS2-pariteit.
-            </p>
-          </div>
+        <div class="table-wrapper">
+          <table class="employees-table" id="vt-table">
+            <thead>
+              <tr>
+                <th data-col="label"><span class="th-label">Label</span></th>
+                <th data-col="code"><span class="th-label">Code</span></th>
+                <th data-col="volgorde"><span class="th-label">Volgorde</span></th>
+                <th data-col="actief"><span class="th-label">Actief</span></th>
+                <th data-col="acties"></th>
+              </tr>
+            </thead>
+            <tbody id="vt-tbody">
+              <tr><td colspan="5" class="mu-empty">Verloftypes laden…</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- Add/Edit modal -->
+  <div class="modal-overlay" id="vt-edit-modal" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="vt-edit-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="vt-edit-title" class="modal-title">Verloftype toevoegen</h2>
+        <button type="button" class="modal-close" id="vt-edit-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="vt-edit-form" class="modal-body">
+        <label class="modal-label" for="vt-edit-label">Label</label>
+        <input type="text" id="vt-edit-label" class="modal-input" required maxlength="60" autocomplete="off" />
+
+        <label class="modal-label" for="vt-edit-volgorde">Volgorde</label>
+        <input type="number" id="vt-edit-volgorde" class="modal-input" min="0" max="999" step="1" value="0" />
+
+        <input type="hidden" id="vt-edit-id" />
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="vt-edit-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary">Opslaan</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
@@ -278,5 +309,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="verloftypes-data.js?v=918f1ad" defer></script>
+  <script src="verloftypes.js?v=918f1ad" defer></script>
 </body>
 </html>

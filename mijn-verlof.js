@@ -114,8 +114,24 @@
     }
   }
 
+  // G25 — vul de type-select met de beheerbare verloftypes (actief, op volgorde).
+  // De hardcoded opties in de HTML blijven de fallback als de tabel leeg/onbereikbaar is.
+  function fillTypes() {
+    var sel = $("mv-type");
+    if (!sel || !window.verloftypesDB || !window.verloftypesDB.getActiveSync) return;
+    var actief = window.verloftypesDB.getActiveSync();
+    if (!actief || !actief.length) return;
+    var huidige = sel.value;
+    sel.innerHTML = actief.map(function (t) {
+      return '<option value="' + esc(t.code) + '">' + esc(t.label) + "</option>";
+    }).join("");
+    if (huidige && actief.some(function (t) { return t.code === huidige; })) sel.value = huidige;
+  }
+
   function wire(mid) {
     if ($("mv-add-btn")) $("mv-add-btn").addEventListener("click", function () { if ($("mv-form")) $("mv-form").hidden = !$("mv-form").hidden; });
+    fillTypes();
+    window.addEventListener("besa:verloftypes-updated", fillTypes);
     if ($("mv-cancel")) $("mv-cancel").addEventListener("click", function () { if ($("mv-form")) $("mv-form").hidden = true; });
     if ($("mv-submit")) $("mv-submit").addEventListener("click", function () { submit(mid); });
     window.addEventListener("besa:verlof-updated", function () { loadAanvragen(mid); });
