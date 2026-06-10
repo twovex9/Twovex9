@@ -297,6 +297,14 @@
               <span class="id-kpi-sub">afgesloten trajecten</span>
             </div>
           </div>
+          <div class="id-kpi id-kpi--red" id="vz-kpi-bradford-tile">
+            <div class="id-kpi-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+            <div class="id-kpi-body">
+              <span class="id-kpi-label">Frequent verzuim</span>
+              <span class="id-kpi-value" id="vz-kpi-bradford">0</span>
+              <span class="id-kpi-sub" id="vz-kpi-bradford-sub">Bradford-factor ≥ 125 (laatste 52 wk)</span>
+            </div>
+          </div>
         </section>
 
         <div class="vz-toolbar">
@@ -355,6 +363,17 @@
                 <button type="button" class="btn-primary" id="vz-cm-add">+ Contactmoment</button>
               </header>
               <div class="vz-cm-list" id="vz-cm-list"></div>
+            </section>
+
+            <section class="id-card vz-sec vz-sec--acties">
+              <header class="id-card-head">
+                <div>
+                  <h2 class="id-card-title">Acties</h2>
+                  <p class="id-card-sub">Afgesproken re-integratie-acties met deadline en eigenaar</p>
+                </div>
+                <button type="button" class="btn-primary" id="vz-act-add">+ Actie</button>
+              </header>
+              <div class="vz-cm-list" id="vz-act-list"></div>
             </section>
 
             <section class="id-card vz-sec vz-sec--docs">
@@ -511,6 +530,40 @@
     </div>
   </div>
 
+  <!-- ============================ MODAL: actie (G35) ============================ -->
+  <div class="modal-overlay vz-modal-overlay" id="vz-act-modal" hidden aria-hidden="true">
+    <div class="modal-card vz-modal-card vz-modal-card--sm" role="dialog" aria-modal="true" aria-labelledby="vz-act-title" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title" id="vz-act-title">Actie</h2>
+        <button type="button" class="modal-close" id="vz-act-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="vz-act-form" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="vz-act-id" value="" />
+          <label class="modal-label">Omschrijving
+            <input type="text" id="vz-act-omschrijving" class="modal-input" required maxlength="200" autocomplete="off" placeholder="Bijv. werkplekonderzoek inplannen" />
+          </label>
+          <div class="vz-form-row2">
+            <label class="modal-label">Deadline
+              <input type="date" id="vz-act-deadline" class="modal-input" />
+            </label>
+            <label class="modal-label">Uitgevoerd op
+              <input type="date" id="vz-act-voltooid" class="modal-input" />
+            </label>
+          </div>
+          <div class="vz-gdpr-warning" role="note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Beschrijf alleen administratieve feiten — <strong>geen medische gegevens</strong>.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="vz-act-cancel">Annuleren</button>
+          <button type="submit" class="btn-primary">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="top-nav-overflow.js?v=918f1ad"></script>
   <script src="sidebar-nav.js?v=918f1ad"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -535,6 +588,7 @@
   <script src="verzuim-data.js?v=918f1ad"></script>
   <script src="verzuim-mijlpalen-data.js?v=918f1ad"></script>
   <script src="verzuim-contactmomenten-data.js?v=918f1ad"></script>
+  <script src="verzuim-acties-data.js?v=918f1ad"></script>
   <script src="verzuim-documenten-data.js?v=918f1ad"></script>
   <script src="verzuim.js?v=918f1ad"></script>
 </body>
