@@ -274,6 +274,73 @@
     ready: bootPromise,
   };
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // G57 — herbruikbare alleen-lezen-modus per rol.
+  //
+  //   besaApplyReadOnly(["HR", "Facilitair"])                  // hele pagina
+  //   besaApplyReadOnly(["HR"], { scope: "#planning-root",
+  //                               banner: "Kijkmodus: alleen-lezen voor HR" })
+  //
+  // Heeft de ingelogde gebruiker een van de opgegeven rollen (admin-tier wint
+  // en blijft volledig), dan worden alle invoervelden en muterende knoppen
+  // binnen de scope uitgeschakeld + komt er één duidelijke banner. Een
+  // MutationObserver houdt dynamisch gerenderde content ook read-only.
+  // Idempotent; geeft true terug als de kijkmodus actief is.
+  // Opt-outs per element: data-ro-keep (blijft bruikbaar), data-ro-hide
+  // (extra te verbergen element).
+  // ──────────────────────────────────────────────────────────────────────────
+  function besaApplyReadOnly(roles, opts) {
+    var doc = global.document;
+    if (!doc || !Array.isArray(roles) || !roles.length) return false;
+    if (!state.loaded) {
+      // Permissies nog niet geladen → opnieuw zodra ze er zijn (de gate-laag
+      // blijft intussen fail-closed voor strikte pagina's).
+      bootPromise.then(function () { besaApplyReadOnly(roles, opts); });
+      return false;
+    }
+    if (besaIsAdminTier()) return false;
+    var mine = getRoleNames();
+    var match = roles.some(function (r) { return mine.indexOf(r) !== -1; });
+    if (!match) return false;
+
+    var o = opts || {};
+    var root = o.scope ? doc.querySelector(o.scope) : (doc.querySelector("main.content") || doc.body);
+    if (!root) return false;
+
+    function lock(scopeEl) {
+      var ctrls = scopeEl.querySelectorAll(
+        "input:not([type=hidden]):not([data-ro-keep]), select:not([data-ro-keep]), textarea:not([data-ro-keep])"
+      );
+      Array.prototype.forEach.call(ctrls, function (el) {
+        // zoekvelden/filters blijven bruikbaar (lezen ≠ muteren)
+        if (el.classList.contains("search") || el.type === "search") return;
+        el.disabled = true;
+      });
+      var btns = scopeEl.querySelectorAll(
+        ".btn-primary:not([data-ro-keep]), .employee-delete-btn, .hr-restore-btn, [data-ro-hide]"
+      );
+      Array.prototype.forEach.call(btns, function (el) { el.hidden = true; });
+    }
+
+    lock(root);
+    try {
+      var mo = new MutationObserver(function () { lock(root); });
+      mo.observe(root, { childList: true, subtree: true });
+    } catch (e) { /* zonder observer blijft de eerste lock staan */ }
+
+    if (!doc.getElementById("besa-readonly-banner")) {
+      var b = doc.createElement("div");
+      b.id = "besa-readonly-banner";
+      b.className = "besa-readonly-banner";
+      b.setAttribute("role", "note");
+      b.textContent = o.banner || "Kijkmodus — je rol heeft alleen-lezen toegang tot deze pagina.";
+      root.insertBefore(b, root.firstChild);
+    }
+    return true;
+  }
+  global.besaApplyReadOnly = besaApplyReadOnly;
+  global.besaPermissions.applyReadOnly = besaApplyReadOnly;
+
   // Achterwaartse compat: een aantal docs/oude code-fragmenten gebruikt
   // `besaPermissions.getCurrentRol()`. Geef de "primaire" rol terug (admin-tier
   // wint, anders eerste in lijst). Niet gebruikt door nieuwe gate-laag.

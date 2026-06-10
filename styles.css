@@ -25397,6 +25397,21 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   cursor: pointer;
 }
 .emp-onb-doc--found .emp-onb-doc-check-label { color: var(--text-secondary); }
+/* G57 — alleen-lezen-banner van besaApplyReadOnly */
+.besa-readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--yellow);
+  border-radius: var(--r-md);
+  background: var(--yellow-soft);
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+}
+
 /* G41 — SKJ-saldo-badge in de Functioneren-tab (opleidingen-sectie) */
 .cf-skj-saldo {
   display: inline-block;
