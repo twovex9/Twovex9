@@ -291,6 +291,19 @@
                     <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
                   </div>
                 </th>
+                <th data-col="client" class="th-sort">
+                  <div class="th-sort-inner">
+                    <span class="th-label">Cliënt</span>
+                    <button type="button" class="th-sort-trigger" aria-expanded="false" aria-haspopup="true" aria-label="Sorteren op cliënt">
+                      <span class="th-sort-arrows" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div class="th-sort-menu" role="menu" hidden>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="asc"><span class="th-opt-ico">↑</span> Asc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="desc"><span class="th-opt-ico">↓</span> Desc</button>
+                    <button type="button" class="th-sort-opt" role="menuitem" data-action="hide"><span class="th-opt-ico th-opt-ico--hide">∅</span> Hide</button>
+                  </div>
+                </th>
                 <th data-col="status" class="th-sort">
                   <div class="th-sort-inner">
                     <span class="th-label">Status</span>
@@ -367,6 +380,12 @@
           <textarea class="modal-input" id="vm-add-beschr" rows="4"></textarea>
         </div>
         <div class="modal-field">
+          <label class="modal-label" for="vm-add-client">Cliënt (optioneel)</label>
+          <select class="modal-input modal-select" id="vm-add-client">
+            <option value="">— Geen cliënt —</option>
+          </select>
+        </div>
+        <div class="modal-field">
           <label class="modal-label" for="vm-add-vervaldatum">Vervaldatum</label>
           <input class="modal-input" type="date" id="vm-add-vervaldatum" placeholder="dd-mm-jjjj" />
         </div>
@@ -402,6 +421,12 @@
         <div class="modal-field">
           <label class="modal-label" for="vm-edit-beschr">Beschrijving</label>
           <textarea class="modal-input" id="vm-edit-beschr" rows="4"></textarea>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="vm-edit-client">Cliënt (optioneel)</label>
+          <select class="modal-input modal-select" id="vm-edit-client">
+            <option value="">— Geen cliënt —</option>
+          </select>
         </div>
         <div class="modal-field">
           <label class="modal-label" for="vm-edit-vervaldatum">Vervaldatum</label>
@@ -494,6 +519,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="clienten-data.js?v=918f1ad" defer></script>
   <script src="verbeteringsmaatregelen-data.js?v=918f1ad" defer></script>
   <script src="verbeteringsmaatregelen.js?v=918f1ad" defer></script>
 </body>

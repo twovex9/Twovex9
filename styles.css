@@ -28408,3 +28408,297 @@ body.ond-body {
   border: 1px solid var(--yellow);
   color: var(--yellow);
 }
+
+/* ============================================================
+   Cliëntmodule 2.0 — fase 3: AI-samenvatting, zorgplannen,
+   signaleringsplannen, contactlogboek, kwaliteit, team-blok
+   ============================================================ */
+
+/* --- AI-cliëntsamenvatting (kaart boven de dossier-tabs) --- */
+.cd-ai-kaart {
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.cd-ai-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cd-ai-titel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+.cd-ai-punten {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cd-ai-punt {
+  font-size: var(--font-base);
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+.cd-ai-punt--rood {
+  background: var(--red-soft);
+  border-color: var(--red);
+}
+.cd-ai-punt--oranje {
+  background: var(--yellow-soft);
+  border-color: var(--yellow);
+}
+.cd-ai-punt--info {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+.cd-ai-ok {
+  margin: 0 0 10px;
+  font-size: var(--font-base);
+  color: var(--green);
+}
+.cd-ai-feiten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.cd-ai-feit {
+  font-size: var(--font-table-head);
+  color: var(--text-secondary);
+}
+
+/* --- Zorgplan-/signaleringsplan-kaarten --- */
+.cd-zp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cd-zp-kaart {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 14px 16px;
+}
+.cd-zp-kaart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cd-zp-kaart-titel {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+.cd-zp-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  background: transparent;
+  white-space: nowrap;
+}
+.cd-zp-status--actief {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+.cd-zp-status--gw_akkoord,
+.cd-zp-status--ter_ondertekening {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.cd-zp-status--geevalueerd {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: var(--yellow-soft);
+}
+.cd-zp-veld {
+  margin: 4px 0;
+  font-size: var(--font-base);
+  color: var(--text);
+}
+.cd-zp-meta {
+  margin: 8px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+.cd-zp-acties {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.cd-zp-doelen {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cd-zp-doel {
+  font-size: var(--font-base);
+  color: var(--text);
+}
+.cd-zp-doel-status {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+.cd-zp-doel-status--behaald {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+.cd-zp-doel-status--gestopt {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
+}
+.cd-zp-doel-datum {
+  color: var(--text-muted);
+}
+
+/* --- Zorgplan-modal: doelen-editor --- */
+.cd-zp-modal-card {
+  width: min(720px, calc(100vw - 32px));
+}
+.cd-zp-doelen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cd-zp-doel-rij {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto auto;
+  gap: 6px;
+  align-items: center;
+}
+.cd-zp-doel-del {
+  flex: none;
+}
+.cd-zp-f-groot {
+  flex: 1;
+}
+
+/* --- Signaleringsplan: escalatiefases --- */
+.cd-sp-fases {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+.cd-sp-fase {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cd-sp-fase--groen {
+  border-left-color: var(--green);
+}
+.cd-sp-fase--oranje {
+  border-left-color: var(--yellow);
+}
+.cd-sp-fase--rood {
+  border-left-color: var(--red);
+}
+.cd-sp-fase-titel {
+  margin: 0;
+  font-size: var(--font-table-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* --- Kwaliteit-secties in de Incidenten-tab --- */
+.cd-kwal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+.cd-kwal-h4 {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* --- Team-blok in de vcard --- */
+.cd-team-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cd-team-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 6px 8px;
+}
+.cd-team-naam {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cd-team-rol {
+  font-size: var(--font-ui-badge);
+  color: var(--text-secondary);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.cd-team-del {
+  flex: none;
+}
+
+/* --- Rapportages: doelen-koppeling in de modal --- */
+.cd-rap-doelen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

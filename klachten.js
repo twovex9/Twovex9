@@ -41,6 +41,49 @@
     catch (e) { return []; }
   }
 
+  // ─── Cliënt-koppeling ──────────────────────────────────────────────────────
+  function clientNaam(c) {
+    if (!c) return "";
+    var delen = [];
+    if (c.achternaam) delen.push(c.achternaam);
+    if (c.voornaam) delen.push(c.voornaam);
+    return delen.join(", ");
+  }
+  function clientNaamById(id) {
+    if (!id || !window.clientenDB || !window.clientenDB.getByIdSync) return "";
+    return clientNaam(window.clientenDB.getByIdSync(id));
+  }
+  function populateClientSelect(currentId) {
+    var sel = $("kl-f-client");
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Geen cliënt —</option>';
+    var cs = (window.clientenDB && window.clientenDB.getAllSync) ? (window.clientenDB.getAllSync() || []) : [];
+    cs.filter(function (c) { return c && !c.archived; })
+      .sort(function (a, b) {
+        var an = (a.achternaam || "") + " " + (a.voornaam || "");
+        var bn = (b.achternaam || "") + " " + (b.voornaam || "");
+        return an.localeCompare(bn, "nl");
+      })
+      .forEach(function (c) {
+        var opt = document.createElement("option");
+        opt.value = c.id;
+        var label = clientNaam(c) || String(c.id);
+        if (c.clientnummer !== "" && c.clientnummer != null) label += " (" + c.clientnummer + ")";
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+    sel.value = currentId ? String(currentId) : "";
+    // Gearchiveerde/onbekende cliënt van een bestaande klacht toch tonen,
+    // zodat bewerken de koppeling niet stilzwijgend wist.
+    if (currentId && sel.value !== String(currentId)) {
+      var extra = document.createElement("option");
+      extra.value = String(currentId);
+      extra.textContent = clientNaamById(currentId) || String(currentId);
+      sel.appendChild(extra);
+      sel.value = String(currentId);
+    }
+  }
+
   function renderStats() {
     var act = all().filter(function (k) { return !k.archived; });
     $("kl-stat-total").textContent = act.filter(function (k) { return k.status !== "afgehandeld"; }).length;
@@ -106,6 +149,7 @@
         + "<td>" + statusSelectHtml(k) + "</td>"
         + '<td><span class="kl-prio kl-prio--' + escHtml(k.prioriteit) + '">' + (PRIO_LABEL[k.prioriteit] || "—") + "</span></td>"
         + "<td>" + melder + "</td>"
+        + "<td>" + escHtml(clientNaamById(k.clientId) || "—") + "</td>"
         + "<td>" + escHtml(fmtDate(k.ontvangenOp)) + "</td>"
         + "<td>" + escHtml(k.behandelaarNaam || "—") + "</td>"
         + '<td class="kl-action-td">' + actionsHtml(k) + "</td>"
@@ -123,6 +167,7 @@
     $("kl-f-prioriteit").value = k ? k.prioriteit : "middel";
     $("kl-f-melder").value = k ? (k.melderNaam || "") : "";
     $("kl-f-meldertype").value = k ? (k.melderType || "") : "";
+    populateClientSelect(k ? (k.clientId || "") : "");
     $("kl-f-ontvangen").value = k ? (k.ontvangenOp ? String(k.ontvangenOp).slice(0, 10) : "") : todayISO();
     $("kl-f-behandelaar").value = k ? (k.behandelaarNaam || "") : "";
     var err = $("kl-form-err"); if (err) { err.hidden = true; err.textContent = ""; }
@@ -154,6 +199,7 @@
       prioriteit: $("kl-f-prioriteit").value,
       melderNaam: $("kl-f-melder").value.trim(),
       melderType: $("kl-f-meldertype").value,
+      clientId: $("kl-f-client").value || null,
       ontvangenOp: $("kl-f-ontvangen").value || null,
       behandelaarNaam: $("kl-f-behandelaar").value.trim(),
     };
@@ -237,6 +283,17 @@
     tbody.addEventListener("click", onTbodyClick);
     tbody.addEventListener("change", onStatusChange);
     window.addEventListener("besa:klachten-updated", render);
+    window.addEventListener("besa:clienten-updated", function () {
+      render();
+      var m = $("kl-modal");
+      if (m && !m.hasAttribute("hidden")) {
+        var sel = $("kl-f-client");
+        populateClientSelect(sel ? sel.value : "");
+      }
+    });
+    if (window.clientenDB && window.clientenDB.ready && typeof window.clientenDB.ready.then === "function") {
+      window.clientenDB.ready.then(render, function () { /* fout-feedback via besa-sync-reporter */ });
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

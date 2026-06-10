@@ -420,6 +420,7 @@
         if (window.clientenDB && typeof window.clientenDB.refresh === "function") await window.clientenDB.refresh();
         syncReisPill();
         syncReisActies();
+        renderAiKaart();
         if (pans.t && !pans.t.hidden) renderTijdlijn();
         if (pans.k && !pans.k.hidden) renderIntake();
       } catch (err) {
@@ -664,13 +665,16 @@
     n: document.getElementById("cd-pan-n"),
     j: document.getElementById("cd-pan-j"),
     r: document.getElementById("cd-pan-r"),
+    z: document.getElementById("cd-pan-z"),
+    s: document.getElementById("cd-pan-s"),
+    g: document.getElementById("cd-pan-g"),
     m: document.getElementById("cd-pan-m"),
     q: document.getElementById("cd-pan-q"),
     i: document.getElementById("cd-pan-i"),
     t: document.getElementById("cd-pan-t"),
     k: document.getElementById("cd-pan-k"),
   };
-  var panOrder = "dbpcnjrmqitk";
+  var panOrder = "dbpcnjrzsgmqitk";
 
   // Wordt gezet door initClientBeschikkingen (verderop) — render-hook voor de
   // Beschikkingen-tab zodat tab-activatie altijd verse data toont.
@@ -702,6 +706,10 @@
     if (k === "p") renderBetalingen();
     if (k === "c") renderContacten();
     if (k === "r") renderRapportages();
+    if (k === "z") renderZorgplannen();
+    if (k === "s") renderSignaleringsplannen();
+    if (k === "g") renderContactlog();
+    if (k === "i") renderKwaliteit();
     if (k === "m") renderMedicatie();
     if (k === "q") renderVragenlijsten();
     if (k === "t") renderTijdlijn();
@@ -1161,6 +1169,8 @@
       ondVerk.innerHTML = "";
       verkl.forEach(function (v) {
         if (!v || !v.type) return;
+        // 'zorgplan' loopt via de Zorgplannen-tab (eigen RPC met plan-inhoud).
+        if (v.type === "zorgplan") return;
         var o = document.createElement("option");
         o.value = v.type;
         o.textContent = v.titel || v.type;
@@ -1532,12 +1542,14 @@
     rapPendingFile = null;
     if (rapFFile) rapFFile.value = "";
     if (rapFFileInfo) { rapFFileInfo.hidden = true; rapFFileInfo.textContent = ""; }
+    var rapFTijd = document.getElementById("cd-rap-f-tijd");
 
     if (rec && rec.id) {
       if (rapTitle) rapTitle.textContent = "Rapportage bewerken";
       rapFId.value = rec.id;
       rapFTitel.value = rec.titel || "";
       rapFDatum.value = rec.rapportDatum || "";
+      if (rapFTijd) rapFTijd.value = rec.tijd || "";
       rapFType.value = rec.type || "";
       rapFStatus.value = rec.status || "concept";
       rapFInhoud.value = rec.inhoud || "";
@@ -1550,10 +1562,37 @@
       rapForm.reset();
       rapFId.value = "";
       rapFStatus.value = "concept";
+      if (rapFTijd) rapFTijd.value = "";
     }
+    rapVulDoelenKoppeling(rec && Array.isArray(rec.doelIds) ? rec.doelIds : []);
     rapModal.hidden = false;
     rapModal.setAttribute("aria-hidden", "false");
     try { rapFTitel.focus(); } catch (e) { /* */ }
+  }
+
+  // Doelen-koppeling (§8): checkbox-lijst van de doelen uit het actieve zorgplan.
+  async function rapVulDoelenKoppeling(geselecteerd) {
+    var wrap = document.getElementById("cd-rap-f-doelen-wrap");
+    var lijst = document.getElementById("cd-rap-f-doelen");
+    if (!wrap || !lijst) return;
+    wrap.hidden = true;
+    lijst.innerHTML = "";
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl || !window.zorgplannenDB) return;
+    try {
+      var plannen = await window.zorgplannenDB.fetchVoorClient(cl.id);
+      var actief = plannen.find(function (p) { return p && p.status === "actief" && !p.archived; });
+      var doelen = actief && Array.isArray(actief.doelen) ? actief.doelen : [];
+      if (!doelen.length) return;
+      var sel = (geselecteerd || []).map(String);
+      lijst.innerHTML = doelen.map(function (d) {
+        var did = String((d && d.id) || "");
+        if (!did) return "";
+        var checked = sel.indexOf(did) >= 0 ? " checked" : "";
+        return '<label class="cd-med-check"><input type="checkbox" value="' + escapeAttr(did) + '"' + checked + ' /> <span>' + escapeHtml((d && d.titel) || "—") + '</span></label>';
+      }).join("");
+      wrap.hidden = false;
+    } catch (e) { /* doelen-koppeling is optioneel */ }
   }
   function closeRapModal() {
     if (!rapModal) return;
@@ -1577,6 +1616,8 @@
     var titel = (rapFTitel.value || "").trim();
     if (!titel) { try { rapFTitel.focus(); } catch (e) {} return; }
 
+    var rapFTijd = document.getElementById("cd-rap-f-tijd");
+    var doelChecks = document.querySelectorAll("#cd-rap-f-doelen input[type=checkbox]:checked");
     var rec = {
       clientId: cl.id,
       titel: titel,
@@ -1584,6 +1625,8 @@
       status: rapFStatus.value || "concept",
       type: rapFType.value || "",
       rapportDatum: rapFDatum.value || null,
+      tijd: rapFTijd && rapFTijd.value ? rapFTijd.value : null,
+      doelIds: Array.prototype.map.call(doelChecks, function (ch) { return ch.value; }),
     };
 
     if (rapFFile && rapFFile.files && rapFFile.files[0]) {
@@ -1666,6 +1709,974 @@
     var panR = document.getElementById("cd-pan-r");
     if (panR && !panR.hidden) renderRapportages();
   });
+
+  // ============================================================
+  // FASE 3 — gedeelde helpers (huidige user + GW-akkoord-zicht)
+  // ============================================================
+
+  var f3UserIdPromise = null;
+  function f3CurrentUserId() {
+    if (!f3UserIdPromise) {
+      f3UserIdPromise = (async function () {
+        try {
+          var s = await window.besaSupabase.auth.getSession();
+          return (s && s.data && s.data.session && s.data.session.user && s.data.session.user.id) || null;
+        } catch (e) { return null; }
+      })();
+    }
+    return f3UserIdPromise;
+  }
+
+  // Cosmetische check; de harde poort is zorgplan_kan_gw_akkoord() in SQL.
+  function f3KanGwAkkoord(ctx) {
+    if (window.profilesDB && typeof window.profilesDB.isAdmin === "function" && window.profilesDB.isAdmin()) return true;
+    var rollen = (ctx && Array.isArray(ctx.rollen)) ? ctx.rollen : [];
+    return rollen.indexOf("gedragswetenschapper") >= 0 || rollen.indexOf("admin") >= 0 || rollen.indexOf("eigenaar") >= 0;
+  }
+
+  function f3OndertekenLink(token) {
+    return window.location.origin + "/onderteken?token=" + encodeURIComponent(String(token == null ? "" : token));
+  }
+
+  async function f3KopieerNaarKlembord(tekst) {
+    try { await navigator.clipboard.writeText(tekst); return true; } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // ZORGPLANNEN-tab (fase 3, §9) — workflow concept → gw_akkoord
+  // → ter_ondertekening → actief → geevalueerd / vervangen
+  // ============================================================
+
+  var ZP_STATUS_LABEL = {
+    concept: "Concept",
+    gw_akkoord: "GW-akkoord",
+    ter_ondertekening: "Ter ondertekening",
+    actief: "Actief",
+    geevalueerd: "Geëvalueerd",
+    vervangen: "Vervangen",
+  };
+  var zpCache = [];
+
+  function zpStatusPill(status) {
+    var s = String(status || "concept");
+    return '<span class="cd-zp-status cd-zp-status--' + escapeAttr(s) + '">' + escapeHtml(ZP_STATUS_LABEL[s] || s) + '</span>';
+  }
+
+  function zpDoelStatusLabel(s) {
+    return s === "behaald" ? "Behaald" : s === "gestopt" ? "Gestopt" : "Open";
+  }
+
+  async function renderZorgplannen() {
+    var list = document.getElementById("cd-zp-list");
+    var empty = document.getElementById("cd-zp-empty");
+    var addBtn = document.getElementById("cd-zp-add-btn");
+    if (!list || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    var kanBeoordelen = !!(ctx && ctx.kan_beoordelen);
+    if (addBtn) craSetVisible(addBtn, kanBeoordelen);
+
+    var rows = await window.zorgplannenDB.fetchVoorClient(cl.id);
+    zpCache = rows;
+    var zichtbaar = rows.filter(function (p) { return p && !p.archived; });
+
+    list.innerHTML = zichtbaar.map(function (p) {
+      var doelen = Array.isArray(p.doelen) ? p.doelen : [];
+      var doelenHtml = doelen.length
+        ? '<ul class="cd-zp-doelen">' + doelen.map(function (d) {
+            var ds = String((d && d.status) || "open");
+            return '<li class="cd-zp-doel"><span class="cd-zp-doel-status cd-zp-doel-status--' + escapeAttr(ds) + '">' + escapeHtml(zpDoelStatusLabel(ds)) + '</span> ' +
+              escapeHtml((d && d.titel) || "—") +
+              ((d && d.streefdatum) ? ' <span class="cd-zp-doel-datum">(streefdatum ' + escapeHtml(formatDateNL(d.streefdatum)) + ')</span>' : '') +
+            '</li>';
+          }).join("") + '</ul>'
+        : '<p class="client-detail-hint">Nog geen doelen vastgelegd.</p>';
+
+      var acties = [];
+      if (kanBeoordelen && p.status === "concept") {
+        acties.push('<button type="button" class="btn-outline cd-zp-act" data-act="bewerken" data-id="' + escapeAttr(p.id) + '">Bewerken</button>');
+      }
+      if (p.status === "concept" && f3KanGwAkkoord(ctx)) {
+        acties.push('<button type="button" class="btn-primary cd-zp-act" data-act="gw-akkoord" data-id="' + escapeAttr(p.id) + '">GW-akkoord geven</button>');
+      }
+      if (kanBeoordelen && p.status === "gw_akkoord") {
+        acties.push('<button type="button" class="btn-primary cd-zp-act" data-act="ter-ondertekening" data-id="' + escapeAttr(p.id) + '">Ter ondertekening</button>');
+        acties.push('<button type="button" class="btn-outline cd-zp-act" data-act="activeer" data-id="' + escapeAttr(p.id) + '">Direct activeren</button>');
+      }
+      if (kanBeoordelen && p.status === "ter_ondertekening") {
+        if (p.__ondertekening && p.__ondertekening.status === "open") {
+          acties.push('<button type="button" class="btn-outline cd-zp-act" data-act="link" data-id="' + escapeAttr(p.id) + '">Onderteken-link kopiëren</button>');
+        }
+        acties.push('<button type="button" class="btn-outline cd-zp-act" data-act="activeer" data-id="' + escapeAttr(p.id) + '">Activeren zonder digitale ondertekening</button>');
+      }
+      if (kanBeoordelen && p.status === "actief") {
+        acties.push('<button type="button" class="btn-primary cd-zp-act" data-act="evalueer" data-id="' + escapeAttr(p.id) + '">Evalueren</button>');
+      }
+      if (kanBeoordelen && (p.status === "geevalueerd" || p.status === "vervangen")) {
+        acties.push('<button type="button" class="employee-delete-btn cd-zp-act" data-act="archiveer" data-id="' + escapeAttr(p.id) + '" aria-label="Archiveren">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>');
+      }
+
+      var meta = [];
+      if (p.gw_akkoord_op) meta.push("GW-akkoord: " + escapeHtml(p.gw_akkoord_door_naam || "—") + " (" + escapeHtml(formatDateNL(String(p.gw_akkoord_op).slice(0, 10))) + ")");
+      if (p.actief_sinds) meta.push("Actief sinds " + escapeHtml(formatDateNL(String(p.actief_sinds).slice(0, 10))));
+      if (p.geevalueerd_op) meta.push("Geëvalueerd op " + escapeHtml(formatDateNL(String(p.geevalueerd_op).slice(0, 10))));
+      if (p.evaluatiemoment) meta.push("Evaluatiemoment: " + escapeHtml(formatDateNL(p.evaluatiemoment)));
+      if (p.__ondertekening && p.__ondertekening.status === "ondertekend") meta.push("Digitaal ondertekend");
+
+      return '<article class="cd-zp-kaart">' +
+        '<div class="cd-zp-kaart-head">' +
+          '<h4 class="cd-zp-kaart-titel">' + escapeHtml(p.titel || "Zorgplan") + '</h4>' +
+          zpStatusPill(p.status) +
+        '</div>' +
+        (p.hulpvraag ? '<p class="cd-zp-veld"><strong>Hulpvraag:</strong> ' + escapeHtml(p.hulpvraag) + '</p>' : '') +
+        doelenHtml +
+        (p.acties ? '<p class="cd-zp-veld"><strong>Acties:</strong> ' + escapeHtml(p.acties) + '</p>' : '') +
+        (p.risicoanalyse ? '<p class="cd-zp-veld"><strong>Risicoanalyse:</strong> ' + escapeHtml(p.risicoanalyse) + '</p>' : '') +
+        (p.signalering ? '<p class="cd-zp-veld"><strong>Signalering:</strong> ' + escapeHtml(p.signalering) + '</p>' : '') +
+        (p.evaluatie_verslag ? '<p class="cd-zp-veld"><strong>Evaluatieverslag:</strong> ' + escapeHtml(p.evaluatie_verslag) + '</p>' : '') +
+        (meta.length ? '<p class="cd-zp-meta">' + meta.join(" · ") + '</p>' : '') +
+        (acties.length ? '<div class="cd-zp-acties">' + acties.join("") + '</div>' : '') +
+      '</article>';
+    }).join("");
+    craSetVisible(empty, zichtbaar.length === 0);
+  }
+
+  // --- Zorgplan-modal (nieuw/bewerken, alleen status concept) ---
+  var zpModal = document.getElementById("cd-zp-modal");
+  var zpDoelenList = document.getElementById("cd-zp-f-doelen");
+  var zpDoelSeq = 0;
+
+  function zpNieuwDoelId() {
+    zpDoelSeq += 1;
+    return "doel-" + Date.now().toString(36) + "-" + zpDoelSeq;
+  }
+
+  function zpDoelRijHtml(d) {
+    var doel = d || {};
+    return '<div class="cd-zp-doel-rij" data-doel-id="' + escapeAttr(doel.id || zpNieuwDoelId()) + '">' +
+      '<input class="modal-input cd-zp-doel-titel" type="text" placeholder="Doel *" value="' + escapeAttr(doel.titel || "") + '" />' +
+      '<input class="modal-input cd-zp-doel-omschrijving" type="text" placeholder="Omschrijving (optioneel)" value="' + escapeAttr(doel.omschrijving || "") + '" />' +
+      '<select class="modal-input cd-zp-doel-statussel">' +
+        '<option value="open"' + (doel.status === "behaald" || doel.status === "gestopt" ? "" : " selected") + '>Open</option>' +
+        '<option value="behaald"' + (doel.status === "behaald" ? " selected" : "") + '>Behaald</option>' +
+        '<option value="gestopt"' + (doel.status === "gestopt" ? " selected" : "") + '>Gestopt</option>' +
+      '</select>' +
+      '<input class="modal-input cd-zp-doel-streefdatum" type="date" value="' + escapeAttr(doel.streefdatum || "") + '" aria-label="Streefdatum" />' +
+      '<button type="button" class="modal-close cd-zp-doel-del" aria-label="Doel verwijderen"><span aria-hidden="true">&times;</span></button>' +
+    '</div>';
+  }
+
+  function zpLeesDoelenUitForm() {
+    if (!zpDoelenList) return [];
+    return Array.prototype.map.call(zpDoelenList.querySelectorAll(".cd-zp-doel-rij"), function (rij) {
+      var titel = (rij.querySelector(".cd-zp-doel-titel") || {}).value || "";
+      if (!titel.trim()) return null;
+      return {
+        id: rij.getAttribute("data-doel-id") || zpNieuwDoelId(),
+        titel: titel.trim(),
+        omschrijving: ((rij.querySelector(".cd-zp-doel-omschrijving") || {}).value || "").trim(),
+        status: (rij.querySelector(".cd-zp-doel-statussel") || {}).value || "open",
+        streefdatum: (rij.querySelector(".cd-zp-doel-streefdatum") || {}).value || null,
+      };
+    }).filter(Boolean);
+  }
+
+  function openZpModal(rec) {
+    if (!zpModal) return;
+    var titelEl = document.getElementById("cd-zp-modal-title");
+    document.getElementById("cd-zp-f-id").value = rec && rec.id ? rec.id : "";
+    document.getElementById("cd-zp-f-titel").value = rec ? (rec.titel || "Zorgplan") : "Zorgplan";
+    document.getElementById("cd-zp-f-hulpvraag").value = rec ? (rec.hulpvraag || "") : "";
+    document.getElementById("cd-zp-f-acties").value = rec ? (rec.acties || "") : "";
+    document.getElementById("cd-zp-f-risico").value = rec ? (rec.risicoanalyse || "") : "";
+    document.getElementById("cd-zp-f-signalering").value = rec ? (rec.signalering || "") : "";
+    document.getElementById("cd-zp-f-evaluatie").value = rec && rec.evaluatiemoment ? rec.evaluatiemoment : "";
+    if (titelEl) titelEl.textContent = rec && rec.id ? "Zorgplan bewerken" : "Zorgplan toevoegen";
+    if (zpDoelenList) {
+      var doelen = rec && Array.isArray(rec.doelen) ? rec.doelen : [];
+      zpDoelenList.innerHTML = doelen.length ? doelen.map(zpDoelRijHtml).join("") : zpDoelRijHtml(null);
+    }
+    zpModal.hidden = false;
+    zpModal.setAttribute("aria-hidden", "false");
+    try { document.getElementById("cd-zp-f-titel").focus(); } catch (e) { /* */ }
+  }
+  function closeZpModal() {
+    if (!zpModal) return;
+    zpModal.hidden = true;
+    zpModal.setAttribute("aria-hidden", "true");
+  }
+
+  async function saveZorgplanFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var titelEl = document.getElementById("cd-zp-f-titel");
+    var titel = (titelEl.value || "").trim();
+    if (!titel) { try { titelEl.focus(); } catch (e) {} return; }
+    var rec = {
+      id: document.getElementById("cd-zp-f-id").value || null,
+      clientId: cl.id,
+      titel: titel,
+      hulpvraag: (document.getElementById("cd-zp-f-hulpvraag").value || "").trim(),
+      doelen: zpLeesDoelenUitForm(),
+      acties: (document.getElementById("cd-zp-f-acties").value || "").trim(),
+      risicoanalyse: (document.getElementById("cd-zp-f-risico").value || "").trim(),
+      signalering: (document.getElementById("cd-zp-f-signalering").value || "").trim(),
+      evaluatiemoment: document.getElementById("cd-zp-f-evaluatie").value || null,
+    };
+    try {
+      await window.zorgplannenDB.opslaan(rec);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Zorgplan");
+      closeZpModal();
+    } catch (err) {
+      if (window.showError) window.showError("Zorgplan opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+
+  document.getElementById("cd-zp-add-btn")?.addEventListener("click", function () { openZpModal(null); });
+  document.getElementById("cd-zp-modal-close")?.addEventListener("click", closeZpModal);
+  document.getElementById("cd-zp-cancel-btn")?.addEventListener("click", closeZpModal);
+  document.getElementById("cd-zp-save-btn")?.addEventListener("click", function (e) { e.preventDefault(); saveZorgplanFromForm(); });
+  document.getElementById("cd-zp-form")?.addEventListener("submit", function (e) { e.preventDefault(); saveZorgplanFromForm(); });
+  if (zpModal) zpModal.addEventListener("click", function (e) { if (e.target === zpModal) closeZpModal(); });
+  document.getElementById("cd-zp-f-doel-add")?.addEventListener("click", function () {
+    if (zpDoelenList) zpDoelenList.insertAdjacentHTML("beforeend", zpDoelRijHtml(null));
+  });
+  if (zpDoelenList) {
+    zpDoelenList.addEventListener("click", function (e) {
+      var del = e.target && e.target.closest ? e.target.closest(".cd-zp-doel-del") : null;
+      if (del) { var rij = del.closest(".cd-zp-doel-rij"); if (rij) rij.remove(); }
+    });
+  }
+
+  // --- Zorgplan ter ondertekening (modal) ---
+  var zpOndModal = document.getElementById("cd-zp-ond-modal");
+  function openZpOndModal(planId) {
+    if (!zpOndModal) return;
+    document.getElementById("cd-zp-ond-id").value = planId;
+    document.getElementById("cd-zp-ond-naam").value = "";
+    var result = document.getElementById("cd-zp-ond-result");
+    if (result) { result.hidden = true; }
+    var form = document.getElementById("cd-zp-ond-form");
+    if (form) form.hidden = false;
+    var saveBtn = document.getElementById("cd-zp-ond-save");
+    if (saveBtn) { saveBtn.disabled = false; craSetVisible(saveBtn, true); }
+    zpOndModal.hidden = false;
+    zpOndModal.setAttribute("aria-hidden", "false");
+  }
+  function closeZpOndModal() {
+    if (!zpOndModal) return;
+    zpOndModal.hidden = true;
+    zpOndModal.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("cd-zp-ond-close")?.addEventListener("click", closeZpOndModal);
+  document.getElementById("cd-zp-ond-cancel")?.addEventListener("click", closeZpOndModal);
+  if (zpOndModal) zpOndModal.addEventListener("click", function (e) { if (e.target === zpOndModal) closeZpOndModal(); });
+  document.getElementById("cd-zp-ond-save")?.addEventListener("click", async function () {
+    var planId = document.getElementById("cd-zp-ond-id").value;
+    var ondType = document.getElementById("cd-zp-ond-type").value;
+    var naamEl = document.getElementById("cd-zp-ond-naam");
+    var naam = (naamEl.value || "").trim();
+    if (!naam) { try { naamEl.focus(); } catch (e) {} return; }
+    var btn = this;
+    btn.disabled = true;
+    try {
+      var res = await window.zorgplannenDB.terOndertekening(planId, ondType, naam);
+      var form = document.getElementById("cd-zp-ond-form");
+      if (form) form.hidden = true;
+      var result = document.getElementById("cd-zp-ond-result");
+      var linkEl = document.getElementById("cd-zp-ond-link");
+      if (linkEl) linkEl.value = f3OndertekenLink(res && res.token);
+      if (result) result.hidden = false;
+      craSetVisible(btn, false);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Ondertekening aangevraagd");
+      renderZorgplannen();
+    } catch (err) {
+      btn.disabled = false;
+      if (window.showError) window.showError("Ter ondertekening aanbieden mislukt: " + (err && err.message || err));
+    }
+  });
+  document.getElementById("cd-zp-ond-copy")?.addEventListener("click", async function () {
+    var linkEl = document.getElementById("cd-zp-ond-link");
+    if (!linkEl) return;
+    var ok = await f3KopieerNaarKlembord(linkEl.value);
+    if (window.showActionFeedback) window.showActionFeedback(ok ? "saved" : "error", ok ? "Link gekopieerd" : "Kopiëren mislukt");
+  });
+
+  // --- Zorgplan evalueren (modal) ---
+  var zpEvalModal = document.getElementById("cd-zp-eval-modal");
+  function openZpEvalModal(planId) {
+    if (!zpEvalModal) return;
+    document.getElementById("cd-zp-eval-id").value = planId;
+    document.getElementById("cd-zp-eval-verslag").value = "";
+    zpEvalModal.hidden = false;
+    zpEvalModal.setAttribute("aria-hidden", "false");
+    try { document.getElementById("cd-zp-eval-verslag").focus(); } catch (e) { /* */ }
+  }
+  function closeZpEvalModal() {
+    if (!zpEvalModal) return;
+    zpEvalModal.hidden = true;
+    zpEvalModal.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("cd-zp-eval-close")?.addEventListener("click", closeZpEvalModal);
+  document.getElementById("cd-zp-eval-cancel")?.addEventListener("click", closeZpEvalModal);
+  if (zpEvalModal) zpEvalModal.addEventListener("click", function (e) { if (e.target === zpEvalModal) closeZpEvalModal(); });
+  document.getElementById("cd-zp-eval-save")?.addEventListener("click", async function () {
+    var planId = document.getElementById("cd-zp-eval-id").value;
+    var verslag = (document.getElementById("cd-zp-eval-verslag").value || "").trim();
+    this.disabled = true;
+    try {
+      await window.zorgplannenDB.evalueer(planId, verslag || null);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Zorgplan geëvalueerd");
+      closeZpEvalModal();
+      renderZorgplannen();
+      renderAiKaart();
+    } catch (err) {
+      if (window.showError) window.showError("Evalueren mislukt: " + (err && err.message || err));
+    }
+    this.disabled = false;
+  });
+
+  // --- Zorgplan-kaart-acties ---
+  document.getElementById("cd-zp-list")?.addEventListener("click", async function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest(".cd-zp-act") : null;
+    if (!btn) return;
+    var act = btn.getAttribute("data-act");
+    var id = btn.getAttribute("data-id");
+    var plan = zpCache.find(function (p) { return p && String(p.id) === String(id); });
+    if (!plan) return;
+
+    if (act === "bewerken") { openZpModal(plan); return; }
+    if (act === "ter-ondertekening") { openZpOndModal(id); return; }
+    if (act === "evalueer") { openZpEvalModal(id); return; }
+    if (act === "link") {
+      var token = plan.__ondertekening && plan.__ondertekening.token;
+      var ok = await f3KopieerNaarKlembord(f3OndertekenLink(token));
+      if (window.showActionFeedback) window.showActionFeedback(ok ? "saved" : "error", ok ? "Link gekopieerd" : "Kopiëren mislukt");
+      return;
+    }
+    if (act === "gw-akkoord") {
+      var okGw = await window.showSliderConfirmModal({
+        title: "GW-akkoord geven op dit zorgplan?",
+        preview: plan.titel || "Zorgplan",
+        okLabel: "Akkoord geven",
+        cancelLabel: "Annuleren",
+      });
+      if (!okGw) return;
+      try {
+        await window.zorgplannenDB.gwAkkoord(id);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "GW-akkoord");
+        renderZorgplannen();
+      } catch (err) {
+        if (window.showError) window.showError("GW-akkoord mislukt: " + (err && err.message || err));
+      }
+      return;
+    }
+    if (act === "activeer") {
+      var okAct = await window.showSliderConfirmModal({
+        title: "Zorgplan activeren? Een eerder actief plan wordt vervangen.",
+        preview: plan.titel || "Zorgplan",
+        okLabel: "Activeren",
+        cancelLabel: "Annuleren",
+      });
+      if (!okAct) return;
+      try {
+        await window.zorgplannenDB.activeer(id);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Zorgplan actief");
+        renderZorgplannen();
+        renderAiKaart();
+      } catch (err) {
+        if (window.showError) window.showError("Activeren mislukt: " + (err && err.message || err));
+      }
+      return;
+    }
+    if (act === "archiveer") {
+      var okArc = await window.showArchiveConfirm({ preview: plan.titel || "Zorgplan" });
+      if (!okArc) return;
+      try {
+        await window.zorgplannenDB.archive(id);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Zorgplan");
+        renderZorgplannen();
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+  window.addEventListener("besa:zorgplannen-updated", function () {
+    if (pans.z && !pans.z.hidden) renderZorgplannen();
+  });
+
+  // ============================================================
+  // SIGNALERINGSPLANNEN-tab (fase 3, §10)
+  // ============================================================
+
+  var SP_STATUS_LABEL = { concept: "Concept", actief: "Actief", vervangen: "Vervangen" };
+  var SP_FASE_KLEUREN = ["groen", "oranje", "rood"];
+  var SP_FASE_LABELS = { groen: "Fase groen — ontspannen", oranje: "Fase oranje — spanning loopt op", rood: "Fase rood — escalatie" };
+  var spCache = [];
+
+  async function renderSignaleringsplannen() {
+    var list = document.getElementById("cd-sp-list");
+    var empty = document.getElementById("cd-sp-empty");
+    var addBtn = document.getElementById("cd-sp-add-btn");
+    if (!list || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    var kanBeoordelen = !!(ctx && ctx.kan_beoordelen);
+    if (addBtn) craSetVisible(addBtn, kanBeoordelen);
+
+    var rows = await window.signaleringsplannenDB.fetchVoorClient(cl.id);
+    spCache = rows;
+    var zichtbaar = rows.filter(function (p) { return p && !p.archived; });
+
+    list.innerHTML = zichtbaar.map(function (p) {
+      var fases = Array.isArray(p.escalatiefases) ? p.escalatiefases : [];
+      var fasesHtml = fases.map(function (f) {
+        var kleur = SP_FASE_KLEUREN.indexOf(String((f && f.fase) || "")) >= 0 ? String(f.fase) : "groen";
+        return '<div class="cd-sp-fase cd-sp-fase--' + kleur + '">' +
+          '<p class="cd-sp-fase-titel">' + escapeHtml(SP_FASE_LABELS[kleur] || kleur) + '</p>' +
+          ((f && f.signalen) ? '<p class="cd-zp-veld"><strong>Signalen:</strong> ' + escapeHtml(f.signalen) + '</p>' : '') +
+          ((f && f.interventies) ? '<p class="cd-zp-veld"><strong>Interventies:</strong> ' + escapeHtml(f.interventies) + '</p>' : '') +
+        '</div>';
+      }).join("");
+
+      var acties = [];
+      if (kanBeoordelen && p.status === "concept") {
+        acties.push('<button type="button" class="btn-outline cd-sp-act" data-act="bewerken" data-id="' + escapeAttr(p.id) + '">Bewerken</button>');
+        acties.push('<button type="button" class="btn-primary cd-sp-act" data-act="activeer" data-id="' + escapeAttr(p.id) + '">Activeren</button>');
+      }
+      if (kanBeoordelen && p.status === "vervangen") {
+        acties.push('<button type="button" class="employee-delete-btn cd-sp-act" data-act="archiveer" data-id="' + escapeAttr(p.id) + '" aria-label="Archiveren">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>');
+      }
+
+      return '<article class="cd-zp-kaart">' +
+        '<div class="cd-zp-kaart-head">' +
+          '<h4 class="cd-zp-kaart-titel">Signaleringsplan</h4>' +
+          '<span class="cd-zp-status cd-zp-status--' + escapeAttr(p.status) + '">' + escapeHtml(SP_STATUS_LABEL[p.status] || p.status) + '</span>' +
+        '</div>' +
+        (p.triggers ? '<p class="cd-zp-veld"><strong>Triggers:</strong> ' + escapeHtml(p.triggers) + '</p>' : '') +
+        (p.spanningssignalen ? '<p class="cd-zp-veld"><strong>Spanningssignalen:</strong> ' + escapeHtml(p.spanningssignalen) + '</p>' : '') +
+        (fasesHtml ? '<div class="cd-sp-fases">' + fasesHtml + '</div>' : '') +
+        (p.interventies ? '<p class="cd-zp-veld"><strong>Algemene interventies:</strong> ' + escapeHtml(p.interventies) + '</p>' : '') +
+        (p.veiligheidsafspraken ? '<p class="cd-zp-veld"><strong>Veiligheidsafspraken:</strong> ' + escapeHtml(p.veiligheidsafspraken) + '</p>' : '') +
+        (p.actief_sinds ? '<p class="cd-zp-meta">Actief sinds ' + escapeHtml(formatDateNL(String(p.actief_sinds).slice(0, 10))) + '</p>' : '') +
+        (acties.length ? '<div class="cd-zp-acties">' + acties.join("") + '</div>' : '') +
+      '</article>';
+    }).join("");
+    craSetVisible(empty, zichtbaar.length === 0);
+  }
+
+  var spModal = document.getElementById("cd-sp-modal");
+  function spFaseVeld(kleur, soort) {
+    return document.getElementById("cd-sp-f-" + kleur + "-" + soort);
+  }
+  function openSpModal(rec) {
+    if (!spModal) return;
+    var titelEl = document.getElementById("cd-sp-modal-title");
+    document.getElementById("cd-sp-f-id").value = rec && rec.id ? rec.id : "";
+    document.getElementById("cd-sp-f-triggers").value = rec ? (rec.triggers || "") : "";
+    document.getElementById("cd-sp-f-signalen").value = rec ? (rec.spanningssignalen || "") : "";
+    document.getElementById("cd-sp-f-interventies").value = rec ? (rec.interventies || "") : "";
+    document.getElementById("cd-sp-f-veiligheid").value = rec ? (rec.veiligheidsafspraken || "") : "";
+    var fases = rec && Array.isArray(rec.escalatiefases) ? rec.escalatiefases : [];
+    SP_FASE_KLEUREN.forEach(function (kleur) {
+      var f = fases.find(function (x) { return x && x.fase === kleur; }) || {};
+      var sEl = spFaseVeld(kleur, "signalen");
+      var iEl = spFaseVeld(kleur, "interventies");
+      if (sEl) sEl.value = f.signalen || "";
+      if (iEl) iEl.value = f.interventies || "";
+    });
+    if (titelEl) titelEl.textContent = rec && rec.id ? "Signaleringsplan bewerken" : "Signaleringsplan toevoegen";
+    spModal.hidden = false;
+    spModal.setAttribute("aria-hidden", "false");
+    try { document.getElementById("cd-sp-f-triggers").focus(); } catch (e) { /* */ }
+  }
+  function closeSpModal() {
+    if (!spModal) return;
+    spModal.hidden = true;
+    spModal.setAttribute("aria-hidden", "true");
+  }
+  async function saveSignaleringsplanFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var fases = SP_FASE_KLEUREN.map(function (kleur) {
+      var signalen = ((spFaseVeld(kleur, "signalen") || {}).value || "").trim();
+      var interventies = ((spFaseVeld(kleur, "interventies") || {}).value || "").trim();
+      if (!signalen && !interventies) return null;
+      return { fase: kleur, signalen: signalen, interventies: interventies };
+    }).filter(Boolean);
+    var rec = {
+      id: document.getElementById("cd-sp-f-id").value || null,
+      clientId: cl.id,
+      triggers: (document.getElementById("cd-sp-f-triggers").value || "").trim(),
+      spanningssignalen: (document.getElementById("cd-sp-f-signalen").value || "").trim(),
+      escalatiefases: fases,
+      interventies: (document.getElementById("cd-sp-f-interventies").value || "").trim(),
+      veiligheidsafspraken: (document.getElementById("cd-sp-f-veiligheid").value || "").trim(),
+    };
+    try {
+      await window.signaleringsplannenDB.opslaan(rec);
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Signaleringsplan");
+      closeSpModal();
+    } catch (err) {
+      if (window.showError) window.showError("Signaleringsplan opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+  document.getElementById("cd-sp-add-btn")?.addEventListener("click", function () { openSpModal(null); });
+  document.getElementById("cd-sp-modal-close")?.addEventListener("click", closeSpModal);
+  document.getElementById("cd-sp-cancel-btn")?.addEventListener("click", closeSpModal);
+  document.getElementById("cd-sp-save-btn")?.addEventListener("click", function (e) { e.preventDefault(); saveSignaleringsplanFromForm(); });
+  document.getElementById("cd-sp-form")?.addEventListener("submit", function (e) { e.preventDefault(); saveSignaleringsplanFromForm(); });
+  if (spModal) spModal.addEventListener("click", function (e) { if (e.target === spModal) closeSpModal(); });
+
+  document.getElementById("cd-sp-list")?.addEventListener("click", async function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest(".cd-sp-act") : null;
+    if (!btn) return;
+    var act = btn.getAttribute("data-act");
+    var id = btn.getAttribute("data-id");
+    var plan = spCache.find(function (p) { return p && String(p.id) === String(id); });
+    if (!plan) return;
+    if (act === "bewerken") { openSpModal(plan); return; }
+    if (act === "activeer") {
+      var ok = await window.showSliderConfirmModal({
+        title: "Signaleringsplan activeren? Een eerder actief plan wordt vervangen.",
+        preview: "Signaleringsplan",
+        okLabel: "Activeren",
+        cancelLabel: "Annuleren",
+      });
+      if (!ok) return;
+      try {
+        await window.signaleringsplannenDB.activeer(id);
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Signaleringsplan actief");
+        renderSignaleringsplannen();
+        renderAiKaart();
+      } catch (err) {
+        if (window.showError) window.showError("Activeren mislukt: " + (err && err.message || err));
+      }
+      return;
+    }
+    if (act === "archiveer") {
+      var okArc = await window.showArchiveConfirm({ preview: "Signaleringsplan" });
+      if (!okArc) return;
+      try {
+        await window.signaleringsplannenDB.archive(id);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Signaleringsplan");
+        renderSignaleringsplannen();
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+  window.addEventListener("besa:signaleringsplannen-updated", function () {
+    if (pans.s && !pans.s.hidden) renderSignaleringsplannen();
+  });
+
+  // ============================================================
+  // CONTACTLOGBOEK-tab (fase 3, §14)
+  // ============================================================
+
+  var clCache = [];
+  var clTypeFilter = "";
+
+  async function renderContactlog() {
+    var tbody = document.getElementById("cd-cl-tbody");
+    var empty = document.getElementById("cd-cl-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var rows = await window.clientContactlogDB.fetchVoorClient(cl.id);
+    clCache = rows;
+    var userId = await f3CurrentUserId();
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    var kanBeoordelen = !!(ctx && ctx.kan_beoordelen);
+
+    var zichtbaar = rows.filter(function (r) {
+      if (!r || r.archived) return false;
+      if (clTypeFilter && String(r.type || "") !== clTypeFilter) return false;
+      return true;
+    });
+
+    tbody.innerHTML = zichtbaar.map(function (r) {
+      var magBewerken = kanBeoordelen || (userId && r.created_by === userId);
+      var acties = magBewerken
+        ? '<button type="button" class="btn-outline cd-cl-edit-btn" data-id="' + escapeAttr(r.id) + '">Bewerken</button>' +
+          '<button type="button" class="employee-delete-btn cd-cl-archive-btn" data-id="' + escapeAttr(r.id) + '" aria-label="Archiveren">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+        : "";
+      var datumTekst = escapeHtml(formatDateNL(r.datum)) + (r.tijd ? " " + escapeHtml(String(r.tijd).slice(0, 5)) : "");
+      return '<tr data-id="' + escapeAttr(r.id) + '">' +
+        '<td data-col="datum">' + datumTekst + '</td>' +
+        '<td data-col="type">' + escapeHtml(window.clientContactlogDB.typeLabel(r.type)) + '</td>' +
+        '<td data-col="metwie">' + escapeHtml(r.met_wie || "—") + '</td>' +
+        '<td data-col="onderwerp">' + escapeHtml(r.onderwerp || "—") + '</td>' +
+        '<td data-col="door">' + escapeHtml(r.created_by_naam || "—") + '</td>' +
+        '<td data-col="acties" class="cd-rap-actions-cell">' + acties + '</td>' +
+      '</tr>';
+    }).join("");
+    empty.hidden = zichtbaar.length > 0;
+  }
+
+  var clModal = document.getElementById("cd-cl-modal");
+  function openClModal(rec) {
+    if (!clModal) return;
+    var titelEl = document.getElementById("cd-cl-modal-title");
+    document.getElementById("cd-cl-f-id").value = rec && rec.id ? rec.id : "";
+    document.getElementById("cd-cl-f-type").value = rec ? (rec.type || "oudergesprek") : "oudergesprek";
+    document.getElementById("cd-cl-f-datum").value = rec && rec.datum ? rec.datum : localTodayIso();
+    document.getElementById("cd-cl-f-tijd").value = rec && rec.tijd ? String(rec.tijd).slice(0, 5) : "";
+    document.getElementById("cd-cl-f-metwie").value = rec ? (rec.met_wie || "") : "";
+    document.getElementById("cd-cl-f-onderwerp").value = rec ? (rec.onderwerp || "") : "";
+    document.getElementById("cd-cl-f-verslag").value = rec ? (rec.verslag || "") : "";
+    document.getElementById("cd-cl-f-vervolg").value = rec ? (rec.vervolgacties || "") : "";
+    if (titelEl) titelEl.textContent = rec && rec.id ? "Contactmoment bewerken" : "Contactmoment toevoegen";
+    clModal.hidden = false;
+    clModal.setAttribute("aria-hidden", "false");
+    try { document.getElementById("cd-cl-f-onderwerp").focus(); } catch (e) { /* */ }
+  }
+  function closeClModal() {
+    if (!clModal) return;
+    clModal.hidden = true;
+    clModal.setAttribute("aria-hidden", "true");
+  }
+  // Lokale vandaag-datum (toISOString geeft UTC-datumshift — bekende valkuil).
+  function localTodayIso() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  async function saveContactlogFromForm() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var onderwerpEl = document.getElementById("cd-cl-f-onderwerp");
+    var onderwerp = (onderwerpEl.value || "").trim();
+    if (!onderwerp) { try { onderwerpEl.focus(); } catch (e) {} return; }
+    var rec = {
+      clientId: cl.id,
+      type: document.getElementById("cd-cl-f-type").value || "overig",
+      datum: document.getElementById("cd-cl-f-datum").value || null,
+      tijd: document.getElementById("cd-cl-f-tijd").value || null,
+      metWie: (document.getElementById("cd-cl-f-metwie").value || "").trim(),
+      onderwerp: onderwerp,
+      verslag: (document.getElementById("cd-cl-f-verslag").value || "").trim(),
+      vervolgacties: (document.getElementById("cd-cl-f-vervolg").value || "").trim(),
+    };
+    try {
+      var id = document.getElementById("cd-cl-f-id").value;
+      if (id) {
+        await window.clientContactlogDB.update(id, rec);
+      } else {
+        await window.clientContactlogDB.add(rec);
+      }
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Contactmoment");
+      closeClModal();
+    } catch (err) {
+      if (window.showError) window.showError("Contactmoment opslaan mislukt: " + (err && err.message || err));
+    }
+  }
+  document.getElementById("cd-cl-add-btn")?.addEventListener("click", function () { openClModal(null); });
+  document.getElementById("cd-cl-modal-close")?.addEventListener("click", closeClModal);
+  document.getElementById("cd-cl-cancel-btn")?.addEventListener("click", closeClModal);
+  document.getElementById("cd-cl-save-btn")?.addEventListener("click", function (e) { e.preventDefault(); saveContactlogFromForm(); });
+  document.getElementById("cd-cl-form")?.addEventListener("submit", function (e) { e.preventDefault(); saveContactlogFromForm(); });
+  if (clModal) clModal.addEventListener("click", function (e) { if (e.target === clModal) closeClModal(); });
+  document.getElementById("cd-cl-filter-type")?.addEventListener("change", function () {
+    clTypeFilter = this.value || "";
+    renderContactlog();
+  });
+  document.getElementById("cd-cl-tbody")?.addEventListener("click", async function (e) {
+    var editBtn = e.target.closest(".cd-cl-edit-btn");
+    var arcBtn = e.target.closest(".cd-cl-archive-btn");
+    if (editBtn) {
+      var rec = clCache.find(function (r) { return r && String(r.id) === String(editBtn.getAttribute("data-id")); });
+      if (rec) openClModal(rec);
+      return;
+    }
+    if (arcBtn) {
+      var aid = arcBtn.getAttribute("data-id");
+      var rec2 = clCache.find(function (r) { return r && String(r.id) === String(aid); });
+      if (!rec2) return;
+      try {
+        var ok = await window.showArchiveConfirm({ preview: rec2.onderwerp || "Contactmoment" });
+        if (!ok) return;
+        await window.clientContactlogDB.archive(aid);
+        if (window.showActionFeedback) window.showActionFeedback("archived", "Contactmoment");
+      } catch (err) {
+        if (window.showError) window.showError("Archiveren mislukt: " + (err && err.message || err));
+      }
+    }
+  });
+  window.addEventListener("besa:client-contactlog-updated", function () {
+    if (pans.g && !pans.g.hidden) renderContactlog();
+  });
+
+  // ============================================================
+  // INCIDENTEN & KWALITEIT-tab (fase 3, §6): echte cliënt-lijsten
+  // ============================================================
+
+  var INC_STATUS_LABEL = { in_afwachting: "In afwachting", in_behandeling: "In behandeling", opgelost: "Opgelost" };
+  var KLA_STATUS_LABEL = { nieuw: "Nieuw", in_behandeling: "In behandeling", afgehandeld: "Afgehandeld" };
+
+  function renderKwaliteit() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    // Incidenten (RLS bepaalt wat de ingelogde rol mag zien)
+    var incTbody = document.getElementById("cd-inc-tbody");
+    var incEmpty = document.getElementById("cd-inc-empty");
+    if (incTbody && incEmpty) {
+      var incidenten = (window.incidentenDB && typeof window.incidentenDB.getAllSync === "function")
+        ? window.incidentenDB.getAllSync() : [];
+      var incRows = incidenten.filter(function (i) {
+        return i && !i.archived && String(i.clientId || "") === String(cl.id);
+      });
+      incRows.sort(function (a, b) {
+        return String(b.incidentDatum || b.aanmaakdatum || "") < String(a.incidentDatum || a.aanmaakdatum || "") ? -1 : 1;
+      });
+      incTbody.innerHTML = incRows.map(function (i) {
+        var datum = i.incidentDatum || i.aanmaakdatum || null;
+        var oms = String(i.omschrijving || "");
+        if (oms.length > 120) oms = oms.slice(0, 117) + "…";
+        return '<tr>' +
+          '<td data-col="datum">' + escapeHtml(datum ? formatDateNL(String(datum).slice(0, 10)) : "—") + '</td>' +
+          '<td data-col="categorie">' + escapeHtml(i.categorie || "—") + '</td>' +
+          '<td data-col="status">' + escapeHtml(INC_STATUS_LABEL[String(i.status || "")] || i.status || "—") + '</td>' +
+          '<td data-col="omschrijving">' + escapeHtml(oms || "—") + '</td>' +
+        '</tr>';
+      }).join("");
+      incEmpty.hidden = incRows.length > 0;
+    }
+
+    // Klachten gekoppeld aan deze cliënt
+    var klaTbody = document.getElementById("cd-kla-tbody");
+    var klaEmpty = document.getElementById("cd-kla-empty");
+    if (klaTbody && klaEmpty) {
+      var klachten = (window.klachtenDB && typeof window.klachtenDB.getAllSync === "function")
+        ? window.klachtenDB.getAllSync() : [];
+      var klaRows = klachten.filter(function (k) {
+        return k && !k.archived && String(k.clientId || "") === String(cl.id);
+      });
+      klaTbody.innerHTML = klaRows.map(function (k) {
+        return '<tr>' +
+          '<td data-col="ontvangen">' + escapeHtml(k.ontvangenOp ? formatDateNL(String(k.ontvangenOp).slice(0, 10)) : "—") + '</td>' +
+          '<td data-col="onderwerp">' + escapeHtml(k.onderwerp || "—") + '</td>' +
+          '<td data-col="status">' + escapeHtml(KLA_STATUS_LABEL[String(k.status || "")] || k.status || "—") + '</td>' +
+          '<td data-col="prioriteit">' + escapeHtml(k.prioriteit || "—") + '</td>' +
+        '</tr>';
+      }).join("");
+      klaEmpty.hidden = klaRows.length > 0;
+    }
+
+    // Verbetermaatregelen gekoppeld aan deze cliënt
+    var vmTbody = document.getElementById("cd-vm-tbody");
+    var vmEmpty = document.getElementById("cd-vm-empty");
+    if (vmTbody && vmEmpty) {
+      var maatregelen = (window.verbeteringsmaatregelenDB && typeof window.verbeteringsmaatregelenDB.getAllSync === "function")
+        ? window.verbeteringsmaatregelenDB.getAllSync() : [];
+      var vmRows = maatregelen.filter(function (m) {
+        return m && !m.archived && String(m.clientId || "") === String(cl.id);
+      });
+      vmTbody.innerHTML = vmRows.map(function (m) {
+        return '<tr>' +
+          '<td data-col="titel">' + escapeHtml(m.titel || "—") + '</td>' +
+          '<td data-col="vervaldatum">' + escapeHtml(m.vervaldatum ? formatDateNL(String(m.vervaldatum).slice(0, 10)) : "—") + '</td>' +
+          '<td data-col="status">' + escapeHtml(m.afgerond ? "Afgerond" : "Open") + '</td>' +
+        '</tr>';
+      }).join("");
+      vmEmpty.hidden = vmRows.length > 0;
+    }
+  }
+  ["besa:incidenten-updated", "besa:klachten-updated", "besa:verbeteringsmaatregelen-updated"].forEach(function (ev) {
+    window.addEventListener(ev, function () {
+      if (pans.i && !pans.i.hidden) renderKwaliteit();
+    });
+  });
+
+  // ============================================================
+  // AI-CLIËNTSAMENVATTING (fase 3, §7) — deterministische RPC
+  // ============================================================
+
+  async function renderAiKaart() {
+    var kaart = document.getElementById("cd-ai-kaart");
+    var body = document.getElementById("cd-ai-body");
+    if (!kaart || !body) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    try {
+      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.besaSupabase.rpc("client_ai_samenvatting", { p_client_id: cl.id });
+      if (r.error) throw r.error;
+      var d = r.data || {};
+      if (!d.ok) { craSetVisible(kaart, false); return; }
+
+      var punten = Array.isArray(d.aandachtspunten) ? d.aandachtspunten : [];
+      var puntenHtml = punten.length
+        ? '<ul class="cd-ai-punten">' + punten.map(function (p) {
+            var ernst = p && (p.ernst === "rood" || p.ernst === "oranje") ? p.ernst : "info";
+            return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">' + escapeHtml((p && p.tekst) || "") + '</li>';
+          }).join("") + '</ul>'
+        : '<p class="cd-ai-ok">Geen aandachtspunten — het dossier is op orde.</p>';
+
+      var feiten = [];
+      if (d.zorgplan) {
+        feiten.push('<span class="cd-ai-feit"><strong>Zorgplan:</strong> ' + escapeHtml(d.zorgplan.titel || "actief") +
+          ' (' + Number(d.zorgplan.doelen_behaald || 0) + '/' + Number(d.zorgplan.doelen_totaal || 0) + ' doelen behaald)</span>');
+        if (d.zorgplan.hulpvraag) {
+          var hv = String(d.zorgplan.hulpvraag);
+          if (hv.length > 160) hv = hv.slice(0, 157) + "…";
+          feiten.push('<span class="cd-ai-feit"><strong>Hulpvraag:</strong> ' + escapeHtml(hv) + '</span>');
+        }
+      } else {
+        feiten.push('<span class="cd-ai-feit"><strong>Zorgplan:</strong> geen actief plan</span>');
+      }
+      feiten.push('<span class="cd-ai-feit"><strong>Signaleringsplan:</strong> ' + (d.signaleringsplan_actief ? "actief" : "geen") + '</span>');
+      if (d.beschikking) {
+        feiten.push('<span class="cd-ai-feit"><strong>Beschikking:</strong> nog ' + Number(d.beschikking.dagen_resterend) + ' dagen</span>');
+      }
+      var inc = d.incidenten || {};
+      feiten.push('<span class="cd-ai-feit"><strong>Incidenten (30d):</strong> ' + Number(inc.laatste_30d || 0) + '</span>');
+      if (d.laatste_rapportage) {
+        feiten.push('<span class="cd-ai-feit"><strong>Laatste rapportage:</strong> ' + escapeHtml(formatDateNL(d.laatste_rapportage.datum)) + '</span>');
+      }
+      if (d.laatste_contact) {
+        feiten.push('<span class="cd-ai-feit"><strong>Laatste contactmoment:</strong> ' + escapeHtml(formatDateNL(d.laatste_contact)) + '</span>');
+      }
+
+      body.innerHTML = puntenHtml + '<div class="cd-ai-feiten">' + feiten.join("") + '</div>';
+      craSetVisible(kaart, true);
+    } catch (err) {
+      // Geen rechten of fout → kaart stil verbergen (samenvatting is een extraatje).
+      craSetVisible(kaart, false);
+    }
+  }
+  document.getElementById("cd-ai-refresh")?.addEventListener("click", function () {
+    var body = document.getElementById("cd-ai-body");
+    if (body) body.innerHTML = '<p class="client-detail-hint">Samenvatting laden…</p>';
+    renderAiKaart();
+  });
+  renderAiKaart();
+
+  // ============================================================
+  // TEAM-blok in de vcard (fase 3, client_medewerkers)
+  // ============================================================
+
+  var teamCache = [];
+
+  async function renderTeam() {
+    var lijst = document.getElementById("cd-team-list");
+    var hint = document.getElementById("cd-team-hint");
+    var addBtn = document.getElementById("cd-team-add-btn");
+    if (!lijst || !hint) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+
+    var ctx = null;
+    try { ctx = await ensureReisContext(); } catch (e) { ctx = null; }
+    var kanBeoordelen = !!(ctx && ctx.kan_beoordelen);
+    if (addBtn) craSetVisible(addBtn, kanBeoordelen);
+
+    var rows = await window.clientMedewerkersDB.fetchVoorClient(cl.id);
+    teamCache = rows;
+    lijst.innerHTML = rows.map(function (t) {
+      var del = kanBeoordelen
+        ? '<button type="button" class="modal-close cd-team-del" data-id="' + escapeAttr(t.id) + '" aria-label="Koppeling verwijderen"><span aria-hidden="true">&times;</span></button>'
+        : "";
+      return '<li class="cd-team-item">' +
+        '<span class="cd-team-naam">' + escapeHtml(t.naam) + '</span>' +
+        '<span class="cd-team-rol">' + escapeHtml(window.clientMedewerkersDB.rolLabel(t.rol)) + '</span>' +
+        del +
+      '</li>';
+    }).join("");
+    craSetVisible(hint, rows.length === 0);
+  }
+
+  var teamModal = document.getElementById("cd-team-modal");
+  function openTeamModal() {
+    if (!teamModal) return;
+    var sel = document.getElementById("cd-team-f-mw");
+    if (sel) {
+      var medewerkers = (window.medewerkersDB && typeof window.medewerkersDB.getAllSync === "function")
+        ? window.medewerkersDB.getAllSync() : [];
+      var actief = medewerkers.filter(function (m) { return m && !m.archived; });
+      actief.sort(function (a, b) {
+        var an = ((a.achternaam || "") + " " + (a.voornaam || "")).toLowerCase();
+        var bn = ((b.achternaam || "") + " " + (b.voornaam || "")).toLowerCase();
+        return an.localeCompare(bn, "nl");
+      });
+      sel.innerHTML = "";
+      var ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = "— Kies een medewerker —";
+      sel.appendChild(ph);
+      actief.forEach(function (m) {
+        var o = document.createElement("option");
+        o.value = m.id;
+        o.textContent = ((m.achternaam || "") + ", " + (m.voornaam || "")).replace(/^, /, "") + (m.functie ? " — " + m.functie : "");
+        sel.appendChild(o);
+      });
+    }
+    document.getElementById("cd-team-f-rol").value = "begeleider";
+    teamModal.hidden = false;
+    teamModal.setAttribute("aria-hidden", "false");
+  }
+  function closeTeamModal() {
+    if (!teamModal) return;
+    teamModal.hidden = true;
+    teamModal.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("cd-team-add-btn")?.addEventListener("click", openTeamModal);
+  document.getElementById("cd-team-modal-close")?.addEventListener("click", closeTeamModal);
+  document.getElementById("cd-team-cancel-btn")?.addEventListener("click", closeTeamModal);
+  if (teamModal) teamModal.addEventListener("click", function (e) { if (e.target === teamModal) closeTeamModal(); });
+  document.getElementById("cd-team-save-btn")?.addEventListener("click", async function () {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var mwId = document.getElementById("cd-team-f-mw").value;
+    var rol = document.getElementById("cd-team-f-rol").value;
+    if (!mwId) { try { document.getElementById("cd-team-f-mw").focus(); } catch (e) {} return; }
+    this.disabled = true;
+    try {
+      await window.clientMedewerkersDB.add({ clientId: cl.id, medewerkerId: mwId, rol: rol });
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Teamlid gekoppeld");
+      closeTeamModal();
+      renderTeam();
+    } catch (err) {
+      if (window.showError) window.showError("Koppelen mislukt: " + (err && err.message || err));
+    }
+    this.disabled = false;
+  });
+  document.getElementById("cd-team-list")?.addEventListener("click", async function (e) {
+    var del = e.target && e.target.closest ? e.target.closest(".cd-team-del") : null;
+    if (!del) return;
+    var id = del.getAttribute("data-id");
+    var t = teamCache.find(function (x) { return x && String(x.id) === String(id); });
+    if (!t) return;
+    var ok = await window.showSliderConfirmModal({
+      title: "Teamlid ontkoppelen van deze cliënt?",
+      preview: t.naam + " (" + window.clientMedewerkersDB.rolLabel(t.rol) + ")",
+      okLabel: "Ontkoppelen",
+      cancelLabel: "Annuleren",
+    });
+    if (!ok) return;
+    try {
+      await window.clientMedewerkersDB.remove(id);
+      if (window.showActionFeedback) window.showActionFeedback("deleted", "Teamkoppeling");
+      renderTeam();
+    } catch (err) {
+      if (window.showError) window.showError("Ontkoppelen mislukt: " + (err && err.message || err));
+    }
+  });
+  renderTeam();
 
   // ============================================================
   // MEDICATIE-tab: medicatielijst + aftekenlijst (clientMedicatieDB)

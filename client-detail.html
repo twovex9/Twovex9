@@ -265,6 +265,12 @@
               <p class="client-detail-hint" id="cd-gw-hint" aria-live="polite">Er is nog geen gedragswetenschapper gekoppeld aan deze cliënt.</p>
             </div>
             <div class="client-detail-block">
+              <h3 class="client-detail-h3">Team</h3>
+              <ul class="cd-team-list" id="cd-team-list"></ul>
+              <p class="client-detail-hint" id="cd-team-hint" aria-live="polite">Nog geen teamleden gekoppeld.</p>
+              <button type="button" class="btn-outline client-detail-wide-btn" id="cd-team-add-btn" hidden>+ Teamlid koppelen</button>
+            </div>
+            <div class="client-detail-block">
               <h3 class="client-detail-h3">Rooster</h3>
               <a href="planning" class="btn-outline client-detail-wide-btn" id="cd-rooster" title="Open planning">Rooster bekijken</a>
             </div>
@@ -292,6 +298,17 @@
         </aside>
 
         <div class="client-detail-panel-wrap">
+          <!-- AI-cliëntsamenvatting (fase 3, §7) — deterministische RPC client_ai_samenvatting -->
+          <section class="cd-ai-kaart" id="cd-ai-kaart" aria-label="Cliëntsamenvatting" hidden>
+            <div class="cd-ai-head">
+              <h3 class="cd-ai-titel">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.2 3.6 2.2 4.8.8 1 1.3 1.7 1.3 2.7h5c0-1 .5-1.7 1.3-2.7 1-1.2 2.2-2.6 2.2-4.8a6 6 0 0 0-6-6z"/><path d="M9.5 20h5"/><path d="M10.5 23h3"/></svg>
+                Samenvatting
+              </h3>
+              <button type="button" class="btn-outline cd-ai-refresh" id="cd-ai-refresh">Vernieuwen</button>
+            </div>
+            <div class="cd-ai-body" id="cd-ai-body"><p class="client-detail-hint">Samenvatting laden…</p></div>
+          </section>
           <div class="client-detail-tabs" role="tablist" aria-label="Dossier-secties">
             <button type="button" class="client-detail-tab is-active" id="cd-tab-d" role="tab" aria-selected="true" aria-controls="cd-pan-d" data-cd-panel="d">Details</button>
             <button type="button" class="client-detail-tab" id="cd-tab-b" role="tab" aria-selected="false" aria-controls="cd-pan-b" data-cd-panel="b" tabindex="-1">Beschikkingen</button>
@@ -300,6 +317,9 @@
             <button type="button" class="client-detail-tab" data-cd-panel="n" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-n">Notities</button>
             <button type="button" class="client-detail-tab" data-cd-panel="j" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-j">Documenten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="r" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-r">Rapportages</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="z" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-z">Zorgplannen</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="s" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-s">Signalering</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="g" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-g">Contactlogboek</button>
             <button type="button" class="client-detail-tab" data-cd-panel="m" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-m">Medicatie</button>
             <button type="button" class="client-detail-tab" data-cd-panel="q" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-q">Vragenlijsten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
@@ -845,12 +865,20 @@
                         <input class="modal-input" id="cd-rap-f-datum" type="date" />
                       </div>
                       <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-rap-f-tijd">Tijd</label>
+                        <input class="modal-input" id="cd-rap-f-tijd" type="time" />
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
                         <label class="modal-label" for="cd-rap-f-type">Type</label>
                         <select class="modal-input" id="cd-rap-f-type">
                           <option value="">—</option>
-                          <option value="voortgang">Voortgang</option>
-                          <option value="evaluatie">Evaluatie</option>
-                          <option value="overdracht">Overdracht</option>
+                          <option value="dag">Dagrapportage</option>
+                          <option value="ambulant">Ambulante rapportage</option>
+                          <option value="evaluatie">Evaluatierapportage</option>
+                          <option value="contact">Contactjournaal</option>
+                          <option value="incident">Incidentrapportage</option>
+                          <option value="voortgang">Voortgang (oud)</option>
+                          <option value="overdracht">Overdracht (oud)</option>
                           <option value="overig">Overig</option>
                         </select>
                       </div>
@@ -867,6 +895,10 @@
                       <label class="modal-label" for="cd-rap-f-inhoud">Inhoud</label>
                       <textarea class="modal-input cd-rap-f-inhoud" id="cd-rap-f-inhoud" rows="6" placeholder="Rapportage-tekst..."></textarea>
                     </div>
+                    <div class="modal-field" id="cd-rap-f-doelen-wrap" hidden>
+                      <label class="modal-label">Gekoppelde zorgplan-doelen</label>
+                      <div class="cd-rap-doelen-list" id="cd-rap-f-doelen"></div>
+                    </div>
                     <div class="modal-field">
                       <label class="modal-label" for="cd-rap-f-file">Bijlage (optioneel, PDF/DOC)</label>
                       <input class="modal-input" id="cd-rap-f-file" type="file" accept=".pdf,.doc,.docx,.txt" />
@@ -880,6 +912,289 @@
                 </div>
               </div>
             </section>
+            <!-- ===== Zorgplannen (fase 3, §9) ===== -->
+            <section class="client-detail-pan" id="cd-pan-z" role="tabpanel" aria-hidden="true" hidden>
+              <div class="cd-rap-head">
+                <h3 class="client-detail-pan-h">Zorgplannen</h3>
+                <div class="cd-rap-toolbar">
+                  <button type="button" class="btn-primary" id="cd-zp-add-btn" hidden>+ Zorgplan toevoegen</button>
+                </div>
+              </div>
+              <div class="cd-zp-list" id="cd-zp-list"></div>
+              <p class="client-detail-placeholder" id="cd-zp-empty" hidden>Nog geen zorgplannen voor deze cliënt.</p>
+
+              <!-- Modal: nieuw / bewerk zorgplan -->
+              <div class="modal-overlay" id="cd-zp-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-zp-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-zp-modal-title">Zorgplan toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-zp-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-zp-form" novalidate>
+                    <input type="hidden" id="cd-zp-f-id" />
+                    <div class="modal-field cd-rap-f-row">
+                      <div class="modal-field cd-zp-f-groot">
+                        <label class="modal-label" for="cd-zp-f-titel">Titel *</label>
+                        <input class="modal-input" id="cd-zp-f-titel" type="text" required autocomplete="off" value="Zorgplan" />
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-zp-f-evaluatie">Evaluatiemoment</label>
+                        <input class="modal-input" id="cd-zp-f-evaluatie" type="date" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-f-hulpvraag">Hulpvraag</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-zp-f-hulpvraag" rows="3" placeholder="Wat is de hulpvraag van de cliënt?"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label">Doelen</label>
+                      <div class="cd-zp-doelen-list" id="cd-zp-f-doelen"></div>
+                      <button type="button" class="btn-outline cd-vrl-qa-add" id="cd-zp-f-doel-add">+ Doel toevoegen</button>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-f-acties">Acties</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-zp-f-acties" rows="3" placeholder="Welke acties horen bij de doelen?"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-f-risico">Risicoanalyse</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-zp-f-risico" rows="3" placeholder="Risico's en beschermende factoren"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-f-signalering">Signalering</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-zp-f-signalering" rows="2" placeholder="Verwijzing naar het signaleringsplan / afspraken"></textarea>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-zp-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-zp-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal: zorgplan ter ondertekening aanbieden -->
+              <div class="modal-overlay" id="cd-zp-ond-modal" aria-hidden="true" hidden>
+                <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title">Zorgplan ter ondertekening</h2>
+                    <button type="button" class="modal-close" id="cd-zp-ond-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-zp-ond-form" novalidate>
+                    <input type="hidden" id="cd-zp-ond-id" />
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-ond-type">Ondertekenaar *</label>
+                      <select class="modal-input modal-select" id="cd-zp-ond-type">
+                        <option value="client">Cliënt</option>
+                        <option value="ouder">Ouder</option>
+                        <option value="gezaghebbende">Gezaghebbende</option>
+                        <option value="voogd">Voogd</option>
+                      </select>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-ond-naam">Naam ondertekenaar *</label>
+                      <input class="modal-input" id="cd-zp-ond-naam" type="text" required autocomplete="off" />
+                    </div>
+                  </form>
+                  <div class="cdo-resultaat" id="cd-zp-ond-result" hidden>
+                    <p class="cdo-resultaat-titel">Verzoek aangemaakt. Deel deze link met de ondertekenaar:</p>
+                    <div class="cdo-resultaat-rij">
+                      <label class="visually-hidden" for="cd-zp-ond-link">Deel-link</label>
+                      <input class="modal-input" id="cd-zp-ond-link" type="text" readonly />
+                      <button type="button" class="btn-outline" id="cd-zp-ond-copy">Kopiëren</button>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-zp-ond-cancel">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-zp-ond-save">Aanvragen</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal: zorgplan evalueren -->
+              <div class="modal-overlay" id="cd-zp-eval-modal" aria-hidden="true" hidden>
+                <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title">Zorgplan evalueren</h2>
+                    <button type="button" class="modal-close" id="cd-zp-eval-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-zp-eval-form" novalidate>
+                    <input type="hidden" id="cd-zp-eval-id" />
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-zp-eval-verslag">Evaluatieverslag</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-zp-eval-verslag" rows="5" placeholder="Hoe is het traject verlopen? Zijn de doelen behaald?"></textarea>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-zp-eval-cancel">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-zp-eval-save">Evaluatie vastleggen</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ===== Signaleringsplannen (fase 3, §10) ===== -->
+            <section class="client-detail-pan" id="cd-pan-s" role="tabpanel" aria-hidden="true" hidden>
+              <div class="cd-rap-head">
+                <h3 class="client-detail-pan-h">Signaleringsplannen</h3>
+                <div class="cd-rap-toolbar">
+                  <button type="button" class="btn-primary" id="cd-sp-add-btn" hidden>+ Signaleringsplan toevoegen</button>
+                </div>
+              </div>
+              <div class="cd-zp-list" id="cd-sp-list"></div>
+              <p class="client-detail-placeholder" id="cd-sp-empty" hidden>Nog geen signaleringsplannen voor deze cliënt.</p>
+
+              <!-- Modal: nieuw / bewerk signaleringsplan -->
+              <div class="modal-overlay" id="cd-sp-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-zp-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-sp-modal-title">Signaleringsplan toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-sp-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-sp-form" novalidate>
+                    <input type="hidden" id="cd-sp-f-id" />
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-sp-f-triggers">Triggers</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-triggers" rows="2" placeholder="Wat zijn triggers voor spanning of escalatie?"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-sp-f-signalen">Spanningssignalen</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-signalen" rows="2" placeholder="Waaraan is oplopende spanning te herkennen?"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label">Escalatiefases</label>
+                      <div class="cd-sp-fases" id="cd-sp-f-fases">
+                        <div class="cd-sp-fase cd-sp-fase--groen">
+                          <p class="cd-sp-fase-titel">Fase groen — ontspannen</p>
+                          <label class="visually-hidden" for="cd-sp-f-groen-signalen">Signalen fase groen</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-groen-signalen" rows="2" placeholder="Signalen"></textarea>
+                          <label class="visually-hidden" for="cd-sp-f-groen-interventies">Interventies fase groen</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-groen-interventies" rows="2" placeholder="Interventies"></textarea>
+                        </div>
+                        <div class="cd-sp-fase cd-sp-fase--oranje">
+                          <p class="cd-sp-fase-titel">Fase oranje — spanning loopt op</p>
+                          <label class="visually-hidden" for="cd-sp-f-oranje-signalen">Signalen fase oranje</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-oranje-signalen" rows="2" placeholder="Signalen"></textarea>
+                          <label class="visually-hidden" for="cd-sp-f-oranje-interventies">Interventies fase oranje</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-oranje-interventies" rows="2" placeholder="Interventies"></textarea>
+                        </div>
+                        <div class="cd-sp-fase cd-sp-fase--rood">
+                          <p class="cd-sp-fase-titel">Fase rood — escalatie</p>
+                          <label class="visually-hidden" for="cd-sp-f-rood-signalen">Signalen fase rood</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-rood-signalen" rows="2" placeholder="Signalen"></textarea>
+                          <label class="visually-hidden" for="cd-sp-f-rood-interventies">Interventies fase rood</label>
+                          <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-rood-interventies" rows="2" placeholder="Interventies"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-sp-f-interventies">Algemene interventies</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-interventies" rows="2" placeholder="Wat werkt altijd de-escalerend voor deze cliënt?"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-sp-f-veiligheid">Veiligheidsafspraken</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-sp-f-veiligheid" rows="2" placeholder="Concrete afspraken over veiligheid"></textarea>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-sp-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-sp-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ===== Contactlogboek (fase 3, §14) ===== -->
+            <section class="client-detail-pan" id="cd-pan-g" role="tabpanel" aria-hidden="true" hidden>
+              <div class="cd-rap-head">
+                <h3 class="client-detail-pan-h">Contactlogboek</h3>
+                <div class="cd-rap-toolbar">
+                  <select id="cd-cl-filter-type" class="cd-rap-filter">
+                    <option value="">Alle typen</option>
+                    <option value="oudergesprek">Oudergesprek</option>
+                    <option value="verwijzersoverleg">Verwijzersoverleg</option>
+                    <option value="gemeentecontact">Gemeentecontact</option>
+                    <option value="schoolcontact">Schoolcontact</option>
+                    <option value="mdo">MDO</option>
+                    <option value="casusoverleg">Casusoverleg</option>
+                    <option value="overig">Overig</option>
+                  </select>
+                  <button type="button" class="btn-primary" id="cd-cl-add-btn">+ Contactmoment toevoegen</button>
+                </div>
+              </div>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="datum">Datum</th>
+                        <th data-col="type">Type</th>
+                        <th data-col="metwie">Met wie</th>
+                        <th data-col="onderwerp">Onderwerp</th>
+                        <th data-col="door">Door</th>
+                        <th data-col="acties" aria-label="Rijacties"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-cl-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-cl-empty" hidden>Nog geen contactmomenten vastgelegd. Klik op "+ Contactmoment toevoegen".</div>
+              </div>
+
+              <!-- Modal: nieuw / bewerk contactmoment -->
+              <div class="modal-overlay" id="cd-cl-modal" aria-hidden="true" hidden>
+                <div class="modal-card cd-rap-modal-card" role="dialog" aria-modal="true" tabindex="-1">
+                  <div class="modal-header">
+                    <h2 class="modal-title" id="cd-cl-modal-title">Contactmoment toevoegen</h2>
+                    <button type="button" class="modal-close" id="cd-cl-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <form class="modal-body" id="cd-cl-form" novalidate>
+                    <input type="hidden" id="cd-cl-f-id" />
+                    <div class="modal-field cd-rap-f-row">
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-cl-f-type">Type *</label>
+                        <select class="modal-input" id="cd-cl-f-type">
+                          <option value="oudergesprek">Oudergesprek</option>
+                          <option value="verwijzersoverleg">Verwijzersoverleg</option>
+                          <option value="gemeentecontact">Gemeentecontact</option>
+                          <option value="schoolcontact">Schoolcontact</option>
+                          <option value="mdo">MDO</option>
+                          <option value="casusoverleg">Casusoverleg</option>
+                          <option value="overig">Overig</option>
+                        </select>
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-cl-f-datum">Datum</label>
+                        <input class="modal-input" id="cd-cl-f-datum" type="date" />
+                      </div>
+                      <div class="modal-field cd-rap-f-third">
+                        <label class="modal-label" for="cd-cl-f-tijd">Tijd</label>
+                        <input class="modal-input" id="cd-cl-f-tijd" type="time" />
+                      </div>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cl-f-metwie">Met wie (naam / organisatie)</label>
+                      <input class="modal-input" id="cd-cl-f-metwie" type="text" autocomplete="off" placeholder="bv. moeder, school De Regenboog, gemeente Alkmaar" />
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cl-f-onderwerp">Onderwerp *</label>
+                      <input class="modal-input" id="cd-cl-f-onderwerp" type="text" required autocomplete="off" />
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cl-f-verslag">Verslag</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-cl-f-verslag" rows="4" placeholder="Korte samenvatting van het contact"></textarea>
+                    </div>
+                    <div class="modal-field">
+                      <label class="modal-label" for="cd-cl-f-vervolg">Vervolgacties</label>
+                      <textarea class="modal-input cd-zp-f-area" id="cd-cl-f-vervolg" rows="2" placeholder="Afspraken en vervolgacties (optioneel)"></textarea>
+                    </div>
+                  </form>
+                  <div class="modal-footer">
+                    <button type="button" class="btn-outline" id="cd-cl-cancel-btn">Annuleren</button>
+                    <button type="button" class="btn-primary" id="cd-cl-save-btn">Opslaan</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section class="client-detail-pan" id="cd-pan-m" role="tabpanel" aria-labelledby="cd-tab-m" aria-hidden="true" hidden>
               <div class="cd-med-head">
                 <div>
@@ -1097,8 +1412,69 @@
               </div>
             </section>
             <section class="client-detail-pan" id="cd-pan-i" role="tabpanel" aria-hidden="true" hidden>
-              <h3 class="client-detail-pan-h">Incidenten</h3>
-              <p class="client-detail-placeholder">Bekijk alle incidenten van deze cliënt in het <a href="incidenten" class="client-detail-inline-a">incidenten overzicht</a>.</p>
+              <div class="cd-rap-head">
+                <h3 class="client-detail-pan-h">Incidenten &amp; kwaliteit</h3>
+                <div class="cd-rap-toolbar">
+                  <a href="incidenten" class="btn-outline">Naar incidenten-overzicht</a>
+                </div>
+              </div>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="datum">Datum</th>
+                        <th data-col="categorie">Categorie</th>
+                        <th data-col="status">Status</th>
+                        <th data-col="omschrijving">Omschrijving</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-inc-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-inc-empty" hidden>Geen incidenten geregistreerd voor deze cliënt.</div>
+              </div>
+
+              <div class="cd-kwal-head">
+                <h4 class="cd-kwal-h4">Klachten</h4>
+                <a href="klachten" class="client-detail-inline-a">Naar klachten-overzicht</a>
+              </div>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="ontvangen">Ontvangen</th>
+                        <th data-col="onderwerp">Onderwerp</th>
+                        <th data-col="status">Status</th>
+                        <th data-col="prioriteit">Prioriteit</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-kla-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-kla-empty" hidden>Geen klachten gekoppeld aan deze cliënt.</div>
+              </div>
+
+              <div class="cd-kwal-head">
+                <h4 class="cd-kwal-h4">Verbetermaatregelen</h4>
+                <a href="verbeteringsmaatregelen" class="client-detail-inline-a">Naar verbetermaatregelen</a>
+              </div>
+              <div class="table-card cd-rap-table-card">
+                <div class="table-wrapper">
+                  <table class="employees-table">
+                    <thead>
+                      <tr>
+                        <th data-col="titel">Titel</th>
+                        <th data-col="vervaldatum">Vervaldatum</th>
+                        <th data-col="status">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cd-vm-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="client-detail-empty-list" id="cd-vm-empty" hidden>Geen verbetermaatregelen gekoppeld aan deze cliënt.</div>
+              </div>
             </section>
 
             <section class="client-detail-pan" id="cd-pan-t" role="tabpanel" aria-hidden="true" hidden>
@@ -1180,6 +1556,35 @@
   </div>
 
   <div class="app-toast app-toast--clienten" id="cd-toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Modal: teamlid koppelen (fase 3, client_medewerkers) -->
+  <div class="modal-overlay" id="cd-team-modal" aria-hidden="true" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1">
+      <div class="modal-header">
+        <h2 class="modal-title">Teamlid koppelen</h2>
+        <button type="button" class="modal-close" id="cd-team-modal-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form class="modal-body" id="cd-team-form" novalidate>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-team-f-mw">Medewerker *</label>
+          <select class="modal-input modal-select" id="cd-team-f-mw"></select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="cd-team-f-rol">Rol in het team *</label>
+          <select class="modal-input modal-select" id="cd-team-f-rol">
+            <option value="begeleider">Begeleider</option>
+            <option value="mentor">Mentor</option>
+            <option value="zorgcoordinator">Zorgcoördinator</option>
+            <option value="gedragswetenschapper">Gedragswetenschapper</option>
+          </select>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-outline" id="cd-team-cancel-btn">Annuleren</button>
+        <button type="button" class="btn-primary" id="cd-team-save-btn">Koppelen</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="cdb-add-modal" hidden aria-hidden="true">
     <div class="modal-dialog cdb-add-dialog" role="dialog" aria-modal="true" aria-labelledby="cdb-add-title" tabindex="-1">
@@ -1313,6 +1718,14 @@
   <script src="client-tijdlijn-data.js?v=918f1ad" defer></script>
   <script src="client-intake-data.js?v=918f1ad" defer></script>
   <script src="client-ondertekeningen-data.js?v=918f1ad" defer></script>
+  <script src="zorgplannen-data.js?v=918f1ad" defer></script>
+  <script src="signaleringsplannen-data.js?v=918f1ad" defer></script>
+  <script src="client-contactlog-data.js?v=918f1ad" defer></script>
+  <script src="client-medewerkers-data.js?v=918f1ad" defer></script>
+  <script src="medewerkers-data.js?v=918f1ad" defer></script>
+  <script src="incidenten-data.js?v=918f1ad" defer></script>
+  <script src="klachten-data.js?v=918f1ad" defer></script>
+  <script src="verbeteringsmaatregelen-data.js?v=918f1ad" defer></script>
   <script src="client-detail.js?v=918f1ad" defer></script>
   <script src="read-audit.js?v=918f1ad" defer></script>
   <script src="dsr-flow.js?v=918f1ad" defer></script>

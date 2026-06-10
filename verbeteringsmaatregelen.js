@@ -10,7 +10,8 @@
  *   - Zoeken (titel + beschrijving).
  *   - Toggle "Gearchiveerd" (toont gearchiveerde items).
  *   - Toggle "Afgerond" (toont afgeronde items).
- *   - Sortering per kolom (titel/beschrijving/status/aangemaakt).
+ *   - Sortering per kolom (titel/beschrijving/cliënt/status/aangemaakt).
+ *   - Optionele cliënt-koppeling (select in toevoeg/bewerk-modal, kolom Cliënt).
  *   - Paginatie (15/30/50/100).
  *   - Kolom-zichtbaarheid via Kolommen-knop.
  *   - Modal toevoegen / bewerken.
@@ -67,6 +68,54 @@
     try { return window.verbeteringsmaatregelenDB.getAllSync() || []; } catch (e) { return []; }
   }
 
+  // ---------------------------------------------------------------------------
+  // Cliënten (optionele koppeling)
+  // ---------------------------------------------------------------------------
+  function getAllClienten() {
+    if (!window.clientenDB) return [];
+    try { return window.clientenDB.getAllSync() || []; } catch (e) { return []; }
+  }
+  function getClientById(id) {
+    if (!id) return null;
+    var s = String(id);
+    return getAllClienten().find(function (c) { return c && String(c.id) === s; }) || null;
+  }
+  function clientSelectLabel(c) {
+    if (!c) return "—";
+    var nm = ((c.achternaam || "") + ", " + (c.voornaam || "")).replace(/^,\s*|,\s*$/g, "").trim();
+    if (!nm) nm = "—";
+    if (c.clientnummer) nm += " (" + c.clientnummer + ")";
+    return nm;
+  }
+  function clientCellLabel(c) {
+    if (!c) return "—";
+    var nm = ((c.voornaam || "") + " " + (c.achternaam || "")).trim();
+    return nm || "—";
+  }
+  function fillClientSelect(selectEl, selectedId) {
+    if (!selectEl) return;
+    var sel = selectedId ? String(selectedId) : "";
+    var clients = getAllClienten()
+      .filter(function (c) { return c && (!c.archived || String(c.id) === sel); })
+      .sort(function (a, b) {
+        var cmp = (a.achternaam || "").localeCompare(b.achternaam || "", "nl", { sensitivity: "base" });
+        if (cmp !== 0) return cmp;
+        return (a.voornaam || "").localeCompare(b.voornaam || "", "nl", { sensitivity: "base" });
+      });
+    selectEl.innerHTML = "";
+    var noneOpt = document.createElement("option");
+    noneOpt.value = "";
+    noneOpt.textContent = "— Geen cliënt —";
+    selectEl.appendChild(noneOpt);
+    clients.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = String(c.id);
+      opt.textContent = clientSelectLabel(c);
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = sel && getClientById(sel) ? sel : "";
+  }
+
   function sortValue(rec, key) {
     if (!rec) return "";
     if (key === "status") {
@@ -79,6 +128,10 @@
       return isFinite(t) ? t : 0;
     }
     if (key === "beschrijving") return (rec.beschrijving || "").toLowerCase();
+    if (key === "client") {
+      var cl = getClientById(rec.clientId);
+      return cl ? clientCellLabel(cl).toLowerCase() : "";
+    }
     return (rec.titel || "").toLowerCase();
   }
 
@@ -159,6 +212,7 @@
       + '<td data-col="select"><input type="checkbox" class="table-checkbox vm-row-check" data-id="' + escAttr(rec.id) + '" aria-label="Selecteer" /></td>'
       + '<td data-col="titel"><strong>' + escHtml(rec.titel || "—") + '</strong></td>'
       + '<td data-col="beschrijving" class="ic-cell-beschr">' + escHtml(rec.beschrijving || "—") + '</td>'
+      + '<td data-col="client">' + escHtml(clientCellLabel(getClientById(rec.clientId))) + '</td>'
       + '<td data-col="status">' + statusPill(rec) + '</td>'
       + '<td data-col="aangemaakt">' + escHtml(formatNlDate(rec.aanmaakdatum)) + '</td>'
       + '<td data-col="acties" class="incident-action-cell">' + actionsHtml(rec) + '</td>'
@@ -178,7 +232,7 @@
     var pageRows = items.slice(start, start + pageSize);
 
     if (pageRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="incident-empty">Geen resultaten gevonden</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen resultaten gevonden</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(renderRowHtml).join("");
     }
@@ -201,6 +255,7 @@
     { id: "select", label: "Selectie", defaultOn: true, skipToggle: true },
     { id: "titel", label: "Titel", defaultOn: true, skipToggle: true },
     { id: "beschrijving", label: "Beschrijving", defaultOn: true },
+    { id: "client", label: "Cliënt", defaultOn: true },
     { id: "status", label: "Status", defaultOn: true },
     { id: "aangemaakt", label: "Aangemaakt op", defaultOn: true },
     { id: "acties", label: "Acties", defaultOn: true, skipToggle: true },
@@ -303,6 +358,7 @@
   function openAddModal() {
     $("vm-add-titel").value = "";
     $("vm-add-beschr").value = "";
+    fillClientSelect($("vm-add-client"), "");
     $("vm-add-vervaldatum").value = "";
     $("vm-add-afgerond").checked = false;
     var err = $("vm-add-error"); if (err) { err.hidden = true; err.textContent = ""; }
@@ -313,6 +369,7 @@
     ev.preventDefault();
     var titel = ($("vm-add-titel").value || "").trim();
     var beschr = ($("vm-add-beschr").value || "").trim();
+    var clientId = $("vm-add-client").value || null;
     var vervaldatum = $("vm-add-vervaldatum").value || null;
     var afgerond = !!$("vm-add-afgerond").checked;
     var err = $("vm-add-error");
@@ -328,6 +385,7 @@
       await window.verbeteringsmaatregelenDB.add({
         titel: titel,
         beschrijving: beschr,
+        clientId: clientId,
         vervaldatum: vervaldatum,
         afgerond: afgerond,
       });
@@ -351,6 +409,7 @@
     $("vm-edit-id").value = id;
     $("vm-edit-titel").value = rec.titel || "";
     $("vm-edit-beschr").value = rec.beschrijving || "";
+    fillClientSelect($("vm-edit-client"), rec.clientId || "");
     $("vm-edit-vervaldatum").value = rec.vervaldatum ? String(rec.vervaldatum).slice(0, 10) : "";
     $("vm-edit-afgerond").checked = !!rec.afgerond;
     var err = $("vm-edit-error"); if (err) { err.hidden = true; err.textContent = ""; }
@@ -362,6 +421,7 @@
     if (!state.editingId) return;
     var titel = ($("vm-edit-titel").value || "").trim();
     var beschr = ($("vm-edit-beschr").value || "").trim();
+    var clientId = $("vm-edit-client").value || null;
     var vervaldatum = $("vm-edit-vervaldatum").value || null;
     var afgerond = !!$("vm-edit-afgerond").checked;
     var err = $("vm-edit-error");
@@ -377,6 +437,7 @@
       await window.verbeteringsmaatregelenDB.update(state.editingId, {
         titel: titel,
         beschrijving: beschr,
+        clientId: clientId,
         vervaldatum: vervaldatum,
         afgerond: afgerond,
       });
@@ -613,6 +674,7 @@
     });
 
     window.addEventListener("besa:verbeteringsmaatregelen-updated", renderTable);
+    window.addEventListener("besa:clienten-updated", renderTable);
   }
 
   function init() {
