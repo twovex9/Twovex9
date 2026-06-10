@@ -100,6 +100,7 @@
     // Cliënten
     "clienten.html": "Cliënten",
     "aanmeldingen.html": "Cliënten",
+    "wachtlijst.html": "Cliënten",
     "client-detail.html": "Cliënten",
     "zorgsoorten.html": "Cliënten",
     "zorgsoort-detail.html": "Cliënten",

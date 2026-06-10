@@ -910,10 +910,29 @@
 
     if (document.getElementById("bdtl-side-s")) document.getElementById("bdtl-side-s").textContent = fmtDateDisplay(b.startISO);
     if (document.getElementById("bdtl-side-e")) document.getElementById("bdtl-side-e").textContent = fmtDateDisplay(b.eindISO);
+    // Gegevens-blok in de detail-kop: gemeente + productcode (fase 2).
+    if (document.getElementById("bdtl-side-gem")) {
+      document.getElementById("bdtl-side-gem").textContent =
+        b.gemeente && String(b.gemeente).trim() ? String(b.gemeente).trim() : "—";
+    }
+    if (document.getElementById("bdtl-side-pc")) {
+      document.getElementById("bdtl-side-pc").textContent =
+        b.productcode && String(b.productcode).trim() ? String(b.productcode).trim() : "—";
+    }
 
     fillClientSelect(b.clientId);
     updateClFasePill(b.clientId);
     if (document.getElementById("bdtl-naam")) document.getElementById("bdtl-naam").value = b.naam || "";
+    var gemIn = document.getElementById("bdtl-gemeente");
+    if (gemIn) {
+      gemIn.value = b.gemeente || "";
+      // Hint in het placeholder: standaard de gemeente van de cliënt.
+      var gemCl = null;
+      if (typeof getClientenById === "function" && b.clientId) gemCl = getClientenById(b.clientId);
+      gemIn.placeholder = gemCl && gemCl.gemeente ? String(gemCl.gemeente).trim() : "";
+    }
+    var pcIn = document.getElementById("bdtl-productcode");
+    if (pcIn) pcIn.value = b.productcode || "";
     setDeclOptionsWithValue(b.declMeth);
     setZorgOptionsWithValue(b.zorgsoortKey);
     if (document.getElementById("bdtl-start")) document.getElementById("bdtl-start").value = b.startISO || "";
@@ -965,6 +984,12 @@
         : (row.clientLabel || "—");
       row.locatie = cl && cl.locatie != null ? String(cl.locatie).trim() || "—" : (row.locatie || "—");
       row.naam = na.trim() || "Beschikking";
+      // Gemeente: lege invoer valt terug op de gemeente van de gekoppelde cliënt.
+      var gemRaw = (document.getElementById("bdtl-gemeente") && document.getElementById("bdtl-gemeente").value) || "";
+      gemRaw = gemRaw.trim();
+      row.gemeente = gemRaw || (cl && cl.gemeente ? String(cl.gemeente).trim() : "");
+      var pcRaw = (document.getElementById("bdtl-productcode") && document.getElementById("bdtl-productcode").value) || "";
+      row.productcode = pcRaw.trim();
       row.declMeth = (document.getElementById("bdtl-dm") && document.getElementById("bdtl-dm").value) || "ONS";
       row.zorgsoortKey = (document.getElementById("bdtl-zorg") && document.getElementById("bdtl-zorg").value) || "gecombineerd";
       row.fase = (document.getElementById("bdtl-fase-besc") && document.getElementById("bdtl-fase-besc").value) || "actief";

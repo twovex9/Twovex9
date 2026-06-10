@@ -27742,3 +27742,669 @@ body.amp-body {
   font-size: var(--font-table-cell);
   color: var(--text-muted);
 }
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 2 (onderteken)
+   =================================================================== */
+/* ====================================================================== */
+/* Cliëntmodule 2.0 fase 2 — publieke ondertekenpagina (onderteken.html)  */
+/* Prefix .ond- · uitsluitend thema-tokens (licht + donker automatisch)   */
+/* ====================================================================== */
+
+body.ond-body {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
+  background: var(--bg-muted);
+}
+
+.ond-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 16px 48px;
+}
+
+.ond-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-pop);
+  padding: 32px 36px 30px;
+}
+
+.ond-logo {
+  margin: 0 0 10px;
+  font-size: var(--font-base);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.ond-logo span { color: var(--blue); }
+
+.ond-loading {
+  padding: 28px 0 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.ond-title {
+  margin: 0 0 8px;
+  font-size: var(--font-h1);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.ond-meta {
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.ond-meta strong { color: var(--text); }
+
+.ond-req {
+  color: var(--red);
+  font-style: normal;
+}
+
+/* --- verklaringtekst ---------------------------------------------------- */
+.ond-verklaring {
+  margin: 0 0 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-alt);
+  color: var(--text);
+  line-height: 1.6;
+  max-height: 420px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ond-verklaring p { margin: 0 0 10px; }
+.ond-verklaring p:last-child { margin-bottom: 0; }
+.ond-verklaring ul,
+.ond-verklaring ol { margin: 0 0 10px; padding-left: 20px; }
+.ond-verklaring h1,
+.ond-verklaring h2,
+.ond-verklaring h3,
+.ond-verklaring h4 {
+  margin: 0 0 8px;
+  font-size: var(--font-base);
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* --- handtekening-canvas ------------------------------------------------ */
+.ond-sign-label {
+  margin: 0 0 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ond-canvas-wrap { position: relative; }
+
+.ond-canvas {
+  display: block;
+  width: 100%;
+  height: 180px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.ond-canvas-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+  pointer-events: none;
+}
+
+.ond-canvas-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0 16px;
+}
+
+/* --- akkoord-checkbox ----------------------------------------------------- */
+.ond-akkoord {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.ond-akkoord input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
+/* --- foutbanner ----------------------------------------------------------- */
+.ond-error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  border-radius: var(--r-md);
+  color: var(--red);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ond-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- fout-/infostate (ongeldig, verlopen, al ondertekend, ingetrokken) --- */
+.ond-state {
+  text-align: center;
+  padding: 26px 10px 14px;
+}
+
+.ond-state-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+}
+
+.ond-state-title {
+  margin: 0 0 6px;
+  font-size: var(--font-h1);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ond-state-text {
+  margin: 0 auto;
+  max-width: 460px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* --- succes-scherm -------------------------------------------------------- */
+.ond-success {
+  text-align: center;
+  padding: 26px 10px 14px;
+}
+
+.ond-success-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.ond-success-title {
+  margin: 0 0 6px;
+  font-size: var(--font-h1);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ond-success-text {
+  margin: 0 auto 8px;
+  max-width: 460px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.ond-success-sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+}
+
+.ond-foot {
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+  text-align: center;
+}
+
+/* --- responsief ------------------------------------------------------------ */
+@media (max-width: 720px) {
+  .ond-wrap { padding: 18px 10px 28px; }
+  .ond-card { padding: 22px 16px 20px; }
+  .ond-canvas { height: 160px; }
+  .ond-actions { justify-content: stretch; }
+  .ond-actions .btn-primary { width: 100%; justify-content: center; }
+}
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 2 (intake)
+   =================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   Cliëntmodule 2.0 — fase 2: Intake-tab (.cdi-), digitale ondertekening
+   (.cdo-) en cliëntreis-acties in de vcard (.cra-).
+   Door orchestrator te mergen in styles.css. Tokens-only → werkt automatisch
+   in licht én donker thema (geen aparte [data-theme]-regels nodig).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Intake-tab (#cd-pan-k) ──────────────────────────────────────────────── */
+.cdi-loading {
+  padding: 8px 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
+.cdi-leeg {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: 22px 18px;
+  text-align: center;
+}
+.cdi-leeg-titel {
+  margin: 0 0 6px;
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+.cdi-leeg-uitleg {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}
+
+.cdi-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+.cdi-voortgang {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cdi-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cdi-badge--lopend {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.cdi-badge--afgerond {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.cdi-kaart {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 12px 14px;
+  margin: 0 0 10px;
+}
+.cdi-kaart-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.cdi-kaart-titel {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+.cdi-inhoud {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-table-cell);
+  padding: 8px 10px;
+  resize: vertical;
+}
+.cdi-inhoud:disabled {
+  color: var(--text-muted);
+  background: var(--surface-alt);
+}
+.cdi-kaart-voet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0 0;
+}
+.cdi-afgerond-lab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.cdi-meta {
+  margin: 8px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+
+.cdi-afronden-wrap {
+  margin: 14px 0 0;
+}
+.cdi-confirm {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 12px 14px;
+}
+.cdi-confirm-titel {
+  margin: 0 0 10px;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+}
+.cdi-confirm-knoppen {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Digitale ondertekening (subsectie in de Intake-tab) ─────────────────── */
+.cdo-sectie {
+  margin: 22px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.cdo-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+.cdo-titel {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Horizontale scrollbalk verplicht (werkpatronen §1). */
+.cdo-tabelwrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+}
+.cdo-tabel {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.cdo-ondtype {
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+}
+
+.cdo-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cdo-pill--open {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+.cdo-pill--ondertekend {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.cdo-pill--verlopen {
+  background: var(--red-soft);
+  color: var(--red);
+}
+.cdo-pill--ingetrokken {
+  background: var(--line);
+  color: var(--text-secondary);
+}
+
+.cdo-acties {
+  white-space: nowrap;
+}
+.cdo-acties .cdo-knopje {
+  margin-right: 6px;
+}
+.cdo-acties .cdo-knopje:last-child {
+  margin-right: 0;
+}
+.cdo-confirm-txt {
+  margin-right: 8px;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+}
+
+/* Resultaat-blok in de aanvraag-modal (deel-link + kopieer-knop);
+   zelfde padding als .modal-body zodat het visueel aansluit. */
+.cdo-resultaat {
+  padding: 18px 20px 12px;
+}
+.cdo-resultaat-titel {
+  margin: 0 0 8px;
+  font-size: var(--font-table-cell);
+  color: var(--text);
+}
+.cdo-resultaat-rij {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cdo-resultaat-rij .modal-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── Cliëntreis-acties in de vcard (#cd-reis-acties) ─────────────────────── */
+/* Kleine knopjes, full-width gestapeld onder de Cliëntreis-pill. */
+.cra-btn {
+  display: block;
+  width: 100%;
+  margin: 6px 0 0;
+}
+.cra-confirm {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 10px;
+  margin: 6px 0 0;
+}
+.cra-confirm-titel {
+  margin: 0 0 8px;
+  font-size: var(--font-table-head);
+  color: var(--text);
+}
+.cra-toelichting {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 8px;
+}
+.cra-confirm-knoppen {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 2 (wachtlijst)
+   =================================================================== */
+/* ===== Wachtlijst (Cliëntmodule 2.0 fase 2) =====
+   Page-CSS voor wachtlijst.html. Prefix .wl-, uitsluitend tokens —
+   werkt automatisch in licht + donker. Hergebruikt .kl-stat/.kl-stat-val/
+   .kl-stat-lbl als KPI-tegel-basis (zelfde look als klachten/aanmeldingen). */
+
+/* Top-grid: 2 KPI-tegels + 2 wachttijd-kaarten naast elkaar */
+.wl-top { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+@media (max-width: 1100px) { .wl-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .wl-top { grid-template-columns: 1fr; } }
+.wl-stat--aantal { border-top-color: var(--blue); }
+.wl-stat--wachttijd { border-top-color: var(--yellow); }
+
+/* Wachttijd-kaarten (per gemeente / per product) */
+.wl-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  min-width: 0;
+}
+.wl-card-title {
+  margin: 0 0 8px;
+  font-size: var(--font-table-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.wl-card-body { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.wl-card-empty { margin: 0; color: var(--text-muted); font-size: var(--font-base); }
+.wl-mini-table { width: 100%; border-collapse: collapse; font-size: var(--font-table-cell); }
+.wl-mini-table th {
+  text-align: left;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.wl-mini-table td { padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); color: var(--text); }
+.wl-mini-table tr:last-child td { border-bottom: none; }
+.wl-mini-table th.wl-num, .wl-mini-table td.wl-num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Toolbar */
+.wl-toolbar { margin-bottom: 14px; }
+.wl-search { min-width: 240px; flex: 1 1 240px; max-width: 380px; }
+
+/* Tabel */
+.wl-row { cursor: pointer; }
+.wl-row:hover td { background: var(--surface-alt); }
+.wl-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.wl-cell-client { font-weight: 600; color: var(--text); }
+.wl-cell-ref { font-weight: 700; color: var(--text); white-space: nowrap; }
+.wl-cell-reden { max-width: 280px; overflow-wrap: anywhere; }
+.wl-empty { padding: 18px; text-align: center; color: var(--text-muted); font-size: var(--font-base); }
+.wl-empty[hidden] { display: none; }
+.wl-loading-cell { padding: 18px; text-align: center; color: var(--text-muted); font-size: var(--font-base); }
+
+/* Badges: urgentie + dagen wachtend (>60 rood, >30 geel, anders muted) */
+.wl-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.wl-pill--rood { background: var(--red-soft); color: var(--red); }
+.wl-pill--geel { background: var(--yellow-soft); color: var(--yellow); }
+.wl-pill--muted { background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--line); }
+
+/* Acties-cel + inline bevestig-strook */
+.wl-actions-cell { white-space: nowrap; }
+.wl-geen-actie { color: var(--text-muted); }
+.wl-confirm { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wl-confirm-text { color: var(--text-secondary); font-size: var(--font-table-head); font-weight: 600; }
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 2 (beschikkingen)
+   =================================================================== */
+/* ============================================================================
+   Cliëntmodule 2.0 — fase 2: Beschikkingen-tab in het cliëntdossier (.cdb2-)
+   Live tabel (beschikkingenDB) + verloop-badges + fase-status met dot.
+   Tokens-only: kleuren via --red/--yellow(+-soft), geen losse hex/px.
+   ============================================================================ */
+
+.cdb2-row { cursor: pointer; }
+.cdb2-row:hover td { background: var(--surface-alt); }
+.cdb2-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+.cdb2-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cdb2-verloop {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Verlopen of ≤ 30 dagen */
+.cdb2-verloop--rood {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+/* ≤ 60 dagen (oranje = huisstijl-conventie: --yellow-token) */
+.cdb2-verloop--oranje {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+/* ≤ 90 dagen — lichtste trap: alleen omlijning */
+.cdb2-verloop--geel {
+  background: transparent;
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
+}
