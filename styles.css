@@ -25377,6 +25377,36 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .emp-onb-doc-label { flex: 1 1 auto; min-width: 0; }
 .emp-onb-doc-state { flex: 0 0 auto; color: var(--text-muted); }
 .emp-onb-doc--found .emp-onb-doc-state { color: var(--green); }
+/* G12 — expiry-badge per vereist document + G28 controlevinkje + G29 gesprek-datum */
+.emp-onb-doc-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  vertical-align: middle;
+}
+.emp-onb-doc-badge--bad { background: var(--red-soft); color: var(--red); }
+.emp-onb-doc-badge--warn { background: var(--yellow-soft); color: var(--yellow); }
+.emp-onb-doc-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.emp-onb-doc--found .emp-onb-doc-check-label { color: var(--text-secondary); }
+.emp-onb-gesprek-datum {
+  margin-left: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 2px 6px;
+  font: inherit;
+  font-size: var(--font-table-cell);
+}
 .emp-onb-step-num {
   flex: 0 0 auto;
   width: 26px;
