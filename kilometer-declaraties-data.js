@@ -104,6 +104,15 @@
       isWerkwerk: row.type === "werkwerk",
       locatieNaam: row.locatie_naam || "",
       locatieBs2Id: row.locatie_bs2_id || null,
+      // Zakelijke-rit-velden (mobiliteitsmodule 2026-06-10)
+      clientId: row.client_id || null,
+      clientNaam: row.client_naam || "",
+      locatieId: row.locatie_id || null,
+      trajectType: row.traject_type || null,
+      vertrekadres: row.vertrekadres || "",
+      bestemmingsadres: row.bestemmingsadres || "",
+      reden: row.reden || "",
+      kmBerekend: row.km_berekend == null ? null : Number(row.km_berekend),
       // PR-C: rit met cliënten → inzittendenverzekering-marker (data jsonb)
       metClienten: !!(row.data && row.data.met_clienten),
       // Werk-werk goedkeuring (zorgcoördinator). NULL = n.v.t. (woon-werk
@@ -128,7 +137,7 @@
     if (dRes.error) throw dRes.error;
     var rRes = await global.besaSupabase
       .from(T_REC)
-      .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,approval_status,approved_by,approved_by_naam,approved_at,rejection_reason,aanmaakdatum,laatst_gewijzigd")
+      .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,client_id,client_naam,locatie_id,traject_type,vertrekadres,bestemmingsadres,reden,km_berekend,data,approval_status,approved_by,approved_by_naam,approved_at,rejection_reason,aanmaakdatum,laatst_gewijzigd")
       .order("datum", { ascending: true });
     if (rRes.error) throw rRes.error;
     return {
@@ -281,6 +290,15 @@
       is_automatic: false,
       locatie_naam: p.locatieNaam || "",
       locatie_bs2_id: p.locatieBs2Id || null,
+      // Zakelijke-rit-velden (mobiliteitsmodule)
+      client_id: p.clientId || null,
+      client_naam: p.clientNaam || null,
+      locatie_id: p.locatieId || null,
+      traject_type: p.trajectType || null,
+      vertrekadres: p.vertrekadres || null,
+      bestemmingsadres: p.bestemmingsadres || null,
+      reden: p.reden || null,
+      km_berekend: (p.kmBerekend == null || p.kmBerekend === "") ? null : Number(p.kmBerekend),
       // Werk-werk start altijd als 'pending' → wacht op goedkeuring door de
       // zorgcoördinator. Overige rit-types hebben geen goedkeuring (NULL).
       approval_status: isWerk ? "pending" : null,
@@ -307,6 +325,15 @@
     if (patch && "kilometers" in patch) upd.kilometers = Number(patch.kilometers) || 0;
     if (patch && "locatieNaam" in patch) upd.locatie_naam = patch.locatieNaam || "";
     if (patch && "locatieBs2Id" in patch) upd.locatie_bs2_id = patch.locatieBs2Id || null;
+    // Zakelijke-rit-velden (mobiliteitsmodule)
+    if (patch && "clientId" in patch) upd.client_id = patch.clientId || null;
+    if (patch && "clientNaam" in patch) upd.client_naam = patch.clientNaam || null;
+    if (patch && "locatieId" in patch) upd.locatie_id = patch.locatieId || null;
+    if (patch && "trajectType" in patch) upd.traject_type = patch.trajectType || null;
+    if (patch && "vertrekadres" in patch) upd.vertrekadres = patch.vertrekadres || null;
+    if (patch && "bestemmingsadres" in patch) upd.bestemmingsadres = patch.bestemmingsadres || null;
+    if (patch && "reden" in patch) upd.reden = patch.reden || null;
+    if (patch && "kmBerekend" in patch) upd.km_berekend = (patch.kmBerekend == null || patch.kmBerekend === "") ? null : Number(patch.kmBerekend);
     // PR-C: met_clienten in data jsonb (merge zodat andere data-keys blijven)
     if (patch && "metClienten" in patch) {
       // Fetch huidige data zodat we niet andere keys overschrijven

@@ -962,6 +962,9 @@
       closeModal("km-add-choice-modal");
       var f = $("km-add-manual-form"); if (f) f.reset();
       setErr("km-add-manual-error", "");
+      fillClientSelect();
+      resetRouteStatus();
+      resetManualForm();
       openModal("km-add-manual-modal");
     });
     var cK = $("km-choice-kantoor");
@@ -999,10 +1002,78 @@
     if (metCliCb && inzWarn) {
       metCliCb.addEventListener("change", function () { inzWarn.hidden = !metCliCb.checked; });
     }
+    // Zakelijke rit — cliënt-select vullen uit clientenDB (alfabetisch, actief)
+    var _clientFilled = false;
+    function fillClientSelect() {
+      var sel = $("km-add-manual-client");
+      if (!sel) return;
+      var rows = [];
+      try { rows = (window.clientenDB && window.clientenDB.getAllSync && window.clientenDB.getAllSync()) || []; } catch (e) { rows = []; }
+      var actief = rows.filter(function (c) { return c && !c.archived; });
+      actief.sort(function (a, b) {
+        return String(clientNaam(a)).localeCompare(String(clientNaam(b)), "nl");
+      });
+      // Behoud de eerste "geen/overig" optie, rebuild de rest
+      var first = sel.options[0] ? sel.options[0].outerHTML : '<option value="">— Geen / overig —</option>';
+      sel.innerHTML = first + actief.map(function (c) {
+        return '<option value="' + escHtml(String(c.id)) + '">' + escHtml(clientNaam(c)) + '</option>';
+      }).join("");
+      _clientFilled = true;
+    }
+    function clientNaam(c) {
+      if (!c) return "";
+      var n = (c.naam || c.volledigeNaam || ((c.voornaam || "") + " " + (c.achternaam || "")) || "").trim();
+      return n || ("Cliënt " + (c.id || ""));
+    }
+    function resetRouteStatus() {
+      var st = $("km-add-manual-route-status");
+      if (st) { st.textContent = ""; st.className = "km-route-status"; }
+      _kmBerekend = null;
+    }
+    var _kmBerekend = null;
+
+    // Afstand berekenen (PDOK + OSRM) op basis van vertrek + bestemming
+    var berekenBtn = $("km-add-manual-bereken");
+    if (berekenBtn) berekenBtn.addEventListener("click", function () {
+      var vertrek = ($("km-add-manual-vertrek").value || "").trim();
+      var bestemming = ($("km-add-manual-bestemming").value || "").trim();
+      var st = $("km-add-manual-route-status");
+      if (!vertrek || !bestemming) {
+        if (st) { st.textContent = "Vul eerst vertrek- en bestemmingsadres in."; st.className = "km-route-status km-route-status--err"; }
+        return;
+      }
+      if (!window.besaGeoDistance || !window.besaGeoDistance.calculateRouteText) {
+        if (st) { st.textContent = "Afstandsberekening niet beschikbaar — vul de km handmatig in."; st.className = "km-route-status km-route-status--err"; }
+        return;
+      }
+      berekenBtn.disabled = true;
+      if (st) { st.textContent = "Berekenen…"; st.className = "km-route-status km-route-status--busy"; }
+      window.besaGeoDistance.calculateRouteText(vertrek, bestemming).then(function (res) {
+        if (res && res.error) {
+          if (st) { st.textContent = res.error; st.className = "km-route-status km-route-status--err"; }
+          return;
+        }
+        if (res && isFinite(res.km)) {
+          _kmBerekend = res.km;
+          var kmInput = $("km-add-manual-km");
+          if (kmInput) kmInput.value = String(res.km);
+          if (st) { st.textContent = "Berekend: " + formatKm(res.km) + " (enkele reis)"; st.className = "km-route-status km-route-status--ok"; }
+        }
+      }).catch(function (err) {
+        if (st) { st.textContent = "Berekening mislukt: " + (err && err.message ? err.message : err); st.className = "km-route-status km-route-status--err"; }
+      }).finally(function () { berekenBtn.disabled = false; });
+    });
+    // Als de gebruiker de adressen wijzigt, vervalt de eerder berekende route-link
+    ["km-add-manual-vertrek", "km-add-manual-bestemming"].forEach(function (id) {
+      var el = $(id);
+      if (el) el.addEventListener("input", function () { _kmBerekend = null; });
+    });
+
     // Reset bij heropenen van de modal
     function resetManualForm() {
       if (metCliCb) metCliCb.checked = false;
       if (inzWarn) inzWarn.hidden = true;
+      _kmBerekend = null;
     }
     var manualOpenBtn = $("km-add-manual-choice-btn") || $("km-add-choice-manual");
     if (manualOpenBtn) manualOpenBtn.addEventListener("click", resetManualForm);
@@ -1012,19 +1083,32 @@
       if (!d || !isDeclEditable(d)) { closeModal("km-add-manual-modal"); return; }
       var datum = ($("km-add-manual-datum").value || "").trim();
       var beschr = ($("km-add-manual-beschr").value || "").trim();
+      var vertrek = ($("km-add-manual-vertrek").value || "").trim();
+      var bestemming = ($("km-add-manual-bestemming").value || "").trim();
+      var clientSel = $("km-add-manual-client");
+      var clientId = clientSel ? clientSel.value : "";
+      var clientNm = clientSel && clientSel.value && clientSel.selectedIndex > 0 ? clientSel.options[clientSel.selectedIndex].text : "";
+      var trajectSel = $("km-add-manual-traject");
+      var traject = trajectSel ? trajectSel.value : "";
       var kmv = parseFloat(($("km-add-manual-km").value || "").replace(",", "."));
       var metCli = !!(metCliCb && metCliCb.checked);
       if (!datum) { setErr("km-add-manual-error", "Datum is verplicht."); return; }
-      if (!beschr) { setErr("km-add-manual-error", "Beschrijving is verplicht."); return; }
-      if (!isFinite(kmv) || kmv < 0) { setErr("km-add-manual-error", "Vul een geldig aantal kilometers in."); return; }
+      if (!vertrek) { setErr("km-add-manual-error", "Vertrekadres is verplicht."); return; }
+      if (!bestemming) { setErr("km-add-manual-error", "Bestemmingsadres is verplicht."); return; }
+      if (!isFinite(kmv) || kmv < 0) { setErr("km-add-manual-error", "Vul een geldig aantal kilometers in (of klik 'Afstand berekenen')."); return; }
+      if (!beschr) { setErr("km-add-manual-error", "Reden rit is verplicht."); return; }
       var btn = $("km-add-manual-submit"); if (btn) btn.disabled = true;
       window.kilometerDeclaratiesDB.addRecord({
         declaratieId: d.id, datum: datum, beschrijving: beschr,
-        kilometers: kmv, type: "werkwerk", typeDisplay: "Werk-werk",
+        kilometers: kmv, type: "werkwerk", typeDisplay: "Zakelijke rit",
         metClienten: metCli,
+        clientId: clientId || null, clientNaam: clientNm || null,
+        trajectType: traject || null,
+        vertrekadres: vertrek, bestemmingsadres: bestemming, reden: beschr,
+        kmBerekend: _kmBerekend,
       }).then(function () {
         closeModal("km-add-manual-modal");
-        toast("saved", "Werk-werk rit toegevoegd — wacht op goedkeuring zorgcoördinator");
+        toast("saved", "Zakelijke rit toegevoegd — wacht op goedkeuring zorgcoördinator");
         resetManualForm();
       }).catch(function (err) {
         setErr("km-add-manual-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));

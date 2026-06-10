@@ -191,6 +191,7 @@ function buildNav(active) {
 
   const KILOMETERS = smallDropdown("kilometers", "Kilometers", "Kilometers opties", [
     { href: "kilometers", title: "Kilometer declaraties", sub: "Bekijk alle kilometer declaraties" },
+    { href: "mobiliteit-dashboard", title: "Mobiliteit & kosten", sub: "Kosten-dashboard & AI-signaleringen" },
     { href: "km-afstanden", title: "Woon-werk afstanden", sub: "Beheer woon-werk afstanden" },
     { href: "km-afwijkingen", title: "Afwijkingen", sub: "Kilometer-afwijkingen beoordelen" },
   ], active);
@@ -316,6 +317,7 @@ const TOPIC_BY_PAGE = {
   "verbeteringsmaatregelen.html": "Incidenten en klachten",
   "klachten.html": "Incidenten en klachten",
   "kilometers.html": "Kilometers",
+  "mobiliteit-dashboard.html": "Kilometers",
   "km-afstanden.html": "Kilometers",
   "km-afwijkingen.html": "Kilometers",
   "facturen-te-beoordelen.html": "Facturen",

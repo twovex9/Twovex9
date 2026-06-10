@@ -216,6 +216,11 @@
     // declaraties) krijgen. Admin-tier (Eigenaar/Admin/Directeur) wint sowieso via bypass.
     "km-afstanden.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator", "Salarisadministratie"] },
     "km-afwijkingen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Zorgcoördinator", "Salarisadministratie"] },
+    // mobiliteit-dashboard (Mobiliteit & kosten): rol-gegate dashboard met views
+    // Financieel (Finance/Salarisadministratie), Eigenaar (admin-tier), Planning
+    // (Planner), HR-controle (HR) en AI-signaleringen (HR/Planner/Finance). De
+    // pagina toont per rol enkel de toegestane tabbladen; hier de paginalaag-gate.
+    "mobiliteit-dashboard.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Planner", "Finance", "Salarisadministratie"] },
 
     // ─── Beleid ───────────────────────────────────────────────────────────────
     // beleid-documenten.html = de read-/downloadbare documentenlijst (topnav "Beleid").
