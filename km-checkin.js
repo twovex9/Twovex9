@@ -18,7 +18,10 @@
   var doc = global.document;
   var DREMPEL_M = 350;        // binnen 350 m van de werklocatie = "ok"
 
-  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  function todayIso() {
+    var d = new Date(), m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (day < 10 ? "0" : "") + day;
+  }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
