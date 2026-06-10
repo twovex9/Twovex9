@@ -26968,6 +26968,10 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
    ============================================================================ */
 .mob-period { display: inline-flex; }
 .mob-tabs { margin-bottom: 16px; }
+/* Rol-gating: een verborgen tab-chip MOET verdwijnen. .filter-chip zet een
+   eigen display die anders het [hidden]-attribuut overschrijft (waardoor alle
+   tabs zichtbaar/klikbaar bleven voor elke rol). */
+.mob-tabs .filter-chip[hidden] { display: none !important; }
 .mob-view { display: block; }
 .mob-view[hidden] { display: none; }
 .mob-intro { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 16px; max-width: 70ch; }
