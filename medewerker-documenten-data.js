@@ -107,6 +107,24 @@
       });
   }
 
+  // G46-vervolg — haalt ON-DEMAND een VERSE signed URL op voor één storage-pad.
+  // De in de cache opgeslagen fileData-URL heeft een TTL van 1 uur; bij een
+  // lang openstaande pagina of een stale localStorage-cache (vorige sessie) is
+  // die verlopen → openen geeft dan "400 InvalidJWT". Door bij élke klik
+  // ("Bekijken"/download) een verse URL te minten, opent het document altijd.
+  function getSignedUrl(storagePath) {
+    if (!storagePath || !global.besaSupabase) return Promise.resolve("");
+    return global.besaSupabase.storage.from(BUCKET).createSignedUrl(storagePath, SIGNED_URL_TTL)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return (res.data && res.data.signedUrl) || "";
+      })
+      .catch(function (err) {
+        reportSilent("verse signed URL ophalen", err);
+        return "";
+      });
+  }
+
   function uploadToStorage(path, blob, mime) {
     if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
     return global.besaSupabase
@@ -670,6 +688,7 @@
     restore: restore,
     remove: remove,
     maybeMigrateFromEmployee: maybeMigrateFromEmployee,
+    getSignedUrl: getSignedUrl,
     generateId: generateId,
   };
 })(typeof window !== "undefined" ? window : this);

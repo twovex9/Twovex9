@@ -4926,26 +4926,69 @@ function initDocumentenSection() {
     }
   }
 
-  // Opent een document in een nieuw tabblad. Bewust via een synthetische
-  // link-klik i.p.v. window.open(""): een lege-URL popup wordt door
-  // popup-blockers/extensies stil geblokkeerd (de knop "doet dan niets"),
-  // terwijl een door de klik geïnitieerde <a target="_blank"> dat niet wordt.
-  // De browser toont PDF's/afbeeldingen inline en biedt overige typen als
-  // download aan. Zelfde patroon als performDownloadAll().
-  function openDocument(doc) {
-    if (!doc || !doc.fileData) {
-      if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
-      }
-      return;
-    }
+  function openUrlInNewTab(url) {
     var a = document.createElement("a");
-    a.href = doc.fileData;
+    a.href = url;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }
+
+  // Opent een document in een nieuw tabblad. De bucket is PRIVATE (G46): de in
+  // de cache opgeslagen signed URL (doc.fileData) heeft een TTL van 1 uur en kan
+  // dus verlopen zijn (bij een lang openstaande pagina of een stale cache van een
+  // vorige sessie) → openen gaf dan een "400 InvalidJWT"-foutpagina i.p.v. het
+  // document. Daarom minten we bij élke klik een VERSE signed URL uit
+  // doc.storagePath.
+  //
+  // Popup-veilig: het tabblad wordt SYNCHROON binnen de klik geopend (= user-
+  // gesture, dus niet geblokkeerd) en geredirect zodra de verse URL binnen is.
+  // Blokkeert de browser de popup toch (win === null), dan vallen we — nog steeds
+  // synchroon, dus mét geldige gesture — terug op de gecachte URL.
+  function openDocument(doc) {
+    if (!doc || (!doc.storagePath && !doc.fileData)) {
+      if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Geen bestand", "Er is geen bestand beschikbaar voor dit document.");
+      }
+      return;
+    }
+    // Legacy base64 / data-URL zonder storage-pad: direct (synchroon) openen.
+    if (!doc.storagePath || !window.medewerkerDocsDB || typeof window.medewerkerDocsDB.getSignedUrl !== "function") {
+      if (doc.fileData) openUrlInNewTab(doc.fileData);
+      return;
+    }
+    var win = null;
+    try { win = window.open("", "_blank"); } catch (e) { win = null; }
+    if (!win) {
+      // Popup geblokkeerd → synchrone fallback met de gecachte URL (gesture nog geldig).
+      if (doc.fileData) {
+        openUrlInNewTab(doc.fileData);
+      } else if (typeof window.showActionFeedback === "function") {
+        window.showActionFeedback("info", "Openen geblokkeerd", "Sta pop-ups toe om het document te openen.");
+      }
+      return;
+    }
+    try { win.opener = null; } catch (e) { /* */ }
+    window.medewerkerDocsDB.getSignedUrl(doc.storagePath).then(function (freshUrl) {
+      var target = freshUrl || doc.fileData || "";
+      if (!target) {
+        try { win.close(); } catch (e) { /* */ }
+        if (typeof window.showActionFeedback === "function") {
+          window.showActionFeedback("error", "Document openen mislukt", "De documentlink kon niet worden opgehaald. Probeer het opnieuw.");
+        }
+        return;
+      }
+      try { win.location.replace(target); } catch (e) { win.location.href = target; }
+    }).catch(function (err) {
+      if (doc.fileData) {
+        try { win.location.replace(doc.fileData); } catch (e) { /* */ }
+      } else {
+        try { win.close(); } catch (e) { /* */ }
+        reportDocumentError(err, "Document openen");
+      }
+    });
   }
 
   function buildPills() {
@@ -5450,20 +5493,35 @@ function initDocumentenSection() {
   }
 
   function performDownloadAll(docs) {
-    docs.forEach(function (d) {
+    function triggerDownload(url, name) {
+      if (!url) return;
       var a = document.createElement("a");
-      a.href = d.fileData;
-      a.download = d.fileName || d.naam || "document";
+      a.href = url;
+      a.download = name || "document";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    });
-    if (typeof window.showSaveModal === "function") {
-      var msg = docs.length === 1
-        ? "1 document is gedownload."
-        : docs.length + " documenten zijn gedownload.";
-      window.showSaveModal(msg, "Gedownload");
     }
+    var canMint = window.medewerkerDocsDB && typeof window.medewerkerDocsDB.getSignedUrl === "function";
+    // Verse signed URL per bestand: de gecachte fileData kan verlopen zijn (TTL 1u).
+    var jobs = docs.map(function (d) {
+      var name = d.fileName || d.naam || "document";
+      if (d.storagePath && canMint) {
+        return window.medewerkerDocsDB.getSignedUrl(d.storagePath)
+          .then(function (url) { triggerDownload(url || d.fileData, name); })
+          .catch(function () { triggerDownload(d.fileData, name); });
+      }
+      triggerDownload(d.fileData, name);
+      return Promise.resolve();
+    });
+    Promise.all(jobs).then(function () {
+      if (typeof window.showSaveModal === "function") {
+        var msg = docs.length === 1
+          ? "1 document is gedownload."
+          : docs.length + " documenten zijn gedownload.";
+        window.showSaveModal(msg, "Gedownload");
+      }
+    });
   }
 
   function ensureDownloadConfirmModal() {
