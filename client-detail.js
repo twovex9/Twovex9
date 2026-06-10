@@ -2571,6 +2571,33 @@
   renderAiKaart();
 
   // ============================================================
+  // DOSSIER-ISSUES-kaart (fase 4, §12) — uit client_dossier_controle cron
+  // ============================================================
+
+  async function renderIssuesKaart() {
+    var kaart = document.getElementById("cd-issues-kaart");
+    var lijst = document.getElementById("cd-issues-lijst");
+    if (!kaart || !lijst) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    try {
+      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.besaSupabase.rpc("client_dossier_issues_voor_client", { p_client_id: cl.id });
+      if (r.error) { craSetVisible(kaart, false); return; }
+      var rows = Array.isArray(r.data) ? r.data : [];
+      if (!rows.length) { craSetVisible(kaart, false); return; }
+      lijst.innerHTML = rows.map(function (i) {
+        var ernst = i.ernst === "rood" || i.ernst === "oranje" ? i.ernst : "info";
+        return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">' + escapeHtml(i.tekst || "") + '</li>';
+      }).join("");
+      craSetVisible(kaart, true);
+    } catch (e) {
+      craSetVisible(kaart, false);
+    }
+  }
+  renderIssuesKaart();
+
+  // ============================================================
   // TEAM-blok in de vcard (fase 3, client_medewerkers)
   // ============================================================
 
