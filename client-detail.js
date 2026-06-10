@@ -2788,15 +2788,15 @@
       var rows = [];
       (d.audit || []).forEach(function (a) {
         rows.push({
-          ts: a.ts, bron: "audit/" + (a.tabel || ""),
+          ts: a.ts, bron: "audit/" + (a.resource || ""),
           wie: a.gebruiker_label || "—",
           wat: a.actie || "—",
-          detail: diffJson(a.oude_waarden, a.nieuwe_waarden),
+          detail: typeof a.details === "string" ? a.details : JSON.stringify(a.details || ""),
         });
       });
       (d.tijdlijn || []).forEach(function (t) {
         rows.push({
-          ts: t.created_at, bron: "tijdlijn/" + (t.event_type || ""),
+          ts: t.ts, bron: "tijdlijn/" + (t.event_type || ""),
           wie: t.created_by_naam || "—",
           wat: t.titel || "—",
           detail: t.omschrijving || "",
