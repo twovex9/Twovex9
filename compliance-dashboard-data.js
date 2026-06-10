@@ -36,5 +36,12 @@
     return Number(res.data) || 0;
   }
 
-  global.complianceDashboardDB = { kpis: kpis, overzicht: overzicht, recertificering: recertificering, agressieAantal: agressieAantal };
+  // Periodieken — jaarlijkse trede-verhogingen loondienst.
+  async function periodieken() {
+    var res = await client().rpc("hr_periodieken_overzicht");
+    if (res.error) throw res.error;
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  global.complianceDashboardDB = { kpis: kpis, overzicht: overzicht, recertificering: recertificering, agressieAantal: agressieAantal, periodieken: periodieken };
 })(typeof window !== "undefined" ? window : globalThis);
