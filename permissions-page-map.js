@@ -58,7 +58,7 @@
     // ─── HR Compliance-dashboard (G48) — HR + admin-tier ──────────────────────
     // Compliance-overzicht (verloopbewaking docs, onboarding, VOG%) + drill-down naar
     // het dossier. Server-side gate't hr_compliance_overzicht()/-kpis() via is_office_staff().
-    "compliance-dashboard.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
+    "compliance-dashboard.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"], strict: true },
 
     // ─── HR-domein (employees-groep) ──────────────────────────────────────────
     "hr.html": { action: "browse", entity: "employees" },
@@ -86,12 +86,14 @@
     "inwerk-items.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
 
     // ─── Salarishuis — UITZONDERING op BS2-model (strikt 4 rollen) ────────────
-    "salarishuis.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
-    "salarishuis-wijzigingsgeschiedenis.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"] },
+    // G56: strict — de admin-tier-bypass geldt hier NIET; alleen de expliciete
+    // rollen komen binnen (zelfde fail-closed model als Financiën).
+    "salarishuis.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"], strict: true },
+    "salarishuis-wijzigingsgeschiedenis.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR"], strict: true },
 
     // ─── Salaris-uitvoer + compensatie (Salarisadministratie + admin-tier) ────
-    "salarisadministratie-exporter.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
-    "loonstroken.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
+    "salarisadministratie-exporter.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"], strict: true },
+    "loonstroken.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"], strict: true },
     "compensatie-saldi.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
     "compensatie-berekeningen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },
     "compensatie-feestdagen.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "HR", "Salarisadministratie"] },

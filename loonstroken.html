@@ -281,6 +281,48 @@
           </table>
         </div>
       </section>
+
+      <!-- Jaaropgaven (G20 — HR-upload, zelfde flow als loonstroken) -->
+      <section class="emp-section" style="margin-top:24px">
+        <h3>Jaaropgave toevoegen</h3>
+        <p class="emp-section-sub">Upload een jaaropgave-PDF voor een loondienstmedewerker. De medewerker ziet 'm meteen onder "Mijn jaaropgaven" (web en app).</p>
+        <div class="sa-field-grid">
+          <label class="emp-field">
+            <span>Medewerker</span>
+            <select id="jo-mw" class="comp-modal-input" aria-label="Medewerker (jaaropgave)"></select>
+          </label>
+          <label class="emp-field">
+            <span>Jaar</span>
+            <select id="jo-jaar" class="comp-modal-input" aria-label="Jaar (jaaropgave)"></select>
+          </label>
+          <label class="emp-field">
+            <span>Bestand (PDF)</span>
+            <input type="file" id="jo-file" accept="application/pdf" class="comp-modal-input" />
+          </label>
+        </div>
+        <div class="sa-export-actions" style="margin-top:14px">
+          <button type="button" class="btn-primary" id="jo-upload-btn">Jaaropgave uploaden</button>
+        </div>
+        <p id="jo-msg" hidden></p>
+      </section>
+
+      <h2 class="sa-history-heading" style="margin-top:24px">Geüploade jaaropgaven</h2>
+      <section class="table-card table-card--compact">
+        <div class="table-wrapper">
+          <table class="employees-table">
+            <thead>
+              <tr>
+                <th>Medewerker</th>
+                <th>Jaar</th>
+                <th>Bestand</th>
+                <th>Geüpload</th>
+                <th class="th-dl">Acties</th>
+              </tr>
+            </thead>
+            <tbody id="jo-tbody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 

@@ -33,14 +33,14 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 
 ### Fase 1 — Nieuwe HR-datalagen + tabellen  [ ]
 - [x] G40 — opleidingen-catalogus uitgebreid (categorie/geldigheidsduur_maanden/skj_punten/is_academy) + koppeltabel medewerker_opleidingen (certificaat/herhaaldatum). `hr_v4_addons.sql`. UI in Functioneren-tab.
-- [~] G41 — SKJ-punten per opleiding-koppeling (veld). Saldo-aggregatie + herregistratie-overzicht nog te doen.
+- [x] G41 — SKJ-saldo-badge in Functioneren-tab (som skj_punten van geldige opleidingen). Herregistratie-zicht via G42-recertsectie. PR #605.
 - [x] G26 — beleid_kennisname-tabel + RPC hr_beleid_kennisname_pct + "Verplicht beleid"-sectie in hub (mijn-beleid.js): 9 vaste docs, gelezen+ondertekend+datum. `hr_v4_beleid_kennisname.sql`.
 - [x] G36 — functioneringsgesprekken-tabel + UI (Functioneren-tab medewerker-functioneren.js).
 - [x] G37 — functionering_doelen (Ontwikkeldoelen-sectie).
 - [x] G38 — verbetertrajecten (sectie + CRUD).
 - [x] G39 — medewerker_waarschuwingen (sectie + CRUD).
-- [x] G20 — jaaropgaven: tabel + private bucket + RLS (eigen/HR) + "Mijn jaaropgaven"-sectie in hub (mijn-jaaropgaven.js). `hr_v4_jaaropgaven.sql`. HR-upload-UI nog (kan via loonstroken-patroon).
-- [ ] G28 — onboarding documentcontrole-status (HR verificatie/akkoord per doc) + VOG max-3mnd
+- [x] G20 — jaaropgaven: tabel + private bucket + RLS (eigen/HR) + "Mijn jaaropgaven"-sectie in hub (mijn-jaaropgaven.js). `hr_v4_jaaropgaven.sql`. HR-upload-UI op de loonstroken-pagina (jaaropgave-sectie). COMPLEET.
+- [x] G28 — HR-controlevinkje per gevonden vereist document (traject.data.docCheck) + VOG-leeftijdscheck "Ouder dan 3 mnd" (uploaddatum, badge). PR #603.
 - ~~G52~~ — vacatures: GEDROPT (user-keuze)
 
 ### Fase 2 — Salarisberekening + planning/loket  [~]
@@ -52,7 +52,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G5 — planning-kosten op echte uurkostprijs: nieuwe getPersoneelsUurkostForName (loondienst=uurkostprijsNum, ZZP=uurAlgemeen) → "Personeelskosten (indicatief)"-KPI in planning-overzicht, naast het bestaande diensttype-charge-tariefmodel. Toont "—" tot er uurkostprijs-data is (sparse: 1/106; groeit met HR-invoer).
 - [x] G6 — geaggregeerd personeelskosten-overzicht: het planning-summary-paneel aggregeert al over de actieve (dag/week/maand-gescopte) view → de KPI's (incl. nieuwe personeelskosten) zijn het periode-totaal. Aparte breakdown-tabel niet nodig.
 - [x] G7 — Loket-XLSX uitbreid: +kolommen Overuren (indicatief, gewerkt boven maandnorm), Ziekteverzuim (uren, uit verzuim-perioden), Contractvorm, Bruto maandsalaris (uit dossier; sparse). Achteraan toegevoegd zodat BS2-kolomblok ongewijzigd. medewerker-verzuim-data.js bijgeladen. ⏳ auto-mail uitgesteld (vereist edge-functie-deploy `salarisexport-mail` + SMTP-config = infra-blocker, zie G58).
-- [ ] G21 — salarishistorie self-service view
+- [x] G21 — salarishistorie: medewerker_salaris_historie + dossier-trigger + backfill + "Mijn salarisontwikkeling" in hub. PR #605.
 
 ### Fase 3 — Dossier + portaal-UI (PC + mobiel)  [ ]
 - [x] G14 — nationaliteit · G15 — afdeling · G18 — IBAN (PR #587) · **G16 — leidinggevende** (Details-tab veld emp-leidinggevende → medewerkers.data, mirror G14/15/18-patroon)
@@ -61,17 +61,17 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G22 — eigen verlofsaldo self-service: PC ✅ (mijn-verlof.js, sectie in hub). Mobiel ✅ (/verlof kpi-tegels wet/bovenwet).
 - [x] G23 — verlof aanvragen self-service: PC ✅ (form → verlofDB.add+indienen, route teamleider→HR). Mobiel ✅ (dienVerlofIn → status ingediend + route Zorgcoördinator + notify; live end-to-end getest: aanvraag → "In behandeling", opgeruimd).
 - [x] G24 — mobiel verlof-statusmapping fix: STATUS_NL 1-op-1 met desktop (concept/ingediend/goedgekeurd/afgewezen/geannuleerd; in_afwachting=legacy-alias). Live: 'ingediend' → "In behandeling".
-- [ ] G25 — verloftypes-beheer (verloftypes.js + tabel)
-- [ ] G27 — onboarding toegangschecklist 5 spec-items
-- [ ] G29 — gestructureerde inwerkgesprekken/evaluatiemomenten
-- [ ] G42 — recertificering-overzicht + agressie-training
+- [x] G25 — verloftypes-beheer: tabel+seed+RLS, beheer-UI op verloftypes-pagina, formulier dynamisch. PR #605.
+- [x] G27 — toegangschecklist uitgebreid naar 5 items (+ Toegangspas/sleutels). PR #603.
+- [x] G29 — onboarding-stap "Inwerkgesprekken & evaluatie" (week 1 / maand 1 / einde proeftijd, afvinkbaar+dateerbaar). PR #603.
+- [x] G42 — "Recertificering & trainingen"-sectie op compliance-dashboard (hr_recertificering_overzicht + hr_agressie_training_aantal). PR #605.
 
 ### Fase 4 — Document/verloop-UI + onboarding-flow  [ ]
-- [ ] G10 — 90/60/30 gelaagdheid + SKJ/Verzekeringen-categorie + pushSoon certificeringen
-- [ ] G11 — uitgebreid doc-type-model (4 plekken sync)
-- [ ] G12 — volledige ONB_REQUIRED_DOCS + per-rij expiry-badge
-- [ ] G13 — vervaldatum-veld in publieke onboarding-upload form
-- [ ] G30 — automatische mail teken-/upload-/inwerklink
+- [x] G10 — 90/60/30 gelaagdheid + SKJ/Verzekeringen-categorie + pushSoon certificeringen (PR #589).
+- [x] G11 — canoniek doc-type-model gesynct: edge slaat canonical lowercase op (legacy-labels genormaliseerd; fixte compliance-mismatch), pagina value/label, dossier ongewijzigd. PR #603.
+- [x] G12 — ONB_REQUIRED_DOCS bestond volledig; per-rij expiry-badge toegevoegd (Verlopen / Verloopt over Xd). PR #603.
+- [x] G13 — verloopdatum-veld in publieke uploadform + ISO-validatie in de edge (server-getest: vervaldatum_date gevuld). PR #603.
+- [x] G30 — edge onboarding-mail (SMTP-mechanisme salarisexport, dry_run, office-gate+audit) + "Mail naar medewerker"-knoppen. Server-getest (dry-run 200, 403 voor medewerker). Verstuurt zodra eigenaar SMTP-creds invult. PR #603.
 
 ### Fase 5 — Dashboards + KPI's + rol-gating  [~]
 - [x] G49 — `hr_compliance_overzicht()` + `hr_compliance_kpis()` RPC's (office-only gate), `hr_v4_compliance_rpc.sql`. Server-getest: 106 mw, 73 ZZP, 96% VOG geldig, 67 verlopen docs.
@@ -84,20 +84,20 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G54 — samengestelde compliance-score (transparant: 30% VOG + 20% onboarding + 25% contract + 25% beleid) op compliance-dashboard én management-dashboard. Server-getest qa-hr=29, qa-eigenaar bestuur-KPI's OK, qa-medewerker gated=0.
 - [x] G44 — server-side rol-RLS HR-kerntabellen. `hr_v4_rls_hardening.sql` toegepast op prod. medewerkers (writes office-only, SELECT open), verlof_aanvragen (SELECT/INSERT/UPDATE office-of-eigen, DELETE office), medewerker_notities (SELECT office-only), medewerker_verzuim_perioden (SELECT office-of-eigen), medewerker_verlof_overgedragen (SELECT office-of-eigen, writes office). Server-geverifieerd via role-impersonatie: medewerker ziet eigen verlof/0 notities, cross-write + medewerker-insert → 42501 geweigerd; office ziet alles. bureau_lockout (RESTRICTIVE) composeert AND.
 - [x] G45 — `management_dashboard_v1` RPC gespiegeld naar `supabase/migrations/management_dashboard_v1.sql` (auditeerbaar; idempotent gevalideerd op prod). RLS-helpers al in Fase 0; bs2_*=datatabellen.
-- [ ] G55 — per-rol slug-plan (scripts/<rol>-rol-permissies.mjs)
-- [ ] G56 — fail-closed voor strikte HR-pagina's + page-map-entry
-- [ ] G57 — herbruikbare besaApplyReadOnly(roles) helper
+- [x] G55 — generiek per-rol slug-plan-gereedschap `scripts/rol-permissies.mjs` (--list/--dump/--diff/--apply met dry-run+--yes; JSON-plannen reproduceerbaar/omkeerbaar). Getest read-only op prod (15 rollen; beleid dump→diff = 0/0).
+- [x] G56 — `strict: true` op de salaris-gevoelige pagina's (salarishuis ×2, salarisadministratie-exporter, loonstroken, compliance-dashboard): admin-tier-bypass uit, alleen expliciete rollen (zelfde fail-closed model als Financiën). Cold-cache fail-closed bestond al (PR #568).
+- [x] G57 — herbruikbare `besaApplyReadOnly(roles, {scope, banner})` in permissions.js: disable't invoer + verbergt muterende knoppen (MutationObserver voor dynamische content), admin-tier blijft volledig, zoekvelden blijven werken, data-ro-keep/-hide opt-outs, één banner.
 
 ### Fase 6 — Notificatie-cron + infra  [~]
 - [x] G8  — `notify_vervallende_documenten()` dagelijkse digest-cron (verlopen/30/60/90) → HR. Server-getest (dedup OK). `hr_v4_verloop_documenten_cron.sql`. KERN-DIFFERENTIATOR.
 - [x] G32 — `notify_poortwachter_deadlines()` dagelijkse digest-cron (te laat/binnen 14d) → HR. Server-getest. `hr_v4_poortwachter_signalering_cron.sql`.
-- [ ] G31 — frequent verzuim (Bradford/teller + KPI)
-- [ ] G33 — week-1-mijlpaal + 42e-week UWV los van eerstejaarsevaluatie
-- [ ] G34 — traject auto bij ziekmelding
-- [ ] G35 — acties-entiteit + uitgevoerd_door op contactmoment
-- [ ] G46 — medewerker-documenten bucket PRIVATE + signed URLs
-- [ ] G58 — scripts/deploy-functions.mjs + scripts/apply-migrations.mjs
-- [ ] G58 — scripts/deploy-functions.mjs + scripts/apply-migrations.mjs
+- [x] G31 — Frequent-verzuim-KPI (Bradford S2xD, 52wk, drempel 125, tooltip met namen). PR #606.
+- [x] G33 — week-1-melding arbodienst + 42e-weeksmelding UWV als eigen WP-mijlpalen. PR #606.
+- [x] G34 — WP-traject automatisch aangemaakt bij ziekmelding (seedTraject). PR #606.
+- [x] G35 — verzuim_acties (tabel+RLS+datalaag+UI) + uitgevoerd_door op contactmomenten/acties met naamweergave. PR #606.
+- [x] G46 — bucket private + batch signed URLs + storage-RLS office-of-eigen. Server-geverifieerd (anon 400 / office 200 / cross-sign 400). PR #604.
+- [x] G58 — scripts/deploy-functions.mjs (Management-API edge-deploy, bewezen) + scripts/apply-migrations.mjs. PR #603.
+- [x] G58 — scripts/deploy-functions.mjs (Management-API edge-deploy, bewezen) + scripts/apply-migrations.mjs. PR #603.
 - [x] G59 — DDL-route + canonieke URL's gedocumenteerd in `docs/hr-module/DEPLOY.md` (db-exec, web/mobiel-deploy incl. twovex9-credential-truc, RLS-impersonatie-test, edge-blocker-noot).
 
 ## ⏳ RESTERENDE GAPS — status & reden (na sessie 2026-06-09 #2)

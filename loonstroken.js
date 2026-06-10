@@ -175,12 +175,159 @@
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────────
+  // G20 — Jaaropgaven (zelfde flow: private bucket "jaaropgaven",
+  // pad <medewerker_id>/<jaar>.pdf, upsert op (medewerker_id, jaar)).
+  // ────────────────────────────────────────────────────────────────────────
+  function joMsg(text, ok) {
+    var el = $("jo-msg");
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = false;
+    el.style.color = ok ? "var(--green)" : "var(--red)";
+    el.style.fontWeight = "600";
+    el.style.marginTop = "10px";
+  }
+
+  function vulJoVelden() {
+    var mwSel = $("jo-mw"), jaarSel = $("jo-jaar");
+    if (!mwSel || !jaarSel) return;
+    // medewerkers hergebruiken uit de loonstroken-select (zelfde doelgroep)
+    mwSel.innerHTML = '<option value="" disabled selected hidden>Kies medewerker</option>';
+    Object.keys(mwNaam).forEach(function (id) {
+      var o = document.createElement("option");
+      o.value = id; o.textContent = mwNaam[id];
+      mwSel.appendChild(o);
+    });
+    var nu = new Date();
+    jaarSel.innerHTML = "";
+    for (var y = nu.getFullYear(); y >= nu.getFullYear() - 5; y -= 1) {
+      var o2 = document.createElement("option");
+      o2.value = y; o2.textContent = y;
+      if (y === nu.getFullYear() - 1) o2.selected = true; // default: vorig jaar
+      jaarSel.appendChild(o2);
+    }
+  }
+
+  async function laadJoLijst() {
+    var tb = $("jo-tbody");
+    if (!tb) return;
+    var res = await supa()
+      .from("jaaropgaven")
+      .select("id,medewerker_id,jaar,bestandspad,bestandsnaam,geupload_op")
+      .eq("archived", false)
+      .order("jaar", { ascending: false })
+      .limit(1000);
+    if (res.error) { tb.innerHTML = '<tr><td colspan="5">Laden mislukt.</td></tr>'; return; }
+    var rows = res.data || [];
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="5">Nog geen jaaropgaven geüpload.</td></tr>'; return; }
+    tb.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      var dt = r.geupload_op ? new Date(r.geupload_op).toLocaleDateString("nl-NL") : "";
+      var tdNaam = document.createElement("td");
+      tdNaam.textContent = mwNaam[r.medewerker_id] || "(onbekend)";
+      var tdJaar = document.createElement("td");
+      tdJaar.textContent = r.jaar;
+      var tdBestand = document.createElement("td");
+      var bekijk = document.createElement("button");
+      bekijk.type = "button";
+      bekijk.className = "btn-outline";
+      bekijk.textContent = "Bekijken";
+      bekijk.addEventListener("click", async function () {
+        var s = await supa().storage.from("jaaropgaven").createSignedUrl(r.bestandspad, 3600);
+        if (s.data && s.data.signedUrl) window.open(s.data.signedUrl, "_blank", "noopener");
+        else if (window.showError) window.showError("Kon het bestand niet openen.");
+      });
+      tdBestand.appendChild(bekijk);
+      var tdUp = document.createElement("td");
+      tdUp.textContent = dt;
+      var tdAct = document.createElement("td");
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-outline";
+      del.textContent = "Verwijderen";
+      del.addEventListener("click", async function () {
+        var ok = true;
+        if (typeof window.showSliderConfirmModal === "function") {
+          ok = await window.showSliderConfirmModal({
+            title: "Bent u zeker dat dit verwijderd wordt?",
+            preview: "Jaaropgave " + r.jaar + " — " + (mwNaam[r.medewerker_id] || ""),
+            okLabel: "Verwijderen", cancelLabel: "Annuleren",
+          });
+        }
+        if (!ok) return;
+        var up = await supa().from("jaaropgaven").update({ archived: true }).eq("id", r.id);
+        if (up.error) { if (window.showError) window.showError("Verwijderen mislukt."); return; }
+        if (window.showActionFeedback) window.showActionFeedback("deleted", "Jaaropgave");
+        laadJoLijst();
+      });
+      tdAct.appendChild(del);
+      tr.appendChild(tdNaam);
+      tr.appendChild(tdJaar);
+      tr.appendChild(tdBestand);
+      tr.appendChild(tdUp);
+      tr.appendChild(tdAct);
+      tb.appendChild(tr);
+    });
+  }
+
+  async function joUpload() {
+    var mw = $("jo-mw").value;
+    var jaar = parseInt($("jo-jaar").value, 10);
+    var file = $("jo-file").files[0];
+    if (!mw) { joMsg("Kies eerst een medewerker.", false); return; }
+    if (!file) { joMsg("Kies een PDF-bestand.", false); return; }
+    if (file.type && file.type !== "application/pdf") { joMsg("Alleen PDF-bestanden zijn toegestaan.", false); return; }
+    var btn = $("jo-upload-btn");
+    btn.disabled = true;
+    joMsg("Bezig met uploaden…", true);
+    try {
+      var path = mw + "/" + jaar + ".pdf";
+      var up = await supa().storage.from("jaaropgaven").upload(path, file, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      if (up.error) throw up.error;
+      var uid = null;
+      try { var u = await supa().auth.getUser(); uid = u.data && u.data.user ? u.data.user.id : null; } catch (e) { /* */ }
+      var ins = await supa().from("jaaropgaven").upsert(
+        {
+          medewerker_id: mw,
+          jaar: jaar,
+          bestandspad: path,
+          bestandsnaam: file.name,
+          mime_type: "application/pdf",
+          grootte_bytes: file.size,
+          geupload_door: uid,
+          archived: false,
+        },
+        { onConflict: "medewerker_id,jaar" }
+      );
+      if (ins.error) throw ins.error;
+      joMsg("Jaaropgave " + jaar + " geüpload voor " + (mwNaam[mw] || "medewerker") + ".", true);
+      $("jo-file").value = "";
+      laadJoLijst();
+    } catch (e) {
+      console.error("[jaaropgaven] upload:", e);
+      joMsg("Uploaden mislukt: " + (e && e.message ? e.message : e), false);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   function init() {
     if (!supa()) { setTimeout(init, 150); return; }
     vulPerioden();
-    laadMedewerkers().then(laadLijst);
+    laadMedewerkers().then(function () {
+      vulJoVelden();
+      laadLijst();
+      laadJoLijst();
+    });
     var btn = $("ls-upload-btn");
     if (btn) btn.addEventListener("click", upload);
+    var joBtn = $("jo-upload-btn");
+    if (joBtn) joBtn.addEventListener("click", joUpload);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
