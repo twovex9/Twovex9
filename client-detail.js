@@ -1728,9 +1728,13 @@
   }
 
   // Cosmetische check; de harde poort is zorgplan_kan_gw_akkoord() in SQL.
+  // Let op: clientreis_context() geeft rol-NAMEN terug ("Gedragswetenschapper"),
+  // geen slugs — daarom lowercase-vergelijking.
   function f3KanGwAkkoord(ctx) {
     if (window.profilesDB && typeof window.profilesDB.isAdmin === "function" && window.profilesDB.isAdmin()) return true;
-    var rollen = (ctx && Array.isArray(ctx.rollen)) ? ctx.rollen : [];
+    var rollen = ((ctx && Array.isArray(ctx.rollen)) ? ctx.rollen : []).map(function (r) {
+      return String(r || "").toLowerCase();
+    });
     return rollen.indexOf("gedragswetenschapper") >= 0 || rollen.indexOf("admin") >= 0 || rollen.indexOf("eigenaar") >= 0;
   }
 
