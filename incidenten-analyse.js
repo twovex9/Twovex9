@@ -482,7 +482,7 @@
       }));
 
     // 5. Risicosignalen & aanbevelingen
-    html += rapTable("5. Risicosignalen &amp; aanbevelingen", ["Niveau", "Signaal", "Onderbouwing", "Advies"],
+    html += rapTable("5. Risicosignalen & aanbevelingen", ["Niveau", "Signaal", "Onderbouwing", "Advies"],
       (sig || []).slice(0, 20).map(function (s) {
         var nm = NIVEAU_META[s.niveau] || NIVEAU_META.info;
         return [badge(nm.label, nm.style), escapeHtml(s.titel || ""), escapeHtml(s.onderbouwing || ""), escapeHtml(s.advies || "")];
