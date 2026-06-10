@@ -352,8 +352,19 @@
       { label: "Plaatsing starten", status: "actief" },
       { label: "Op wachtlijst", status: "wachtlijst" },
     ],
-    actief: [{ label: "Tijdelijk pauzeren", status: "tijdelijk_gepauzeerd" }],
-    tijdelijk_gepauzeerd: [{ label: "Hervatten", status: "actief" }],
+    actief: [
+      { label: "Tijdelijk pauzeren", status: "tijdelijk_gepauzeerd" },
+      { label: "Uitstroom starten", special: "uitstroom" },
+    ],
+    tijdelijk_gepauzeerd: [
+      { label: "Hervatten", status: "actief" },
+      { label: "Uitstroom starten", special: "uitstroom" },
+    ],
+    uitgestroomd: [
+      { label: "Nazorgtraject starten", special: "nazorg" },
+      { label: "Dossier sluiten", special: "sluiten" },
+    ],
+    nazorg: [{ label: "Dossier sluiten", special: "sluiten" }],
   };
   // [hidden]-valkuil: classes met expliciete display overschrijven het
   // UA-stylesheet [hidden]{display:none} — zet daarom altijd beide.
@@ -380,6 +391,9 @@
       return;
     }
     reisActies.innerHTML = knoppen.map(function (kn) {
+      if (kn.special) {
+        return '<button type="button" class="btn-outline cra-btn" data-cra-special="' + escapeAttr(kn.special) + '" data-cra-label="' + escapeAttr(kn.label) + '">' + escapeHtml(kn.label) + '</button>';
+      }
       return '<button type="button" class="btn-outline cra-btn" data-cra-status="' + escapeAttr(kn.status) + '" data-cra-label="' + escapeAttr(kn.label) + '">' + escapeHtml(kn.label) + '</button>';
     }).join("");
     craSetVisible(reisActies, true);
@@ -402,9 +416,16 @@
   }
   if (reisActies) {
     reisActies.addEventListener("click", async function (e) {
-      var btn = e.target && e.target.closest ? e.target.closest("[data-cra-status],[data-cra-bevestig],[data-cra-annuleer]") : null;
+      var btn = e.target && e.target.closest ? e.target.closest("[data-cra-status],[data-cra-bevestig],[data-cra-annuleer],[data-cra-special]") : null;
       if (!btn) return;
       if (btn.hasAttribute("data-cra-annuleer")) { syncReisActies(); return; }
+      if (btn.hasAttribute("data-cra-special")) {
+        var spec = btn.getAttribute("data-cra-special");
+        if (spec === "uitstroom") openUitstroomModal();
+        else if (spec === "nazorg") openNazorgModal();
+        else if (spec === "sluiten") openSluitModal();
+        return;
+      }
       if (btn.hasAttribute("data-cra-status")) {
         craRenderConfirm(btn.getAttribute("data-cra-status"), btn.getAttribute("data-cra-label") || "");
         return;
@@ -673,8 +694,9 @@
     i: document.getElementById("cd-pan-i"),
     t: document.getElementById("cd-pan-t"),
     k: document.getElementById("cd-pan-k"),
+    h: document.getElementById("cd-pan-h"),
   };
-  var panOrder = "dbpcnjrzsgmqitk";
+  var panOrder = "dbpcnjrzsgmqitkh";
 
   // Wordt gezet door initClientBeschikkingen (verderop) — render-hook voor de
   // Beschikkingen-tab zodat tab-activatie altijd verse data toont.
@@ -714,6 +736,7 @@
     if (k === "q") renderVragenlijsten();
     if (k === "t") renderTijdlijn();
     if (k === "k") renderIntake();
+    if (k === "h") renderGeschiedenis();
     if (k === "b" && typeof renderClientBeschikkingenTab === "function") renderClientBeschikkingenTab();
   }
 
@@ -2596,6 +2619,209 @@
     }
   }
   renderIssuesKaart();
+
+  // ============================================================
+  // UITSTROOM / NAZORG / DOSSIER SLUITEN (fase 6, §24/§25)
+  // ============================================================
+
+  function openModalById(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.hidden = false;
+    m.setAttribute("aria-hidden", "false");
+  }
+  function closeModalById(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.hidden = true;
+    m.setAttribute("aria-hidden", "true");
+  }
+
+  function openUitstroomModal() {
+    document.getElementById("cd-uit-f-reden").value = "";
+    document.getElementById("cd-uit-f-datum").value = "";
+    document.getElementById("cd-uit-f-vervolg").value = "";
+    document.getElementById("cd-uit-f-afspraken").value = "";
+    openModalById("cd-uit-modal");
+    try { document.getElementById("cd-uit-f-reden").focus(); } catch (e) { /* */ }
+  }
+  function openNazorgModal() {
+    document.getElementById("cd-naz-f-afspraken").value = "";
+    openModalById("cd-naz-modal");
+  }
+  function openSluitModal() {
+    document.getElementById("cd-slt-f-reden").value = "";
+    openModalById("cd-slt-modal");
+  }
+
+  async function naReisOvergang() {
+    if (window.clientenDB && typeof window.clientenDB.refresh === "function") {
+      try { await window.clientenDB.refresh(); } catch (e) { /* */ }
+    }
+    syncReisPill();
+    syncReisActies();
+    renderAiKaart();
+    renderIssuesKaart();
+    if (pans.t && !pans.t.hidden) renderTijdlijn();
+    if (pans.h && !pans.h.hidden) renderGeschiedenis();
+  }
+
+  document.getElementById("cd-uit-close")?.addEventListener("click", function () { closeModalById("cd-uit-modal"); });
+  document.getElementById("cd-uit-cancel")?.addEventListener("click", function () { closeModalById("cd-uit-modal"); });
+  document.getElementById("cd-uit-save")?.addEventListener("click", async function () {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var reden = (document.getElementById("cd-uit-f-reden").value || "").trim();
+    if (!reden) { try { document.getElementById("cd-uit-f-reden").focus(); } catch (e) {} return; }
+    this.disabled = true;
+    try {
+      var r = await window.besaSupabase.rpc("client_uitstroom_starten", {
+        p_client_id: cl.id, p_reden: reden,
+        p_vervolgplek: (document.getElementById("cd-uit-f-vervolg").value || "").trim() || null,
+        p_uitstroom_datum: document.getElementById("cd-uit-f-datum").value || null,
+        p_eindrapportage_id: null,
+        p_nazorg_afspraken: (document.getElementById("cd-uit-f-afspraken").value || "").trim() || null,
+      });
+      if (r.error) throw r.error;
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Uitstroom");
+      closeModalById("cd-uit-modal");
+      await naReisOvergang();
+    } catch (err) {
+      if (window.showError) window.showError("Uitstroom starten mislukt: " + (err && err.message || err));
+    }
+    this.disabled = false;
+  });
+
+  document.getElementById("cd-naz-close")?.addEventListener("click", function () { closeModalById("cd-naz-modal"); });
+  document.getElementById("cd-naz-cancel")?.addEventListener("click", function () { closeModalById("cd-naz-modal"); });
+  document.getElementById("cd-naz-save")?.addEventListener("click", async function () {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    this.disabled = true;
+    try {
+      var r = await window.besaSupabase.rpc("client_nazorg_starten", {
+        p_client_id: cl.id,
+        p_afspraken: (document.getElementById("cd-naz-f-afspraken").value || "").trim() || null,
+      });
+      if (r.error) throw r.error;
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Nazorg gestart");
+      closeModalById("cd-naz-modal");
+      await naReisOvergang();
+    } catch (err) {
+      if (window.showError) window.showError("Nazorg starten mislukt: " + (err && err.message || err));
+    }
+    this.disabled = false;
+  });
+
+  document.getElementById("cd-slt-close")?.addEventListener("click", function () { closeModalById("cd-slt-modal"); });
+  document.getElementById("cd-slt-cancel")?.addEventListener("click", function () { closeModalById("cd-slt-modal"); });
+  document.getElementById("cd-slt-save")?.addEventListener("click", async function () {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    var ok = await window.showSliderConfirmModal({
+      title: "Dossier definitief sluiten?",
+      preview: ((cl.voornaam || "") + " " + (cl.achternaam || "")).trim(),
+      okLabel: "Sluiten",
+      cancelLabel: "Annuleren",
+    });
+    if (!ok) return;
+    this.disabled = true;
+    try {
+      var r = await window.besaSupabase.rpc("client_dossier_sluiten", {
+        p_client_id: cl.id,
+        p_reden: (document.getElementById("cd-slt-f-reden").value || "").trim() || null,
+      });
+      if (r.error) throw r.error;
+      if (window.showActionFeedback) window.showActionFeedback("saved", "Dossier gesloten");
+      closeModalById("cd-slt-modal");
+      await naReisOvergang();
+    } catch (err) {
+      if (window.showError) window.showError("Sluiten mislukt: " + (err && err.message || err));
+    }
+    this.disabled = false;
+  });
+
+  // ============================================================
+  // GESCHIEDENIS-tab (fase 6, §23) — audit_log + tijdlijn samengevoegd
+  // ============================================================
+
+  function formatDatumTijdNL(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    return pad(d.getDate()) + "-" + pad(d.getMonth() + 1) + "-" + d.getFullYear() +
+      " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  function diffJson(oud, nieuw) {
+    if (!oud && !nieuw) return "";
+    if (!oud) return "+ " + Object.keys(nieuw || {}).slice(0, 3).join(", ");
+    if (!nieuw) return "− " + Object.keys(oud).slice(0, 3).join(", ");
+    var keys = Object.keys(nieuw);
+    var changed = [];
+    for (var i = 0; i < keys.length && changed.length < 3; i++) {
+      var k = keys[i];
+      if (JSON.stringify(oud[k]) !== JSON.stringify(nieuw[k])) {
+        changed.push(k);
+      }
+    }
+    return changed.join(", ");
+  }
+
+  async function renderGeschiedenis() {
+    var tbody = document.getElementById("cd-hist-tbody");
+    var empty = document.getElementById("cd-hist-empty");
+    if (!tbody || !empty) return;
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    if (!cl) return;
+    tbody.innerHTML = '<tr><td colspan="5" class="client-detail-placeholder">Laden…</td></tr>';
+    try {
+      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.besaSupabase.rpc("client_audit_trail", { p_client_id: cl.id, p_limit: 200 });
+      if (r.error) throw r.error;
+      var d = r.data || {};
+      if (!d.ok) {
+        tbody.innerHTML = '<tr><td colspan="5" class="client-detail-placeholder">Geen toegang tot geschiedenis.</td></tr>';
+        return;
+      }
+      var rows = [];
+      (d.audit || []).forEach(function (a) {
+        rows.push({
+          ts: a.ts, bron: "audit/" + (a.tabel || ""),
+          wie: a.gebruiker_label || "—",
+          wat: a.actie || "—",
+          detail: diffJson(a.oude_waarden, a.nieuwe_waarden),
+        });
+      });
+      (d.tijdlijn || []).forEach(function (t) {
+        rows.push({
+          ts: t.created_at, bron: "tijdlijn/" + (t.event_type || ""),
+          wie: t.created_by_naam || "—",
+          wat: t.titel || "—",
+          detail: t.omschrijving || "",
+        });
+      });
+      rows.sort(function (a, b) { return String(b.ts || "") < String(a.ts || "") ? -1 : 1; });
+      if (!rows.length) {
+        tbody.innerHTML = "";
+        empty.hidden = false;
+        return;
+      }
+      tbody.innerHTML = rows.map(function (x) {
+        return "<tr>" +
+          "<td>" + escapeHtml(formatDatumTijdNL(x.ts)) + "</td>" +
+          "<td>" + escapeHtml(x.bron) + "</td>" +
+          "<td>" + escapeHtml(x.wie) + "</td>" +
+          "<td>" + escapeHtml(x.wat) + "</td>" +
+          "<td>" + escapeHtml(x.detail || "—") + "</td>" +
+        "</tr>";
+      }).join("");
+      empty.hidden = true;
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="5" class="client-detail-placeholder">Geschiedenis laden mislukt: ' + escapeHtml((err && err.message) || String(err)) + '</td></tr>';
+    }
+  }
 
   // ============================================================
   // TEAM-blok in de vcard (fase 3, client_medewerkers)
