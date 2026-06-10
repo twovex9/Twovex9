@@ -16,7 +16,7 @@
  *   verbeteringsmaatregelenDB.getAllSync()
  *   verbeteringsmaatregelenDB.getActiveSync()       → niet-gearchiveerd
  *   verbeteringsmaatregelenDB.getByIdSync(id)
- *   verbeteringsmaatregelenDB.add({titel, beschrijving, vervaldatum, afgerond})
+ *   verbeteringsmaatregelenDB.add({titel, beschrijving, vervaldatum, afgerond, clientId})
  *   verbeteringsmaatregelenDB.update(id, partial)
  *   verbeteringsmaatregelenDB.archive(id)
  *   verbeteringsmaatregelenDB.restore(id)
@@ -72,6 +72,7 @@
       beschrijving: row.beschrijving || "",
       vervaldatum: row.vervaldatum || null,
       afgerond: !!row.afgerond,
+      clientId: row.client_id || null,
       archived: !!row.archived,
       aanmaakdatum: row.aanmaakdatum,
       laatstGewijzigd: row.laatst_gewijzigd,
@@ -85,6 +86,7 @@
       beschrijving: String(safe.beschrijving || ""),
       vervaldatum: safe.vervaldatum ? String(safe.vervaldatum) : null,
       afgerond: !!safe.afgerond,
+      client_id: safe.clientId ? String(safe.clientId) : null,
       archived: !!safe.archived,
     };
     payload.id = safe.id || generateId();
@@ -98,6 +100,7 @@
     if (Object.prototype.hasOwnProperty.call(safe, "beschrijving")) payload.beschrijving = String(safe.beschrijving || "");
     if (Object.prototype.hasOwnProperty.call(safe, "vervaldatum")) payload.vervaldatum = safe.vervaldatum ? String(safe.vervaldatum) : null;
     if (Object.prototype.hasOwnProperty.call(safe, "afgerond")) payload.afgerond = !!safe.afgerond;
+    if (Object.prototype.hasOwnProperty.call(safe, "clientId")) payload.client_id = safe.clientId ? String(safe.clientId) : null;
     if (Object.prototype.hasOwnProperty.call(safe, "archived")) payload.archived = !!safe.archived;
     return payload;
   }

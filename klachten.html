@@ -240,6 +240,7 @@
                 <th>Status</th>
                 <th>Prioriteit</th>
                 <th>Melder</th>
+                <th>Cliënt</th>
                 <th>Ontvangen</th>
                 <th>Behandelaar</th>
                 <th class="kl-action-th" aria-label="Actie">Actie</th>
@@ -292,6 +293,10 @@
               <option value="anoniem">Anoniem</option>
             </select></label>
         </div>
+        <label class="kl-field"><span>Cliënt (optioneel)</span>
+          <select id="kl-f-client" class="modal-input modal-select">
+            <option value="">— Geen cliënt —</option>
+          </select></label>
         <div class="kl-field-row">
           <label class="kl-field"><span>Ontvangen op</span>
             <input id="kl-f-ontvangen" class="kl-input" type="date"></label>
@@ -324,6 +329,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="clienten-data.js?v=918f1ad" defer></script>
   <script src="klachten-data.js?v=918f1ad" defer></script>
   <script src="klachten.js?v=918f1ad" defer></script>
 </body>

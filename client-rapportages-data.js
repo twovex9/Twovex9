@@ -108,7 +108,10 @@
       status: row.status || "concept",
       type: row.type || "",
       rapportDatum: row.rapport_datum || null,
+      tijd: row.tijd ? String(row.tijd).slice(0, 5) : null,
+      doelIds: Array.isArray(row.doel_ids) ? row.doel_ids : [],
       auteurId: row.auteur_id || null,
+      auteurNaam: row.auteur_naam || "",
       storagePath: row.storage_path || null,
       fileUrl: publicUrlFor(row.storage_path),
       archived: !!row.archived,
@@ -126,6 +129,8 @@
       status: safe.status || "concept",
       type: safe.type ? String(safe.type) : null,
       rapport_datum: safe.rapportDatum || null,
+      tijd: safe.tijd || null,
+      doel_ids: Array.isArray(safe.doelIds) ? safe.doelIds : [],
       storage_path: safe.storagePath || null,
       archived: !!safe.archived,
     };
@@ -138,6 +143,22 @@
     delete p.id;
     delete p.client_id; // immutable
     return p;
+  }
+
+  // RLS (fase 3) eist auteur_id = auth.uid() bij INSERT; auteur_naam voor weergave.
+  async function currentAuteur() {
+    var id = null;
+    try {
+      var s = await global.besaSupabase.auth.getSession();
+      id = (s && s.data && s.data.session && s.data.session.user && s.data.session.user.id) || null;
+    } catch (e) { /* */ }
+    var naam = null;
+    var prof = global.profilesDB && typeof global.profilesDB.getCurrentSync === "function"
+      ? global.profilesDB.getCurrentSync() : null;
+    if (prof) {
+      naam = ((prof.voornaam || "") + " " + (prof.achternaam || "")).trim() || prof.email || null;
+    }
+    return { id: id, naam: naam };
   }
 
   async function fetchAll() {
@@ -223,6 +244,10 @@
     // Eerst INSERT zonder file → ID hebben we nodig voor storage path
     var payload = objToInsertPayload(rec);
     payload.storage_path = null;
+    var auteur = await currentAuteur();
+    if (!auteur.id) throw new Error("Geen actieve sessie — log opnieuw in");
+    payload.auteur_id = auteur.id; // vereist door RLS-insert-policy (fase 3)
+    payload.auteur_naam = auteur.naam;
     var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
