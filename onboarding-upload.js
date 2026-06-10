@@ -63,7 +63,21 @@
 
   function renderMain(info) {
     var voornaam = (info.voornaam || "").trim();
-    var types = Array.isArray(info.allowedTypes) ? info.allowedTypes : ["Contract", "Opleiding", "VOG", "ID", "Addendum", "Overig"];
+    // allowedTypes: nieuw formaat [{value,label}] (canonical lowercase value),
+    // met fallback voor het oude strings-formaat (versie-skew tijdens deploy).
+    var rawTypes = Array.isArray(info.allowedTypes) ? info.allowedTypes : [];
+    var types = rawTypes.map(function (t) {
+      if (t && typeof t === "object") return { value: String(t.value || ""), label: String(t.label || t.value || "") };
+      return { value: String(t), label: String(t) };
+    }).filter(function (t) { return t.value; });
+    if (!types.length) {
+      types = [
+        { value: "contract", label: "Contract" }, { value: "education", label: "Opleiding" },
+        { value: "vog", label: "VOG" }, { value: "id", label: "ID" },
+        { value: "addendum", label: "Addendum" }, { value: "employment_conditions", label: "Arbeidsvoorwaarden" },
+        { value: "other", label: "Overig" },
+      ];
+    }
     var uploaded = Array.isArray(info.uploaded) ? info.uploaded : [];
 
     var begroeting = voornaam ? "Welkom " + esc(voornaam) + "!" : "Welkom!";
@@ -82,7 +96,7 @@
     }
 
     var typeOpts = '<option value="">Kies een type…</option>'
-      + types.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + "</option>"; }).join("");
+      + types.map(function (t) { return '<option value="' + esc(t.value) + '">' + esc(t.label) + "</option>"; }).join("");
 
     setContent(
       '<p class="onbup-welcome">' + begroeting + "</p>"
@@ -100,6 +114,9 @@
       + '<input type="text" id="onbup-naam" placeholder="Bijv. Identiteitsbewijs" required></label>'
       + '<label class="onbup-field"><span>Type</span>'
       + '<select id="onbup-type" required>' + typeOpts + "</select></label>"
+      + '<label class="onbup-field"><span>Verloopdatum (indien van toepassing)</span>'
+      + '<input type="date" id="onbup-verval">'
+      + '<span class="onbup-muted">Bijvoorbeeld bij een VOG, identiteitsbewijs of certificaat met einddatum.</span></label>'
       + '<p class="onbup-alert onbup-alert--error" id="onbup-err" hidden></p>'
       + '<p class="onbup-alert onbup-alert--ok" id="onbup-ok" hidden></p>'
       + '<button type="submit" class="btn-primary onbup-submit" id="onbup-submit">Uploaden</button>'
@@ -143,6 +160,7 @@
       submitBtn.textContent = "Bezig met uploaden…";
       try {
         var base64 = await fileToBase64(f);
+        var vervalEl = document.getElementById("onbup-verval");
         await callFn({
           action: "upload",
           token: token,
@@ -151,6 +169,7 @@
           fileName: f.name || "bestand",
           fileMime: f.type || "application/octet-stream",
           fileBase64: base64,
+          vervaldatum: (vervalEl && vervalEl.value) ? vervalEl.value : "",
         });
         // Ververs de lijst met ontvangen documenten.
         var fresh = await callFn({ action: "info", token: token });

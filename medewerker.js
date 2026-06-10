@@ -1182,7 +1182,7 @@ function onbFormatDate(iso) {
 var ONB_REQUIRED_DOCS = {
   loondienst: [
     { label: "Identiteitsbewijs", types: ["id"] },
-    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"], maxAgeMonths: 3 },
     { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
     { label: "Geheimhoudingsverklaring", keywords: ["geheimhoud"] },
@@ -1191,20 +1191,20 @@ var ONB_REQUIRED_DOCS = {
   zzp: [
     { label: "Uittreksel KvK", keywords: ["kvk", "kamer van koophandel", "uittreksel"] },
     { label: "Identiteitsbewijs", types: ["id"] },
-    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"], maxAgeMonths: 3 },
     { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "Bewijs aansprakelijkheidsverzekering", keywords: ["verzeker", "aansprakelijk"] },
   ],
   stagiair: [
     { label: "Identiteitsbewijs", types: ["id"] },
-    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"], maxAgeMonths: 3 },
     { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "Stageovereenkomst", keywords: ["stage"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
   ],
   inhuur: [
     { label: "Identiteitsbewijs", types: ["id"] },
-    { label: "VOG (max 3 mnd)", types: ["vog"] },
+    { label: "VOG (max 3 mnd)", types: ["vog"], maxAgeMonths: 3 },
     { label: "Diploma's / certificaten", types: ["education", "opleiding"] },
     { label: "CV", keywords: ["cv", "curriculum"] },
   ],
@@ -1237,24 +1237,67 @@ function onbDocMatches(doc, req) {
   return typeOk && kwOk;
 }
 
-function onbComputeRequiredDocs(emp) {
+// Parse mixed-format vervaldatum (yyyy-mm-dd of dd-mm-yyyy) — zelfde tolerantie
+// als de SQL-trigger mw_doc_parse_vervaldatum (G9).
+function onbParseDocDatum(txt) {
+  var s = String(txt || "").trim();
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  return null;
+}
+
+function onbComputeRequiredDocs(emp, traject) {
   var key = onbRequiredDocsKey(emp);
   var reqs = ONB_REQUIRED_DOCS[key] || ONB_REQUIRED_DOCS.loondienst;
   // Lees uit onze eigen cache (gevuld door list()), niet listSync — die laatste
   // kan leeg blijven als de localStorage-cache van de documenten-laag faalt.
   var docs = (emp && emp.id && _onbDocsCache && _onbDocsCache[emp.id]) ? _onbDocsCache[emp.id] : [];
+  var checkState = (traject && traject.data && traject.data.docCheck && typeof traject.data.docCheck === "object")
+    ? traject.data.docCheck : {};
+  var today = new Date(); today.setHours(0, 0, 0, 0);
   return reqs.map(function (req) {
-    return { label: req.label, found: docs.some(function (d) { return onbDocMatches(d, req); }) };
+    var match = null;
+    docs.some(function (d) { if (onbDocMatches(d, req)) { match = d; return true; } return false; });
+    // G12 — per-rij expiry-badge op het gevonden document.
+    var badge = "", badgeKind = "";
+    if (match) {
+      var vd = onbParseDocDatum(match.vervaldatum);
+      if (vd) {
+        var dagen = Math.round((vd - today) / 86400000);
+        if (dagen < 0) { badge = "Verlopen"; badgeKind = "bad"; }
+        else if (dagen <= 90) { badge = "Verloopt over " + dagen + "d"; badgeKind = "warn"; }
+      }
+      // G28 — VOG mag bij indiensttreding max 3 maanden oud zijn (uploaddatum).
+      if (!badge && req.maxAgeMonths) {
+        var up = match.uploaddatum ? new Date(match.uploaddatum) : null;
+        if (up && !isNaN(up.getTime())) {
+          var grens = new Date(today);
+          grens.setMonth(grens.getMonth() - req.maxAgeMonths);
+          if (up < grens) { badge = "Ouder dan " + req.maxAgeMonths + " mnd"; badgeKind = "warn"; }
+        }
+      }
+    }
+    return {
+      label: req.label,
+      found: !!match,
+      badge: badge,
+      badgeKind: badgeKind,
+      checked: checkState[req.label] === true,
+    };
   });
 }
 
 // Kopieerbaar inwerk-link-blok (generieke kopieer-knop via data-copy-target).
+// G30: + mail-knop die de link direct naar de medewerker stuurt.
 function onbInwerkLinkBlok(label, url) {
   return '<div class="emp-onb-uploadlink">'
     + '<div class="emp-onb-uploadlink-label">' + onbEscHtml(label) + "</div>"
     + '<div class="emp-onb-uploadlink-row">'
     + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-inwerklink-input" readonly value="' + onbEscHtml(url) + '">'
     + '<button type="button" class="btn-outline" data-copy-target="emp-onb-inwerklink-input">Kopiëren</button>'
+    + '<button type="button" class="btn-outline" data-onb-mail="inwerk" data-onb-mail-link="' + onbEscHtml(url) + '">Mail naar medewerker</button>'
     + "</div>"
     + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de medewerker; daar doorloopt hij/zij de inwerk-onderdelen en vinkt "gelezen en akkoord" aan.</div>'
     + "</div>";
@@ -1318,8 +1361,42 @@ var ONB_TOEGANG_ITEMS = [
   { key: "ons", label: "ONS (zorgsysteem)" },
   { key: "sharepoint", label: "SharePoint" },
   { key: "outlook", label: "Outlook / e-mail" },
+  { key: "pas", label: "Toegangspas / sleutels" },
   { key: "overig", label: "Overige rechten" },
 ];
+
+// G29 — gestructureerde inwerkgesprekken/evaluatiemomenten. Vaste cyclus die HR
+// per moment afvinkt + dateert; state in traject.data.gesprekken (zelfde patroon
+// als de toegang-checklist). Het volwaardige gespreksverslag hoort daarna in de
+// Functioneren-tab (functioneringsgesprekken).
+var ONB_GESPREK_MOMENTEN = [
+  { key: "week1", label: "Startgesprek (week 1)" },
+  { key: "maand1", label: "Voortgangsgesprek (maand 1)" },
+  { key: "proeftijd", label: "Evaluatie einde proeftijd" },
+];
+
+function onbComputeGesprekken(traject) {
+  var state = (traject && traject.data && traject.data.gesprekken && typeof traject.data.gesprekken === "object")
+    ? traject.data.gesprekken : {};
+  var done = ONB_GESPREK_MOMENTEN.filter(function (m) { return state[m.key] && state[m.key].done === true; }).length;
+  var total = ONB_GESPREK_MOMENTEN.length;
+  var status = done === total ? "klaar" : (done > 0 ? "bezig" : "open");
+  var detail = '<ul class="emp-onb-toegang">'
+    + ONB_GESPREK_MOMENTEN.map(function (m) {
+      var st = state[m.key] || {};
+      var on = st.done === true;
+      var datum = typeof st.datum === "string" ? st.datum : "";
+      return '<li class="emp-onb-toegang-item' + (on ? " emp-onb-toegang-item--done" : "") + '">'
+        + '<label class="emp-onb-toegang-label">'
+        + '<input type="checkbox" class="emp-onb-gesprek-cb" data-gesprek-key="' + onbEscHtml(m.key) + '"' + (on ? " checked" : "") + "> "
+        + onbEscHtml(m.label) + "</label> "
+        + '<input type="date" class="emp-onb-gesprek-datum" data-gesprek-datum="' + onbEscHtml(m.key) + '" value="' + onbEscHtml(datum) + '" aria-label="Datum ' + onbEscHtml(m.label) + '">'
+        + "</li>";
+    }).join("")
+    + "</ul>"
+    + '<p class="emp-onb-uploadlink-hint">Vink af wanneer het gesprek is gevoerd; het verslag leg je vast onder Functioneren → Gesprekken.</p>';
+  return { status: status, desc: "Start-, voortgangs- en proeftijdevaluatie inplannen en voeren (" + onbEscHtml(done + "/" + total) + " gevoerd).", detailHtml: detail };
+}
 
 function onbComputeToegang(traject) {
   var state = (traject && traject.data && traject.data.toegang && typeof traject.data.toegang === "object") ? traject.data.toegang : {};
@@ -1359,17 +1436,26 @@ function onbComputeVrijgeven(traject) {
 // status: 'open' | 'bezig' | 'klaar'. De documenten-stap leidt zijn status af
 // uit de geüploade documenten; overige stappen worden in latere releases gevuld.
 function onbComputeSteps(emp, traject) {
-  var reqDocs = onbComputeRequiredDocs(emp);
+  var reqDocs = onbComputeRequiredDocs(emp, traject);
   var foundCount = reqDocs.filter(function (r) { return r.found; }).length;
+  var checkedCount = reqDocs.filter(function (r) { return r.found && r.checked; }).length;
   var docStatus = reqDocs.length === 0
     ? "open"
     : (foundCount === reqDocs.length ? "klaar" : (foundCount > 0 ? "bezig" : "open"));
   var docDetail = '<ul class="emp-onb-doclist">'
     + reqDocs.map(function (r) {
+      // G12 expiry-badge + G28 HR-controlecheckbox per gevonden document.
+      var badgeHtml = r.badge
+        ? ' <span class="emp-onb-doc-badge emp-onb-doc-badge--' + (r.badgeKind || "warn") + '">' + onbEscHtml(r.badge) + "</span>"
+        : "";
+      var checkHtml = r.found
+        ? '<label class="emp-onb-doc-check-label"><input type="checkbox" class="emp-onb-doccheck-cb" data-doccheck-label="'
+          + onbEscHtml(r.label) + '"' + (r.checked ? " checked" : "") + "> gecontroleerd</label>"
+        : "";
       return '<li class="emp-onb-doc' + (r.found ? " emp-onb-doc--found" : "") + '">'
         + '<span class="emp-onb-doc-icon" aria-hidden="true">' + (r.found ? "✓" : "○") + "</span>"
-        + '<span class="emp-onb-doc-label">' + onbEscHtml(r.label) + "</span>"
-        + '<span class="emp-onb-doc-state">' + (r.found ? "Aanwezig" : "Nog niet") + "</span>"
+        + '<span class="emp-onb-doc-label">' + onbEscHtml(r.label) + badgeHtml + "</span>"
+        + '<span class="emp-onb-doc-state">' + (r.found ? "Aanwezig" : "Nog niet") + " " + checkHtml + "</span>"
         + "</li>";
     }).join("")
     + "</ul>";
@@ -1383,6 +1469,7 @@ function onbComputeSteps(emp, traject) {
       + '<div class="emp-onb-uploadlink-row">'
       + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-uploadlink-input" readonly value="' + onbEscHtml(_uplink) + '">'
       + '<button type="button" class="btn-outline" id="emp-onb-uploadlink-copy">Kopiëren</button>'
+      + '<button type="button" class="btn-outline" data-onb-mail="upload" data-onb-mail-link="' + onbEscHtml(_uplink) + '">Mail naar medewerker</button>'
       + "</div>"
       + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de medewerker; daar kan hij/zij zelf documenten uploaden zonder in te loggen.</div>'
       + "</div>";
@@ -1429,14 +1516,16 @@ function onbComputeSteps(emp, traject) {
   }
 
   var inwerken = onbComputeInwerken(emp, traject);
+  var gesprekken = onbComputeGesprekken(traject);
   var toegang = onbComputeToegang(traject);
   var vrijgeven = onbComputeVrijgeven(traject);
 
   return [
-    { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig).", status: docStatus, detailHtml: docDetail },
+    { key: "documenten", titel: "Documenten verzameld", desc: "Vereiste documenten voor dit dienstverband (" + onbEscHtml(foundCount + "/" + reqDocs.length) + " aanwezig, " + onbEscHtml(String(checkedCount)) + " gecontroleerd).", status: docStatus, detailHtml: docDetail },
     { key: "contract", titel: "Contract opgesteld", desc: contractDesc, status: contractStatus, detailHtml: contractDetail },
     { key: "tekenen", titel: "Contract getekend", desc: tekenDesc, status: tekenStatus, detailHtml: tekenDetail },
     { key: "inwerken", titel: "Inwerken afgerond", desc: inwerken.desc, status: inwerken.status, detailHtml: inwerken.detailHtml },
+    { key: "gesprekken", titel: "Inwerkgesprekken & evaluatie", desc: gesprekken.desc, status: gesprekken.status, detailHtml: gesprekken.detailHtml },
     { key: "toegang", titel: "Toegang geregeld", desc: toegang.desc, status: toegang.status, detailHtml: toegang.detailHtml },
     { key: "vrijgeven", titel: "Vrijgegeven voor planning", desc: vrijgeven.desc, status: vrijgeven.status, detailHtml: vrijgeven.detailHtml },
   ];
@@ -1796,12 +1885,17 @@ function onbStatusPill(status) {
 }
 
 // Kopieerbaar tekenlink-blok voor de teken-stap (kind: "mw" | "wg").
+// G30: voor de medewerker-link ("mw") ook een mail-knop (onboarding-mail edge).
 function onbTekenLinkBlok(label, url, kind) {
+  var mailBtn = kind === "mw"
+    ? '<button type="button" class="btn-outline" data-onb-mail="teken" data-onb-mail-link="' + onbEscHtml(url) + '">Mail naar medewerker</button>'
+    : "";
   return '<div class="emp-onb-uploadlink">'
     + '<div class="emp-onb-uploadlink-label">' + onbEscHtml(label) + "</div>"
     + '<div class="emp-onb-uploadlink-row">'
     + '<input type="text" class="emp-onb-uploadlink-input" id="emp-onb-teken-link-' + kind + '" readonly value="' + onbEscHtml(url) + '">'
     + '<button type="button" class="btn-outline" data-teken-copy="' + kind + '">Kopiëren</button>'
+    + mailBtn
     + "</div>"
     + '<div class="emp-onb-uploadlink-hint">Stuur deze privé-link naar de tekenaar; daar kan hij/zij het contract lezen en ondertekenen.</div>'
     + "</div>";
@@ -1927,6 +2021,42 @@ function initOnboardingTab() {
   document.addEventListener("click", async function (e) {
     if (!e.target || !e.target.closest) return;
     // Generieke kopieer-knop (data-copy-target="<input-id>") — o.a. inwerk-link.
+    // G30 — mail de upload-/teken-/inwerklink rechtstreeks naar de medewerker
+    // via de onboarding-mail edge-functie (SMTP-config van de salarisexport).
+    var mailBtn = e.target.closest("[data-onb-mail]");
+    if (mailBtn) {
+      var mailKind = mailBtn.getAttribute("data-onb-mail");
+      var mailLink = mailBtn.getAttribute("data-onb-mail-link") || "";
+      var mailEmp = getSelectedEmployee();
+      if (!mailEmp || !mailEmp.id || !mailLink) return;
+      var mailOrig = mailBtn.textContent;
+      mailBtn.disabled = true;
+      mailBtn.textContent = "Versturen…";
+      try {
+        var mailRes = await window.besaSupabase.functions.invoke("onboarding-mail", {
+          body: { kind: mailKind, medewerker_id: mailEmp.id, link: mailLink },
+        });
+        if (mailRes.error) {
+          var mailMsg = mailRes.error.message || "Versturen mislukt.";
+          try {
+            if (mailRes.error.context && typeof mailRes.error.context.json === "function") {
+              var mj = await mailRes.error.context.json();
+              if (mj && mj.error) mailMsg = mj.error;
+            }
+          } catch (eM) { /* fallback-msg */ }
+          throw new Error(mailMsg);
+        }
+        var naar = mailRes.data && mailRes.data.verstuurd_naar ? mailRes.data.verstuurd_naar : "de medewerker";
+        if (window.showActionFeedback) window.showActionFeedback("saved", "Mail verstuurd naar " + naar);
+        mailBtn.textContent = "Verstuurd ✓";
+        setTimeout(function () { mailBtn.textContent = mailOrig; mailBtn.disabled = false; }, 2500);
+      } catch (errM) {
+        if (window.showError) window.showError("Mail versturen mislukt: " + (errM && errM.message ? errM.message : "onbekende fout"));
+        mailBtn.textContent = mailOrig;
+        mailBtn.disabled = false;
+      }
+      return;
+    }
     var copyTargetBtn = e.target.closest("[data-copy-target]");
     if (copyTargetBtn) {
       var tgtId = copyTargetBtn.getAttribute("data-copy-target");
@@ -2065,7 +2195,59 @@ function initOnboardingTab() {
 
   // Toegang-checklist: checkbox-toggle direct opslaan (release 7).
   document.addEventListener("change", async function (e) {
-    var cb = (e.target && e.target.closest) ? e.target.closest(".emp-onb-toegang-cb") : null;
+    var t = e.target;
+    if (!t || !t.closest) return;
+
+    // G28 — HR-controlevinkje per vereist document (traject.data.docCheck).
+    var dcCb = t.closest(".emp-onb-doccheck-cb");
+    if (dcCb) {
+      var dcLabel = dcCb.getAttribute("data-doccheck-label");
+      var empD = getSelectedEmployee();
+      var tD = (empD && empD.id && window.onboardingDB) ? window.onboardingDB.getForMedewerkerSync(empD.id) : null;
+      if (!tD || !tD.id || !dcLabel) return;
+      var curD = (tD.data && tD.data.docCheck && typeof tD.data.docCheck === "object") ? Object.assign({}, tD.data.docCheck) : {};
+      curD[dcLabel] = dcCb.checked;
+      dcCb.disabled = true;
+      try {
+        await window.onboardingDB.updateData(tD.id, { docCheck: curD });
+      } catch (errD) {
+        dcCb.checked = !dcCb.checked;
+        if (window.showActionFeedback) window.showActionFeedback("error", "Opslaan mislukt: " + (errD && errD.message ? errD.message : errD));
+      } finally {
+        dcCb.disabled = false;
+      }
+      renderOnboardingTab();
+      return;
+    }
+
+    // G29 — inwerkgesprek afvinken of dateren (traject.data.gesprekken).
+    var gsCb = t.closest(".emp-onb-gesprek-cb");
+    var gsDt = t.closest(".emp-onb-gesprek-datum");
+    if (gsCb || gsDt) {
+      var gsKey = gsCb ? gsCb.getAttribute("data-gesprek-key") : gsDt.getAttribute("data-gesprek-datum");
+      var empG = getSelectedEmployee();
+      var tG = (empG && empG.id && window.onboardingDB) ? window.onboardingDB.getForMedewerkerSync(empG.id) : null;
+      if (!tG || !tG.id || !gsKey) return;
+      var curG = (tG.data && tG.data.gesprekken && typeof tG.data.gesprekken === "object") ? Object.assign({}, tG.data.gesprekken) : {};
+      var slot = Object.assign({}, curG[gsKey] || {});
+      if (gsCb) slot.done = gsCb.checked;
+      if (gsDt) slot.datum = gsDt.value || "";
+      curG[gsKey] = slot;
+      var ctl = gsCb || gsDt;
+      ctl.disabled = true;
+      try {
+        await window.onboardingDB.updateData(tG.id, { gesprekken: curG });
+      } catch (errG) {
+        if (gsCb) gsCb.checked = !gsCb.checked;
+        if (window.showActionFeedback) window.showActionFeedback("error", "Opslaan mislukt: " + (errG && errG.message ? errG.message : errG));
+      } finally {
+        ctl.disabled = false;
+      }
+      renderOnboardingTab();
+      return;
+    }
+
+    var cb = t.closest(".emp-onb-toegang-cb");
     if (!cb) return;
     var key = cb.getAttribute("data-toegang-key");
     var empT = getSelectedEmployee();

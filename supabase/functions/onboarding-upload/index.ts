@@ -13,7 +13,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ALLOWED_TYPES = ["Contract", "Opleiding", "VOG", "ID", "Addendum", "Overig"];
+// G11 — canoniek doc-type-model, identiek aan het dossier (medewerker.html /
+// DOC_TYPE_LABELS in medewerker.js / compliance-RPC's): lowercase `value` wordt
+// opgeslagen, NL `label` getoond. Voorheen werden NL-labels ("VOG") als type
+// opgeslagen → die telden niet mee in compliance (d.type='vog'). Legacy-labels
+// blijven geaccepteerd als input en worden genormaliseerd.
+const DOC_TYPES: { value: string; label: string }[] = [
+  { value: "contract", label: "Contract" },
+  { value: "education", label: "Opleiding" },
+  { value: "vog", label: "VOG" },
+  { value: "id", label: "ID" },
+  { value: "addendum", label: "Addendum" },
+  { value: "employment_conditions", label: "Arbeidsvoorwaarden" },
+  { value: "other", label: "Overig" },
+];
+const TYPE_LOOKUP: Record<string, string> = {};
+for (const t of DOC_TYPES) {
+  TYPE_LOOKUP[t.value] = t.value;
+  TYPE_LOOKUP[t.label.toLowerCase()] = t.value;
+}
+const TYPE_LABEL: Record<string, string> = {};
+for (const t of DOC_TYPES) TYPE_LABEL[t.value] = t.label;
 const MAX_BYTES = 20 * 1024 * 1024;
 const BUCKET = "medewerker-documenten";
 
@@ -67,26 +87,38 @@ Deno.serve(async (req: Request) => {
       .eq("medewerker_id", String(traject.medewerker_id));
     const uploaded = (dRes.data || [])
       .filter((d: { archived?: boolean }) => !d.archived)
-      .map((d: { naam?: string; type?: string }) => ({ naam: d.naam || "", type: d.type || "" }));
+      .map((d: { naam?: string; type?: string }) => {
+        const raw = String(d.type || "").toLowerCase();
+        return { naam: d.naam || "", type: TYPE_LABEL[raw] || d.type || "" };
+      });
     return json({
       voornaam: mw.voornaam || "",
       dienstverband: mw.dienstverband || "",
       status: traject.status,
-      allowedTypes: ALLOWED_TYPES,
+      // Nieuw formaat: [{value,label}]. De pagina accepteert ook nog strings
+      // (oude cache) — zie onboarding-upload.js.
+      allowedTypes: DOC_TYPES,
       uploaded,
     });
   }
 
   if (action === "upload") {
     const naam = String(body.naam || "").trim();
-    const type = String(body.type || "").trim();
+    const rawType = String(body.type || "").trim();
+    // Normaliseer naar canonical lowercase (accepteert ook legacy NL-labels).
+    const type = TYPE_LOOKUP[rawType.toLowerCase()] || "";
     const fileName = String(body.fileName || "bestand").trim() || "bestand";
     const fileMime = String(body.fileMime || "application/octet-stream");
     const fileBase64 = String(body.fileBase64 || "");
     const vervaldatum = String(body.vervaldatum || "");
+    // G13 — vervaldatum optioneel maar indien ingevuld: ISO-datum (yyyy-mm-dd),
+    // hetzelfde formaat dat de vervaldatum_date-trigger (G9) betrouwbaar parsed.
+    if (vervaldatum && !/^\d{4}-\d{2}-\d{2}$/.test(vervaldatum)) {
+      return json({ error: "Ongeldige verloopdatum." }, 400);
+    }
 
     if (!naam) return json({ error: "Geef het document een naam." }, 400);
-    if (ALLOWED_TYPES.indexOf(type) === -1) return json({ error: "Kies een geldig type." }, 400);
+    if (!type) return json({ error: "Kies een geldig type." }, 400);
     if (!fileBase64) return json({ error: "Selecteer een bestand." }, 400);
 
     let bytes: Uint8Array;
