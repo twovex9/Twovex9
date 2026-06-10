@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
@@ -9,9 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Gemeente — HR</title>
+  <title>Mobiliteit &amp; kosten — Dashboard</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad" />
-  <!-- ff-pwa: app-icoon + startscherm-naam (Future Flow) -->
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -22,12 +21,13 @@
 </head>
 <body>
   <script src="save-feedback.js?v=918f1ad" defer></script>
+  <script src="besa-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
 
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <a href="hr" class="brand-logo" aria-label="Home">
+        <a href="home" class="brand-logo" aria-label="Home">
           <img class="brand-logo-img" src="assets/etf-logo.png" width="140" height="48" alt="Embrace the Future" />
         </a>
         <div class="top-nav-track">
@@ -100,7 +100,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="clienten" class="top-link top-link--dropdown is-active">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="clienten" class="top-link top-link--dropdown">Cliënten<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--mega" role="menu" aria-label="Cliënten opties">
                 <div class="top-dropdown-col">
                   <span class="top-dropdown-group-title">Cliënten</span>
@@ -130,7 +130,7 @@
               </div>
             </div>
             <div class="top-nav-item top-nav-item--dropdown">
-              <a href="kilometers" class="top-link top-link--dropdown">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
+              <a href="kilometers" class="top-link top-link--dropdown is-active">Kilometers<span class="top-link-chev" aria-hidden="true"></span></a>
               <div class="top-dropdown top-dropdown--hr" role="menu" aria-label="Kilometers opties">
                 <a href="kilometers" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Kilometer declaraties</span><span class="top-dropdown-subtitle">Bekijk alle kilometer declaraties</span></a>
                 <a href="mobiliteit-dashboard" class="top-dropdown-link top-dropdown-link--stacked" role="menuitem"><span class="top-dropdown-title">Mobiliteit & kosten</span><span class="top-dropdown-subtitle">Kosten-dashboard & AI-signaleringen</span></a>
@@ -185,107 +185,132 @@
       </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
-      <nav class="side-nav" aria-label="Cliënten module">
-        <a href="clienten" class="side-link">Cliënten</a>
-        <a href="zorgsoorten" class="side-link">Zorgsoorten</a>
-        <div class="side-group" data-side-group="cl-beschikkingen">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
-            <span class="side-group__label">Beschikkingen</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
-            <a href="beschikkingen-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="beschikkingen" class="side-link side-link--nested">Overzicht</a>
-            <a href="facturen" class="side-link side-link--nested">Facturen</a>
-          </div>
-        </div>
-        <a href="organisatie" class="side-link">Organisatie</a>
-        <a href="gemeenten" class="side-link is-active" title="Overzicht gemeenten">Gemeenten</a>
-        <a href="urendeclaraties" class="side-link">Uren declaraties</a>
-        <a href="uren-budgettering" class="side-link">Uren budgetering</a>
-        <a href="facturen-importeren" class="side-link">Facturen importeren</a>
-        <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="false" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, open submenu">
-            <span class="side-group__label">Incidenten</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten" hidden>
-            <a href="incidenten" class="side-link side-link--nested">Incidenten overzicht</a>
-            <a href="incidenten-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="incidenten-categorieen" class="side-link side-link--nested">Categorieën</a>
-            <a href="verbeteringsmaatregelen" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
-          </div>
-        </div>
+    <aside class="sidebar sidebar--clienten-nav" aria-label="Kilometers">
+      <nav class="side-nav" aria-label="Kilometer module">
+        <a href="kilometers" class="side-link">Kilometer declaraties</a>
+        <a href="mobiliteit-dashboard" class="side-link is-active" aria-current="page">Mobiliteit &amp; kosten</a>
+        <a href="km-afstanden" class="side-link">Woon-werk afstanden</a>
+        <a href="km-afwijkingen" class="side-link">Afwijkingen</a>
       </nav>
       <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
+        <a class="side-nav-exit" href="kilometers">← Kilometers</a>
+        <span class="sidebar-hr-mark" aria-hidden="true">KM</span>
       </div>
     </aside>
 
-    <main class="content content--hr-list content--gemeente-detail">
+    <main class="content" id="mob-main">
       <div class="content-header">
-        <h1 id="gd-page-title">Gemeente</h1>
+        <h1>Mobiliteit &amp; kosten</h1>
         <div class="header-actions">
-          <a href="gemeenten" class="btn-outline">Terug naar lijst</a>
+          <div id="mob-period-range" class="mob-period"></div>
+          <input type="hidden" id="mob-date-from" />
+          <input type="hidden" id="mob-date-to" />
         </div>
       </div>
 
-      <p class="client-detail-missing" id="gd-missing" hidden>
-        <span id="gd-missing-body">Gemeente niet gevonden.</span>
-        <a href="gemeenten" class="client-detail-missing__link">Terug naar gemeenten</a>
-      </p>
+      <div class="toolbar mob-tabs" role="tablist" aria-label="Mobiliteit-weergaven" id="mob-tabs">
+        <div class="filter-chips">
+          <button type="button" class="filter-chip filter-chip--active" role="tab" data-view="financieel" id="mob-tab-financieel" aria-selected="true" hidden>Financieel</button>
+          <button type="button" class="filter-chip" role="tab" data-view="eigenaar" id="mob-tab-eigenaar" aria-selected="false" hidden>Eigenaar</button>
+          <button type="button" class="filter-chip" role="tab" data-view="planning" id="mob-tab-planning" aria-selected="false" hidden>Planning</button>
+          <button type="button" class="filter-chip" role="tab" data-view="hr" id="mob-tab-hr" aria-selected="false" hidden>HR-controle</button>
+          <button type="button" class="filter-chip" role="tab" data-view="signaleringen" id="mob-tab-signaleringen" aria-selected="false" hidden>AI-signaleringen</button>
+        </div>
+      </div>
 
-      <div class="gemeente-detail-layout" id="gd-root" hidden>
-        <section class="gemeente-detail-vcard" aria-label="Gemeente samenvatting">
-          <div class="gemeente-detail-hero">
-            <div class="gemeente-detail-hero-top">
-              <span class="gemeente-detail-hero-ico" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
-              </span>
-              <div class="gemeente-detail-kebab-wrap">
-                <button type="button" class="icon-btn gemeente-detail-kebab-btn" id="gd-kebab-btn" aria-expanded="false" aria-haspopup="true" aria-label="Meer acties">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-                </button>
-                <div class="gemeente-detail-kebab-panel" id="gd-kebab-panel" role="menu" aria-labelledby="gd-kebab-btn" hidden>
-                  <a href="gemeenten" class="gemeente-detail-kebab-link" role="menuitem">Naar overzicht gemeenten</a>
-                </div>
-              </div>
-            </div>
-            <div class="gemeente-detail-hero-main">
-              <h2 class="gemeente-detail-hero-name" id="gd-hero-name">—</h2>
-              <p class="gemeente-detail-hero-kicker">Gemeente</p>
-            </div>
-          </div>
+      <p class="mob-noaccess" id="mob-noaccess" hidden>Je hebt geen toegang tot een mobiliteit-dashboard.</p>
+
+      <!-- ============ FINANCIEEL ============ -->
+      <section class="mob-view" id="mob-view-financieel" hidden>
+        <div class="mob-kpis" id="mob-fin-kpis">
+          <div class="mob-kpi"><div class="mob-kpi-label">Kosten vandaag</div><div class="mob-kpi-value" id="mob-fin-vandaag">€ 0,00</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Kosten deze week</div><div class="mob-kpi-value" id="mob-fin-week">€ 0,00</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Kosten deze maand</div><div class="mob-kpi-value" id="mob-fin-maand">€ 0,00</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Kosten gekozen periode</div><div class="mob-kpi-value" id="mob-fin-periode">€ 0,00</div><div class="mob-kpi-sub" id="mob-fin-periode-km">0 km</div></div>
+        </div>
+        <div class="mob-grid">
+          <section class="table-card mob-card">
+            <div class="mob-card-head"><h2 class="mob-card-title">Kosten per locatie</h2></div>
+            <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Locatie</th><th class="mob-num">Km</th><th class="mob-num">Ritten</th><th class="mob-num">Kosten</th></tr></thead><tbody id="mob-fin-locatie"></tbody></table></div>
+          </section>
+          <section class="table-card mob-card">
+            <div class="mob-card-head"><h2 class="mob-card-title">Kosten per cliënt</h2></div>
+            <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Cliënt</th><th class="mob-num">Km</th><th class="mob-num">Ritten</th><th class="mob-num">Kosten</th></tr></thead><tbody id="mob-fin-client"></tbody></table></div>
+          </section>
+          <section class="table-card mob-card">
+            <div class="mob-card-head"><h2 class="mob-card-title">Kosten per medewerker</h2></div>
+            <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Medewerker</th><th class="mob-num">Km</th><th class="mob-num">Ritten</th><th class="mob-num">Kosten</th></tr></thead><tbody id="mob-fin-medewerker"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ EIGENAAR ============ -->
+      <section class="mob-view" id="mob-view-eigenaar" hidden>
+        <div class="mob-kpis">
+          <div class="mob-kpi"><div class="mob-kpi-label">Totale mobiliteitskosten</div><div class="mob-kpi-value" id="mob-eig-totaal">€ 0,00</div><div class="mob-kpi-sub" id="mob-eig-totaal-km">0 km</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Woon-werkkosten</div><div class="mob-kpi-value" id="mob-eig-woonwerk">€ 0,00</div><div class="mob-kpi-sub" id="mob-eig-woonwerk-km">0 km</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Zakelijke kilometers</div><div class="mob-kpi-value" id="mob-eig-zakelijk">€ 0,00</div><div class="mob-kpi-sub" id="mob-eig-zakelijk-km">0 km</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Gem. kosten per locatie</div><div class="mob-kpi-value" id="mob-eig-gemloc">€ 0,00</div></div>
+        </div>
+        <div class="mob-grid">
+          <section class="table-card mob-card mob-card--wide">
+            <div class="mob-card-head"><h2 class="mob-card-title">Hoogste kostenlocaties</h2></div>
+            <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Locatie</th><th class="mob-num">Km</th><th class="mob-num">Ritten</th><th class="mob-num">Kosten</th><th>Aandeel</th></tr></thead><tbody id="mob-eig-locatie"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ PLANNING ============ -->
+      <section class="mob-view" id="mob-view-planning" hidden>
+        <p class="mob-intro">Verwachte woon-werk reiskosten op basis van de geplande diensten in de gekozen periode (loondienst × afstandsmatrix). De AI-planningsmodule kan deze reiskosten meewegen bij het verdelen van diensten.</p>
+        <div class="mob-kpis">
+          <div class="mob-kpi"><div class="mob-kpi-label">Verwachte reiskosten periode</div><div class="mob-kpi-value" id="mob-plan-totaal">€ 0,00</div><div class="mob-kpi-sub" id="mob-plan-totaal-km">0 km</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Geplande dienstdagen</div><div class="mob-kpi-value" id="mob-plan-dagen">0</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Locaties met reiskosten</div><div class="mob-kpi-value" id="mob-plan-locaties">0</div></div>
+        </div>
+        <div class="mob-grid">
+          <section class="table-card mob-card mob-card--wide">
+            <div class="mob-card-head"><h2 class="mob-card-title">Verwachte reiskosten per locatie</h2></div>
+            <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Locatie</th><th class="mob-num">Dienstdagen</th><th class="mob-num">Medewerkers</th><th class="mob-num">Verwachte km</th><th class="mob-num">Verwachte kosten</th></tr></thead><tbody id="mob-plan-locatie"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ HR-CONTROLE ============ -->
+      <section class="mob-view" id="mob-view-hr" hidden>
+        <p class="mob-intro">Overzicht van openstaande kilometer-controlepunten. Klik door naar het bijbehorende scherm om af te handelen.</p>
+        <div class="mob-kpis mob-kpis--controle" id="mob-hr-kpis">
+          <a class="mob-kpi mob-kpi--link" href="kilometers"><div class="mob-kpi-label">Open goedkeuringen</div><div class="mob-kpi-value" id="mob-hr-goedk">0</div><div class="mob-kpi-sub">Zakelijke ritten te beoordelen</div></a>
+          <a class="mob-kpi mob-kpi--link" href="kilometers"><div class="mob-kpi-label">Afgewezen ritten</div><div class="mob-kpi-value" id="mob-hr-afgewezen">0</div><div class="mob-kpi-sub">Door coördinator afgewezen</div></a>
+          <a class="mob-kpi mob-kpi--link" href="km-afwijkingen"><div class="mob-kpi-label">Open afwijkingen</div><div class="mob-kpi-value" id="mob-hr-afwijkingen">0</div><div class="mob-kpi-sub">Woon-werk handmatig gewijzigd</div></a>
+          <a class="mob-kpi mob-kpi--link" href="km-afstanden"><div class="mob-kpi-label">Ontbrekende afstanden</div><div class="mob-kpi-value" id="mob-hr-afstanden">0</div><div class="mob-kpi-sub">Woon-werk nog niet berekend</div></a>
+          <div class="mob-kpi"><div class="mob-kpi-label">Open AI-signaleringen</div><div class="mob-kpi-value" id="mob-hr-signaleringen">0</div><div class="mob-kpi-sub" id="mob-hr-signaleringen-hoog">0 met hoge prioriteit</div></div>
+          <div class="mob-kpi"><div class="mob-kpi-label">Check-in afwijkingen</div><div class="mob-kpi-value" id="mob-hr-checkins">0</div><div class="mob-kpi-sub">GPS niet op werklocatie</div></div>
+        </div>
+        <section class="table-card mob-card mob-card--wide">
+          <div class="mob-card-head"><h2 class="mob-card-title">Recente check-ins met afwijking</h2></div>
+          <div class="table-wrapper"><table class="employees-table"><thead><tr><th>Medewerker</th><th>Datum</th><th>Werklocatie</th><th class="mob-num">Afstand</th><th>Status</th></tr></thead><tbody id="mob-hr-checkin-list"></tbody></table></div>
+          <div class="mob-empty" id="mob-hr-checkin-empty" hidden>Geen check-in-afwijkingen.</div>
         </section>
+      </section>
 
-        <div class="gemeente-detail-main-col">
-          <div class="gemeente-detail-tabs" role="tablist" aria-label="Secties">
-            <span class="gemeente-detail-tab is-active" role="tab" aria-selected="true">Details</span>
-          </div>
-          <div class="gemeente-detail-panels">
-            <section class="gemeente-detail-pan is-active" aria-labelledby="gd-section-gegevens">
-              <h3 class="gemeente-detail-section-title" id="gd-section-gegevens">Gemeente gegevens</h3>
-              <p class="gemeente-detail-arch-hint" id="gd-arch-hint" hidden>Deze gemeente is gearchiveerd. Herstel eerst in het overzicht om te bewerken.</p>
-              <form id="gd-form" novalidate>
-                <input type="hidden" id="gd-id" name="id" value="" />
-                <div class="modal-field">
-                  <label class="modal-label" for="gd-naam">Naam</label>
-                  <input class="modal-input" type="text" id="gd-naam" name="naam" required autocomplete="off" />
-                </div>
-                <div class="gemeente-detail-form-actions">
-                  <button type="submit" class="btn-outline" id="gd-save">Wijzigingen opslaan</button>
-                </div>
-              </form>
-            </section>
-          </div>
+      <!-- ============ AI-SIGNALERINGEN ============ -->
+      <section class="mob-view" id="mob-view-signaleringen" hidden>
+        <p class="mob-intro">De engine analyseert de kilometerregistraties op opvallend hoge declaraties, afwijkende routes, dubbele registraties, onlogische reistijden en hoge kosten per cliënt/locatie. Deterministische heuristiek — geen externe AI.</p>
+        <div class="toolbar mob-sig-toolbar">
+          <button type="button" class="btn-primary" id="mob-sig-genereer">Signaleringen verversen</button>
+          <span class="mob-sig-result" id="mob-sig-result" aria-live="polite"></span>
+          <label class="switch switch--yellow mob-sig-toggle">
+            <input type="checkbox" id="mob-sig-show-done" />
+            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+            <span class="switch-label">Toon afgehandelde</span>
+          </label>
         </div>
-      </div>
+        <div class="mob-sig-list" id="mob-sig-list"></div>
+        <div class="mob-empty" id="mob-sig-empty" hidden>Geen openstaande signaleringen — de registraties zien er gezond uit.</div>
+      </section>
     </main>
   </div>
-
-  <div class="app-toast app-toast--clienten" id="gd-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="top-nav-overflow.js?v=918f1ad"></script>
   <script src="sidebar-nav.js?v=918f1ad"></script>
@@ -293,22 +318,18 @@
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
   <script src="besa-sync-reporter.js?v=918f1ad"></script>
-  <script src="optimistic-lock.js?v=918f1ad" defer></script>
-  <script src="realtime-sync.js?v=918f1ad" defer></script>
-  <script src="bulk-actions.js?v=918f1ad" defer></script>
-  <script src="pdf-export.js?v=918f1ad" defer></script>
   <script src="permissions.js?v=918f1ad" defer></script>
   <script src="permissions-page-map.js?v=918f1ad" defer></script>
   <script src="permissions-gate.js?v=918f1ad" defer></script>
   <script src="permissions-nav-hide.js?v=918f1ad" defer></script>
   <script src="helpdesk-modal.js?v=918f1ad" defer></script>
-  <script src="onboarding-flow.js?v=918f1ad" defer></script>
   <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="gemeenten-data.js?v=918f1ad"></script>
-  <script src="gemeente-detail.js?v=918f1ad"></script>
+  <script src="besa-daterange.js?v=918f1ad" defer></script>
+  <script src="km-signaleringen-data.js?v=918f1ad" defer></script>
+  <script src="km-checkin-data.js?v=918f1ad" defer></script>
+  <script src="mobiliteit-dashboard.js?v=918f1ad" defer></script>
 </body>
 </html>

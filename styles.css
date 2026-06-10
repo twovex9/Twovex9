@@ -26962,3 +26962,107 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
   .topbar, .sidebar, .prod-viewtabs, .prod-period, .ia-lead, .content-header .header-actions { display: none !important; }
   .ia-rap-inner { padding: 0; }
 }
+
+/* ============================================================================
+   Mobiliteit & kosten — dashboard (mobiliteitsmodule 2026-06-10)
+   ============================================================================ */
+.mob-period { display: inline-flex; }
+.mob-tabs { margin-bottom: 16px; }
+.mob-view { display: block; }
+.mob-view[hidden] { display: none; }
+.mob-intro { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 16px; max-width: 70ch; }
+.mob-noaccess { font-size: var(--font-base); color: var(--text-secondary); }
+
+.mob-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.mob-kpis--controle { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.mob-kpi {
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  padding: 16px 18px;
+  text-decoration: none;
+  display: block;
+}
+.mob-kpi--link { transition: border-color .12s ease, background .12s ease; }
+.mob-kpi--link:hover { border-color: var(--blue); background: var(--blue-soft); }
+.mob-kpi-label { font-size: var(--font-table-head); color: var(--text-muted); margin-bottom: 6px; }
+.mob-kpi-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1.1; }
+.mob-kpi-sub { font-size: var(--font-table-head); color: var(--text-secondary); margin-top: 4px; }
+
+.mob-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+.mob-card { margin: 0; }
+.mob-card--wide { grid-column: 1 / -1; }
+.mob-card-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.mob-card-title { font-size: var(--font-base); font-weight: 600; color: var(--text); margin: 0; }
+.mob-num { text-align: right; white-space: nowrap; }
+.mob-td-empty { color: var(--text-muted); text-align: center; padding: 18px 8px; }
+.mob-empty { color: var(--text-muted); padding: 16px; font-size: var(--font-base); }
+
+.mob-bar {
+  display: inline-block;
+  width: 90px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  vertical-align: middle;
+  overflow: hidden;
+  margin-right: 8px;
+}
+.mob-bar-fill { display: block; height: 100%; background: var(--blue); border-radius: var(--r-pill); }
+.mob-bar-label { font-size: var(--font-table-head); color: var(--text-secondary); }
+
+.mob-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.mob-pill--hoog { background: var(--red-soft); color: var(--red); }
+.mob-pill--midden { background: var(--yellow-soft); color: var(--yellow); }
+.mob-pill--laag { background: var(--blue-soft); color: var(--blue); }
+.mob-pill--warn { background: var(--yellow-soft); color: var(--yellow); }
+
+.mob-sig-toolbar { align-items: center; gap: 14px; flex-wrap: wrap; }
+.mob-sig-toggle { margin-left: auto; }
+.mob-sig-result { font-size: var(--font-table-head); color: var(--text-secondary); }
+.mob-sig-result--busy { color: var(--text-secondary); }
+.mob-sig-result--ok { color: var(--green); }
+.mob-sig-result--err { color: var(--red); }
+
+.mob-sig-list { display: flex; flex-direction: column; gap: 12px; }
+.mob-sig-item {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 14px 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.mob-sig-item--hoog { border-left-color: var(--red); }
+.mob-sig-item--midden { border-left-color: var(--yellow); }
+.mob-sig-item--laag { border-left-color: var(--blue); }
+.mob-sig-item--done { opacity: .62; }
+.mob-sig-main { flex: 1 1 280px; min-width: 0; }
+.mob-sig-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.mob-sig-type { font-size: var(--font-table-head); color: var(--text-muted); }
+.mob-sig-status { font-size: var(--font-table-head); color: var(--green); font-weight: 600; }
+.mob-sig-title { font-size: var(--font-base); font-weight: 600; color: var(--text); margin: 0 0 4px; }
+.mob-sig-desc { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 4px; }
+.mob-sig-meta { font-size: var(--font-table-head); color: var(--text-muted); margin: 0; }
+.mob-sig-actions { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; }
