@@ -249,6 +249,47 @@
     return value;
   }
 
+  // ---------------------------------------------------------------------------
+  // Public: geocodeText — vrije-tekst adres (bv. "Stationsweg 12, Alkmaar")
+  // Voor de zakelijke-rit-modal waar vertrek-/bestemmingsadres losse tekst is.
+  // ---------------------------------------------------------------------------
+  async function geocodeText(text) {
+    var q = String(text == null ? "" : text).trim();
+    if (!q) return null;
+    var cacheKey = "free:" + q.toLowerCase();
+    var cached = cacheGet(cacheKey, CACHE_KEY_GEO, TTL_GEO_MS);
+    if (cached) return cached;
+    var url = PDOK + "?q=" + encodeURIComponent(q) + "&fq=type:adres&rows=1";
+    var res = await fetchWithRetry(url, "PDOK");
+    var data = await res.json();
+    var doc = data && data.response && Array.isArray(data.response.docs) ? data.response.docs[0] : null;
+    if (!doc) return null;
+    var ll = parseCentroide(doc.centroide_ll);
+    if (!ll) return null;
+    var value = { lat: ll.lat, lng: ll.lng, label: doc.weergavenaam || q };
+    cacheSet(cacheKey, CACHE_KEY_GEO, value);
+    return value;
+  }
+
+  // ---------------------------------------------------------------------------
+  // High-level: bereken route tussen twee vrije-tekst adressen.
+  // Retour {km, from, to} of {error}.
+  // ---------------------------------------------------------------------------
+  async function calculateRouteText(vertrek, bestemming) {
+    var f, t;
+    try { f = await geocodeText(vertrek); }
+    catch (err) { return { error: "Vertrekadres opzoeken mislukt (PDOK): " + ((err && err.message) || err) + ". Probeer opnieuw of vul de km handmatig in." }; }
+    if (!f) return { error: "Vertrekadres niet gevonden (controleer straat + huisnummer + plaats of postcode)." };
+    try { t = await geocodeText(bestemming); }
+    catch (err) { return { error: "Bestemmingsadres opzoeken mislukt (PDOK): " + ((err && err.message) || err) + ". Probeer opnieuw of vul de km handmatig in." }; }
+    if (!t) return { error: "Bestemmingsadres niet gevonden (controleer straat + huisnummer + plaats of postcode)." };
+    var km;
+    try { km = await routeKm(f, t); }
+    catch (err) { return { error: "Route-berekening mislukt (OSRM): " + ((err && err.message) || err) + ". Probeer opnieuw of vul de km handmatig in." }; }
+    if (km == null) return { error: "Route kon niet berekend worden tussen deze 2 adressen." };
+    return { km: km, from: f, to: t };
+  }
+
   function clearCache() {
     try { window.localStorage.removeItem(CACHE_KEY_GEO); } catch (e) {}
     try { window.localStorage.removeItem(CACHE_KEY_OSRM); } catch (e) {}
@@ -256,9 +297,11 @@
 
   window.besaGeoDistance = {
     geocode: geocode,
+    geocodeText: geocodeText,
     lookupAdres: lookupAdres,
     routeKm: routeKm,
     calculateEnkeleReis: calculateEnkeleReis,
+    calculateRouteText: calculateRouteText,
     clearCache: clearCache,
   };
 })();

@@ -554,25 +554,57 @@
   <div class="modal-overlay" id="km-add-manual-modal" hidden aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="km-add-manual-title" tabindex="-1">
       <div class="modal-header">
-        <h2 class="modal-title" id="km-add-manual-title">Werk-werk (cliëntvervoer)</h2>
+        <h2 class="modal-title" id="km-add-manual-title">Zakelijke rit (werk-werk)</h2>
         <button type="button" class="modal-close" id="km-add-manual-close" aria-label="Sluiten"><span aria-hidden="true">&times;</span></button>
       </div>
       <form id="km-add-manual-form" class="modal-body" novalidate>
         <p class="km-werkwerk-info">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Werk-werk kilometers (een cliënt tijdens werktijd vervoeren) worden ter goedkeuring voorgelegd aan de zorgcoördinator. De rit telt pas mee in je vergoeding nadat die is goedgekeurd.</span>
+          <span>Zakelijke kilometers (cliëntvervoer, huisbezoek, werkoverleg op externe locatie) worden ter goedkeuring voorgelegd aan de zorgcoördinator. De rit telt pas mee in je vergoeding nadat die is goedgekeurd.</span>
         </p>
         <div class="modal-field">
           <label class="modal-label" for="km-add-manual-datum">Datum <span class="im-req">*</span></label>
           <input class="modal-input" type="date" id="km-add-manual-datum" required />
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-add-manual-beschr">Beschrijving <span class="im-req">*</span></label>
-          <textarea class="modal-input" id="km-add-manual-beschr" rows="3" required placeholder="Bv. Van de woongroep naar de cliënt voor begeleiding"></textarea>
+          <label class="modal-label" for="km-add-manual-client">Cliënt</label>
+          <select class="modal-input" id="km-add-manual-client">
+            <option value="">— Geen / overig (bv. werkoverleg) —</option>
+          </select>
         </div>
         <div class="modal-field">
-          <label class="modal-label" for="km-add-manual-km">Kilometers <span class="im-req">*</span></label>
+          <label class="modal-label" for="km-add-manual-traject">Soort traject</label>
+          <select class="modal-input" id="km-add-manual-traject">
+            <option value="">— Kies —</option>
+            <option value="ambulant">Ambulant traject</option>
+            <option value="wlz">WLZ-traject</option>
+            <option value="locatie">Locatie / woongroep</option>
+            <option value="overig">Overig</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="km-add-manual-vertrek">Vertrekadres <span class="im-req">*</span></label>
+          <input class="modal-input" type="text" id="km-add-manual-vertrek" placeholder="Bv. Stationsweg 12, Alkmaar" autocomplete="off" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="km-add-manual-bestemming">Bestemmingsadres <span class="im-req">*</span></label>
+          <input class="modal-input" type="text" id="km-add-manual-bestemming" placeholder="Bv. Huisartsenpost, Hertog Aalbrechtweg, Alkmaar" autocomplete="off" />
+        </div>
+        <div class="modal-field km-route-field">
+          <button type="button" class="btn-outline km-route-btn" id="km-add-manual-bereken">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            Afstand berekenen
+          </button>
+          <span class="km-route-status" id="km-add-manual-route-status" aria-live="polite"></span>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="km-add-manual-km">Kilometers (heen) <span class="im-req">*</span></label>
           <input class="modal-input" type="number" min="0" step="0.01" id="km-add-manual-km" required />
+          <p class="km-totals-hint">Wordt automatisch ingevuld na berekening; je mag dit aanpassen. Grote afwijkingen t.o.v. de berekende route worden gesignaleerd.</p>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="km-add-manual-beschr">Reden rit <span class="im-req">*</span></label>
+          <textarea class="modal-input" id="km-add-manual-beschr" rows="2" required placeholder="Bv. Cliënt naar huisarts brengen"></textarea>
         </div>
         <div class="modal-field">
           <label class="modal-label planning-checkbox">
@@ -747,6 +779,8 @@
   <script src="medewerkers-data.js?v=918f1ad" defer></script>
   <script src="locaties-data.js?v=918f1ad" defer></script>
   <script src="planning-data.js?v=918f1ad" defer></script>
+  <script src="clienten-data.js?v=918f1ad" defer></script>
+  <script src="geo-distance.js?v=918f1ad" defer></script>
   <script src="kilometer-declaraties-data.js?v=918f1ad" defer></script>
   <script src="km-afwijkingen-data.js?v=918f1ad" defer></script>
   <script src="kilometers.js?v=918f1ad" defer></script>

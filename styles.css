@@ -21921,6 +21921,26 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
   color: var(--text-muted);
   margin: 0;
 }
+/* Zakelijke-rit: route-berekening (mobiliteitsmodule) */
+.km-route-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.km-route-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.km-route-status {
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+.km-route-status--busy { color: var(--text-secondary); }
+.km-route-status--ok { color: var(--green); }
+.km-route-status--err { color: var(--red); }
 .km-add-btn {
   white-space: nowrap;
 }
