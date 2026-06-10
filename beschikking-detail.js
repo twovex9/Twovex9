@@ -758,7 +758,18 @@
       if (clis[c].archived) o.textContent += " (gearchiveerd)";
       cSel.appendChild(o);
     }
-    if (selectedId) cSel.value = String(selectedId);
+    if (selectedId) {
+      cSel.value = String(selectedId);
+      // Dual-key: BS2-geïmporteerde beschikkingen verwijzen met een bs2-uuid
+      // i.p.v. clienten.id — resolve dan via clienten.bs2_id, anders blijft de
+      // select leeg en weigert onSave elke wijziging ("Kies een cliënt").
+      if (cSel.value !== String(selectedId)) {
+        for (var r2 = 0; r2 < clis.length; r2 += 1) {
+          var b2 = clis[r2].bs2_id || (clis[r2].data && clis[r2].data.bs2_id);
+          if (b2 && String(b2) === String(selectedId)) { cSel.value = clis[r2].id; break; }
+        }
+      }
+    }
   }
 
   function updateClFasePill(clientId) {
@@ -978,7 +989,12 @@
     var urenWkVal = urenWkEl && urenWkEl.value.trim() ? n2(urenWkEl.value.trim()) : 0;
     setBeschikkingField(loadedBesc.id, function (row) {
       var cl = getClientenById(cId) || null;
-      row.clientId = cId;
+      // Dual-key: als de gekozen cliënt dezelfde is als de oorspronkelijke
+      // bs2-koppeling, behoud dan de originele client_id (bs2-uuid) — de
+      // dashboard-RPC's joinen daarop. Alleen bij een ECHT andere cliënt
+      // schrijven we de nieuwe clienten.id.
+      var clBs2 = cl ? (cl.bs2_id || (cl.data && cl.data.bs2_id) || null) : null;
+      row.clientId = (clBs2 && String(loadedBesc.clientId || "") === String(clBs2)) ? loadedBesc.clientId : cId;
       row.clientLabel = cl
         ? (String((cl.voornaam || "")).trim() + " " + String((cl.achternaam || "")).trim()).trim() || "—"
         : (row.clientLabel || "—");
