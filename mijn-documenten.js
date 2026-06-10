@@ -59,8 +59,11 @@
       return;
     }
     tb.innerHTML = docs.map(function (d) {
-      var bestand = d.fileData
-        ? '<a href="' + esc(d.fileData) + '" target="_blank" rel="noopener">' + esc(d.fileName || "Bekijk") + "</a>"
+      // De bucket is PRIVATE: de gecachte signed URL kan verlopen zijn (TTL 1u).
+      // Daarom geen statische href, maar een link die bij de klik een VERSE
+      // signed URL mint (zie openOwnDoc).
+      var bestand = (d.storagePath || d.fileData)
+        ? '<a href="#" class="md-open-link" data-doc-id="' + esc(d.id) + '">' + esc(d.fileName || "Bekijk") + "</a>"
         : "—";
       return "<tr>" +
         "<td>" + esc(d.naam || "—") + "</td>" +
@@ -70,6 +73,43 @@
         "<td>" + bestand + "</td>" +
         "</tr>";
     }).join("");
+  }
+
+  function openUrlInNewTab(url) {
+    var a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // Opent een eigen document. Mint bij élke klik een VERSE signed URL (de
+  // gecachte fileData heeft TTL 1u → kan verlopen zijn). Popup-veilig: tabblad
+  // synchroon openen binnen de klik, daarna redirecten.
+  function openOwnDoc(docId) {
+    var doc = ownDocs().find(function (d) { return String(d.id) === String(docId); });
+    if (!doc || (!doc.storagePath && !doc.fileData)) return;
+    if (!doc.storagePath || !window.medewerkerDocsDB || typeof window.medewerkerDocsDB.getSignedUrl !== "function") {
+      if (doc.fileData) openUrlInNewTab(doc.fileData);
+      return;
+    }
+    var win = null;
+    try { win = window.open("", "_blank"); } catch (e) { win = null; }
+    if (!win) {
+      if (doc.fileData) openUrlInNewTab(doc.fileData);
+      return;
+    }
+    try { win.opener = null; } catch (e) { /* */ }
+    window.medewerkerDocsDB.getSignedUrl(doc.storagePath).then(function (freshUrl) {
+      var target = freshUrl || doc.fileData || "";
+      if (!target) { try { win.close(); } catch (e) { /* */ } return; }
+      try { win.location.replace(target); } catch (e) { win.location.href = target; }
+    }).catch(function () {
+      if (doc.fileData) { try { win.location.replace(doc.fileData); } catch (e) { /* */ } }
+      else { try { win.close(); } catch (e) { /* */ } }
+    });
   }
 
   // --- Modal -------------------------------------------------------------------
@@ -138,6 +178,14 @@
   function wire() {
     var addBtn = $("md-add-btn");
     if (addBtn) addBtn.addEventListener("click", showModal);
+    // Gedelegeerd op de (persistente) tbody — overleeft elke render().
+    var tb = $("md-tbody");
+    if (tb) tb.addEventListener("click", function (e) {
+      var link = e.target && e.target.closest ? e.target.closest(".md-open-link") : null;
+      if (!link) return;
+      e.preventDefault();
+      openOwnDoc(link.getAttribute("data-doc-id"));
+    });
     var form = $("md-form");
     if (form) form.addEventListener("submit", submit);
     var close = $("md-close"); if (close) close.addEventListener("click", hideModal);
