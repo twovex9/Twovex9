@@ -977,7 +977,7 @@
 
   // Detail-acties via event-delegation
   detailView.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-mp-done],[data-mp-edit],[data-mp-del],[data-cm-edit],[data-cm-del],[data-doc-open],[data-doc-del]");
+    var t = e.target.closest("[data-mp-done],[data-mp-edit],[data-mp-del],[data-cm-edit],[data-cm-del],[data-act-done],[data-act-edit],[data-act-del],[data-doc-open],[data-doc-del]");
     if (!t) return;
     var id;
     if ((id = t.getAttribute("data-mp-done"))) { markMpDone(id); return; }
