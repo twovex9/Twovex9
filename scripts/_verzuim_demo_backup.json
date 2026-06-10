@@ -1,0 +1,62 @@
+[
+  {
+    "id": "vz_l_1",
+    "type": "lang",
+    "medewerker": "Sophie de Vries",
+    "eerst_ziektedag": "2025-10-14",
+    "verwachte_terug": "2026-04-01",
+    "werkelijke_terug": null,
+    "beschrijving": "Langdurige ziekmelding — traject begeleiding",
+    "status": "Actief",
+    "aanmaakdatum": "2026-05-05T19:25:23.422687+00:00",
+    "laatst_gewijzigd": "2026-06-08T12:12:52.736289+00:00"
+  },
+  {
+    "id": "vz_l_2",
+    "type": "lang",
+    "medewerker": "Thomas Bakker",
+    "eerst_ziektedag": "2025-12-02",
+    "verwachte_terug": "2026-06-15",
+    "werkelijke_terug": null,
+    "beschrijving": "Re-integratie in voorbereiding",
+    "status": "Actief",
+    "aanmaakdatum": "2026-05-05T19:25:23.422687+00:00",
+    "laatst_gewijzigd": "2026-06-08T12:12:52.736289+00:00"
+  },
+  {
+    "id": "vz_l_3",
+    "type": "lang",
+    "medewerker": "Marieke Jansen",
+    "eerst_ziektedag": "2026-01-08",
+    "verwachte_terug": "2026-03-20",
+    "werkelijke_terug": "2026-02-28",
+    "beschrijving": "Hersteld na specialistisch consult",
+    "status": "Hersteld",
+    "aanmaakdatum": "2026-05-05T19:25:23.422687+00:00",
+    "laatst_gewijzigd": "2026-06-08T12:12:52.736289+00:00"
+  },
+  {
+    "id": "vz_k_1",
+    "type": "kort",
+    "medewerker": "Daan Visser",
+    "eerst_ziektedag": "2026-03-02",
+    "verwachte_terug": "2026-03-09",
+    "werkelijke_terug": "2026-03-08",
+    "beschrijving": "Griep",
+    "status": "Hersteld",
+    "aanmaakdatum": "2026-05-05T19:25:23.422687+00:00",
+    "laatst_gewijzigd": "2026-06-08T12:12:52.739145+00:00"
+  },
+  {
+    "id": "vz_k_2",
+    "type": "kort",
+    "medewerker": "Emma Smit",
+    "eerst_ziektedag": "2026-03-18",
+    "verwachte_terug": "2026-03-25",
+    "werkelijke_terug": null,
+    "beschrijving": "Mag klachten",
+    "status": "Actief",
+    "aanmaakdatum": "2026-05-05T19:25:23.422687+00:00",
+    "laatst_gewijzigd": "2026-06-08T12:12:52.739145+00:00"
+  }
+]

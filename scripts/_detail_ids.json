@@ -1,0 +1,14 @@
+{
+  "main_employees": "b87c33a8-f045-48eb-b8a3-4f7d914db2c4",
+  "clienten": "cl_181",
+  "facturen": "718327c5-de4c-4223-8d53-5eb8503b9ecf",
+  "beschikkingen": "cb6db1ce-840e-4779-a780-180d99b8506d",
+  "locaties": "7df8df82-c612-473a-b57a-59d5757c5ef9",
+  "opleidingen": "e3b3c696-22e5-4e6a-ba67-e415cbe1cf39",
+  "organisaties": "org_seed_1",
+  "gemeenten": "b4465cb7-bddd-488e-b189-e8ea9622b12d",
+  "competenties": "f22efd69-db18-4110-b0cf-5a050260265b",
+  "zorgsoorten": "155f2e08-afb0-42f2-a29c-13aa1eb6636d",
+  "bureaus": "66014237-6418-4c5e-ba0d-f68002736cde",
+  "invoices": "133e0a46-3a69-4f31-bd7c-fa1132f536b8"
+}

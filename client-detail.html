@@ -298,6 +298,17 @@
         </aside>
 
         <div class="client-detail-panel-wrap">
+          <!-- Dossier-issues (fase 4, §12) — uit client_dossier_controle()/cron -->
+          <section class="cd-ai-kaart cd-issues-kaart" id="cd-issues-kaart" aria-label="Dossier-issues" hidden>
+            <div class="cd-ai-head">
+              <h3 class="cd-ai-titel">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.3 3.9-8.5 14.2A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.9L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                Dossier-issues
+              </h3>
+            </div>
+            <ul class="cd-ai-punten" id="cd-issues-lijst"></ul>
+          </section>
+
           <!-- AI-cliëntsamenvatting (fase 3, §7) — deterministische RPC client_ai_samenvatting -->
           <section class="cd-ai-kaart" id="cd-ai-kaart" aria-label="Cliëntsamenvatting" hidden>
             <div class="cd-ai-head">
