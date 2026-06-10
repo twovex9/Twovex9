@@ -131,6 +131,13 @@
     "organisatie.html": { action: "browse", entity: "care-allocators" },
     "organisatie-detail.html": { action: "view", entity: "care-allocators" },
 
+    // ─── Bezetting & kamerbeheer ──────────────────────────────────────────────
+    // Real-time bezettingsboard van de woonlocaties. Lezen = alle kantoor/zorg-rollen;
+    // muteren (kamers/status/toewijzingen) is server-side rol-gegate via de bezetting_*-RPC's
+    // (can_beheer_kamers / can_toewijzen_clienten). Detacheringsbureau + (pure) Medewerker
+    // horen hier niet → expliciete allowedRoles i.p.v. open. Matcht can_view_bezetting().
+    "bezetting.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Gedragswetenschapper", "Cliëntbeheer", "Planner", "Facilitair", "HR", "Finance", "Beleid", "Salarisadministratie"] },
+
     // ─── Planning + teams ─────────────────────────────────────────────────────
     "planning.html": { action: "view", entity: "planning" },
     "planning-beheer.html": { action: "manage", entity: "shifts" },
