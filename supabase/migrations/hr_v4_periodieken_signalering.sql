@@ -59,6 +59,7 @@ begin
         or lower(coalesce(m.data->>'dienstverband', '')) = 'loondienst'
       )
       and coalesce(m.data->>'salarisschaal', '') <> ''
+      and lower(coalesce(m.data->>'salarisschaal', '')) not like 'selecteer%'
   ),
   laatste_salaris as (
     select distinct on (msh.medewerker_id)
@@ -147,6 +148,7 @@ begin
         or lower(coalesce(m.data->>'dienstverband', '')) = 'loondienst'
       )
       and coalesce(m.data->>'salarisschaal', '') <> ''
+      and lower(coalesce(m.data->>'salarisschaal', '')) not like 'selecteer%'
   ),
   laatste_salaris as (
     select distinct on (msh.medewerker_id)
