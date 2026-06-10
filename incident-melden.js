@@ -102,6 +102,40 @@
     if (!m) return "—";
     return (((m.voornaam || "") + " " + (m.achternaam || "")).trim()) || "—";
   }
+  // Cliënten zijn locatiegebonden: de incident-locatie volgt automatisch uit de
+  // gekozen cliënt. De cliënt bewaart de locatie als vrije-tekst naam
+  // (clienten.locatie), terwijl de locatie-dropdown locaties.id (uuid) als value
+  // gebruikt. We matchen dus op naam (case-insensitive, getrimd) tegen dezelfde
+  // niet-gearchiveerde set die de dropdown vult, zodat het gevonden id ook echt
+  // als optie bestaat.
+  function normLocName(s) {
+    return String(s == null ? "" : s).trim().toLowerCase();
+  }
+  function findLocatieIdForClient(clientId) {
+    var client = findById(getAllClienten(), clientId);
+    if (!client) return null;
+    var naam = normLocName(client.locatie);
+    if (!naam) return null;
+    var locaties = getAllLocaties().filter(function (l) { return l && !l.archived; });
+    for (var i = 0; i < locaties.length; i += 1) {
+      if (normLocName(locaties[i].naam || locaties[i].name) === naam) {
+        return String(locaties[i].id);
+      }
+    }
+    return null;
+  }
+  // Vult het locatie-veld op basis van de gekozen cliënt. Wordt aangeroepen bij
+  // het wisselen van cliënt; het veld blijft bewerkbaar zodat de melder kan
+  // afwijken als het incident elders plaatsvond. Heeft de cliënt geen herkenbare
+  // locatie, dan laten we het veld ongemoeid (geen handmatige keuze wissen).
+  function autoFillLocatieFromClient() {
+    var locSel = $("im-locatie");
+    var clientSel = $("im-client");
+    if (!locSel || !clientSel) return;
+    var locId = findLocatieIdForClient(clientSel.value);
+    if (!locId) return;
+    locSel.value = locId;
+  }
   function partijLabel(p) {
     if (!p) return "—";
     if (p.type === "client") return clientLabel(findById(getAllClienten(), p.id));
@@ -1260,6 +1294,12 @@
 
   function wireUp() {
     $("im-form").addEventListener("submit", onSubmit);
+
+    // Cliënten zijn locatiegebonden → vul de locatie automatisch in zodra een
+    // cliënt gekozen wordt. Blijft handmatig aanpasbaar voor afwijkingen.
+    if ($("im-client")) {
+      $("im-client").addEventListener("change", autoFillLocatieFromClient);
+    }
 
     Array.prototype.forEach.call(document.querySelectorAll('input[name="im-betrokken-type"]'), function (r) {
       r.addEventListener("change", refreshBetrokkenPersonSelect);
