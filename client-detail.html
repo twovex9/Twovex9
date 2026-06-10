@@ -105,6 +105,7 @@
                 <div class="top-dropdown-col">
                   <span class="top-dropdown-group-title">Cliënten</span>
                   <a href="clienten" class="top-dropdown-link" role="menuitem">Cliënten</a>
+                  <a href="aanmeldingen" class="top-dropdown-link" role="menuitem">Aanmeldingen</a>
                   <a href="zorgsoorten" class="top-dropdown-link" role="menuitem">Zorgsoorten</a>
                   <a href="organisatie" class="top-dropdown-link" role="menuitem">Organisaties</a>
                   <a href="gemeenten" class="top-dropdown-link" role="menuitem">Gemeenten</a>
@@ -246,6 +247,7 @@
               <h3 class="client-detail-h3">Zorgdata</h3>
               <p class="client-detail-kv"><span class="client-detail-kv-k">In zorg</span><span class="client-detail-kv-v" id="cd-aside-inzorg">—</span></p>
               <p class="client-detail-kv"><span class="client-detail-kv-k">Uit zorg</span><span class="client-detail-kv-v" id="cd-aside-uitzorg">—</span></p>
+              <p class="client-detail-kv"><span class="client-detail-kv-k">Cliëntreis</span><span class="client-detail-kv-v"><span class="cr-pill" id="cd-reis-pill">—</span></span></p>
             </div>
             <div class="client-detail-block">
               <h3 class="client-detail-h3">Medewerker</h3>
@@ -298,6 +300,7 @@
             <button type="button" class="client-detail-tab" data-cd-panel="m" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-m">Medicatie</button>
             <button type="button" class="client-detail-tab" data-cd-panel="q" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-q">Vragenlijsten</button>
             <button type="button" class="client-detail-tab" data-cd-panel="i" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-i">Incidenten</button>
+            <button type="button" class="client-detail-tab" data-cd-panel="t" role="tab" aria-selected="false" tabindex="-1" aria-controls="cd-pan-t">Tijdlijn</button>
           </div>
 
           <div class="client-detail-panels table-card" id="cd-panels">
@@ -1176,6 +1179,12 @@
               <p class="client-detail-placeholder">Bekijk alle incidenten van deze cliënt in het <a href="incidenten" class="client-detail-inline-a">incidenten overzicht</a>.</p>
             </section>
 
+            <section class="client-detail-pan" id="cd-pan-t" role="tabpanel" aria-hidden="true" hidden>
+              <h3 class="client-detail-pan-h">Tijdlijn</h3>
+              <div class="cdt-list" id="cd-tijdlijn-list"></div>
+              <p class="client-detail-placeholder" id="cd-tijdlijn-empty" hidden>Nog geen gebeurtenissen.</p>
+            </section>
+
             <!-- Fase E.14 DSR-flow — alleen admin-tier zichtbaar -->
             <section class="client-detail-pan client-detail-pan--dsr" id="cd-dsr-section" hidden>
               <h3 class="client-detail-pan-h">Gegevensbescherming (AVG)</h3>
@@ -1509,6 +1518,8 @@
   <script src="client-rapportages-data.js?v=918f1ad" defer></script>
   <script src="client-medicatie-data.js?v=918f1ad" defer></script>
   <script src="client-vragenlijsten-data.js?v=918f1ad" defer></script>
+  <script src="clientreis-ui.js?v=918f1ad" defer></script>
+  <script src="client-tijdlijn-data.js?v=918f1ad" defer></script>
   <script src="client-detail.js?v=918f1ad" defer></script>
   <script src="read-audit.js?v=918f1ad" defer></script>
   <script src="dsr-flow.js?v=918f1ad" defer></script>

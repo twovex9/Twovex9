@@ -99,6 +99,7 @@
     "nieuws.html": "HR",
     // Cliënten
     "clienten.html": "Cliënten",
+    "aanmeldingen.html": "Cliënten",
     "client-detail.html": "Cliënten",
     "zorgsoorten.html": "Cliënten",
     "zorgsoort-detail.html": "Cliënten",

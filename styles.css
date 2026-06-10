@@ -27070,3 +27070,675 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .mob-sig-desc { font-size: var(--font-base); color: var(--text-secondary); margin: 0 0 4px; }
 .mob-sig-meta { font-size: var(--font-table-head); color: var(--text-muted); margin: 0; }
 .mob-sig-actions { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; }
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 1 (portaal)
+   =================================================================== */
+/* =======================================================================
+   Cliëntmodule 2.0 — fase 1: publiek aanmeldportaal (aanmeld-portaal.html)
+   Prefix: .amp-  — door orchestrator te mergen in styles.css
+   Alleen tokens (var(--…)) → werkt in licht én donker thema.
+   ======================================================================= */
+
+/* Standalone pagina: styles.css zet body op 100vh + overflow hidden
+   (app-shell-layout); het portaal moet gewoon kunnen scrollen. */
+body.amp-body {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
+  background: var(--bg-muted);
+}
+
+.amp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 16px 48px;
+}
+
+.amp-card {
+  width: 100%;
+  max-width: 860px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-pop);
+  padding: 36px 40px 32px;
+}
+
+.amp-logo {
+  margin: 0 0 6px;
+  font-size: var(--font-base);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.amp-logo span { color: var(--blue); }
+
+.amp-title {
+  margin: 0 0 10px;
+  font-size: var(--font-h1);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.amp-intro {
+  margin: 0 0 22px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 640px;
+}
+.amp-req-mark,
+.amp-field > span em {
+  color: var(--red);
+  font-style: normal;
+}
+
+/* --- foutbanner ------------------------------------------------------- */
+.amp-error {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  border-radius: var(--r-md);
+  color: var(--red);
+  font-weight: 600;
+}
+.amp-error p { margin: 0; }
+.amp-error ul { margin: 6px 0 0; padding-left: 18px; }
+.amp-error li { margin: 2px 0; }
+
+/* --- secties + velden -------------------------------------------------- */
+#amp-form fieldset.amp-section {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px 20px 20px;
+  margin: 0 0 18px;
+}
+
+.amp-section-title {
+  padding: 0 8px;
+  font-size: var(--font-base);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.amp-hint {
+  margin: 2px 0 14px;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+  line-height: 1.5;
+}
+
+.amp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+.amp-field--wide { grid-column: 1 / -1; }
+
+.amp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.amp-field > span small {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+}
+
+.amp-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-base);
+  font-family: inherit;
+  font-weight: 400;
+}
+.amp-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+.amp-textarea {
+  height: auto;
+  min-height: 84px;
+  padding: 9px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.amp-input--invalid { border-color: var(--red); }
+.amp-input--invalid:focus { box-shadow: 0 0 0 3px var(--red-soft); }
+
+/* --- contactpersoon-blokken -------------------------------------------- */
+.amp-contacts { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+
+.amp-contact {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+  padding: 14px 16px 16px;
+}
+
+.amp-contact-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.amp-contact-title {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.amp-contact-remove { height: 30px; padding: 0 12px; }
+
+/* --- documenten --------------------------------------------------------- */
+.amp-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.amp-files {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amp-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+}
+
+.amp-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.amp-file-size {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+}
+
+.amp-file-remove {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--red);
+  font-size: var(--font-base);
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.amp-file-remove:hover {
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+
+/* --- honeypot (anti-spam): off-screen, niet display:none zodat simpele
+       bots hem blijven invullen --------------------------------------- */
+.amp-hp {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* --- privacy + acties --------------------------------------------------- */
+.amp-privacy {
+  margin: 4px 0 16px;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+  line-height: 1.5;
+}
+
+.amp-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- succes-scherm ------------------------------------------------------ */
+.amp-success {
+  text-align: center;
+  padding: 26px 10px 14px;
+}
+
+.amp-success-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.amp-success-title {
+  margin: 0 0 6px;
+  font-size: var(--font-h1);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.amp-success-sub {
+  margin: 0 0 4px;
+  color: var(--text-secondary);
+}
+
+.amp-success-ref {
+  margin: 0 0 16px;
+  font-size: var(--font-h1);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--blue);
+}
+
+.amp-success-text {
+  margin: 0 auto;
+  max-width: 520px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.amp-foot {
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-table-head);
+  text-align: center;
+}
+
+/* --- responsief --------------------------------------------------------- */
+@media (max-width: 720px) {
+  .amp-wrap { padding: 18px 10px 28px; }
+  .amp-card { padding: 24px 18px 22px; }
+  .amp-grid { grid-template-columns: 1fr; }
+  .amp-actions { justify-content: stretch; }
+  .amp-actions .btn-primary { width: 100%; justify-content: center; }
+}
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 1 (aanmeldingen)
+   =================================================================== */
+/* ===== Aanmeldingen — beoordelingsmodule (Cliëntmodule 2.0 fase 1) =====
+   Page-CSS voor aanmeldingen.html. Prefix .anm-, uitsluitend tokens —
+   werkt automatisch in licht + donker. Hergebruikt .kl-stats/.kl-stat als
+   stats-tegel-basis (zelfde look als klachten). */
+
+/* Stats-tegels: 5 kolommen i.p.v. de kl-default van 4 */
+.kl-stats.anm-stats { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1100px) { .kl-stats.anm-stats { grid-template-columns: repeat(2, 1fr); } }
+.anm-stat--nieuw { border-top-color: var(--blue); }
+.anm-stat--beoordeling { border-top-color: var(--blue); }
+.anm-stat--meerinfo { border-top-color: var(--yellow); }
+.anm-stat--wachtlijst { border-top-color: var(--yellow); }
+.anm-stat--afgerond { border-top-color: var(--green); }
+
+/* Toolbar */
+.anm-toolbar { margin-bottom: 14px; }
+.anm-search { min-width: 240px; flex: 1 1 240px; max-width: 380px; }
+
+/* Tabel */
+.anm-row { cursor: pointer; }
+.anm-row:hover td { background: var(--surface-alt); }
+.anm-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.anm-cell-ref { font-weight: 700; color: var(--text); white-space: nowrap; }
+.anm-cell-client { font-weight: 600; color: var(--text); }
+.anm-verw { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.anm-verw-naam { color: var(--text); }
+.anm-verw-org { color: var(--text-muted); font-size: var(--font-table-head); }
+.anm-empty { padding: 18px; text-align: center; color: var(--text-muted); font-size: var(--font-base); }
+.anm-empty[hidden] { display: none; }
+.anm-loading-cell, .anm-loading { padding: 18px; text-align: center; color: var(--text-muted); font-size: var(--font-base); }
+
+/* Status-pills + urgentie-badges (tokens-only) */
+.anm-pill, .anm-urg {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.anm-pill--blauw { background: var(--blue-soft); color: var(--blue); }
+.anm-pill--geel { background: var(--yellow-soft); color: var(--yellow); }
+.anm-pill--groen { background: var(--green-soft); color: var(--green); }
+.anm-pill--rood { background: var(--red-soft); color: var(--red); }
+.anm-pill--muted { background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--line); }
+.anm-urg--rood { background: var(--red-soft); color: var(--red); }
+.anm-urg--geel { background: var(--yellow-soft); color: var(--yellow); }
+.anm-urg--muted { background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--line); }
+
+/* Detail-modal */
+.anm-modal-card {
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+.anm-modal-body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 22px;
+}
+.anm-section {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 14px 16px;
+}
+.anm-section-title {
+  margin: 0 0 10px;
+  font-size: var(--font-table-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.anm-section-empty { margin: 0; color: var(--text-muted); font-size: var(--font-base); }
+
+/* Definitielijst (2 kolommen, brede velden over volle breedte) */
+.anm-dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+  margin: 0;
+}
+.anm-dl-row { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.anm-dl-row--wide { grid-column: 1 / -1; }
+.anm-dl dt { font-size: var(--font-table-head); color: var(--text-muted); }
+.anm-dl dd { margin: 0; font-size: var(--font-base); color: var(--text); overflow-wrap: anywhere; }
+@media (max-width: 640px) { .anm-dl { grid-template-columns: 1fr; } }
+
+/* Contactpersonen-tabelletje */
+.anm-contact-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: var(--r-md); }
+.anm-contact-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: var(--font-table-cell); }
+.anm-contact-table th {
+  text-align: left;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+  white-space: nowrap;
+}
+.anm-contact-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); color: var(--text); vertical-align: top; }
+.anm-contact-table tr:last-child td { border-bottom: none; }
+.anm-gezag-cell { text-align: center; }
+.anm-gezag { color: var(--green); font-weight: 700; }
+
+/* Documenten */
+.anm-doc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.anm-doc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+  padding: 8px 12px;
+}
+.anm-doc-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.anm-doc-name { font-weight: 600; color: var(--text); font-size: var(--font-base); overflow-wrap: anywhere; }
+.anm-doc-meta { color: var(--text-muted); font-size: var(--font-table-head); }
+.anm-doc-link { color: var(--blue); font-weight: 600; font-size: var(--font-base); text-decoration: none; white-space: nowrap; }
+.anm-doc-link:hover { text-decoration: underline; }
+.anm-doc-unavailable { color: var(--text-muted); font-size: var(--font-table-head); white-space: nowrap; }
+
+/* Dossier-knop */
+.anm-footer-actions { display: flex; justify-content: flex-end; }
+.anm-dossier-link { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* Beoordeel-sectie */
+.anm-review-label { display: block; font-size: var(--font-table-head); color: var(--text-muted); margin-bottom: 6px; }
+.anm-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--font-base);
+  padding: 8px 10px;
+  resize: vertical;
+}
+.anm-textarea:focus { outline: none; border-color: var(--blue); }
+.anm-review-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.anm-btn-danger { color: var(--red); border-color: var(--red); }
+.anm-btn-danger:hover { background: var(--red-soft); }
+
+/* Inline bevestig-strook (geen confirm()-popup) */
+.anm-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--yellow);
+  border-radius: var(--r-md);
+  background: var(--yellow-soft);
+}
+.anm-confirm[hidden] { display: none; }
+.anm-confirm-text { font-size: var(--font-base); color: var(--text); font-weight: 600; }
+.anm-confirm-actions { display: flex; gap: 8px; }
+
+/* Rode foutmelding in de modal */
+.anm-modal-err {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: var(--font-base);
+}
+.anm-modal-err[hidden] { display: none; }
+
+/* ===================================================================
+   Cliëntmodule 2.0 — fase 1 (dossier)
+   =================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   Cliëntmodule 2.0 — fase 1 (dossier): cliëntreis-pill + tijdlijn-tab
+   Door orchestrator te mergen in styles.css. Tokens-only → werkt automatisch
+   in licht én donker thema (geen aparte [data-theme]-regels nodig).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Cliëntreis-statuspill (.cr-pill) — zelfde maatvoering als .cl-fase-pill.
+      Class komt uit besaClientreis.pillClass(slug) in clientreis-ui.js. ───── */
+.cr-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-ui-badge);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Aanmeld-/intake-/wachtlijstgroep — geel/oranje-soft (onderweg naar zorg) */
+.cr-pill--nieuwe-aanmelding,
+.cr-pill--in-beoordeling,
+.cr-pill--meer-info-nodig,
+.cr-pill--intake-gepland,
+.cr-pill--intake-afgerond,
+.cr-pill--wachtlijst,
+.cr-pill--plaatsing-gepland {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+/* Actief — groen-soft */
+.cr-pill--actief {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+/* Tijdelijk gepauzeerd — vol geel (zelfde patroon als .cl-fase-pill--in-aanvraag) */
+.cr-pill--tijdelijk-gepauzeerd {
+  background: var(--yellow);
+  color: var(--text);
+}
+
+/* Uitstroomgroep — rood-soft */
+.cr-pill--uitstroom-gepland,
+.cr-pill--uitgestroomd {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+/* Nazorg — blauw-soft */
+.cr-pill--nazorg {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+/* Dossier gesloten + onbekend/leeg — muted */
+.cr-pill--dossier-gesloten,
+.cr-pill--onbekend {
+  background: var(--line);
+  color: var(--text-secondary);
+}
+
+/* ── Dossier-tijdlijn (tab Tijdlijn, #cd-tijdlijn-list) ──────────────────── */
+.cdt-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px 0 6px 2px;
+}
+
+/* Verticale lijn door de stippen (dot-center = 2px padding + 14px = 16px;
+   2px lijn → left 15px). Geen lijn zolang de lijst leeg is (loading/empty). */
+.cdt-list::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--line);
+}
+.cdt-list:empty::before {
+  content: none;
+}
+
+.cdt-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Stip met event-icoon. background-color (dekkend, --surface) onder de
+   soft-tint via background-image: zo schijnt de verticale lijn niet door
+   de semi-transparante *-soft token heen. */
+.cdt-dot {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--blue-soft), var(--blue-soft));
+  color: var(--blue);
+  border: 1px solid var(--line);
+  position: relative;
+  z-index: 1;
+}
+.cdt-dot svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.cdt-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 10px 12px;
+}
+
+.cdt-titel {
+  margin: 0;
+  font-size: var(--font-table-cell);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cdt-omschrijving {
+  margin: 4px 0 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cdt-meta {
+  margin: 6px 0 0;
+  font-size: var(--font-table-head);
+  color: var(--text-muted);
+}
+
+.cdt-loading {
+  padding: 8px 0;
+  font-size: var(--font-table-cell);
+  color: var(--text-muted);
+}

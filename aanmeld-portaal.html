@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
+  <title>Aanmelden cliënt — Embrace the Future</title>
+  <link rel="stylesheet" href="styles.css?v=918f1ad">
+  <link rel="icon" type="image/png" href="assets/app-icon-192.png">
+</head>
+<body class="amp-body">
+  <main class="amp-wrap">
+    <section class="amp-card" aria-labelledby="amp-title">
+      <p class="amp-logo" aria-hidden="true">Embrace <span>the Future</span></p>
+      <h1 class="amp-title" id="amp-title">Cliënt aanmelden</h1>
+      <p class="amp-intro">
+        Via dit formulier kunt u als verwijzer een cliënt aanmelden bij Embrace the Future.
+        Vul de gegevens zo volledig mogelijk in; velden met een
+        <em class="amp-req-mark">*</em> zijn verplicht. Na het versturen ontvangt u direct een
+        referentienummer en beoordeelt ons team de aanmelding zo snel mogelijk.
+      </p>
+
+      <div class="amp-error" id="amp-error" role="alert" hidden></div>
+
+      <form id="amp-form" autocomplete="off" novalidate>
+
+        <!-- a. Cliëntgegevens -->
+        <fieldset class="amp-section">
+          <legend class="amp-section-title">1. Cliëntgegevens</legend>
+          <div class="amp-grid">
+            <label class="amp-field"><span>Voornaam <em>*</em></span>
+              <input type="text" id="amp-voornaam" class="amp-input" maxlength="120" required></label>
+            <label class="amp-field"><span>Achternaam <em>*</em></span>
+              <input type="text" id="amp-achternaam" class="amp-input" maxlength="120" required></label>
+            <label class="amp-field"><span>BSN <small>(optioneel)</small></span>
+              <input type="text" id="amp-bsn" class="amp-input" inputmode="numeric" pattern="[0-9]{8,9}" maxlength="9" placeholder="8 of 9 cijfers"></label>
+            <label class="amp-field"><span>Geboortedatum</span>
+              <input type="date" id="amp-geboortedatum" class="amp-input"></label>
+            <label class="amp-field"><span>Geslacht</span>
+              <select id="amp-geslacht" class="amp-input">
+                <option value="">—</option>
+                <option value="jongen">Jongen</option>
+                <option value="meisje">Meisje</option>
+                <option value="anders">Anders</option>
+                <option value="onbekend">Onbekend</option>
+              </select></label>
+            <label class="amp-field"><span>Nationaliteit</span>
+              <input type="text" id="amp-nationaliteit" class="amp-input" maxlength="80"></label>
+            <label class="amp-field"><span>Adres</span>
+              <input type="text" id="amp-adres" class="amp-input" maxlength="200" placeholder="Straat en huisnummer"></label>
+            <label class="amp-field"><span>Postcode</span>
+              <input type="text" id="amp-postcode" class="amp-input" maxlength="10" placeholder="1234 AB"></label>
+            <label class="amp-field"><span>Woonplaats</span>
+              <input type="text" id="amp-woonplaats" class="amp-input" maxlength="120"></label>
+            <label class="amp-field"><span>Gemeente <em>*</em></span>
+              <input type="text" id="amp-gemeente" class="amp-input" maxlength="120" required></label>
+          </div>
+        </fieldset>
+
+        <!-- b. Verwijzer -->
+        <fieldset class="amp-section">
+          <legend class="amp-section-title">2. Verwijzer</legend>
+          <div class="amp-grid">
+            <label class="amp-field"><span>Organisatie <em>*</em></span>
+              <input type="text" id="amp-verw-organisatie" class="amp-input" maxlength="160" required></label>
+            <label class="amp-field"><span>Naam <em>*</em></span>
+              <input type="text" id="amp-verw-naam" class="amp-input" maxlength="120" required></label>
+            <label class="amp-field"><span>Functie</span>
+              <input type="text" id="amp-verw-functie" class="amp-input" maxlength="120"></label>
+            <label class="amp-field"><span>Telefoonnummer</span>
+              <input type="tel" id="amp-verw-telefoon" class="amp-input" maxlength="30"></label>
+            <label class="amp-field amp-field--wide"><span>E-mailadres <em>*</em></span>
+              <input type="email" id="amp-verw-email" class="amp-input" maxlength="160" required placeholder="naam@organisatie.nl"></label>
+          </div>
+        </fieldset>
+
+        <!-- c. Ouders / gezaghebbenden / voogd -->
+        <fieldset class="amp-section">
+          <legend class="amp-section-title">3. Ouders / gezaghebbenden / voogd</legend>
+          <p class="amp-hint">Voeg de ouders, voogd of andere gezaghebbenden van de cliënt toe.</p>
+          <div id="amp-contacts" class="amp-contacts"></div>
+          <button type="button" class="btn-outline" id="amp-contact-add">+ Contactpersoon toevoegen</button>
+        </fieldset>
+
+        <!-- d. Aanmeldinformatie -->
+        <fieldset class="amp-section">
+          <legend class="amp-section-title">4. Aanmeldinformatie</legend>
+          <div class="amp-grid">
+            <label class="amp-field amp-field--wide"><span>Reden aanmelding <em>*</em></span>
+              <textarea id="amp-reden" class="amp-input amp-textarea" rows="4" maxlength="4000" required></textarea></label>
+            <label class="amp-field amp-field--wide"><span>Hulpvraag <em>*</em></span>
+              <textarea id="amp-hulpvraag" class="amp-input amp-textarea" rows="4" maxlength="4000" required></textarea></label>
+            <label class="amp-field"><span>Urgentie</span>
+              <select id="amp-urgentie" class="amp-input">
+                <option value="laag">Laag</option>
+                <option value="middel" selected>Middel</option>
+                <option value="hoog">Hoog</option>
+                <option value="spoed">Spoed</option>
+              </select></label>
+            <label class="amp-field"><span>Gewenste zorgvorm</span>
+              <select id="amp-zorgvorm" class="amp-input">
+                <option value="">—</option>
+                <option value="Verblijf">Verblijf</option>
+                <option value="Ambulant">Ambulant</option>
+                <option value="WLZ">WLZ</option>
+                <option value="Dagbesteding">Dagbesteding</option>
+                <option value="Overig">Overig</option>
+              </select></label>
+            <label class="amp-field amp-field--wide"><span>Veiligheidsrisico's</span>
+              <textarea id="amp-veiligheid" class="amp-input amp-textarea" rows="3" maxlength="4000" placeholder="Bijv. agressie, weglopen, middelengebruik…"></textarea></label>
+            <label class="amp-field amp-field--wide"><span>Diagnoses</span>
+              <textarea id="amp-diagnoses" class="amp-input amp-textarea" rows="3" maxlength="4000"></textarea></label>
+            <label class="amp-field"><span>Huidige hulpverlening</span>
+              <input type="text" id="amp-hulpverlening" class="amp-input" maxlength="300"></label>
+            <label class="amp-field"><span>School / dagbesteding</span>
+              <input type="text" id="amp-school" class="amp-input" maxlength="300"></label>
+            <label class="amp-field"><span>Gewenste startdatum</span>
+              <input type="date" id="amp-startdatum" class="amp-input"></label>
+          </div>
+        </fieldset>
+
+        <!-- e. Documenten -->
+        <fieldset class="amp-section">
+          <legend class="amp-section-title">5. Documenten</legend>
+          <p class="amp-hint">
+            Gewenste documenten (indien beschikbaar): beschikking, diagnostiek, signaleringsplan,
+            veiligheidsplan, schoolinformatie, rechtbankdocumenten en overige relevante stukken.
+            Maximaal 10 bestanden, elk maximaal 10&nbsp;MB
+            (pdf, doc, docx, xls, xlsx, jpg, jpeg, png).
+          </p>
+          <input type="file" id="amp-file-input" class="amp-file-input" multiple
+                 accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" tabindex="-1" aria-hidden="true">
+          <button type="button" class="btn-outline" id="amp-file-btn">+ Bestanden kiezen</button>
+          <ul class="amp-files" id="amp-files" aria-label="Gekozen bestanden"></ul>
+        </fieldset>
+
+        <!-- honeypot (anti-spam, onzichtbaar voor mensen) -->
+        <div class="amp-hp" aria-hidden="true">
+          <label>Website
+            <input type="text" name="website" id="amp-website" autocomplete="off" tabindex="-1">
+          </label>
+        </div>
+
+        <p class="amp-privacy">
+          Uw gegevens en die van de cliënt worden vertrouwelijk verwerkt en uitsluitend gebruikt
+          ten behoeve van de beoordeling en afhandeling van deze aanmelding.
+        </p>
+
+        <div class="amp-actions">
+          <button type="submit" class="btn-primary" id="amp-submit">Aanmelding versturen</button>
+        </div>
+      </form>
+
+      <!-- succes-scherm -->
+      <div class="amp-success" id="amp-success" hidden>
+        <div class="amp-success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h2 class="amp-success-title">Aanmelding ontvangen</h2>
+        <p class="amp-success-sub">Uw referentienummer is:</p>
+        <p class="amp-success-ref" id="amp-ref">—</p>
+        <p class="amp-success-text">
+          Bewaar dit nummer voor uw administratie. Ons team beoordeelt de aanmelding en neemt
+          contact met u op via de opgegeven contactgegevens. Heeft u vragen over de aanmelding,
+          vermeld dan altijd het referentienummer.
+        </p>
+      </div>
+    </section>
+    <p class="amp-foot">Embrace the Future — aanmeldportaal voor verwijzers</p>
+  </main>
+
+  <script src="aanmeld-portaal.js?v=918f1ad" defer></script>
+</body>
+</html>
