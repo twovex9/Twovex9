@@ -27,7 +27,12 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function isoDate(d) { return d.toISOString().slice(0, 10); }
+  // Lokale yyyy-mm-dd (NIET toISOString → die schuift in UTC een dag terug,
+  // waardoor de 1e van de maand als de 31e van de vorige maand zou tellen).
+  function isoDate(d) {
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (day < 10 ? "0" : "") + day;
+  }
 
   // ── Toegang per rol ────────────────────────────────────────────────────────
   var TAB_ROLES = {
