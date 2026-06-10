@@ -80,13 +80,13 @@
 - [x] Permissie-slugs `browse-aanmeldingen`/`beoordeel-aanmeldingen` (bs2_permissions + meta + rol-toekenning via scripts/rol-permissies.mjs).
 - [x] Verificatie: RPC's server-side per rol getest + live 2 clean runs (licht+donker): qa-gedragswetenschapper, qa-zorgcoordinator, qa-directeur (beoordelen werkt), qa-medewerker + qa-finance (géén toegang aanmeldingen), publieke aanmelding end-to-end → verschijnt in lijst + dossier aangemaakt + tijdlijn-event. PR + merge.
 
-## Fase 2 — Intake + ondertekening + wachtlijst + beschikking-uitbreiding  [ ]
-- [ ] `client_intakes` (7 onderdelen §4 als secties: intakegesprek/veiligheids-/risico-/gezins-/onderwijs-/netwerk-/hulpvraaganalyse; status per onderdeel) — start automatisch bij goedkeuring; statusflow intake_gepland→intake_afgerond.
-- [ ] Digitale ondertekening: `client_ondertekeningen` (verklaring-type: privacy/toestemming/huisregels/informatieverstrekking; ondertekenaar-type: client/ouder/gezaghebbende/voogd; token-flow via edge function patroon contract-sign; PDF-vastlegging).
-- [ ] Wachtlijst: velden op clienten/aanmelding (urgentie, gewenst product, verwachte startdatum, reden wachtlijst) + `wachtlijst.html`-view (per cliënt §5) + dashboard-kaarten (aantal, gem. wachttijd, per gemeente, per product).
-- [ ] Beschikkingen: kolommen `gemeente`, `productcode` (+ UI detail/overzicht), 90-dagen-mijlpaal toevoegen aan `beschikking_verloop_herinneringen`, dossier-tab "Beschikkingen" ECHT maken (demo-rij eruit, live render uit beschikkingenDB incl. status §11; export-knop echt of weg).
-- [ ] Plaatsing: actie "Plaatsing plannen/starten" (reis_status plaatsing_gepland→actief, tijdlijn).
-- [ ] Verificatie idem fase 1.
+## Fase 2 — Intake + ondertekening + wachtlijst + beschikking-uitbreiding  [x] ✅ AFGEROND 2026-06-10 (PR #619/620)
+- [x] `client_intakes` (7 onderdelen §4 als secties: intakegesprek/veiligheids-/risico-/gezins-/onderwijs-/netwerk-/hulpvraaganalyse; status per onderdeel) — start automatisch bij goedkeuring; statusflow intake_gepland→intake_afgerond.
+- [x] Digitale ondertekening: `client_ondertekeningen` (verklaring-type: privacy/toestemming/huisregels/informatieverstrekking; ondertekenaar-type: client/ouder/gezaghebbende/voogd; token-flow via edge function patroon contract-sign; PDF-vastlegging).
+- [x] Wachtlijst: velden op clienten/aanmelding (urgentie, gewenst product, verwachte startdatum, reden wachtlijst) + `wachtlijst.html`-view (per cliënt §5) + dashboard-kaarten (aantal, gem. wachttijd, per gemeente, per product).
+- [x] Beschikkingen: kolommen `gemeente`, `productcode` (+ UI detail/overzicht), 90-dagen-mijlpaal toevoegen aan `beschikking_verloop_herinneringen`, dossier-tab "Beschikkingen" ECHT maken (demo-rij eruit, live render uit beschikkingenDB incl. status §11; export-knop echt of weg).
+- [x] Plaatsing: actie "Plaatsing plannen/starten" (reis_status plaatsing_gepland→actief, tijdlijn).
+- [x] Verificatie idem fase 1.
 
 ## Fase 3 — Actief dossier: zorgplannen, signalering, rapportages, contactlogboek, AI-samenvatting  [ ]
 - [ ] `zorgplannen` (hulpvraag/doelen jsonb/acties/evaluatiemoment/risicoanalyse/signalering + workflow concept→gw_akkoord→ter_ondertekening→actief→geevalueerd→vervangen; §9) + dossier-tab + tekenflow hergebruik fase 2.
@@ -126,4 +126,5 @@
 ## Voortgangslog
 - 2026-06-10: verkenning afgerond (6-agent audit); plan opgesteld; fase 1 gestart.
 - 2026-06-10: **Fase 1 AFGEROND + live** (PR #617). Server-side rolmatrix 17/17 PASS; edge end-to-end (PDF→private bucket, honeypot, validatie); live 2 clean runs (run 1 licht / run 2 donker): portaal→AM-2026-0003/0004, GW meer-info(+verplichte-toelichting-validatie)→zorgcoörd goedkeuren→dossier pill+tijdlijn+contacten, directeur wachtlijst+signed-PDF-check, medewerker+finance fail-closed Geen toegang, audit_log met echte gebruikers. QA-fixtures AM-2026-0001..0004 (cliënten cl_*, reis_status intake_gepland/wachtlijst) BEWUST laten staan: nodig als instroom voor fase 2 (intake/wachtlijst). Bekend cosmetisch punt: clienten.html-sidebar heeft (per-pagina statisch) nog geen Aanmeldingen-link; topnav-dropdown wél — meenemen in fase 2.
+- 2026-06-10: **Fase 2 AFGEROND + live** (PR #619 + fix-PR #620). Server-side 22/22 PASS (scripts/_qa_clientreis_fase2_test.mjs); 2 clean runs licht+donker: intake 7 onderdelen+afronden-validatie+afronden, ondertekening end-to-end (canvas→PNG+PDF-akte in private bucket, token-states), wachtlijst KPI's+plaatsing, Volgende-stap-knoppen (plannen/starten/pauzeren/hervatten), beschikkingen-dossier-tab live (badges 90/60/30, tarief-gating: zorgcoörd ZONDER, directeur MET kolom), goedkeuren→auto-intake, medewerker+finance fail-closed. **Bugfix onderweg (PR #620): beschikking-detail-save faalde stil voor alle BS2-geïmporteerde beschikkingen (dual-key cliënt-select) — gold ook vóór fase 2.** QA-fixtures: Sam (AM-2026-0005, intake_gepland) klaar als fase-3-instroom; Liv/Mik/QA-Edge/QA-Test = actief.
 - Valkuil-notitie: CDP-screenshots timen soms uit direct na een klik (extensie-glitch); pagina zelf is gezond — verifieer dan via javascript_tool.
