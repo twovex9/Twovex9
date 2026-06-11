@@ -5377,6 +5377,28 @@ function initViewModal() {
   });
 }
 
+// Deep-link helper: leest ?dienst=<id> en opent die dienst in de detail-/toewijs-modal
+// zodra de dienst in de cache zit. Pollt kort (max ~6s) want de data-laag kan koud zijn.
+function maybeOpenDeepLinkDienst() {
+  var id;
+  try { id = new URLSearchParams(window.location.search).get("dienst"); } catch (e) { id = null; }
+  if (!id) return;
+  var tries = 0;
+  var tryOpen = function () {
+    tries++;
+    if (getItemById(id)) {
+      try { openViewModal(id); } catch (e) { /* */ }
+      return;
+    }
+    if (tries < 30) setTimeout(tryOpen, 200);
+  };
+  if (window.planningDB && window.planningDB.ready) {
+    Promise.resolve(window.planningDB.ready).then(tryOpen, tryOpen);
+  } else {
+    tryOpen();
+  }
+}
+
 function initPlanningPage() {
   ui.dayDate = new Date();
   ui.monthDate = new Date();
@@ -5424,6 +5446,9 @@ function initPlanningPage() {
       _ffHide();
     }
   } catch (e) { /* */ }
+  // Deep-link vanuit de dashboards: ?dienst=<id> opent die dienst direct in de
+  // detail-/toewijs-modal zodra de planning-data geladen is (kritieke/open diensten).
+  try { maybeOpenDeepLinkDienst(); } catch (e) { /* */ }
   applyPlanningRoleMode();
   loadPlanningOwnLocaties();
   // Eigen-/locatie-scope: zodra rollen/profiel async geladen zijn, de read-only-

@@ -27347,10 +27347,85 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 
 .md-note { margin: 14px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
+/* --------------------------------------------------------------------------
+   Verkeerslicht + per-locatie dashboard-onderdelen (vl-*) — gedeeld door het
+   Eigenaar/Directie-, HR- en Planner-dashboard. Alleen design-tokens.
+   -------------------------------------------------------------------------- */
+.vl-dot { display: inline-block; width: 11px; height: 11px; border-radius: var(--r-pill); flex-shrink: 0; vertical-align: middle; }
+.vl-dot.md--groen { background: var(--green); }
+.vl-dot.md--oranje { background: var(--yellow); }
+.vl-dot.md--rood { background: var(--red); }
+.vl-txt--groen, .vl-table td.vl-txt--groen { color: var(--green); }
+.vl-txt--oranje, .vl-table td.vl-txt--oranje { color: var(--yellow); }
+.vl-txt--rood, .vl-table td.vl-txt--rood { color: var(--red); }
+.vl-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+.vl-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.vl-leg-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+
+/* Tabellen (verkeerslicht + financieel per locatie) */
+.vl-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: var(--font-table-cell, 13px); }
+.vl-table th {
+  text-align: left; font-size: var(--font-table-head, 12px); font-weight: 600; color: var(--text-muted);
+  padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface);
+}
+.vl-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--text); white-space: nowrap; }
+.vl-table tbody tr:hover { background: var(--surface-alt); }
+.vl-table .vl-num { text-align: right; font-variant-numeric: tabular-nums; }
+.vl-table th.vl-num { text-align: right; }
+.vl-loc { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.vl-cell { display: inline-flex; align-items: center; gap: 7px; }
+.vl-cell-txt { font-variant-numeric: tabular-nums; }
+.vl-row--rood td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.vl-row--oranje td:first-child { box-shadow: inset 3px 0 0 var(--yellow); }
+.vl-total td { font-weight: 700; border-top: 2px solid var(--line-strong, var(--line)); background: var(--surface-alt); }
+
+/* Verhouding-balk (loondienst : zzp) */
+.vl-split { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.vl-split-bar { height: 12px; border-radius: var(--r-pill); background: var(--yellow); overflow: hidden; }
+.vl-split-a { display: block; height: 100%; background: var(--blue); border-radius: var(--r-pill); }
+.vl-split-lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+/* Klikbare cat-rijen (doorklik) */
+.md-cat-row--link { text-decoration: none; cursor: pointer; border-radius: var(--r-sm); }
+.md-cat-row--link:hover { background: var(--surface-alt); }
+
+/* Kritieke diensten-lijst */
+.vl-krit-list { display: flex; flex-direction: column; gap: 6px; }
+.vl-krit-item {
+  display: grid; grid-template-columns: auto minmax(110px, 1fr) 1fr auto; align-items: center; gap: 10px;
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-md); text-decoration: none; color: var(--text);
+}
+.vl-krit-item:hover { border-color: var(--blue); background: var(--surface-alt); }
+.vl-krit-loc { font-weight: 600; }
+.vl-krit-type { color: var(--text-muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.vl-krit-tijd { font-size: 12px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Status-chips (incidenten doorklik) */
+.vl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.vl-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line);
+  border-radius: var(--r-pill); font-size: 12.5px; color: var(--text); text-decoration: none; background: var(--surface);
+}
+.vl-chip:hover { border-color: var(--blue); background: var(--surface-alt); }
+.vl-chip strong { color: var(--blue); font-variant-numeric: tabular-nums; }
+
+/* Mini week-trend (staafjes) */
+.vl-trend { display: flex; align-items: flex-end; gap: 8px; min-height: 92px; padding-top: 6px; }
+.vl-trend-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 28px; }
+.vl-trend-bar { width: 70%; max-width: 30px; min-height: 4px; background: var(--blue); border-radius: var(--r-xs) var(--r-xs) 0 0; }
+.vl-trend-lbl { font-size: 10px; color: var(--text-muted); }
+.vl-trend-val { font-size: 11px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.md-perinc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
 @media (max-width: 760px) {
   .md-quickstats { grid-template-columns: 1fr; }
   .md-tiles { grid-template-columns: 1fr; }
   .md-news-item { grid-template-columns: 1fr; gap: 2px; }
+  .md-perinc-grid { grid-template-columns: 1fr; }
+  .vl-krit-item { grid-template-columns: auto 1fr; }
+  .vl-krit-tijd, .vl-krit-type { grid-column: 2; }
 }
 
 /* --------------------------------------------------------------------------
