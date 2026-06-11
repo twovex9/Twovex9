@@ -4010,6 +4010,44 @@ function initPlanningTopToggle() {
   });
 }
 
+/* ── Auto-verbergen planning-toolbar bij scrollen (gebruikerseis 2026-06-11) ──
+ * De toolbar staat sticky bovenin de planning-kaart (#planning-calendar-section is
+ * zélf de verticale scroll-container). Gedrag:
+ *   • naar BENEDEN scrollen → toolbar schuift weg, zodat het rooster maximaal in beeld komt;
+ *   • naar BOVEN scrollen   → toolbar komt meteen terug;
+ *   • aan de top            → altijd volledig zichtbaar.
+ * Een drempel voorkomt jitter; de eerste ~64px wordt hij niet verborgen zodat hij
+ * niet meteen wegspringt bij een minieme scroll. rAF houdt het soepel. */
+function initPlanningToolbarAutohide() {
+  var sc = document.getElementById("planning-calendar-section");
+  if (!sc || sc.dataset.autohideWired === "1") return;
+  sc.dataset.autohideWired = "1";
+  var lastY = sc.scrollTop || 0;
+  var ticking = false;
+  var REVEAL_AT_TOP = 4;      // binnen 4px van de top = altijd tonen
+  var DIR_THRESHOLD = 8;      // pas reageren na 8px richting-scroll (anti-jitter)
+  var MIN_SCROLL_TO_HIDE = 64; // niet verbergen zolang we vlak onder de top zitten
+  function update() {
+    ticking = false;
+    var y = sc.scrollTop;
+    var dy = y - lastY;
+    sc.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
+    if (y <= REVEAL_AT_TOP) {
+      sc.classList.remove("planning-toolbar-hidden");        // aan de top: altijd tonen
+    } else if (dy > DIR_THRESHOLD && y > MIN_SCROLL_TO_HIDE) {
+      sc.classList.add("planning-toolbar-hidden");           // naar beneden → verbergen
+    } else if (dy < -DIR_THRESHOLD) {
+      sc.classList.remove("planning-toolbar-hidden");        // naar boven → tonen
+    }
+    lastY = y;
+  }
+  sc.addEventListener("scroll", function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(update);
+  }, { passive: true });
+}
+
 function initNav() {
   document.getElementById("planning-erm-prev")?.addEventListener("click", () => {
     if (ui.calMode === "day") ui.dayDate = addDays(ui.dayDate, -1);
@@ -4147,6 +4185,9 @@ function initNav() {
 
   /* Inklapbare kop (KPI-strip + overlap-/beschikking-banner) */
   initPlanningTopToggle();
+
+  /* Toolbar auto-verbergen bij scrollen-omlaag, terug bij scrollen-omhoog */
+  initPlanningToolbarAutohide();
 
   /* Klik op een overlappende dienst in de melding → open die dienst meteen (om aan te
    * passen). Delegation op document: robuust ongeacht of de banner-HTML al geparsed is. */
