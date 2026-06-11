@@ -316,6 +316,7 @@
     metaParts.push('<div class="bz-meta-row"><span>Status</span><span>' + statusPill(k) + "</span></div>");
     metaParts.push('<div class="bz-meta-row"><span>Capaciteit</span><span>' + fmtInt(k.aantal_bewoners) + " / " + fmtInt(k.capaciteit) + " bedden bezet</span></div>");
     if (k.verdieping) metaParts.push('<div class="bz-meta-row"><span>Verdieping</span><span>' + esc(k.verdieping) + "</span></div>");
+    if (k.adres) metaParts.push('<div class="bz-meta-row"><span>Adres</span><span>' + esc(k.adres) + "</span></div>");
     if (k.status_notitie) metaParts.push('<div class="bz-meta-row"><span>Toelichting status</span><span>' + esc(k.status_notitie) + "</span></div>");
     if (k.notitie) metaParts.push('<div class="bz-meta-row"><span>Notitie</span><span>' + esc(k.notitie) + "</span></div>");
     $("bz-room-meta").innerHTML = metaParts.join("");
@@ -427,6 +428,7 @@
     $("bz-kamer-nummer").value = k ? k.nummer : "";
     $("bz-kamer-verdieping").value = (k && k.verdieping) || "";
     $("bz-kamer-cap").value = k ? k.capaciteit : 1;
+    $("bz-kamer-adres").value = (k && k.adres) || "";
     $("bz-kamer-notitie").value = (k && k.notitie) || "";
     showErr("bz-kamer-err", "");
     $("bz-kamer-modal").setAttribute("data-id", kamerId || "");
@@ -444,6 +446,7 @@
         nummer: $("bz-kamer-nummer").value,
         verdieping: $("bz-kamer-verdieping").value,
         capaciteit: $("bz-kamer-cap").value,
+        adres: $("bz-kamer-adres").value,
         notitie: $("bz-kamer-notitie").value,
       };
       if (!payload.locatie) { showErr("bz-kamer-err", "Kies een locatie."); return; }
