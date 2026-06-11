@@ -383,32 +383,6 @@
         body.appendChild(tz.tbl);
       }
 
-      // Loondienst-medewerkers (maandsalaris × werkgeverslasten, verdeeld over hun locaties)
-      body.appendChild(el("h3", "fin-sec-h", "Loondienst-medewerkers"));
-      var loon = d.loondienst || [];
-      if (!loon.length) { emptyRow(body, "Geen loondienst-medewerkers aan deze locatie gekoppeld."); }
-      else {
-        var tl = buildTable([{ label: "Medewerker" }, { label: "Functie" }, { label: "€/maand", num: true }, { label: "Maanden", num: true }, { label: "Kosten", num: true }]);
-        var sumL = 0;
-        loon.forEach(function (p) {
-          sumL += Number(p.kost_periode) || 0;
-          var tr = el("tr");
-          tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
-          tr.appendChild(el("td", null, p.functie || "—"));
-          tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
-          tr.appendChild(el("td", "fin-num", fmtInt(p.maanden)));
-          tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
-          tl.tb.appendChild(tr);
-        });
-        var tlf = el("tfoot"), tlrf = el("tr");
-        tlrf.appendChild(el("td", "bd-td-strong", "Totaal (" + loon.length + ")"));
-        tlrf.appendChild(el("td", null, "")); tlrf.appendChild(el("td", null, "")); tlrf.appendChild(el("td", null, ""));
-        tlrf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sumL)));
-        tlf.appendChild(tlrf); tl.tbl.appendChild(tlf);
-        body.appendChild(tl.tbl);
-        body.appendChild(el("p", "bd-mrow-note", "Loondienstkosten = bruto maandsalaris × werkgeverslasten (1,30), gelijk verdeeld over de locaties waaraan de medewerker is gekoppeld, × het aantal maanden in de periode. Indicatief."));
-      }
-
       // Cliënten / beschikkingen
       body.appendChild(el("h3", "fin-sec-h", "Cliënten & beschikkingen"));
       var cl = d.clienten || [];
