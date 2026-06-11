@@ -29197,3 +29197,17 @@ body.ond-body {
   .bz-kamer-grid { grid-template-columns: 1fr; }
   .bz-room-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
+
+/* Rol-detail alleen-lezen melding (spraakmemo eigenaar 2026-06-11):
+   alleen Eigenaar/HR/Directeur/Admin mogen rollen wijzigen. Tokens → licht+donker. */
+.rd-readonly-note {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--yellow);
+  border-left: 4px solid var(--yellow);
+  background: var(--yellow-soft);
+  color: var(--text-secondary);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  line-height: 1.4;
+}

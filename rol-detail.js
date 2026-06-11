@@ -24,6 +24,49 @@
 
   var roleId = null, pending = null, original = null, users = [];
 
+  // Spraakmemo eigenaar 2026-06-11: alleen Eigenaar/HR/Directeur/Admin mogen rollen
+  // wijzigen. De server (RLS can_manage_roles) is de harde gate; dit is de UI-vangrail
+  // zodat wie hier toch komt (zonder manage-roles) geen bewerkbare knoppen ziet.
+  var readOnly = false;
+
+  async function initReadOnly() {
+    try {
+      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
+        await window.besaPermissionsReady;
+      }
+      var canManage = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier())
+        || (typeof window.besaCan === "function" && window.besaCan("manage", "roles"));
+      readOnly = !canManage;
+    } catch (e) { readOnly = true; } // fail-closed: bij twijfel niet bewerkbaar
+  }
+
+  function applyReadOnlyLock() {
+    if (!readOnly) return;
+    var note = document.getElementById("rd-readonly-note");
+    if (!note) {
+      var header = document.querySelector(".content-header");
+      if (header && header.parentNode) {
+        note = document.createElement("div");
+        note.id = "rd-readonly-note";
+        note.className = "rd-readonly-note";
+        note.setAttribute("role", "status");
+        note.textContent = "Alleen-lezen — rollen en rechten mogen uitsluitend door Eigenaar, HR, Directeur of Admin worden gewijzigd.";
+        header.parentNode.insertBefore(note, header.nextSibling);
+      }
+    }
+    [$("role-save-btn"), $("role-save-btn-bottom")].forEach(function (b) {
+      if (b) { b.disabled = true; b.title = "Geen rechten om rollen te wijzigen."; b.style.display = "none"; }
+    });
+    var lev = $("role-level-select"); if (lev) lev.disabled = true;
+    ["role-perm-wrap", "role-users-wrap"].forEach(function (id) {
+      var wrap = $(id);
+      if (wrap) wrap.querySelectorAll("input, select, button").forEach(function (el) { el.disabled = true; });
+    });
+    // Voeg-/verwijder-controls voor gebruikers volledig verbergen (niet enkel disabled).
+    var uw = $("role-users-wrap");
+    if (uw) uw.querySelectorAll(".role-user-remove, .role-user-add").forEach(function (el) { el.style.display = "none"; });
+  }
+
   function getRoleId() {
     try { return new URL(location.href).searchParams.get("id"); } catch (e) { return null; }
   }
@@ -61,6 +104,7 @@
     });
   }
   function refreshSaveBtns() {
+    if (readOnly) { [$("role-save-btn"), $("role-save-btn-bottom")].forEach(function (b) { if (b) b.disabled = true; }); return; }
     var d = !dirty();
     [$("role-save-btn"), $("role-save-btn-bottom")].forEach(function (b) { if (b) b.disabled = d; });
   }
@@ -108,7 +152,7 @@
     });
     return html || '<div class="rollen-loading">Geen rechten matchen de zoekopdracht.</div>';
   }
-  function renderRights() { $("role-perm-wrap").innerHTML = rightsHtml(); refreshSaveBtns(); }
+  function renderRights() { $("role-perm-wrap").innerHTML = rightsHtml(); refreshSaveBtns(); applyReadOnlyLock(); }
 
   function buildUsers() {
     var h = '<div class="role-users-head"><strong>Toegewezen gebruikers</strong> <span class="role-users-count">' + users.length + '</span></div><ul class="role-users-list">';
@@ -139,6 +183,7 @@
     $("role-users-wrap").innerHTML = buildUsers();
     renderRights();
     $("rd-page").setAttribute("aria-busy", "false");
+    applyReadOnlyLock();
   }
 
   async function load() {
@@ -170,6 +215,7 @@
   }
 
   async function saveRights() {
+    if (readOnly) return;
     var r = role(); if (!r) return;
     var add = [], remove = [], hier = [];
     Object.keys(pending).forEach(function (s) {
@@ -191,6 +237,7 @@
     [$("role-save-btn"), $("role-save-btn-bottom")].forEach(function (b) { if (b) b.addEventListener("click", saveRights); });
 
     $("role-level-select").addEventListener("change", async function (e) {
+      if (readOnly) return;
       var r = role(); if (!r) return;
       try { await DB().setLevel(r.id, e.target.value || null); fb("updated", "Rol-niveau: " + r.name); }
       catch (ex) { err("Niveau opslaan mislukt: " + (ex && ex.message || ex)); }
@@ -200,6 +247,7 @@
     if (rs) { var d = null; rs.addEventListener("input", function () { if (d) clearTimeout(d); d = setTimeout(renderRights, 120); }); }
 
     $("role-perm-wrap").addEventListener("change", function (e) {
+      if (readOnly) return;
       var cb = e.target.closest(".role-perm-cb");
       if (cb) {
         var s = cb.getAttribute("data-slug");
@@ -217,6 +265,7 @@
       }
     });
     $("role-perm-wrap").addEventListener("click", function (e) {
+      if (readOnly) return;
       var b = e.target.closest(".role-perm-grpbtn"); if (!b) return;
       var grp = b.getAttribute("data-grp"), on = b.getAttribute("data-on") === "1";
       DB().getPermissionsSync().filter(function (p) { return p.perm_group === grp; }).forEach(function (p) {
@@ -228,6 +277,7 @@
     });
 
     $("role-users-wrap").addEventListener("click", async function (e) {
+      if (readOnly) return;
       var r = role(); if (!r) return;
       var rm = e.target.closest(".role-user-remove");
       if (rm) {
@@ -262,5 +312,5 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", function () { wire(); load(); });
+  document.addEventListener("DOMContentLoaded", async function () { await initReadOnly(); wire(); load(); });
 })();
