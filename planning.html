@@ -38,6 +38,21 @@
     .planning-overlap-banner__details{margin-top:9px;display:flex;flex-direction:column;gap:9px;padding-right:5px;}
     .planning-overlap-banner__details:empty{display:none;}
     .planning-overlap-conf__more{margin-top:1px;font-size:12px;font-weight:600;opacity:.9;}
+    /* Context-balk boven de gefilterde lijst (alleen dubbel-ingeroosterde diensten). */
+    .planning-overlap-listbar{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:9px;color:#991b1b;font-size:13px;line-height:1.4;}
+    .planning-overlap-listbar[hidden]{display:none;}
+    .planning-overlap-listbar__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#dc2626;color:#fff;font-weight:700;font-size:13px;}
+    .planning-overlap-listbar__txt{flex:1;min-width:0;font-weight:600;}
+    .planning-overlap-listbar__actions{flex:none;display:flex;gap:8px;align-items:center;}
+    .planning-overlap-listbar__btn{white-space:nowrap;}
+    [data-theme="dark"] .planning-overlap-listbar{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
+    /* Lijstrij klikbaar → opent de dienst-detail om aan te passen. */
+    .planning-table-row{cursor:pointer;}
+    .planning-table-row:hover{background:var(--row-hover, rgba(37,99,235,.06));}
+    [data-theme="dark"] .planning-table-row:hover{background:rgba(96,165,250,.10);}
+    /* Kort oplichten van de zojuist aangepaste dienst na "Terug naar rooster". */
+    @keyframes planningJustEdited{0%{box-shadow:0 0 0 0 rgba(37,99,235,.55);}100%{box-shadow:0 0 0 7px rgba(37,99,235,0);}}
+    .planning-erm-card--justedited{outline:2px solid var(--blue);outline-offset:1px;animation:planningJustEdited 1.3s ease-out 2;border-radius:10px;}
     /* Beschikking-urenbewaking-banner (cliënt zit boven de beschikte uren/week). */
     .planning-besch-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:9px;color:#991b1b;font-size:13px;line-height:1.45;}
     .planning-besch-banner[hidden]{display:none;}
@@ -511,6 +526,14 @@
           </div>
 
           <div class="planning-view-panel" id="planning-view-list-panel" hidden>
+            <div class="planning-overlap-listbar" id="planning-overlap-listbar" hidden>
+              <span class="planning-overlap-listbar__ico" aria-hidden="true">!</span>
+              <span class="planning-overlap-listbar__txt" id="planning-overlap-listbar-txt"></span>
+              <div class="planning-overlap-listbar__actions">
+                <button type="button" class="btn-outline planning-overlap-listbar__btn" id="planning-overlap-showall">Toon alle diensten</button>
+                <button type="button" class="btn-primary planning-overlap-listbar__btn" id="planning-overlap-back">Terug naar rooster</button>
+              </div>
+            </div>
             <div class="planning-table-wrap">
               <table class="employees-table planning-table">
                 <thead>
@@ -624,7 +647,7 @@
             </div>
             <div class="planning-dienst-dt">
               <label class="visually-hidden" for="dienst-starttime">Starttijd</label>
-              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-starttime" required step="60" />
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-starttime" required step="60" data-besa-timetype placeholder="uu:mm" />
               <span class="planning-dienst-ico" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               </span>
@@ -640,7 +663,7 @@
             </div>
             <div class="planning-dienst-dt">
               <label class="visually-hidden" for="dienst-eindtime">Eindtijd</label>
-              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-eindtime" required step="60" />
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-eindtime" required step="60" data-besa-timetype placeholder="uu:mm" />
             </div>
           </div>
         </div>
@@ -946,6 +969,7 @@
   <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="planning-generator.js?v=918f1ad"></script>
+  <script src="besa-time-typing.js?v=918f1ad"></script>
   <script src="planning.js?v=918f1ad"></script>
 
   <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->
