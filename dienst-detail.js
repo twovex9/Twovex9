@@ -755,6 +755,18 @@
     listEl.innerHTML = html;
   }
 
+  // Begint-met-matching op de naamwoorden in de zoekbalk van de medewerker-picker
+  // ("Toewijzen"/"Uitnodigen"). Typ je "a", dan komen alleen medewerkers naar voren
+  // wiens VOORNAAM (of achternaam) met die letters begint — niet iedereen met een "a"
+  // ergens midden in de naam. Eigenaar-eis 2026-06-11 (spraakmemo 15.37).
+  // data-name = "voornaam achternaam" (lowercase): match als de hele naam met q begint
+  // (bv. "jan a") of als een volgend naamwoord met q begint.
+  function nameMatchesPickerQuery(name, q) {
+    if (!q) return true;
+    if (name.indexOf(q) === 0) return true;
+    return name.indexOf(" " + q) !== -1;
+  }
+
   function attachMedewerkerPickerEvents(cfg) {
     if (pickerBound[cfg.key]) return;
     var listEl = document.getElementById(cfg.listId);
@@ -782,7 +794,7 @@
         var rows = listEl.querySelectorAll(".planning-medewerker-row");
         for (var i = 0; i < rows.length; i++) {
           var name = rows[i].getAttribute("data-name") || "";
-          rows[i].style.display = (!q || name.indexOf(q) !== -1) ? "" : "none";
+          rows[i].style.display = nameMatchesPickerQuery(name, q) ? "" : "none";
         }
       });
     }
