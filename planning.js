@@ -1174,7 +1174,11 @@ function isZzpEmployeeName(name) {
       emp?.bs2_worker_type,
       emp?.bs2_hiring_type,
     ];
-    return flags.some((f) => /zzp|hiring|agency/i.test(String(f || "")));
+    // 'inhuur' meenemen: in de medewerker-cache staat het dienstverband als "Inhuur"
+    // (uit bs2_employment_type=hiring), terwijl dit gate-filter dat woord eerder niet
+    // herkende — waardoor ZZP-diensten niet als ZZP telden en de ZZP-kosten op 0 bleven.
+    // Nu consistent met getDienstverbandForName/getZzpHourlyRateForName (/inhuur|zzp|agency/).
+    return flags.some((f) => /zzp|hiring|agency|inhuur/i.test(String(f || "")));
   });
 }
 
