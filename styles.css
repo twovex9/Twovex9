@@ -14974,12 +14974,16 @@ button.planning-erm-new {
 }
 
 /* =====================================================================
-   Planning STATISCH + volledige week in beeld  (gebruikerseis 2026-06-02)
+   Planning: toolbar vast + volledige week in beeld  (gebruikerseis 2026-06-02,
+   bijgesteld 2026-06-10)
    ---------------------------------------------------------------------
-   1) De planning-pagina scrollt niet meer als geheel: toolbar, KPI-strip
-      en dag-koppen blijven vast staan; alleen de rooster-rijen (of in de
-      lijst-weergave de tabel) scrollen binnen hun eigen kader. Zo schuift
-      de planning niet meer weg in het beeldscherm, maar staat ze statisch.
+   1) De planning-kaart is zélf de verticale scroll-container (zie
+      .planning-main-card--v3 hieronder). Alleen de TOOLBAR blijft sticky
+      bovenin staan; de KPI-strip en de overlap-/beschikking-banners scrollen
+      mét het rooster weg, zodat de gebruiker die twee bovenste blokken kan
+      wegscrollen en het rooster volledig in beeld krijgt. (Oorspronkelijk
+      2026-06-02 stonden óók KPI-strip en dag-koppen vast; de eigenaar wilde
+      die op 2026-06-10 alsnog kunnen wegscrollen.)
    2) De WEEK-weergave toont alle 7 dagen tegelijk: het rooster vult exact
       de breedte van het paneel (kolommen krimpen mee, zie colMin=0 in
       planning.js) i.p.v. zijn max-content-breedte aan te nemen — geen
@@ -15001,20 +15005,38 @@ button.planning-erm-new {
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  /* De kaart is zélf de verticale scroll-container. Zo kunnen de KPI-strip én de
+     overlap-/beschikking-banners weggescrold worden en komt het rooster volledig in
+     beeld (gebruikersfeedback 2026-06-10: "ik kan deze twee gedeeltes hierboven niet
+     wegscrollen om de planning goed te zien"). De toolbar blijft hieronder sticky staan
+     zodat de planning-navigatie (periode, week/maand, genereren) altijd bereikbaar blijft. */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-/* Alleen het zichtbare paneel groeit mee; :not([hidden]) zodat het
-   verborgen paneel z'n display:none behoudt (anders zou display:flex
-   het verborgen lijst- of roosterpaneel alsnog tonen). */
+/* Toolbar blijft vast bovenin tijdens het scrollen. De negatieve marge laat de
+   (witte) achtergrond over de kaart-padding (12px boven / 14px zijkant) bleeden,
+   zodat weggescrolde inhoud niet langs de vastgezette toolbar piept. */
+.planning-main--erm .planning-erm-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  margin: -12px -14px 12px;
+  padding: 12px 14px 10px;
+}
+/* Het zichtbare paneel + rooster nemen hun volledige (intrinsieke) hoogte aan, zodat
+   de hele inhoud ONDER de toolbar als één geheel mee scrollt — i.p.v. dat alleen het
+   rooster in een eigen klein kader schuift terwijl KPI's/banner vast blijven staan.
+   :not([hidden]) zodat het verborgen paneel z'n display:none behoudt. */
 .planning-main-card--v3 > .planning-view-panel:not([hidden]) {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 .planning-main-card--v3 > .planning-view-panel:not([hidden]) > .planning-week-grid-wrap--v3,
 .planning-main-card--v3 > .planning-view-panel:not([hidden]) > .planning-table-wrap {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   max-height: none;
 }

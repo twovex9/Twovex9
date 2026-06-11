@@ -30,16 +30,20 @@
     .planning-overlap-banner__btn{flex:none;align-self:center;background:#dc2626;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
     .planning-overlap-banner__btn:hover{background:#b91c1c;}
     [data-theme="dark"] .planning-overlap-banner{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.42);border-left-color:#ef4444;color:#fca5a5;}
-    /* Detail-lijst: per medewerker de concrete overlappende diensten (dienst + tijd + locatie). */
-    .planning-overlap-banner__details{margin-top:9px;display:flex;flex-direction:column;gap:9px;max-height:238px;overflow-y:auto;padding-right:5px;}
+    /* Detail-lijst: per medewerker de concrete overlappende diensten (dienst + tijd + locatie).
+       Géén eigen interne scroll meer: een eigen overflow-scroll "ving" het muiswiel zodat de
+       pagina niet verder scrolde (gebruikersfeedback 2026-06-10). De lijst wordt nu in
+       planning.js compact gecapt; de volledige set blijft bereikbaar via "Toon in lijst". */
+    .planning-overlap-banner__details{margin-top:9px;display:flex;flex-direction:column;gap:9px;padding-right:5px;}
     .planning-overlap-banner__details:empty{display:none;}
+    .planning-overlap-conf__more{margin-top:1px;font-size:12px;font-weight:600;opacity:.9;}
     /* Beschikking-urenbewaking-banner (cliënt zit boven de beschikte uren/week). */
     .planning-besch-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:9px;color:#991b1b;font-size:13px;line-height:1.45;}
     .planning-besch-banner[hidden]{display:none;}
     .planning-besch-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#dc2626;color:#fff;font-weight:700;font-size:13px;}
     .planning-besch-banner__body{flex:1;min-width:0;}
     .planning-besch-banner__title{font-weight:700;}
-    .planning-besch-banner__details{margin-top:8px;display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;padding-right:5px;}
+    .planning-besch-banner__details{margin-top:8px;display:flex;flex-direction:column;gap:5px;padding-right:5px;}
     .planning-besch-banner__details:empty{display:none;}
     .planning-besch-row{padding:5px 9px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.14);border-radius:7px;}
     .planning-besch-row b{font-weight:700;}
