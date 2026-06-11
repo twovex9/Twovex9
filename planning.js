@@ -997,6 +997,62 @@ function planningOwnName() {
   } catch (e) { return ""; }
 }
 
+/* ── Locatie-scope voor de werkvloer (spraakmemo eigenaar 2026-06-11) ──────────
+ * Een zuivere Medewerker moet niet langer enkel zíjn eigen diensten zien, maar het
+ * VOLLEDIGE rooster van de locatie(s) waar hij bevoegd is te werken: alle collega's
+ * die er staan ingepland (ook op dagen dat hij zelf vrij is) én alle openstaande
+ * diensten op die locaties, zodat hij daarop kan reageren. De koppeling
+ * medewerker→locatie staat server-side in `medewerker_locaties` (dezelfde tabel die
+ * de cliënten-RLS al locatie-scoopt). De planning-data is client-side niet
+ * RLS-gescoopt, dus we halen de toegestane locatie-namen apart op en filteren het
+ * rooster daarop. Fail-safe: zolang de koppeling (nog) niet bekend is, valt
+ * getBaseFiltered terug op de eigen-diensten-scope (status quo) — nooit het hele
+ * org-rooster lekken, nooit met een lege planning achterblijven. */
+var planningOwnLocaties = null;        // Set<string> (lowercased locatie-namen) of null = nog niet geladen
+var planningOwnLocatiesForMed = null;  // medewerker-id waarvoor de set geladen is (dedup)
+
+function planningOwnMedId() {
+  try {
+    var prof = (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function")
+      ? window.profilesDB.getCurrentSync() : null;
+    return (prof && (prof.medewerkerId || prof.medewerker_id)) || null;
+  } catch (e) { return null; }
+}
+
+/* Async: laad de locatie-namen waar de ingelogde medewerker aan gekoppeld is en
+ * her-render zodra ze binnen zijn. Voor full-planners (alles-zien-rollen) is dit
+ * een no-op — die houden de volledige planner-view. */
+function loadPlanningOwnLocaties() {
+  try {
+    if (planningIsFullPlanner()) { planningOwnLocaties = null; planningOwnLocatiesForMed = null; return; }
+    var medId = planningOwnMedId();
+    if (!medId) return;                                   // profiel nog niet geladen → later opnieuw
+    if (planningOwnLocatiesForMed === medId && planningOwnLocaties) return; // al geladen voor deze medewerker
+    var sb = window.besaSupabase;
+    if (!sb || typeof sb.from !== "function") return;     // client nog niet klaar → later opnieuw
+    planningOwnLocatiesForMed = medId;
+    sb.from("medewerker_locaties")
+      .select("locaties(naam)")
+      .eq("medewerker_id", medId)
+      .then(function (res) {
+        if (res && res.error) { planningOwnLocatiesForMed = null; return; }
+        var names = new Set();
+        (res && res.data ? res.data : []).forEach(function (row) {
+          var naam = row && row.locaties && row.locaties.naam;
+          if (naam) names.add(String(naam).toLowerCase().trim());
+        });
+        planningOwnLocaties = names;
+        try { renderAllViews(); } catch (e) { /* */ }
+      }, function () { planningOwnLocatiesForMed = null; });
+  } catch (e) { /* stil: fallback op eigen-scope blijft gelden */ }
+}
+
+/* De set toegestane locatie-namen (lowercased) of null wanneer (nog) onbekend. */
+function planningOwnLocatieSet() {
+  if (planningIsFullPlanner()) return null;
+  return (planningOwnLocaties && planningOwnLocaties.size) ? planningOwnLocaties : null;
+}
+
 /* Toggelt de read-only-rooster-modus (verbergt planner-UI: dienst aanmaken,
  * KPI-strip, beschikking-overschrijdingsbanner én de detail-paneel-acties) voor
  * rollen zonder bewerk-recht. SCOPE (alles vs eigen) blijft op planningIsFullPlanner
@@ -1022,8 +1078,22 @@ function applyPlanningRoleMode() {
 
 function getBaseFiltered() {
   var rows = readPlanningItems().filter(rowMatchesFilters);
-  var own = planningOwnName();
-  if (own) {
+  if (planningIsFullPlanner()) return rows; // kantoor/planner/admin: volledige planner-view
+  var locs = planningOwnLocatieSet();        // Set<string> locatie-namen, of null
+  var own = planningOwnName();               // eigen naam (lowercased), of ""
+  if (locs) {
+    // Werkvloer met bekende locatie-koppeling: toon het VOLLEDIGE rooster van die
+    // locatie(s) — alle ingeplande collega's én openstaande diensten — plus de
+    // eigen diensten (ook als die op een andere locatie vallen).
+    rows = rows.filter(function (row) {
+      var loc = String(row.locatie || row.vestiging || "").toLowerCase().trim();
+      if (loc && locs.has(loc)) return true;
+      if (own && String(row.teamlid || "").toLowerCase().trim() === own) return true;
+      return false;
+    });
+  } else if (own) {
+    // Geen locatie-koppeling bekend (ontkoppeld profiel, of nog niet geladen):
+    // veilige terugval op de eigen-diensten-scope (status quo).
     rows = rows.filter(function (row) {
       return String(row.teamlid || "").toLowerCase().trim() === own;
     });
@@ -2270,7 +2340,18 @@ function renderAllViews() {
   renderFilterDiensttypeMultiselect();
   renderSimpleSelect("filter-teamlid", dataState.medewerkers, filterState.teamlid, "Selecteer een teamlid");
   renderSimpleSelect("filter-client", dataState.clienten, filterState.client, "Selecteer Cliënt");
-  renderSimpleSelect("planning-loc-select", dataState.hrVestigingen, filterState.locatieToolbar, "Selecteer Locatie");
+  // Werkvloer ziet enkel de locatie(s) waar hij bevoegd is — beperk ook de keuzelijst.
+  var locOpties = dataState.hrVestigingen;
+  var ownLocs = planningOwnLocatieSet();
+  if (ownLocs) {
+    locOpties = (dataState.hrVestigingen || []).filter(function (n) {
+      return ownLocs.has(String(n || "").toLowerCase().trim());
+    });
+    if (filterState.locatieToolbar && !ownLocs.has(String(filterState.locatieToolbar).toLowerCase().trim())) {
+      filterState.locatieToolbar = "";
+    }
+  }
+  renderSimpleSelect("planning-loc-select", locOpties, filterState.locatieToolbar, "Selecteer Locatie");
   syncAssignStatusRadios();
 
   const items = getItemsForView();
@@ -4542,14 +4623,22 @@ function initPlanningPage() {
   if (ax) ui.rowAxis = ax.value;
   renderAllViews();
   applyPlanningRoleMode();
-  // Eigen-diensten-scope: zodra rollen/profiel async geladen zijn, de read-only-
-  // modus opnieuw bepalen en her-renderen (getBaseFiltered scoopt dan op eigen naam).
+  loadPlanningOwnLocaties();
+  // Eigen-/locatie-scope: zodra rollen/profiel async geladen zijn, de read-only-
+  // modus opnieuw bepalen, de locatie-koppeling (her)laden en her-renderen
+  // (getBaseFiltered scoopt dan op de eigen locatie(s) + eigen diensten).
   try {
     if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); renderAllViews(); });
+      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); });
     }
   } catch (e) { /* */ }
-  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); renderAllViews(); });
+  // Supabase-client kan ná de eerste render klaarkomen → locatie-koppeling alsnog laden.
+  try {
+    if (window.besaSupabaseReady && typeof window.besaSupabaseReady.then === "function") {
+      window.besaSupabaseReady.then(function () { loadPlanningOwnLocaties(); });
+    }
+  } catch (e) { /* */ }
+  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); });
   initDienstPanel();
   initViewModal();
   initNav();
@@ -4597,7 +4686,7 @@ function initPlanningPage() {
     try { renderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:medewerkers-updated", () => {
-    try { applyPlanningRoleMode(); renderAllViews(); } catch (e) { /* */ }
+    try { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); } catch (e) { /* */ }
   });
   // Locaties bepalen welke medewerkers planbaar zijn (kantoor/overhead = verborgen);
   // her-render zodra de locatie-data laadt of wijzigt.
