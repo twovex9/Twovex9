@@ -2890,9 +2890,15 @@ function makeKoppelRow(prefill) {
     inp.step = "60";
     inp.className = "planning-dienst-input";
     inp.setAttribute("data-k", k);
+    inp.setAttribute("data-besa-timetype", "");
+    inp.setAttribute("placeholder", "uu:mm");
     inp.value = val || "";
     w.appendChild(l);
     w.appendChild(inp);
+    // Direct verrijken (vlot typbaar uu:mm); fallback voor de observer.
+    if (window.BesaTimeTyping && typeof window.BesaTimeTyping.enhance === "function") {
+      window.BesaTimeTyping.enhance(inp);
+    }
     return w;
   };
   tijd.appendChild(mkTime("van", "Van", tij.van));
