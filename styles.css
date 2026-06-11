@@ -24973,6 +24973,19 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   bottom: auto !important;
 }
 
+/* Facturen-pagina's (Te beoordelen + Alle facturen): de Kolommen-knop staat
+   LINKS in .fact-tb-controls (justify-content: flex-start), niet rechtsboven in
+   .header-actions zoals op de standaardpagina's. Met de site-brede right:0-anker
+   opende het paneel naar links en schoof het deels uit beeld onder de zijbalk —
+   de kolomnamen waren afgesneden ("...rker", "...ummer", "...datum"). Anker het
+   paneel hier daarom links onder de knop zodat het naar rechts openklapt en
+   volledig zichtbaar blijft. Hogere specificiteit (3 classes) + !important
+   wint van de site-brede regel. Alleen plaatsing; afmeting/stijl ongewijzigd. */
+.fact-tb-controls .columns-dropdown > .columns-panel {
+  right: auto !important;
+  left: 0 !important;
+}
+
 /* Rollen-beheer — rol-detailmodal (machtigingen-matrix + gebruikers).
    Hergebruikt .modal-overlay/.modal-card + .rollen-* kaarten. */
 .role-modal-card { max-width: 860px; width: min(94vw, 860px); }
