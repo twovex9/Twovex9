@@ -153,6 +153,33 @@
     detail: { sortKey: "datum", sortDir: "asc", page: 1, pageSize: 50, decl: null },
   };
 
+  // Waar wordt een rit toegevoegd? "detail" = binnen een geopende maand-declaratie
+  // (bestaand gedrag). "overview" = direct vanaf het overzicht; dan bepalen we de
+  // doel-declaratie uit de rit-datum en maken die zo nodig aan (ensureDraftFor),
+  // zodat een medewerker zónder bestaande declaratie tóch werkkilometers kan invoeren.
+  var _addContext = "detail";
+
+  // Jaar/maand uit een ISO-datum "YYYY-MM-DD".
+  function ymFromDatum(datum) {
+    var s = String(datum || "");
+    return { jaar: parseInt(s.slice(0, 4), 10), maand: parseInt(s.slice(5, 7), 10) };
+  }
+
+  // Bepaal de declaratie waar de nieuwe rit aan gekoppeld wordt.
+  // - detail-context: de geopende declaratie (1-op-1 bestaand gedrag).
+  // - overview-context: de declaratie van de ingelogde medewerker voor de maand
+  //   van de rit-datum; bestaat die nog niet, dan wordt een draft aangemaakt.
+  function resolveTargetDecl(datum) {
+    if (_addContext !== "overview") {
+      return Promise.resolve(currentDecl());
+    }
+    var medId = ownMedewerkerId();
+    if (!medId) return Promise.reject(new Error("Geen aan jou gekoppelde medewerker gevonden — neem contact op met HR."));
+    var ym = ymFromDatum(datum);
+    if (!isFinite(ym.jaar) || !isFinite(ym.maand)) return Promise.reject(new Error("Ongeldige datum."));
+    return window.kilometerDeclaratiesDB.ensureDraftFor(medId, ym.jaar, ym.maand);
+  }
+
   // Wie GEEN view-all-mileage-declarations (en geen admin-tier) heeft, ziet alléén
   // z'n eigen declaraties — video-eis Facilitair "alleen je eigen kilometers" +
   // spraakmemo "iedereen ... eigen invoeren". HR/Planner/Salarisadministratie/admin
@@ -168,6 +195,16 @@
       var p = window.profilesDB && window.profilesDB.getCurrentSync ? window.profilesDB.getCurrentSync() : null;
       return p ? (p.medewerkerId || p.medewerker_id || null) : null;
     } catch (e) { return null; }
+  }
+  // Mag de ingelogde gebruiker zélf werkkilometers invoeren vanaf het overzicht?
+  // Bestuur (Eigenaar/Directie/Admin) niet — die pagina is voor hen puur overzicht
+  // (zelfde regel als de detail-Toevoegen-knop). Een gebruiker zonder gekoppelde
+  // medewerker kan ook niet invoeren (er is geen declaratie om aan te koppelen).
+  function canAddOwnKm() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return false;
+      return !!ownMedewerkerId();
+    } catch (e) { return false; }
   }
   function getDecls() {
     var all = window.kilometerDeclaratiesDB ? (window.kilometerDeclaratiesDB.getAllSync() || []) : [];
@@ -242,9 +279,16 @@
     var start = (state.overview.page - 1) * ps;
     var pageRows = rows.slice(start, start + ps);
 
+    var mayAdd = canAddOwnKm();
+    var ovAddBtn = $("km-overview-add-btn");
+    if (ovAddBtn) ovAddBtn.hidden = !mayAdd;
+
     var tbody = $("km-overview-tbody");
     if (pageRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="incident-empty">Geen kilometer-declaraties gevonden</td></tr>';
+      var emptyMsg = mayAdd
+        ? "Nog geen kilometers ingevoerd. Klik op &lsquo;Kilometers toevoegen&rsquo; om je eerste werk-werk rit in te voeren."
+        : "Geen kilometer-declaraties gevonden";
+      tbody.innerHTML = '<tr><td colspan="8" class="incident-empty">' + emptyMsg + '</td></tr>';
     } else {
       tbody.innerHTML = pageRows.map(function (a) {
         var naam = declNaam(a);
@@ -949,8 +993,30 @@
       addBtn.addEventListener("click", function () {
         var d = currentDecl();
         if (!d || !isDeclEditable(d)) return;
+        _addContext = "detail";
         applyChoiceGating();
         openModal("km-add-choice-modal");
+      });
+    }
+    // Overzicht-knop: werkkilometers toevoegen zónder eerst een declaratie te openen.
+    // De memo gaat puur over werk-werk (cliëntvervoer), dus we openen direct de
+    // werk-werk modal (woon-werk/kantoor blijven via de detail-flow per declaratie).
+    // De doel-declaratie wordt bij opslaan bepaald uit de rit-datum
+    // (resolveTargetDecl → ensureDraftFor).
+    var ovAddBtn = $("km-overview-add-btn");
+    if (ovAddBtn) {
+      ovAddBtn.addEventListener("click", function () {
+        if (!ownMedewerkerId()) {
+          toast("error", "Geen aan jou gekoppelde medewerker — neem contact op met HR.");
+          return;
+        }
+        _addContext = "overview";
+        var f = $("km-add-manual-form"); if (f) f.reset();
+        setErr("km-add-manual-error", "");
+        fillClientSelect();
+        resetRouteStatus();
+        resetManualForm();
+        openModal("km-add-manual-modal");
       });
     }
     // Keuze-modal
@@ -1079,8 +1145,6 @@
     if (manualOpenBtn) manualOpenBtn.addEventListener("click", resetManualForm);
     if (mForm) mForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      var d = currentDecl();
-      if (!d || !isDeclEditable(d)) { closeModal("km-add-manual-modal"); return; }
       var datum = ($("km-add-manual-datum").value || "").trim();
       var beschr = ($("km-add-manual-beschr").value || "").trim();
       var vertrek = ($("km-add-manual-vertrek").value || "").trim();
@@ -1098,18 +1162,31 @@
       if (!isFinite(kmv) || kmv < 0) { setErr("km-add-manual-error", "Vul een geldig aantal kilometers in (of klik 'Afstand berekenen')."); return; }
       if (!beschr) { setErr("km-add-manual-error", "Reden rit is verplicht."); return; }
       var btn = $("km-add-manual-submit"); if (btn) btn.disabled = true;
-      window.kilometerDeclaratiesDB.addRecord({
-        declaratieId: d.id, datum: datum, beschrijving: beschr,
-        kilometers: kmv, type: "werkwerk", typeDisplay: "Zakelijke rit",
-        metClienten: metCli,
-        clientId: clientId || null, clientNaam: clientNm || null,
-        trajectType: traject || null,
-        vertrekadres: vertrek, bestemmingsadres: bestemming, reden: beschr,
-        kmBerekend: _kmBerekend,
-      }).then(function () {
-        closeModal("km-add-manual-modal");
-        toast("saved", "Zakelijke rit toegevoegd — wacht op goedkeuring zorgcoördinator");
-        resetManualForm();
+      var fromOverview = (_addContext === "overview");
+      // Doel-declaratie bepalen (en in overview-context zo nodig aanmaken voor de
+      // maand van de rit-datum), dan de rit opslaan.
+      resolveTargetDecl(datum).then(function (d) {
+        if (!d || !isDeclEditable(d)) {
+          setErr("km-add-manual-error", "Deze maand-declaratie is al ingediend of gesloten — toevoegen is niet mogelijk.");
+          return null;
+        }
+        return window.kilometerDeclaratiesDB.addRecord({
+          declaratieId: d.id, datum: datum, beschrijving: beschr,
+          kilometers: kmv, type: "werkwerk", typeDisplay: "Zakelijke rit",
+          metClienten: metCli,
+          clientId: clientId || null, clientNaam: clientNm || null,
+          trajectType: traject || null,
+          vertrekadres: vertrek, bestemmingsadres: bestemming, reden: beschr,
+          kmBerekend: _kmBerekend,
+        }).then(function () {
+          closeModal("km-add-manual-modal");
+          toast("saved", "Zakelijke rit toegevoegd — wacht op goedkeuring zorgcoördinator");
+          resetManualForm();
+          _addContext = "detail";
+          // Vanaf het overzicht: navigeer naar de (zo nodig nieuw aangemaakte)
+          // maand-declaratie zodat de medewerker zijn rit + status meteen ziet.
+          if (fromOverview) { showDetail(d.id); }
+        });
       }).catch(function (err) {
         setErr("km-add-manual-error", "Opslaan mislukt: " + (err && err.message ? err.message : err));
       }).finally(function () { if (btn) btn.disabled = false; });
