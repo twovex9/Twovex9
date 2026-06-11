@@ -64,7 +64,15 @@ const GRID_ACCENT = ["#2563eb", "#16a34a", "#ca8a04", "#dc2626", "#7c3aed", "#db
 /** Vaste groep-kopjes voor 1-op-1/ambulant en achterwacht. Deze diensten worden
  *  — los van hun woonlocatie — onder één eigen kop gebundeld (user-eis 2026-06-06):
  *  alle 1-op-1's bij elkaar in één kopje, en de achterwacht helemaal onderaan
- *  (1 persoon die verantwoordelijk is voor àlle locaties). */
+ *  (1 persoon die verantwoordelijk is voor àlle locaties).
+ *
+ *  🔗 Koppeling met Locatiebeheer (user-eis 2026-06-11): Locatiebeheer is dé bron
+ *  van het locatie-overzicht in de planning. Daarom MOETEN deze twee functionele
+ *  groep-namen ook als rij in `public.locaties` bestaan (exact dezelfde naam), zodat
+ *  de eigenaar ze terugziet/beheert in Locatiebeheer en de planning-kop met de
+ *  HR-locatierij samenvalt (zelfde string → één groep, geen dubbel). De seed staat
+ *  in `scripts/seed-planning-functionele-groepen.mjs`. Voeg je hier een nieuwe
+ *  functionele groep toe, seed 'm dan óók in `locaties`. */
 const EEN_OP_EEN_GROEP = "Eén op één / Ambulant";
 const ACHTERWACHT_GROEP = "Achterwacht";
 const OPENSTAANDE_GROEP = "Openstaande diensten";
@@ -1632,10 +1640,7 @@ function renderMonthCalendar(host, items, overlapIds) {
   const monthStart = startOfMonth(ui.monthDate || new Date());
   const monthEnd = addDays(monthStart, daysInMonth(monthStart));
   const gridStart = getMonday(monthStart);
-  /* Alleen de weken tonen die een dag van déze maand bevatten (4, 5 of 6 rijen,
-     afhankelijk van de maand) — geen lege trailing-week. Zo krijgt elke weekrij
-     meer hoogte en blijven de dagen beter leesbaar binnen het ene-scherm-beeld. */
-  const lastVisible = addDays(getMonday(addDays(monthEnd, -1)), 7);
+  const lastVisible = addDays(getMonday(addDays(monthEnd, 6)), 7);
   const days = [];
   for (let d = new Date(gridStart); d < lastVisible; d = addDays(d, 1)) days.push(new Date(d));
   const weekCount = Math.max(1, Math.round(days.length / 7));
@@ -1707,14 +1712,14 @@ function renderMonthCalendar(host, items, overlapIds) {
      fitMonthCells() per dagcel de chips die niet in de rij-hoogte passen. */
   const applyFit = () => {
     if (!board.isConnected) return;
-    const rect = board.getBoundingClientRect();
-    // Page-zoom/DPI-schaal: getBoundingClientRect (visueel) kan afwijken van de
-    // layout-hoogte (offsetHeight). We clampen in visuele ruimte en rekenen terug
-    // naar de CSS-pixelhoogte die we op het board zetten, zodat de onderkant exact
-    // binnen de viewport valt — ongeacht zoomniveau of schermschaling.
-    const scale = board.offsetHeight > 0 ? rect.height / board.offsetHeight : 1;
-    const availVisual = window.innerHeight - rect.top - 8;
-    const h = Math.max(200, Math.floor(availVisual / (scale || 1)));
+    /* De hele interface staat op html{zoom:1.1}. getBoundingClientRect()/innerHeight
+       leveren zichtbare (gezoomde) pixels, maar een via style.height gezette waarde
+       wordt nóg eens met de zoom geschaald. Daarom delen we de beschikbare zichtbare
+       ruimte door de zoomfactor — anders rendert het board ~zoom× te hoog en valt de
+       onderste week alsnog buiten beeld (op productie ~84px). */
+    const zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+    const top = board.getBoundingClientRect().top;
+    const h = Math.max(320, Math.floor((window.innerHeight - top - 8) / zoom));
     board.style.height = h + "px";
     fitMonthCells(board);
   };
@@ -1732,9 +1737,8 @@ function renderMonthCalendar(host, items, overlapIds) {
 }
 
 /* Compacte dienst-chip voor de maandweergave: één regel met kleur-stip + tijd +
-   diensttype. Klik springt naar de dagweergave van die datum (inzoomen op de dag),
-   consistent met de "+N meer"-chip; daar staan de volledige dienstkaarten met de
-   bekijk-/bewerk-/verwijder-acties. */
+   diensttype. Klik opent de "Dienst bekijken"-modal (inzien), net als de
+   oog-actie op de week-/dagkaart. */
 function buildMonthChipEl(it, overlapIds) {
   const autoOverlap = overlapIds && overlapIds.has(it.id);
   const labels = rowDiensttypeLabels(it);
@@ -1758,11 +1762,7 @@ function buildMonthChipEl(it, overlapIds) {
     <span class="planning-month-chip-name">${escapeHtml(title)}</span>`;
   chip.addEventListener("click", (e) => {
     e.stopPropagation();
-    const s = parseStartDate(it.start);
-    if (!s) return;
-    ui.dayDate = new Date(s.getFullYear(), s.getMonth(), s.getDate());
-    setCalMode("day");
-    renderAllViews();
+    openViewModal(it.id);
   });
   return chip;
 }
@@ -1800,7 +1800,7 @@ function fitMonthCells(board) {
       shown--;
       used -= chipH(chips[shown]) + gap;
     }
-    let hiddenCount = chips.length - shown;
+    const hiddenCount = chips.length - shown;
     for (let i = shown; i < chips.length; i++) chips[i].hidden = true;
     const more = document.createElement("button");
     more.type = "button";
@@ -1815,15 +1815,6 @@ function fitMonthCells(board) {
       renderAllViews();
     });
     list.appendChild(more);
-    // Correctie: past de "+N meer"-chip er nét niet bij, verberg telkens nog één
-    // zichtbare chip tot de lijst exact binnen de rij-hoogte valt (geen clipping).
-    let guard = chips.length;
-    while (shown > 0 && list.scrollHeight > list.clientHeight + 1 && guard-- > 0) {
-      shown--;
-      chips[shown].hidden = true;
-      hiddenCount++;
-      more.textContent = `+${hiddenCount} meer`;
-    }
   });
 }
 
@@ -2143,16 +2134,18 @@ function renderWeekGrid() {
   if (wrap && wrap.classList.contains("planning-week-grid-wrap--v3")) {
     wrap.classList.toggle("planning-week-grid-wrap--freezehead", ui.calMode !== "month");
   }
-  /* Maandweergave "volledig in beeld" (gebruikerseis 2026-06-11): het view-panel +
-     de wrap krimpen mee zodat het kalender-board z'n in JS geclampte hoogte kan
-     aannemen (zie .planning-view-panel--monthfit in styles.css), en de KPI-strip +
-     banners wijken zodat de hele maand in één keer past. Beide reversibel: alleen in
-     maandmodus actief; in week/dag teruggezet zónder de opgeslagen kop-voorkeur te raken. */
+  /* Maandweergave "volledig in beeld": het view-panel + de wrap groeien mee zodat
+     het kalender-board exact de beschikbare hoogte vult (zie .planning-view-panel
+     --monthfit in styles.css). Alleen in maandmodus; in week/dag teruggezet. */
   const monthMode = ui.calMode === "month";
   const panel = wrap && wrap.parentElement;
   if (panel && panel.classList.contains("planning-view-panel")) {
     panel.classList.toggle("planning-view-panel--monthfit", monthMode);
   }
+  /* In maandmodus wijkt de KPI-strip + de overlap-/beschikking-banner zodat de hele
+     maand (dag 1 t/m einde) in één beeld past. Puur presentatie (reversibel via een
+     card-class) — de opgeslagen kop-inklap-voorkeur blijft ongemoeid en geldt weer
+     zodra je terug naar de weekweergave gaat. */
   const card = panel && panel.closest(".planning-main-card--v3");
   if (card) card.classList.toggle("planning-card--monthfit", monthMode);
   host.innerHTML = "";
@@ -2382,6 +2375,62 @@ function renderWeekGrid() {
     table.appendChild(foot);
   }
   host.appendChild(table);
+  syncPlanningDayheadHeight();
+}
+
+/* Hoogte van de sticky dag-kop-rij meten en als CSS-variabele zetten, zodat de
+   locatie-groepkop (.planning-erm-locbar) er precies ónder kan blijven plakken
+   tijdens het scrollen — voor élke rol altijd zichtbaar bij welke locatie de
+   diensten horen (spraakmemo eigenaar 2026-06-11). */
+function syncPlanningDayheadHeight() {
+  try {
+    const host = document.getElementById("planning-week-grid");
+    if (!host) return;
+    /* Synchroon meten: het rooster staat na appendChild al in de DOM, dus
+       getBoundingClientRect levert direct een geldige hoogte (geen rAF — die wordt
+       in niet-zichtbare/achtergrond-tabs sterk gethrottled). */
+    const cell = host.querySelector(
+      ".planning-erm-wg-row--head .planning-erm-cell--day",
+    );
+    const h = cell ? Math.round(cell.getBoundingClientRect().height) : 0;
+    if (h > 0) host.style.setProperty("--ff-dayhead-h", h + "px");
+  } catch (e) {
+    /* niet kritiek: de var heeft een CSS-fallback (60px) */
+  }
+}
+
+/* Breng het rooster (de geselecteerde locatie) naar voren. Bij de volledige planner
+   staat het rooster ONDER de KPI-strip + rode overlap-/beschikking-banner; een
+   simpele scroll-naar-boven zou juist dát rode blok tonen. Daarom scrollen we het
+   rooster-paneel tot net onder de sticky toolbar, zodat de dag-koppen + de gekozen
+   locatie meteen in beeld staan — in zowel de read-only kijk-modus (scroll-container
+   = .content--planning-erm) als de volledige planner (scroll-container = de kaart). */
+function scrollPlanningToRooster() {
+  try {
+    var target =
+      document.querySelector(".planning-week-grid-wrap--v3") ||
+      document.querySelector(".planning-view-panel:not([hidden])");
+    if (!target) return;
+    var sc = target.parentElement;
+    while (sc && sc !== document.body && sc !== document.documentElement) {
+      var oy = getComputedStyle(sc).overflowY;
+      if ((oy === "auto" || oy === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break;
+      sc = sc.parentElement;
+    }
+    /* Synchroon (geen rAF — die wordt in achtergrond-/niet-zichtbare tabs gethrottled,
+       waardoor de scroll met verouderde maten zou landen). getBoundingClientRect
+       forceert de layout, dus de maten kloppen direct na renderAllViews(). De sticky
+       toolbar telt niet mee: de dag-koppen plakken zelf op top:0, dus we brengen de
+       rooster-top exact tot de bovenkant van de scroll-container. */
+    if (sc && sc !== document.body && sc !== document.documentElement) {
+      var d = target.getBoundingClientRect().top - sc.getBoundingClientRect().top;
+      sc.scrollTop = Math.max(0, sc.scrollTop + d - 1);
+    } else {
+      target.scrollIntoView({ block: "start" });
+    }
+  } catch (e) {
+    /* */
+  }
 }
 
 function escapeHtml(s) {
@@ -2573,19 +2622,27 @@ function returnToRosterAtAdjustment() {
   }
   renderAllViews();
   if (target) {
-    // Na de re-render de kaart in beeld scrollen + kort oplichten. De verticale
-    // scroll-container van de planning is instabiel (soms de kaart-sectie, soms page-main)
-    // en de grid-DOM wordt pas ná deze tick volledig opgebouwd; daarom twee frames wachten
-    // en de kaart vers opzoeken vóór we scrollen (anders scrollt een verouderde/lege grid).
+    // Na de re-render de kaart in beeld scrollen + kort oplichten. Dit is bewust géén
+    // "scroll één keer en stop": de grid-DOM + KPI-/banner-kop stromen ná de eerste frames
+    // nog her én een sluitende dienst-detail-animatie (~260ms) kan de scrollpositie nét
+    // daarna resetten. We scrollen daarom op meerdere vaste momenten over ~0,8s — elke pass
+    // zoekt de kaart vers op (de grid-render kan 'm vervangen) en centreert 'm opnieuw, zodat
+    // een late reset altijd wordt gecorrigeerd. De scroll-container is bovendien instabiel
+    // (soms de kaart-sectie, soms page-main) — scrollIntoView kiest zelf de juiste.
     const sel = '.planning-erm-card[data-id="' + String(target.id).replace(/["\\]/g, "\\$&") + '"]';
-    const doScroll = () => {
+    let highlighted = false;
+    const scrollPass = () => {
       const card = document.querySelector(sel);
       if (!card) return;
       try { card.scrollIntoView({ block: "center", inline: "center" }); } catch (e) { try { card.scrollIntoView(); } catch (e2) { /* */ } }
-      card.classList.add("planning-erm-card--justedited");
-      setTimeout(() => card.classList.remove("planning-erm-card--justedited"), 2600);
+      if (!highlighted) {
+        highlighted = true;
+        card.classList.add("planning-erm-card--justedited");
+        setTimeout(() => { const c = document.querySelector(sel); if (c) c.classList.remove("planning-erm-card--justedited"); }, 2600);
+      }
     };
-    requestAnimationFrame(() => requestAnimationFrame(doScroll));
+    requestAnimationFrame(scrollPass);
+    [90, 200, 360, 560, 820].forEach((ms) => setTimeout(scrollPass, ms));
   }
 }
 
@@ -4796,6 +4853,11 @@ function initNav() {
   document.getElementById("planning-loc-select")?.addEventListener("change", (e) => {
     filterState.locatieToolbar = e.target.value || "";
     renderAllViews();
+    /* De gekozen locatie meteen vóóraan in beeld brengen (spraakmemo eigenaar
+       2026-06-11: "het overzicht van de locaties moet naar voren komen zodra je
+       daar een locatie aan het zoeken bent"): scroll het rooster tot net onder de
+       toolbar zodat de geselecteerde locatie direct onder de dag-koppen staat. */
+    scrollPlanningToRooster();
   });
 
   /* Sidebar: Teamlid + Cliënt single-select dropdowns */

@@ -11802,7 +11802,11 @@ button.btn-dienst-aanmaken:hover {
 .planning-readonly #planning-summary,
 .planning-readonly #planning-besch-banner,
 .planning-readonly .planning-filters-card,
-.planning-readonly .planning-erm-locselwrap,
+/* LET OP: .planning-erm-locselwrap NIET meer verbergen in read-only modus.
+   De locatie-keuze ("Selecteer Locatie") is een pure KIJK-filter en moet voor
+   ÉLKE rol beschikbaar zijn (spraakmemo eigenaar 2026-06-11: "het overzicht van
+   de locaties moet naar voren komen zodra je een locatie aan het zoeken bent. En
+   het geldt voor elke rol"). Zie ook de zichtbaar-makende regel verderop. */
 .planning-readonly #planning-gen-btn,
 .planning-readonly #planning-opt-btn,
 .planning-readonly #planning-ai-btn,
@@ -15373,6 +15377,21 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
   border-left: 1px solid var(--pb-dce2ea);
 }
 
+/* Locatie-groepkop blijft in beeld tijdens het scrollen (spraakmemo eigenaar
+   2026-06-11: "de locaties die ik wil zien komen niet helemaal duidelijk in beeld"
+   / "voor elke rol moet duidelijk in beeld zijn welke locaties mensen werken"). De
+   balk plakt nét onder de sticky dag-koppen, zodat je altijd ziet bij welke locatie
+   de zichtbare diensten horen — voor élke rol. De hoogte van de dag-kop-rij komt uit
+   --ff-dayhead-h (in planning.js gemeten); de fallback dekt de eerste render af. De
+   locbar heeft al een dekkende achtergrond (var(--ps-e9eef4) / open-variant), dus
+   weggescrolde rijen schijnen er niet doorheen. z-index 5 = boven de dienstkaarten,
+   onder de dag-koppen (z-index 6). */
+.planning-week-grid-wrap--freezehead #planning-week-grid.planning-erm--locations .planning-erm-locbar {
+  position: sticky;
+  top: var(--ff-dayhead-h, 60px);
+  z-index: 5;
+}
+
 /* Maandweergave: kalender met weken onder elkaar, in dezelfde huisstijl */
 .planning-month-board {
   display: grid;
@@ -15505,51 +15524,49 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
    ---------------------------------------------------------------------------
    Bij het inzien van het rooster per locatie moet — naast de volledige week
    (ma t/m zo, al in beeld) — óók de hele maand (dag 1 t/m einde) in één keer op
-   het scherm passen. In maandmodus krijgt het kalender-board daarom een in JS
-   (applyFit, planning.js) geclampte hoogte tot de onderkant van de viewport; de
-   weekrijen delen die hoogte gelijk (1fr) en de 7 dagkolommen krimpen mee in de
-   breedte (geen horizontale schuif). Elke dagcel clipt zijn diensten — fitMonthCells()
+   het scherm passen. Daarvoor laten we in maandmodus het view-panel + de grid-
+   wrap meegroeien met de planning-kaart, zodat het kalender-board exact de
+   beschikbare hoogte onder de toolbar vult. De weekrijen delen die hoogte gelijk
+   (1fr, ingesteld in planning.js), de 7 dagkolommen krimpen mee in de breedte
+   (geen horizontale schuif), en elke dagcel clipt zijn diensten — fitMonthCells()
    toont per dag zoveel compacte dienst-chips als passen plus een "+N meer"-chip.
    Geldt voor élke locatie. =================================================== */
-
 /* In maandmodus wijken de KPI-strip + banners (en hun inklap-toggle) zodat het
-   kalender-board de volle hoogte krijgt. Puur presentatie en reversibel: zodra je
-   terug naar de weekweergave schakelt vervalt .planning-card--monthfit en geldt de
-   opgeslagen kop-inklap-voorkeur weer. */
+   kalender-board de volle hoogte krijgt en de hele maand in één keer past. Puur
+   presentatie en reversibel: zodra je terug naar de weekweergave schakelt vervalt
+   .planning-card--monthfit en geldt de opgeslagen kop-voorkeur weer. */
 .planning-card--monthfit #planning-summary,
 .planning-card--monthfit #planning-overlap-banner,
 .planning-card--monthfit #planning-besch-banner,
 .planning-card--monthfit .planning-top-toggle {
   display: none;
 }
-
-/* Panel + wrap krimpen mee met het board: het board krijgt z'n hoogte van applyFit
-   (exact tot de viewport-onderkant). Door wrap/panel hieromheen te laten shrink-
-   wrappen (geen eigen flex-hoogte, geen clipping) is die geclampte hoogte de enige
-   bron van waarheid en wordt de onderste week niet weggeklipt. */
 .planning-main-card--v3 > .planning-view-panel--monthfit:not([hidden]) {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
 }
 .planning-main-card--v3 > .planning-view-panel--monthfit:not([hidden]) > .planning-week-grid-wrap--v3 {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
 }
 .planning-view-panel--monthfit > .planning-week-grid-wrap--v3 > #planning-week-grid.planning-erm--month {
-  height: auto;
+  height: 100%;
   min-height: 0;
   /* Override de generieke .planning-week-grid-wrap--v3 > .planning-week-grid-regel
-     (width: max-content); op een smal of DPI-geschaald scherm zou de host anders
-     breder worden dan het paneel en zondag uit beeld duwen. width:100% + min-width:0
-     houdt de host exact paneelbreed zodat de 7 dagkolommen altijd samen passen. */
+     (width: max-content) die anders de host op z'n intrinsieke breedte zet — op een
+     smal of DPI-geschaald scherm (bv. een laptop op 150%) zou het board dan tóch
+     breder worden dan het paneel en zondag uit beeld duwen. Met width:100% + min-width:0
+     blijft de host exact paneelbreed, zodat de 7 dagkolommen (minmax(0,1fr)) altijd
+     samen passen — nooit horizontaal schuiven. */
   width: 100%;
   min-width: 0;
 }
 .planning-month-board--fit {
-  /* Hoogte wordt door applyFit gezet. min-width:0 overschrijft de standaard
-     min-width:max-content zodat de 7 dagkolommen in de paneelbreedte passen. */
+  height: 100%;
+  /* Override de standaard min-width:max-content zodat de 7 dagkolommen in de
+     paneelbreedte passen i.p.v. horizontaal te scrollen. */
   min-width: 0;
 }
 .planning-month-board--fit .planning-month-cell {
@@ -15598,7 +15615,8 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 }
 /* Belangrijk: `display:flex` hierboven overschrijft het `[hidden]`-attribuut
    (display:none). Met deze specifiekere regel verbergt fitMonthCells() de chips die
-   niet in de rij passen wél echt (anders blijven ze renderen en clippen ze). */
+   niet in de rij-hoogte passen wél echt — anders blijven ze renderen en clippen ze
+   op drukke locaties (bv. Eén-op-één/Ambulant), ondanks de "+N meer"-correctie. */
 .planning-month-chip[hidden] {
   display: none;
 }
