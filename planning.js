@@ -2921,14 +2921,17 @@ function setCalMode(mode) {
 // dienst-mutaties) blijven synchroon zodat die meteen reageren.
 var _planningRenderHandle = 0;
 function scheduleRenderAllViews() {
-  if (_planningRenderHandle) return;
-  var schedule = window.requestAnimationFrame
-    ? window.requestAnimationFrame.bind(window)
-    : function (cb) { return window.setTimeout(cb, 16); };
-  _planningRenderHandle = schedule(function () {
+  // Trailing-debounce: tijdens een koude load vuren de data-lagen hun
+  // "…-updated"-events temporeel verspreid (terwijl de hoofdthread tussendoor
+  // bezet is). Een rAF-bundeling collapse't alleen events binnen dezelfde frame;
+  // een korte trailing-debounce wacht tot de uitbarsting tot rust komt en rendert
+  // dán één keer met de meest recente data — zo wordt een serie events tot één
+  // (i.p.v. ~8) zware render teruggebracht. Het eindbeeld is identiek.
+  if (_planningRenderHandle) clearTimeout(_planningRenderHandle);
+  _planningRenderHandle = window.setTimeout(function () {
     _planningRenderHandle = 0;
     try { renderAllViews(); } catch (e) { /* */ }
-  });
+  }, 120);
 }
 
 function renderAllViews() {
@@ -5376,6 +5379,26 @@ function initPlanningPage() {
   const ax = document.querySelector('input[name="planning-row-axis"]:checked');
   if (ax) ui.rowAxis = ax.value;
   renderAllViews();
+  // Laad-animatie: zodra de eerste render uit de cache geschilderd is, ziet de
+  // gebruiker al "wat hij ziet" — het zichtbare rooster. We sluiten de globale
+  // spinner dan meteen i.p.v. te wachten op de achtergrond-refresh van álle
+  // diensten (die anders pas de 12s-veiligheidsklep van de loader liet vallen).
+  // De rest van de data laadt door op de achtergrond en ververst het beeld live.
+  // Bij een KOUDE cache (lege eerste render) wachten we wél tot de data-laag klaar
+  // is, zodat er geen lege flits verschijnt.
+  try {
+    var _ffPlanningCount = (window.planningDB && window.planningDB.getAllSync)
+      ? (window.planningDB.getAllSync() || []).length : 0;
+    if (window.FFLoader && typeof window.FFLoader.ready === "function") {
+      if (_ffPlanningCount > 0) {
+        window.FFLoader.ready();
+      } else if (window.planningDB && window.planningDB.ready) {
+        Promise.resolve(window.planningDB.ready).then(function () {
+          try { window.FFLoader.ready(); } catch (e) { /* */ }
+        }, function () { try { window.FFLoader.ready(); } catch (e) { /* */ } });
+      }
+    }
+  } catch (e) { /* */ }
   applyPlanningRoleMode();
   loadPlanningOwnLocaties();
   // Eigen-/locatie-scope: zodra rollen/profiel async geladen zijn, de read-only-
