@@ -1990,6 +1990,17 @@ function buildShiftCardEl(it, gi, overlapIds) {
   return card;
 }
 
+// Effectieve CSS-`zoom` van de keten boven een element (product van alle `zoom`-
+// waarden van de voorouders). De interface draait standaard op `html { zoom: 1.1 }`.
+function planningEffectiveZoom(el) {
+  let z = 1;
+  for (let n = el ? el.parentElement : null; n; n = n.parentElement) {
+    const cz = parseFloat(getComputedStyle(n).zoom);
+    if (cz && cz !== 1) z *= cz;
+  }
+  return z || 1;
+}
+
 // Reden-uitleg popover voor het "!"-icoon op een dienstkaart. Eén tegelijk open.
 let __dienstReasonPop = null;
 function closeDienstReasonPopover() {
@@ -2024,16 +2035,26 @@ function showDienstReasonPopover(anchorEl, warnings) {
     </ul>`;
   document.body.appendChild(pop);
   // Positioneer onder het anker; val terug naar boven/links als het buiten beeld valt.
+  // De interface draait op `html { zoom: 1.1 }`. getBoundingClientRect() geeft VISUELE
+  // (gezoomde) coördinaten, terwijl style.left/top CSS-layout-lengtes zijn die bij het
+  // renderen NÓG eens met de zoom worden vermenigvuldigd. Zonder correctie landt de
+  // popover daarom verder naar rechts/onder dan het "!" (afwijking groeit met de
+  // afstand tot de oorsprong). We delen de gemeten anker-coördinaten door de zoom zodat
+  // ze in dezelfde layout-ruimte zitten als offsetWidth/clientWidth/scroll.
+  const z = planningEffectiveZoom(pop) || 1;
   const r = anchorEl.getBoundingClientRect();
+  const aLeft = r.left / z;
+  const aTop = r.top / z;
+  const aBottom = r.bottom / z;
   const pw = pop.offsetWidth;
   const ph = pop.offsetHeight;
   const vw = document.documentElement.clientWidth;
   const vh = document.documentElement.clientHeight;
-  let left = r.left + window.scrollX;
+  let left = aLeft + window.scrollX;
   const maxLeft = window.scrollX + vw - pw - 8;
   if (left > maxLeft) left = Math.max(window.scrollX + 8, maxLeft);
-  let top = r.bottom + window.scrollY + 6;
-  if (r.bottom + ph + 10 > vh) top = Math.max(window.scrollY + 8, r.top + window.scrollY - ph - 6);
+  let top = aBottom + window.scrollY + 6;
+  if (aBottom + ph + 10 > vh) top = Math.max(window.scrollY + 8, aTop + window.scrollY - ph - 6);
   pop.style.left = left + "px";
   pop.style.top = top + "px";
   const onDoc = (e) => {
