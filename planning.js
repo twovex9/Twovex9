@@ -4020,30 +4020,29 @@ function initPlanningTopToggle() {
  *
  * LET OP: welke container verticaal scrollt is NIET stabiel — afhankelijk van de
  * layout-/zijbalk-stand is dat soms de kaart zelf (#planning-calendar-section met
- * overflow-y:auto), soms de pagina-main (.content--planning-erm). We luisteren daarom
- * op BEIDE en bepalen per frame welke daadwerkelijk scrollt. De klassen blijven op de
- * kaart staan zodat de CSS-selector .planning-main-card--v3.* blijft kloppen. */
+ * overflow-y:auto), soms de pagina-main (.content--planning-erm), soms beide (geneste
+ * scroll). We luisteren daarom op BEIDE en reageren op het element dat het scroll-event
+ * daadwerkelijk afvuurde (e.target), met de richting bepaald uit DAT elements eigen
+ * vorige positie. De klassen blijven op de kaart staan zodat de CSS-selector
+ * .planning-main-card--v3.* blijft kloppen. */
 function initPlanningToolbarAutohide() {
   var card = document.getElementById("planning-calendar-section");
   if (!card || card.dataset.autohideWired === "1") return;
   card.dataset.autohideWired = "1";
   var main = card.closest(".content--planning-erm") ||
              document.querySelector(".content--planning-erm");
-  var lastY = 0;
+  var pending = null;
   var ticking = false;
   var REVEAL_AT_TOP = 4;      // binnen 4px van de top = altijd tonen
   var DIR_THRESHOLD = 8;      // pas reageren na 8px richting-scroll (anti-jitter)
   var MIN_SCROLL_TO_HIDE = 64; // niet verbergen zolang we vlak onder de top zitten
-  // De container die op dit moment daadwerkelijk verticaal scrollt (kaart heeft voorrang).
-  function activeScroller() {
-    if (card.scrollHeight > card.clientHeight + 4) return card;
-    if (main && main.scrollHeight > main.clientHeight + 4) return main;
-    return card;
-  }
   function update() {
     ticking = false;
-    var y = activeScroller().scrollTop;
-    var dy = y - lastY;
+    var el = pending;
+    if (!el) return;
+    var y = el.scrollTop;
+    var dy = y - (el.__besaAutohideY || 0);   // richting t.o.v. dit elements eigen vorige stand
+    el.__besaAutohideY = y;
     card.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
     if (y <= REVEAL_AT_TOP) {
       card.classList.remove("planning-toolbar-hidden");        // aan de top: altijd tonen
@@ -4052,9 +4051,12 @@ function initPlanningToolbarAutohide() {
     } else if (dy < -DIR_THRESHOLD) {
       card.classList.remove("planning-toolbar-hidden");        // naar boven → tonen
     }
-    lastY = y;
   }
-  function onScroll() {
+  function onScroll(e) {
+    // Reageer op het element dat scrolde; negeer scroll van b.v. dropdowns.
+    var el = e.target === document ? (document.scrollingElement || null) : e.target;
+    if (el !== card && el !== main) return;
+    pending = el;
     if (ticking) return;
     ticking = true;
     window.requestAnimationFrame(update);
