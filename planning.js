@@ -1740,8 +1740,11 @@ function renderMonthCalendar(host, items, overlapIds) {
 }
 
 /* Compacte dienst-chip voor de maandweergave: één regel met kleur-stip + tijd +
-   diensttype. Klik opent de "Dienst bekijken"-modal (inzien), net als de
-   oog-actie op de week-/dagkaart. */
+   diensttype. Klik springt naar de dagweergave van die datum (inzoomen op de dag),
+   consistent met de "+N meer"-chip; daar staan de volledige dienstkaarten met de
+   bekijk-/bewerk-/verwijder-acties. (De directe "Dienst bekijken"-modal werd vanuit
+   de maand-chip niet betrouwbaar geopend — open-dan-direct-dicht — dus drillen we
+   door naar de dag.) */
 function buildMonthChipEl(it, overlapIds) {
   const autoOverlap = overlapIds && overlapIds.has(it.id);
   const labels = rowDiensttypeLabels(it);
@@ -1765,7 +1768,11 @@ function buildMonthChipEl(it, overlapIds) {
     <span class="planning-month-chip-name">${escapeHtml(title)}</span>`;
   chip.addEventListener("click", (e) => {
     e.stopPropagation();
-    openViewModal(it.id);
+    const s = parseStartDate(it.start);
+    if (!s) return;
+    ui.dayDate = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+    setCalMode("day");
+    renderAllViews();
   });
   return chip;
 }
