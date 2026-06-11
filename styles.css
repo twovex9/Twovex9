@@ -29525,3 +29525,61 @@ body.ond-body {
   font-size: 14px;
   line-height: 1.4;
 }
+
+/* ===== ff-page-loader — globale laad-animatie (FOUC-preventie) =====
+   Het inline <head>-snippet zet data-loading="1" op <html> vóór de eerste
+   paint. styles.css is render-blocking in de <head>, dus deze overlay is al
+   actief bij de allereerste paint → de gebruiker ziet nooit meer de rauwe
+   skeleton-"flits", alleen deze spinner. besa-page-loader.js haalt het
+   attribuut weg zodra de echte lay-out geschilderd is (fade-out hieronder).
+   Gethematiseerd via tokens (data-theme staat al vóór paint) → geen witte
+   flits in dark mode. Zie besa-page-loader.js. */
+@keyframes ff-loader-spin { to { transform: rotate(360deg); } }
+
+/* Backdrop — dekt de hele viewport, in de paginakleur van het actieve thema. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: var(--bg-app, #f4f4f5);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .25s ease, visibility 0s linear .25s;
+}
+
+/* Spinner — gecentreerd, merkblauwe accentrand. */
+html::after {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  box-sizing: border-box;
+  border: 3px solid var(--border, rgba(0, 0, 0, .14));
+  border-top-color: var(--blue, #2563eb);
+  border-radius: 50%;
+  z-index: 2147483647;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .25s ease, visibility 0s linear .25s;
+}
+
+/* Tonen zolang data-loading="1" op <html> staat. */
+html[data-loading="1"]::before,
+html[data-loading="1"]::after {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .25s ease, visibility 0s;
+}
+html[data-loading="1"]::after {
+  animation: ff-loader-spin .7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-loading="1"]::after { animation: none; }
+}
