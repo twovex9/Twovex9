@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <title>Management Dashboard</title>
+  <title>HR Dashboard</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
@@ -195,17 +195,11 @@
     <aside class="sidebar sidebar--clienten-nav" aria-label="Dashboard">
       <nav class="side-nav" aria-label="Dashboard secties">
         <a href="#md-top" class="side-link is-active" aria-current="page">Overzicht</a>
-        <a href="#md-verkeerslicht" class="side-link">Verkeerslicht</a>
-        <a href="#md-fin" class="side-link">Financiën</a>
-        <a href="#md-locaties" class="side-link side-link--sub">Resultaat per locatie</a>
-        <a href="#md-perfin" class="side-link side-link--sub">Personeelskosten per locatie</a>
-        <a href="#md-hr" class="side-link">Medewerkers</a>
-        <a href="#md-perspers" class="side-link side-link--sub">Personeel per locatie</a>
-        <a href="#md-planning" class="side-link">Planning</a>
-        <a href="#md-perplan" class="side-link side-link--sub">Planning per locatie</a>
-        <a href="#md-incidenten" class="side-link">Incidenten &amp; klachten</a>
-        <a href="#md-perinc" class="side-link side-link--sub">Incidenten per locatie</a>
-        <a href="#md-nieuws" class="side-link">Nieuws</a>
+        <a href="#hrd-samenstelling" class="side-link">Samenstelling</a>
+        <a href="#hrd-stroom" class="side-link">In- en uitstroom</a>
+        <a href="#hrd-docs" class="side-link">Documenten &amp; VOG</a>
+        <a href="#hrd-verzuim" class="side-link">Verzuim</a>
+        <a href="#hrd-verdeling" class="side-link">Verdeling locatie &amp; functie</a>
       </nav>
       <div class="sidebar-footer">
         <a class="side-nav-exit" href="home">← Home</a>
@@ -215,7 +209,7 @@
     <main class="content content--mgmt-dashboard" id="md-top">
       <div class="content-header md-header">
         <div>
-          <h1 id="md-greeting">Welkom</h1>
+          <h1 id="md-greeting">HR-dashboard</h1>
           <p class="md-subtitle" id="md-date">—</p>
         </div>
         <div class="header-actions md-header-actions">
@@ -224,185 +218,55 @@
         </div>
       </div>
 
-      <!-- Signaleringsstrip -->
-      <section class="md-signals" id="md-signals" aria-label="Signaleringen" aria-live="polite"></section>
+      <section class="md-quickstats" id="hrd-quickstats" aria-label="Snelle statistieken">
+        <div class="md-qstat"><span class="md-qstat-val" id="hrd-qs-totaal">—</span><span class="md-qstat-lbl">Actieve medewerkers</span></div>
+        <div class="md-qstat"><span class="md-qstat-val" id="hrd-qs-verzuim">—</span><span class="md-qstat-lbl">Ziekteverzuim</span></div>
+        <div class="md-qstat"><span class="md-qstat-val" id="hrd-qs-docs">—</span><span class="md-qstat-lbl">Documenten met aandacht</span></div>
+      </section>
 
-      <!-- Verkeerslicht-overzicht per locatie -->
-      <section class="table-card md-domain" id="md-verkeerslicht" aria-label="Verkeerslicht per locatie">
+      <section class="table-card md-domain" id="hrd-samenstelling" aria-label="Personeelssamenstelling">
         <div class="md-domain-head">
-          <h2 class="md-domain-title">Verkeerslicht — stuurinformatie per locatie</h2>
-          <span class="vl-legend" id="md-vl-legend"></span>
+          <h2 class="md-domain-title">Personeelssamenstelling</h2>
+          <a href="hr" class="md-domain-link">Naar medewerkers &rarr;</a>
         </div>
-        <p class="md-note">In één oogopslag welke locaties aandacht nodig hebben: open diensten · incidenten · personeelsbezetting · verzuim · resultaat. Rood eerst.</p>
-        <div id="md-vl-body"><p class="md-news-empty">Laden…</p></div>
+        <div class="md-metric-grid" id="hrd-sam-grid"></div>
       </section>
 
-      <!-- Snelle statistieken -->
-      <section class="md-quickstats" id="md-quickstats" aria-label="Snelle statistieken">
-        <div class="md-qstat">
-          <span class="md-qstat-val" id="md-qs-bezetting">—</span>
-          <span class="md-qstat-lbl">Bezettingsgraad vandaag</span>
-        </div>
-        <div class="md-qstat">
-          <span class="md-qstat-val" id="md-qs-verzuim">—</span>
-          <span class="md-qstat-lbl">Ziekteverzuim</span>
-        </div>
-        <div class="md-qstat">
-          <span class="md-qstat-val" id="md-qs-declaraties">—</span>
-          <span class="md-qstat-lbl">Open declaraties</span>
-        </div>
-      </section>
-
-      <!-- Domeintegels 2x2 -->
-      <section class="md-tiles" id="md-tiles" aria-label="Domeinen">
-        <a href="#md-fin" class="md-tile" id="md-tile-fin" data-domein="financien">
-          <span class="md-tile-dot" id="md-dot-fin" aria-hidden="true"></span>
-          <span class="md-tile-name">Financiën</span>
-          <span class="md-tile-metric" id="md-tile-fin-metric">—</span>
-          <span class="md-tile-sub" id="md-tile-fin-sub"></span>
-        </a>
-        <a href="#md-hr" class="md-tile" id="md-tile-hr" data-domein="hr">
-          <span class="md-tile-dot" id="md-dot-hr" aria-hidden="true"></span>
-          <span class="md-tile-name">Medewerkers</span>
-          <span class="md-tile-metric" id="md-tile-hr-metric">—</span>
-          <span class="md-tile-sub" id="md-tile-hr-sub"></span>
-        </a>
-        <a href="#md-planning" class="md-tile" id="md-tile-planning" data-domein="planning">
-          <span class="md-tile-dot" id="md-dot-planning" aria-hidden="true"></span>
-          <span class="md-tile-name">Planning</span>
-          <span class="md-tile-metric" id="md-tile-planning-metric">—</span>
-          <span class="md-tile-sub" id="md-tile-planning-sub"></span>
-        </a>
-        <a href="#md-incidenten" class="md-tile" id="md-tile-incidenten" data-domein="incidenten">
-          <span class="md-tile-dot" id="md-dot-incidenten" aria-hidden="true"></span>
-          <span class="md-tile-name">Incidenten</span>
-          <span class="md-tile-metric" id="md-tile-incidenten-metric">—</span>
-          <span class="md-tile-sub" id="md-tile-incidenten-sub"></span>
-        </a>
-      </section>
-
-      <!-- Per locatie: kosten / omzet / resultaat / open diensten -->
-      <section class="table-card md-domain" id="md-locaties" aria-label="Resultaat per locatie">
+      <section class="table-card md-domain" id="hrd-stroom" aria-label="In- en uitstroom">
         <div class="md-domain-head">
-          <h2 class="md-domain-title">Resultaat per locatie <span class="md-loc-period" id="md-loc-period"></span></h2>
-          <a href="financien-locaties" class="md-domain-link">Naar financiën per locatie →</a>
+          <h2 class="md-domain-title">In- en uitstroom &amp; contracten</h2>
+          <a href="contract-sjablonen" class="md-domain-link">Naar contracten &rarr;</a>
         </div>
-        <div class="md-loc-wrap" id="md-loc-wrap">
-          <table class="md-loc-table" id="md-loc-table">
-            <thead>
-              <tr>
-                <th scope="col">Locatie</th>
-                <th scope="col" class="md-loc-num">Omzet</th>
-                <th scope="col" class="md-loc-num">Kosten</th>
-                <th scope="col" class="md-loc-num">Resultaat</th>
-                <th scope="col" class="md-loc-num">Marge</th>
-                <th scope="col" class="md-loc-num">Open diensten</th>
-              </tr>
-            </thead>
-            <tbody id="md-loc-tbody"></tbody>
-            <tfoot>
-              <tr>
-                <td class="md-loc-strong">Totaal</td>
-                <td class="md-loc-num md-loc-strong" id="md-loc-foot-omzet"></td>
-                <td class="md-loc-num md-loc-strong" id="md-loc-foot-kosten"></td>
-                <td class="md-loc-num md-loc-strong" id="md-loc-foot-result"></td>
-                <td class="md-loc-num" id="md-loc-foot-marge"></td>
-                <td class="md-loc-num md-loc-strong" id="md-loc-foot-open"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <p class="md-note" id="md-loc-note"></p>
+        <div class="md-metric-grid" id="hrd-stroom-grid"></div>
+        <div class="md-cat" id="hrd-contracten"></div>
       </section>
 
-      <!-- Domein: Financiën -->
-      <section class="table-card md-domain" id="md-fin" aria-label="Financiën &amp; declaraties">
+      <section class="table-card md-domain" id="hrd-docs" aria-label="Documenten, VOG en certificering">
         <div class="md-domain-head">
-          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-fin-headdot" aria-hidden="true"></span>Financiën &amp; declaraties</h2>
-          <a href="beschikkingen-dashboard" class="md-domain-link">Naar declaraties →</a>
+          <h2 class="md-domain-title">Documenten, VOG &amp; certificering</h2>
+          <a href="compliance-dashboard" class="md-domain-link">Naar compliance-dashboard &rarr;</a>
         </div>
-        <div class="md-metric-grid" id="md-fin-grid"></div>
-        <p class="md-note" id="md-fin-note"></p>
+        <div class="md-metric-grid" id="hrd-docs-grid"></div>
+        <p class="md-note">Documentstatus uit de personeelsadministratie (BS2): groen = compleet, oranje = waarschuwing/bijna verlopen, rood = ontbrekend/verlopen (o.a. VOG &amp; verplichte certificaten). Detail per medewerker op het compliance-dashboard.</p>
       </section>
 
-      <!-- Personeelskosten (loondienst vs ZZP) per locatie -->
-      <section class="table-card md-domain" id="md-perfin" aria-label="Personeelskosten per locatie">
+      <section class="table-card md-domain" id="hrd-verzuim" aria-label="Verzuim">
         <div class="md-domain-head">
-          <h2 class="md-domain-title">Personeelskosten per locatie</h2>
-          <a href="financien-locaties" class="md-domain-link">Naar financiën per locatie →</a>
+          <h2 class="md-domain-title">Ziekteverzuim</h2>
+          <a href="verzuim" class="md-domain-link">Naar verzuim &rarr;</a>
         </div>
-        <div id="md-perfin-body"><p class="md-news-empty">Laden…</p></div>
-        <p class="md-note" id="md-perfin-note"></p>
+        <div class="md-metric-grid" id="hrd-verzuim-grid"></div>
+        <div class="md-cat" id="hrd-verzuim-list"></div>
       </section>
 
-      <!-- Domein: Medewerkers -->
-      <section class="table-card md-domain" id="md-hr" aria-label="Medewerkers &amp; HR">
+      <section class="table-card md-domain" id="hrd-verdeling" aria-label="Verdeling per locatie en functie">
         <div class="md-domain-head">
-          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-hr-headdot" aria-hidden="true"></span>Medewerkers &amp; HR</h2>
-          <a href="hr" class="md-domain-link">Naar medewerkers →</a>
-        </div>
-        <div class="md-metric-grid" id="md-hr-grid"></div>
-      </section>
-
-      <!-- Personeel per locatie -->
-      <section class="table-card md-domain" id="md-perspers" aria-label="Personeel per locatie">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title">Personeel — verhouding &amp; verdeling per locatie</h2>
-          <a href="hr-dashboard" class="md-domain-link">Naar HR-dashboard →</a>
-        </div>
-        <div class="md-metric-grid" id="md-perspers-grid"></div>
-        <div class="md-cat" id="md-perspers-loc"></div>
-      </section>
-
-      <!-- Domein: Planning -->
-      <section class="table-card md-domain" id="md-planning" aria-label="Planning &amp; bezetting">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-planning-headdot" aria-hidden="true"></span>Planning &amp; bezetting</h2>
-          <a href="planning" class="md-domain-link">Naar planning →</a>
-        </div>
-        <div class="md-metric-grid" id="md-planning-grid"></div>
-      </section>
-
-      <!-- Planning per locatie -->
-      <section class="table-card md-domain" id="md-perplan" aria-label="Planning per locatie">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title">Planning — open diensten &amp; kritieke diensten per locatie</h2>
-          <a href="planner-dashboard" class="md-domain-link">Naar planner-dashboard →</a>
-        </div>
-        <div class="md-cat" id="md-perplan-loc"></div>
-        <div class="md-cat" id="md-perplan-kritiek"></div>
-      </section>
-
-      <!-- Domein: Incidenten & klachten -->
-      <section class="table-card md-domain" id="md-incidenten" aria-label="Incidenten &amp; klachten">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title"><span class="md-domain-dot" id="md-incidenten-headdot" aria-hidden="true"></span>Incidenten &amp; klachten</h2>
-          <a href="incidenten-dashboard" class="md-domain-link">Naar incidenten →</a>
-        </div>
-        <div class="md-metric-grid" id="md-inc-grid"></div>
-        <div class="md-cat" id="md-inc-cat" aria-label="Incidenten per categorie"></div>
-      </section>
-
-      <!-- Incidenten per locatie + trend + doorklik -->
-      <section class="table-card md-domain" id="md-perinc" aria-label="Incidenten per locatie">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title">Incidenten — per locatie, type &amp; trend</h2>
-          <a href="incidenten-dashboard" class="md-domain-link">Naar incidenten-dashboard →</a>
+          <h2 class="md-domain-title">Verdeling medewerkers</h2>
         </div>
         <div class="md-perinc-grid">
-          <div class="md-cat" id="md-perinc-loc"></div>
-          <div class="md-cat" id="md-perinc-status"></div>
+          <div class="md-cat" id="hrd-loc"></div>
+          <div class="md-cat" id="hrd-functie"></div>
         </div>
-        <div class="md-cat" id="md-perinc-trend"></div>
-      </section>
-
-      <!-- Nieuws -->
-      <section class="table-card md-domain" id="md-nieuws" aria-label="Nieuwsberichten">
-        <div class="md-domain-head">
-          <h2 class="md-domain-title">Nieuwsberichten</h2>
-          <a href="nieuws" class="md-domain-link">Alles bekijken →</a>
-        </div>
-        <div class="md-news" id="md-news-list"></div>
       </section>
     </main>
   </div>
@@ -424,10 +288,7 @@
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
-  <script src="nieuws-data.js?v=918f1ad" defer></script>
-  <script src="management-dashboard-data.js?v=918f1ad-hrkpi1" defer></script>
-  <script src="management-dashboard.js?v=918f1ad-hrkpi1" defer></script>
   <script src="dashboard-shared.js?v=dash1" defer></script>
-  <script src="management-dashboard-locatie.js?v=dash1" defer></script>
+  <script src="hr-dashboard.js?v=dash1" defer></script>
 </body>
 </html>
