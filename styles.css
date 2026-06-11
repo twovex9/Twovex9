@@ -15129,6 +15129,29 @@ html:has(.content--planning-erm) body {
   height: 100%;
 }
 
+/* Onderste dienst onbereikbaar in read-only modus — zoom-compensatie (spraakmemo
+   medewerker 2026-06-11: "als ik helemaal naar beneden scroll, zie ik de onderste
+   dienst niet helemaal — wie er op die dienst staat").
+   ---------------------------------------------------------------------
+   De hele interface staat op html{zoom:1.1} (zie boven, ~regel 796). De viewport-
+   units (100vh/100dvh) NEGEREN die CSS-zoom: de app-shell krijgt een layout-hoogte
+   van 100dvh = het volledige aantal viewport-pixels, dat ná de 1,1× zoom ~10% HOGER
+   uitvalt dan de zichtbaar gemaakte viewport (gemeten: app-shell-bodem ~107px onder
+   de vouw). Op gewone pagina's verdwijnt dat in de footer-ruimte, maar op de
+   planningpagina is de paginascroll vergrendeld (regel hierboven) én is in read-only
+   modus (Medewerker/HR/Facilitair) .content--planning-erm de enige scroller. Die
+   scroller-bodem viel daardoor ónder de vouw: zelfs volledig naar beneden gescrold
+   bleef de laatste dienst (incl. wie erop staat) afgekapt en onbereikbaar.
+   Door de app-shell op de planningpagina de zoom exact te laten compenseren, past hij
+   precies in de zichtbare viewport en is élke dienst — tot de laatste — bereikbaar.
+   Repareert zowel de read-only scroller als de kaart-scroller in bewerk-modus.
+   Bewust gekoppeld aan de vaste zoom-factor html{zoom:1.1} hierboven; pas beide samen
+   aan als die ooit wijzigt. */
+body:has(.content--planning-erm) .app-shell {
+  height: calc(100vh / 1.1);
+  height: calc(100dvh / 1.1);
+}
+
 /* =====================================================================
    Planning: toolbar vast + volledige week in beeld  (gebruikerseis 2026-06-02,
    bijgesteld 2026-06-10)
