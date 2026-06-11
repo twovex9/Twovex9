@@ -1930,7 +1930,12 @@ function buildShiftCardEl(it, gi, overlapIds) {
     const warnBtn = t.closest && t.closest(".planning-erm-warnbtn");
     if (warnBtn) {
       ev.stopPropagation();
-      showDienstReasonPopover(warnBtn, getDienstWaarschuwingen(it, overlapIds));
+      // Toggle: staat de popover al open voor ditzelfde "!" → sluiten i.p.v. heropenen.
+      if (__dienstReasonPop && __dienstReasonPop._anchor === warnBtn) {
+        closeDienstReasonPopover();
+      } else {
+        showDienstReasonPopover(warnBtn, getDienstWaarschuwingen(it, overlapIds));
+      }
       return;
     }
     if (t.closest(".planning-erm-hbtn")) {
@@ -2070,6 +2075,7 @@ function showDienstReasonPopover(anchorEl, warnings) {
   document.addEventListener("mousedown", onDoc, true);
   document.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", closeDienstReasonPopover, true);
+  pop._anchor = anchorEl; // voor de toggle: terugklikken op hetzelfde "!" sluit de popover
   __dienstReasonPop = pop;
 }
 
