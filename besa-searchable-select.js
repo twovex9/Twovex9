@@ -92,14 +92,53 @@
       return out;
     }
 
+    // Voorletter-gericht filteren: een naam telt mee als de hele tekst óf een
+    // los woord (voornaam/achternaam/tussenvoegsel) met de getypte letters
+    // begint. Zo komt bij "A" iedereen met voorletter A naar boven, bij "Ba"
+    // alleen wie met "Ba" begint, enz. Vindt niets met die prefix? Dan vallen
+    // we terug op een losse substring-match, zodat een fragment middenin een
+    // naam alsnog resultaat geeft.
+    function matchesPrefix(label, q) {
+      var lo = label.toLowerCase();
+      if (lo.indexOf(q) === 0) return true;
+      var words = lo.split(/[\s\-]+/);
+      for (var i = 0; i < words.length; i++) {
+        if (words[i].indexOf(q) === 0) return true;
+      }
+      return false;
+    }
+
     function renderMenu(query) {
       var q = (query || "").trim().toLowerCase();
       var opts = allOptions();
-      filtered = q
-        ? opts.filter(function (o) { return o.label.toLowerCase().indexOf(q) !== -1; })
-        : opts;
+      if (!q) {
+        filtered = opts;
+      } else {
+        filtered = opts.filter(function (o) { return matchesPrefix(o.label, q); });
+        if (filtered.length === 0) {
+          filtered = opts.filter(function (o) { return o.label.toLowerCase().indexOf(q) !== -1; });
+        }
+      }
 
       menu.innerHTML = "";
+
+      // Wis-optie bovenaan: terug naar de lege/placeholder-waarde (bv. "open
+      // dienst" of een filter wissen). Alleen tonen als er nu echt iets gekozen
+      // is en de select een placeholder-optie heeft.
+      var ph = select.options[0];
+      if (ph && isPlaceholder(ph) && String(select.value) !== "") {
+        var clearItem = document.createElement("div");
+        clearItem.className = "bss-option bss-clear";
+        clearItem.setAttribute("role", "option");
+        clearItem.dataset.value = "";
+        clearItem.textContent = textOf(ph) || "Wissen";
+        clearItem.addEventListener("mousedown", function (e) {
+          e.preventDefault();
+          choose("");
+        });
+        menu.appendChild(clearItem);
+      }
+
       if (filtered.length === 0) {
         var empty = document.createElement("div");
         empty.className = "bss-empty";

@@ -20945,6 +20945,12 @@ button.besc-dtl-tab:hover {
   font-size: 14px;
   color: var(--text-muted);
 }
+.bss-option.bss-clear {
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 2px;
+}
 .im-add-btn {
   width: 36px;
   flex-shrink: 0;

@@ -2843,6 +2843,7 @@ function makeKoppelRow(prefill) {
   const cSel = document.createElement("select");
   cSel.className = "planning-dienst-input";
   cSel.setAttribute("data-k", "client");
+  cSel.setAttribute("data-searchable", "");
   fillSelectFromArray(cSel, data.clienten, "Selecteer cliënt");
   if (prefill && prefill.client) cSel.value = prefill.client;
   cWrap.appendChild(cLab);
@@ -2856,6 +2857,7 @@ function makeKoppelRow(prefill) {
   const tSel = document.createElement("select");
   tSel.className = "planning-dienst-input";
   tSel.setAttribute("data-k", "teamlid");
+  tSel.setAttribute("data-searchable", "");
   fillSelectFromArray(tSel, data.medewerkers, "Selecteer teamlid");
   if (prefill && prefill.teamlid) tSel.value = prefill.teamlid;
   tWrap.appendChild(tLab);
