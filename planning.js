@@ -2138,6 +2138,8 @@ function updateOverlapBanner(items) {
       banner.hidden = true;
       if (detailsEl) detailsEl.innerHTML = "";
       if (namesEl) namesEl.textContent = "";
+      var hintNone = document.getElementById("planning-top-toggle-hint");
+      if (hintNone) hintNone.textContent = "";
       return;
     }
     const m = info.members.length;
@@ -2146,6 +2148,10 @@ function updateOverlapBanner(items) {
       titleEl.textContent =
         `${m} medewerker${m === 1 ? "" : "s"} dubbel ingeroosterd in deze periode — ${p} overlappende dienst${p === 1 ? "" : "en"}`;
     }
+    // Hint op de inklap-toggle: blijft zichtbaar wanneer de kop is ingeklapt, zodat de
+    // dubbele-inroostering-waarschuwing niet onopgemerkt blijft.
+    var hintEl = document.getElementById("planning-top-toggle-hint");
+    if (hintEl) hintEl.textContent = `⚠ ${m} medewerker${m === 1 ? "" : "s"} dubbel ingeroosterd`;
     if (namesEl) namesEl.textContent = "";
     if (detailsEl) {
       // Compacte preview i.p.v. een eigen interne scroll: de banner toont de eerste
@@ -3953,6 +3959,57 @@ function exportPlanningCsv() {
   openExportPlanningModal();
 }
 
+/* ── Inklapbare kop: KPI-strip + overlap-/beschikking-banner ──
+ * Toggle bovenin de planning-kaart om alles boven het rooster weg te klappen.
+ * Standaard UITGEKLAPT; de keuze wordt PER ACCOUNT onthouden in localStorage
+ * (key met de user-id uit de Supabase-sessie). FOUC-vrij: een head-snippet in
+ * planning.html zet html[data-planning-top] vóór de eerste paint. */
+function planningTopCollapseKey() {
+  var uid = "anon";
+  try {
+    var raw = localStorage.getItem("sb-besa-auth");
+    if (raw) {
+      var j = JSON.parse(raw);
+      uid = (j && j.user && j.user.id) ||
+            (j && j.currentSession && j.currentSession.user && j.currentSession.user.id) || "anon";
+    }
+  } catch (e) { /* */ }
+  return "besa-planning-top-collapsed:" + uid;
+}
+function planningTopIsCollapsed() {
+  return document.documentElement.getAttribute("data-planning-top") === "collapsed";
+}
+function setPlanningTopCollapsed(collapsed, persist) {
+  document.documentElement.setAttribute("data-planning-top", collapsed ? "collapsed" : "expanded");
+  var btn = document.getElementById("planning-top-toggle");
+  if (btn) {
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    btn.title = collapsed ? "Kerngetallen & signaleringen tonen" : "Kerngetallen & signaleringen verbergen";
+  }
+  if (persist) {
+    try {
+      if (collapsed) localStorage.setItem(planningTopCollapseKey(), "1");
+      else localStorage.removeItem(planningTopCollapseKey());
+    } catch (e) { /* */ }
+  }
+}
+function initPlanningTopToggle() {
+  var btn = document.getElementById("planning-top-toggle");
+  if (!btn || btn.dataset.wired === "1") return;
+  btn.dataset.wired = "1";
+  // Veiligheidsnet als de head-snippet niet draaide: alsnog uit localStorage toepassen.
+  if (!document.documentElement.hasAttribute("data-planning-top")) {
+    var c = false;
+    try { c = localStorage.getItem(planningTopCollapseKey()) === "1"; } catch (e) { /* */ }
+    setPlanningTopCollapsed(c, false);
+  } else {
+    setPlanningTopCollapsed(planningTopIsCollapsed(), false); // aria/title synchroniseren
+  }
+  btn.addEventListener("click", function () {
+    setPlanningTopCollapsed(!planningTopIsCollapsed(), true);
+  });
+}
+
 function initNav() {
   document.getElementById("planning-erm-prev")?.addEventListener("click", () => {
     if (ui.calMode === "day") ui.dayDate = addDays(ui.dayDate, -1);
@@ -4087,6 +4144,9 @@ function initNav() {
     setListMode(true);
     renderAllViews();
   });
+
+  /* Inklapbare kop (KPI-strip + overlap-/beschikking-banner) */
+  initPlanningTopToggle();
 
   /* Klik op een overlappende dienst in de melding → open die dienst meteen (om aan te
    * passen). Delegation op document: robuust ongeacht of de banner-HTML al geparsed is. */

@@ -15024,6 +15024,47 @@ button.planning-erm-new {
   margin: -12px -14px 12px;
   padding: 12px 14px 10px;
 }
+/* ── Inklapbare kop: KPI-strip + overlap-/beschikking-banner (gebruikerseis 2026-06-11) ──
+   Toggle bovenin de planning-kaart om alles boven het rooster weg te klappen. Standaard
+   uitgeklapt; keuze per account onthouden (localStorage, head-snippet in planning.html +
+   planning.js). FOUC-vrij via html[data-planning-top]. */
+.planning-top-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 6px 2px 10px;
+  margin: 2px 0 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+}
+.planning-top-toggle:hover { color: var(--text); }
+.planning-top-toggle__chev { width: 15px; height: 15px; flex: none; transition: transform 0.15s ease; }
+.planning-top-toggle__label { flex: 0 0 auto; }
+.planning-top-toggle__hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--red);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: none;
+}
+html[data-planning-top="collapsed"] .planning-top-toggle__chev { transform: rotate(-90deg); }
+html[data-planning-top="collapsed"] #planning-summary,
+html[data-planning-top="collapsed"] #planning-overlap-banner,
+html[data-planning-top="collapsed"] #planning-besch-banner { display: none; }
+/* De waarschuwing-hint alleen tonen wanneer de kop is ingeklapt (anders staat ze al in de banner). */
+html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { display: block; }
 /* Het zichtbare paneel + rooster nemen hun volledige (intrinsieke) hoogte aan, zodat
    de hele inhoud ONDER de toolbar als één geheel mee scrollt — i.p.v. dat alleen het
    rooster in een eigen klein kader schuift terwijl KPI's/banner vast blijven staan.

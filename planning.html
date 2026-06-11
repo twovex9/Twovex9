@@ -3,6 +3,7 @@
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <script>/*planning-top-collapse-preset*/(function(){try{var uid='anon',raw=localStorage.getItem('sb-besa-auth');if(raw){var j=JSON.parse(raw);uid=(j&&j.user&&j.user.id)||(j&&j.currentSession&&j.currentSession.user&&j.currentSession.user.id)||'anon';}var c=localStorage.getItem('besa-planning-top-collapsed:'+uid)==='1';document.documentElement.setAttribute('data-planning-top',c?'collapsed':'expanded');}catch(e){}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
   <meta charset="UTF-8">
@@ -418,6 +419,12 @@
               <button type="button" class="btn-dienst-aanmaken" id="planning-dienst-aanmaken-btn">+ Dienst aanmaken</button>
             </div>
           </div>
+
+          <button type="button" class="planning-top-toggle" id="planning-top-toggle" aria-expanded="true" aria-controls="planning-summary planning-overlap-banner planning-besch-banner" title="Kerngetallen &amp; signaleringen verbergen">
+            <svg class="planning-top-toggle__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <span class="planning-top-toggle__label">Kerngetallen &amp; signaleringen</span>
+            <span class="planning-top-toggle__hint" id="planning-top-toggle-hint"></span>
+          </button>
 
           <div class="planning-erm-kpis planning-erm-kpis--v3" id="planning-summary" aria-label="Kerngetallen"></div>
 
