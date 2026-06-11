@@ -15232,16 +15232,22 @@ body:has(.content--planning-erm) .app-shell {
      zodat de planning-navigatie (periode, week/maand, genereren) altijd bereikbaar blijft. */
   overflow-y: auto;
   overflow-x: hidden;
+  /* Géén padding bovenaan: de sticky toolbar pint tegen de PADDING-rand van de
+     scroller, dus 12px kaart-padding bovenaan duwde de gepinde toolbar 12px (×1,1 zoom
+     = ~13px) omlaag → er ontstond een gleuf tussen de website-bovenbalk en de toolbar
+     waar weggescrolde diensten doorheen piepten (gebruikerseis 2026-06-11). De toolbar
+     heeft zelf 12px top-padding voor de ademruimte, dus de kop sluit nu strak aan. */
+  padding-top: 0;
 }
-/* Toolbar blijft vast bovenin tijdens het scrollen. De negatieve marge laat de
-   (witte) achtergrond over de kaart-padding (12px boven / 14px zijkant) bleeden,
-   zodat weggescrolde inhoud niet langs de vastgezette toolbar piept. */
+/* Toolbar blijft vast bovenin tijdens het scrollen, strak tegen de website-bovenbalk.
+   De negatieve zij-marge laat de (witte) achtergrond over de kaart-zijpadding (14px)
+   bleeden; bovenaan is er geen kaart-padding meer (zie hierboven), dus margin-top 0. */
 .planning-main--erm .planning-erm-toolbar {
   position: sticky;
   top: 0;
   z-index: 20;
   background: var(--surface);
-  margin: -12px -14px 12px;
+  margin: 0 -14px 12px;
   padding: 12px 14px 10px;
   /* Alleen de schaduw faden; de toolbar blijft altijd zichtbaar (vaste, nette kop —
      gebruikerseis 2026-06-11: het wegschuiven/terugspringen maakte de bovenkant
