@@ -11802,7 +11802,11 @@ button.btn-dienst-aanmaken:hover {
 .planning-readonly #planning-summary,
 .planning-readonly #planning-besch-banner,
 .planning-readonly .planning-filters-card,
-.planning-readonly .planning-erm-locselwrap,
+/* LET OP: .planning-erm-locselwrap NIET meer verbergen in read-only modus.
+   De locatie-keuze ("Selecteer Locatie") is een pure KIJK-filter en moet voor
+   ÉLKE rol beschikbaar zijn (spraakmemo eigenaar 2026-06-11: "het overzicht van
+   de locaties moet naar voren komen zodra je een locatie aan het zoeken bent. En
+   het geldt voor elke rol"). Zie ook de zichtbaar-makende regel verderop. */
 .planning-readonly #planning-gen-btn,
 .planning-readonly #planning-opt-btn,
 .planning-readonly #planning-ai-btn,
@@ -15371,6 +15375,21 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 
 #planning-week-grid.planning-erm--locations .planning-erm-wg-data > .planning-erm-cell--body:first-child {
   border-left: 1px solid var(--pb-dce2ea);
+}
+
+/* Locatie-groepkop blijft in beeld tijdens het scrollen (spraakmemo eigenaar
+   2026-06-11: "de locaties die ik wil zien komen niet helemaal duidelijk in beeld"
+   / "voor elke rol moet duidelijk in beeld zijn welke locaties mensen werken"). De
+   balk plakt nét onder de sticky dag-koppen, zodat je altijd ziet bij welke locatie
+   de zichtbare diensten horen — voor élke rol. De hoogte van de dag-kop-rij komt uit
+   --ff-dayhead-h (in planning.js gemeten); de fallback dekt de eerste render af. De
+   locbar heeft al een dekkende achtergrond (var(--ps-e9eef4) / open-variant), dus
+   weggescrolde rijen schijnen er niet doorheen. z-index 5 = boven de dienstkaarten,
+   onder de dag-koppen (z-index 6). */
+.planning-week-grid-wrap--freezehead #planning-week-grid.planning-erm--locations .planning-erm-locbar {
+  position: sticky;
+  top: var(--ff-dayhead-h, 60px);
+  z-index: 5;
 }
 
 /* Maandweergave: kalender met weken onder elkaar, in dezelfde huisstijl */
