@@ -2239,6 +2239,62 @@ function renderWeekGrid() {
     table.appendChild(foot);
   }
   host.appendChild(table);
+  syncPlanningDayheadHeight();
+}
+
+/* Hoogte van de sticky dag-kop-rij meten en als CSS-variabele zetten, zodat de
+   locatie-groepkop (.planning-erm-locbar) er precies ónder kan blijven plakken
+   tijdens het scrollen — voor élke rol altijd zichtbaar bij welke locatie de
+   diensten horen (spraakmemo eigenaar 2026-06-11). */
+function syncPlanningDayheadHeight() {
+  try {
+    const host = document.getElementById("planning-week-grid");
+    if (!host) return;
+    /* Synchroon meten: het rooster staat na appendChild al in de DOM, dus
+       getBoundingClientRect levert direct een geldige hoogte (geen rAF — die wordt
+       in niet-zichtbare/achtergrond-tabs sterk gethrottled). */
+    const cell = host.querySelector(
+      ".planning-erm-wg-row--head .planning-erm-cell--day",
+    );
+    const h = cell ? Math.round(cell.getBoundingClientRect().height) : 0;
+    if (h > 0) host.style.setProperty("--ff-dayhead-h", h + "px");
+  } catch (e) {
+    /* niet kritiek: de var heeft een CSS-fallback (60px) */
+  }
+}
+
+/* Breng het rooster (de geselecteerde locatie) naar voren. Bij de volledige planner
+   staat het rooster ONDER de KPI-strip + rode overlap-/beschikking-banner; een
+   simpele scroll-naar-boven zou juist dát rode blok tonen. Daarom scrollen we het
+   rooster-paneel tot net onder de sticky toolbar, zodat de dag-koppen + de gekozen
+   locatie meteen in beeld staan — in zowel de read-only kijk-modus (scroll-container
+   = .content--planning-erm) als de volledige planner (scroll-container = de kaart). */
+function scrollPlanningToRooster() {
+  try {
+    var target =
+      document.querySelector(".planning-week-grid-wrap--v3") ||
+      document.querySelector(".planning-view-panel:not([hidden])");
+    if (!target) return;
+    var sc = target.parentElement;
+    while (sc && sc !== document.body && sc !== document.documentElement) {
+      var oy = getComputedStyle(sc).overflowY;
+      if ((oy === "auto" || oy === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break;
+      sc = sc.parentElement;
+    }
+    /* Synchroon (geen rAF — die wordt in achtergrond-/niet-zichtbare tabs gethrottled,
+       waardoor de scroll met verouderde maten zou landen). getBoundingClientRect
+       forceert de layout, dus de maten kloppen direct na renderAllViews(). De sticky
+       toolbar telt niet mee: de dag-koppen plakken zelf op top:0, dus we brengen de
+       rooster-top exact tot de bovenkant van de scroll-container. */
+    if (sc && sc !== document.body && sc !== document.documentElement) {
+      var d = target.getBoundingClientRect().top - sc.getBoundingClientRect().top;
+      sc.scrollTop = Math.max(0, sc.scrollTop + d - 1);
+    } else {
+      target.scrollIntoView({ block: "start" });
+    }
+  } catch (e) {
+    /* */
+  }
 }
 
 function escapeHtml(s) {
@@ -4650,6 +4706,11 @@ function initNav() {
   document.getElementById("planning-loc-select")?.addEventListener("change", (e) => {
     filterState.locatieToolbar = e.target.value || "";
     renderAllViews();
+    /* De gekozen locatie meteen vóóraan in beeld brengen (spraakmemo eigenaar
+       2026-06-11: "het overzicht van de locaties moet naar voren komen zodra je
+       daar een locatie aan het zoeken bent"): scroll het rooster tot net onder de
+       toolbar zodat de geselecteerde locatie direct onder de dag-koppen staat. */
+    scrollPlanningToRooster();
   });
 
   /* Sidebar: Teamlid + Cliënt single-select dropdowns */
