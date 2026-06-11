@@ -22074,6 +22074,9 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .fzz-card--green { border-left-color: var(--green); }
 .fzz-card--orange { border-left-color: var(--yellow); }
 .fzz-card--red { border-left-color: var(--red); }
+/* Geselecteerde filter-tab (Te beoordelen / Goedgekeurd): ring in eigen accent */
+.fzz-card--selected { box-shadow: 0 0 0 2px var(--blue), 0 4px 16px rgba(0,0,0,0.12); }
+.fzz-card--green.fzz-card--selected { box-shadow: 0 0 0 2px var(--green), 0 4px 16px rgba(0,0,0,0.12); }
 .fzz-card-lbl { font-size: var(--font-table-cell); font-weight: 600; color: var(--text-secondary); }
 .fzz-period { color: var(--text-muted); font-weight: 600; }
 .fzz-period::before { content: "· "; }
