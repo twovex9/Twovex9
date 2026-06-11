@@ -11842,6 +11842,16 @@ button.btn-dienst-aanmaken:hover {
   min-height: 0;
   overflow: visible !important;
 }
+/* Read-only (HR/Facilitair/Medewerker/kijk-modus): de scroll zit op
+   .content--planning-erm, niet op de kaart zelf. Zonder dit rekt de layout-grid de
+   kaart uit tot viewport-hoogte, terwijl het rooster er met overflow:visible onderuit
+   puilt — dan zit de sticky toolbar gevangen in een te kort containing-block en scrolt
+   hij na ~1 scherm mee uit beeld. `align-self: start` laat de kaart tot de vólle
+   roosterhoogte groeien, zodat de toolbar over de héle scroll bovenin gepind blijft
+   (vaste, nette kop). Geen effect op de bewerk-modus: daar is de kaart zélf de scroller. */
+.planning-readonly .planning-main-card--v3 {
+  align-self: start;
+}
 
 .planning-erm-clear-plan {
   border-color: var(--pb-b91c1c);
@@ -15132,12 +15142,14 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
 .planning-week-grid-wrap--v3.planning-week-grid-wrap--freezehead {
   overflow: visible;
 }
-/* Dag-kop-cellen plakken bovenin de kaart-scroller: boven de data-rijen, onder de
-   sticky toolbar (z-index 20). Stevige achtergrond zodat weggescrolde rijen er niet
+/* Dag-kop-cellen plakken vlak ÓNDER de vaste toolbar (z-index 20): de toolbar en de
+   dag-koprij vormen samen één strak gepinde kop. --ff-toolbar-h = gemeten toolbar-hoogte
+   (planning.js, zoom-vrij via offsetHeight) zodat de dag-kop exact aansluit i.p.v. achter
+   de toolbar te verdwijnen. Stevige achtergrond zodat weggescrolde rijen er niet
    doorheen schijnen. */
 .planning-week-grid-wrap--freezehead .planning-erm-wg-row--head > .planning-erm-cell {
   position: sticky;
-  top: 0;
+  top: var(--ff-toolbar-h, 0px);
   z-index: 6;
   background: var(--ps-e9eef4);
 }
@@ -15231,18 +15243,15 @@ body:has(.content--planning-erm) .app-shell {
   background: var(--surface);
   margin: -12px -14px 12px;
   padding: 12px 14px 10px;
-  /* Auto-verbergen bij scrollen (gebruikerseis 2026-06-11): de toolbar schuift
-     soepel weg/terug. will-change houdt het schuiven vloeiend op de GPU. */
-  transition: transform 0.24s ease, box-shadow 0.2s ease;
-  will-change: transform;
+  /* Alleen de schaduw faden; de toolbar blijft altijd zichtbaar (vaste, nette kop —
+     gebruikerseis 2026-06-11: het wegschuiven/terugspringen maakte de bovenkant
+     onrustig en liet "Week … 2026" verschijnen/verdwijnen). */
+  transition: box-shadow 0.2s ease;
 }
-/* Naar BENEDEN scrollen → toolbar schuift volledig weg boven beeld (bottom-rand
-   eindigt op -12px, dus geen sliver blijft hangen). De flow-ruimte blijft staan,
-   zodat de inhoud eronder NIET verspringt. */
+/* Toolbar wordt NIET meer verborgen tijdens het scrollen — de klasse blijft als
+   no-op bestaan voor compatibiliteit, maar verplaatst de toolbar niet langer. */
 .planning-main-card--v3.planning-toolbar-hidden .planning-erm-toolbar {
-  transform: translateY(-100%);
-  box-shadow: none;
-  pointer-events: none;
+  transform: none;
 }
 /* Zodra er inhoud onder de vastgezette toolbar is weggescrold: subtiele schaduw,
    zodat de toolbar visueel "vastgeplakt" aanvoelt i.p.v. los te zweven. */
@@ -15388,7 +15397,7 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
    onder de dag-koppen (z-index 6). */
 .planning-week-grid-wrap--freezehead #planning-week-grid.planning-erm--locations .planning-erm-locbar {
   position: sticky;
-  top: var(--ff-dayhead-h, 60px);
+  top: calc(var(--ff-toolbar-h, 0px) + var(--ff-dayhead-h, 58px));
   z-index: 5;
 }
 

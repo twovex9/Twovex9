@@ -2427,16 +2427,24 @@ function syncPlanningDayheadHeight() {
   try {
     const host = document.getElementById("planning-week-grid");
     if (!host) return;
-    /* Synchroon meten: het rooster staat na appendChild al in de DOM, dus
-       getBoundingClientRect levert direct een geldige hoogte (geen rAF — die wordt
-       in niet-zichtbare/achtergrond-tabs sterk gethrottled). */
+    /* Synchroon meten: het rooster staat na appendChild al in de DOM (geen rAF — die
+       wordt in niet-zichtbare/achtergrond-tabs sterk gethrottled).
+       offsetHeight i.p.v. getBoundingClientRect: onder de vaste html{zoom:1.1} geeft
+       getBoundingClientRect visuele (×1,1) pixels terug, terwijl een sticky `top` in
+       CSS-pixels rekent — dat verschil zorgde voor een doorkijk-gat tussen de lagen.
+       offsetHeight levert de layout-hoogte in CSS-pixels, dus zoom-vrij en pixel-exact. */
     const cell = host.querySelector(
       ".planning-erm-wg-row--head .planning-erm-cell--day",
     );
-    const h = cell ? Math.round(cell.getBoundingClientRect().height) : 0;
+    const h = cell ? cell.offsetHeight : 0;
     if (h > 0) host.style.setProperty("--ff-dayhead-h", h + "px");
+    /* Toolbar-hoogte: de dag-koprij plakt hier precies ónder, zodat toolbar + dag-kop
+       samen één strak gepinde kop vormen (geen overlap, geen doorkijk-gat). */
+    const tb = document.querySelector(".planning-erm-toolbar");
+    const th = tb ? tb.offsetHeight : 0;
+    if (th > 0) host.style.setProperty("--ff-toolbar-h", th + "px");
   } catch (e) {
-    /* niet kritiek: de var heeft een CSS-fallback (60px) */
+    /* niet kritiek: de vars hebben een CSS-fallback */
   }
 }
 
@@ -4748,21 +4756,20 @@ function initPlanningTopToggle() {
   });
 }
 
-/* ── Auto-verbergen planning-toolbar bij scrollen (gebruikerseis 2026-06-11) ──
- * De toolbar staat sticky bovenin de planning-kaart. Gedrag:
- *   • naar BENEDEN scrollen → toolbar schuift weg, zodat het rooster maximaal in beeld komt;
- *   • naar BOVEN scrollen   → toolbar komt meteen terug;
- *   • aan de top            → altijd volledig zichtbaar.
- * Een drempel voorkomt jitter; de eerste ~64px wordt hij niet verborgen zodat hij
- * niet meteen wegspringt bij een minieme scroll. rAF houdt het soepel.
+/* ── Vaste, nette planning-kop (gebruikerseis 2026-06-11) ──
+ * De toolbar (periode, week/maand, knoppen) + de dag-koprij blijven samen ALTIJD
+ * strak bovenin staan; alleen de KPI-strip en de overlap-/beschikking-banners scrollen
+ * mee weg. Eerder schoof de toolbar weg/terug bij scrollen, maar omdat NIET stabiel is
+ * welke container scrolt (soms de kaart zelf, soms .content--planning-erm), bleef hij
+ * half hangen / sprong terug — de bovenkant werd er onrustig van en "Week … 2026" dook
+ * op en verdween. Nu pinnen we hem gewoon vast.
  *
- * LET OP: welke container verticaal scrollt is NIET stabiel — afhankelijk van de
- * layout-/zijbalk-stand is dat soms de kaart zelf (#planning-calendar-section met
- * overflow-y:auto), soms de pagina-main (.content--planning-erm), soms beide (geneste
- * scroll). We luisteren daarom op BEIDE en reageren op het element dat het scroll-event
- * daadwerkelijk afvuurde (e.target), met de richting bepaald uit DAT elements eigen
- * vorige positie. De klassen blijven op de kaart staan zodat de CSS-selector
- * .planning-main-card--v3.* blijft kloppen. */
+ * Deze functie houdt alleen nog:
+ *   • de subtiele schaduw-cue (.planning-is-scrolled) zodra er iets onder de toolbar is
+ *     weggescrold, zodat hij "vastgeplakt" aanvoelt;
+ *   • het her-meten van toolbar-/dag-kop-hoogte bij viewport-resize (de toolbar kan op
+ *     smalle schermen wrappen → hoger worden), zodat de sticky-offsets blijven kloppen.
+ * De toolbar wordt NIET meer verborgen (geen .planning-toolbar-hidden meer gezet). */
 function initPlanningToolbarAutohide() {
   var card = document.getElementById("planning-calendar-section");
   if (!card || card.dataset.autohideWired === "1") return;
@@ -4771,24 +4778,12 @@ function initPlanningToolbarAutohide() {
              document.querySelector(".content--planning-erm");
   var pending = null;
   var ticking = false;
-  var REVEAL_AT_TOP = 4;      // binnen 4px van de top = altijd tonen
-  var DIR_THRESHOLD = 8;      // pas reageren na 8px richting-scroll (anti-jitter)
-  var MIN_SCROLL_TO_HIDE = 64; // niet verbergen zolang we vlak onder de top zitten
+  var REVEAL_AT_TOP = 4;      // binnen 4px van de top = geen schaduw
   function update() {
     ticking = false;
     var el = pending;
     if (!el) return;
-    var y = el.scrollTop;
-    var dy = y - (el.__besaAutohideY || 0);   // richting t.o.v. dit elements eigen vorige stand
-    el.__besaAutohideY = y;
-    card.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
-    if (y <= REVEAL_AT_TOP) {
-      card.classList.remove("planning-toolbar-hidden");        // aan de top: altijd tonen
-    } else if (dy > DIR_THRESHOLD && y > MIN_SCROLL_TO_HIDE) {
-      card.classList.add("planning-toolbar-hidden");           // naar beneden → verbergen
-    } else if (dy < -DIR_THRESHOLD) {
-      card.classList.remove("planning-toolbar-hidden");        // naar boven → tonen
-    }
+    card.classList.toggle("planning-is-scrolled", el.scrollTop > REVEAL_AT_TOP);
   }
   function onScroll(e) {
     // Reageer op het element dat scrolde; negeer scroll van b.v. dropdowns.
@@ -4802,6 +4797,12 @@ function initPlanningToolbarAutohide() {
   [card, main].forEach(function (el) {
     if (el) el.addEventListener("scroll", onScroll, { passive: true });
   });
+  // Toolbar kan bij resize wrappen → her-meet de hoogte zodat de dag-kop strak blijft.
+  var rt = null;
+  window.addEventListener("resize", function () {
+    if (rt) window.clearTimeout(rt);
+    rt = window.setTimeout(syncPlanningDayheadHeight, 120);
+  }, { passive: true });
 }
 
 function initNav() {
