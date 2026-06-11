@@ -15093,6 +15093,31 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
 }
 
 /* =====================================================================
+   Sticky dag-koppen — datum blijft in beeld (spraakmemo eigenaar 2026-06-11)
+   ---------------------------------------------------------------------
+   "Als je naar beneden scrolt naar de locaties, moet de datum bovenin in beeld
+   blijven." De dag-kop-cellen hebben al position:sticky/top:0, maar de grid-wrap
+   (overflow-y:auto) vormde een eigen verticale scroll-context terwijl de planning-
+   kaart de werkelijke scroller is — daardoor plakten de koppen aan de niet-scrollende
+   wrap en scrolden de datums alsnog weg. In week-/dagweergave (freezehead) zetten we
+   de wrap-overflow op visible: de sticky lost nu op tegen .planning-main-card--v3 en de
+   dag-kop-rij blijft bovenin staan terwijl je langs de locaties scrolt. De week vult
+   exact de paneelbreedte (colMin=0), dus horizontaal scrollen is hier niet nodig. De
+   maandweergave houdt haar eigen horizontaal-scrollende board en blijft ongemoeid. */
+.planning-week-grid-wrap--v3.planning-week-grid-wrap--freezehead {
+  overflow: visible;
+}
+/* Dag-kop-cellen plakken bovenin de kaart-scroller: boven de data-rijen, onder de
+   sticky toolbar (z-index 20). Stevige achtergrond zodat weggescrolde rijen er niet
+   doorheen schijnen. */
+.planning-week-grid-wrap--freezehead .planning-erm-wg-row--head > .planning-erm-cell {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--ps-e9eef4);
+}
+
+/* =====================================================================
    Planning: toolbar vast + volledige week in beeld  (gebruikerseis 2026-06-02,
    bijgesteld 2026-06-10)
    ---------------------------------------------------------------------
