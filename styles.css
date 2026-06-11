@@ -15613,6 +15613,13 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
   line-height: 1.25;
   overflow: hidden;
 }
+/* Belangrijk: `display:flex` hierboven overschrijft het `[hidden]`-attribuut
+   (display:none). Met deze specifiekere regel verbergt fitMonthCells() de chips die
+   niet in de rij-hoogte passen wél echt — anders blijven ze renderen en clippen ze
+   op drukke locaties (bv. Eén-op-één/Ambulant), ondanks de "+N meer"-correctie. */
+.planning-month-chip[hidden] {
+  display: none;
+}
 .planning-month-chip:hover {
   background: var(--ps-eff6ff);
   border-color: var(--pb-93c5fd);
