@@ -53,24 +53,48 @@
     else if (name === "gebruikers") renderGebruikers();
   }
 
-  // Beheer-tabs (Gebruikers / Notificatietypes / Entiteiten) zijn admin-only. Sinds de
-  // pagina open is voor elke ingelogde gebruiker (iedereen moet z'n eigen profiel +
-  // notificaties kunnen beheren — video-feedback eigenaar 2026-06-07) moeten deze tabs
-  // hier verborgen worden voor wie geen edit-settings heeft. Admin-tier wint via besaCan.
+  // Beheer-tabs (Gebruikers / Entiteiten) zijn admin-only. Sinds de pagina open is voor
+  // elke ingelogde gebruiker (iedereen moet z'n eigen profiel kunnen beheren —
+  // video-feedback eigenaar 2026-06-07) moeten deze tabs hier verborgen worden voor wie
+  // geen edit-settings heeft. Admin-tier wint via besaCan.
   function canManageSettings() {
     try {
       if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
       return (typeof window.besaCan === "function") && window.besaCan("edit", "settings");
     } catch (e) { return false; }
   }
+
+  // Notificaties (zowel "Notificatietypes" als de eigen "Mijn notificaties"-opt-in)
+  // mogen alléén bediend worden door management — spraakmemo eigenaar 2026-06-11:
+  // notificaties worden aan de voorkant vanuit HR ingesteld; een medewerker mag ze niet
+  // zelf invoeren/bedienen, alleen op de Notificaties-pagina zien wat hij moet aanleveren.
+  // Toegestane rollen: Eigenaar, Directeur, Admin (admin-tier) + Zorgcoördinator + HR.
+  // (HR heeft géén edit-settings-slug, dus dit kan niet op canManageSettings leunen.)
+  var NOTIF_MANAGER_ROLES = ["Eigenaar", "Directeur", "Admin", "Zorgcoördinator", "HR"];
+  function canManageNotifications() {
+    try {
+      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
+      if (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function") {
+        return window.besaPermissions.hasAnyRole(NOTIF_MANAGER_ROLES);
+      }
+    } catch (e) { /* */ }
+    return false;
+  }
+
   function applyAdminTabVisibility() {
-    var allowed = canManageSettings();
-    ["inst-tab-gebruikers", "inst-tab-notificaties", "inst-tab-entiteiten"].forEach(function (id) {
+    var allowSettings = canManageSettings();
+    ["inst-tab-gebruikers", "inst-tab-entiteiten"].forEach(function (id) {
       var btn = document.getElementById(id);
-      if (btn) btn.style.display = allowed ? "" : "none";
+      if (btn) btn.style.display = allowSettings ? "" : "none";
+    });
+    var allowNotif = canManageNotifications();
+    ["inst-tab-mijn-notificaties", "inst-tab-notificaties"].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.style.display = allowNotif ? "" : "none";
     });
     // Stond een verborgen beheer-tab toch actief (bv. uit URL/cache) → terug naar profiel.
-    if (!allowed && ["gebruikers", "notificaties", "entiteiten"].indexOf(state.activeTab) !== -1) {
+    if ((!allowSettings && ["gebruikers", "entiteiten"].indexOf(state.activeTab) !== -1) ||
+        (!allowNotif && ["mijn-notificaties", "notificaties"].indexOf(state.activeTab) !== -1)) {
       setTab("profiel");
     }
   }
