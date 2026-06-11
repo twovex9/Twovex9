@@ -3390,10 +3390,27 @@ function clearPlanningDiensttypeMultiselect() {
 }
 
 function setPlanningDiensttypeSelectionFromString(value) {
+  // Bij bewerken moet het diensttype van de bestaande dienst vóóraangevinkt staan.
+  // renderPlanningDiensttypeMultiselect vinkt aan op `keep.has(o.value)`, waarbij
+  // o.value de ruwe diensttype-label is ("Vroege dienst"). De keep-set moet dus uit
+  // die optie-values bestaan — niet uit de canonieke keys van resolveDiensttypeKey
+  // ("vroege_dienst"), want die matchten nooit waardoor het type leeg bleef en
+  // opslaan op "Selecteer minstens één diensttype" strandde. We matchen de
+  // gevraagde labels op de werkelijke opties via canonieke key (vangt aliassen) én
+  // als terugval via genormaliseerd token (vangt casing/diacritica/spaties).
+  const opts = readCompensatieDiensttypeOptions();
+  const wantedLabels = rowDiensttypeLabels({ diensttype: value });
+  const wantedKeys = new Set(wantedLabels.map((l) => resolveDiensttypeKey(l)).filter(Boolean));
+  const wantedTokens = new Set(wantedLabels.map((l) => normalizeDiensttypeToken(l)).filter(Boolean));
   const wanted = new Set(
-    rowDiensttypeLabels({ diensttype: value })
-      .map((label) => resolveDiensttypeKey(label))
-      .filter(Boolean)
+    opts
+      .filter((o) => {
+        const k = resolveDiensttypeKey(o.value) || resolveDiensttypeKey(o.label);
+        if (k && wantedKeys.has(k)) return true;
+        return wantedTokens.has(normalizeDiensttypeToken(o.value)) ||
+          wantedTokens.has(normalizeDiensttypeToken(o.label));
+      })
+      .map((o) => o.value)
   );
   renderPlanningDiensttypeMultiselect(wanted);
   applyDienstFormOneOnOneState();

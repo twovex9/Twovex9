@@ -215,9 +215,20 @@
       if (cancelBtn) cancelBtn.textContent = cancelLabel;
       if (okBtn) okBtn.textContent = okLabel;
 
+      // Zodra de gebruiker ver genoeg naar rechts schuift, "klikt" de slider vast
+      // op 100%: het balletje blijft daarna rechts staan — ook als de muis het
+      // kader verlaat of wordt losgelaten vóór exact 100% — tot er op de knop
+      // Verwijderen (of Annuleren/Escape) wordt geklikt. Voorkomt dat een net-niet-
+      // volledige sleep terugveert en de bevestiging onmogelijk maakt.
+      var sliderLocked = false;
+      var SLIDER_LOCK_AT = 90;
       function syncSlider() {
         if (!slider) return;
         var v = Math.min(100, Math.max(0, parseInt(slider.value, 10) || 0));
+        if (sliderLocked || v >= SLIDER_LOCK_AT) {
+          sliderLocked = true;
+          v = 100;
+        }
         slider.value = String(v);
         slider.style.setProperty("--employee-slider-pct", v + "%");
         slider.setAttribute("aria-valuenow", String(v));
