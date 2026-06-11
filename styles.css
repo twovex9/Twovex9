@@ -26895,6 +26895,10 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-empty { text-align: center; color: var(--text-muted); padding: 24px 12px; }
 .fin-loc-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
 .fin-loc-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+/* Kosten-cel: totaal met compacte ZZP/loondienst-split eronder (Per-locatie tabel) */
+.fin-loc-kost { white-space: nowrap; }
+.fin-loc-kost-tot { display: block; }
+.fin-loc-kost-split { display: block; margin-top: 2px; font-size: var(--font-ui-badge); font-weight: 400; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 /* Bezetting-cel: telling + vrij-badge naast elkaar (Per-locatie tabel) */
 .fin-loc-bez { white-space: nowrap; }
 .fin-loc-bez-cnt { margin-right: 8px; color: var(--text); font-variant-numeric: tabular-nums; }
