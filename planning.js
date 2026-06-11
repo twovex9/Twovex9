@@ -2430,19 +2430,29 @@ function returnToRosterAtAdjustment() {
   }
   renderAllViews();
   if (target) {
-    // Na de re-render de kaart in beeld scrollen + kort oplichten. De verticale
-    // scroll-container van de planning is instabiel (soms de kaart-sectie, soms page-main)
-    // en de grid-DOM wordt pas ná deze tick volledig opgebouwd; daarom twee frames wachten
-    // en de kaart vers opzoeken vóór we scrollen (anders scrollt een verouderde/lege grid).
+    // Na de re-render de kaart in beeld scrollen + kort oplichten. De grid-DOM (én de
+    // KPI-/banner-kop erboven) wordt pas ná deze tick volledig opgebouwd en kan nog
+    // herstromen, waardoor één enkele scrollIntoView te vroeg op een nog niet-uitgevulde
+    // layout landt. We scrollen daarom in een korte retry-lus tot de kaart écht in beeld
+    // staat (of na een veilige cap stoppen). De scroll-container van de planning is bovendien
+    // instabiel (soms de kaart-sectie, soms page-main) — scrollIntoView kiest zelf de juiste.
     const sel = '.planning-erm-card[data-id="' + String(target.id).replace(/["\\]/g, "\\$&") + '"]';
-    const doScroll = () => {
-      const card = document.querySelector(sel);
-      if (!card) return;
-      try { card.scrollIntoView({ block: "center", inline: "center" }); } catch (e) { try { card.scrollIntoView(); } catch (e2) { /* */ } }
+    let attempt = 0;
+    const settleAndHighlight = (card) => {
       card.classList.add("planning-erm-card--justedited");
       setTimeout(() => card.classList.remove("planning-erm-card--justedited"), 2600);
     };
-    requestAnimationFrame(() => requestAnimationFrame(doScroll));
+    const doScroll = () => {
+      const card = document.querySelector(sel);
+      if (!card) { if (attempt++ < 12) setTimeout(doScroll, 70); return; }
+      try { card.scrollIntoView({ block: "center", inline: "center" }); } catch (e) { try { card.scrollIntoView(); } catch (e2) { /* */ } }
+      const r = card.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const inView = r.top >= 0 && r.top <= vh - 40;
+      if (!inView && attempt++ < 12) { setTimeout(doScroll, 70); return; }
+      settleAndHighlight(card);
+    };
+    requestAnimationFrame(doScroll);
   }
 }
 
