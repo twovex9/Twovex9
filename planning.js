@@ -4011,30 +4011,38 @@ function initPlanningTopToggle() {
 }
 
 /* ── Auto-verbergen planning-toolbar bij scrollen (gebruikerseis 2026-06-11) ──
- * De toolbar staat sticky bovenin de planning-kaart, maar de verticale scroll-container
- * is de pagina-main (.content--planning-erm), NIET de kaart zelf. Gedrag:
+ * De toolbar staat sticky bovenin de planning-kaart. Gedrag:
  *   • naar BENEDEN scrollen → toolbar schuift weg, zodat het rooster maximaal in beeld komt;
  *   • naar BOVEN scrollen   → toolbar komt meteen terug;
  *   • aan de top            → altijd volledig zichtbaar.
  * Een drempel voorkomt jitter; de eerste ~64px wordt hij niet verborgen zodat hij
- * niet meteen wegspringt bij een minieme scroll. rAF houdt het soepel. */
+ * niet meteen wegspringt bij een minieme scroll. rAF houdt het soepel.
+ *
+ * LET OP: welke container verticaal scrollt is NIET stabiel — afhankelijk van de
+ * layout-/zijbalk-stand is dat soms de kaart zelf (#planning-calendar-section met
+ * overflow-y:auto), soms de pagina-main (.content--planning-erm). We luisteren daarom
+ * op BEIDE en bepalen per frame welke daadwerkelijk scrollt. De klassen blijven op de
+ * kaart staan zodat de CSS-selector .planning-main-card--v3.* blijft kloppen. */
 function initPlanningToolbarAutohide() {
   var card = document.getElementById("planning-calendar-section");
   if (!card || card.dataset.autohideWired === "1") return;
-  // De toolbar plakt t.o.v. de dichtstbijzijnde scroll-ancestor: de pagina-main. We
-  // luisteren dáár en togglen de klassen op de kaart, zodat de CSS-selector
-  // .planning-main-card--v3.planning-toolbar-hidden .planning-erm-toolbar blijft kloppen.
-  var scroller = card.closest(".content--planning-erm") ||
-                 document.querySelector(".content--planning-erm") || card;
   card.dataset.autohideWired = "1";
-  var lastY = scroller.scrollTop || 0;
+  var main = card.closest(".content--planning-erm") ||
+             document.querySelector(".content--planning-erm");
+  var lastY = 0;
   var ticking = false;
   var REVEAL_AT_TOP = 4;      // binnen 4px van de top = altijd tonen
   var DIR_THRESHOLD = 8;      // pas reageren na 8px richting-scroll (anti-jitter)
   var MIN_SCROLL_TO_HIDE = 64; // niet verbergen zolang we vlak onder de top zitten
+  // De container die op dit moment daadwerkelijk verticaal scrollt (kaart heeft voorrang).
+  function activeScroller() {
+    if (card.scrollHeight > card.clientHeight + 4) return card;
+    if (main && main.scrollHeight > main.clientHeight + 4) return main;
+    return card;
+  }
   function update() {
     ticking = false;
-    var y = scroller.scrollTop;
+    var y = activeScroller().scrollTop;
     var dy = y - lastY;
     card.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
     if (y <= REVEAL_AT_TOP) {
@@ -4046,11 +4054,14 @@ function initPlanningToolbarAutohide() {
     }
     lastY = y;
   }
-  scroller.addEventListener("scroll", function () {
+  function onScroll() {
     if (ticking) return;
     ticking = true;
     window.requestAnimationFrame(update);
-  }, { passive: true });
+  }
+  [card, main].forEach(function (el) {
+    if (el) el.addEventListener("scroll", onScroll, { passive: true });
+  });
 }
 
 function initNav() {
