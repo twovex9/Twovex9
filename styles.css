@@ -13288,10 +13288,6 @@ button.planning-erm-new {
 .planning-erm-locbar--open .planning-erm-glabel-name {
   color: var(--pb-b91c1c);
 }
-.planning-erm-locbar--open .planning-erm-row-badge {
-  background: var(--pb-b91c1c);
-  color: #fff;
-}
 
 /* Reden-uitleg popover bij het "!"-icoon op een dienstkaart. */
 .planning-reason-pop {
@@ -15283,6 +15279,13 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 #planning-week-grid.planning-erm--locations .planning-erm-locbar .planning-erm-glabel-chip {
   font-size: 12px;
   font-weight: 800;
+}
+
+/* Rode telbadge op de "Openstaande diensten"-groepkop (override van de blauwe
+   standaard-badge; ID-gescoopt zodat de specificity wint). */
+#planning-week-grid.planning-erm--locations .planning-erm-locbar--open .planning-erm-row-badge {
+  background: var(--pb-b91c1c);
+  color: #fff;
 }
 
 #planning-week-grid.planning-erm--locations .planning-erm-wg-data > .planning-erm-cell--body:first-child {
