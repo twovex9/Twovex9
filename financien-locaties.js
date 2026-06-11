@@ -349,9 +349,6 @@
       renderKamersBezetting(body, loc.name, d);
       renderJongeren(body, loc.name, d.jongeren || []);
 
-      // Loondienst-medewerkers (automatisch o.b.v. salaris × locatiekoppeling)
-      renderLoondienstSection(body, d.loondienst || []);
-
       // Overhead-personeel (read-only; beheer via de Overhead-tab)
       renderPersSection(body, loc.name, d.personeel || []);
 
@@ -440,31 +437,6 @@
       // Openstaande diensten op deze locatie (toekomst)
       renderOpenDienstenDetail(body, d.open_diensten || [], d.open_diensten_totaal || 0);
     });
-  }
-
-  /* ---- loondienst-medewerkers (drill-down, read-only) ---- */
-  function renderLoondienstSection(body, rows) {
-    if (!rows || !rows.length) return;
-    body.appendChild(el("h3", "fin-sec-h", "Loondienst-medewerkers"));
-    var t = buildTable([{ label: "Naam" }, { label: "Functie" }, { label: "€/maand", num: true }, { label: "Mnd", num: true }, { label: "In periode", num: true }]);
-    var sum = 0;
-    rows.forEach(function (p) {
-      sum += Number(p.kost_periode) || 0;
-      var tr = el("tr");
-      tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
-      tr.appendChild(el("td", null, p.functie || "—"));
-      tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
-      tr.appendChild(el("td", "fin-num", fmtInt(p.maanden)));
-      tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
-      t.tb.appendChild(tr);
-    });
-    var tf = el("tfoot"), trf = el("tr");
-    trf.appendChild(el("td", "bd-td-strong", "Totaal loondienst (" + rows.length + ")"));
-    trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, "")); trf.appendChild(el("td", null, ""));
-    trf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sum)));
-    tf.appendChild(trf); t.tbl.appendChild(tf);
-    body.appendChild(t.tbl);
-    body.appendChild(el("p", "bd-mrow-note", "Loondienstkosten = bruto-maandsalaris × 1,30 (werkgeverslasten), gelijk verdeeld over de gekoppelde locaties van de medewerker (HR → locatiekeuze)."));
   }
 
   /* ---- openstaande diensten (drill-down) ---- */
