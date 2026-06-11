@@ -16,8 +16,13 @@
 --
 -- Toegang (server-side, SECURITY DEFINER):
 --   can_view_bezetting()     : alle kantoor/zorg-rollen (lezen).
---   can_beheer_kamers()      : kamers + capaciteit + housekeeping-status muteren
---                              (admin-tier + Facilitair + Planner + Zorgcoördinator).
+--   can_beheer_kamers()      : kamers TOEVOEGEN / bewerken / archiveren (capaciteit, verdieping)
+--                              — alleen admin-tier (Eigenaar/Admin/Directeur) + Zorgcoördinator.
+--                              (Eigenaar-besluit 2026-06-11: kamerbeheer = enkel deze rollen.)
+--   can_kamers_status()      : housekeeping/schoonmaak-status zetten (gereed/schoonmaak/onderhoud/
+--                              buiten gebruik) — admin-tier + Facilitair + Planner + Zorgcoördinator
+--                              (Facilitair houdt zo z'n housekeeping-taak, zonder kamers te kunnen
+--                              toevoegen/verwijderen).
 --   can_toewijzen_clienten() : cliënt↔kamer koppelen/verplaatsen
 --                              (admin-tier + Zorgcoördinator + Gedragswetenschapper + Cliëntbeheer).
 -- Rolbron = bs2_role_users (email-match) → bs2_roles.slug (idem is_office_staff /
@@ -116,7 +121,26 @@ as $$
   );
 $$;
 
+-- Kamers toevoegen / bewerken / archiveren — beperkt tot admin-tier + Zorgcoördinator.
+-- (Eigenaar-besluit 2026-06-11: Facilitair/Planner mogen GEEN kamers meer toevoegen/verwijderen.)
 create or replace function public.can_beheer_kamers()
+ returns boolean language sql stable security definer
+ set search_path to 'pg_catalog','public'
+as $$
+  select exists(
+    select 1 from public.profiles p
+    join public.bs2_role_users ru on lower(ru.user_email) = lower(p.email)
+    join public.bs2_roles r on r.id = ru.role_id
+    where p.id = auth.uid() and r.slug in
+      ('admin','eigenaar','directeur','teamleider')
+  ) or exists(
+    select 1 from public.profiles p where p.id = auth.uid() and p.rol = 'admin'
+  );
+$$;
+
+-- Housekeeping/schoonmaak-status zetten — bredere set zodat Facilitair (en Planner) hun
+-- onderhoud/schoonmaak-taak houden, ZONDER kamers te kunnen toevoegen/verwijderen.
+create or replace function public.can_kamers_status()
  returns boolean language sql stable security definer
  set search_path to 'pg_catalog','public'
 as $$
@@ -433,7 +457,7 @@ set search_path to 'pg_catalog','public'
 as $$
 declare v_n integer;
 begin
-  if not public.can_beheer_kamers() then return jsonb_build_object('unauthorized', true); end if;
+  if not public.can_kamers_status() then return jsonb_build_object('unauthorized', true); end if;
   if p_kamer_id is null then return jsonb_build_object('ok', false, 'error', 'Geen kamer opgegeven.'); end if;
   if p_status not in ('gereed','schoonmaak_nodig','onderhoud_nodig','buiten_gebruik') then
     return jsonb_build_object('ok', false, 'error', 'Onbekende status: ' || coalesce(p_status,'(leeg)'));
@@ -535,6 +559,7 @@ $$;
 -- ----------------------------------------------------------------------------
 grant execute on function public.can_view_bezetting() to authenticated;
 grant execute on function public.can_beheer_kamers() to authenticated;
+grant execute on function public.can_kamers_status() to authenticated;
 grant execute on function public.can_toewijzen_clienten() to authenticated;
 grant execute on function public.bezetting_overzicht() to authenticated;
 grant execute on function public.bezetting_kamer_upsert(uuid,text,text,text,integer,integer,text) to authenticated;
