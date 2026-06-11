@@ -29409,6 +29409,11 @@ body.ond-body {
 
 /* Toolbar van het board/lijst */
 .bz-board-toolbar { gap: 12px; flex-wrap: wrap; align-items: center; }
+/* .btn-outline/.btn-primary hebben display:(inline-)flex, wat het [hidden]-attribuut
+   overschrijft. JS verbergt "+ Kamer toevoegen" / "Meerdere kamers toevoegen" voor rollen
+   zonder kamerbeheer-rechten (Facilitair/Planner); deze regel laat dat ook echt verbergen. */
+.bz-board-toolbar .btn-primary[hidden],
+.bz-board-toolbar .btn-outline[hidden] { display: none !important; }
 .bz-loc-filter { min-width: 180px; }
 .bz-search { min-width: 200px; }
 
