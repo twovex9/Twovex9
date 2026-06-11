@@ -1266,6 +1266,7 @@ function getMetrics(items) {
   let zzpKostenAccum = 0;   // Module 2 Bug #88: ZZP-kosten per-diensttype via comp_diensttypes.basis
   let kostenAccum = 0;       // Totaal kosten per-diensttype (alle medewerkers)
   let kmKosten = 0;
+  let kmTotaal = 0;          // Totaal gereden kilometers (aantal, niet kosten)
   let openHours = 0;
   let openCount = 0;
   let zzpRateWeighted = 0;   // F8: som(uren × medewerker.uurAlgemeen) voor ZZP'ers
@@ -1321,7 +1322,7 @@ function getMetrics(items) {
     // PR-F: km-tarief uit planning_settings i.p.v. hardcoded 0.23
     const settingsTar = (window.planningSettingsDB && window.planningSettingsDB.getSync && window.planningSettingsDB.getSync())?.km_tarief;
     const kmTar = Number(r.kmTarief) || Number(settingsTar) || 0.23;
-    if (km > 0) kmKosten += km * kmTar;
+    if (km > 0) { kmKosten += km * kmTar; kmTotaal += km; }
   });
   const uren = formatHoursShort(hours);
   const openUren = formatHoursShort(openHours);
@@ -1335,12 +1336,15 @@ function getMetrics(items) {
     count: items.length,
     hours,
     uren,
+    zzpHours,
+    zzpUren: formatHoursShort(zzpHours),
     openHours,
     openUren,
     openCount,
     kosten,
     zzpKosten,
     kmKosten,
+    kmTotaal,
     per,
     gemTarief,
     gemZzpTarief,
@@ -1348,6 +1352,12 @@ function getMetrics(items) {
     personeelsKostenHours,
     tarief: ui.tarief,
   };
+}
+
+/** Toon kilometers als afgerond geheel getal met "km"-suffix (bv. "128 km"). */
+function formatKmCount(km) {
+  const n = Math.round(Number(km) || 0);
+  return `${n.toLocaleString("nl-NL")} km`;
 }
 
 function renderSummary(items) {
@@ -1375,6 +1385,17 @@ function renderSummary(items) {
         <strong class="planning-stat-value">${m.uren}</strong>
       </div>
     </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--zzpuren" title="Uren die door ZZP'ers / inhuur worden ingezet in deze periode.">
+      <span class="planning-kpi-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+        </svg>
+      </span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">ZZP-uren</span>
+        <strong class="planning-stat-value">${m.zzpUren}</strong>
+      </div>
+    </div>
     <div class="planning-kpi planning-kpi--v3 planning-kpi--open">
       <span class="planning-kpi-ico" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -1391,6 +1412,17 @@ function renderSummary(items) {
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">Kilometerkosten</span>
         <strong class="planning-stat-value planning-stat-value--money">${formatEuro(m.kmKosten)}</strong>
+      </div>
+    </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--kmcount" title="Totaal aantal gereden kilometers in deze periode.">
+      <span class="planning-kpi-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 17h2l1-5h12l1 5h2"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/>
+        </svg>
+      </span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Kilometers</span>
+        <strong class="planning-stat-value">${formatKmCount(m.kmTotaal)}</strong>
       </div>
     </div>
     <div class="planning-kpi planning-kpi--v3 planning-kpi--tarief">
@@ -2030,6 +2062,10 @@ function renderWeekGrid() {
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">⏱</span>
             <span>${formatHoursShort(m.hours)}</span>
           </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--zzpuren" title="Ingezette ZZP-uren in deze rij">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">⏱</span>
+            <span>ZZP ${m.zzpUren}</span>
+          </span>
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--open" title="Openstaande uren in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">!</span>
             <span>Open ${formatHoursShort(m.openHours)}</span>
@@ -2037,6 +2073,10 @@ function renderWeekGrid() {
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--km" title="Kilometerkosten in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€</span>
             <span>KM ${formatEuro(m.kmKosten)}</span>
+          </span>
+          <span class="planning-erm-glabel-chip planning-erm-glabel-chip--kmcount" title="Gereden kilometers in deze rij">
+            <span class="planning-erm-glabel-chip-ico" aria-hidden="true">⛟</span>
+            <span>${formatKmCount(m.kmTotaal)}</span>
           </span>
           <span class="planning-erm-glabel-chip planning-erm-glabel-chip--tarief" title="Gemiddeld tarief per uur in deze rij">
             <span class="planning-erm-glabel-chip-ico" aria-hidden="true">€/u</span>
