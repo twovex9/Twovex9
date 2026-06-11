@@ -1624,17 +1624,32 @@ function renderMonthStrip() {
   }
 }
 
+/* Window-resize-handler die de maand-board-hoogte herberekent en fitMonthCells
+   opnieuw draait, zodat de hele maand in beeld blijft bij venster-resize. */
+let monthFitResizeHandler = null;
+
 function renderMonthCalendar(host, items, overlapIds) {
   const monthStart = startOfMonth(ui.monthDate || new Date());
   const monthEnd = addDays(monthStart, daysInMonth(monthStart));
   const gridStart = getMonday(monthStart);
-  const lastVisible = addDays(getMonday(addDays(monthEnd, 6)), 7);
+  /* Alleen de weken tonen die een dag van déze maand bevatten (4, 5 of 6 rijen,
+     afhankelijk van de maand) — geen lege trailing-week. Zo krijgt elke weekrij
+     meer hoogte en blijven de dagen beter leesbaar binnen het ene-scherm-beeld. */
+  const lastVisible = addDays(getMonday(addDays(monthEnd, -1)), 7);
   const days = [];
   for (let d = new Date(gridStart); d < lastVisible; d = addDays(d, 1)) days.push(new Date(d));
+  const weekCount = Math.max(1, Math.round(days.length / 7));
 
   const board = document.createElement("div");
-  board.className = "planning-month-board";
-  board.style.gridTemplateColumns = "42px repeat(7, minmax(132px, 1fr))";
+  /* Volledige maand in één beeld (gebruikerseis 2026-06-11): het kalender-board
+     vult de beschikbare hoogte onder de toolbar en de weekrijen delen die hoogte
+     gelijk (1fr), zodat álle weken — dag 1 t/m einde maand — samen op het scherm
+     passen zonder pagina-scroll. De 7 dagkolommen krimpen mee in de breedte
+     (minmax(0,1fr) → geen horizontale schuif). Elke dagcel clipt zijn diensten en
+     fitMonthCells() toont per dag zoveel compacte dienst-chips als passen + "+N meer". */
+  board.className = "planning-month-board planning-month-board--fit";
+  board.style.gridTemplateColumns = "minmax(34px, 42px) repeat(7, minmax(0, 1fr))";
+  board.style.gridTemplateRows = `auto repeat(${weekCount}, minmax(0, 1fr))`;
 
   const corner = document.createElement("div");
   corner.className = "planning-month-head planning-month-head--week";
@@ -1655,9 +1670,10 @@ function renderMonthCalendar(host, items, overlapIds) {
     weekLabel.textContent = `W${getIsoWeek(weekDays[0])}`;
     board.appendChild(weekLabel);
 
-    weekDays.forEach((day, dayIdx) => {
+    weekDays.forEach((day) => {
       const cell = document.createElement("div");
       cell.className = "planning-month-cell";
+      cell.dataset.day = String(day.getTime());
       if (day.getMonth() !== monthStart.getMonth()) cell.classList.add("is-outside-month");
       if (isToday(day)) cell.classList.add("is-today");
 
@@ -1675,25 +1691,140 @@ function renderMonthCalendar(host, items, overlapIds) {
 
       const list = document.createElement("div");
       list.className = "planning-month-cell-list";
-      inDay.slice(0, 4).forEach((it) => list.appendChild(buildShiftCardEl(it, dayIdx, overlapIds)));
-      if (inDay.length > 4) {
-        const more = document.createElement("button");
-        more.type = "button";
-        more.className = "planning-month-more";
-        more.textContent = `+${inDay.length - 4} meer`;
-        more.addEventListener("click", () => {
-          ui.dayDate = new Date(day);
-          setCalMode("day");
-          renderAllViews();
-        });
-        list.appendChild(more);
-      }
+      inDay.forEach((it) => list.appendChild(buildMonthChipEl(it, overlapIds)));
       cell.appendChild(list);
       board.appendChild(cell);
     });
   }
 
   host.appendChild(board);
+
+  /* Het board exact tot de onderkant van de viewport laten reiken. De app-shell
+     rendert bewust ~80px hoger dan de viewport (en de pagina-scroll is vergrendeld),
+     dus puur meegroeien met de kaart zou de onderste week net buiten beeld duwen.
+     Daarom zetten we de hoogte expliciet op "viewport-onderkant − board-top", zodat
+     álle weken (dag 1 t/m einde maand) binnen het scherm vallen. Daarna trimt
+     fitMonthCells() per dagcel de chips die niet in de rij-hoogte passen. */
+  const applyFit = () => {
+    if (!board.isConnected) return;
+    const rect = board.getBoundingClientRect();
+    // Page-zoom/DPI-schaal: getBoundingClientRect (visueel) kan afwijken van de
+    // layout-hoogte (offsetHeight). We clampen in visuele ruimte en rekenen terug
+    // naar de CSS-pixelhoogte die we op het board zetten, zodat de onderkant exact
+    // binnen de viewport valt — ongeacht zoomniveau of schermschaling.
+    const scale = board.offsetHeight > 0 ? rect.height / board.offsetHeight : 1;
+    const availVisual = window.innerHeight - rect.top - 8;
+    const h = Math.max(200, Math.floor(availVisual / (scale || 1)));
+    board.style.height = h + "px";
+    fitMonthCells(board);
+  };
+  // Synchroon (board staat al in de DOM) + na de volgende frame + kort daarna,
+  // zodat een async her-render of late layout-pas de hoogte niet mist.
+  applyFit();
+  requestAnimationFrame(applyFit);
+  setTimeout(applyFit, 120);
+  if (monthFitResizeHandler) {
+    window.removeEventListener("resize", monthFitResizeHandler);
+    monthFitResizeHandler = null;
+  }
+  monthFitResizeHandler = () => requestAnimationFrame(applyFit);
+  window.addEventListener("resize", monthFitResizeHandler);
+}
+
+/* Compacte dienst-chip voor de maandweergave: één regel met kleur-stip + tijd +
+   diensttype. Klik springt naar de dagweergave van die datum (inzoomen op de dag),
+   consistent met de "+N meer"-chip; daar staan de volledige dienstkaarten met de
+   bekijk-/bewerk-/verwijder-acties. */
+function buildMonthChipEl(it, overlapIds) {
+  const autoOverlap = overlapIds && overlapIds.has(it.id);
+  const labels = rowDiensttypeLabels(it);
+  const firstLabel = labels[0] || it.diensttype || it.functie || "";
+  const dtKey = resolveDiensttypeKey(firstLabel);
+  const accent = colorForDiensttype(firstLabel) || (dtKey && DIENSTTYPE_COLORS[dtKey]) || GRID_ACCENT[0];
+  const clientLabel = String(it.client || "").trim();
+  const title = (dtKey === "1_op_1" && clientLabel)
+    ? `${getClientFirstName(clientLabel)} 1 op 1`
+    : (firstLabel || "Dienst");
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = "planning-month-chip";
+  if (it.conflict || autoOverlap) chip.classList.add("planning-month-chip--conflict");
+  chip.style.setProperty("--erv-stripe", accent);
+  const timeRange = `${formatTimeShort(it.start)} – ${formatTimeShort(it.einde)}`;
+  chip.title = `${title} · ${timeRange}${it.teamlid ? " · " + String(it.teamlid).trim() : ""}`;
+  chip.innerHTML = `
+    <span class="planning-month-chip-dot" style="background:${accent}" aria-hidden="true"></span>
+    <span class="planning-month-chip-time">${formatTimeShort(it.start)}</span>
+    <span class="planning-month-chip-name">${escapeHtml(title)}</span>`;
+  chip.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const s = parseStartDate(it.start);
+    if (!s) return;
+    ui.dayDate = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+    setCalMode("day");
+    renderAllViews();
+  });
+  return chip;
+}
+
+/* Trim per dagcel het aantal zichtbare dienst-chips zodat ze binnen de
+   (gelijk verdeelde) rij-hoogte passen. De verborgen chips worden samengevat in
+   een "+N meer"-chip die naar de dagweergave springt. Idempotent: kan na elke
+   resize opnieuw draaien. */
+function fitMonthCells(board) {
+  if (!board || !board.isConnected) return;
+  board.querySelectorAll(".planning-month-cell").forEach((cell) => {
+    const list = cell.querySelector(".planning-month-cell-list");
+    if (!list) return;
+    const prevMore = list.querySelector(".planning-month-more");
+    if (prevMore) prevMore.remove();
+    const chips = [...list.querySelectorAll(".planning-month-chip")];
+    chips.forEach((c) => { c.hidden = false; });
+    if (!chips.length) return;
+    const avail = list.clientHeight;
+    if (avail <= 0) return;
+    const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+    const chipH = (c) => c.offsetHeight;
+    let used = 0;
+    let shown = 0;
+    for (let i = 0; i < chips.length; i++) {
+      const h = chipH(chips[i]) + (i > 0 ? gap : 0);
+      if (used + h > avail) break;
+      used += h;
+      shown++;
+    }
+    if (shown >= chips.length) return; // alles past al
+    // Reserveer ruimte voor de "+N meer"-chip; haal zo nodig één zichtbare chip weg.
+    const reserve = chipH(chips[0]) + gap;
+    while (shown > 0 && used + reserve > avail) {
+      shown--;
+      used -= chipH(chips[shown]) + gap;
+    }
+    let hiddenCount = chips.length - shown;
+    for (let i = shown; i < chips.length; i++) chips[i].hidden = true;
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "planning-month-more";
+    more.textContent = `+${hiddenCount} meer`;
+    more.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const ts = parseInt(cell.dataset.day || "0", 10);
+      if (!ts) return;
+      ui.dayDate = new Date(ts);
+      setCalMode("day");
+      renderAllViews();
+    });
+    list.appendChild(more);
+    // Correctie: past de "+N meer"-chip er nét niet bij, verberg telkens nog één
+    // zichtbare chip tot de lijst exact binnen de rij-hoogte valt (geen clipping).
+    let guard = chips.length;
+    while (shown > 0 && list.scrollHeight > list.clientHeight + 1 && guard-- > 0) {
+      shown--;
+      chips[shown].hidden = true;
+      hiddenCount++;
+      more.textContent = `+${hiddenCount} meer`;
+    }
+  });
 }
 
 function buildShiftCardEl(it, gi, overlapIds) {
@@ -2012,6 +2143,18 @@ function renderWeekGrid() {
   if (wrap && wrap.classList.contains("planning-week-grid-wrap--v3")) {
     wrap.classList.toggle("planning-week-grid-wrap--freezehead", ui.calMode !== "month");
   }
+  /* Maandweergave "volledig in beeld" (gebruikerseis 2026-06-11): het view-panel +
+     de wrap krimpen mee zodat het kalender-board z'n in JS geclampte hoogte kan
+     aannemen (zie .planning-view-panel--monthfit in styles.css), en de KPI-strip +
+     banners wijken zodat de hele maand in één keer past. Beide reversibel: alleen in
+     maandmodus actief; in week/dag teruggezet zónder de opgeslagen kop-voorkeur te raken. */
+  const monthMode = ui.calMode === "month";
+  const panel = wrap && wrap.parentElement;
+  if (panel && panel.classList.contains("planning-view-panel")) {
+    panel.classList.toggle("planning-view-panel--monthfit", monthMode);
+  }
+  const card = panel && panel.closest(".planning-main-card--v3");
+  if (card) card.classList.toggle("planning-card--monthfit", monthMode);
   host.innerHTML = "";
   if (empty) empty.hidden = true;
   const overlapIds = buildOverlapConflictIds(items);
