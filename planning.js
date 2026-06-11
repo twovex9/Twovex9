@@ -1338,18 +1338,47 @@ function getMetrics(items) {
   let personeelsKostenHours = 0; // uren met bekende uurkostprijs (voor dekkingsindicatie)
 
   // Diensttype-tarief lookup via comp_diensttypes.basis (per-type uurtarief).
+  // Per-render memoïsatie: tariefForDiensttype is puur t.o.v. dtNaam binnen één
+  // render. Veel diensten delen hetzelfde diensttype → dit voorkomt honderden
+  // identieke .find()-scans over de diensttypelijst zonder de uitkomst te wijzigen.
+  const _tariefMemo = new Map();
   function tariefForDiensttype(dtNaam) {
     if (!dtNaam) return ui.tarief || 0;
+    if (_tariefMemo.has(dtNaam)) return _tariefMemo.get(dtNaam);
+    let result = ui.tarief || 0;
     try {
       if (window.compDiensttypesDB && typeof window.compDiensttypesDB.getAllSync === "function") {
         const list = window.compDiensttypesDB.getAllSync() || [];
         const dt = list.find((d) => String(d.naam || d.diensttype || "").trim().toLowerCase() === String(dtNaam).trim().toLowerCase());
         const basis = Number(dt?.basis);
-        if (basis > 0) return basis;
+        if (basis > 0) result = basis;
       }
     } catch (e) { /* */ }
-    return ui.tarief || 0;
+    _tariefMemo.set(dtNaam, result);
+    return result;
   }
+
+  // Per-render memoïsatie van naam-gebonden HR-lookups (puur t.o.v. de naam binnen
+  // één render — afhankelijk van stabiele HR-data). Veel diensten delen dezelfde
+  // medewerker → dit voorkomt honderden identieke lineaire zoekacties door de
+  // medewerkerslijst zonder de uitkomst te wijzigen.
+  const _isZzpMemo = new Map();
+  const isZzpEmployeeNameMemo = (name) => {
+    if (_isZzpMemo.has(name)) return _isZzpMemo.get(name);
+    const v = isZzpEmployeeName(name); _isZzpMemo.set(name, v); return v;
+  };
+  const _zzpRateMemo = new Map();
+  const getZzpHourlyRateForNameMemo = (name) => {
+    if (_zzpRateMemo.has(name)) return _zzpRateMemo.get(name);
+    const v = getZzpHourlyRateForName(name); _zzpRateMemo.set(name, v); return v;
+  };
+  const _persMemo = new Map();
+  const getPersoneelsUurkostForNameMemo = (name) => {
+    if (_persMemo.has(name)) return _persMemo.get(name);
+    const v = getPersoneelsUurkostForName(name); _persMemo.set(name, v); return v;
+  };
+  // km-tarief uit planning_settings: één keer ophalen i.p.v. per dienst.
+  const _settingsKmTar = (window.planningSettingsDB && window.planningSettingsDB.getSync && window.planningSettingsDB.getSync())?.km_tarief;
 
   items.forEach((r) => {
     const h = durationHours(r.start, r.einde);
@@ -1359,7 +1388,7 @@ function getMetrics(items) {
 
     const tarief = tariefForDiensttype(r.diensttype);
     kostenAccum += net * tarief;
-    if (isZzpEmployeeName(r.teamlid)) {
+    if (isZzpEmployeeNameMemo(r.teamlid)) {
       zzpHours += net;
       // ZZP-kosten = het in HR ingevoerde uurtarief van de ZZP'er × de gewerkte
       // (netto) uren — overgenomen uit HR (medewerker.uurAlgemeen), niet het
@@ -1367,7 +1396,7 @@ function getMetrics(items) {
       // ZZP'ers zoals ingevoerd in HR moeten in de planning verrekend worden met de
       // uren die ze werken"). Valt op 0 terug als er voor die ZZP'er nog geen tarief
       // in HR staat, zodat het bedrag meegroeit naarmate HR de tarieven invult.
-      const zzpRate = getZzpHourlyRateForName(r.teamlid);
+      const zzpRate = getZzpHourlyRateForNameMemo(r.teamlid);
       zzpKostenAccum += net * zzpRate;
       if (zzpRate > 0 && net > 0) {
         zzpRateWeighted += net * zzpRate;
@@ -1376,7 +1405,7 @@ function getMetrics(items) {
     }
     // G5: werkelijke personeelskosten op basis van uurkostprijs per medewerker.
     if (r.teamlid && String(r.teamlid).trim()) {
-      const pk = getPersoneelsUurkostForName(r.teamlid);
+      const pk = getPersoneelsUurkostForNameMemo(r.teamlid);
       if (pk > 0 && net > 0) {
         personeelsKosten += net * pk;
         personeelsKostenHours += net;
@@ -1387,9 +1416,8 @@ function getMetrics(items) {
       openCount += 1;
     }
     const km = Number(r.kilometers) || 0;
-    // PR-F: km-tarief uit planning_settings i.p.v. hardcoded 0.23
-    const settingsTar = (window.planningSettingsDB && window.planningSettingsDB.getSync && window.planningSettingsDB.getSync())?.km_tarief;
-    const kmTar = Number(r.kmTarief) || Number(settingsTar) || 0.23;
+    // PR-F: km-tarief uit planning_settings i.p.v. hardcoded 0.23 (gehoist boven de lus)
+    const kmTar = Number(r.kmTarief) || Number(_settingsKmTar) || 0.23;
     if (km > 0) { kmKosten += km * kmTar; kmTotaal += km; }
   });
   const uren = formatHoursShort(hours);
