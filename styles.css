@@ -3476,6 +3476,27 @@ h1 {
   border-color: var(--green);
 }
 
+/* Dossier-status puntje op het cliënten-overzicht (clienten.html).
+   Net als de medewerkers-stoplicht: rood = dossier niet compleet (rode issue
+   zoals beschikking/zorgplan/handtekening ontbreekt of verlopen), oranje =
+   dossier vraagt aandacht (alleen oranje/info-issues). Geen puntje = compleet.
+   Gezet door client-doc-status.js o.b.v. RPC client_dossier_status_overzicht. */
+.cl-doc-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-pill);
+  margin-right: 7px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.cl-doc-dot--red {
+  background: var(--red);
+}
+.cl-doc-dot--orange {
+  background: var(--yellow);
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
