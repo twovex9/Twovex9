@@ -35,11 +35,28 @@ const dryRun = args.includes("--check") || args.includes("--dry-run");
 
 const DEFAULT_VERSION = "918f1ad";
 
-// Inline snippet: zet data-loading vóór paint + harde 10s veiligheidsklep.
+// Inline snippet: zet data-loading vóór paint + installeer een lichte
+// netwerk-teller (window.__ffNet) zodat besa-page-loader.js de overlay pas
+// weghaalt wanneer de initiële data-fetches (Supabase) binnen zijn — niet al
+// na de eerste lege paint. Plus een harde 15s veiligheidsklep zodat de overlay
+// nooit blijft hangen, ook niet als het externe script faalt te laden.
 const INLINE_SNIPPET =
   `<script>/*ff-loading*/(function(){try{var d=document.documentElement;` +
-  `d.setAttribute('data-loading','1');setTimeout(function(){` +
-  `d.removeAttribute('data-loading');},10000);}catch(e){}})();</script>`;
+  `d.setAttribute('data-loading','1');if(window.__ffNet)return;` +
+  `var n={p:0,last:0,t0:Date.now()};window.__ffNet=n;` +
+  `if(window.fetch){var of=window.fetch;window.fetch=function(){n.p++;var r;` +
+  `try{r=of.apply(this||window,arguments)}catch(e){n.p--;n.last=Date.now();throw e}` +
+  `if(r&&typeof r.then==='function'){return r.then(function(x){n.p--;n.last=Date.now();return x},` +
+  `function(e){n.p--;n.last=Date.now();throw e})}n.p--;n.last=Date.now();return r}}` +
+  `if(window.XMLHttpRequest&&XMLHttpRequest.prototype){var os=XMLHttpRequest.prototype.send;` +
+  `XMLHttpRequest.prototype.send=function(){var x=this,done=false;n.p++;` +
+  `function fin(){if(done)return;done=true;n.p--;n.last=Date.now()}` +
+  `try{x.addEventListener('loadend',fin)}catch(e){}` +
+  `try{return os.apply(this,arguments)}catch(e){fin();throw e}}}` +
+  `setTimeout(function(){d.removeAttribute('data-loading')},15000)}catch(e){}})();</script>`;
+
+// Bestaand inline snippet (welke versie dan ook) — voor idempotente upgrade.
+const EXISTING_SNIPPET_REGEX = /<script>\/\*ff-loading\*\/[^]*?<\/script>/i;
 
 // Anker: het bestaande inline thema-snippet (zet data-theme vóór paint).
 const THEME_SNIPPET_REGEX =
@@ -51,15 +68,27 @@ const htmlFiles = readdirSync(projectRoot)
   .filter((f) => statSync(f).isFile());
 
 let added = 0;
+let upgraded = 0;
 let skipped = 0;
 let noAnchor = 0;
 
 for (const file of htmlFiles) {
   const original = readFileSync(file, "utf8");
 
-  // Idempotent: al gedaan?
-  if (original.includes("/*ff-loading*/") || /data-loading/.test(original)) {
-    skipped++;
+  // Al een ff-loading-snippet aanwezig? Dan upgraden naar de nieuwste versie
+  // (vervang het bestaande inline snippet in-place). Idempotent: als het al
+  // identiek is, verandert er niets en slaan we over.
+  if (original.includes("/*ff-loading*/")) {
+    const existing = original.match(EXISTING_SNIPPET_REGEX);
+    if (existing && existing[0] !== INLINE_SNIPPET) {
+      const updated = original.replace(existing[0], INLINE_SNIPPET);
+      if (!dryRun) writeFileSync(file, updated, "utf8");
+      const rel = file.replace(projectRoot, "").replace(/^[\\/]/, "");
+      console.log(`  ${rel}: loader-snippet geüpgraded`);
+      upgraded++;
+    } else {
+      skipped++;
+    }
     continue;
   }
 
@@ -96,7 +125,8 @@ for (const file of htmlFiles) {
 
 console.log(
   `\n[add-page-loader] ${htmlFiles.length} HTML-bestanden. ` +
-  `Toegevoegd: ${added}, Overgeslagen (al aanwezig): ${skipped}, ` +
+  `Toegevoegd: ${added}, Geüpgraded: ${upgraded}, ` +
+  `Overgeslagen (al up-to-date): ${skipped}, ` +
   `Geen thema-anker: ${noAnchor}` +
   `${dryRun ? " (dry-run, niets opgeslagen)" : ""}.`
 );
