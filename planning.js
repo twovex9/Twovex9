@@ -117,6 +117,13 @@ const ui = {
   tarief: 45,
   prefillStartDay: null,
   viewingId: null,
+  // Spraakmemo 2026-06-11: "Toon in lijst" vanaf de rode overlap-banner toont ALLEEN
+  // de dubbel-ingeroosterde diensten (de details die niet kloppen), niet het volledige
+  // rooster. lastAdjustedId onthoudt de laatst aangepaste dienst zodat we na het
+  // aanpassen direct (zonder herladen) terug naar het rooster kunnen springen op de
+  // locatie waar de aanpassing is gedaan.
+  overlapOnly: false,
+  lastAdjustedId: null,
 };
 
 function readJsonArray(key) {
@@ -1607,6 +1614,7 @@ function renderMonthStrip() {
     b.textContent = String(d.getDate());
     if (isToday(d)) b.classList.add("is-today");
     b.addEventListener("click", () => {
+      ui.overlapOnly = false;
       ui.dayDate = new Date(d);
       setListMode(false);
       setCalMode("day");
@@ -2336,12 +2344,19 @@ function renderListTable() {
   const body = document.getElementById("planning-table-body");
   const empty = document.getElementById("planning-empty");
   if (!body) return;
-  const items = getItemsForView().slice().sort(comparePlanningItemsByTime);
-  const overlapIds = buildOverlapConflictIds(items);
+  const allItems = getItemsForView().slice().sort(comparePlanningItemsByTime);
+  // Overlap-conflicten altijd over de VOLLEDIGE view berekenen (zodat een dienst die
+  // met een andere botst herkend blijft), daarna pas filteren wanneer de gebruiker via
+  // de rode banner "Toon in lijst" alleen de niet-kloppende diensten wil zien.
+  const overlapIds = buildOverlapConflictIds(allItems);
+  const items = ui.overlapOnly ? allItems.filter((it) => overlapIds.has(it.id)) : allItems;
+  updateOverlapListbar(items.length);
   const naamFunctieMap = buildNaamFunctieMap();
   body.innerHTML = "";
   items.forEach((item) => {
     const tr = document.createElement("tr");
+    tr.dataset.id = item.id;
+    tr.className = "planning-table-row";
     const h = durationHours(item.start, item.einde);
     const itemWarnings = getDienstWaarschuwingen(item, overlapIds);
     const risk = itemWarnings.length ? itemWarnings.map((w) => w.label).join(" + ") : "—";
@@ -2368,7 +2383,64 @@ function renderListTable() {
     body.appendChild(tr);
   });
   applyPlanningColumnVisibility();
-  if (empty) empty.hidden = items.length > 0;
+  if (empty) {
+    empty.hidden = items.length > 0;
+    empty.textContent = ui.overlapOnly
+      ? "Geen dubbel-ingeroosterde diensten meer in deze periode — alle overlappingen zijn opgelost."
+      : "Geen items gevonden.";
+  }
+}
+
+/** Context-balk boven de lijst wanneer alleen de dubbel-ingeroosterde diensten worden
+ *  getoond (na "Toon in lijst" op de rode overlap-banner). Toont hoeveel diensten nog
+ *  niet kloppen + knoppen om alles te tonen of (zonder herladen) terug te gaan naar het
+ *  rooster op de locatie van de laatste aanpassing. */
+function updateOverlapListbar(count) {
+  const bar = document.getElementById("planning-overlap-listbar");
+  if (!bar) return;
+  if (!ui.overlapOnly) {
+    bar.hidden = true;
+    return;
+  }
+  bar.hidden = false;
+  const txt = document.getElementById("planning-overlap-listbar-txt");
+  if (txt) {
+    const n = count || 0;
+    txt.textContent = n > 0
+      ? `Alleen dubbel-ingeroosterde diensten — ${n} dienst${n === 1 ? "" : "en"} die nog niet ${n === 1 ? "klopt" : "kloppen"}.`
+      : "Alle overlappingen zijn opgelost.";
+  }
+}
+
+/** Spraakmemo 2026-06-11: na het aanpassen van een dienst direct (zonder herladen)
+ *  terug naar het rooster, op de locatie/datum waar de aanpassing is gedaan. Verlaat de
+ *  overlap-only lijst, springt de kalender naar de datum van de laatst aangepaste dienst
+ *  en markeert die kort zodat de gebruiker meteen ziet waar hij gebleven was. */
+function returnToRosterAtAdjustment() {
+  ui.overlapOnly = false;
+  setListMode(false);
+  const target = ui.lastAdjustedId ? getItemById(ui.lastAdjustedId) : null;
+  if (target) {
+    const d = parseStartDate(target.start);
+    if (d && !isNaN(d.getTime())) {
+      ui.dayDate = new Date(d);
+      ui.weekStart = getMonday(d);
+      ui.monthDate = new Date(d);
+    }
+  }
+  renderAllViews();
+  if (target) {
+    // Na de re-render de kaart in beeld scrollen + kort oplichten. requestAnimationFrame
+    // zodat de grid-DOM eerst opnieuw is opgebouwd.
+    const id = String(target.id).replace(/["\\]/g, "\\$&");
+    requestAnimationFrame(() => {
+      const card = document.querySelector('.planning-erm-card[data-id="' + id + '"]');
+      if (!card) return;
+      try { card.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" }); } catch (e) { card.scrollIntoView(); }
+      card.classList.add("planning-erm-card--justedited");
+      setTimeout(() => card.classList.remove("planning-erm-card--justedited"), 2600);
+    });
+  }
 }
 
 function countOverlapInView(items) {
@@ -2487,7 +2559,7 @@ function updateOverlapBanner(items) {
       const remaining = p - shown;
       let html = blocks.join("");
       if (remaining > 0) {
-        html += `<div class="planning-overlap-conf__more">+ ${remaining} meer overlappende dienst${remaining === 1 ? "" : "en"} — klik “Toon in lijst” voor het volledige overzicht.</div>`;
+        html += `<div class="planning-overlap-conf__more">+ ${remaining} meer overlappende dienst${remaining === 1 ? "" : "en"} — klik “Toon in lijst” voor alle dubbel-ingeroosterde diensten.</div>`;
       }
       detailsEl.innerHTML = html;
     }
@@ -2843,6 +2915,7 @@ function makeKoppelRow(prefill) {
   const cSel = document.createElement("select");
   cSel.className = "planning-dienst-input";
   cSel.setAttribute("data-k", "client");
+  cSel.setAttribute("data-searchable", "");
   fillSelectFromArray(cSel, data.clienten, "Selecteer cliënt");
   if (prefill && prefill.client) cSel.value = prefill.client;
   cWrap.appendChild(cLab);
@@ -2856,6 +2929,7 @@ function makeKoppelRow(prefill) {
   const tSel = document.createElement("select");
   tSel.className = "planning-dienst-input";
   tSel.setAttribute("data-k", "teamlid");
+  tSel.setAttribute("data-searchable", "");
   fillSelectFromArray(tSel, data.medewerkers, "Selecteer teamlid");
   if (prefill && prefill.teamlid) tSel.value = prefill.teamlid;
   tWrap.appendChild(tLab);
@@ -2890,9 +2964,15 @@ function makeKoppelRow(prefill) {
     inp.step = "60";
     inp.className = "planning-dienst-input";
     inp.setAttribute("data-k", k);
+    inp.setAttribute("data-besa-timetype", "");
+    inp.setAttribute("placeholder", "uu:mm");
     inp.value = val || "";
     w.appendChild(l);
     w.appendChild(inp);
+    // Direct verrijken (vlot typbaar uu:mm); fallback voor de observer.
+    if (window.BesaTimeTyping && typeof window.BesaTimeTyping.enhance === "function") {
+      window.BesaTimeTyping.enhance(inp);
+    }
     return w;
   };
   tijd.appendChild(mkTime("van", "Van", tij.van));
@@ -4509,25 +4589,30 @@ function initNav() {
     renderAllViews();
   });
   document.getElementById("planning-cal-day")?.addEventListener("click", () => {
+    ui.overlapOnly = false;
     setListMode(false);
     setCalMode("day");
     renderAllViews();
   });
   document.getElementById("planning-cal-week")?.addEventListener("click", () => {
+    ui.overlapOnly = false;
     setListMode(false);
     setCalMode("week");
     renderAllViews();
   });
   document.getElementById("planning-cal-month")?.addEventListener("click", () => {
+    ui.overlapOnly = false;
     setListMode(false);
     setCalMode("month");
     renderAllViews();
   });
   document.getElementById("planning-view-list")?.addEventListener("click", () => {
+    ui.overlapOnly = false; // handmatige "Lijst" toont het volledige rooster
     setListMode(true);
     renderAllViews();
   });
   document.getElementById("planning-view-roster")?.addEventListener("click", () => {
+    ui.overlapOnly = false;
     setListMode(false);
     renderAllViews();
   });
@@ -4609,10 +4694,28 @@ function initNav() {
     else if (ev.key === "Escape") { ev.preventDefault(); hidePresetNameInput(); }
   });
 
-  /* Overlap-waarschuwing: "Toon in lijst" → naar lijstweergave (overlaps rood gemarkeerd) */
+  /* Overlap-waarschuwing: "Toon in lijst" → lijstweergave met ALLEEN de dubbel-
+   * ingeroosterde diensten (de details die niet kloppen), niet het volledige rooster. */
   document.getElementById("planning-overlap-banner-btn")?.addEventListener("click", () => {
+    ui.overlapOnly = true;
     setListMode(true);
     renderAllViews();
+  });
+
+  /* Context-balk boven de gefilterde lijst: "Terug naar rooster" (springt zonder
+   * herladen naar de locatie van de laatste aanpassing) + "Toon alle diensten". */
+  document.getElementById("planning-overlap-back")?.addEventListener("click", returnToRosterAtAdjustment);
+  document.getElementById("planning-overlap-showall")?.addEventListener("click", () => {
+    ui.overlapOnly = false;
+    renderAllViews();
+  });
+
+  /* Klik op een rij in de lijst opent de dienst-detail om direct aan te passen. */
+  document.getElementById("planning-table-body")?.addEventListener("click", (e) => {
+    const tr = e.target && e.target.closest && e.target.closest("tr[data-id]");
+    if (!tr) return;
+    const id = tr.getAttribute("data-id");
+    if (id && typeof openViewModal === "function") openViewModal(id);
   });
 
   /* Inklapbare kop (KPI-strip + overlap-/beschikking-banner) */
@@ -5007,9 +5110,17 @@ function initPlanningPage() {
   // Wanneer de Supabase-bootstrap of een externe sync de planning-cache
   // vernieuwt, vragen we het rooster opnieuw te tekenen.
   window.addEventListener("besa:planning-updated", () => {
+    // Staat de dienst-detail open terwijl de planning muteert? Dan is dít de dienst die
+    // de gebruiker zojuist aanpaste — onthoud 'm zodat "Terug naar rooster" daar landt.
+    if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
     // Her-evalueer ook het read-only-recht: bij koude cache zijn de permissies vaak
     // pas geladen tegen de tijd dat de planning-data binnenkomt → betrouwbare re-apply.
     try { applyPlanningRoleMode(); renderAllViews(); } catch (e) { /* */ }
+  });
+  // Toewijzen/uitnodigen muteert eerst de uitnodigingen (teamlid-sync volgt async); leg
+  // de laatst-aangepaste dienst ook hier vast zodat de terugspring betrouwbaar werkt.
+  window.addEventListener("besa:dienst-uitnodigingen-updated", () => {
+    if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
   });
   window.addEventListener("besa:comp-diensttypes-updated", () => {
     try { renderAllViews(); } catch (e) { /* */ }
