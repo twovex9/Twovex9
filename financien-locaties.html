@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://ukjflilnhigozfoxowmj.supabase.co">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <title>Financiën — Locaties</title>
-  <link rel="stylesheet" href="styles.css?v=918f1ad" />
+  <link rel="stylesheet" href="styles.css?v=918f1ad-finloon1" />
   <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -230,7 +230,7 @@
           <svg class="fin-note-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
           <div>
             <strong>Hoe deze cijfers berekend zijn.</strong>
-            <b>Kosten</b> = ingehuurde ZZP-diensten uit de planning (netto-uren × uurtarief uit HR) <b>plus</b> handmatig toegevoegde overhead-personeelskosten (gedragswetenschappers, zorgcoördinator, HR, facilitair, …) <b>plus</b> handmatige onkosten per locatie (huur, boodschappen, energie, water, …). Vast personeel (loondienst) en kantoor/overhead voer je in via het tabblad <a href="financien-overhead">Overhead / kantoor</a>.
+            <b>Kosten</b> = ingehuurde ZZP-diensten uit de planning (netto-uren × uurtarief uit HR) <b>plus</b> loondienst-medewerkers (bruto maandsalaris × werkgeverslasten 1,30, verdeeld over de locaties waaraan ze gekoppeld zijn) <b>plus</b> handmatig toegevoegde overhead-personeelskosten <b>plus</b> handmatige onkosten per locatie (huur, boodschappen, energie, water, …). Extra kantoor/overhead voeg je toe via het tabblad <a href="financien-overhead">Overhead / kantoor</a>.
             <b>Opbrengst</b> = beschikkingen-omzet per locatie: betaald + gedeclareerd-wacht-op-betaling + nog-te-declareren (zelfde berekening als het beschikkingen-dashboard).
             Recente maanden lopen achter doordat nog niet alle zorg is gedeclareerd; het resultaat van recente maanden is daarom indicatief.
           </div>
@@ -243,7 +243,7 @@
             <span class="bd-money-sub" id="fin-omzet-sub">—</span>
           </div>
           <div class="bd-money bd-money--red fin-static" id="fin-card-kosten">
-            <span class="bd-money-lbl">Kosten — ZZP + overige onkosten</span>
+            <span class="bd-money-lbl">Kosten — ZZP + loondienst + onkosten</span>
             <span class="bd-money-val" id="fin-v-kosten">€ 0,00</span>
             <span class="bd-money-sub" id="fin-kosten-sub">—</span>
           </div>
@@ -295,7 +295,7 @@
           <p class="bd-sec-s">Opbrengst vs. kosten per maand · klik op een maand om te selecteren</p>
           <div class="bd-legend" role="list" aria-label="Legenda">
             <span class="bd-leg" role="listitem"><span class="bd-leg-s" style="background:var(--green)" aria-hidden="true"></span>Opbrengst</span>
-            <span class="bd-leg" role="listitem"><span class="bd-leg-s" style="background:var(--red)" aria-hidden="true"></span>Kosten (ZZP)</span>
+            <span class="bd-leg" role="listitem"><span class="bd-leg-s" style="background:var(--red)" aria-hidden="true"></span>Kosten</span>
           </div>
           <div class="fin-mchart" id="fin-mchart"></div>
         </section>
@@ -304,7 +304,7 @@
           <div class="fin-card-head">
             <div>
               <h2 class="bd-sec-t">Per locatie</h2>
-              <p class="bd-sec-s">Klik op een locatie voor de ZZP'ers, cliënten/beschikkingen én onkosten</p>
+              <p class="bd-sec-s">Klik op een locatie voor de ZZP'ers, loondienst-medewerkers, cliënten/beschikkingen én onkosten</p>
             </div>
             <button type="button" class="btn-outline fin-add-onk-btn" id="fin-add-onk">+ Onkosten toevoegen</button>
           </div>
@@ -511,7 +511,7 @@
   <script src="besa-audit.js?v=918f1ad" defer></script>
   <script src="financien-locaties-data.js?v=918f1ad" defer></script>
   <script src="zorgsoorten-data.js?v=918f1ad" defer></script>
-  <script src="financien-locaties.js?v=918f1ad" defer></script>
+  <script src="financien-locaties.js?v=918f1ad-finloon1" defer></script>
   <script src="financien-locaties-zorgsoorten.js?v=918f1ad" defer></script>
 </body>
 </html>
