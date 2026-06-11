@@ -5390,7 +5390,15 @@ function initPlanningPage() {
     // FFLoader.done() = directe verberg (de .ready()-route met afterPaint/rAF bleek op
     // deze pagina niet betrouwbaar te vuren, waardoor de spinner telkens pas op de
     // 12s-veiligheidsklep verdween). done() sluit meteen — het rooster is dan al zichtbaar.
+    // planning.js draait synchroon tijdens het parsen, VÓÓR de defer-geladen
+    // besa-page-loader.js — window.FFLoader bestaat hier dus nog niet. Daarom
+    // verbergen we de spinner door het data-loading-attribuut direct te
+    // verwijderen (dat is precies wat de loader intern ook doet), en roepen we
+    // FFLoader.done() defensief aan zodra die wél bestaat zodat de loader-state
+    // consistent blijft. Zonder dit viel de spinner terug op de inline
+    // 15s-veiligheidsklep (~16s), ook al stond het rooster er al.
     var _ffHide = function () {
+      try { document.documentElement.removeAttribute("data-loading"); } catch (e) { /* */ }
       try { if (window.FFLoader && typeof window.FFLoader.done === "function") window.FFLoader.done(); } catch (e) { /* */ }
     };
     var _ffPlanningCount = (window.planningDB && window.planningDB.getAllSync)
