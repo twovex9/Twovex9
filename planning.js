@@ -320,7 +320,10 @@ const PLANNING_LOCATIE_KLEUREN = {
 function readHrLocaties() {
   const seen = new Set();
   return readJsonArray(LOCATIES_STORAGE_KEY)
-    .filter((l) => !l?.archived)
+    // Alleen cliëntwoningen die in de planning horen: gearchiveerde én als
+    // "buiten planning" gemarkeerde locaties (kantoor/showroom/shop/satelliet-
+    // woning) blijven volledig uit het rooster — eigenaarseis 2026-06-11.
+    .filter((l) => !l?.archived && !l?.nietInPlanning)
     .map((l) => ({
       naam: String(l?.naam || "").trim(),
       kleur: String(l?.kleur || "").trim(),
@@ -1454,6 +1457,31 @@ function sortLocatieGroepen(groups) {
   });
 }
 
+/** Set van locatienamen (lowercase) die de planning mag tonen: de niet-verborgen,
+ *  niet-gearchiveerde cliëntwoningen uit de Locaties-module. */
+function planningZichtbareLocatieSet() {
+  const s = new Set();
+  readHrLocaties().forEach((l) => {
+    const k = String(l.naam || "").trim().toLowerCase();
+    if (k) s.add(k);
+  });
+  return s;
+}
+
+/** Mag deze locatie-/groep-naam als rij in het rooster verschijnen? Alleen de
+ *  cliëntwoningen plus de vaste functionele groepen (Openstaande diensten,
+ *  Eén-op-één/Ambulant, Achterwacht). Houdt test-/overhead-locaties (showroom,
+ *  shop, kantoor, satellietwoning, …) volledig uit de planner-weergave —
+ *  eigenaarseis 2026-06-11. */
+function isPlanningZichtbareGroep(name) {
+  const k = String(name || "").trim().toLowerCase();
+  if (!k) return false;
+  if (k === "openstaande diensten") return true;
+  if (k === EEN_OP_EEN_GROEP.toLowerCase()) return true;
+  if (k === ACHTERWACHT_GROEP.toLowerCase()) return true;
+  return planningZichtbareLocatieSet().has(k);
+}
+
 /** Dienst overlapt op tijdlijn (zelfde medewerker) — duidt risico in het rooster. */
 function buildOverlapConflictIds(scopeItems) {
   const ids = new Set();
@@ -1875,7 +1903,12 @@ function renderWeekGrid() {
   const host = document.getElementById("planning-week-grid");
   const empty = document.getElementById("planning-week-empty");
   if (!host) return;
-  const items = getItemsForView();
+  let items = getItemsForView();
+  // In de locatie-weergave alleen diensten op cliëntwoningen meenemen, zodat
+  // dagtotalen en cellen niet vervuilen met test-/overhead-locaties.
+  if (ui.rowAxis === "vestiging") {
+    items = items.filter((it) => isPlanningZichtbareGroep(getRowKey(it)));
+  }
   host.classList.add("planning-erm--dense");
   host.classList.toggle("planning-erm--locations", ui.rowAxis === "vestiging");
   host.classList.toggle("planning-erm--month", ui.calMode === "month");
@@ -1894,9 +1927,11 @@ function renderWeekGrid() {
     const base = getEmptyWeekGroups();
     const seen = new Set(base);
     groups = [...base];
-    // Neem extra locaties uit items mee (bijv. legacy-data of nieuwe import).
+    // Neem extra locaties uit items mee (bijv. legacy-data of nieuwe import),
+    // maar uitsluitend als ze planning-zichtbaar zijn — zo verschijnen test-/
+    // overhead-locaties (showroom, shop, kantoor, satellietwoning) niet als rij.
     groupItems(items).forEach((g) => {
-      if (!seen.has(g)) {
+      if (!seen.has(g) && isPlanningZichtbareGroep(g)) {
         seen.add(g);
         groups.push(g);
       }
@@ -2459,7 +2494,12 @@ function renderAllViews() {
   renderSimpleSelect("planning-loc-select", locOpties, filterState.locatieToolbar, "Selecteer Locatie");
   syncAssignStatusRadios();
 
-  const items = getItemsForView();
+  let items = getItemsForView();
+  // Kerngetallen + resultaat-teller volgen de locatie-weergave: alleen diensten
+  // op de zichtbare cliëntwoningen tellen mee (geen test-/overhead-locaties).
+  if (ui.rowAxis === "vestiging") {
+    items = items.filter((it) => isPlanningZichtbareGroep(getRowKey(it)));
+  }
   updatePeriodUI();
   renderSummary(items);
   if (!ui.isList) renderWeekGrid();
