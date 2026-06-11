@@ -25,6 +25,11 @@
   // Maximale bestandgrootte voor bijlagen (5 MB).
   var MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+  // Sentinel-waarde in de cliënten-select voor "Niemand aanwezig": voldoet aan de
+  // verplicht-validatie maar wordt bij opslaan als clientId = null bewaard (geen
+  // betrokken cliënt). Geen geldige cliënt-id, dus nooit als FK weggeschreven.
+  var NIEMAND_AANWEZIG = "__niemand__";
+
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
@@ -326,7 +331,23 @@
     var clienten = getAllClienten().filter(function (c) { return c && !c.archived; });
     var medewerkers = getAllMedewerkers().filter(function (m) { return m && !m.archived; });
 
-    fillSelect($("im-client"), clienten, "Selecteer Cliënt", clientLabel, $("im-client").value);
+    // Cliënten-select: naast de cliënten een expliciete "Niemand aanwezig"-keuze,
+    // zodat een melder kan vastleggen dat er geen cliënt bij het incident betrokken
+    // was (i.p.v. gedwongen een cliënt te moeten kiezen). fillSelect herbouwt de
+    // opties, dus we bewaren de huidige keuze en zetten 'm daarna terug — ook de
+    // sentinel __niemand__ (die nog niet bestaat op het moment dat fillSelect de
+    // waarde zou zetten).
+    var clientSel = $("im-client");
+    var prevClientVal = clientSel ? clientSel.value : "";
+    fillSelect(clientSel, clienten, "Selecteer Cliënt", clientLabel, null);
+    if (clientSel) {
+      var noneOpt = document.createElement("option");
+      noneOpt.value = NIEMAND_AANWEZIG;
+      noneOpt.textContent = "Niemand aanwezig";
+      if (clientSel.options.length > 1) clientSel.insertBefore(noneOpt, clientSel.options[1]);
+      else clientSel.appendChild(noneOpt);
+      if (prevClientVal) clientSel.value = prevClientVal;
+    }
 
     var cats = (window.incidentenDB && window.incidentenDB.CATEGORIES) || [];
     fillSelect($("im-categorie"), cats.map(function (c) { return { id: c, label: c }; }),
@@ -1037,7 +1058,17 @@
 
   function populateForm(rec) {
     $("im-id").value = rec ? rec.id : "";
-    $("im-client").value = rec && rec.clientId ? rec.clientId : "";
+    // Bestaand incident zonder gekoppelde cliënt = "Niemand aanwezig" (zo blijft de
+    // keuze van de melder bij bewerken zichtbaar i.p.v. een lege verplicht-select).
+    $("im-client").value = rec && rec.clientId
+      ? rec.clientId
+      : (rec && rec.id ? NIEMAND_AANWEZIG : "");
+    // Programmatisch gezette waarde levert geen 'change' op; de doorzoekbare
+    // combobox synct zijn weergave daarop. Eén change dispatchen zodat het
+    // tekstveld bij bewerken de juiste naam/"Niemand aanwezig" toont. autoFill
+    // van de locatie is hier nog niet gewired (gebeurt in wireUp ná populateForm)
+    // en de locatie wordt hieronder sowieso expliciet uit het record gezet.
+    $("im-client").dispatchEvent(new Event("change", { bubbles: true }));
     $("im-categorie").value = rec && rec.categorie ? rec.categorie : "";
     $("im-tijdstip").value = rec && rec.tijdstipVanDag ? rec.tijdstipVanDag : "";
     $("im-buiten").checked = !!(rec && rec.isBuiten);
@@ -1114,8 +1145,10 @@
     var isEdit = !!state.editingId;
     var locatieEl = $("im-locatie");
     var statusEl = $("im-status");
+    var clientVal = $("im-client").value;
     var payload = {
-      clientId: $("im-client").value || null,
+      // "Niemand aanwezig" (sentinel) → geen betrokken cliënt: clientId blijft null.
+      clientId: (clientVal && clientVal !== NIEMAND_AANWEZIG) ? clientVal : null,
       categorie: $("im-categorie").value || "Overig",
       // Create → altijd in_afwachting (BS2 pending). Afhandelen (edit) →
       // status uit de afhandelen-select; de data-laag stempelt afgehandeld_op
