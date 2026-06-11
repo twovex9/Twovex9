@@ -1301,6 +1301,20 @@
       $("im-client").addEventListener("change", autoFillLocatieFromClient);
     }
 
+    // Klik op een datumveld opent meteen de kalender, niet alleen het kleine
+    // kalender-icoontje rechts. showPicker() vereist een user-gesture, dus we
+    // koppelen 'm aan de klik op de input zelf. Bewust géén focus-handler: de
+    // form-validatie focust het eerste lege verplichte veld (waaronder
+    // im-datum), wat de kalender ongevraagd over de foutmelding zou openploppen.
+    // In try/catch: de browser kan de picker al hebben geopend (klik exact op
+    // het icoontje) → InvalidStateError/NotAllowedError, die negeren we stil.
+    Array.prototype.forEach.call(document.querySelectorAll('#im-form input[type="date"]'), function (inp) {
+      if (typeof inp.showPicker !== "function") return;
+      inp.addEventListener("click", function () {
+        try { inp.showPicker(); } catch (e) { /* picker al open of niet toegestaan */ }
+      });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('input[name="im-betrokken-type"]'), function (r) {
       r.addEventListener("change", refreshBetrokkenPersonSelect);
     });
