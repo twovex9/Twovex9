@@ -16032,6 +16032,37 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 .inv-recalc-ok { color: var(--green); font-size: var(--font-table-cell); font-weight: 600; }
 .inv-recalc-note { color: var(--text-muted); font-size: var(--font-table-head); }
 
+/* Goedkeuren-gate: systeemfactuur moet 1-op-1 zijn met de ingediende factuur */
+.inv-control-gate {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; border-radius: var(--r-md);
+  background: var(--pink-soft); color: var(--text); font-size: var(--font-table-head);
+}
+.inv-control-gate-ico { flex: 0 0 auto; color: var(--pink); font-weight: 800; }
+#inv-actions .btn-primary[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* Rooster-bewerker: geplande uren per dienst aanpassen → herberekenen */
+.inv-rooster { display: flex; flex-direction: column; gap: 10px; }
+.inv-rooster-table { width: 100%; border-collapse: collapse; font-size: var(--font-table-cell); }
+.inv-rooster-table th, .inv-rooster-table td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; }
+.inv-rooster-table th { font-size: var(--font-table-head); color: var(--text-secondary); }
+.inv-rooster-table .td-num { text-align: right; }
+.inv-rooster-ref { color: var(--text-muted); }
+.inv-rooster-input {
+  width: 84px; text-align: right; font-size: var(--font-table-cell);
+  padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--text);
+}
+.inv-rooster-input:focus { outline: none; border-color: var(--blue); }
+.inv-rooster-foot td { font-weight: 700; color: var(--text); border-top: 2px solid var(--line-strong); }
+.inv-rooster-diff-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: var(--r-pill); font-size: var(--font-ui-badge); font-weight: 700; white-space: nowrap;
+}
+.inv-rooster-diff-badge--match { background: var(--green-soft); color: var(--green); }
+.inv-rooster-diff-badge--mismatch { background: var(--pink-soft); color: var(--pink); }
+.inv-rooster-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* Afwijzen — verplichte reden, dienst-picker en zichtbare reden */
 .inv-req { color: var(--red); }
 .inv-review-lines {
