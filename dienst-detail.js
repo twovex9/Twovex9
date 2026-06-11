@@ -32,18 +32,30 @@
       .replace(/"/g, "&quot;");
   }
 
+  // Diensttijden worden als "fake-UTC" wandklok opgeslagen ("…T22:45:00+00"); de
+  // roosterweergave (planning.js → parseStartDate) leest de wandklok-componenten
+  // rechtstreeks i.p.v. ze via new Date() naar lokale tijd te converteren (wat in
+  // NL +1/+2u zou schuiven). Deze detail-modal moet exact dezelfde tijden tonen,
+  // dus parsen we de wandklok identiek. Audit-tijdstempels (created_at) zijn echte
+  // UTC-timestamps en blijven via new Date() lopen (formatTimeAgo, ongewijzigd).
+  function parseWallClock(iso) {
+    if (!iso) return null;
+    var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0);
+    var t = new Date(iso);
+    return isNaN(t.getTime()) ? null : t;
+  }
+
   function formatNlDate(iso) {
-    if (!iso) return "-";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "-";
+    var d = parseWallClock(iso);
+    if (!d) return "-";
     var pad = function (n) { return String(n).padStart(2, "0"); };
     return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
   }
 
   function formatNlTime(iso) {
-    if (!iso) return "-";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "-";
+    var d = parseWallClock(iso);
+    if (!d) return "-";
     var pad = function (n) { return String(n).padStart(2, "0"); };
     return pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
