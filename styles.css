@@ -15116,6 +15116,18 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
   z-index: 6;
   background: var(--ps-e9eef4);
 }
+/* De planningpagina is een vaste-hoogte werkblad: enkel de planning-kaart scrolt
+   verticaal. Het document zelf moet NIET kunnen scrollen — de app-shell rendert
+   ~80px hoger dan de viewport, en die paginascroll sleepte bij muiswiel-scroll de
+   hele kaart (incl. de sticky dag-koppen) uit beeld, afhankelijk van zijbalk-/
+   viewport-stand. Door de scroll op de planningpagina tot de kaart te beperken,
+   blijven de dag-koppen betrouwbaar bovenin staan. Gescoped via :has zodat álle
+   andere pagina's gewoon kunnen scrollen. */
+html:has(.content--planning-erm),
+html:has(.content--planning-erm) body {
+  overflow: hidden;
+  height: 100%;
+}
 
 /* =====================================================================
    Planning: toolbar vast + volledige week in beeld  (gebruikerseis 2026-06-02,
