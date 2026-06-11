@@ -15062,6 +15062,23 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
   background: var(--surface);
   margin: -12px -14px 12px;
   padding: 12px 14px 10px;
+  /* Auto-verbergen bij scrollen (gebruikerseis 2026-06-11): de toolbar schuift
+     soepel weg/terug. will-change houdt het schuiven vloeiend op de GPU. */
+  transition: transform 0.24s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+/* Naar BENEDEN scrollen → toolbar schuift volledig weg boven beeld (bottom-rand
+   eindigt op -12px, dus geen sliver blijft hangen). De flow-ruimte blijft staan,
+   zodat de inhoud eronder NIET verspringt. */
+.planning-main-card--v3.planning-toolbar-hidden .planning-erm-toolbar {
+  transform: translateY(-100%);
+  box-shadow: none;
+  pointer-events: none;
+}
+/* Zodra er inhoud onder de vastgezette toolbar is weggescrold: subtiele schaduw,
+   zodat de toolbar visueel "vastgeplakt" aanvoelt i.p.v. los te zweven. */
+.planning-main-card--v3.planning-is-scrolled .planning-erm-toolbar {
+  box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.28);
 }
 /* ── Inklapbare kop: KPI-strip + overlap-/beschikking-banner (gebruikerseis 2026-06-11) ──
    Toggle bovenin de planning-kaart om alles boven het rooster weg te klappen. Standaard
