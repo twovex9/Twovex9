@@ -1195,6 +1195,20 @@ function getDienstverbandForName(name) {
   return "";
 }
 
+/** Robuust uurtarief uit een HR-veld lezen. De data staat doorgaans als schone
+ *  punt-decimaal ("42.00"), maar HR kan ook vrij typen ("€ 47,50", "1.234,56").
+ *  Komma aanwezig → NL-notatie (punt = duizendtal, komma = decimaal); anders is de
+ *  punt het decimaalteken (zodat "42.00" 42 blijft, niet 4200 wordt). */
+function parseUurtarief(v) {
+  if (v == null) return 0;
+  if (typeof v === "number") return isFinite(v) && v > 0 ? v : 0;
+  let t = String(v).replace(/€/gi, "").replace(/\s/g, "").trim();
+  if (!t) return 0;
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  const n = parseFloat(t);
+  return isFinite(n) && n > 0 ? n : 0;
+}
+
 // F8: zoek ZZP-uurtarief per medewerker-naam uit medewerkers.data.uurAlgemeen
 function getZzpHourlyRateForName(name) {
   if (!name) return 0;
@@ -1207,8 +1221,8 @@ function getZzpHourlyRateForName(name) {
   const empType = String(emp.bs2_employment_type || emp.employmentType || emp.dienstverband || "").toLowerCase();
   const isHiring = empType === "hiring" || /inhuur|zzp|agency/.test(empType);
   if (!isHiring) return 0;
-  const r = Number(emp.uurAlgemeen != null ? emp.uurAlgemeen : (emp.uurTarief || 0));
-  return isFinite(r) && r > 0 ? r : 0;
+  const r = parseUurtarief(emp.uurAlgemeen != null && emp.uurAlgemeen !== "" ? emp.uurAlgemeen : emp.uurTarief);
+  return r > 0 ? r : 0;
 }
 
 // G5: personeelskostprijs per uur per medewerker (werkelijke werkgeverskost, niet
@@ -1224,8 +1238,8 @@ function getPersoneelsUurkostForName(name) {
   if (!emp) return 0;
   const dv = getDienstverbandForName(name);
   if (dv === "inhuur") {
-    const r = Number(emp.uurAlgemeen != null ? emp.uurAlgemeen : (emp.uurTarief || 0));
-    return isFinite(r) && r > 0 ? r : 0;
+    const r = parseUurtarief(emp.uurAlgemeen != null && emp.uurAlgemeen !== "" ? emp.uurAlgemeen : emp.uurTarief);
+    return r > 0 ? r : 0;
   }
   // loondienst (of onbekend): werkelijke uurkostprijs uit het dossier
   const k = Number(emp.uurkostprijsNum != null ? emp.uurkostprijsNum : (emp.data && emp.data.uurkostprijsNum));
@@ -1298,9 +1312,14 @@ function getMetrics(items) {
     kostenAccum += net * tarief;
     if (isZzpEmployeeName(r.teamlid)) {
       zzpHours += net;
-      zzpKostenAccum += net * tarief;
-      // F8: gemiddeld ZZP-uurtarief via persoonlijk uurAlgemeen
+      // ZZP-kosten = het in HR ingevoerde uurtarief van de ZZP'er × de gewerkte
+      // (netto) uren — overgenomen uit HR (medewerker.uurAlgemeen), niet het
+      // diensttype-charge-tarief (spraakmemo eigenaar 2026-06-11: "de kosten van de
+      // ZZP'ers zoals ingevoerd in HR moeten in de planning verrekend worden met de
+      // uren die ze werken"). Valt op 0 terug als er voor die ZZP'er nog geen tarief
+      // in HR staat, zodat het bedrag meegroeit naarmate HR de tarieven invult.
       const zzpRate = getZzpHourlyRateForName(r.teamlid);
+      zzpKostenAccum += net * zzpRate;
       if (zzpRate > 0 && net > 0) {
         zzpRateWeighted += net * zzpRate;
         zzpRateHours += net;
@@ -1367,7 +1386,7 @@ function renderSummary(items) {
   // Sprint 6 / S6: 5 KPI cards (mirror BS2). Volgorde: ZZP, Geplande uren,
   // Openstaande uren, Kilometerkosten, Gem. tarief.
   el.innerHTML = `
-    <div class="planning-kpi planning-kpi--v3 planning-kpi--zzp">
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--zzp" title="ZZP-kosten = het in HR ingevoerde uurtarief per ZZP'er × de gewerkte uren in deze periode. Groeit mee naarmate HR de tarieven invult.">
       <span class="planning-kpi-ico" aria-hidden="true">€</span>
       <div class="planning-kpi-txt">
         <span class="planning-stat-label">ZZP Kosten</span>
