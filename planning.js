@@ -5387,16 +5387,24 @@ function initPlanningPage() {
   // Bij een KOUDE cache (lege eerste render) wachten we wél tot de data-laag klaar
   // is, zodat er geen lege flits verschijnt.
   try {
+    // FFLoader.done() = directe verberg (de .ready()-route met afterPaint/rAF bleek op
+    // deze pagina niet betrouwbaar te vuren, waardoor de spinner telkens pas op de
+    // 12s-veiligheidsklep verdween). done() sluit meteen — het rooster is dan al zichtbaar.
+    var _ffHide = function () {
+      try { if (window.FFLoader && typeof window.FFLoader.done === "function") window.FFLoader.done(); } catch (e) { /* */ }
+    };
     var _ffPlanningCount = (window.planningDB && window.planningDB.getAllSync)
       ? (window.planningDB.getAllSync() || []).length : 0;
-    if (window.FFLoader && typeof window.FFLoader.ready === "function") {
-      if (_ffPlanningCount > 0) {
-        window.FFLoader.ready();
-      } else if (window.planningDB && window.planningDB.ready) {
-        Promise.resolve(window.planningDB.ready).then(function () {
-          try { window.FFLoader.ready(); } catch (e) { /* */ }
-        }, function () { try { window.FFLoader.ready(); } catch (e) { /* */ } });
-      }
+    if (_ffPlanningCount > 0) {
+      _ffHide(); // warme cache: zichtbaar rooster is geschilderd → direct sluiten
+    } else if (window.planningDB && window.planningDB.ready) {
+      // koude cache: wacht tot de data binnen is, render, dán pas sluiten (geen lege flits)
+      Promise.resolve(window.planningDB.ready).then(function () {
+        try { renderAllViews(); } catch (e) { /* */ }
+        _ffHide();
+      }, _ffHide);
+    } else {
+      _ffHide();
     }
   } catch (e) { /* */ }
   applyPlanningRoleMode();
