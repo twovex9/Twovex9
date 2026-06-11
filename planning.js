@@ -180,6 +180,16 @@ function normalizeItem(raw) {
   return o;
 }
 
+// Memoïsatie: normalizeItem over de volledige dataset (duizenden diensten) is
+// duur, en readPlanningItems() wordt meermaals per render aangeroepen
+// (buildDataState, getBaseFiltered, getItemsForView, …). De data-laag geeft bij
+// élke wijziging een NIEUWE array-referentie terug (writeCache zet _mem = nieuwe
+// array); zolang die referentie gelijk blijft is de genormaliseerde uitkomst
+// identiek. We cachen daarom op array-identiteit en hernormaliseren alleen bij
+// een echte data-wijziging. Consumenten lezen de items uitsluitend (geen
+// mutaties — geverifieerd), dus het delen van de genormaliseerde objecten is veilig.
+var _planningNormSrc = null;
+var _planningNormOut = null;
 function readPlanningItems() {
   // Bron-van-waarheid is de Supabase-gesyncde data-laag (planningDB, met _mem in
   // RAM). getAllSync valt zelf terug op de localStorage-cache zolang de data-laag
@@ -187,7 +197,11 @@ function readPlanningItems() {
   var src = (window.planningDB && typeof window.planningDB.getAllSync === "function")
     ? window.planningDB.getAllSync()
     : readJsonArray(PLANNING_STORAGE_KEY);
-  return (Array.isArray(src) ? src : []).map(normalizeItem);
+  if (!Array.isArray(src)) src = [];
+  if (src === _planningNormSrc && _planningNormOut) return _planningNormOut;
+  _planningNormOut = src.map(normalizeItem);
+  _planningNormSrc = src;
+  return _planningNormOut;
 }
 
 function getEmployeeName(emp) {
@@ -1117,7 +1131,7 @@ function loadPlanningOwnLocaties() {
           if (naam) names.add(String(naam).toLowerCase().trim());
         });
         planningOwnLocaties = names;
-        try { renderAllViews(); } catch (e) { /* */ }
+        try { scheduleRenderAllViews(); } catch (e) { /* */ }
       }, function () { planningOwnLocatiesForMed = null; });
   } catch (e) { /* stil: fallback op eigen-scope blijft gelden */ }
 }
@@ -2867,6 +2881,26 @@ function setCalMode(mode) {
     el.setAttribute("aria-selected", k === mode ? "true" : "false");
   });
   updatePeriodUI();
+}
+
+// Render-coalescing: renderAllViews() verwerkt de volledige planning-dataset en
+// is daardoor zwaar. Tijdens een koude load vuren ~8 data-lagen ná elkaar hun
+// "…-updated"-event en élk triggerde een aparte volledige re-render → de pagina
+// bevroor seconden lang ("alles laadt", niet "wat je ziet"). scheduleRenderAllViews()
+// bundelt een uitbarsting van render-verzoeken tot één render op de eerstvolgende
+// animatieframe; het eindresultaat is identiek, maar het werk wordt niet 6-8×
+// onnodig herhaald. Directe renderAllViews()-aanroepen (init, navigatie, filters,
+// dienst-mutaties) blijven synchroon zodat die meteen reageren.
+var _planningRenderHandle = 0;
+function scheduleRenderAllViews() {
+  if (_planningRenderHandle) return;
+  var schedule = window.requestAnimationFrame
+    ? window.requestAnimationFrame.bind(window)
+    : function (cb) { return window.setTimeout(cb, 16); };
+  _planningRenderHandle = schedule(function () {
+    _planningRenderHandle = 0;
+    try { renderAllViews(); } catch (e) { /* */ }
+  });
 }
 
 function renderAllViews() {
@@ -5321,7 +5355,7 @@ function initPlanningPage() {
   // (getBaseFiltered scoopt dan op de eigen locatie(s) + eigen diensten).
   try {
     if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); });
+      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
     }
   } catch (e) { /* */ }
   // Supabase-client kan ná de eerste render klaarkomen → locatie-koppeling alsnog laden.
@@ -5330,7 +5364,7 @@ function initPlanningPage() {
       window.besaSupabaseReady.then(function () { loadPlanningOwnLocaties(); });
     }
   } catch (e) { /* */ }
-  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); });
+  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
   initDienstPanel();
   initViewModal();
   initNav();
@@ -5349,7 +5383,7 @@ function initPlanningPage() {
       if (event.key === LOCATIES_STORAGE_KEY && document.body.classList.contains("planning-dienst-open")) {
         refreshDienstLocatieSelect();
       }
-      renderAllViews();
+      scheduleRenderAllViews();
     }
   });
   window.addEventListener("focus", () => {
@@ -5358,10 +5392,10 @@ function initPlanningPage() {
       renderPlanningDiensttypeMultiselect(keep);
       refreshDienstLocatieSelect();
     }
-    renderAllViews();
+    scheduleRenderAllViews();
   });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) renderAllViews();
+    if (!document.hidden) scheduleRenderAllViews();
   });
   // Wanneer de Supabase-bootstrap of een externe sync de planning-cache
   // vernieuwt, vragen we het rooster opnieuw te tekenen.
@@ -5371,7 +5405,7 @@ function initPlanningPage() {
     if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
     // Her-evalueer ook het read-only-recht: bij koude cache zijn de permissies vaak
     // pas geladen tegen de tijd dat de planning-data binnenkomt → betrouwbare re-apply.
-    try { applyPlanningRoleMode(); renderAllViews(); } catch (e) { /* */ }
+    try { applyPlanningRoleMode(); scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Toewijzen/uitnodigen muteert eerst de uitnodigingen (teamlid-sync volgt async); leg
   // de laatst-aangepaste dienst ook hier vast zodat de terugspring betrouwbaar werkt.
@@ -5379,23 +5413,23 @@ function initPlanningPage() {
     if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
   });
   window.addEventListener("besa:comp-diensttypes-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Module 2 Bug #92: cliënt-dropdown sync wanneer cliënten elders in systeem worden gewijzigd
   window.addEventListener("besa:clienten-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   window.addEventListener("besa:medewerkers-updated", () => {
-    try { applyPlanningRoleMode(); loadPlanningOwnLocaties(); renderAllViews(); } catch (e) { /* */ }
+    try { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Locaties bepalen welke medewerkers planbaar zijn (kantoor/overhead = verborgen);
   // her-render zodra de locatie-data laadt of wijzigt.
   window.addEventListener("besa:locaties-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Release 7: vrijgave-status van onboarders kan de selecteerbare medewerkers wijzigen.
   window.addEventListener("besa:onboarding-updated", () => {
-    try { renderAllViews(); } catch (e) { /* */ }
+    try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Sprint 4 / S4: filter-voorinstellingen lijst rendert direct uit cache + live-refresh
   try { renderPresetsList(); } catch (e) { /* */ }
