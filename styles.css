@@ -20736,6 +20736,87 @@ button.besc-dtl-tab:hover {
   align-items: stretch;
 }
 .im-betrokken-input-row .im-select { flex: 1; }
+
+/* ---------------------------------------------------------------------------
+   Doorzoekbare select (besa-searchable-select.js)
+   Type-to-filter combobox bovenop een native <select>. Volledig op tokens ->
+   licht + donker. De native select blijft in de DOM (verborgen) als bron.
+--------------------------------------------------------------------------- */
+.bss { position: relative; display: block; }
+.im-betrokken-input-row .bss { flex: 1; }
+.bss .bss-native {
+  /* Visueel verbergen, maar wel in DOM houden voor waarde + formulier. */
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+  pointer-events: none;
+}
+.bss .bss-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  box-sizing: border-box;
+  /* Zoek-icoon rechts, in dezelfde positie als de select-pijl. */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.bss .bss-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft, rgba(37, 99, 235, 0.15));
+}
+.im-field--error .bss .bss-input {
+  border-color: var(--red);
+}
+.bss-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-pop, 0 8px 24px rgba(0, 0, 0, 0.1));
+  padding: 4px;
+}
+.bss-option {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bss-option:hover,
+.bss-option.is-active {
+  background: var(--surface-alt);
+}
+.bss-option.is-selected {
+  color: var(--blue);
+  font-weight: 600;
+}
+.bss-empty {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
 .im-add-btn {
   width: 36px;
   flex-shrink: 0;

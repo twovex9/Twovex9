@@ -254,7 +254,7 @@
           <div class="im-card-body">
             <div class="im-field">
               <label class="im-label" for="im-client">Mensen die aanwezig zijn/waren</label>
-              <select class="im-select" id="im-client" required>
+              <select class="im-select" id="im-client" data-searchable required>
                 <option value="">Selecteer Cliënt</option>
               </select>
             </div>
@@ -282,7 +282,7 @@
                   <div class="im-betrokken-cell im-betrokken-cell--grow">
                     <span class="im-mini-label">Selecteer persoon</span>
                     <div class="im-betrokken-input-row">
-                      <select class="im-select" id="im-betrokken-person">
+                      <select class="im-select" id="im-betrokken-person" data-searchable>
                         <option value="">Selecteer cliënt</option>
                       </select>
                       <button type="button" class="im-add-btn" id="im-betrokken-add" aria-label="Toevoegen">
@@ -506,7 +506,7 @@
               <div class="im-notif-medewerkers" id="im-notif-medewerkers" hidden>
                 <span class="im-mini-label">Selecteer medewerkers</span>
                 <div class="im-betrokken-input-row">
-                  <select class="im-select" id="im-notif-medewerker-select">
+                  <select class="im-select" id="im-notif-medewerker-select" data-searchable>
                     <option value="">Selecteer medewerker</option>
                   </select>
                   <button type="button" class="im-add-btn" id="im-notif-medewerker-add" aria-label="Toevoegen">
@@ -617,7 +617,7 @@
                 </div>
                 <div class="im-field">
                   <label class="im-label" for="im-taak-assignee">Toegewezen aan</label>
-                  <select class="im-select" id="im-taak-assignee">
+                  <select class="im-select" id="im-taak-assignee" data-searchable>
                     <option value="">Niet toegewezen</option>
                   </select>
                 </div>
@@ -625,7 +625,7 @@
               <div class="im-field">
                 <label class="im-label">Medewerkers (samenwerking)</label>
                 <div class="im-betrokken-input-row">
-                  <select class="im-select" id="im-taak-collab-select">
+                  <select class="im-select" id="im-taak-collab-select" data-searchable>
                     <option value="">Selecteer medewerker</option>
                   </select>
                   <button type="button" class="im-add-btn" id="im-taak-collab-add" aria-label="Toevoegen">
@@ -724,6 +724,7 @@
   <script src="incidenten-data.js?v=918f1ad" defer></script>
   <script src="incident-taken-data.js?v=918f1ad" defer></script>
   <script src="incident-documenten-data.js?v=918f1ad" defer></script>
+  <script src="besa-searchable-select.js?v=918f1ad" defer></script>
   <script src="incident-melden.js?v=918f1ad" defer></script>
 </body>
 </html>
