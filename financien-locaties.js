@@ -32,6 +32,19 @@
     return v.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   }
   function fmtPct(n) { return (n == null) ? "—" : (Math.round(Number(n) * 10) / 10).toLocaleString("nl-NL") + "%"; }
+  /* Kosten-uitsplitsing (ZZP + loondienst + evt. handmatig personeel/onkosten) — één bron
+     voor tooltip én sub-tekst, zodat alle plekken optellen tot het kosten-totaal. */
+  function kostParts(o) {
+    var parts = ["ZZP " + fmtEuro(o.kosten_zzp), "Loondienst " + fmtEuro(o.loondienst)];
+    if ((Number(o.personeel) || 0) > 0) parts.push("Personeel " + fmtEuro(o.personeel));
+    if ((Number(o.onkosten) || 0) > 0) parts.push("Onkosten " + fmtEuro(o.onkosten));
+    return parts;
+  }
+  function kostBreakdownTitle(o) { return kostParts(o).join(" · "); }
+  /* Compacte split-regel onder een kosten-bedrag in de per-locatie tabel. */
+  function makeKostSplit(o) {
+    return el("span", "fin-loc-kost-split", "ZZP " + fmtEuro(o.kosten_zzp) + " · Loon " + fmtEuro(o.loondienst));
+  }
   function euTickSigned(v) {
     v = Number(v) || 0; var sign = v < 0 ? "−" : "+"; var a = Math.abs(v);
     var t = a >= 1000 ? "€ " + Math.round(a / 1000) + "k" : "€ " + Math.round(a);
@@ -114,7 +127,7 @@
     var res = Number(m.resultaat) || 0;
     return '<div class="bd-tip-title">' + esc(ymLabel(m.ym, true)) + "</div>"
       + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--green)"></span><span class="bd-tip-nm">Opbrengst</span><span class="bd-tip-val">' + fmtEuro(m.omzet) + "</span></div>"
-      + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--red)"></span><span class="bd-tip-nm">Kosten (ZZP)</span><span class="bd-tip-val">' + fmtEuro(m.kosten) + "</span></div>"
+      + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--red)"></span><span class="bd-tip-nm">Kosten</span><span class="bd-tip-val">' + fmtEuro(m.kosten) + "</span></div>"
       + '<div class="bd-tip-div"></div>'
       + '<div class="bd-tip-row bd-tip-row--total"><span class="bd-tip-sw" style="background:transparent"></span><span class="bd-tip-nm">' + (res >= 0 ? "Winst" : "Verlies") + '</span><span class="bd-tip-val">' + fmtEuro(res) + "</span></div>";
   }
@@ -149,7 +162,7 @@
   /* ---- overhead-detectie: een locatie zonder omzet én zonder ZZP-kosten is een
      pure kostenpost (kantoor/overhead). Zorggroepen hebben omzet en/of ZZP-inzet. ---- */
   function isOverhead(l) {
-    return (Number(l.omzet) || 0) === 0 && (Number(l.kosten_zzp) || 0) === 0
+    return (Number(l.omzet) || 0) === 0 && (Number(l.kosten_zzp) || 0) === 0 && (Number(l.loondienst) || 0) === 0
       && ((Number(l.personeel) || 0) > 0 || (Number(l.onkosten) || 0) > 0);
   }
 
@@ -177,7 +190,7 @@
       ["fin-foot-kosten", "fin-foot-omzet", "fin-foot-result", "fin-foot-bezet"].forEach(function (id) { setText(id, ""); });
       return;
     }
-    var tOmzet = 0, tKosten = 0, tZzp = 0, tPers = 0, tOnk = 0, tKamers = 0, tBezet = 0, tVrij = 0;
+    var tOmzet = 0, tKosten = 0, tZzp = 0, tLoon = 0, tPers = 0, tOnk = 0, tKamers = 0, tBezet = 0, tVrij = 0;
     // zorggroepen eerst, overhead-regels onderaan
     var sorted = locations.slice().sort(function (a, b) {
       var ao = isOverhead(a) ? 1 : 0, bo = isOverhead(b) ? 1 : 0;
@@ -186,7 +199,7 @@
     });
     sorted.forEach(function (l) {
       tOmzet += Number(l.omzet) || 0; tKosten += Number(l.kosten) || 0;
-      tZzp += Number(l.kosten_zzp) || 0; tPers += Number(l.personeel) || 0; tOnk += Number(l.onkosten) || 0;
+      tZzp += Number(l.kosten_zzp) || 0; tLoon += Number(l.loondienst) || 0; tPers += Number(l.personeel) || 0; tOnk += Number(l.onkosten) || 0;
       tKamers += Number(l.kamers) || 0; tBezet += Number(l.bezet) || 0;
       if ((Number(l.kamers) || 0) > 0) tVrij += Math.max((Number(l.kamers) || 0) - (Number(l.bezet) || 0), 0);
       var res = Number(l.resultaat) || 0;
@@ -201,9 +214,11 @@
       tr.appendChild(tdN);
 
       tr.appendChild(el("td", "fin-num", fmtInt(l.zzpers)));
-      // Kosten (totaal) — uitsplitsing ZZP/Personeel/Onkosten in tooltip; losse kolommen weg voor leesbaarheid
-      var tdK = el("td", "fin-num fin-eur", fmtEuro(l.kosten));
-      tdK.title = "ZZP " + fmtEuro(l.kosten_zzp) + " · Personeel " + fmtEuro(l.personeel) + " · Onkosten " + fmtEuro(l.onkosten);
+      // Kosten (totaal) met compacte ZZP/loondienst-split eronder; volledige uitsplitsing in tooltip.
+      var tdK = el("td", "fin-num fin-eur fin-loc-kost");
+      tdK.appendChild(el("span", "fin-loc-kost-tot", fmtEuro(l.kosten)));
+      tdK.appendChild(makeKostSplit(l));
+      tdK.title = kostBreakdownTitle(l);
       tr.appendChild(tdK);
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.omzet)));
       tr.appendChild(el("td", "fin-num fin-eur " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtEuro(res)));
@@ -222,7 +237,12 @@
       tb.appendChild(tr);
     });
     var footK = $("fin-foot-kosten");
-    if (footK) { footK.textContent = fmtEuro(tKosten); footK.title = "ZZP " + fmtEuro(tZzp) + " · Personeel " + fmtEuro(tPers) + " · Onkosten " + fmtEuro(tOnk); }
+    if (footK) {
+      clear(footK);
+      footK.appendChild(el("span", "fin-loc-kost-tot", fmtEuro(tKosten)));
+      footK.appendChild(makeKostSplit({ kosten_zzp: tZzp, loondienst: tLoon }));
+      footK.title = kostBreakdownTitle({ kosten_zzp: tZzp, loondienst: tLoon, personeel: tPers, onkosten: tOnk });
+    }
     setText("fin-foot-omzet", fmtEuro(tOmzet));
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
@@ -313,8 +333,7 @@
     }
     sum.appendChild(stat("Opbrengst", fmtEuro(loc.omzet), "",
       "Betaald " + fmtEuro(loc.paid) + " · Open " + fmtEuro(loc.pending) + " · Nog te declareren " + fmtEuro(loc.to_declare)));
-    sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "",
-      "ZZP " + fmtEuro(loc.kosten_zzp) + " · Personeel " + fmtEuro(loc.personeel) + " · Onkosten " + fmtEuro(loc.onkosten)));
+    sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "", kostBreakdownTitle(loc)));
     sum.appendChild(stat("Resultaat", fmtEuro(res0), (res0 >= 0 ? "fin-pos" : "fin-neg"),
       (res0 >= 0 ? "Winst" : "Verlies") + (loc.marge_pct != null ? " · marge " + fmtPct(loc.marge_pct) : "")));
     body.appendChild(sum);
@@ -335,6 +354,31 @@
 
       // Overige onkosten (bewerkbaar)
       renderOnkSection(body, loc.name, d.onkosten || []);
+
+      // Loondienst-medewerkers (automatisch: maandsalaris × werkgeverslasten, verdeeld over hun locaties)
+      var loon = d.loondienst || [];
+      if (loon.length) {
+        body.appendChild(el("h3", "fin-sec-h", "Loondienst-medewerkers"));
+        var tl = buildTable([{ label: "Naam" }, { label: "Functie" }, { label: "€/maand", num: true }, { label: "Mnd", num: true }, { label: "In periode", num: true }]);
+        var sumL = 0;
+        loon.forEach(function (p) {
+          sumL += Number(p.kost_periode) || 0;
+          var tr = el("tr");
+          tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
+          tr.appendChild(el("td", null, p.functie || "—"));
+          tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
+          tr.appendChild(el("td", "fin-num", fmtInt(p.maanden)));
+          tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
+          tl.tb.appendChild(tr);
+        });
+        var tfl = el("tfoot"), trfl = el("tr");
+        trfl.appendChild(el("td", "bd-td-strong", "Totaal loondienst (" + loon.length + ")"));
+        trfl.appendChild(el("td", null, "")); trfl.appendChild(el("td", null, "")); trfl.appendChild(el("td", null, ""));
+        trfl.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sumL)));
+        tfl.appendChild(trfl); tl.tbl.appendChild(tfl);
+        body.appendChild(tl.tbl);
+        body.appendChild(el("p", "bd-mrow-note", "Loondienstkosten = bruto maandsalaris × werkgeverslasten (1,30), gelijk verdeeld over de locaties waaraan de medewerker is gekoppeld, × het aantal maanden in de periode. Indicatief."));
+      }
 
       // ZZP'ers
       body.appendChild(el("h3", "fin-sec-h", "Ingezette ZZP'ers"));
@@ -388,7 +432,42 @@
         body.appendChild(tc.tbl);
         body.appendChild(el("p", "bd-mrow-note", "Opbrengst = betaald + gedeclareerd-open + nog-te-declareren (schatting o.b.v. eigen factuurhistorie van de beschikking). Beweeg over een bedrag voor de uitsplitsing."));
       }
+
+      // Openstaande diensten op deze locatie (toekomst)
+      renderOpenDienstenDetail(body, d.open_diensten || [], d.open_diensten_totaal || 0);
     });
+  }
+
+  /* ---- openstaande diensten (drill-down) ---- */
+  function urgentieBadge(u) {
+    var cls = u === "hoog" ? "fin-urg fin-urg--hoog" : u === "midden" ? "fin-urg fin-urg--midden" : "fin-urg fin-urg--laag";
+    var lbl = u === "hoog" ? "Hoog" : u === "midden" ? "Midden" : "Laag";
+    return el("span", cls, lbl);
+  }
+  function dagLabel(datum) {
+    if (!datum) return "—";
+    var p = String(datum).split("-");
+    if (p.length < 3) return datum;
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    try { return d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }); } catch (e) { return datum; }
+  }
+  function renderOpenDienstenDetail(body, rows, totaal) {
+    var head = el("div", "fin-sec-head");
+    head.appendChild(el("h3", "fin-sec-h", "Openstaande diensten (" + fmtInt(totaal) + ")"));
+    body.appendChild(head);
+    if (!rows.length) { emptyRow(body, "Geen openstaande toekomstige diensten op deze locatie."); return; }
+    var t = buildTable([{ label: "Datum" }, { label: "Tijd" }, { label: "Functie / diensttype" }, { label: "Urgentie" }]);
+    rows.forEach(function (o) {
+      var tr = el("tr");
+      tr.appendChild(el("td", "bd-td-strong", dagLabel(o.datum)));
+      tr.appendChild(el("td", null, (o.start || "—") + (o.eind ? "–" + o.eind : "")));
+      tr.appendChild(el("td", null, o.functie || o.diensttype || "Dienst"));
+      var tdU = el("td"); tdU.appendChild(urgentieBadge(o.urgentie)); tr.appendChild(tdU);
+      t.tb.appendChild(tr);
+    });
+    body.appendChild(t.tbl);
+    if (totaal > rows.length) body.appendChild(el("p", "bd-mrow-note", "Eerste " + rows.length + " van " + fmtInt(totaal) + " getoond (oplopend op datum). Volledige lijst via Planning → Open diensten."));
+    else body.appendChild(el("p", "bd-mrow-note", "Urgentie: Hoog = binnen 2 dagen · Midden = binnen een week · Laag = later."));
   }
 
   /* ---- kamers & bezetting (drill-down) ---- */
@@ -743,8 +822,17 @@
 
   function wireControls() {
     var bm = $("fin-mode-maand"), bp = $("fin-mode-periode");
-    if (bm) bm.addEventListener("click", function () { mode = "maand"; selEnd = selStart; syncControls(); reload(); });
-    if (bp) bp.addEventListener("click", function () { mode = "periode"; syncControls(); });
+    if (bm) bm.addEventListener("click", function () { mode = "maand"; selEnd = selStart; markPreset(null); syncControls(); reload(); });
+    if (bp) bp.addEventListener("click", function () { mode = "periode"; markPreset(null); syncControls(); });
+
+    // Periode-presets: maand / kwartaal / jaar
+    var pmd = $("fin-preset-maand"); if (pmd) pmd.addEventListener("click", function () { setPreset("maand"); });
+    var pkw = $("fin-preset-kwartaal"); if (pkw) pkw.addEventListener("click", function () { setPreset("kwartaal"); });
+    var pjr = $("fin-preset-jaar"); if (pjr) pjr.addEventListener("click", function () { setPreset("jaar"); });
+
+    // Open diensten: horizon-filter
+    var odh = $("fin-od-horizon");
+    if (odh) odh.addEventListener("change", function () { odHorizon = parseInt(odh.value, 10) || 30; odLoad(); });
     var maand = $("fin-maand");
     if (maand) maand.addEventListener("change", function () { selStart = selEnd = maand.value; reload(); });
     function step(delta) {
@@ -804,6 +892,105 @@
     main.appendChild(box);
   }
 
+  /* ---- signaleringsstrip: verliesgevende locaties + veel open diensten ---- */
+  var OPEN_WEEK_DREMPEL = 5;
+  function renderSignals(data) {
+    var box = $("fin-signals");
+    if (!box) return;
+    clear(box);
+    var locs = (data && data.locations) || [];
+    var sigs = [];
+    locs.forEach(function (l) {
+      var res = Number(l.resultaat) || 0;
+      var omzet = Number(l.omzet) || 0;
+      // Verlies alleen melden bij een echte zorggroep (heeft omzet of ZZP-inzet), niet bij pure overhead-regels.
+      if (res < 0 && !isOverhead(l) && (omzet > 0 || (Number(l.kosten_zzp) || 0) > 0)) {
+        sigs.push({ ernst: "rood", dom: l.name, tekst: "Verliesgevend — resultaat " + fmtEuro(res) + (l.marge_pct != null ? " (marge " + fmtPct(l.marge_pct) + ")" : "") });
+      }
+      var ow = Number(l.open_diensten_week) || 0;
+      if (ow >= OPEN_WEEK_DREMPEL) {
+        sigs.push({ ernst: "oranje", dom: l.name, tekst: ow + " open diensten in de komende 7 dagen" });
+      }
+    });
+    sigs.sort(function (a, b) { return (a.ernst === "rood" ? 0 : 1) - (b.ernst === "rood" ? 0 : 1); });
+    if (!sigs.length) {
+      box.innerHTML = '<div class="fin-signal fin-signal--ok"><span class="fin-signal-ico" aria-hidden="true">✓</span>'
+        + '<span class="fin-signal-txt"><strong>Geen signalen.</strong> Alle locaties zijn winstgevend en zonder grote planningsgaten.</span></div>';
+      return;
+    }
+    sigs.forEach(function (s) {
+      var d = el("div", "fin-signal " + (s.ernst === "rood" ? "fin-signal--rood" : "fin-signal--oranje"));
+      d.appendChild(el("span", "fin-signal-dom", s.dom));
+      d.appendChild(el("span", "fin-signal-txt", s.tekst));
+      box.appendChild(d);
+    });
+  }
+
+  /* ---- open diensten per locatie (page-sectie, operationeel) ---- */
+  var _odData = null;
+  var odHorizon = 30;
+  function odLoad() {
+    var tb = $("fin-od-tbody");
+    if (tb) { clear(tb); var trL = el("tr"); var tdL = el("td", "fin-empty"); tdL.colSpan = 6; tdL.textContent = "Laden…"; trL.appendChild(tdL); tb.appendChild(trL); }
+    return window.financienLocatiesDB.openDiensten(null, odHorizon).then(function (d) {
+      _odData = d || null;
+      renderOdTable();
+    });
+  }
+  function renderOdTable() {
+    var tb = $("fin-od-tbody"); if (!tb) return;
+    clear(tb);
+    var rows = (_odData && _odData.per_locatie) || [];
+    setText("fin-od-totaal", _odData ? fmtInt(_odData.totaal) : "—");
+    if (!rows.length) {
+      var tr0 = el("tr"); var td0 = el("td", "fin-empty"); td0.colSpan = 6;
+      td0.textContent = "Geen openstaande toekomstige diensten."; tr0.appendChild(td0); tb.appendChild(tr0);
+      return;
+    }
+    rows.forEach(function (r) {
+      var tr = el("tr", "fin-loc-row"); tr.tabIndex = 0; tr.setAttribute("role", "button");
+      tr.setAttribute("aria-label", r.loc + " — openstaande diensten");
+      tr.appendChild(el("td", "fin-loc-name", r.loc));
+      tr.appendChild(el("td", "fin-num bd-td-strong", fmtInt(r.aantal)));
+      var tdW = el("td", "fin-num" + ((Number(r.week) || 0) >= OPEN_WEEK_DREMPEL ? " fin-neg" : "")); tdW.textContent = fmtInt(r.week); tr.appendChild(tdW);
+      tr.appendChild(el("td", "fin-num", fmtInt(r.maand)));
+      var tdU = el("td", "fin-od-urg");
+      if (Number(r.hoog) > 0) { var bh = urgentieBadge("hoog"); bh.textContent = "Hoog " + fmtInt(r.hoog); tdU.appendChild(bh); }
+      if (Number(r.midden) > 0) { var bm = urgentieBadge("midden"); bm.textContent = "Midden " + fmtInt(r.midden); tdU.appendChild(bm); }
+      tr.appendChild(tdU);
+      var tdA = el("td", "fin-num");
+      var b = el("button", "fin-icon-btn", "Bekijken"); b.type = "button";
+      tdA.appendChild(b); tr.appendChild(tdA);
+      (function (loc) {
+        function open() { openDetail(loc); }
+        tr.addEventListener("click", open);
+        tr.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+      })(r.loc);
+      tb.appendChild(tr);
+    });
+  }
+
+  /* ---- periode-presets: maand / kwartaal / jaar ---- */
+  function clampYm(ym) {
+    if (!ym) return ym;
+    if (winMin && ym < winMin) return winMin;
+    if (winMax && ym > winMax) return winMax;
+    return ym;
+  }
+  function setPreset(kind) {
+    var anchor = selEnd || selStart || winMax;
+    if (!anchor) return;
+    if (kind === "maand") { mode = "maand"; selStart = selEnd = anchor; }
+    else if (kind === "kwartaal") { mode = "periode"; selEnd = anchor; selStart = clampYm(addMonthsYm(anchor, -2)); }
+    else if (kind === "jaar") { mode = "periode"; var y = anchor.slice(0, 4); selStart = clampYm(y + "-01"); selEnd = clampYm(y + "-12"); }
+    syncControls(); markPreset(kind); reload();
+  }
+  function markPreset(kind) {
+    [["fin-preset-maand", "maand"], ["fin-preset-kwartaal", "kwartaal"], ["fin-preset-jaar", "jaar"]].forEach(function (p) {
+      var b = $(p[0]); if (b) { b.classList.toggle("is-active", p[1] === kind); b.setAttribute("aria-selected", p[1] === kind); }
+    });
+  }
+
   /* ---- render ---- */
   function render() {
     var data = curData();
@@ -823,7 +1010,7 @@
     setHTML("fin-omzet-sub", "Betaald " + esc(fmtEuro(t.paid)) + " · Open " + esc(fmtEuro(t.pending)) + " · Nog te declareren " + esc(fmtEuro(t.to_declare)));
 
     setText("fin-v-kosten", fmtEuro(t.kosten));
-    setText("fin-kosten-sub", "ZZP " + fmtEuro(t.kosten_zzp) + " · Personeel " + fmtEuro(t.personeel) + " · Onkosten " + fmtEuro(t.onkosten));
+    setText("fin-kosten-sub", kostBreakdownTitle(t));
 
     setText("fin-v-result", fmtEuro(t.resultaat));
     var pos = (Number(t.resultaat) || 0) >= 0;
@@ -832,6 +1019,7 @@
     var marge = (Number(t.omzet) > 0) ? (Math.round((t.resultaat / t.omzet) * 1000) / 10) : null;
     setText("fin-result-sub", (pos ? "Winst" : "Verlies") + (marge != null ? " · marge " + fmtPct(marge) : ""));
 
+    renderSignals(data);
     renderLocTable(data.locations || []);
     renderSplit(data.locations || []);
     renderBezetting(t);
@@ -849,6 +1037,7 @@
       if (window.financienLocatiesDB && window.financienLocatiesDB.ready) await window.financienLocatiesDB.ready;
     } catch (e) { /* reporter meldde al */ }
     render();
+    odLoad();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

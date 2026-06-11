@@ -284,14 +284,95 @@
     }).join("");
   }
 
+  // ─── Per locatie: omzet / kosten / resultaat / open diensten ─────────────
+  var OPEN_WEEK_DREMPEL = 5;
+  function locFin() { return (window.managementDashboardDB && window.managementDashboardDB.getLocaties) ? window.managementDashboardDB.getLocaties() : null; }
+  // Pure overhead-regel = geen omzet én geen ZZP-inzet (kantoor/satelliet). Niet als zorggroep tonen.
+  function isOverheadLoc(l) {
+    return num(l.omzet) === 0 && num(l.kosten_zzp) === 0
+      && (num(l.personeel) > 0 || num(l.onkosten) > 0 || num(l.loondienst) > 0);
+  }
+  function locSignalen() {
+    var fl = locFin();
+    var out = [];
+    if (!fl || !Array.isArray(fl.locations)) return out;
+    fl.locations.forEach(function (l) {
+      var res = num(l.resultaat);
+      if (res < 0 && !isOverheadLoc(l) && (num(l.omzet) > 0 || num(l.kosten_zzp) > 0)) {
+        out.push({ domein: l.name, ernst: "rood", tekst: "Verliesgevend — resultaat " + eur(res) });
+      }
+      if (num(l.open_diensten_week) >= OPEN_WEEK_DREMPEL) {
+        out.push({ domein: l.name, ernst: "oranje", tekst: num(l.open_diensten_week) + " open diensten in de komende 7 dagen" });
+      }
+    });
+    return out;
+  }
+  function renderLocaties() {
+    var fl = locFin();
+    var section = $("md-locaties");
+    var tb = $("md-loc-tbody");
+    if (!tb) return;
+    if (!fl || !Array.isArray(fl.locations) || !fl.locations.length) {
+      // Geen toegang of geen data → sectie verbergen (gebeurt niet voor Eigenaar/Directeur).
+      if (section) section.hidden = true;
+      return;
+    }
+    if (section) section.hidden = false;
+    var per = fl.period || {};
+    setText("md-loc-period", per.start ? (per.start === per.end ? monthLabel(per.start) : monthLabel(per.start) + " – " + monthLabel(per.end)) : "");
+    while (tb.firstChild) tb.removeChild(tb.firstChild);
+    // Zorggroepen eerst (op omzet), overhead onderaan.
+    var rows = fl.locations.slice().sort(function (a, b) {
+      var ao = isOverheadLoc(a) ? 1 : 0, bo = isOverheadLoc(b) ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      return num(b.omzet) - num(a.omzet);
+    });
+    var tOmzet = 0, tKosten = 0, tOpen = 0;
+    rows.forEach(function (l) {
+      tOmzet += num(l.omzet); tKosten += num(l.kosten); tOpen += num(l.open_diensten);
+      var res = num(l.resultaat), pos = res >= 0;
+      var tr = document.createElement("tr");
+      tr.className = "md-loc-row";
+
+      var tdN = document.createElement("td");
+      tdN.className = "md-loc-name";
+      var dot = document.createElement("span");
+      dot.className = "md-loc-dot " + (pos ? "md--groen" : "md--rood");
+      tdN.appendChild(dot);
+      tdN.appendChild(document.createTextNode(l.name));
+      if (isOverheadLoc(l)) { var ob = document.createElement("span"); ob.className = "md-loc-ovh"; ob.textContent = "overhead"; tdN.appendChild(ob); }
+      tr.appendChild(tdN);
+
+      tr.appendChild(cell("md-loc-num", eur(l.omzet)));
+      tr.appendChild(cell("md-loc-num", eur(l.kosten)));
+      tr.appendChild(cell("md-loc-num " + (pos ? "md-loc-pos" : "md-loc-neg"), eur(res)));
+      tr.appendChild(cell("md-loc-num " + (pos ? "md-loc-pos" : "md-loc-neg"), l.marge_pct == null ? "—" : intl(l.marge_pct) + "%"));
+      var ow = num(l.open_diensten_week);
+      var tdO = cell("md-loc-num" + (ow >= OPEN_WEEK_DREMPEL ? " md-loc-neg" : ""), intl(l.open_diensten));
+      if (ow > 0) tdO.title = ow + " in de komende 7 dagen";
+      tr.appendChild(tdO);
+      tb.appendChild(tr);
+    });
+    setText("md-loc-foot-omzet", eur(tOmzet));
+    setText("md-loc-foot-kosten", eur(tKosten));
+    var tRes = tOmzet - tKosten;
+    var footRes = $("md-loc-foot-result");
+    if (footRes) { footRes.textContent = eur(tRes); footRes.className = "md-loc-num md-loc-strong " + (tRes >= 0 ? "md-loc-pos" : "md-loc-neg"); }
+    setText("md-loc-foot-marge", tOmzet > 0 ? intl(Math.round(tRes / tOmzet * 1000) / 10) + "%" : "—");
+    setText("md-loc-foot-open", intl(tOpen));
+    setText("md-loc-note", "Kosten per locatie = ingehuurde ZZP-diensten + loondienst-medewerkers (salaris × werkgeverslasten, gekoppeld via HR) + handmatige personeels- en onkosten. Open diensten = toekomstige, nog niet-toegewezen diensten. Klik op de titel-link voor de volledige uitsplitsing en periodefilters.");
+  }
+  function cell(cls, txt) { var td = document.createElement("td"); td.className = cls; td.textContent = txt; return td; }
+
   // ─── Render alles ────────────────────────────────────────────────────────
   function render() {
     renderGreeting();
     renderNews();
     var d = (window.managementDashboardDB && window.managementDashboardDB.getData) ? window.managementDashboardDB.getData() : null;
     if (!d) return;
-    renderSignals(d.signalering);
+    renderSignals((Array.isArray(d.signalering) ? d.signalering : []).concat(locSignalen()));
     renderTilesAndStats(d);
+    renderLocaties();
     renderFin(d);
     renderHr(d);
     renderPlanning(d);

@@ -197,7 +197,8 @@
         <a href="#md-top" class="side-link is-active" aria-current="page">Overzicht</a>
         <a href="#md-verkeerslicht" class="side-link">Verkeerslicht</a>
         <a href="#md-fin" class="side-link">Financiën</a>
-        <a href="#md-perfin" class="side-link side-link--sub">Financieel per locatie</a>
+        <a href="#md-locaties" class="side-link side-link--sub">Resultaat per locatie</a>
+        <a href="#md-perfin" class="side-link side-link--sub">Personeelskosten per locatie</a>
         <a href="#md-hr" class="side-link">Medewerkers</a>
         <a href="#md-perspers" class="side-link side-link--sub">Personeel per locatie</a>
         <a href="#md-planning" class="side-link">Planning</a>
@@ -280,6 +281,40 @@
         </a>
       </section>
 
+      <!-- Per locatie: kosten / omzet / resultaat / open diensten -->
+      <section class="table-card md-domain" id="md-locaties" aria-label="Resultaat per locatie">
+        <div class="md-domain-head">
+          <h2 class="md-domain-title">Resultaat per locatie <span class="md-loc-period" id="md-loc-period"></span></h2>
+          <a href="financien-locaties" class="md-domain-link">Naar financiën per locatie →</a>
+        </div>
+        <div class="md-loc-wrap" id="md-loc-wrap">
+          <table class="md-loc-table" id="md-loc-table">
+            <thead>
+              <tr>
+                <th scope="col">Locatie</th>
+                <th scope="col" class="md-loc-num">Omzet</th>
+                <th scope="col" class="md-loc-num">Kosten</th>
+                <th scope="col" class="md-loc-num">Resultaat</th>
+                <th scope="col" class="md-loc-num">Marge</th>
+                <th scope="col" class="md-loc-num">Open diensten</th>
+              </tr>
+            </thead>
+            <tbody id="md-loc-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td class="md-loc-strong">Totaal</td>
+                <td class="md-loc-num md-loc-strong" id="md-loc-foot-omzet"></td>
+                <td class="md-loc-num md-loc-strong" id="md-loc-foot-kosten"></td>
+                <td class="md-loc-num md-loc-strong" id="md-loc-foot-result"></td>
+                <td class="md-loc-num" id="md-loc-foot-marge"></td>
+                <td class="md-loc-num md-loc-strong" id="md-loc-foot-open"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="md-note" id="md-loc-note"></p>
+      </section>
+
       <!-- Domein: Financiën -->
       <section class="table-card md-domain" id="md-fin" aria-label="Financiën &amp; declaraties">
         <div class="md-domain-head">
@@ -290,10 +325,10 @@
         <p class="md-note" id="md-fin-note"></p>
       </section>
 
-      <!-- Financieel per locatie -->
-      <section class="table-card md-domain" id="md-perfin" aria-label="Financieel per locatie">
+      <!-- Personeelskosten (loondienst vs ZZP) per locatie -->
+      <section class="table-card md-domain" id="md-perfin" aria-label="Personeelskosten per locatie">
         <div class="md-domain-head">
-          <h2 class="md-domain-title">Financieel per locatie</h2>
+          <h2 class="md-domain-title">Personeelskosten per locatie</h2>
           <a href="financien-locaties" class="md-domain-link">Naar financiën per locatie →</a>
         </div>
         <div id="md-perfin-body"><p class="md-news-empty">Laden…</p></div>

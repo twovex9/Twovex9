@@ -26895,6 +26895,10 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-empty { text-align: center; color: var(--text-muted); padding: 24px 12px; }
 .fin-loc-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
 .fin-loc-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+/* Kosten-cel: totaal met compacte ZZP/loondienst-split eronder (Per-locatie tabel) */
+.fin-loc-kost { white-space: nowrap; }
+.fin-loc-kost-tot { display: block; }
+.fin-loc-kost-split { display: block; margin-top: 2px; font-size: var(--font-ui-badge); font-weight: 400; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 /* Bezetting-cel: telling + vrij-badge naast elkaar (Per-locatie tabel) */
 .fin-loc-bez { white-space: nowrap; }
 .fin-loc-bez-cnt { margin-right: 8px; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -26989,6 +26993,33 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-vrij-badge--full { background: rgba(148, 163, 184, 0.18); color: var(--text-muted); }
 .fin-vrij-badge--over { background: var(--red-soft); color: var(--red); }
 .fin-vrij-badge--none { background: transparent; color: var(--text-muted); }
+
+/* ── Per-locatie dashboard: signaleringen, periode-presets, open diensten ─── */
+/* Signaleringsstrip (verliesgevend / veel open diensten) */
+.fin-signals { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
+.fin-signal { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1px solid var(--line); border-radius: var(--r-sm, 8px); background: var(--bg, var(--surface)); font-size: 13px; }
+.fin-signal--rood { border-color: var(--red); background: var(--red-soft); }
+.fin-signal--oranje { border-color: var(--yellow); background: var(--yellow-soft, rgba(234, 179, 8, 0.12)); }
+.fin-signal--ok { border-color: var(--green); background: var(--green-soft); }
+.fin-signal-dom { flex: 0 0 auto; font-weight: 700; color: var(--text); min-width: 120px; }
+.fin-signal-txt { color: var(--text); }
+.fin-signal-ico { flex: 0 0 auto; color: var(--green); font-weight: 700; }
+
+/* Periode-presets (maand/kwartaal/jaar) naast de periodekiezer */
+.fin-presets { display: inline-flex; gap: 6px; margin-left: 4px; }
+.fin-preset-btn { border: 1px solid var(--line); border-radius: var(--r-pill, 999px); background: var(--surface); color: var(--text); padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+.fin-preset-btn:hover { border-color: var(--blue); color: var(--blue); }
+.fin-preset-btn.is-active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Open diensten per locatie: badges + urgentie */
+.fin-od-tot-badge { display: inline-block; margin-left: 8px; padding: 1px 9px; font-size: 12px; font-weight: 700; color: var(--text-muted); background: rgba(148, 163, 184, 0.18); border-radius: 999px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.fin-od-horizon-wrap { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.fin-od-urg { white-space: nowrap; }
+.fin-urg { display: inline-block; padding: 2px 9px; margin-right: 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.fin-urg--hoog { background: var(--red-soft); color: var(--red); }
+.fin-urg--midden { background: var(--yellow-soft, rgba(234, 179, 8, 0.14)); color: var(--yellow); }
+.fin-urg--laag { background: rgba(148, 163, 184, 0.18); color: var(--text-muted); }
+@media (max-width: 560px) { .fin-signal { flex-direction: column; align-items: flex-start; gap: 2px; } .fin-signal-dom { min-width: 0; } }
 
 /* Drill-down: kamers & bezetting tegels */
 .fin-kb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 4px; }
@@ -27418,6 +27449,23 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .vl-trend-val { font-size: 11px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
 .md-perinc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* Per-locatie tabel (management-dashboard "Resultaat per locatie") */
+.md-loc-period { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.md-loc-wrap { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.md-loc-table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.md-loc-table th { text-align: left; font-size: var(--font-table-head, 12px); color: var(--text-muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.md-loc-table td { padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--text); }
+.md-loc-table tbody tr:last-child td { border-bottom: 1px solid var(--line); }
+.md-loc-table tfoot td { border-top: 2px solid var(--line); border-bottom: none; }
+.md-loc-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.md-loc-strong { font-weight: 700; }
+.md-loc-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.md-loc-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: var(--r-pill, 999px); }
+.md-loc-ovh { margin-left: 4px; padding: 1px 7px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); background: rgba(148, 163, 184, 0.20); border-radius: 999px; }
+.md-loc-pos { color: var(--green); }
+.md-loc-neg { color: var(--red); }
+.md-loc-row:hover td { background: var(--row-hover, rgba(0,0,0,0.03)); }
 
 @media (max-width: 760px) {
   .md-quickstats { grid-template-columns: 1fr; }

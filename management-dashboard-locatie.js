@@ -372,44 +372,50 @@
       }).join("");
   }
 
-  // ─── 5. Financieel per locatie ────────────────────────────────────────────────────
+  // ─── 5. Personeelskosten (loondienst vs ZZP) per locatie ────────────────────────────
+  // Complementair aan de "Resultaat per locatie"-tabel (#md-locaties): splitst de
+  // personeelskosten uit in loondienst- en ZZP-kosten per locatie (directie-spec).
   function renderFinancieel() {
     var box = $("md-perfin-body"); if (!box || !model) return;
     if (model.finUnauthorized) { box.innerHTML = '<p class="md-news-empty">Geen toegang tot de financiële cijfers.</p>'; return; }
     var rijen = model.rijen.filter(function (r) { return r.fin; })
-      .slice().sort(function (a, b) { return b.fin.omzet - a.fin.omzet; });
+      .slice().sort(function (a, b) { return (b.fin.loondienst + b.fin.kosten_zzp) - (a.fin.loondienst + a.fin.kosten_zzp); });
     if (!rijen.length) { box.innerHTML = '<p class="md-news-empty">Geen financiële locatiegegevens beschikbaar.</p>'; return; }
-    var head = '<thead><tr><th>Locatie</th><th class="vl-num">Omzet</th><th class="vl-num">Personeelskosten</th><th class="vl-num">ZZP-kosten</th><th class="vl-num">Resultaat</th><th class="vl-num">Marge</th></tr></thead>';
+    var head = '<thead><tr><th>Locatie</th><th class="vl-num">Loondienst-kosten</th><th class="vl-num">ZZP-kosten</th><th class="vl-num">Totaal personeelskosten</th><th class="vl-num">ZZP-aandeel</th><th class="vl-num">% van omzet</th></tr></thead>';
     var rows = rijen.map(function (r) {
       var f = r.fin;
       var persKosten = f.loondienst + f.kosten_zzp;
-      var st = F.vlResultaat(f.resultaat, f.omzet);
+      var zzpAandeel = persKosten ? (f.kosten_zzp / persKosten) * 100 : 0;
+      var vanOmzet = f.omzet ? (persKosten / f.omzet) * 100 : null;
+      var st = vanOmzet == null ? "groen" : (vanOmzet > 100 ? "rood" : vanOmzet > 85 ? "oranje" : "groen");
       return "<tr>"
-        + '<td class="vl-loc">' + dot(st) + "<span>" + F.escHtml(r.naam) + "</span></td>"
-        + '<td class="vl-num">' + F.eur(f.omzet) + "</td>"
-        + '<td class="vl-num">' + F.eur(persKosten) + "</td>"
+        + '<td class="vl-loc"><span>' + F.escHtml(r.naam) + "</span></td>"
+        + '<td class="vl-num">' + F.eur(f.loondienst) + "</td>"
         + '<td class="vl-num">' + F.eur(f.kosten_zzp) + "</td>"
-        + '<td class="vl-num ' + F.statusClass(st).replace("md--", "vl-txt--") + '">' + F.eur(f.resultaat) + "</td>"
-        + '<td class="vl-num">' + F.pct(f.marge_pct, 1) + "</td>"
+        + '<td class="vl-num">' + F.eur(persKosten) + "</td>"
+        + '<td class="vl-num">' + F.pct(zzpAandeel) + "</td>"
+        + '<td class="vl-num ' + F.statusClass(st).replace("md--", "vl-txt--") + '">' + (vanOmzet == null ? "—" : F.pct(vanOmzet)) + "</td>"
         + "</tr>";
     }).join("");
     var t = model.finTot;
-    var totPers = F.num(t.loondienst) + F.num(t.kosten_zzp);
-    var totRes = F.num(t.resultaat);
+    var totLoon = F.num(t.loondienst), totZzp = F.num(t.kosten_zzp);
+    var totPers = totLoon + totZzp;
+    var totZzpAandeel = totPers ? (totZzp / totPers) * 100 : 0;
+    var totVanOmzet = F.num(t.omzet) ? (totPers / F.num(t.omzet)) * 100 : null;
     var foot = '<tfoot><tr class="vl-total">'
       + "<td>Organisatie totaal</td>"
-      + '<td class="vl-num">' + F.eur(t.omzet) + "</td>"
+      + '<td class="vl-num">' + F.eur(totLoon) + "</td>"
+      + '<td class="vl-num">' + F.eur(totZzp) + "</td>"
       + '<td class="vl-num">' + F.eur(totPers) + "</td>"
-      + '<td class="vl-num">' + F.eur(t.kosten_zzp) + "</td>"
-      + '<td class="vl-num ' + F.statusClass(F.vlResultaat(totRes, t.omzet)).replace("md--", "vl-txt--") + '">' + F.eur(totRes) + "</td>"
-      + '<td class="vl-num">' + (t.omzet ? F.pct((totRes / F.num(t.omzet)) * 100, 1) : "—") + "</td>"
+      + '<td class="vl-num">' + F.pct(totZzpAandeel) + "</td>"
+      + '<td class="vl-num">' + (totVanOmzet == null ? "—" : F.pct(totVanOmzet)) + "</td>"
       + "</tr></tfoot>";
     box.innerHTML = '<div class="table-wrapper"><table class="employees-table vl-table">' + head + "<tbody>" + rows + "</tbody>" + foot + "</table></div>";
     var note = $("md-perfin-note");
     if (note && model.finPeriod) {
       var p = model.finPeriod;
       note.textContent = "Periode: " + maandLabel(p.start) + (p.end && p.end !== p.start ? " t/m " + maandLabel(p.end) : "")
-        + ". Personeelskosten = loondienst (indicatief, salaris × werkgeverslasten) + ZZP-kosten. De recentste maanden lopen nog achter in declaratie.";
+        + ". Loondienst-kosten zijn indicatief (salaris × werkgeverslasten, toegerekend o.b.v. de locaties van de medewerker); ZZP-kosten komen uit de ingezette diensten. Omzet/resultaat per locatie staat in de tabel hierboven.";
     }
   }
   function maandLabel(ym) {
