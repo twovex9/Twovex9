@@ -222,6 +222,23 @@
   let openItem = null;
   let closeTimer = null;
 
+  // Effectieve CSS-`zoom` van de keten boven een element (product van alle
+  // `zoom`-waarden van de voorouders). De interface draait standaard op
+  // `html { zoom: 1.1 }` (zie styles.css). Dat is cruciaal voor de positionering
+  // hieronder: getBoundingClientRect()/innerWidth geven VISUELE (gezoomde)
+  // coördinaten, maar een CSS-lengte die we via style.left/top zetten wordt bij
+  // het renderen NÓG een keer met de zoom vermenigvuldigd. Zonder correctie zou
+  // de dropdown ~10% naar rechts/onder verschuiven (oplopend hoe verder naar
+  // rechts de knop staat) i.p.v. recht onder het bovenste kopje uit te lijnen.
+  function effectiveZoom(el) {
+    let z = 1;
+    for (let n = el ? el.parentElement : null; n; n = n.parentElement) {
+      const cz = parseFloat(getComputedStyle(n).zoom);
+      if (cz && cz !== 1) z *= cz;
+    }
+    return z || 1;
+  }
+
   function positionDropdown(item) {
     const dd = item.querySelector(".top-dropdown");
     if (!dd) return;
@@ -236,6 +253,12 @@
     dd.style.maxHeight = "";
     dd.style.overflowX = "";
     dd.style.overflowY = "";
+    // VISUELE → LOKALE coördinaten. Alle metingen (r, vw/vh, dd-breedte) zitten in
+    // visuele (gezoomde) pixels en zijn onderling consistent, dus de klem-wiskunde
+    // gebeurt in visuele ruimte. Maar style.left/top zijn CSS-lengtes die bij het
+    // renderen met de zoom vermenigvuldigd worden → we delen de uiteindelijke
+    // toewijzing door de zoom zodat de dropdown precies onder het kopje landt.
+    const z = effectiveZoom(dd);
     // Horizontale klem. Gebruik de VISUELE breedte (getBoundingClientRect),
     // consistent met de trigger-positie r — zo klopt de klem ook als de pagina
     // geschaald/gezoomd wordt.
@@ -243,19 +266,20 @@
     let left = r.left;
     if (left + w > vw - margin) left = vw - margin - w;
     if (left < margin) left = margin;
-    dd.style.left = Math.round(left) + "px";
+    dd.style.left = Math.round(left / z) + "px";
     // Verticale klem: past het menu onder de knop? Zo niet → tegen de knop
     // plakken (geen brug nodig) en interne scroll, zodat het NOOIT onderaan
     // het scherm wordt afgekapt (belangrijk voor de hoge HR/Cliënten mega-menu's
-    // op korte of ingezoomde schermen).
+    // op korte of ingezoomde schermen). scrollHeight is een LAYOUT-maat (niet
+    // gezoomd) → × z voor de visuele hoogte waarmee we tegen `avail` vergelijken.
     const avail = vh - (r.bottom + gap) - margin;
-    if (dd.scrollHeight > avail) {
-      dd.style.top = Math.round(r.bottom) + "px";
-      dd.style.maxHeight = Math.max(140, vh - r.bottom - margin) + "px";
+    if (dd.scrollHeight * z > avail) {
+      dd.style.top = Math.round(r.bottom / z) + "px";
+      dd.style.maxHeight = Math.round(Math.max(140, vh - r.bottom - margin) / z) + "px";
       dd.style.overflowX = "hidden";
       dd.style.overflowY = "auto";
     } else {
-      dd.style.top = Math.round(r.bottom + gap) + "px";
+      dd.style.top = Math.round((r.bottom + gap) / z) + "px";
     }
   }
 
