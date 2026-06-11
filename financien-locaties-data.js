@@ -47,6 +47,23 @@
     return _data;
   }
 
+  /** Openstaande (toekomstige) diensten per locatie (operationeel, niet periode-gebonden).
+   *  locatie = null voor alle locaties; dagen = horizon voor de detail-lijst (default 14). */
+  async function openDiensten(locatie, dagen) {
+    try {
+      await ensureSupabase();
+      var res = await global.besaSupabase.rpc("planning_open_diensten_per_locatie", {
+        p_locatie: (locatie === "" || locatie == null) ? null : locatie,
+        p_dagen: dagen || 14,
+      });
+      if (res.error) throw res.error;
+      return res.data || null;
+    } catch (err) {
+      reportSilent("open diensten laden", err);
+      return null;
+    }
+  }
+
   /** Drill-down voor één locatie over de geselecteerde periode. */
   async function detail(location, startISO, endISO) {
     try {
@@ -215,6 +232,7 @@
     get ready() { return readyPromise || bootstrap(); },
     load: load,
     detail: detail,
+    openDiensten: openDiensten,
     getData: function () { return _data; },
     getPeriod: function () { return _period; },
     refresh: function () { return load(_period.start, _period.end); },
