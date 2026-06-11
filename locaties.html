@@ -395,6 +395,20 @@
             <span class="switch-slider"></span>
             <span class="switch-label">Niet zichtbaar in planning (kantoor/overhead)</span>
           </label>
+
+          <div class="loc-kamers-block">
+            <div class="loc-kamers-head">
+              <span class="loc-kamers-title">Kamers</span>
+              <span class="loc-kamers-req">verplicht</span>
+            </div>
+            <p class="loc-kamers-hint">Geef de kamers van deze locatie op. Ze verschijnen meteen bij <strong>Bezettingen</strong>. Per kamer kun je een naam en (optioneel) een specifiek adres invullen.</p>
+            <label class="emp-verzuim-modal-field">
+              <span>Aantal kamers</span>
+              <input type="number" id="loc-add-aantal-kamers" class="comp-modal-input" min="1" max="200" step="1" value="1" required>
+            </label>
+            <div id="loc-add-kamers-list" class="loc-kamers-list" aria-label="Kamers"></div>
+          </div>
+          <p class="loc-add-err" id="loc-add-err" hidden></p>
         </div>
         <div class="emp-verzuim-modal-footer">
           <button type="button" class="emp-verzuim-modal-cancel" id="loc-add-cancel-btn">Annuleren</button>
@@ -472,6 +486,7 @@
   <script src="profiles-data.js?v=918f1ad"></script>
   <script src="besa-audit.js?v=918f1ad" defer></script>
   <script src="locaties-data.js?v=918f1ad"></script>
+  <script src="bezetting-data.js?v=918f1ad"></script>
   <script src="locaties.js?v=918f1ad"></script>
   <script src="geo-distance.js?v=918f1ad"></script>
   <script src="besa-adres-autofill.js?v=918f1ad"></script>

@@ -309,6 +309,102 @@
   var addCloseBtn = document.getElementById("loc-add-close-btn");
   var addCancelBtn = document.getElementById("loc-add-cancel-btn");
   var addForm = document.getElementById("loc-add-form");
+  var aantalKamersEl = document.getElementById("loc-add-aantal-kamers");
+  var kamersListEl = document.getElementById("loc-add-kamers-list");
+  var addErrEl = document.getElementById("loc-add-err");
+
+  function showLocAddErr(msg) {
+    if (!addErrEl) return;
+    addErrEl.textContent = msg || "";
+    addErrEl.hidden = !msg;
+  }
+
+  function fieldVal(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
+  function escAttr(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Standaard-adres per kamer = het zojuist ingevulde locatie-adres (overschrijfbaar).
+  function defaultKamerAdres() {
+    var o = {
+      postcode: fieldVal("loc-add-postcode"),
+      huisnummer: fieldVal("loc-add-huisnummer"),
+      toevoeging: fieldVal("loc-add-toevoeging"),
+      straat: fieldVal("loc-add-straat"),
+      plaats: fieldVal("loc-add-plaats"),
+    };
+    var a = (typeof locComposeAdres === "function") ? locComposeAdres(o) : "";
+    return (a && a !== "N/A") ? a : "";
+  }
+
+  function readKamerRows() {
+    if (!kamersListEl) return [];
+    return Array.prototype.map.call(kamersListEl.querySelectorAll(".loc-kamer-row"), function (row) {
+      var n = row.querySelector(".loc-kamer-naam");
+      var a = row.querySelector(".loc-kamer-adres");
+      return {
+        naam: n ? n.value : "",
+        adres: a ? a.value : "",
+        naamEdited: row.dataset.naamEdited === "1",
+        adresEdited: row.dataset.adresEdited === "1",
+      };
+    });
+  }
+
+  // (Her)teken de per-kamer rijen. Bewaart wat de gebruiker al typte.
+  function renderKamerRows() {
+    if (!kamersListEl || !aantalKamersEl) return;
+    var n = parseInt(aantalKamersEl.value, 10);
+    if (!isFinite(n) || n < 1) n = 1;
+    if (n > 200) { n = 200; aantalKamersEl.value = "200"; }
+    var prev = readKamerRows();
+    var def = defaultKamerAdres();
+    var html = "";
+    for (var i = 0; i < n; i++) {
+      var p = prev[i];
+      var naam = p ? p.naam : "Kamer " + (i + 1);
+      var adres = p ? p.adres : def;
+      html += '<div class="loc-kamer-row" data-naam-edited="' + (p && p.naamEdited ? "1" : "") +
+        '" data-adres-edited="' + (p && p.adresEdited ? "1" : "") + '">' +
+        '<span class="loc-kamer-num">' + (i + 1) + "</span>" +
+        '<input type="text" class="comp-modal-input loc-kamer-naam" placeholder="Kamernaam" value="' + escAttr(naam) + '">' +
+        '<input type="text" class="comp-modal-input loc-kamer-adres" placeholder="Adres (optioneel)" autocomplete="off" value="' + escAttr(adres) + '">' +
+        "</div>";
+    }
+    kamersListEl.innerHTML = html;
+  }
+
+  // Adresvelden gewijzigd → ververs alleen kamers waar de gebruiker het adres
+  // nog niet zelf heeft aangepast.
+  function refreshDefaultKamerAdres() {
+    if (!kamersListEl) return;
+    var def = defaultKamerAdres();
+    kamersListEl.querySelectorAll(".loc-kamer-row").forEach(function (row) {
+      if (row.dataset.adresEdited === "1") return;
+      var a = row.querySelector(".loc-kamer-adres");
+      if (a) a.value = def;
+    });
+  }
+
+  if (aantalKamersEl) aantalKamersEl.addEventListener("input", renderKamerRows);
+  if (kamersListEl) {
+    kamersListEl.addEventListener("input", function (e) {
+      var row = e.target.closest(".loc-kamer-row");
+      if (!row) return;
+      if (e.target.classList.contains("loc-kamer-naam")) row.dataset.naamEdited = "1";
+      else if (e.target.classList.contains("loc-kamer-adres")) row.dataset.adresEdited = "1";
+    });
+  }
+  ["loc-add-postcode", "loc-add-huisnummer", "loc-add-toevoeging", "loc-add-straat", "loc-add-plaats"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener("input", refreshDefaultKamerAdres);
+  });
 
   function resetLocAddForm() {
     ["loc-add-naam", "loc-add-postcode", "loc-add-huisnummer", "loc-add-toevoeging", "loc-add-straat", "loc-add-plaats"].forEach(function (id) {
@@ -317,6 +413,10 @@
     });
     var nip = document.getElementById("loc-add-niet-in-planning");
     if (nip) nip.checked = false;
+    if (aantalKamersEl) aantalKamersEl.value = "1";
+    if (kamersListEl) kamersListEl.innerHTML = "";
+    renderKamerRows();
+    showLocAddErr("");
   }
 
   function openAddModal() {
@@ -550,6 +650,7 @@
   if (addForm) {
     addForm.addEventListener("submit", async function (e) {
       e.preventDefault();
+      showLocAddErr("");
       var naamInput = document.getElementById("loc-add-naam");
       var pcEl = document.getElementById("loc-add-postcode");
       var hnEl = document.getElementById("loc-add-huisnummer");
@@ -558,9 +659,32 @@
       var plEl = document.getElementById("loc-add-plaats");
       var naam = naamInput ? naamInput.value.trim() : "";
       if (!naam) {
+        showLocAddErr("Naam is verplicht.");
         if (naamInput) naamInput.focus();
         return;
       }
+
+      // Kamers valideren (verplicht ≥1, unieke namen) vóór we de locatie aanmaken.
+      var rows = readKamerRows();
+      var kamers = [];
+      var seen = {};
+      for (var i = 0; i < rows.length; i++) {
+        var rn = (rows[i].naam || "").trim();
+        if (!rn) continue;
+        var key = rn.toLowerCase();
+        if (seen[key]) {
+          showLocAddErr('Kamernaam “' + rn + '” komt dubbel voor. Geef elke kamer een unieke naam.');
+          return;
+        }
+        seen[key] = true;
+        kamers.push({ nummer: rn, adres: (rows[i].adres || "").trim() });
+      }
+      if (kamers.length < 1) {
+        showLocAddErr("Geef minstens één kamer met een naam op.");
+        if (aantalKamersEl) aantalKamersEl.focus();
+        return;
+      }
+
       var nipEl = document.getElementById("loc-add-niet-in-planning");
       var input = {
         naam: naam,
@@ -572,20 +696,41 @@
         plaats: plEl ? plEl.value.trim() : "",
         nietInPlanning: nipEl ? nipEl.checked : false,
       };
+
+      var newItem;
       try {
-        await window.locatiesDB.add(input);
+        newItem = await window.locatiesDB.add(input);
       } catch (err) {
         console.error("Locatie toevoegen mislukt:", err);
+        showLocAddErr("Locatie opslaan mislukt: " + (err && err.message ? err.message : "Onbekende fout."));
+        return;
+      }
+
+      // Kamers van de nieuwe locatie aanmaken → verschijnen direct bij Bezettingen.
+      var locNaam = (newItem && newItem.naam) || naam;
+      try {
+        if (!window.bezettingDB || typeof window.bezettingDB.kamersAanmaken !== "function") {
+          throw new Error("Bezetting-module niet geladen.");
+        }
+        await window.bezettingDB.kamersAanmaken(locNaam, kamers);
+      } catch (err) {
+        console.error("Kamers aanmaken mislukt:", err);
+        closeAddModal();
+        currentPage = 0;
+        render();
         if (typeof window.showActionFeedback === "function") {
-          window.showActionFeedback("error", "Toevoegen mislukt", err && err.message ? err.message : "Onbekende fout.");
+          window.showActionFeedback("error", "Locatie toegevoegd — kamers mislukt",
+            (err && err.message ? err.message : "Onbekende fout.") + " Voeg de kamers toe via Bezettingen.");
         }
         return;
       }
+
       closeAddModal();
       currentPage = 0;
       render();
       if (typeof window.showActionFeedback === "function") {
-        window.showActionFeedback("added", "Locatie “" + naam + "”");
+        window.showActionFeedback("added",
+          "Locatie “" + naam + "” met " + kamers.length + " kamer" + (kamers.length === 1 ? "" : "s"));
       }
     });
   }

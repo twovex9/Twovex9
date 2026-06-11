@@ -91,9 +91,25 @@
       p_capaciteit: (p.capaciteit == null || p.capaciteit === "") ? 1 : Math.round(Number(p.capaciteit)),
       p_volgorde: (p.volgorde == null || p.volgorde === "") ? 0 : Math.round(Number(p.volgorde)),
       p_notitie: p.notitie || null,
+      p_adres: p.adres || null,
     });
     await load();
     return d;
+  }
+
+  /**
+   * Maak in één keer een reeks benoemde kamers (met optioneel adres) voor een
+   * bestaande locatie aan. Gebruikt door de Locatie-toevoegen-flow zodat een nieuwe
+   * locatie direct haar kamers in het bezettingsoverzicht heeft.
+   *   kamers = [{ nummer, adres?, capaciteit?, verdieping? }, ...]
+   * Roept bewust GEEN load() aan: de aanroeper (bv. de Locaties-pagina) rendert
+   * geen bezettingsboard. De Bezetting-pagina pikt de inserts via Realtime op.
+   */
+  async function kamersAanmaken(locatie, kamers) {
+    return callRpc("bezetting_kamers_aanmaken", {
+      p_locatie: locatie,
+      p_kamers: Array.isArray(kamers) ? kamers : [],
+    });
   }
 
   async function kamersBulk(p) {
@@ -159,6 +175,7 @@
     listArchived: listArchived,
     kamerUpsert: kamerUpsert,
     kamersBulk: kamersBulk,
+    kamersAanmaken: kamersAanmaken,
     kamerArchiveren: kamerArchiveren,
     kamerHerstellen: kamerHerstellen,
     zetStatus: zetStatus,
