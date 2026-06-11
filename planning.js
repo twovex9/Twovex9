@@ -1407,6 +1407,17 @@ function renderSummary(items) {
         <strong class="planning-stat-value">${m.openUren}</strong>
       </div>
     </div>
+    <div class="planning-kpi planning-kpi--v3 planning-kpi--opencount${m.openCount > 0 ? " is-actief" : ""}" title="Aantal diensten zonder ingeplande medewerker in deze periode — direct in te vullen onder het kopje 'Openstaande diensten'.">
+      <span class="planning-kpi-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+      </span>
+      <div class="planning-kpi-txt">
+        <span class="planning-stat-label">Open diensten</span>
+        <strong class="planning-stat-value">${m.openCount}</strong>
+      </div>
+    </div>
     <div class="planning-kpi planning-kpi--v3 planning-kpi--km">
       <span class="planning-kpi-ico" aria-hidden="true">€</span>
       <div class="planning-kpi-txt">
