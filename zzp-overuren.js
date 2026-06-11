@@ -25,7 +25,7 @@
     try {
       var res = await zzpFacturenDB.getOpenOveruren();
       if (res && res.unauthorized) {
-        $("zo-tbody").innerHTML = '<tr><td colspan="7" class="zo-empty">Je hebt geen rechten om uren-wijzigingen te beoordelen (alleen teamleider/zorgcoördinator).</td></tr>';
+        $("zo-tbody").innerHTML = '<tr><td colspan="7" class="zo-empty">Je hebt geen rechten om uren-wijzigingen te beoordelen (alleen zorgcoördinator, planner of directeur).</td></tr>';
         return;
       }
       state.items = (res && res.items) || [];
