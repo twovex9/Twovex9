@@ -2148,16 +2148,32 @@ function updateOverlapBanner(items) {
     }
     if (namesEl) namesEl.textContent = "";
     if (detailsEl) {
-      detailsEl.innerHTML = info.members.map((mem) => {
-        const pairs = mem.pairs.map((pr) =>
+      // Compacte preview i.p.v. een eigen interne scroll: de banner toont de eerste
+      // overlaps inline en blijft zo kort genoeg om als geheel weg te scrollen. De
+      // volledige set blijft bereikbaar via "Toon in lijst". (Een eigen overflow-scroll
+      // ving voorheen het muiswiel zodat de pagina niet verder scrolde — feedback 2026-06-10.)
+      const MAX_PAIRS = 10;
+      let shown = 0;
+      const blocks = [];
+      for (const mem of info.members) {
+        if (shown >= MAX_PAIRS) break;
+        const memPairs = mem.pairs.slice(0, MAX_PAIRS - shown);
+        shown += memPairs.length;
+        const pairs = memPairs.map((pr) =>
           `<div class="planning-overlap-conf__pair" data-overlap-shift="${escapeHtml(String(pr.a.id))}" title="Klik om de eerste dienst te openen">` +
             renderOverlapShiftHtml(pr.a) +
             `<span class="planning-overlap-conf__vs" aria-hidden="true">⟷</span>` +
             renderOverlapShiftHtml(pr.b) +
           `</div>`
         ).join("");
-        return `<div class="planning-overlap-conf"><div class="planning-overlap-conf__who">${escapeHtml(mem.naam)}</div>${pairs}</div>`;
-      }).join("");
+        blocks.push(`<div class="planning-overlap-conf"><div class="planning-overlap-conf__who">${escapeHtml(mem.naam)}</div>${pairs}</div>`);
+      }
+      const remaining = p - shown;
+      let html = blocks.join("");
+      if (remaining > 0) {
+        html += `<div class="planning-overlap-conf__more">+ ${remaining} meer overlappende dienst${remaining === 1 ? "" : "en"} — klik “Toon in lijst” voor het volledige overzicht.</div>`;
+      }
+      detailsEl.innerHTML = html;
     }
     banner.hidden = false;
   } catch (err) {
@@ -2987,11 +3003,12 @@ function updateBeschikkingBanner() {
       ` — ${over.length} ${over.length === 1 ? "week" : "weken"} met overschrijding in deze periode`;
   }
   if (detailsEl) {
-    detailsEl.innerHTML = over.slice(0, 40).map((o) =>
+    // Compacte preview (geen eigen interne scroll meer, zie planning.html): cap op 12 rijen.
+    detailsEl.innerHTML = over.slice(0, 12).map((o) =>
       `<div class="planning-besch-row"><b>${escapeHtml(o.client)}</b> — ${escapeHtml(o.zorgsoortLabel)}, ` +
       `${escapeHtml(isoWeekLabel(o.week))}: <b>${o.gepland} u</b> gepland t.o.v. <b>${o.budget} u</b> beschikt ` +
       `(${o.over} u te veel)</div>`
-    ).join("") + (over.length > 40 ? `<div class="planning-besch-row">… en nog ${over.length - 40} meer</div>` : "");
+    ).join("") + (over.length > 12 ? `<div class="planning-besch-row">… en nog ${over.length - 12} meer</div>` : "");
   }
   banner.hidden = false;
 }
