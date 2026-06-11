@@ -3602,6 +3602,73 @@ function refreshDienstLocatieSelect() {
   sel.value = locaties.includes(current) ? current : "";
 }
 
+/** Wire het inline "+ Nieuwe locatie"-paneel in het dienst-formulier. Maakt via
+ *  window.locatiesDB een nieuwe cliëntwoning aan (planning-zichtbaar) en
+ *  selecteert die direct in de locatie-keuze. */
+function initNieuweLocatieInline() {
+  const btn = document.getElementById("dienst-locatie-nieuw-btn");
+  const form = document.getElementById("dienst-locatie-nieuw-form");
+  const annuleer = document.getElementById("nieuwe-loc-annuleer");
+  const opslaan = document.getElementById("nieuwe-loc-opslaan");
+  const msg = document.getElementById("nieuwe-loc-msg");
+  if (!btn || !form) return;
+  if (form.dataset.wired === "1") return;
+  form.dataset.wired = "1";
+
+  const ids = ["nieuwe-loc-naam", "nieuwe-loc-straat", "nieuwe-loc-huisnr", "nieuwe-loc-postcode", "nieuwe-loc-plaats"];
+  const setMsg = (txt, kind) => {
+    if (!msg) return;
+    msg.textContent = txt || "";
+    msg.classList.toggle("is-error", kind === "error");
+    msg.classList.toggle("is-ok", kind === "ok");
+  };
+  const toggle = (show) => {
+    form.hidden = !show;
+    btn.setAttribute("aria-expanded", show ? "true" : "false");
+    if (show) {
+      setMsg("");
+      document.getElementById("nieuwe-loc-naam")?.focus();
+    }
+  };
+  const reset = () => { ids.forEach((id) => { const el = document.getElementById(id); if (el) el.value = ""; }); };
+
+  btn.addEventListener("click", () => toggle(form.hidden !== false));
+  annuleer?.addEventListener("click", () => { reset(); toggle(false); });
+
+  opslaan?.addEventListener("click", async () => {
+    const val = (id) => (document.getElementById(id)?.value || "").trim();
+    const naam = val("nieuwe-loc-naam");
+    if (!naam) { setMsg("Vul een naam voor de locatie in.", "error"); document.getElementById("nieuwe-loc-naam")?.focus(); return; }
+    if (!window.locatiesDB || typeof window.locatiesDB.add !== "function") {
+      setMsg("Locatiebeheer is niet beschikbaar op deze pagina.", "error");
+      return;
+    }
+    try {
+      opslaan.disabled = true;
+      setMsg("Bezig met aanmaken…");
+      await window.locatiesDB.add({
+        naam,
+        straat: val("nieuwe-loc-straat"),
+        huisnummer: val("nieuwe-loc-huisnr"),
+        postcode: val("nieuwe-loc-postcode"),
+        plaats: val("nieuwe-loc-plaats"),
+      });
+      // Selecteer de nieuwe locatie direct in het dienst-formulier.
+      refreshDienstLocatieSelect();
+      const sel = document.getElementById("dienst-locatie-hr");
+      if (sel) sel.value = naam;
+      setMsg(`Locatie "${naam}" aangemaakt en geselecteerd.`, "ok");
+      reset();
+      // Verberg het sub-paneel na een korte bevestiging.
+      setTimeout(() => { if (!form.hidden) toggle(false); }, 1200);
+    } catch (e) {
+      setMsg("Aanmaken mislukt: " + (e && e.message ? e.message : e), "error");
+    } finally {
+      opslaan.disabled = false;
+    }
+  });
+}
+
 function setDienstFormDefaults() {
   const sDate = document.getElementById("dienst-startdate");
   const sTime = document.getElementById("dienst-starttime");
@@ -3788,6 +3855,10 @@ function initDienstPanel() {
   koppelBlok?.addEventListener("change", () => updateKoppelTel());
   // Zorgsoort-keuzelijst verversen zodra de zorgsoorten (incl. tarieven) laden of wijzigen.
   window.addEventListener("besa:zorgsoorten-updated", () => { if (document.getElementById("dienst-zorgsoort")) fillZorgsoortSelect(); });
+  // Inline "nieuwe locatie / cliëntwoning" aanmaken vanuit de dienst-flow
+  // (eigenaarseis 2026-06-11): planner kan zonder de planning te verlaten een
+  // nieuwe woonlocatie aanmaken waar een nieuwe cliënt woont.
+  initNieuweLocatieInline();
   openBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     openDienstPanel();

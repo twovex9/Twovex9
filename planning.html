@@ -90,6 +90,24 @@
     [data-theme="dark"] .plai-row{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12);}
     [data-theme="dark"] .plai-switch__slider{background:#475569;}
     [data-theme="dark"] .plai-num{background:#1e293b;border-color:#475569;}
+    /* Inline "nieuwe locatie" aanmaken vanuit de dienst-flow (eigenaarseis 2026-06-11) */
+    .planning-loc-row{display:flex;gap:8px;align-items:stretch;}
+    .planning-loc-row > select{flex:1 1 auto;min-width:0;}
+    .planning-loc-addbtn{flex:0 0 auto;white-space:nowrap;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);border-radius:8px;padding:0 12px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;}
+    .planning-loc-addbtn:hover{background:var(--bg-card-hover,var(--surface));border-color:var(--brand,#2563eb);}
+    .planning-loc-addbtn[aria-expanded="true"]{background:var(--brand,#2563eb);border-color:var(--brand,#2563eb);color:#fff;}
+    .planning-loc-newform{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-alt);}
+    .planning-loc-newhint{margin:0 0 8px;font-size:.8rem;color:var(--text-muted);}
+    .planning-loc-newgrid{display:grid;grid-template-columns:1fr 1fr 70px;gap:8px;}
+    .planning-loc-newgrid > #nieuwe-loc-naam{grid-column:1 / -1;}
+    .planning-loc-newgrid > #nieuwe-loc-postcode{grid-column:1 / 2;}
+    .planning-loc-newgrid > #nieuwe-loc-plaats{grid-column:2 / 4;}
+    .planning-loc-newact{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+    .planning-loc-newcancel{border:1px solid var(--border);background:transparent;color:var(--text-primary);border-radius:8px;padding:7px 14px;font-size:.85rem;cursor:pointer;}
+    .planning-loc-newcancel:hover{background:var(--bg-card-hover,var(--surface));}
+    .planning-loc-newmsg{margin:8px 0 0;font-size:.82rem;color:var(--text-muted);min-height:1em;}
+    .planning-loc-newmsg.is-error{color:var(--red,#dc2626);}
+    .planning-loc-newmsg.is-ok{color:var(--green,#16a34a);}
   </style>
 </head>
 <body class="page--planning-erm">
@@ -567,7 +585,25 @@
         </div>
         <div class="planning-dienst-field planning-dienst-field--wide">
           <label class="planning-dienst-label" for="dienst-locatie-hr">Locatie <span class="req">*</span></label>
-          <select id="dienst-locatie-hr" class="planning-dienst-input" name="locatie_hr" required></select>
+          <div class="planning-loc-row">
+            <select id="dienst-locatie-hr" class="planning-dienst-input" name="locatie_hr" required></select>
+            <button type="button" class="planning-loc-addbtn" id="dienst-locatie-nieuw-btn" aria-expanded="false" aria-controls="dienst-locatie-nieuw-form" title="Nieuwe locatie / cliëntwoning aanmaken">+ Nieuwe locatie</button>
+          </div>
+          <div class="planning-loc-newform" id="dienst-locatie-nieuw-form" hidden>
+            <p class="planning-loc-newhint">Maak een nieuwe cliëntwoning aan — verschijnt direct in de planning.</p>
+            <div class="planning-loc-newgrid">
+              <input type="text" id="nieuwe-loc-naam" class="planning-dienst-input" placeholder="Naam locatie *" autocomplete="off" />
+              <input type="text" id="nieuwe-loc-straat" class="planning-dienst-input" placeholder="Straat" autocomplete="off" />
+              <input type="text" id="nieuwe-loc-huisnr" class="planning-dienst-input planning-loc-newnr" placeholder="Nr" autocomplete="off" />
+              <input type="text" id="nieuwe-loc-postcode" class="planning-dienst-input" placeholder="Postcode" autocomplete="off" />
+              <input type="text" id="nieuwe-loc-plaats" class="planning-dienst-input" placeholder="Plaats" autocomplete="off" />
+            </div>
+            <div class="planning-loc-newact">
+              <button type="button" class="btn planning-loc-newcancel" id="nieuwe-loc-annuleer">Annuleren</button>
+              <button type="button" class="btn-dienst-aanmaken planning-loc-newsave" id="nieuwe-loc-opslaan">Locatie aanmaken</button>
+            </div>
+            <p class="planning-loc-newmsg" id="nieuwe-loc-msg" role="status" aria-live="polite"></p>
+          </div>
         </div>
         <div class="planning-dienst-field planning-dienst-field--duo planning-dienst-field--wide dienst-only-groep">
           <span class="planning-dienst-label">Starttijd <span class="req">*</span></span>
