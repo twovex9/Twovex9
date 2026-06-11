@@ -1712,8 +1712,14 @@ function renderMonthCalendar(host, items, overlapIds) {
      fitMonthCells() per dagcel de chips die niet in de rij-hoogte passen. */
   const applyFit = () => {
     if (!board.isConnected) return;
+    /* De hele interface staat op html{zoom:1.1}. getBoundingClientRect()/innerHeight
+       leveren zichtbare (gezoomde) pixels, maar een via style.height gezette waarde
+       wordt nóg eens met de zoom geschaald. Daarom delen we de beschikbare zichtbare
+       ruimte door de zoomfactor — anders rendert het board ~zoom× te hoog en valt de
+       onderste week alsnog buiten beeld (op productie ~84px). */
+    const zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
     const top = board.getBoundingClientRect().top;
-    const h = Math.max(320, Math.floor(window.innerHeight - top - 8));
+    const h = Math.max(320, Math.floor((window.innerHeight - top - 8) / zoom));
     board.style.height = h + "px";
     fitMonthCells(board);
   };
