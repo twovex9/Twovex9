@@ -4011,37 +4011,42 @@ function initPlanningTopToggle() {
 }
 
 /* ── Auto-verbergen planning-toolbar bij scrollen (gebruikerseis 2026-06-11) ──
- * De toolbar staat sticky bovenin de planning-kaart (#planning-calendar-section is
- * zélf de verticale scroll-container). Gedrag:
+ * De toolbar staat sticky bovenin de planning-kaart, maar de verticale scroll-container
+ * is de pagina-main (.content--planning-erm), NIET de kaart zelf. Gedrag:
  *   • naar BENEDEN scrollen → toolbar schuift weg, zodat het rooster maximaal in beeld komt;
  *   • naar BOVEN scrollen   → toolbar komt meteen terug;
  *   • aan de top            → altijd volledig zichtbaar.
  * Een drempel voorkomt jitter; de eerste ~64px wordt hij niet verborgen zodat hij
  * niet meteen wegspringt bij een minieme scroll. rAF houdt het soepel. */
 function initPlanningToolbarAutohide() {
-  var sc = document.getElementById("planning-calendar-section");
-  if (!sc || sc.dataset.autohideWired === "1") return;
-  sc.dataset.autohideWired = "1";
-  var lastY = sc.scrollTop || 0;
+  var card = document.getElementById("planning-calendar-section");
+  if (!card || card.dataset.autohideWired === "1") return;
+  // De toolbar plakt t.o.v. de dichtstbijzijnde scroll-ancestor: de pagina-main. We
+  // luisteren dáár en togglen de klassen op de kaart, zodat de CSS-selector
+  // .planning-main-card--v3.planning-toolbar-hidden .planning-erm-toolbar blijft kloppen.
+  var scroller = card.closest(".content--planning-erm") ||
+                 document.querySelector(".content--planning-erm") || card;
+  card.dataset.autohideWired = "1";
+  var lastY = scroller.scrollTop || 0;
   var ticking = false;
   var REVEAL_AT_TOP = 4;      // binnen 4px van de top = altijd tonen
   var DIR_THRESHOLD = 8;      // pas reageren na 8px richting-scroll (anti-jitter)
   var MIN_SCROLL_TO_HIDE = 64; // niet verbergen zolang we vlak onder de top zitten
   function update() {
     ticking = false;
-    var y = sc.scrollTop;
+    var y = scroller.scrollTop;
     var dy = y - lastY;
-    sc.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
+    card.classList.toggle("planning-is-scrolled", y > REVEAL_AT_TOP);
     if (y <= REVEAL_AT_TOP) {
-      sc.classList.remove("planning-toolbar-hidden");        // aan de top: altijd tonen
+      card.classList.remove("planning-toolbar-hidden");        // aan de top: altijd tonen
     } else if (dy > DIR_THRESHOLD && y > MIN_SCROLL_TO_HIDE) {
-      sc.classList.add("planning-toolbar-hidden");           // naar beneden → verbergen
+      card.classList.add("planning-toolbar-hidden");           // naar beneden → verbergen
     } else if (dy < -DIR_THRESHOLD) {
-      sc.classList.remove("planning-toolbar-hidden");        // naar boven → tonen
+      card.classList.remove("planning-toolbar-hidden");        // naar boven → tonen
     }
     lastY = y;
   }
-  sc.addEventListener("scroll", function () {
+  scroller.addEventListener("scroll", function () {
     if (ticking) return;
     ticking = true;
     window.requestAnimationFrame(update);
