@@ -68,7 +68,12 @@
     return hasAnyRole(r || []);
   }
   function canAssign() { return adminTier() || hasAnyRole(["Zorgcoördinator", "Gedragswetenschapper", "Cliëntbeheer"]); }
-  function canManageKamers() { return adminTier() || hasAnyRole(["Facilitair", "Planner", "Zorgcoördinator"]); }
+  // Kamers toevoegen / bewerken / archiveren — alleen admin-tier (Eigenaar/Admin/Directeur)
+  // + Zorgcoördinator. (Eigenaar-besluit 2026-06-11: Facilitair/Planner mogen dit niet meer.)
+  function canManageKamers() { return adminTier() || hasAnyRole(["Zorgcoördinator"]); }
+  // Housekeeping/schoonmaak-status zetten — bredere set zodat Facilitair (en Planner) hun
+  // onderhoud/schoonmaak-taak houden, zonder kamers te kunnen toevoegen/verwijderen.
+  function canSetStatus() { return adminTier() || hasAnyRole(["Facilitair", "Planner", "Zorgcoördinator"]); }
 
   // ── State ────────────────────────────────────────────────────────────────────
   var state = {
@@ -195,7 +200,7 @@
     var rows = filteredKamers();
     if (!rows.length) { tb.innerHTML = ""; if (empty) empty.hidden = false; return; }
     if (empty) empty.hidden = true;
-    var canAct = canAssign() || canManageKamers();
+    var canAct = canAssign() || canManageKamers() || canSetStatus();
     tb.innerHTML = rows.map(function (k) {
       var acties = canAct
         ? '<button type="button" class="btn-outline bz-rowbtn" data-room="' + esc(k.id) + '">Beheer</button>'
@@ -227,7 +232,8 @@
     }
     if (!rows.length) { tb.innerHTML = ""; if (empty) empty.hidden = false; return; }
     if (empty) empty.hidden = true;
-    var canMan = canManageKamers();
+    var canCrud = canManageKamers();   // toevoegen / bewerken / archiveren / herstellen
+    var canStat = canSetStatus();       // housekeeping/schoonmaak-status
     tb.innerHTML = rows.map(function (r) {
       var k = r.k;
       var bew = r.archived ? '<span class="bz-muted">—</span>' : bewonerCell(k);
@@ -235,16 +241,19 @@
         ? '<span class="bz-pill bz-pill--buiten_gebruik">Gearchiveerd</span>'
         : statusPill(k);
       var acties;
-      if (!canMan) {
+      if (!canCrud && !canStat) {
         acties = '<span class="bz-muted">—</span>';
       } else if (r.archived) {
-        acties = '<div class="hr-row-actions"><button type="button" class="btn-outline hr-restore-btn bz-restore" data-id="' + esc(k.id) + '">Herstel</button></div>';
+        // Herstellen uit archief = kamerbeheer (CRUD); status-only rollen zien hier niets.
+        acties = canCrud
+          ? '<div class="hr-row-actions"><button type="button" class="btn-outline hr-restore-btn bz-restore" data-id="' + esc(k.id) + '">Herstel</button></div>'
+          : '<span class="bz-muted">—</span>';
       } else {
-        acties = '<div class="bz-beheer-actions">' +
-          '<button type="button" class="btn-outline bz-edit" data-id="' + esc(k.id) + '">Bewerken</button>' +
-          '<button type="button" class="btn-outline bz-status" data-id="' + esc(k.id) + '">Status</button>' +
-          '<button type="button" class="employee-delete-btn bz-archive" data-id="' + esc(k.id) + '" aria-label="Archiveren">' + TRASH_SVG + "</button>" +
-          "</div>";
+        var parts = [];
+        if (canCrud) parts.push('<button type="button" class="btn-outline bz-edit" data-id="' + esc(k.id) + '">Bewerken</button>');
+        if (canStat) parts.push('<button type="button" class="btn-outline bz-status" data-id="' + esc(k.id) + '">Status</button>');
+        if (canCrud) parts.push('<button type="button" class="employee-delete-btn bz-archive" data-id="' + esc(k.id) + '" aria-label="Archiveren">' + TRASH_SVG + "</button>");
+        acties = '<div class="bz-beheer-actions">' + parts.join("") + "</div>";
       }
       return "<tr>" +
         "<td>" + esc(k.locatie_naam) + "</td>" +
@@ -329,8 +338,10 @@
     if (canAssign() && num(k.vrije_plekken) > 0 && k.schoonmaak_status !== "buiten_gebruik") {
       foot.push('<button type="button" class="btn-primary" id="bz-room-assign">Cliënt toewijzen</button>');
     }
-    if (canManageKamers()) {
+    if (canSetStatus()) {
       foot.push('<button type="button" class="btn-outline" id="bz-room-status">Status wijzigen</button>');
+    }
+    if (canManageKamers()) {
       foot.push('<button type="button" class="btn-outline" id="bz-room-edit">Kamer bewerken</button>');
     }
     foot.push('<button type="button" class="btn-outline" id="bz-room-dismiss">Sluiten</button>');
