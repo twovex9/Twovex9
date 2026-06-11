@@ -1912,6 +1912,16 @@ function renderWeekGrid() {
   host.classList.add("planning-erm--dense");
   host.classList.toggle("planning-erm--locations", ui.rowAxis === "vestiging");
   host.classList.toggle("planning-erm--month", ui.calMode === "month");
+  // Sticky dag-koppen: de datum-rij blijft bovenin staan terwijl je langs de locaties
+  // scrolt (spraakmemo eigenaar 2026-06-11). In week-/dagweergave mag de grid-wrap geen
+  // eigen verticale scroll-context vormen, anders plakken de sticky dag-kop-cellen aan
+  // de niet-scrollende wrap i.p.v. aan de planning-kaart die werkelijk verticaal scrolt
+  // — waardoor de datums wegscrollen. De maandweergave houdt z'n eigen horizontaal-
+  // scrollende board, dus die laten we ongemoeid.
+  const wrap = host.parentElement;
+  if (wrap && wrap.classList.contains("planning-week-grid-wrap--v3")) {
+    wrap.classList.toggle("planning-week-grid-wrap--freezehead", ui.calMode !== "month");
+  }
   host.innerHTML = "";
   if (empty) empty.hidden = true;
   const overlapIds = buildOverlapConflictIds(items);
