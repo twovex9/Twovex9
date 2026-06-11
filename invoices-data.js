@@ -269,6 +269,30 @@
   function archive(id) { return setArchived(id, true); }
   function restore(id) { return setArchived(id, false); }
 
+  // Werkt de systeemfactuur bij na een rooster-herberekening: schrijft de
+  // nieuwe samenvatting (totals + billing_summary + recalc-metadata) naar
+  // public.invoices.system_generated_summary, zodat de controle "ingediend
+  // vs. systeemfactuur" op elk apparaat klopt en de goedkeuren-gate opnieuw
+  // beoordeeld wordt. Bron-van-waarheid blijft Supabase.
+  async function recomputeSystem(id, summary) {
+    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (id == null) throw new Error("Geen factuur-id");
+    var nowIso = new Date().toISOString();
+    var res = await global.besaSupabase.from(T_INV)
+      .update({ system_generated_summary: summary, laatst_gewijzigd: nowIso })
+      .eq("id", id);
+    if (res.error) throw res.error;
+    var arr = invList();
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && String(arr[i].id) === String(id)) {
+        arr[i] = Object.assign({}, arr[i], { systemGeneratedSummary: summary, laatstGewijzigd: nowIso });
+        break;
+      }
+    }
+    setInv(arr);
+    dispatchUpdated("recompute");
+  }
+
   global.invoicesDB = {
     get ready() { return readyPromise || bootstrap(); },
     refresh: refresh,
@@ -280,6 +304,7 @@
     approve: approve,
     reject: reject,
     markUnderReview: markUnderReview,
+    recomputeSystem: recomputeSystem,
     archive: archive,
     restore: restore,
   };

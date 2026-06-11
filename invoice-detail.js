@@ -81,15 +81,48 @@
   var ctrlState = null;   // laatst berekende controle-staat (voor Herberekenen-knop)
   var curLines = [];      // geladen factuurregels (voor de afwijs-dienst-picker)
   var rejectOpts = [];    // regels in de afwijs-picker (index → regel)
+  var roosterLines = [];  // bewerkbare rooster-regels (dienst → geplande uren) voor herberekenen
+  var lastInv = null;     // laatst geladen factuur (voor recompute + gate)
+
+  function currentUserName() {
+    try {
+      var p = window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync();
+      if (p) return ((p.voornaam || "") + " " + (p.achternaam || "")).trim() || p.email || "Onbekend";
+    } catch (e) { /* */ }
+    return "Onbekend";
+  }
+
+  // Vergelijkt de ingediende factuur (inv.total) met de systeemfactuur
+  // (systemGeneratedSummary.totals.total) — uitsluitend op basis van `inv`,
+  // zodat de goedkeuren-gate al klopt vóór de regels asynchroon geladen zijn.
+  function matchState(inv) {
+    var submittedTotal = Number(inv.total) || 0;
+    var sys = inv.systemGeneratedSummary || null;
+    var sysTotal = sys && sys.totals && sys.totals.total != null ? Number(sys.totals.total) : null;
+    var hasSys = sysTotal != null && isFinite(sysTotal);
+    var diff = hasSys ? Math.round((submittedTotal - sysTotal) * 100) / 100 : null;
+    return { submittedTotal: submittedTotal, sysTotal: sysTotal, hasSys: hasSys, diff: diff, match: hasSys && Math.abs(diff) < 0.01 };
+  }
 
   function renderActions(inv) {
     var host = $("inv-actions");
+    var ms = matchState(inv);
+    // Goedkeuren mag pas als de systeemfactuur 1-op-1 is met de ingediende
+    // factuur. Wijkt het af → knop geblokkeerd tot het rooster herberekend is.
+    var approveBlocked = ms.hasSys && !ms.match;
     var html = "";
-    if (inv.canBeApproved) html += '<button type="button" class="btn-primary" data-act="approve">Goedkeuren</button>';
+    if (inv.canBeApproved) {
+      if (approveBlocked) {
+        html += '<button type="button" class="btn-primary" data-act="approve" disabled'
+          + ' title="Systeemfactuur wijkt af van de ingediende factuur — pas het rooster aan en klik Herberekenen tot beide overeenkomen.">Goedkeuren</button>';
+      } else {
+        html += '<button type="button" class="btn-primary" data-act="approve">Goedkeuren</button>';
+      }
+    }
     if (inv.canBeMarkedUnderReview) html += '<button type="button" class="btn-outline" data-act="review">In beoordeling</button>';
     if (inv.canBeRejected) html += '<button type="button" class="btn-outline inv-btn-reject" data-act="reject">Afwijzen</button>';
     host.innerHTML = html;
-    host.querySelectorAll("button[data-act]").forEach(function (b) {
+    host.querySelectorAll("button[data-act]:not([disabled])").forEach(function (b) {
       b.addEventListener("click", function () { openReview(b.getAttribute("data-act")); });
     });
   }
@@ -231,6 +264,7 @@
   function renderControl(inv, lines) {
     var host = $("inv-control");
     if (!host) return;
+    lastInv = inv;
     var c = computeControl(inv, lines);
     ctrlState = c;
     if (!c.hasSys && !c.recalc.length) { host.hidden = true; host.innerHTML = ""; return; }
@@ -272,40 +306,169 @@
     host.innerHTML =
       '<div class="inv-control-head"><h2 class="inv-section-title">Controle — ingediend vs. systeemfactuur</h2>' + badge + '</div>'
       + '<div class="inv-control-cmp">' + cmp + '</div>'
+      + (c.hasSys && !c.match
+          ? '<div class="inv-control-gate"><span class="inv-control-gate-ico" aria-hidden="true">⛔</span>'
+            + '<div>Goedkeuren is geblokkeerd zolang de systeemfactuur afwijkt van de ingediende factuur. '
+            + 'Pas hieronder het rooster aan (geplande uren per dienst) en klik <strong>Herberekenen</strong> tot beide overeenkomen.</div></div>'
+          : "")
       + warn
-      + '<div class="inv-control-actions"><button type="button" class="btn-outline" id="inv-recalc-btn">Herberekenen</button>'
-      + '<span class="inv-control-hint">Herberekent elke regel uit de geplande dienst-tijden — incl. overuren en diensten over middernacht.</span></div>'
-      + '<div class="inv-recalc-detail" id="inv-recalc-detail" hidden></div>';
+      + '<div class="inv-control-actions"><button type="button" class="btn-outline" id="inv-rooster-toggle">Rooster aanpassen &amp; herberekenen</button>'
+      + '<span class="inv-control-hint">Pas de geplande uren per dienst aan en herbereken de systeemfactuur — incl. overuren en diensten over middernacht.</span></div>'
+      + '<div class="inv-rooster" id="inv-rooster" hidden></div>';
 
-    var rb = $("inv-recalc-btn");
-    if (rb) rb.addEventListener("click", toggleRecalc);
+    var tg = $("inv-rooster-toggle");
+    if (tg) tg.addEventListener("click", toggleRooster);
   }
 
-  function toggleRecalc() {
-    var host = $("inv-recalc-detail");
-    if (!host || !ctrlState) return;
+  // ---- Rooster-bewerker: geplande uren per dienst aanpassen → herberekenen ----
+  // De diensten op deze factuur vormen het rooster. Default-uren = geplande
+  // dienst-tijden (start→eind − pauze); valt terug op een eerder opgeslagen
+  // herberekening of de gefactureerde uren. De controleur corrigeert de uren,
+  // klikt Herberekenen → systeemfactuur = Σ(uren × tarief) wordt opgeslagen.
+  function fmtNumInput(n) {
+    var v = Math.round(Number(n || 0) * 100) / 100;
+    return String(v);
+  }
+  function buildRoosterLines(inv, lines) {
+    var sys = inv && inv.systemGeneratedSummary ? inv.systemGeneratedSummary : null;
+    var saved = sys && sys.metadata && sys.metadata.recalc && Array.isArray(sys.metadata.recalc.lines)
+      ? sys.metadata.recalc.lines : [];
+    var savedById = {};
+    saved.forEach(function (s) { if (s && s.id != null) savedById[String(s.id)] = Number(s.hours); });
+    var real = (lines || []).filter(function (b) { return b && !b.isGroup && !b.isBlankRow; });
+    var shiftLines = real.filter(function (b) { return b.shift; });
+    var src = shiftLines.length ? shiftLines : real;
+    return src.map(function (b) {
+      var shiftH = shiftHours(b.shift);
+      var billed = Number(b.amount) || 0;
+      var base = shiftH != null ? shiftH : billed;
+      var saveH = savedById[String(b.id)];
+      var hours = (saveH != null && isFinite(saveH)) ? saveH : base;
+      return { id: b.id, label: lineLabel(b), price: Number(b.price) || 0, billed: billed, shiftH: shiftH, base: base, hours: hours };
+    });
+  }
+
+  function toggleRooster() {
+    var host = $("inv-rooster");
+    if (!host || !lastInv) return;
     if (!host.hidden) { host.hidden = true; host.innerHTML = ""; return; }
-    var c = ctrlState;
-    var rows = c.recalc.map(function (r) {
-      var cls = r.diff ? ' class="inv-recalc-row--diff"' : "";
-      var comp = (r.computed == null) ? "—" : fmtH(r.computed);
-      var delta = (r.delta == null || Math.abs(r.delta) < 0.01) ? "" : (r.delta > 0 ? "+" : "") + fmtH(r.delta);
-      return '<tr' + cls + '><td>' + escHtml(lineFlat(r.label)) + '</td>'
-        + '<td class="td-num">' + fmtH(r.billed) + '</td>'
-        + '<td class="td-num">' + comp + '</td>'
-        + '<td class="td-num inv-recalc-delta">' + escHtml(delta) + '</td></tr>';
-    }).join("");
-    var summary = c.lineDiffs.length
-      ? '<p class="inv-recalc-note">' + c.lineDiffs.length + ' regel(s) wijken af van de geplande dienst-tijden (roze gemarkeerd).</p>'
-      : '<p class="inv-recalc-ok">✓ Alle regels komen overeen met de geplande dienst-tijden.</p>';
-    host.innerHTML =
-      '<table class="inv-recalc-table"><thead><tr><th>Regel</th><th class="td-num">Gefactureerd</th>'
-      + '<th class="td-num">Herberekend</th><th class="td-num">Verschil</th></tr></thead>'
-      + '<tbody>' + rows + '</tbody>'
-      + '<tfoot><tr class="inv-recalc-foot"><td>Herberekend totaal (uit dienst-tijden)</td>'
-      + '<td class="td-num">' + fmtH(c.subHours) + '</td><td class="td-num">' + fmtH(c.recalcHours) + '</td>'
-      + '<td class="td-num">' + formatEur(c.recalcEur) + '</td></tr></tfoot></table>' + summary;
+    roosterLines = buildRoosterLines(lastInv, curLines);
+    renderRooster();
     host.hidden = false;
+  }
+
+  function renderRooster() {
+    var host = $("inv-rooster");
+    if (!host) return;
+    if (!roosterLines.length) {
+      host.innerHTML = '<p class="inv-recalc-note">Geen dienst-regels beschikbaar om te herberekenen.</p>';
+      return;
+    }
+    var rows = roosterLines.map(function (l, i) {
+      var ref = l.shiftH != null ? fmtH(l.shiftH) + " u" : "—";
+      return '<tr><td>' + escHtml(lineFlat(l.label)) + '</td>'
+        + '<td class="td-num">' + formatEur(l.price) + '</td>'
+        + '<td class="td-num"><input class="inv-rooster-input" type="number" min="0" step="0.25" '
+        + 'inputmode="decimal" data-idx="' + i + '" value="' + fmtNumInput(l.hours) + '" aria-label="Geplande uren"></td>'
+        + '<td class="td-num inv-rooster-ref">' + ref + '</td>'
+        + '<td class="td-num inv-rooster-line-total" data-idx="' + i + '">' + formatEur(l.hours * l.price) + '</td></tr>';
+    }).join("");
+    host.innerHTML =
+      '<table class="inv-rooster-table"><thead><tr><th>Dienst</th><th class="td-num">Tarief</th>'
+      + '<th class="td-num">Geplande uren</th><th class="td-num">Dienst-tijden</th><th class="td-num">Regel-totaal</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody>'
+      + '<tfoot>'
+      + '<tr class="inv-rooster-foot"><td>Systeemfactuur (herberekend)</td><td></td>'
+      + '<td class="td-num" id="inv-rooster-hours"></td><td></td><td class="td-num" id="inv-rooster-total"></td></tr>'
+      + '<tr><td>Ingediend door medewerker</td><td></td><td class="td-num"></td><td></td>'
+      + '<td class="td-num">' + formatEur(Number(lastInv.total) || 0) + '</td></tr>'
+      + '<tr><td>Verschil</td><td></td><td class="td-num"></td><td></td>'
+      + '<td class="td-num"><span id="inv-rooster-diff" class="inv-rooster-diff-badge"></span></td></tr>'
+      + '</tfoot></table>'
+      + '<div class="inv-rooster-actions">'
+      + '<button type="button" class="btn-outline" id="inv-rooster-reset">Herstel naar dienst-tijden</button>'
+      + '<button type="button" class="btn-primary" id="inv-rooster-recalc">Herberekenen</button>'
+      + '</div>';
+    host.querySelectorAll(".inv-rooster-input").forEach(function (inp) {
+      inp.addEventListener("input", onRoosterInput);
+    });
+    var rs = $("inv-rooster-reset"); if (rs) rs.addEventListener("click", resetRooster);
+    var rc = $("inv-rooster-recalc"); if (rc) rc.addEventListener("click", doRecalc);
+    refreshRoosterTotals();
+  }
+
+  function onRoosterInput(e) {
+    var idx = parseInt(e.target.getAttribute("data-idx"), 10);
+    if (isNaN(idx) || !roosterLines[idx]) return;
+    var v = parseFloat(String(e.target.value).replace(",", "."));
+    roosterLines[idx].hours = (isFinite(v) && v >= 0) ? v : 0;
+    var cell = document.querySelector('.inv-rooster-line-total[data-idx="' + idx + '"]');
+    if (cell) cell.textContent = formatEur(roosterLines[idx].hours * roosterLines[idx].price);
+    refreshRoosterTotals();
+  }
+
+  function roosterTotals() {
+    var hours = 0, total = 0;
+    roosterLines.forEach(function (l) { hours += l.hours; total += l.hours * l.price; });
+    return { hours: Math.round(hours * 100) / 100, total: Math.round(total * 100) / 100 };
+  }
+
+  function refreshRoosterTotals() {
+    var t = roosterTotals();
+    var submitted = Number(lastInv.total) || 0;
+    var diff = Math.round((submitted - t.total) * 100) / 100;
+    var match = Math.abs(diff) < 0.01;
+    var hEl = $("inv-rooster-hours"); if (hEl) hEl.textContent = fmtH(t.hours) + " u";
+    var tEl = $("inv-rooster-total"); if (tEl) tEl.textContent = formatEur(t.total);
+    var dEl = $("inv-rooster-diff");
+    if (dEl) {
+      dEl.textContent = match ? "✓ Komt overeen" : (formatEur(diff) + " verschil");
+      dEl.className = "inv-rooster-diff-badge " + (match ? "inv-rooster-diff-badge--match" : "inv-rooster-diff-badge--mismatch");
+    }
+  }
+
+  function resetRooster() {
+    roosterLines.forEach(function (l) { l.hours = l.base; });
+    renderRooster();
+  }
+
+  function buildSummary(inv, t) {
+    var prev = inv.systemGeneratedSummary || {};
+    var rate = t.hours > 0 ? Math.round((t.total / t.hours) * 100) / 100 : (roosterLines[0] ? roosterLines[0].price : 0);
+    var summary = Object.assign({}, prev);
+    summary.totals = Object.assign({}, prev.totals || {}, { total: t.total, total_excl_vat: t.total });
+    summary.billing_summary = Object.assign({}, prev.billing_summary || {}, {
+      total_hours: t.hours, shifts_count: roosterLines.length, hourly_rate: rate,
+    });
+    summary.metadata = Object.assign({}, prev.metadata || {}, {
+      recalc: {
+        lines: roosterLines.map(function (l) { return { id: l.id, hours: l.hours }; }),
+        by: currentUserName(), at: new Date().toISOString(),
+      },
+    });
+    summary.mode = prev.mode || "recalculated";
+    summary.generated_at = new Date().toISOString();
+    return summary;
+  }
+
+  async function doRecalc() {
+    if (!lastInv || !INV_ID) return;
+    var btn = $("inv-rooster-recalc");
+    if (btn) btn.disabled = true;
+    try {
+      var t = roosterTotals();
+      var summary = buildSummary(lastInv, t);
+      await window.invoicesDB.recomputeSystem(INV_ID, summary);
+      if (typeof window.showActionFeedback === "function") window.showActionFeedback("saved", "Systeemfactuur");
+      await load();
+      // rooster open houden met de zojuist opgeslagen waarden
+      var host = $("inv-rooster");
+      if (host) { roosterLines = buildRoosterLines(lastInv, curLines); renderRooster(); host.hidden = false; }
+    } catch (err) {
+      if (typeof window.showError === "function") window.showError("Herberekenen mislukt: " + (err && err.message ? err.message : err));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
   function lineFlat(s) { return String(s == null ? "" : s).replace(/\s*\n\s*/g, " — "); }
 
