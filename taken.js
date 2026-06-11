@@ -156,6 +156,9 @@
   function wachtOpGoedkeuring(t) { return !!t && t.type === "taak" && t.status === "Voltooid" && !t.archived && !t.goedgekeurdOp; }
   // Mag een verzoek beoordelen: management/hoger dat het verzoek ziet (niet de indiener zelf).
   function magBeoordelen(t) { return !!t && t.type === "verzoek" && canManage() && !isMaker(t) && ["Ingediend", "In beoordeling", "Teruggestuurd"].indexOf(t.status) >= 0; }
+  // Mag de huidige gebruiker zijn EIGEN ingediende verzoek intrekken/verwijderen?
+  // = de indiener, verzoek nog niet definitief beoordeeld (Goedgekeurd/Afgewezen), niet gearchiveerd.
+  function magEigenVerzoekVerwijderen(t) { return !!t && t.type === "verzoek" && isMaker(t) && !t.archived && ["Ingediend", "In beoordeling", "Teruggestuurd"].indexOf(t.status) >= 0; }
   // Mag een besluit nemen: directie/eigenaar of de aanmaker van het besluitpunt.
   function magBeslissen(t) { return !!t && t.type === "goedkeuring" && (isDirectie() || isMaker(t)) && ["Open", "In behandeling"].indexOf(t.status) >= 0; }
 
@@ -253,6 +256,9 @@
         ? '<div class="hr-row-actions"><button class="btn-outline hr-restore-btn" data-action="restore" data-id="' + escapeHtml(t.id) + '">Herstel</button>' +
           '<button class="employee-delete-btn" data-action="purge" data-id="' + escapeHtml(t.id) + '" aria-label="Definitief verwijderen">' + trashSvg() + '</button></div>'
         : '<button class="employee-delete-btn" data-action="archive" data-id="' + escapeHtml(t.id) + '" aria-label="Archiveren">' + trashSvg() + '</button>';
+    } else if (magEigenVerzoekVerwijderen(t)) {
+      // Medewerker mag zijn eigen, nog niet beoordeelde verzoek intrekken/verwijderen.
+      actionsCell = '<button class="employee-delete-btn" data-action="purge" data-id="' + escapeHtml(t.id) + '" aria-label="Verzoek verwijderen">' + trashSvg() + '</button>';
     }
     var nameButton = '<button class="link-button" data-action="edit" data-id="' + escapeHtml(t.id) + '" style="background:none;border:0;padding:0;color:var(--blue);cursor:pointer;text-align:left;font:inherit;font-weight:600;">' + escapeHtml(t.naam) + '</button>';
     var sub = t.beschrijving ? '<br><span style="color:var(--text-muted);font-size:12px;">' + escapeHtml(t.beschrijving.slice(0, 80)) + (t.beschrijving.length > 80 ? "…" : "") + '</span>' : "";
@@ -790,9 +796,17 @@
     modal.removeAttribute("hidden"); modal.setAttribute("aria-hidden", "false");
   }
   function closeArchiveModal() { state.archivingId = null; var m = document.getElementById("taken-archive-modal"); if (m) { m.setAttribute("hidden", ""); m.setAttribute("aria-hidden", "true"); } }
+  var PURGE_COPY = {
+    taak:        { title: "Definitief verwijderen", msg: "Deze taak wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt." },
+    verzoek:     { title: "Verzoek verwijderen",     msg: "Dit verzoek wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt." },
+    goedkeuring: { title: "Besluitpunt verwijderen", msg: "Dit besluitpunt wordt <strong>permanent</strong> verwijderd. Dit kan niet ongedaan worden gemaakt." },
+  };
   function openPurgeModal(item) {
     state.purgingId = item.id;
     var modal = document.getElementById("taken-purge-modal");
+    var copy = PURGE_COPY[item && item.type] || PURGE_COPY.taak;
+    var titleEl = document.getElementById("taken-purge-title"); if (titleEl) titleEl.textContent = copy.title;
+    var msgEl = document.getElementById("taken-purge-msg"); if (msgEl) msgEl.innerHTML = copy.msg;
     document.getElementById("taken-purge-preview").textContent = item.naam || "";
     var slider = document.getElementById("taken-purge-slider"); slider.value = 0; slider.style.setProperty("--employee-slider-pct", "0%");
     document.getElementById("taken-purge-confirm-btn").disabled = true;
