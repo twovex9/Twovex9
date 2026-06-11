@@ -14453,6 +14453,38 @@ button.planning-erm-new {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* ── Planning filter-paneel als HR-stijl zijbalk (gebruikerseis 2026-06-11) ──
+   Strak tegen de linkerrand + inklapbaar, net als de sectie-zijbalk op HR e.d.
+   Hergebruikt de globale .sidebar-stijl + sidebar-collapse.js (zelfde inklap-pijl,
+   gedeelde data-sidebar-stand). De rol-/read-only-logica blijft volledig ongewijzigd:
+   het paneel houdt z'n .planning-filters-card(-erm)-klassen, dus
+   `.planning-readonly .planning-filters-card { display:none }` werkt door. */
+html[data-sidebar="expanded"] .content--planning-erm { padding-left: 0; }
+.planning-filters-card.planning-filters-sidebar {
+  grid-area: auto;
+  grid-column: 1;
+  background: var(--sidebar-bg);
+  border: 0;
+  border-right: 1px solid var(--line-strong);
+  border-radius: 0;
+  box-shadow: none;
+  position: static;
+  top: auto;
+  max-height: none;
+  margin: 0;
+  padding: 14px 14px 16px;
+  overflow-y: auto;
+}
+/* Inklappen (gedeelde data-sidebar-stand, zoals HR): de filter-zijbalk verbergt zich
+   via de globale regel `html[data-sidebar="collapsed"] .sidebar{display:none}`; hier
+   laten we de planningskaart de vrijgekomen ruimte volledig vullen. */
+html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: minmax(0, 1fr); }
+/* Read-only kijkfunctie (HR/Facilitair/werkvloer): het filterpaneel is daar al volledig
+   afgeschermd (`.planning-readonly .planning-filters-card{display:none}`), dus de
+   uitklap-handle heeft daar geen functie — verbergen om verwarring te voorkomen. De
+   rol-/toegangslogica zelf blijft ongewijzigd. */
+.planning-readonly .sidebar-expand-handle { display: none; }
+
 /* ---- Toolbar bovenaan grid (Selecteer Locatie, vandaag, < >, periode, knoppen) ---- */
 .planning-main-card--v3 {
   padding: 12px 14px 14px;
