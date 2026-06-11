@@ -1640,7 +1640,10 @@ function renderMonthCalendar(host, items, overlapIds) {
   const monthStart = startOfMonth(ui.monthDate || new Date());
   const monthEnd = addDays(monthStart, daysInMonth(monthStart));
   const gridStart = getMonday(monthStart);
-  const lastVisible = addDays(getMonday(addDays(monthEnd, 6)), 7);
+  /* Alleen de weken tonen die een dag van déze maand bevatten (4, 5 of 6 rijen,
+     afhankelijk van de maand) — geen lege trailing-week. Zo krijgt elke weekrij meer
+     hoogte en blijven de dagen beter leesbaar binnen het ene-scherm-beeld. */
+  const lastVisible = addDays(getMonday(addDays(monthEnd, -1)), 7);
   const days = [];
   for (let d = new Date(gridStart); d < lastVisible; d = addDays(d, 1)) days.push(new Date(d));
   const weekCount = Math.max(1, Math.round(days.length / 7));
@@ -1800,7 +1803,7 @@ function fitMonthCells(board) {
       shown--;
       used -= chipH(chips[shown]) + gap;
     }
-    const hiddenCount = chips.length - shown;
+    let hiddenCount = chips.length - shown;
     for (let i = shown; i < chips.length; i++) chips[i].hidden = true;
     const more = document.createElement("button");
     more.type = "button";
@@ -1815,6 +1818,16 @@ function fitMonthCells(board) {
       renderAllViews();
     });
     list.appendChild(more);
+    /* Correctie: past de "+N meer"-chip er nét niet bij (die kan iets hoger zijn dan
+       een gewone chip, plus sub-pixel afronding bij zoom), verberg dan telkens nog
+       één zichtbare chip tot de lijst exact binnen de rij-hoogte valt — geen clipping. */
+    let guard = chips.length;
+    while (shown > 0 && list.scrollHeight > list.clientHeight + 1 && guard-- > 0) {
+      shown--;
+      chips[shown].hidden = true;
+      hiddenCount++;
+      more.textContent = `+${hiddenCount} meer`;
+    }
   });
 }
 
