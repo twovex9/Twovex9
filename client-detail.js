@@ -503,15 +503,16 @@
   if (haSel) haSel.addEventListener("change", syncDots);
 
   var empHint = document.getElementById("cd-emp-hint");
+  var emp2Hint = document.getElementById("cd-emp2-hint");
   var gwHint = document.getElementById("cd-gw-hint");
   var notHint = document.getElementById("cd-zij-not-hint");
 
-  function syncMedewerkerSelect() {
-    var sel = document.getElementById("cd-emp");
+  // Vult één mentor-keuzelijst (cd-emp = eerste mentor, cd-emp2 = tweede mentor)
+  // uit de HR-medewerkerslijst. Beide werken identiek; de tweede mentor is
+  // optioneel en wordt los opgeslagen (mentor2EmpId / mentor2Zoek in data-jsonb).
+  function fillMentorSelect(selId, savedId, savedZoek, emptyLabel) {
+    var sel = document.getElementById(selId);
     if (!sel) return;
-    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
-    var savedId = cl && cl.medewerkerEmpId != null ? String(cl.medewerkerEmpId) : "";
-    var savedZoek = cl && cl.medewerkerZoek != null ? String(cl.medewerkerZoek).trim() : "";
     var uiPrior = sel.value;
     var rows = getHrEmployeeRows();
     var byId = {};
@@ -521,7 +522,7 @@
     sel.innerHTML = "";
     var o0 = document.createElement("option");
     o0.value = "";
-    o0.textContent = "— Geen medewerker";
+    o0.textContent = emptyLabel || "— Geen medewerker";
     sel.appendChild(o0);
     rows.forEach(function (r) {
       var o = document.createElement("option");
@@ -563,6 +564,22 @@
         }
       }
     }
+  }
+
+  function syncMedewerkerSelect() {
+    var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
+    fillMentorSelect(
+      "cd-emp",
+      cl && cl.medewerkerEmpId != null ? String(cl.medewerkerEmpId) : "",
+      cl && cl.medewerkerZoek != null ? String(cl.medewerkerZoek).trim() : "",
+      "— Geen eerste mentor"
+    );
+    fillMentorSelect(
+      "cd-emp2",
+      cl && cl.mentor2EmpId != null ? String(cl.mentor2EmpId) : "",
+      cl && cl.mentor2Zoek != null ? String(cl.mentor2Zoek).trim() : "",
+      "— Geen tweede mentor"
+    );
   }
 
   function onHrListMaybeChanged() {
@@ -623,22 +640,27 @@
     if (typeof updHints === "function") updHints();
   }
 
-  function updHints() {
-    if (empHint) {
-      var es = document.getElementById("cd-emp");
-      if (es) {
-        if (es.getAttribute("data-orphan") === "1") {
-          var oLab = (es.getAttribute("data-orphan-label") || "").trim();
-          empHint.textContent = oLab
-            ? "Opgeslagen: " + oLab + ", maar deze staat niet (meer) in HR → Medewerkers. Kies een geldige medewerker."
-            : "Eerdere koppeling niet meer gevonden. Kies opnieuw een medewerker in de lijst.";
-        } else if (es.value) {
-          empHint.textContent = "Gekoppeld met medewerker uit HR. Lijst komt overeen met Medewerkers; open het menu opnieuw om wijzigingen in HR te zien na opslaan daar.";
-        } else {
-          empHint.textContent = "Kies een medewerker uit de lijst (zelfde bron als HR → Medewerkers).";
-        }
-      }
+  function setMentorHint(hintEl, selId, isTweede) {
+    if (!hintEl) return;
+    var es = document.getElementById(selId);
+    if (!es) return;
+    if (es.getAttribute("data-orphan") === "1") {
+      var oLab = (es.getAttribute("data-orphan-label") || "").trim();
+      hintEl.textContent = oLab
+        ? "Opgeslagen: " + oLab + ", maar deze staat niet (meer) in HR → Medewerkers. Kies een geldige mentor."
+        : "Eerdere koppeling niet meer gevonden. Kies opnieuw een mentor in de lijst.";
+    } else if (es.value) {
+      hintEl.textContent = (isTweede ? "Tweede" : "Eerste") + " mentor gekoppeld uit HR. Lijst komt overeen met Medewerkers; open het menu opnieuw om wijzigingen in HR te zien na opslaan daar.";
+    } else {
+      hintEl.textContent = isTweede
+        ? "Geen tweede mentor gekoppeld. Dit is optioneel."
+        : "Kies een eerste mentor uit de lijst (zelfde bron als HR → Medewerkers).";
     }
+  }
+
+  function updHints() {
+    setMentorHint(empHint, "cd-emp", false);
+    setMentorHint(emp2Hint, "cd-emp2", true);
     if (gwHint) {
       var gsel = document.getElementById("cd-srch-gw");
       var gtxt = (gsel && gsel.value && gsel.options[gsel.selectedIndex]) ? gsel.options[gsel.selectedIndex].textContent : "";
@@ -659,6 +681,11 @@
   if (cdEmp) {
     cdEmp.addEventListener("change", updHints);
     cdEmp.addEventListener("focus", onHrListMaybeChanged);
+  }
+  var cdEmp2 = document.getElementById("cd-emp2");
+  if (cdEmp2) {
+    cdEmp2.addEventListener("change", updHints);
+    cdEmp2.addEventListener("focus", onHrListMaybeChanged);
   }
   var cdGw = document.getElementById("cd-srch-gw");
   if (cdGw) cdGw.addEventListener("change", updHints);
@@ -3726,6 +3753,18 @@
       })(),
       medewerkerZoek: (function () {
         var s = document.getElementById("cd-emp");
+        if (!s || !s.value) return "";
+        var oi = s.selectedIndex;
+        if (oi < 0 || !s.options[oi]) return "";
+        return String(s.options[oi].textContent || "").trim();
+      })(),
+      mentor2EmpId: (function () {
+        var s = document.getElementById("cd-emp2");
+        if (!s || !s.value) return "";
+        return String(s.value);
+      })(),
+      mentor2Zoek: (function () {
+        var s = document.getElementById("cd-emp2");
         if (!s || !s.value) return "";
         var oi = s.selectedIndex;
         if (oi < 0 || !s.options[oi]) return "";

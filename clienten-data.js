@@ -131,6 +131,8 @@
     if (c.inZorgDatum == null) c.inZorgDatum = "";
     if (c.medewerkerZoek == null) c.medewerkerZoek = "";
     if (c.medewerkerEmpId == null) c.medewerkerEmpId = "";
+    if (c.mentor2Zoek == null) c.mentor2Zoek = "";
+    if (c.mentor2EmpId == null) c.mentor2EmpId = "";
     if (c.gedragswetenschapperZoek == null) c.gedragswetenschapperZoek = "";
     if (!Array.isArray(c.detailNotities)) c.detailNotities = [];
     if (c.zijbalkNotities == null) c.zijbalkNotities = "";
