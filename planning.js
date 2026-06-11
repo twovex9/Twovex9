@@ -2430,29 +2430,27 @@ function returnToRosterAtAdjustment() {
   }
   renderAllViews();
   if (target) {
-    // Na de re-render de kaart in beeld scrollen + kort oplichten. De grid-DOM (én de
-    // KPI-/banner-kop erboven) wordt pas ná deze tick volledig opgebouwd en kan nog
-    // herstromen, waardoor één enkele scrollIntoView te vroeg op een nog niet-uitgevulde
-    // layout landt. We scrollen daarom in een korte retry-lus tot de kaart écht in beeld
-    // staat (of na een veilige cap stoppen). De scroll-container van de planning is bovendien
-    // instabiel (soms de kaart-sectie, soms page-main) — scrollIntoView kiest zelf de juiste.
+    // Na de re-render de kaart in beeld scrollen + kort oplichten. Dit is bewust géén
+    // "scroll één keer en stop": de grid-DOM + KPI-/banner-kop stromen ná de eerste frames
+    // nog her én een sluitende dienst-detail-animatie (~260ms) kan de scrollpositie nét
+    // daarna resetten. We scrollen daarom op meerdere vaste momenten over ~0,8s — elke pass
+    // zoekt de kaart vers op (de grid-render kan 'm vervangen) en centreert 'm opnieuw, zodat
+    // een late reset altijd wordt gecorrigeerd. De scroll-container is bovendien instabiel
+    // (soms de kaart-sectie, soms page-main) — scrollIntoView kiest zelf de juiste.
     const sel = '.planning-erm-card[data-id="' + String(target.id).replace(/["\\]/g, "\\$&") + '"]';
-    let attempt = 0;
-    const settleAndHighlight = (card) => {
-      card.classList.add("planning-erm-card--justedited");
-      setTimeout(() => card.classList.remove("planning-erm-card--justedited"), 2600);
-    };
-    const doScroll = () => {
+    let highlighted = false;
+    const scrollPass = () => {
       const card = document.querySelector(sel);
-      if (!card) { if (attempt++ < 12) setTimeout(doScroll, 70); return; }
+      if (!card) return;
       try { card.scrollIntoView({ block: "center", inline: "center" }); } catch (e) { try { card.scrollIntoView(); } catch (e2) { /* */ } }
-      const r = card.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const inView = r.top >= 0 && r.top <= vh - 40;
-      if (!inView && attempt++ < 12) { setTimeout(doScroll, 70); return; }
-      settleAndHighlight(card);
+      if (!highlighted) {
+        highlighted = true;
+        card.classList.add("planning-erm-card--justedited");
+        setTimeout(() => { const c = document.querySelector(sel); if (c) c.classList.remove("planning-erm-card--justedited"); }, 2600);
+      }
     };
-    requestAnimationFrame(doScroll);
+    requestAnimationFrame(scrollPass);
+    [90, 200, 360, 560, 820].forEach((ms) => setTimeout(scrollPass, ms));
   }
 }
 
