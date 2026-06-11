@@ -136,6 +136,7 @@
   <script src="save-feedback.js?v=918f1ad" defer></script>
   <script src="besa-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
+  <script src="besa-searchable-select.js?v=918f1ad" defer></script>
 
   <div class="app-shell app-shell--home app-shell--planning-erm">
     <header class="topbar topbar--erm">
@@ -387,7 +388,7 @@
             <div class="planning-erm-fld">
               <label class="planning-erm-fld-label" for="filter-teamlid">Teamlid</label>
               <div class="planning-erm-fld-selectwrap">
-                <select id="filter-teamlid" class="planning-dienst-input planning-erm-fld-select">
+                <select id="filter-teamlid" class="planning-dienst-input planning-erm-fld-select" data-searchable>
                   <option value="">Selecteer een teamlid</option>
                 </select>
               </div>
@@ -396,7 +397,7 @@
             <div class="planning-erm-fld">
               <label class="planning-erm-fld-label" for="filter-client">Cliënt</label>
               <div class="planning-erm-fld-selectwrap">
-                <select id="filter-client" class="planning-dienst-input planning-erm-fld-select">
+                <select id="filter-client" class="planning-dienst-input planning-erm-fld-select" data-searchable>
                   <option value="">Selecteer Cliënt</option>
                 </select>
               </div>
@@ -679,7 +680,7 @@
       </div>
       <div class="planning-dienst-field planning-dienst-field--full dienst-only-groep">
         <label class="planning-dienst-label" for="dienst-mw">Medewerker <span class="planning-dienst-opt">(optioneel)</span></label>
-        <select id="dienst-mw" class="planning-dienst-input" name="teamlid">
+        <select id="dienst-mw" class="planning-dienst-input" name="teamlid" data-searchable>
           <option value="">Geen — open dienst (later in te vullen)</option>
         </select>
         <p class="planning-dienst-hint" id="dienst-mw-saldo-hint" hidden></p>
@@ -687,7 +688,7 @@
       <div class="planning-dienst-grid dienst-only-groep">
         <div class="planning-dienst-field" id="dienst-client-field">
           <label class="planning-dienst-label" for="dienst-client" id="dienst-client-label">Cliënt <span class="planning-dienst-opt">(optioneel)</span></label>
-          <select id="dienst-client" class="planning-dienst-input" name="client"></select>
+          <select id="dienst-client" class="planning-dienst-input" name="client" data-searchable></select>
           <p class="planning-dienst-hint" id="dienst-client-hint" hidden>Selecteer de jongere die deze medewerker individueel zal begeleiden.</p>
         </div>
         <div class="planning-dienst-field">
