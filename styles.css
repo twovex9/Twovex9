@@ -16426,6 +16426,23 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
   line-height: 1.35;
 }
 
+.client-detail-sublabel {
+  display: block;
+  margin: 0 0 6px;
+  font-size: var(--font-table-cell);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.client-detail-sublabel--spaced {
+  margin-top: 14px;
+}
+
+.client-detail-sublabel-opt {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .client-detail-wide-btn {
   display: block;
   width: 100%;

@@ -256,10 +256,13 @@
               <div id="cd-reis-acties" hidden></div>
             </div>
             <div class="client-detail-block">
-              <h3 class="client-detail-h3">Medewerker</h3>
-              <label class="visually-hidden" for="cd-emp">Medewerker koppelen uit HR</label>
-              <select class="modal-input modal-select client-detail-search" id="cd-emp" name="medewerkerEmpId" aria-label="Medewerker uit HR-lijst"></select>
-              <p class="client-detail-hint" id="cd-emp-hint" aria-live="polite">Er is nog geen medewerker gekoppeld aan deze cliënt.</p>
+              <h3 class="client-detail-h3">Mentor</h3>
+              <label class="client-detail-sublabel" for="cd-emp">Eerste mentor</label>
+              <select class="modal-input modal-select client-detail-search" id="cd-emp" name="medewerkerEmpId" aria-label="Eerste mentor uit HR-lijst"></select>
+              <p class="client-detail-hint" id="cd-emp-hint" aria-live="polite">Er is nog geen eerste mentor gekoppeld aan deze cliënt.</p>
+              <label class="client-detail-sublabel client-detail-sublabel--spaced" for="cd-emp2">Tweede mentor <span class="client-detail-sublabel-opt">(optioneel)</span></label>
+              <select class="modal-input modal-select client-detail-search" id="cd-emp2" name="mentor2EmpId" aria-label="Tweede mentor uit HR-lijst"></select>
+              <p class="client-detail-hint" id="cd-emp2-hint" aria-live="polite">Geen tweede mentor gekoppeld. Dit is optioneel.</p>
             </div>
             <div class="client-detail-block">
               <h3 class="client-detail-h3">Gedragswetenschapper</h3>
