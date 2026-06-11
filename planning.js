@@ -2430,16 +2430,19 @@ function returnToRosterAtAdjustment() {
   }
   renderAllViews();
   if (target) {
-    // Na de re-render de kaart in beeld scrollen + kort oplichten. requestAnimationFrame
-    // zodat de grid-DOM eerst opnieuw is opgebouwd.
-    const id = String(target.id).replace(/["\\]/g, "\\$&");
-    requestAnimationFrame(() => {
-      const card = document.querySelector('.planning-erm-card[data-id="' + id + '"]');
+    // Na de re-render de kaart in beeld scrollen + kort oplichten. De verticale
+    // scroll-container van de planning is instabiel (soms de kaart-sectie, soms page-main)
+    // en de grid-DOM wordt pas ná deze tick volledig opgebouwd; daarom twee frames wachten
+    // en de kaart vers opzoeken vóór we scrollen (anders scrollt een verouderde/lege grid).
+    const sel = '.planning-erm-card[data-id="' + String(target.id).replace(/["\\]/g, "\\$&") + '"]';
+    const doScroll = () => {
+      const card = document.querySelector(sel);
       if (!card) return;
-      try { card.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" }); } catch (e) { card.scrollIntoView(); }
+      try { card.scrollIntoView({ block: "center", inline: "center" }); } catch (e) { try { card.scrollIntoView(); } catch (e2) { /* */ } }
       card.classList.add("planning-erm-card--justedited");
       setTimeout(() => card.classList.remove("planning-erm-card--justedited"), 2600);
-    });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(doScroll));
   }
 }
 
