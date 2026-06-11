@@ -64,7 +64,15 @@ const GRID_ACCENT = ["#2563eb", "#16a34a", "#ca8a04", "#dc2626", "#7c3aed", "#db
 /** Vaste groep-kopjes voor 1-op-1/ambulant en achterwacht. Deze diensten worden
  *  — los van hun woonlocatie — onder één eigen kop gebundeld (user-eis 2026-06-06):
  *  alle 1-op-1's bij elkaar in één kopje, en de achterwacht helemaal onderaan
- *  (1 persoon die verantwoordelijk is voor àlle locaties). */
+ *  (1 persoon die verantwoordelijk is voor àlle locaties).
+ *
+ *  🔗 Koppeling met Locatiebeheer (user-eis 2026-06-11): Locatiebeheer is dé bron
+ *  van het locatie-overzicht in de planning. Daarom MOETEN deze twee functionele
+ *  groep-namen ook als rij in `public.locaties` bestaan (exact dezelfde naam), zodat
+ *  de eigenaar ze terugziet/beheert in Locatiebeheer en de planning-kop met de
+ *  HR-locatierij samenvalt (zelfde string → één groep, geen dubbel). De seed staat
+ *  in `scripts/seed-planning-functionele-groepen.mjs`. Voeg je hier een nieuwe
+ *  functionele groep toe, seed 'm dan óók in `locaties`. */
 const EEN_OP_EEN_GROEP = "Eén op één / Ambulant";
 const ACHTERWACHT_GROEP = "Achterwacht";
 const OPENSTAANDE_GROEP = "Openstaande diensten";
