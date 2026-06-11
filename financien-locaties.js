@@ -32,6 +32,19 @@
     return v.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   }
   function fmtPct(n) { return (n == null) ? "—" : (Math.round(Number(n) * 10) / 10).toLocaleString("nl-NL") + "%"; }
+  /* Kosten-uitsplitsing (ZZP + loondienst + evt. handmatig personeel/onkosten) — één bron
+     voor tooltip én sub-tekst, zodat alle plekken optellen tot het kosten-totaal. */
+  function kostParts(o) {
+    var parts = ["ZZP " + fmtEuro(o.kosten_zzp), "Loondienst " + fmtEuro(o.loondienst)];
+    if ((Number(o.personeel) || 0) > 0) parts.push("Personeel " + fmtEuro(o.personeel));
+    if ((Number(o.onkosten) || 0) > 0) parts.push("Onkosten " + fmtEuro(o.onkosten));
+    return parts;
+  }
+  function kostBreakdownTitle(o) { return kostParts(o).join(" · "); }
+  /* Compacte split-regel onder een kosten-bedrag in de per-locatie tabel. */
+  function makeKostSplit(o) {
+    return el("span", "fin-loc-kost-split", "ZZP " + fmtEuro(o.kosten_zzp) + " · Loon " + fmtEuro(o.loondienst));
+  }
   function euTickSigned(v) {
     v = Number(v) || 0; var sign = v < 0 ? "−" : "+"; var a = Math.abs(v);
     var t = a >= 1000 ? "€ " + Math.round(a / 1000) + "k" : "€ " + Math.round(a);
@@ -114,7 +127,7 @@
     var res = Number(m.resultaat) || 0;
     return '<div class="bd-tip-title">' + esc(ymLabel(m.ym, true)) + "</div>"
       + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--green)"></span><span class="bd-tip-nm">Opbrengst</span><span class="bd-tip-val">' + fmtEuro(m.omzet) + "</span></div>"
-      + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--red)"></span><span class="bd-tip-nm">Kosten (ZZP)</span><span class="bd-tip-val">' + fmtEuro(m.kosten) + "</span></div>"
+      + '<div class="bd-tip-row"><span class="bd-tip-sw" style="background:var(--red)"></span><span class="bd-tip-nm">Kosten</span><span class="bd-tip-val">' + fmtEuro(m.kosten) + "</span></div>"
       + '<div class="bd-tip-div"></div>'
       + '<div class="bd-tip-row bd-tip-row--total"><span class="bd-tip-sw" style="background:transparent"></span><span class="bd-tip-nm">' + (res >= 0 ? "Winst" : "Verlies") + '</span><span class="bd-tip-val">' + fmtEuro(res) + "</span></div>";
   }
@@ -149,8 +162,8 @@
   /* ---- overhead-detectie: een locatie zonder omzet én zonder ZZP-kosten is een
      pure kostenpost (kantoor/overhead). Zorggroepen hebben omzet en/of ZZP-inzet. ---- */
   function isOverhead(l) {
-    return (Number(l.omzet) || 0) === 0 && (Number(l.kosten_zzp) || 0) === 0
-      && ((Number(l.personeel) || 0) > 0 || (Number(l.onkosten) || 0) > 0 || (Number(l.loondienst) || 0) > 0);
+    return (Number(l.omzet) || 0) === 0 && (Number(l.kosten_zzp) || 0) === 0 && (Number(l.loondienst) || 0) === 0
+      && ((Number(l.personeel) || 0) > 0 || (Number(l.onkosten) || 0) > 0);
   }
 
   /* ---- bezetting-cellen ---- */
@@ -201,9 +214,11 @@
       tr.appendChild(tdN);
 
       tr.appendChild(el("td", "fin-num", fmtInt(l.zzpers)));
-      // Kosten (totaal) — uitsplitsing ZZP/Personeel/Onkosten in tooltip; losse kolommen weg voor leesbaarheid
-      var tdK = el("td", "fin-num fin-eur", fmtEuro(l.kosten));
-      tdK.title = "ZZP " + fmtEuro(l.kosten_zzp) + " · Loondienst " + fmtEuro(l.loondienst) + " · Personeel " + fmtEuro(l.personeel) + " · Onkosten " + fmtEuro(l.onkosten);
+      // Kosten (totaal) met compacte ZZP/loondienst-split eronder; volledige uitsplitsing in tooltip.
+      var tdK = el("td", "fin-num fin-eur fin-loc-kost");
+      tdK.appendChild(el("span", "fin-loc-kost-tot", fmtEuro(l.kosten)));
+      tdK.appendChild(makeKostSplit(l));
+      tdK.title = kostBreakdownTitle(l);
       tr.appendChild(tdK);
       tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(l.omzet)));
       tr.appendChild(el("td", "fin-num fin-eur " + (res >= 0 ? "fin-pos" : "fin-neg"), fmtEuro(res)));
@@ -222,7 +237,12 @@
       tb.appendChild(tr);
     });
     var footK = $("fin-foot-kosten");
-    if (footK) { footK.textContent = fmtEuro(tKosten); footK.title = "ZZP " + fmtEuro(tZzp) + " · Loondienst " + fmtEuro(tLoon) + " · Personeel " + fmtEuro(tPers) + " · Onkosten " + fmtEuro(tOnk); }
+    if (footK) {
+      clear(footK);
+      footK.appendChild(el("span", "fin-loc-kost-tot", fmtEuro(tKosten)));
+      footK.appendChild(makeKostSplit({ kosten_zzp: tZzp, loondienst: tLoon }));
+      footK.title = kostBreakdownTitle({ kosten_zzp: tZzp, loondienst: tLoon, personeel: tPers, onkosten: tOnk });
+    }
     setText("fin-foot-omzet", fmtEuro(tOmzet));
     var tRes = tOmzet - tKosten;
     var foot = $("fin-foot-result");
@@ -313,8 +333,7 @@
     }
     sum.appendChild(stat("Opbrengst", fmtEuro(loc.omzet), "",
       "Betaald " + fmtEuro(loc.paid) + " · Open " + fmtEuro(loc.pending) + " · Nog te declareren " + fmtEuro(loc.to_declare)));
-    sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "",
-      "ZZP " + fmtEuro(loc.kosten_zzp) + " · Loondienst " + fmtEuro(loc.loondienst) + " · Personeel " + fmtEuro(loc.personeel) + " · Onkosten " + fmtEuro(loc.onkosten)));
+    sum.appendChild(stat("Kosten", fmtEuro(loc.kosten), "", kostBreakdownTitle(loc)));
     sum.appendChild(stat("Resultaat", fmtEuro(res0), (res0 >= 0 ? "fin-pos" : "fin-neg"),
       (res0 >= 0 ? "Winst" : "Verlies") + (loc.marge_pct != null ? " · marge " + fmtPct(loc.marge_pct) : "")));
     body.appendChild(sum);
@@ -362,6 +381,32 @@
         trf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sumK)));
         tf.appendChild(trf); tz.tbl.appendChild(tf);
         body.appendChild(tz.tbl);
+      }
+
+      // Loondienst-medewerkers (maandsalaris × werkgeverslasten, verdeeld over hun locaties)
+      body.appendChild(el("h3", "fin-sec-h", "Loondienst-medewerkers"));
+      var loon = d.loondienst || [];
+      if (!loon.length) { emptyRow(body, "Geen loondienst-medewerkers aan deze locatie gekoppeld."); }
+      else {
+        var tl = buildTable([{ label: "Medewerker" }, { label: "Functie" }, { label: "€/maand", num: true }, { label: "Maanden", num: true }, { label: "Kosten", num: true }]);
+        var sumL = 0;
+        loon.forEach(function (p) {
+          sumL += Number(p.kost_periode) || 0;
+          var tr = el("tr");
+          tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
+          tr.appendChild(el("td", null, p.functie || "—"));
+          tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
+          tr.appendChild(el("td", "fin-num", fmtInt(p.maanden)));
+          tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
+          tl.tb.appendChild(tr);
+        });
+        var tlf = el("tfoot"), tlrf = el("tr");
+        tlrf.appendChild(el("td", "bd-td-strong", "Totaal (" + loon.length + ")"));
+        tlrf.appendChild(el("td", null, "")); tlrf.appendChild(el("td", null, "")); tlrf.appendChild(el("td", null, ""));
+        tlrf.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sumL)));
+        tlf.appendChild(tlrf); tl.tbl.appendChild(tlf);
+        body.appendChild(tl.tbl);
+        body.appendChild(el("p", "bd-mrow-note", "Loondienstkosten = bruto maandsalaris × werkgeverslasten (1,30), gelijk verdeeld over de locaties waaraan de medewerker is gekoppeld, × het aantal maanden in de periode. Indicatief."));
       }
 
       // Cliënten / beschikkingen
@@ -994,7 +1039,7 @@
     setHTML("fin-omzet-sub", "Betaald " + esc(fmtEuro(t.paid)) + " · Open " + esc(fmtEuro(t.pending)) + " · Nog te declareren " + esc(fmtEuro(t.to_declare)));
 
     setText("fin-v-kosten", fmtEuro(t.kosten));
-    setText("fin-kosten-sub", "ZZP " + fmtEuro(t.kosten_zzp) + " · Loondienst " + fmtEuro(t.loondienst) + " · Personeel " + fmtEuro(t.personeel) + " · Onkosten " + fmtEuro(t.onkosten));
+    setText("fin-kosten-sub", kostBreakdownTitle(t));
 
     setText("fin-v-result", fmtEuro(t.resultaat));
     var pos = (Number(t.resultaat) || 0) >= 0;

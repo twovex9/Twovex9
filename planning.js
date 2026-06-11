@@ -1801,9 +1801,12 @@ function buildMonthChipEl(it, overlapIds) {
   chip.type = "button";
   chip.className = "planning-month-chip";
   if (it.conflict || autoOverlap) chip.classList.add("planning-month-chip--conflict");
+  // Open dienst (geen medewerker) krijgt ook in de maandweergave een eigen markering,
+  // zodat een cliënt-titel (bv. "Noufel 1 op 1") niet als gekoppelde medewerker leest.
+  if (isOpenDienst(it)) chip.classList.add("planning-month-chip--open");
   chip.style.setProperty("--erv-stripe", accent);
   const timeRange = `${formatTimeShort(it.start)} – ${formatTimeShort(it.einde)}`;
-  chip.title = `${title} · ${timeRange}${it.teamlid ? " · " + String(it.teamlid).trim() : ""}`;
+  chip.title = `${title} · ${timeRange}${it.teamlid ? " · " + String(it.teamlid).trim() : " · Geen medewerker"}`;
   chip.innerHTML = `
     <span class="planning-month-chip-dot" style="background:${accent}" aria-hidden="true"></span>
     <span class="planning-month-chip-time">${formatTimeShort(it.start)}</span>
@@ -1932,9 +1935,15 @@ function buildShiftCardEl(it, gi, overlapIds) {
          <span>${escapeHtml(clientLabel)}</span>
        </div>`
     : "";
+  // Medewerker-status is ALTIJD expliciet op de kaart: óf de naam van de gekoppelde
+  // medewerker, óf een duidelijke "Geen medewerker"-markering bij een open dienst.
+  // Zo is de dienst-/cliënttitel (bv. "Noufel 1 op 1") nooit te verwarren met een
+  // gekoppelde medewerker — een dienst leest eenduidig als open (geen medewerker) of
+  // bezet (naam). (Spraakmemo eigenaar 2026-06-11: "het is niet helder of het een open
+  // dienst is of dat er een medewerker gekoppeld is".)
   const employeeChip = employeeLabel
     ? `<div class="planning-erm-card-person">${escapeHtml(employeeLabel)}</div>`
-    : "";
+    : `<div class="planning-erm-card-person planning-erm-card-person--open" aria-label="Open dienst — nog geen medewerker ingepland">Geen medewerker</div>`;
   card.innerHTML = `
     <div class="planning-erm-card__top">
       <strong class="planning-erm-name">${escapeHtml(dtTitle)}</strong>
