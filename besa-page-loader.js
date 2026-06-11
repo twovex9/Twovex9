@@ -5,18 +5,27 @@
  * skeleton/lege staat in beeld vóór de juiste inhoud verscheen ("eerst iets
  * anders, dan het juiste"). Dat is klassieke FOUC.
  *
- * Oplossing — zelfde patroon als de thema-FOUC-preventie:
+ * Oplossing — zelfde patroon als de thema-FOUC-preventie, maar nu wachtend op
+ * de ECHTE data in plaats van enkel op de eerste paint:
  *   1. Een inline <head>-snippet zet `data-loading="1"` op <html> VÓÓR de
- *      eerste paint. styles.css is render-blocking in de <head>, dus de
- *      overlay-spinner is al actief bij de allereerste paint → de gebruiker
- *      ziet nooit meer de flits, alleen de spinner.
- *   2. Dit bestand haalt het attribuut weg zodra de ECHTE lay-out minstens
- *      één keer geschilderd is (dubbele requestAnimationFrame), met een
- *      minimale zichttijd zodat de spinner niet flikkert op snelle pagina's
- *      en een harde fallback-timeout zodat de overlay NOOIT blijft hangen.
+ *      eerste paint en installeert een lichte netwerk-teller (`window.__ffNet`)
+ *      die elke `fetch`/XHR telt. styles.css is render-blocking in de <head>,
+ *      dus de overlay-spinner is al actief bij de allereerste paint → de
+ *      gebruiker ziet nooit meer de flits, alleen de spinner.
+ *   2. Dit bestand haalt het attribuut pas weg wanneer (a) de lay-out minstens
+ *      één keer geschilderd is ÉN (b) het netwerk tot rust is gekomen — d.w.z.
+ *      alle initiële data-fetches (Supabase) binnen zijn en de bijbehorende
+ *      her-render heeft plaatsgevonden. Pas dán staat "direct het juiste".
+ *      Een minimale zichttijd voorkomt flikker op snelle pagina's; een harde
+ *      fallback-timeout zorgt dat de overlay NOOIT blijft hangen.
  *
- * Pagina's met zwaar databladen kunnen de overlay langer tonen via
- * `window.FFLoader.show()` / `.hide()` — zuiver additief, niets verplicht.
+ * Waarom netwerk-stilte als signaal? Elke data-laag in deze app haalt zijn data
+ * via de Supabase JS-client op, die onder de motorkap `fetch` gebruikt. Door
+ * `fetch`/XHR centraal te tellen weten we generiek — zonder per-pagina-bedrading
+ * — wanneer de initiële data binnen is. Dat dekt alle 100+ pagina's tegelijk.
+ *
+ * Pagina's kunnen de overlay expliciet sluiten via `window.FFLoader.ready()`
+ * (alles klaar) of `.done()` (hard verbergen). Zuiver additief.
  *
  * Volledig additief; één verwijdering van dit script + de CSS + het inline
  * snippet zet alles terug.
@@ -25,63 +34,107 @@
   "use strict";
 
   var root = document.documentElement;
-  var MIN_MS = 180;       // minimale zichttijd → geen spinner-flikker
-  var FALLBACK_MS = 8000; // veiligheidsklep → overlay nooit laten hangen
+  var MIN_MS = 150;        // minimale zichttijd → geen spinner-flikker
+  var SETTLE_MS = 120;     // hoe lang het netwerk stil moet zijn vóór "klaar"
+  var POLL_MS = 50;        // frequentie van de netwerk-stilte-check
+  var FALLBACK_MS = 12000; // veiligheidsklep → overlay nooit laten hangen
 
   var start = Date.now();
   var hidden = false;
+  var painted = false;
+  var releasing = false;
   var fallbackTimer = null;
+  var pollTimer = null;
 
-  function clearFallback() {
-    if (fallbackTimer) {
-      clearTimeout(fallbackTimer);
-      fallbackTimer = null;
-    }
+  function clearTimers() {
+    if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
   function doHide() {
     if (hidden) return;
     hidden = true;
-    clearFallback();
+    clearTimers();
     try { root.removeAttribute("data-loading"); } catch (e) { /* noop */ }
   }
 
-  function hide() {
-    var elapsed = Date.now() - start;
-    if (elapsed >= MIN_MS) {
-      doHide();
-    } else {
-      setTimeout(doHide, MIN_MS - elapsed);
+  // Is alle initiële netwerkactiviteit tot rust gekomen? Wanneer de teller niet
+  // beschikbaar is (oud inline snippet / fout) blokkeren we niet — dan valt het
+  // terug op "verbergen zodra geschilderd", net als de oude versie.
+  function netSettled() {
+    try {
+      var n = window.__ffNet;
+      if (!n) return true;
+      if (n.p > 0) return false;
+      return (Date.now() - (n.last || n.t0 || start)) >= SETTLE_MS;
+    } catch (e) {
+      return true;
     }
   }
 
-  function show() {
-    hidden = false;
-    start = Date.now();
-    clearFallback();
-    try { root.setAttribute("data-loading", "1"); } catch (e) { /* noop */ }
-    fallbackTimer = setTimeout(doHide, FALLBACK_MS);
-  }
-
-  // Veiligheidsklep meteen aanzetten: ook als hide() nooit wordt aangeroepen
-  // (bijv. een script-fout op de pagina) verdwijnt de overlay vanzelf.
-  fallbackTimer = setTimeout(doHide, FALLBACK_MS);
-
-  // Opt-in API voor pagina's die de spinner langer willen tonen.
-  window.FFLoader = { show: show, hide: hide };
-
-  // Verberg zodra de browser de echte lay-out minstens één keer heeft
-  // geschilderd. Dubbele rAF garandeert dat de paint achter de rug is.
-  function whenPainted() {
+  function afterPaint(fn) {
     requestAnimationFrame(function () {
-      requestAnimationFrame(hide);
+      requestAnimationFrame(fn);
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", whenPainted, { once: true });
-  } else {
-    whenPainted();
+  // Alles klaar: respecteer de flicker-floor, schilder de echte inhoud, verberg.
+  function ready() {
+    if (hidden || releasing) return;
+    releasing = true;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    var elapsed = Date.now() - start;
+    var wait = elapsed >= MIN_MS ? 0 : (MIN_MS - elapsed);
+    setTimeout(function () { afterPaint(doHide); }, wait);
   }
+
+  function tick() {
+    if (hidden || releasing) return;
+    if (painted && netSettled()) ready();
+  }
+
+  // Begin pas met de netwerk-stilte-check zodra de eerste paint achter de rug is.
+  function beginPolling() {
+    painted = true;
+    tick();
+    if (!hidden && !releasing && !pollTimer) {
+      pollTimer = setInterval(tick, POLL_MS);
+    }
+  }
+
+  function armPaintWatch() {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", function () {
+        afterPaint(beginPolling);
+      }, { once: true });
+    } else {
+      afterPaint(beginPolling);
+    }
+  }
+
+  // Opt-in API voor pagina's die de spinner expliciet willen sturen.
+  window.FFLoader = {
+    // Opnieuw tonen (bijv. bij een client-side navigatie).
+    show: function () {
+      hidden = false;
+      painted = false;
+      releasing = false;
+      start = Date.now();
+      clearTimers();
+      try { root.setAttribute("data-loading", "1"); } catch (e) { /* noop */ }
+      fallbackTimer = setTimeout(doHide, FALLBACK_MS);
+      armPaintWatch();
+    },
+    // Alles is binnen → netjes wegfaden (respecteert flicker-floor + paint).
+    ready: ready,
+    hide: ready,
+    // Hard verbergen, ongeacht netwerk-stilte.
+    done: doHide,
+  };
+
+  // Veiligheidsklep meteen aanzetten: ook als de netwerk-stilte nooit intreedt
+  // (trage/hangende request) verdwijnt de overlay vanzelf na FALLBACK_MS.
+  fallbackTimer = setTimeout(doHide, FALLBACK_MS);
+
+  armPaintWatch();
 })();
-/* deploy-marker: globale laad-animatie live op productie */
