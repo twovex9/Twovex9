@@ -67,8 +67,9 @@ const GRID_ACCENT = ["#2563eb", "#16a34a", "#ca8a04", "#dc2626", "#7c3aed", "#db
  *  (1 persoon die verantwoordelijk is voor àlle locaties). */
 const EEN_OP_EEN_GROEP = "Eén op één / Ambulant";
 const ACHTERWACHT_GROEP = "Achterwacht";
+const OPENSTAANDE_GROEP = "Openstaande diensten";
 const PLANNING_LOCATIE_VOLGORDE = [
-  "Openstaande diensten",
+  OPENSTAANDE_GROEP,
   "Breedstraat",
   "Leonard Bramerstraat",
   "Zijperstraat",
@@ -734,11 +735,51 @@ function getColumnDates() {
   return out;
 }
 
+/** Open dienst = er is nog geen medewerker (teamlid) op de dienst ingepland. */
+function isOpenDienst(it) {
+  return !String((it && it.teamlid) || "").trim();
+}
+
+/** Bepaalt waaróm een dienst rood/aandacht is — voert de klikbare uitleg op het
+ *  "!"-icoon (user-eis 2026-06-11: "als je op het uitroepteken drukt moet je zien
+ *  wat het probleem is, niet zomaar 'open' terwijl er een medewerker ingepland zit").
+ *  Geeft een lijst {type,label,detail} terug; leeg = geen waarschuwing. */
+function getDienstWaarschuwingen(it, overlapIds) {
+  const out = [];
+  if (isOpenDienst(it)) {
+    out.push({
+      type: "open",
+      label: "Openstaande dienst",
+      detail: "Er is nog geen medewerker op deze dienst ingepland.",
+    });
+  }
+  if (overlapIds && it && overlapIds.has(it.id)) {
+    out.push({
+      type: "overlap",
+      label: "Dubbel ingeroosterd",
+      detail: "Deze medewerker staat in dezelfde periode op meer dan één dienst ingepland.",
+    });
+  }
+  if (it && it.conflict) {
+    out.push({
+      type: "aandacht",
+      label: "Gemarkeerd als aandacht",
+      detail: "Deze dienst is handmatig gemarkeerd als aandachtspunt.",
+    });
+  }
+  return out;
+}
+
 function getRowKey(it) {
   const ax = ui.rowAxis || "afdeling";
   // BS2-parity: groupering op locatie (BS2 toont locatie-namen als group-headers).
   // Fallback naar locatie als vestiging leeg is (Phase 3 import vult vestiging niet).
   if (ax === "vestiging") {
+    // Open diensten (nog geen medewerker ingepland) worden — los van hun locatie —
+    // gebundeld onder "Openstaande diensten" zodat ze direct opvallen (user-eis
+    // 2026-06-11: "open dienst → rood + onder het kopje Openstaande diensten, i.p.v.
+    // alleen een rood vakje op de locatie").
+    if (isOpenDienst(it)) return OPENSTAANDE_GROEP;
     // 1-op-1/ambulant en achterwacht krijgen — los van hun woonlocatie — een eigen
     // kop-groep, zodat ze gebundeld onder één kopje verschijnen (user-eis 2026-06-06).
     const dt = it.diensttype || it.functie;
@@ -1471,8 +1512,9 @@ function buildShiftCardEl(it, gi, overlapIds) {
   const card = document.createElement("div");
   card.className = "planning-erm-card";
   card.dataset.id = it.id;
-  const autoOverlap = overlapIds && overlapIds.has(it.id);
-  if (it.conflict || autoOverlap) card.classList.add("planning-erm-card--conflict");
+  const warnings = getDienstWaarschuwingen(it, overlapIds);
+  const heeftWaarschuwing = warnings.length > 0;
+  if (heeftWaarschuwing) card.classList.add("planning-erm-card--conflict");
   if (ui.selectedId === it.id) card.classList.add("is-selected");
   /* Streep-kleur volgt het diensttype (zoals in screenshot per dienst).
    * Module 2 Bug #90 fix: gebruik colorForDiensttype() helper die eerst
@@ -1483,17 +1525,13 @@ function buildShiftCardEl(it, gi, overlapIds) {
   const dtNaam = firstLabel || it.diensttype || it.functie || "";
   const accent = colorForDiensttype(dtNaam) || (dtKey && DIENSTTYPE_COLORS[dtKey]) || GRID_ACCENT[gi % GRID_ACCENT.length];
   card.style.setProperty("--erv-stripe", accent);
-  const overlapTag =
-    autoOverlap && !it.conflict
-      ? '<span class="planning-erm-overlap" title="Overlap: zelfde medewerker, overlappende tijd">!</span>'
-      : "";
-  const cardTitle = it.conflict
-    ? "Handmatig gemarkeerd als aandacht"
-    : autoOverlap
-      ? "Overlap: zelfde medewerker, overlappende periode (automatisch)"
-      : "";
-  if (cardTitle) card.setAttribute("title", cardTitle);
-  else card.removeAttribute("title");
+  // Eén klikbaar "!"-icoon dat álle waarschuwingen (open/dubbel/aandacht) bundelt;
+  // de reden wordt bij klikken in een popover getoond (geen vage tooltip meer).
+  const warnTitle = warnings.map((w) => w.label).join(" · ");
+  const warnBadge = heeftWaarschuwing
+    ? `<button type="button" class="planning-erm-overlap planning-erm-warnbtn" data-a="warn" title="${escapeHtml(warnTitle)} — klik voor uitleg" aria-label="Waarom is deze dienst gemarkeerd? ${escapeHtml(warnTitle)} — klik voor uitleg">!</button>`
+    : "";
+  card.removeAttribute("title");
   /* Kaartstijl volgens screenshot:
      1) titel: diensttype OF "{Voornaam} 1 op 1" + tijd
      2) locatie met locatie-kleurbolletje
@@ -1528,7 +1566,7 @@ function buildShiftCardEl(it, gi, overlapIds) {
   card.innerHTML = `
     <div class="planning-erm-card__top">
       <strong class="planning-erm-name">${escapeHtml(dtTitle)}</strong>
-      <span class="planning-erm-when-w">${overlapTag}<span class="planning-erm-when">${formatTimeShort(it.start)} – ${formatTimeShort(it.einde)}</span></span>
+      <span class="planning-erm-when-w">${warnBadge}<span class="planning-erm-when">${formatTimeShort(it.start)} – ${formatTimeShort(it.einde)}</span></span>
     </div>
     ${locLine}
     ${clientLine}
@@ -1559,6 +1597,12 @@ function buildShiftCardEl(it, gi, overlapIds) {
   `;
   card.addEventListener("click", (ev) => {
     const t = ev.target;
+    const warnBtn = t.closest && t.closest(".planning-erm-warnbtn");
+    if (warnBtn) {
+      ev.stopPropagation();
+      showDienstReasonPopover(warnBtn, getDienstWaarschuwingen(it, overlapIds));
+      return;
+    }
     if (t.closest(".planning-erm-hbtn")) {
       const act = t.closest("[data-a]")?.getAttribute("data-a");
       if (act === "view") {
@@ -1614,6 +1658,68 @@ function buildShiftCardEl(it, gi, overlapIds) {
     else card.classList.remove("is-selected");
   });
   return card;
+}
+
+// Reden-uitleg popover voor het "!"-icoon op een dienstkaart. Eén tegelijk open.
+let __dienstReasonPop = null;
+function closeDienstReasonPopover() {
+  if (__dienstReasonPop) {
+    try { __dienstReasonPop._cleanup && __dienstReasonPop._cleanup(); } catch (e) { /* */ }
+    try { __dienstReasonPop.remove(); } catch (e) { /* */ }
+    __dienstReasonPop = null;
+  }
+}
+function showDienstReasonPopover(anchorEl, warnings) {
+  closeDienstReasonPopover();
+  if (!anchorEl || !warnings || !warnings.length) return;
+  const pop = document.createElement("div");
+  pop.className = "planning-reason-pop";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "Waarom is deze dienst gemarkeerd");
+  pop.innerHTML = `
+    <div class="planning-reason-pop-head">Waarom is deze dienst gemarkeerd?</div>
+    <ul class="planning-reason-pop-list">
+      ${warnings
+        .map(
+          (w) => `
+        <li class="planning-reason-pop-item planning-reason-pop-item--${escapeHtml(w.type)}">
+          <span class="planning-reason-pop-dot" aria-hidden="true"></span>
+          <span class="planning-reason-pop-txt">
+            <strong>${escapeHtml(w.label)}</strong>
+            <span>${escapeHtml(w.detail)}</span>
+          </span>
+        </li>`
+        )
+        .join("")}
+    </ul>`;
+  document.body.appendChild(pop);
+  // Positioneer onder het anker; val terug naar boven/links als het buiten beeld valt.
+  const r = anchorEl.getBoundingClientRect();
+  const pw = pop.offsetWidth;
+  const ph = pop.offsetHeight;
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  let left = r.left + window.scrollX;
+  const maxLeft = window.scrollX + vw - pw - 8;
+  if (left > maxLeft) left = Math.max(window.scrollX + 8, maxLeft);
+  let top = r.bottom + window.scrollY + 6;
+  if (r.bottom + ph + 10 > vh) top = Math.max(window.scrollY + 8, r.top + window.scrollY - ph - 6);
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+  const onDoc = (e) => {
+    if (pop.contains(e.target) || (anchorEl && anchorEl.contains(e.target))) return;
+    closeDienstReasonPopover();
+  };
+  const onKey = (e) => { if (e.key === "Escape") closeDienstReasonPopover(); };
+  pop._cleanup = () => {
+    document.removeEventListener("mousedown", onDoc, true);
+    document.removeEventListener("keydown", onKey, true);
+    window.removeEventListener("resize", closeDienstReasonPopover, true);
+  };
+  document.addEventListener("mousedown", onDoc, true);
+  document.addEventListener("keydown", onKey, true);
+  window.addEventListener("resize", closeDienstReasonPopover, true);
+  __dienstReasonPop = pop;
 }
 
 function copyItem(it) {
@@ -1800,8 +1906,10 @@ function renderWeekGrid() {
       const locBar = document.createElement("div");
       locBar.className = "planning-erm-locbar";
       locBar.style.gridColumn = "1 / -1";
-      locBar.setAttribute("title", `Locatie: ${g}`);
+      const isOpenGroep = g === OPENSTAANDE_GROEP;
+      locBar.setAttribute("title", isOpenGroep ? "Diensten zonder ingeplande medewerker" : `Locatie: ${g}`);
       const count = list.length;
+      if (isOpenGroep && count > 0) locBar.classList.add("planning-erm-locbar--open");
       locBar.innerHTML = `
         <div class="planning-erm-glabel-head">
           <span class="planning-wg-dot" style="background:${GRID_ACCENT[gi % GRID_ACCENT.length]}"></span>
@@ -2030,11 +2138,8 @@ function renderListTable() {
   items.forEach((item) => {
     const tr = document.createElement("tr");
     const h = durationHours(item.start, item.einde);
-    const autoO = overlapIds.has(item.id);
-    let risk = "—";
-    if (item.conflict && autoO) risk = "Aandacht + overlap";
-    else if (item.conflict) risk = "Aandacht";
-    else if (autoO) risk = "Overlap (auto)";
+    const itemWarnings = getDienstWaarschuwingen(item, overlapIds);
+    const risk = itemWarnings.length ? itemWarnings.map((w) => w.label).join(" + ") : "—";
     // Functie = HR-functie van de ingeroosterde medewerker. Geen terugval op het
     // diensttype (normalizeItem zet een lege functie op het diensttype) — bij een
     // onbekende/functie-loze medewerker tonen we "—" i.p.v. een misleidend diensttype.
