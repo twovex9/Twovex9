@@ -164,6 +164,9 @@
         ? "volledig gefactureerd"
         : "moet nog gefactureerd worden";
     }
+    var afgew = Number(sel.afgewezen || 0), afgewCnt = Number(sel.afgewezen_cnt || 0);
+    if ($("fzz-v-rejected")) $("fzz-v-rejected").textContent = formatEur(afgew);
+    if ($("fzz-c-rejected")) $("fzz-c-rejected").textContent = afgewCnt;
   }
 
   // ---- Maandgrafiek: verwacht vs binnengekomen (goedgekeurd + te beoordelen)
@@ -390,7 +393,7 @@
   }
   function closeModal() {
     var m = $("fzz-modal"); if (!m) return;
-    m.hidden = true; document.body.classList.remove("bd-modal-open");
+    m.hidden = true; m.classList.remove("fzz-modal--wide"); document.body.classList.remove("bd-modal-open");
   }
   function zzpStatusPill(verwacht, gefactureerd) {
     var v = Number(verwacht || 0), g = Number(gefactureerd || 0);
@@ -435,6 +438,68 @@
         '<table class="bd-modal-tbl"><thead><tr>'
         + '<th>ZZP\'er</th><th class="bd-td-eur">Uren</th><th class="bd-td-eur">Verwacht</th>'
         + '<th class="bd-td-eur">Gefactureerd</th><th>Status</th>'
+        + '</tr></thead><tbody>' + body + foot + '</tbody></table>';
+    });
+  }
+
+  // ---- Afgekeurde facturen: lijst + reden van afwijzing -------------------
+  // De afwijzingsreden staat in de workflow-transitie (status 'rejected' →
+  // comment), idem als de rode banner op de detailpagina. Wordt per factuur
+  // on-demand opgehaald (invoicesDB.getWorkflow is gecached).
+  var rejectSeq = 0;
+  function openRejected() {
+    var rows = getAll().filter(function (r) {
+      return r && r.status === "rejected" && !r.gearchiveerd && inSelected(r);
+    });
+    rows.sort(function (a, b) {
+      return String(b.rejectedAt || b.laatstGewijzigd || "").localeCompare(String(a.rejectedAt || a.laatstGewijzigd || ""));
+    });
+    var lbl = state.startYm === state.endYm ? ymLabel(state.startYm)
+      : (ymLabel(state.startYm) + " – " + ymLabel(state.endYm));
+    $("fzz-modal-title").textContent = "Afgekeurde facturen";
+    $("fzz-modal-sub").textContent = lbl + " — reden van afwijzing per factuur";
+    var modal = $("fzz-modal");
+    if (modal) modal.classList.add("fzz-modal--wide");
+    var mySeq = ++rejectSeq;
+    if (!rows.length) {
+      $("fzz-modal-body").innerHTML = '<p class="bd-modal-empty">Geen afgekeurde facturen in deze periode.</p>';
+      openModal();
+      return;
+    }
+    $("fzz-modal-body").innerHTML = '<p class="bd-modal-empty">Laden…</p>';
+    openModal();
+    Promise.all(rows.map(function (r) {
+      var wfP = (window.invoicesDB && window.invoicesDB.getWorkflow)
+        ? window.invoicesDB.getWorkflow(r.id) : Promise.resolve([]);
+      return wfP.then(function (wf) {
+        var last = null;
+        (wf || []).forEach(function (w) { if (w.status === "rejected") last = w; });
+        return {
+          inv: r,
+          reason: (last && last.comment) ? last.comment : "Geen reden vastgelegd.",
+          diensten: (last && last.data && last.data.diensten) ? last.data.diensten : [],
+        };
+      }).catch(function () { return { inv: r, reason: "Geen reden vastgelegd.", diensten: [] }; });
+    })).then(function (items) {
+      if (mySeq !== rejectSeq) return;  // nieuwere modal-actie → negeer
+      var totaal = 0;
+      var body = items.map(function (it) {
+        var r = it.inv; totaal += Number(r.total || 0);
+        var diensten = it.diensten.length
+          ? '<div class="fzz-rej-diensten">Betreft: ' + escHtml(it.diensten.join("; ")) + '</div>' : "";
+        return '<tr class="fzz-rej-row" data-id="' + escAttr(r.id) + '" tabindex="0" role="link" aria-label="Open factuur ' + escAttr(r.number || "") + '">'
+          + '<td class="bd-td-strong">' + escHtml(invNaam(r)) + '</td>'
+          + '<td>' + escHtml(r.number || "—") + '</td>'
+          + '<td class="bd-td-eur">' + formatEur(r.total) + '</td>'
+          + '<td>' + escHtml(formatNlDate(r.rejectedAt || r.laatstGewijzigd)) + '</td>'
+          + '<td class="fzz-rej-reason-cell"><div class="fzz-rej-reason">' + escHtml(it.reason) + '</div>' + diensten + '</td>'
+          + '</tr>';
+      }).join("");
+      var foot = '<tr class="fzz-modal-foot"><td class="bd-td-strong">Totaal (' + items.length + ')</td>'
+        + '<td></td><td class="bd-td-eur bd-td-strong">' + formatEur(totaal) + '</td><td></td><td></td></tr>';
+      $("fzz-modal-body").innerHTML =
+        '<table class="bd-modal-tbl fzz-rej-tbl"><thead><tr>'
+        + '<th>Medewerker</th><th>Factuurnr.</th><th class="bd-td-eur">Bedrag</th><th>Afgekeurd op</th><th>Reden van afwijzing</th>'
         + '</tr></thead><tbody>' + body + foot + '</tbody></table>';
     });
   }
@@ -530,7 +595,7 @@
 
     // Kaart-acties
     var cVerwacht = $("fzz-card-verwacht"), cRest = $("fzz-card-rest"),
-      cTodo = $("fzz-card-todo"), cOk = $("fzz-card-ok");
+      cTodo = $("fzz-card-todo"), cOk = $("fzz-card-ok"), cRejected = $("fzz-card-rejected");
     function cardKey(el, fn) {
       if (!el) return;
       el.addEventListener("click", fn);
@@ -540,6 +605,21 @@
     cardKey(cRest, function () { openDrill(true); });
     cardKey(cTodo, function () { scrollToTable(); });
     cardKey(cOk, function () { openDrill(false); });
+    cardKey(cRejected, function () { openRejected(); });
+
+    // Klik/Enter op een rij in de afkeur-modal → open de factuurdetail
+    var modalBody = $("fzz-modal-body");
+    if (modalBody) {
+      modalBody.addEventListener("click", function (e) {
+        var row = e.target && e.target.closest && e.target.closest(".fzz-rej-row");
+        if (row) openDetail(row.getAttribute("data-id"));
+      });
+      modalBody.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var row = e.target && e.target.closest && e.target.closest(".fzz-rej-row");
+        if (row) { e.preventDefault(); openDetail(row.getAttribute("data-id")); }
+      });
+    }
 
     // Modal sluiten
     if ($("fzz-modal-x")) $("fzz-modal-x").addEventListener("click", closeModal);
