@@ -14459,7 +14459,10 @@ button.planning-erm-new {
    gedeelde data-sidebar-stand). De rol-/read-only-logica blijft volledig ongewijzigd:
    het paneel houdt z'n .planning-filters-card(-erm)-klassen, dus
    `.planning-readonly .planning-filters-card { display:none }` werkt door. */
-html[data-sidebar="expanded"] .content--planning-erm { padding-left: 0; }
+/* Full-bleed: de planningskaart staat niet meer als los kader maar direct op de pagina
+   (rand/radius/schaduw weg) en sluit gat-loos aan op de filter-zijbalk. */
+.planning-layout--erm { gap: 0; }
+.planning-main-card--v3.planning-main--erm { border: 0; border-radius: 0; box-shadow: none; }
 .planning-filters-card.planning-filters-sidebar {
   grid-area: auto;
   grid-column: 1;
@@ -15025,7 +15028,11 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
 .content--planning-erm {
   overflow: hidden;
   min-height: 0;
-  padding-bottom: 16px;
+  /* Full-bleed (gebruikerseis 2026-06-11): de planning vult de volledige breedte van
+     boven tot onder — geen content-padding meer, zodat de zijbalk tot de topbar reikt
+     en het rooster tot de randen. Het "kader" rond de planningskaart vervalt hieronder. */
+  padding: 0;
+  border-radius: 0;
 }
 .content--planning-erm > .planning-layout--erm {
   flex: 1 1 auto;
