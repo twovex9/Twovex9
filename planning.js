@@ -795,6 +795,21 @@ function getRowKey(it) {
   return (it.afdeling || it.diensttype || "Overig").trim() || "Overig";
 }
 
+/** Effectieve locatie-groep van een dienst — identiek aan de rooster-groepering in
+ *  getRowKey (vestiging-as): open diensten, 1-op-1/ambulant en achterwacht krijgen
+ *  hun eigen kop-groep, de rest valt op (vestiging || locatie). Het toolbar-
+ *  locatiefilter matcht hierop, zodat elke geselecteerde locatie exact de rijen toont
+ *  die ook onder die kop in het rooster verschijnen. (Spraakmemo eigenaar 2026-06-11:
+ *  het filter matchte alleen op `vestiging` — vrijwel altijd leeg bij de BS2-import —
+ *  waardoor één locatie kiezen NIETS toonde; de locatienaam zit in `locatie`.) */
+function effectiveLocatie(row) {
+  if (isOpenDienst(row)) return OPENSTAANDE_GROEP;
+  const dt = row.diensttype || row.functie;
+  if (isAchterwachtDienst(dt)) return ACHTERWACHT_GROEP;
+  if (isEenOpEenDienst(dt)) return EEN_OP_EEN_GROEP;
+  return (row.vestiging || row.locatie || "").trim() || "Onbekende locatie";
+}
+
 function makePlanningId() {
   return `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -918,10 +933,11 @@ function rowMatchesFilters(row) {
     if (!okM) return false;
   }
 
-  /* Toolbar-locatiefilter (single select), gelijk aan vestigingsnaam in HR. */
+  /* Toolbar-locatiefilter (single select). Matcht op de effectieve locatie-groep
+     (vestiging || locatie + speciale groepen), consistent met de rooster-indeling —
+     niet enkel op `vestiging`, dat bij de BS2-import vrijwel altijd leeg is. */
   if (filterState.locatieToolbar) {
-    const v = String(row.vestiging || "").trim();
-    if (v !== filterState.locatieToolbar) return false;
+    if (effectiveLocatie(row) !== filterState.locatieToolbar) return false;
   }
   /* Single-select Teamlid (uit zijbalk). */
   if (filterState.teamlid) {
