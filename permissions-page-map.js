@@ -195,10 +195,11 @@
     // FF-native ZZP-proforma-facturatie (zzp_facturen) — zelfde invoices-permissie.
     "zzp-facturen.html": { action: "view", entity: "invoices" },
     "zzp-factuur-detail.html": { action: "view", entity: "invoices" },
-    // Overuren-goedkeuring → teamleider (Zorgcoördinator) + admin-tier/Finance. RPC gate't ook server-side.
+    // Overuren-goedkeuring → Zorgcoördinator + Planner (eigenaar 2026-06-11: planner mag óók beoordelen)
+    // + admin-tier (Eigenaar/Admin/Directeur)/Finance. RPC gate't ook server-side (slug 'teamleider'/'planner').
     // HR verwijderd (video-feedback eigenaar 2026-06-07): het hele Facturen-kopje hoeft niet
     // zichtbaar te zijn voor HR.
-    "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Finance"] },
+    "zzp-overuren.html": { allowedRoles: ["Eigenaar", "Admin", "Directeur", "Zorgcoördinator", "Planner", "Finance"] },
     "zzp-reconciliatie.html": { action: "view", entity: "invoices" },
     // Detacheringsbureau-portaal: het bureau-account (rol Detacheringsbureau) ziet hier
     // ALLEEN z'n eigen mensen/facturen (server-side via RPC + RLS-lockout). Reviewers
