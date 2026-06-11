@@ -355,6 +355,31 @@
       // Overige onkosten (bewerkbaar)
       renderOnkSection(body, loc.name, d.onkosten || []);
 
+      // Loondienst-medewerkers (automatisch: maandsalaris × werkgeverslasten, verdeeld over hun locaties)
+      var loon = d.loondienst || [];
+      if (loon.length) {
+        body.appendChild(el("h3", "fin-sec-h", "Loondienst-medewerkers"));
+        var tl = buildTable([{ label: "Naam" }, { label: "Functie" }, { label: "€/maand", num: true }, { label: "Mnd", num: true }, { label: "In periode", num: true }]);
+        var sumL = 0;
+        loon.forEach(function (p) {
+          sumL += Number(p.kost_periode) || 0;
+          var tr = el("tr");
+          tr.appendChild(el("td", "bd-td-strong", p.naam || "—"));
+          tr.appendChild(el("td", null, p.functie || "—"));
+          tr.appendChild(el("td", "fin-num", fmtEuro(p.maandkost)));
+          tr.appendChild(el("td", "fin-num", fmtInt(p.maanden)));
+          tr.appendChild(el("td", "fin-num fin-eur", fmtEuro(p.kost_periode)));
+          tl.tb.appendChild(tr);
+        });
+        var tfl = el("tfoot"), trfl = el("tr");
+        trfl.appendChild(el("td", "bd-td-strong", "Totaal loondienst (" + loon.length + ")"));
+        trfl.appendChild(el("td", null, "")); trfl.appendChild(el("td", null, "")); trfl.appendChild(el("td", null, ""));
+        trfl.appendChild(el("td", "fin-num fin-eur bd-td-strong", fmtEuro(sumL)));
+        tfl.appendChild(trfl); tl.tbl.appendChild(tfl);
+        body.appendChild(tl.tbl);
+        body.appendChild(el("p", "bd-mrow-note", "Loondienstkosten = bruto maandsalaris × werkgeverslasten (1,30), gelijk verdeeld over de locaties waaraan de medewerker is gekoppeld, × het aantal maanden in de periode. Indicatief."));
+      }
+
       // ZZP'ers
       body.appendChild(el("h3", "fin-sec-h", "Ingezette ZZP'ers"));
       var zz = d.zzpers || [];
