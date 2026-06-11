@@ -15014,6 +15014,16 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
   text-overflow: ellipsis;
 }
 
+/* Open dienst: lege medewerker-sleuf. Gestreepte amber-rand (zelfde open-palet als de
+   "Openstaande diensten"-groepchip) zodat het duidelijk leest als "nog in te vullen",
+   visueel onderscheiden van een gevulde (effen) medewerker-chip. Tokens hebben zowel
+   een licht- als donker-variant, dus werkt in beide thema's. */
+.planning-erm-card-person--open {
+  background: var(--ps-fff7ed);
+  border: 1px dashed var(--pt-ea580c);
+  color: var(--pt-9a3412);
+}
+
 #planning-week-grid.planning-erm--locations .planning-erm-card .planning-erm-card-loc {
   font-size: 14px;
 }
@@ -15643,6 +15653,14 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
   border-color: var(--red);
   border-left-color: var(--red);
   background: var(--red-soft);
+}
+/* Open dienst (geen medewerker) in de maandweergave — amber, gestreepte linkerrand,
+   zodat een cliënt-titel niet als gekoppelde medewerker leest. Een dubbel-ingeroosterde
+   (conflict-)chip houdt voorrang met zijn rode markering. */
+.planning-month-chip--open:not(.planning-month-chip--conflict) {
+  border-color: var(--pt-ea580c);
+  border-left: 2px dashed var(--pt-ea580c);
+  background: var(--ps-fff7ed);
 }
 .planning-month-chip-dot {
   width: 7px;
