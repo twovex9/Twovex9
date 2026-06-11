@@ -154,7 +154,7 @@
     "gebruikers.html": "Organisatie",
     // Instellingen
     "instellingen.html": "Instellingen",
-    "mijn-gegevens.html": "Instellingen",
+    "mijn-gegevens.html": "Mijn gegevens",
     "notifications.html": "Instellingen",
   };
 

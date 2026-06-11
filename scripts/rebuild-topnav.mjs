@@ -227,6 +227,7 @@ function buildNav(active) {
     standalone("mijn-proforma-facturen", "Mijn facturen", active),
     standalone("mijn-beschikbaarheid", "Mijn beschikbaarheid", active),
     standalone("mijn-uren", "Mijn uren", active),
+    standalone("mijn-gegevens", "Mijn gegevens", active),
     PLANNING,
     URENREGISTRATIE,
     HR,
@@ -350,7 +351,7 @@ const TOPIC_BY_PAGE = {
   "rol-detail.html": "Organisatie",
   "gebruikers.html": "Organisatie",
   "instellingen.html": "Instellingen",
-  "mijn-gegevens.html": "Instellingen",
+  "mijn-gegevens.html": "Mijn gegevens",
   "notifications.html": "Instellingen",
 };
 
