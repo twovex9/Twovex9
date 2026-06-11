@@ -26806,6 +26806,15 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 /* === Financiën › Locaties (winst/verlies per locatie) ===================== */
 .content--fin-dashboard { min-width: 0; }
 
+/* Financiën-kaarten erven .table-card (overflow:hidden) maar misten interne
+   padding → de vetgedrukte sectie-titels (.bd-sec-t) plakten tegen de rand en
+   werden links afgekapt. Zelfde binnenruimte als de dashboard-kaarten
+   (.bd-chart-card / .bd-bar-card) zodat alle tekst volledig zichtbaar is. */
+.fin-chart-card,
+.fin-loc-card {
+  padding: 18px 20px 20px;
+}
+
 .fin-note {
   display: flex; gap: 10px; align-items: flex-start;
   background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--blue);
