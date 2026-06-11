@@ -35,6 +35,13 @@
   };
   // "Te beoordelen" = status submitted (BS2: filter[status][0]=submitted).
   var TODO = ["submitted"];
+  // De resultaatkaarten fungeren als filter-tabs op de tabel: per kaart tonen
+  // we alleen de bijbehorende factuurstatussen. "Nog te verwachten"/"Verwacht"
+  // zijn planning-gebaseerd (per ZZP'er) en blijven drill-down-modals.
+  var VIEW_STATUS = {
+    todo: ["submitted"],      // Te beoordelen — wacht op beoordeling
+    approved: ["approved"],   // Goedgekeurd
+  };
   var MND = ["januari", "februari", "maart", "april", "mei", "juni", "juli",
     "augustus", "september", "oktober", "november", "december"];
   var MND_KORT = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
@@ -80,6 +87,7 @@
 
   var state = {
     search: "", showArchived: false,
+    view: "todo",                  // 'todo' (Te beoordelen) | 'approved' (Goedgekeurd)
     page: 1, pageSize: 50, sortKey: "datum", sortDir: "desc",
     mode: "maand",                 // 'maand' | 'periode'
     startYm: null, endYm: null,    // huidige selectie (werk-maand-range)
@@ -104,7 +112,8 @@
   }
 
   function filtered() {
-    var rows = getAll().filter(function (r) { return r && TODO.indexOf(r.status) >= 0; });
+    var statuses = VIEW_STATUS[state.view] || VIEW_STATUS.todo;
+    var rows = getAll().filter(function (r) { return r && statuses.indexOf(r.status) >= 0; });
     rows = rows.filter(function (r) { return state.showArchived ? r.gearchiveerd : !r.gearchiveerd; });
     rows = rows.filter(inSelected);
     if (state.search) {
@@ -252,8 +261,9 @@
     var start = (state.page - 1) * ps;
     var pageRows = rows.slice(start, start + ps);
     var tb = $("fact-tb-tbody");
+    var viewLbl = state.view === "approved" ? "goedgekeurde facturen" : "facturen te beoordelen";
     if (!pageRows.length) {
-      tb.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen facturen te beoordelen in deze periode</td></tr>';
+      tb.innerHTML = '<tr><td colspan="7" class="incident-empty">Geen ' + viewLbl + ' in deze periode</td></tr>';
     } else {
       tb.innerHTML = pageRows.map(function (r) {
         return '<tr class="fact-tb-row" data-id="' + escAttr(r.id) + '" tabindex="0" role="link">'
@@ -278,7 +288,8 @@
     if (hint) {
       var lbl = state.startYm === state.endYm ? ymLabel(state.startYm)
         : (ymLabel(state.startYm) + " – " + ymLabel(state.endYm));
-      hint.textContent = state.startYm ? ("Te beoordelen in " + lbl) : "";
+      var hintPrefix = state.view === "approved" ? "Goedgekeurd in " : "Te beoordelen in ";
+      hint.textContent = state.startYm ? (hintPrefix + lbl) : "";
     }
     applyColumnVisibility();
   }
@@ -366,6 +377,28 @@
       renderOverview(data.selected);
       renderChart(state.months);
     }).catch(function () { if (mySeq === loadSeq) state.loading = false; });
+  }
+
+  // ---- Tabelweergave (kaart-filter) --------------------------------------
+  function syncCardSelection() {
+    var cTodo = $("fzz-card-todo"), cOk = $("fzz-card-ok");
+    if (cTodo) {
+      var aTodo = state.view === "todo";
+      cTodo.classList.toggle("fzz-card--selected", aTodo);
+      cTodo.setAttribute("aria-pressed", aTodo ? "true" : "false");
+    }
+    if (cOk) {
+      var aOk = state.view === "approved";
+      cOk.classList.toggle("fzz-card--selected", aOk);
+      cOk.setAttribute("aria-pressed", aOk ? "true" : "false");
+    }
+  }
+  function setView(view) {
+    state.view = (view === "approved") ? "approved" : "todo";
+    state.page = 1;
+    syncCardSelection();
+    render();
+    scrollToTable();
   }
 
   function selectMonth(ym) {
@@ -536,10 +569,12 @@
       el.addEventListener("click", fn);
       el.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(); } });
     }
+    // Verwacht/Nog te verwachten = planning-gebaseerd (per ZZP'er) → drill-modal.
     cardKey(cVerwacht, function () { openDrill(false); });
     cardKey(cRest, function () { openDrill(true); });
-    cardKey(cTodo, function () { scrollToTable(); });
-    cardKey(cOk, function () { openDrill(false); });
+    // Te beoordelen/Goedgekeurd = factuurstatus → filter de tabel als tab.
+    cardKey(cTodo, function () { setView("todo"); });
+    cardKey(cOk, function () { setView("approved"); });
 
     // Modal sluiten
     if ($("fzz-modal-x")) $("fzz-modal-x").addEventListener("click", closeModal);
@@ -594,6 +629,7 @@
     buildColumnsPanel();
     render();
     wire();
+    syncCardSelection();
     if (window.facturenZzpDB && window.facturenZzpDB.ready) {
       window.facturenZzpDB.ready.then(function () {
         applyInitial(window.facturenZzpDB.getData());
