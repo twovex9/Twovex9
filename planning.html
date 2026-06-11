@@ -3,6 +3,8 @@
 <head>
   <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
   <script>(function(){try{var t=localStorage.getItem('besa-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <script>/*ff-loading*/(function(){try{var d=document.documentElement;d.setAttribute('data-loading','1');setTimeout(function(){d.removeAttribute('data-loading');},10000);}catch(e){}})();</script>
+  <script src="besa-page-loader.js?v=918f1ad" defer></script>
   <script>/*planning-top-collapse-preset*/(function(){try{var uid='anon',raw=localStorage.getItem('sb-besa-auth');if(raw){var j=JSON.parse(raw);uid=(j&&j.user&&j.user.id)||(j&&j.currentSession&&j.currentSession.user&&j.currentSession.user.id)||'anon';}var c=localStorage.getItem('besa-planning-top-collapsed:'+uid)==='1';document.documentElement.setAttribute('data-planning-top',c?'collapsed':'expanded');}catch(e){}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
   <script src="besa-calendar.js?v=918f1ad" defer></script>
