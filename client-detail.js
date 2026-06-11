@@ -3629,6 +3629,45 @@
   });
 
   setTab("d");
+
+  // --- Betalingen-tab rol-gate (financiële info; fail-closed) ----------------
+  // Een medewerker (en elke andere niet-financiële rol) mag in het cliëntdossier
+  // geen betalings-/factuurgegevens zien. Alleen admin-tier (admin/eigenaar/
+  // directeur) of Finance/Cliëntbeheer. Identieke audience als de Tarief-kolom in
+  // Beschikkingen. Verberg de tab-knop direct (synchroon) zodat er geen flits is
+  // vóór besaPermissionsReady beslist; daarna definitief tonen of verwijderen.
+  (function gateBetalingenTab() {
+    var tabBtn0 = document.getElementById("cd-tab-p");
+    if (tabBtn0) { tabBtn0.style.display = "none"; }
+    var ready = (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function")
+      ? window.besaPermissionsReady
+      : Promise.resolve();
+    ready.then(function () {
+      return !!(
+        (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) ||
+        (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function" &&
+          window.besaPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
+      );
+    }).catch(function () {
+      return false; // fail-closed: bij twijfel verbergen
+    }).then(function (mag) {
+      var tabBtn = document.getElementById("cd-tab-p");
+      if (mag) {
+        if (tabBtn) { tabBtn.style.display = ""; }
+        return;
+      }
+      // Niet toegestaan → tab-knop én paneel volledig uit de DOM verwijderen.
+      if (tabBtn) tabBtn.remove();
+      var pan = document.getElementById("cd-pan-p");
+      if (pan) pan.remove();
+      pans.p = null;
+      panOrder = panOrder.replace("p", ""); // ook uit pijltjes-navigatie halen
+      // Stond de Betalingen-tab actief (of geen enkel paneel meer)? → Details.
+      var actiefPan = document.querySelector(".client-detail-pan.is-active");
+      if (!actiefPan) setTab("d");
+    });
+  })();
+
   document.querySelectorAll(".client-detail-tab").forEach(function (btn) {
     btn.addEventListener("click", function () {
       setTab(btn.getAttribute("data-cd-panel") || "d");
