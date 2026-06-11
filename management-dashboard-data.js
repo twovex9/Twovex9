@@ -12,6 +12,8 @@
 
   var _data = null;
   var _bestuur = null;
+  var _locaties = null;   // financien_locaties_dashboard-aggregaat (per-locatie sectie)
+  var _open = null;       // planning_open_diensten_per_locatie-aggregaat
   var readyPromise = null;
 
   function reportSilent(action, err) {
@@ -39,6 +41,16 @@
         var bk = await global.besaSupabase.rpc("hr_bestuur_kpis");
         if (!bk.error) _bestuur = (bk.data && bk.data[0]) || null;
       } catch (e) { /* bestuurs-KPI's optioneel */ }
+      // Per-locatie financiën + open diensten (gegate Eigenaar/Directeur/Finance). Optioneel:
+      // bij een fout/geen-toegang blijft de per-locatie sectie gewoon verborgen.
+      try {
+        var fl = await global.besaSupabase.rpc("financien_locaties_dashboard", { p_start: null, p_end: null });
+        _locaties = (!fl.error && fl.data && !fl.data.unauthorized) ? fl.data : null;
+      } catch (e) { /* per-locatie optioneel */ }
+      try {
+        var od = await global.besaSupabase.rpc("planning_open_diensten_per_locatie", { p_locatie: null, p_dagen: 7 });
+        _open = (!od.error && od.data && !od.data.unauthorized) ? od.data : null;
+      } catch (e) { /* open diensten optioneel */ }
       try {
         global.dispatchEvent(new CustomEvent("besa:management-dashboard-updated", { detail: { source: "load" } }));
       } catch (e) { /* */ }
@@ -59,6 +71,8 @@
     load: load,
     getData: function () { return _data; },
     getBestuurKpis: function () { return _bestuur; },
+    getLocaties: function () { return _locaties; },
+    getOpenDiensten: function () { return _open; },
     refresh: function () { return load(null); },
   };
 
