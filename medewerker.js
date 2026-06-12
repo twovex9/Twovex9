@@ -1103,10 +1103,24 @@ function renderEmployeeWarnings(empId) {
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function rowHtml(item) {
+    // "Oplossen →"-knop met de bestemming (Documenten- of Opleiding-tab) + de
+    // uitleg meegegeven via data-attributen, zodat de klik-handler ze terugleest.
+    var fix = (window.besaOplossen && window.besaOplossen.medewerkerFix)
+      ? window.besaOplossen.medewerkerFix(item) : null;
+    var btn = fix
+      ? window.besaOplossen.triggerHtml({
+          "data-fix-tab": fix.tab,
+          "data-fix-knop": fix.knop,
+          "data-fix-uitleg": fix.uitleg,
+        })
+      : "";
     return '<li class="emp-warnings-item">'
+      + '<div class="emp-warnings-item-main">'
       + '<div class="emp-warnings-item-title">' + escHtml(item.naam || item.label) + '</div>'
       + '<div class="emp-warnings-item-sub">' + escHtml(item.label) + '</div>'
       + '<div class="emp-warnings-item-reden">' + escHtml(item.reden) + '</div>'
+      + '</div>'
+      + btn
       + '</li>';
   }
   function paint(result) {
@@ -1125,6 +1139,30 @@ function renderEmployeeWarnings(empId) {
     if (errGroup) errGroup.hidden = errors.length === 0;
     if (warnGroup) warnGroup.hidden = warnings.length === 0;
     section.hidden = errors.length === 0 && warnings.length === 0;
+  }
+  // Eénmalig: klik op "Oplossen →" opent de uitleg-popover; de spring-knop
+  // schakelt naar de juiste medewerker-tab (Documenten/Opleiding) via de
+  // bestaande tab-knop en scrollt het paneel in beeld.
+  if (section && !section.__oplosBound) {
+    section.__oplosBound = true;
+    section.addEventListener("click", function (ev) {
+      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
+      if (!btn || !window.besaOplossen) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
+      var tab = btn.getAttribute("data-fix-tab") || "documenten";
+      window.besaOplossen.openPopover(btn, {
+        uitleg: btn.getAttribute("data-fix-uitleg") || "",
+        knopLabel: btn.getAttribute("data-fix-knop") || "Ga naar Documenten",
+        onGaNaar: function () {
+          var tb = document.querySelector('.emp-tab[data-tab="' + tab + '"]');
+          if (tb) tb.click();
+          var panel = document.querySelector('.emp-tab-panel[data-panel="' + tab + '"]');
+          if (panel) { try { panel.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* */ } }
+        },
+      });
+    });
   }
   // Eerst sync render uit cache/snelle data
   try { paint(window.medewerkerWarnings.computeForIdSync(empId)); } catch (e) { /* */ }

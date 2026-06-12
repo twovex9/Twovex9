@@ -1985,7 +1985,7 @@ function buildShiftCardEl(it, gi, overlapIds) {
       if (__dienstReasonPop && __dienstReasonPop._anchor === warnBtn) {
         closeDienstReasonPopover();
       } else {
-        showDienstReasonPopover(warnBtn, getDienstWaarschuwingen(it, overlapIds));
+        showDienstReasonPopover(warnBtn, getDienstWaarschuwingen(it, overlapIds), it);
       }
       return;
     }
@@ -2066,13 +2066,26 @@ function closeDienstReasonPopover() {
     __dienstReasonPop = null;
   }
 }
-function showDienstReasonPopover(anchorEl, warnings) {
+// Bepaalt de spring-knop onder de reden-popover: welk label + welke actie lost
+// deze dienst op. Open dienst → medewerker toewijzen; overlap/aandacht → dienst
+// aanpassen. Alle paden openen het dienst-paneel (waar je toewijst/aanpast).
+function dienstOplosActie(warnings) {
+  const types = (warnings || []).map((w) => w.type);
+  if (types.indexOf("open") !== -1) return { label: "Medewerker toewijzen" };
+  if (types.indexOf("overlap") !== -1) return { label: "Dienst aanpassen" };
+  return { label: "Dienst bekijken" };
+}
+function showDienstReasonPopover(anchorEl, warnings, it) {
   closeDienstReasonPopover();
   if (!anchorEl || !warnings || !warnings.length) return;
   const pop = document.createElement("div");
   pop.className = "planning-reason-pop";
   pop.setAttribute("role", "dialog");
   pop.setAttribute("aria-label", "Waarom is deze dienst gemarkeerd");
+  const oplos = dienstOplosActie(warnings);
+  const oplosBtn = it
+    ? `<button type="button" class="btn-primary planning-reason-pop-go" data-a="oplos">${escapeHtml(oplos.label)} →</button>`
+    : "";
   pop.innerHTML = `
     <div class="planning-reason-pop-head">Waarom is deze dienst gemarkeerd?</div>
     <ul class="planning-reason-pop-list">
@@ -2088,8 +2101,20 @@ function showDienstReasonPopover(anchorEl, warnings) {
         </li>`
         )
         .join("")}
-    </ul>`;
+    </ul>
+    ${oplosBtn}`;
   document.body.appendChild(pop);
+  if (it) {
+    const goBtn = pop.querySelector(".planning-reason-pop-go");
+    if (goBtn) {
+      goBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDienstReasonPopover();
+        try { openDienstPanel(it.id); } catch (err) { /* */ }
+      });
+    }
+  }
   // Positioneer onder het anker; val terug naar boven/links als het buiten beeld valt.
   // De interface draait op `html { zoom: 1.1 }`. getBoundingClientRect() geeft VISUELE
   // (gezoomde) coördinaten, terwijl style.left/top CSS-layout-lengtes zijn die bij het
