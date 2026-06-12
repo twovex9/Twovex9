@@ -913,33 +913,14 @@ body.page-medewerker-detail .content--emp-detail {
   gap: 3px;
   min-width: 0;
   flex: 1;
-  /* Horizontaal scrollen i.p.v. items verbergen: de onderwerpen blijven ALTIJD
-     in dezelfde volgorde staan en verdwijnen nooit. De dropdowns staan op
-     position:fixed (zie .top-dropdown) zodat ze niet door deze scroll-container
-     worden afgekapt. */
+  /* NIET scrollen: onderwerpen die niet passen schuift top-nav-overflow.js in
+     het "meer"-menu (pijltje rechts in .top-nav-track). overflow:hidden klipt
+     enkel het deel dat de meting markeert als verborgen (.top-nav-hidden). De
+     dropdowns staan op position:fixed (zie .top-dropdown) en worden dus niet
+     door deze container afgekapt. */
   flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* GEEN scroll-behavior:smooth — anders animeert het herstellen van de
-     scrollpositie bij elke paginalaad (zou eruitzien als "verspringen"). */
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
+  overflow: hidden;
   padding: 0;
-}
-
-.top-nav::-webkit-scrollbar {
-  height: 6px;
-}
-.top-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-.top-nav::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
-  border-radius: var(--r-pill);
-}
-.top-nav::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
 }
 
 /* Overflow chevron */
@@ -25605,7 +25586,9 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   .topbar { position: sticky; top: 0; min-height: 52px; padding: 0 10px; gap: 8px; }
   .topbar-left { gap: 8px; min-width: 0; flex: 1 1 auto; }
   .brand-logo-img { height: 30px; width: auto; }
-  .top-nav-track { min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  /* overflow:visible zodat het "meer"-menu (absoluut, onder de track) niet
+     wordt afgekapt; .top-nav klipt zelf al zijn eigen items. */
+  .top-nav-track { min-width: 0; flex: 1 1 auto; overflow: visible; }
   .topbar-icons { gap: 2px; flex-shrink: 0; }
 
   /* Content: volle breedte, compacte padding, eigen scroll uit (pagina

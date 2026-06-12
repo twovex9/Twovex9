@@ -1,20 +1,22 @@
 /* top-nav-overflow.js — top-navigatie controller.
  *
- * Historie: dit bestand verborg vroeger "overlopende" top-nav items in een
- * "meer"-menu. Dat veroorzaakte het verspringen/verdwijnen/flikkeren van
- * onderwerpen bij navigatie (welke items werden verborgen hing af van de
- * paginabreedte én de actieve-item-breedte, en gebeurde ná de eerste paint).
- *
- * Nieuw gedrag (stabiel):
- *   - De top-nav verbergt NIETS meer. Alle onderwerpen staan altijd in dezelfde
- *     volgorde. Past niet alles op het scherm? Dan scrollt de balk horizontaal
- *     (CSS overflow-x:auto). De scrollpositie wordt bewaard in sessionStorage
- *     zodat de balk bij elke paginawissel op exact dezelfde plek blijft staan.
- *   - Dropdowns staan op position:fixed (CSS) en worden hier bij hover/focus
- *     correct gepositioneerd en binnen de viewport geklemd, zodat ze niet door
- *     de scroll-container worden afgekapt.
+ * Gedrag:
+ *   - De top-nav SCROLT NIET. Past niet elk onderwerp op het scherm (tabblad/
+ *     venster te smal), dan schuiven de onderwerpen die niet passen — vanaf
+ *     rechts — in een "meer"-menu achter een pijltje (chevron) dat ALTIJD aan
+ *     de rechterkant van de balk staat. Wordt de balk breder, dan komen er
+ *     vanzelf meer onderwerpen tevoorschijn tot ze allemaal passen; dan
+ *     verdwijnt het pijltje. Past alles → geen pijltje.
+ *   - De onderwerpen blijven altijd in dezelfde volgorde; we verbergen enkel de
+ *     rechterkant in het "meer"-menu (geen herordening → geen verspringen).
+ *   - De in-balk dropdowns (Planning/HR/Cliënten/…) staan op position:fixed en
+ *     worden hier bij hover/focus correct gepositioneerd en binnen de viewport
+ *     geklemd, zodat ze niet worden afgekapt.
  *   - De actieve top-link wordt o.b.v. de huidige pagina gemarkeerd, vóór de
- *     eerste paint (dit script laadt non-defer onderaan de body).
+ *     eerste paint (dit script laadt non-defer onderaan de body). Valt het
+ *     actieve onderwerp in het "meer"-menu, dan wordt het daar gemarkeerd.
+ *
+ * Eén gedeeld bestand → het gedrag geldt op elke pagina en voor elke rol.
  */
 (function () {
   "use strict";
@@ -22,7 +24,13 @@
   const nav = document.querySelector(".top-nav");
   if (!nav) return;
 
-  const SCROLL_KEY = "besa-topnav-scroll";
+  const overflowBtn = document.getElementById("top-nav-overflow-btn");
+  const overflowPanel = document.getElementById("top-nav-overflow-panel");
+
+  // Speling (px) bij het meten. Klein genoeg om het pijltje niet onnodig te
+  // tonen, groot genoeg om een afgekapt randje te voorkomen.
+  const FIT_TOL = 2;
+  const EDGE_TOL = 4;
 
   function normalizeFileName(pathname) {
     const cleaned = String(pathname || "").split("?")[0].split("#")[0];
@@ -34,6 +42,7 @@
   }
 
   function getTopLinkLabel(link) {
+    if (!link) return "";
     const clone = link.cloneNode(true);
     clone.querySelectorAll(".top-link-chev").forEach((c) => c.remove());
     return clone.textContent.trim();
@@ -187,11 +196,11 @@
   const FALLBACK_ROUTE = "home";
 
   function resolveTopRoute(link) {
-    const parentNavItem = link.closest(".top-nav-item");
-    const firstRealSubLink = parentNavItem?.querySelector(
-      '.top-dropdown-link[href]:not([href="#"])'
-    );
-    return firstRealSubLink?.getAttribute("href") || FALLBACK_ROUTE;
+    const parentNavItem = link && link.closest(".top-nav-item");
+    const firstRealSubLink = parentNavItem
+      ? parentNavItem.querySelector('.top-dropdown-link[href]:not([href="#"])')
+      : null;
+    return (firstRealSubLink && firstRealSubLink.getAttribute("href")) || FALLBACK_ROUTE;
   }
 
   function wireFailsafeNavigation() {
@@ -222,23 +231,6 @@
   let openItem = null;
   let closeTimer = null;
 
-  // Effectieve CSS-`zoom` van de keten boven een element (product van alle
-  // `zoom`-waarden van de voorouders). De interface draait standaard op
-  // `html { zoom: 1.1 }` (zie styles.css). Dat is cruciaal voor de positionering
-  // hieronder: getBoundingClientRect()/innerWidth geven VISUELE (gezoomde)
-  // coördinaten, maar een CSS-lengte die we via style.left/top zetten wordt bij
-  // het renderen NÓG een keer met de zoom vermenigvuldigd. Zonder correctie zou
-  // de dropdown ~10% naar rechts/onder verschuiven (oplopend hoe verder naar
-  // rechts de knop staat) i.p.v. recht onder het bovenste kopje uit te lijnen.
-  function effectiveZoom(el) {
-    let z = 1;
-    for (let n = el ? el.parentElement : null; n; n = n.parentElement) {
-      const cz = parseFloat(getComputedStyle(n).zoom);
-      if (cz && cz !== 1) z *= cz;
-    }
-    return z || 1;
-  }
-
   function positionDropdown(item) {
     const dd = item.querySelector(".top-dropdown");
     if (!dd) return;
@@ -253,12 +245,6 @@
     dd.style.maxHeight = "";
     dd.style.overflowX = "";
     dd.style.overflowY = "";
-    // VISUELE → LOKALE coördinaten. Alle metingen (r, vw/vh, dd-breedte) zitten in
-    // visuele (gezoomde) pixels en zijn onderling consistent, dus de klem-wiskunde
-    // gebeurt in visuele ruimte. Maar style.left/top zijn CSS-lengtes die bij het
-    // renderen met de zoom vermenigvuldigd worden → we delen de uiteindelijke
-    // toewijzing door de zoom zodat de dropdown precies onder het kopje landt.
-    const z = effectiveZoom(dd);
     // Horizontale klem. Gebruik de VISUELE breedte (getBoundingClientRect),
     // consistent met de trigger-positie r — zo klopt de klem ook als de pagina
     // geschaald/gezoomd wordt.
@@ -266,20 +252,19 @@
     let left = r.left;
     if (left + w > vw - margin) left = vw - margin - w;
     if (left < margin) left = margin;
-    dd.style.left = Math.round(left / z) + "px";
+    dd.style.left = Math.round(left) + "px";
     // Verticale klem: past het menu onder de knop? Zo niet → tegen de knop
     // plakken (geen brug nodig) en interne scroll, zodat het NOOIT onderaan
     // het scherm wordt afgekapt (belangrijk voor de hoge HR/Cliënten mega-menu's
-    // op korte of ingezoomde schermen). scrollHeight is een LAYOUT-maat (niet
-    // gezoomd) → × z voor de visuele hoogte waarmee we tegen `avail` vergelijken.
+    // op korte of ingezoomde schermen).
     const avail = vh - (r.bottom + gap) - margin;
-    if (dd.scrollHeight * z > avail) {
-      dd.style.top = Math.round(r.bottom / z) + "px";
-      dd.style.maxHeight = Math.round(Math.max(140, vh - r.bottom - margin) / z) + "px";
+    if (dd.scrollHeight > avail) {
+      dd.style.top = Math.round(r.bottom) + "px";
+      dd.style.maxHeight = Math.max(140, vh - r.bottom - margin) + "px";
       dd.style.overflowX = "hidden";
       dd.style.overflowY = "auto";
     } else {
-      dd.style.top = Math.round((r.bottom + gap) / z) + "px";
+      dd.style.top = Math.round(r.bottom + gap) + "px";
     }
   }
 
@@ -334,73 +319,200 @@
   }
 
   // -------------------------------------------------------------------------
-  // 4) Scrollpositie bewaren zodat de balk op dezelfde plek blijft staan.
+  // 4) Overflow "meer"-menu — schuif onderwerpen die niet passen naar rechts.
   // -------------------------------------------------------------------------
-  function restoreScroll() {
-    try {
-      const saved = parseInt(sessionStorage.getItem(SCROLL_KEY) || "0", 10);
-      if (saved > 0) nav.scrollLeft = saved;
-    } catch (e) {
-      /* sessionStorage onbeschikbaar → geen restore */
+  // Directe onderwerp-kinderen van de balk (losse links + dropdown-wraps), in
+  // hun natuurlijke volgorde. Door permissies verborgen items (display:none)
+  // tellen niet mee en komen ook niet in het "meer"-menu.
+  function topItems() {
+    return Array.from(nav.children).filter(
+      (el) =>
+        el.nodeType === 1 &&
+        (el.classList.contains("top-link") || el.classList.contains("top-nav-item"))
+    );
+  }
+
+  function isPermHidden(el) {
+    // permissions-nav-hide.js verbergt items via inline display:none.
+    return !el || el.style.display === "none";
+  }
+
+  function topLinkOf(child) {
+    return child.classList.contains("top-link") ? child : child.querySelector(".top-link");
+  }
+
+  function buildPanelItem(child) {
+    const kop = topLinkOf(child);
+    const a = document.createElement("a");
+    a.className = "top-nav-overflow-item";
+    let href = (kop && kop.getAttribute("href") ? kop.getAttribute("href") : "").trim();
+    if (!href || href === "#") href = resolveTopRoute(kop);
+    a.setAttribute("href", href);
+    a.setAttribute("data-href", href);
+    a.setAttribute("role", "menuitem");
+    a.textContent = getTopLinkLabel(kop);
+    if (kop && kop.classList.contains("is-active")) a.classList.add("is-active");
+    return a;
+  }
+
+  function openPanel() {
+    if (!overflowPanel || !overflowBtn) return;
+    overflowPanel.classList.add("is-open");
+    overflowBtn.setAttribute("aria-expanded", "true");
+  }
+  function closePanel() {
+    if (!overflowPanel || !overflowBtn) return;
+    overflowPanel.classList.remove("is-open");
+    overflowBtn.setAttribute("aria-expanded", "false");
+  }
+  function panelIsOpen() {
+    return overflowPanel && overflowPanel.classList.contains("is-open");
+  }
+
+  function recomputeOverflow() {
+    if (!overflowBtn || !overflowPanel) return;
+
+    // Reset: alles weer zichtbaar, paneel leeg, pijltje verborgen.
+    const items = topItems();
+    items.forEach((el) => el.classList.remove("top-nav-hidden"));
+    overflowPanel.innerHTML = "";
+    overflowBtn.classList.remove("is-visible");
+
+    const visible = items.filter((el) => !isPermHidden(el));
+    if (!visible.length) {
+      closePanel();
+      return;
+    }
+
+    // Past alles binnen de balk (pijltje verborgen)? Dan klaar — geen menu.
+    const last = visible[visible.length - 1];
+    let navRight = nav.getBoundingClientRect().right;
+    if (last.getBoundingClientRect().right <= navRight + FIT_TOL) {
+      closePanel();
+      return;
+    }
+
+    // Er is overloop → toon het pijltje (dat verkleint de balk) en hermeet.
+    overflowBtn.classList.add("is-visible");
+    navRight = nav.getBoundingClientRect().right;
+    const threshold = navRight - EDGE_TOL;
+
+    // Eerste onderwerp (van links) waarvan de rechterrand voorbij de grens valt;
+    // dat onderwerp en alles erna gaan naar het "meer"-menu. De voorgaande
+    // onderwerpen verschuiven niet (links uitgelijnd), dus één meting volstaat.
+    let cutoff = -1;
+    for (let i = 0; i < visible.length; i++) {
+      if (visible[i].getBoundingClientRect().right > threshold) {
+        cutoff = i;
+        break;
+      }
+    }
+    if (cutoff === -1) {
+      // Het pijltje maakte genoeg ruimte vrij → toch niets te verbergen.
+      overflowBtn.classList.remove("is-visible");
+      closePanel();
+      return;
+    }
+    if (cutoff === 0) cutoff = 1; // houd minstens één onderwerp in de balk
+
+    for (let i = cutoff; i < visible.length; i++) {
+      visible[i].classList.add("top-nav-hidden");
+      overflowPanel.appendChild(buildPanelItem(visible[i]));
+    }
+
+    if (!overflowPanel.children.length) {
+      overflowBtn.classList.remove("is-visible");
+      closePanel();
     }
   }
 
-  let saveScheduled = false;
-  function saveScrollSoon() {
-    if (saveScheduled) return;
-    saveScheduled = true;
-    requestAnimationFrame(() => {
-      saveScheduled = false;
-      try {
-        sessionStorage.setItem(SCROLL_KEY, String(Math.round(nav.scrollLeft)));
-      } catch (e) {
-        /* negeren */
-      }
-    });
-  }
+  function wireOverflowMenu() {
+    if (!overflowBtn || !overflowPanel) return;
 
-  // Verticaal muiswiel boven de balk → horizontaal scrollen (alleen als nodig).
-  function wireWheelScroll() {
-    nav.addEventListener(
-      "wheel",
-      (e) => {
-        if (nav.scrollWidth <= nav.clientWidth) return;
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        const atStart = nav.scrollLeft <= 0;
-        const atEnd = nav.scrollLeft >= nav.scrollWidth - nav.clientWidth - 1;
-        // Aan de rand: blokkeer niet, laat de pagina gewoon verticaal scrollen.
-        if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
-        nav.scrollLeft += e.deltaY;
-        e.preventDefault();
-      },
-      { passive: false }
-    );
+    // Klik op het pijltje → open/sluit. Kliks die uit het paneel zelf komen
+    // (een onderwerp) niet als toggle behandelen.
+    overflowBtn.addEventListener("click", (e) => {
+      if (e.target.closest(".top-nav-overflow-item")) return;
+      e.preventDefault();
+      if (panelIsOpen()) closePanel();
+      else openPanel();
+    });
+
+    // Navigatie vanuit het paneel zelf afhandelen (het paneel zit in de knop;
+    // zo voorkomen we toggle-conflicten en nested-anchor-eigenaardigheden).
+    overflowPanel.addEventListener("click", (e) => {
+      const item = e.target.closest(".top-nav-overflow-item");
+      if (!item) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const href = item.getAttribute("data-href") || item.getAttribute("href");
+      if (href) window.location.href = href;
+    });
+
+    // Buiten klikken / Escape → sluiten.
+    document.addEventListener("click", (e) => {
+      if (!overflowBtn.contains(e.target)) closePanel();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePanel();
+    });
   }
 
   // -------------------------------------------------------------------------
   // Publieke hook: permissions-nav-hide.js roept dit aan na het verbergen van
-  // rol-beperkte items, zodat actieve-markering + dropdownpositie kloppen.
+  // rol-beperkte items, zodat actieve-markering + overflow + dropdownpositie
+  // kloppen.
   // -------------------------------------------------------------------------
   window.recomputeTopNavOverflow = function () {
     syncTopNavActiveState();
+    recomputeOverflow();
     if (openItem) positionDropdown(openItem);
   };
 
+  let overflowScheduled = false;
+  function scheduleOverflow() {
+    if (overflowScheduled) return;
+    overflowScheduled = true;
+    requestAnimationFrame(() => {
+      overflowScheduled = false;
+      recomputeOverflow();
+    });
+  }
+
   // --- init ---
-  restoreScroll();
-  // Nogmaals ná de eerste layout/fontlading: bij init kan de nav nog niet
-  // scrollbaar zijn (breedte nog niet definitief), waardoor de browser de
-  // herstelde scrollLeft naar 0 zou klemmen.
-  requestAnimationFrame(restoreScroll);
   syncTopNavActiveState();
   setupDropdowns();
   wireFailsafeNavigation();
-  wireWheelScroll();
+  wireOverflowMenu();
+  recomputeOverflow();
+  // Nogmaals ná de eerste layout/fontlading: de definitieve breedtes (en dus de
+  // overloop) staan pas vast als de fonts geladen zijn.
+  requestAnimationFrame(recomputeOverflow);
+  window.addEventListener("load", scheduleOverflow);
+  try {
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === "function") {
+      document.fonts.ready.then(scheduleOverflow);
+    }
+  } catch (e) {
+    /* fonts-API onbeschikbaar → init-metingen volstaan */
+  }
 
-  nav.addEventListener("scroll", () => {
-    saveScrollSoon();
+  window.addEventListener("resize", () => {
     scheduleReposition();
+    scheduleOverflow();
   });
   window.addEventListener("scroll", scheduleReposition, true);
-  window.addEventListener("resize", scheduleReposition);
+
+  // De balk kan ook breder/smaller worden zonder window-resize (sidebar in-/
+  // uitklappen, layout-verschuivingen) → herbereken bij elke maatverandering.
+  try {
+    if (typeof ResizeObserver === "function") {
+      const ro = new ResizeObserver(() => scheduleOverflow());
+      ro.observe(nav);
+      const track = nav.closest(".top-nav-track");
+      if (track) ro.observe(track);
+    }
+  } catch (e) {
+    /* ResizeObserver onbeschikbaar → resize/load-metingen volstaan */
+  }
 })();
