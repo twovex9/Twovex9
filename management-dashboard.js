@@ -134,12 +134,20 @@
   }
 
   // ─── Metric-kaart helper ─────────────────────────────────────────────────
-  function metricCard(label, value, sub, accent) {
+  // btnHtml (optioneel) wordt onderaan de kaart geïnjecteerd (bv. een
+  // "Oplossen →"-knop bij rode/oranje accenten). Default "" → bestaande
+  // aanroepen blijven ongewijzigd werken.
+  function metricCard(label, value, sub, accent, btnHtml) {
     return '<div class="md-metric' + (accent ? " md-metric--" + accent : "") + '">'
       + '<span class="md-metric-lbl">' + escHtml(label) + "</span>"
       + '<span class="md-metric-val">' + value + "</span>"
       + (sub ? '<span class="md-metric-sub">' + sub + "</span>" : "")
+      + (btnHtml || "")
       + "</div>";
+  }
+  // navBtn-shortcut met guard; geeft "" als besa-oplossen ontbreekt.
+  function oplosBtn(url, knop, uitleg) {
+    return window.besaOplossen ? window.besaOplossen.navBtn(url, knop, uitleg) : "";
   }
   function deltaHtml(d) {
     var fin = d.financien || {};
@@ -159,13 +167,26 @@
     var liqAccent = liq.status === "Kritiek" ? "rood" : liq.status === "Aandacht vereist" ? "oranje" : "groen";
     var grid = $("md-fin-grid");
     if (grid) {
+      var openDeclBtn = fin.open_declaraties_aantal > 0
+        ? oplosBtn("facturen-te-beoordelen", "Naar Facturen", "Open declaraties staan nog bij de gemeente. Beoordeel en volg ze op via Facturen.")
+        : "";
+      var afgekeurdBtn = fin.afgekeurd_aantal > 0
+        ? oplosBtn("facturen-te-beoordelen", "Naar Facturen", "Afgekeurde declaraties moeten worden gecorrigeerd en opnieuw ingediend. Bekijk de reden via Facturen.")
+        : "";
+      var nogDeclBtn = num(fin.nog_te_declareren) > 0
+        ? oplosBtn("beschikkingen-dashboard", "Naar Beschikkingen-dashboard", "Geleverde zorg is nog niet gedeclareerd. Werk de achterstand bij via het Beschikkingen-dashboard.")
+        : "";
+      var liqBtn = (liqAccent === "rood" || liqAccent === "oranje")
+        ? oplosBtn("financien-locaties", "Naar Financiën", "De liquiditeit vraagt aandacht. Bekijk openstaande posten per locatie in Financiën.")
+        : "";
       grid.innerHTML = [
         metricCard("Omzet — " + monthLabel(fin.omzet_ref_ym), eur(fin.omzet_maand), deltaHtml(d)),
-        metricCard("Open declaraties", eur(fin.open_declaraties_bedrag), intl(fin.open_declaraties_aantal) + " stuks bij de gemeente", fin.open_declaraties_aantal > 0 ? "oranje" : null),
-        metricCard("Afgekeurde declaraties", intl(fin.afgekeurd_aantal), eur(fin.afgekeurd_bedrag), fin.afgekeurd_aantal > 0 ? "rood" : null),
-        metricCard("Nog te declareren", eur(fin.nog_te_declareren), "achterstand zorg → declaratie"),
-        metricCard("Liquiditeit", escHtml(liq.status || "—"), "te ontvangen " + eur(liq.te_ontvangen) + " · te betalen " + eur(liq.te_betalen), liqAccent),
+        metricCard("Open declaraties", eur(fin.open_declaraties_bedrag), intl(fin.open_declaraties_aantal) + " stuks bij de gemeente", fin.open_declaraties_aantal > 0 ? "oranje" : null, openDeclBtn),
+        metricCard("Afgekeurde declaraties", intl(fin.afgekeurd_aantal), eur(fin.afgekeurd_bedrag), fin.afgekeurd_aantal > 0 ? "rood" : null, afgekeurdBtn),
+        metricCard("Nog te declareren", eur(fin.nog_te_declareren), "achterstand zorg → declaratie", null, nogDeclBtn),
+        metricCard("Liquiditeit", escHtml(liq.status || "—"), "te ontvangen " + eur(liq.te_ontvangen) + " · te betalen " + eur(liq.te_betalen), liqAccent, liqBtn),
       ].join("");
+      if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
     }
     var note = $("md-fin-note");
     if (note) {
@@ -181,10 +202,18 @@
     var trend = hr.verzuim_trend === "stijgend" ? "▲ stijgend" : hr.verzuim_trend === "dalend" ? "▼ dalend" : "● stabiel";
     var grid = $("md-hr-grid");
     if (!grid) return;
+    var verzuimAccent = num(hr.verzuim_pct) > 8 ? "rood" : num(hr.verzuim_pct) >= 5 ? "oranje" : "groen";
+    var verzuimBtn = (verzuimAccent === "rood" || verzuimAccent === "oranje")
+      ? oplosBtn("hr-dashboard", "Naar HR-dashboard", "Het ziekteverzuim ligt boven de drempel. Bekijk de verzuimcijfers en lopende meldingen in het HR-dashboard.")
+      : "";
+    var contractAccent = hr.contract_7d > 0 ? "rood" : hr.contract_30d > 0 ? "oranje" : null;
+    var contractBtn = (contractAccent === "rood" || contractAccent === "oranje")
+      ? oplosBtn("hr", "Naar Medewerkers", "Er verlopen binnenkort contracten. Verleng of regel opvolging via Medewerkers (HR).")
+      : "";
     var cards = [
       metricCard("Actieve medewerkers", intl(hr.actief_totaal), intl(hr.loondienst) + " loondienst · " + intl(hr.zzp) + " inhuur · " + intl(hr.stage) + " stage"),
-      metricCard("Ziekteverzuim", intl(hr.verzuim_pct) + "%", trend + " · vorige maand " + intl(hr.verzuim_pct_vorige) + "%", num(hr.verzuim_pct) > 8 ? "rood" : num(hr.verzuim_pct) >= 5 ? "oranje" : "groen"),
-      metricCard("Contracten verlopen", intl(hr.contract_30d), "binnen 30 dagen · " + intl(hr.contract_7d) + " binnen 7 dagen", hr.contract_7d > 0 ? "rood" : hr.contract_30d > 0 ? "oranje" : null),
+      metricCard("Ziekteverzuim", intl(hr.verzuim_pct) + "%", trend + " · vorige maand " + intl(hr.verzuim_pct_vorige) + "%", verzuimAccent, verzuimBtn),
+      metricCard("Contracten verlopen", intl(hr.contract_30d), "binnen 30 dagen · " + intl(hr.contract_7d) + " binnen 7 dagen", contractAccent, contractBtn),
       metricCard("Verlof deze week", intl(hr.verlof_deze_week), "goedgekeurd in de lopende week"),
     ];
     // Bestuurs-KPI's (G50/G51/G54) — alleen als de gegate RPC data teruggaf.
@@ -192,14 +221,22 @@
     if (bk) {
       var dossierSub = intl(bk.salaris_dossiers_compleet) + " van " + intl(bk.salaris_dossiers_totaal) + " dossiers met salarisgegevens";
       var scoreAcc = num(bk.compliance_score) >= 90 ? "groen" : num(bk.compliance_score) >= 70 ? "oranje" : "rood";
+      var dossierAccent = bk.salaris_dossiers_compleet < bk.salaris_dossiers_totaal ? "oranje" : null;
+      var dossierBtn = dossierAccent === "oranje"
+        ? oplosBtn("compliance-dashboard", "Naar Compliance-dashboard", "Niet alle dossiers hebben volledige salarisgegevens. Vul de ontbrekende documenten aan via het Compliance-dashboard.")
+        : "";
+      var scoreBtn = (scoreAcc === "rood" || scoreAcc === "oranje")
+        ? oplosBtn("compliance-dashboard", "Naar Compliance-dashboard", "De compliance-score ligt onder de norm. Bekijk welke dossiers en documenten ontbreken in het Compliance-dashboard.")
+        : "";
       cards.push(
-        metricCard("Personeelskosten / maand (indicatief)", eur(bk.personeelskosten_maand_indicatief), dossierSub, bk.salaris_dossiers_compleet < bk.salaris_dossiers_totaal ? "oranje" : null),
+        metricCard("Personeelskosten / maand (indicatief)", eur(bk.personeelskosten_maand_indicatief), dossierSub, dossierAccent, dossierBtn),
         metricCard("ZZP-aandeel", intl(bk.zzp_pct) + "%", intl(bk.zzp) + " inhuur van " + intl(bk.actief) + " actief", num(bk.zzp_pct) >= 60 ? "oranje" : null),
         metricCard("Verloop (uit dienst)", intl(bk.verloop_pct) + "%", intl(bk.uit_dienst_aantal) + " medewerker(s) uit dienst", null),
-        metricCard("Compliance-score", intl(bk.compliance_score) + "%", "gewogen index — zie compliance-dashboard", scoreAcc)
+        metricCard("Compliance-score", intl(bk.compliance_score) + "%", "gewogen index — zie compliance-dashboard", scoreAcc, scoreBtn)
       );
     }
     grid.innerHTML = cards.join("");
+    if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
   }
 
   // ─── Domein: Planning ────────────────────────────────────────────────────
@@ -211,12 +248,21 @@
     var bar = '<div class="md-bar"><div class="md-bar-fill ' + barCls + '" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>';
     var grid = $("md-planning-grid");
     if (!grid) return;
+    var bezAccent = pct < 85 ? "rood" : pct < 95 ? "oranje" : "groen";
+    var bezBtn = (bezAccent === "rood" || bezAccent === "oranje")
+      ? oplosBtn("planning", "Naar Planning", "De bezettingsgraad is te laag. Vul de openstaande plekken in via de Planning.")
+      : "";
+    var openAccent = pl.openstaande_diensten >= 3 ? "rood" : pl.openstaande_diensten > 0 ? "oranje" : "groen";
+    var openBtn = (openAccent === "rood" || openAccent === "oranje")
+      ? oplosBtn("planning", "Naar Planning", "Er staan diensten open die vandaag niet zijn ingevuld. Wijs medewerkers toe via de Planning.")
+      : "";
     grid.innerHTML = [
-      metricCard("Bezettingsgraad vandaag", pct + "%", bar + intl(pl.ingevuld) + " van " + intl(pl.vereist) + " plekken ingevuld", pct < 85 ? "rood" : pct < 95 ? "oranje" : "groen"),
-      metricCard("Openstaande diensten", intl(pl.openstaande_diensten), "vandaag niet ingevuld", pl.openstaande_diensten >= 3 ? "rood" : pl.openstaande_diensten > 0 ? "oranje" : "groen"),
+      metricCard("Bezettingsgraad vandaag", pct + "%", bar + intl(pl.ingevuld) + " van " + intl(pl.vereist) + " plekken ingevuld", bezAccent, bezBtn),
+      metricCard("Openstaande diensten", intl(pl.openstaande_diensten), "vandaag niet ingevuld", openAccent, openBtn),
       metricCard("Oproepen uitstaand", intl(pl.oproepen_uitstaand), "wachten op bevestiging medewerker"),
       metricCard("Diensten vandaag", intl(pl.diensten_vandaag), "totaal ingepland"),
     ].join("");
+    if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
   }
 
   // ─── Domein: Incidenten & klachten ───────────────────────────────────────
@@ -237,12 +283,21 @@
     setHeadDot("md-incidenten-headdot", inc.status);
     var grid = $("md-inc-grid");
     if (grid) {
+      var opvAccent = inc.zonder_opvolging_48u >= 3 ? "rood" : inc.zonder_opvolging_48u > 0 ? "oranje" : "groen";
+      var opvBtn = (opvAccent === "rood" || opvAccent === "oranje")
+        ? oplosBtn("incidenten", "Naar Incidenten", "Er zijn incidenten zonder opvolging na 48 uur. Pak de opvolging op via Incidenten.")
+        : "";
+      var klachtAccent = inc.klachten_open >= 2 ? "rood" : inc.klachten_open > 0 ? "oranje" : "groen";
+      var klachtBtn = (klachtAccent === "rood" || klachtAccent === "oranje")
+        ? oplosBtn("incidenten", "Naar Incidenten", "Er staan klachten open. Behandel ze via Incidenten.")
+        : "";
       grid.innerHTML = [
         metricCard("Nieuwe incidenten", intl(inc.nieuw_7d), "afgelopen 7 dagen"),
-        metricCard("Zonder opvolging >48u", intl(inc.zonder_opvolging_48u), "kritieke indicator", inc.zonder_opvolging_48u >= 3 ? "rood" : inc.zonder_opvolging_48u > 0 ? "oranje" : "groen"),
-        metricCard("Klachten in behandeling", intl(inc.klachten_in_behandeling), intl(inc.klachten_open) + " open klacht(en)", inc.klachten_open >= 2 ? "rood" : inc.klachten_open > 0 ? "oranje" : "groen"),
+        metricCard("Zonder opvolging >48u", intl(inc.zonder_opvolging_48u), "kritieke indicator", opvAccent, opvBtn),
+        metricCard("Klachten in behandeling", intl(inc.klachten_in_behandeling), intl(inc.klachten_open) + " open klacht(en)", klachtAccent, klachtBtn),
         metricCard("Totaal openstaand", intl(inc.totaal_open), "alle openstaande incidenten"),
       ].join("");
+      if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
     }
     var catBox = $("md-inc-cat");
     if (catBox) {

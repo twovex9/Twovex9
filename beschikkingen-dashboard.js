@@ -204,7 +204,10 @@
     var body = openModal("Verloopt binnen 60 dagen", rows.length + (rows.length === 1 ? " beschikking" : " beschikkingen"));
     if (!body) return;
     if (!rows.length) { emptyRow(body, "Geen beschikkingen die binnen 60 dagen verlopen."); return; }
-    var t = buildTable(["Cliënt", "Beschikking", "Zorgsoort", "Einddatum", "Resteert"]);
+    var hasOplos = !!window.besaOplossen;
+    var t = buildTable(hasOplos
+      ? ["Cliënt", "Beschikking", "Zorgsoort", "Einddatum", "Resteert", ""]
+      : ["Cliënt", "Beschikking", "Zorgsoort", "Einddatum", "Resteert"]);
     rows.forEach(function (r) {
       var tr = el("tr");
       tr.appendChild(el("td", "bd-td-strong", r.client || "—"));
@@ -214,9 +217,16 @@
       var d = Number(r.dagen);
       var td = el("td"); var pill = el("span", "bd-pill " + (d <= 14 ? "bd-pill--red" : "bd-pill--orange"), d + (d === 1 ? " dag" : " dagen"));
       td.appendChild(pill); tr.appendChild(td);
+      if (hasOplos) {
+        var actTd = el("td", "bd-td-act");
+        var url = r.id ? "beschikking-detail?id=" + encodeURIComponent(r.id) : "beschikkingen";
+        actTd.innerHTML = window.besaOplossen.navBtn(url, "Naar beschikking", "Verleng of werk de aflopende beschikking bij.");
+        tr.appendChild(actTd);
+      }
       t.tb.appendChild(tr);
     });
     body.appendChild(t.tbl);
+    if (window.besaOplossen) window.besaOplossen.bindSignals(body);
   }
 
   function showPendingReqModal() {
@@ -288,7 +298,12 @@
         window.besaDashboardDB.detail(it.ym, kind).then(function (det) {
           clear(panel);
           if (!det || !det.length) { panel.appendChild(el("p", "bd-modal-empty", "Geen details.")); return; }
-          var t = buildTable(kind === "to_declare" ? ["Cliënt", "Beschikking", "Geschat bedrag"] : ["Cliënt", "Beschikking", "Factuur", "Bedrag"]);
+          var hasOplos = !!window.besaOplossen;
+          var heads = kind === "to_declare"
+            ? ["Cliënt", "Beschikking", "Geschat bedrag"]
+            : ["Cliënt", "Beschikking", "Factuur", "Bedrag"];
+          if (hasOplos) heads = heads.concat([""]);
+          var t = buildTable(heads);
           det.forEach(function (d) {
             var tr = el("tr");
             tr.appendChild(el("td", "bd-td-strong", d.client || "—"));
@@ -299,9 +314,28 @@
               tr.appendChild(el("td", null, d.factuurnummer || "—"));
               tr.appendChild(el("td", "bd-td-eur", fmtEuro(d.bedrag)));
             }
+            if (hasOplos) {
+              var actTd = el("td", "bd-td-act");
+              // to_declare: d.id is de beschikking-id → naar de beschikking om te
+              // declareren. pending: d.id is de factuur-id (geen beschikking-id),
+              // dus stuur naar de declaratie-/facturenflow.
+              var url, knop, uitleg;
+              if (kind === "to_declare") {
+                url = d.id ? "beschikking-detail?id=" + encodeURIComponent(d.id) : "beschikkingen";
+                knop = "Naar beschikking";
+                uitleg = "Maak de declaratie voor deze beschikking aan.";
+              } else {
+                url = "facturen-te-beoordelen";
+                knop = "Naar facturen";
+                uitleg = "Volg de declaratie op in de facturen-flow.";
+              }
+              actTd.innerHTML = window.besaOplossen.navBtn(url, knop, uitleg);
+              tr.appendChild(actTd);
+            }
             t.tb.appendChild(tr);
           });
           panel.appendChild(t.tbl);
+          if (window.besaOplossen) window.besaOplossen.bindSignals(panel);
           if (kind === "to_declare") {
             panel.appendChild(el("p", "bd-mrow-note", "Bedrag is een schatting op basis van het gemiddelde maandbedrag uit de eigen factuurhistorie van de beschikking."));
           }

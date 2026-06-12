@@ -191,6 +191,7 @@
       $("mob-hr-signaleringen-hoog").textContent = fmtInt(r.hoge_signaleringen) + " met hoge prioriteit";
       $("mob-hr-checkins").textContent = fmtInt(r.open_check_afwijkingen);
     } catch (err) { reportErr("HR-controle", err); }
+    wireHrSignaleringenOplossen();
     // Check-in-afwijkingen lijst
     try {
       if (global.kmCheckinDB && global.kmCheckinDB.ready) await global.kmCheckinDB.ready;
@@ -206,6 +207,29 @@
         }).join("");
       }
     } catch (err) { reportErr("Check-ins", err); }
+  }
+
+  // In-page "Oplossen →" op de plain-div KPI 'Open AI-signaleringen' → opent de
+  // signaleringen-tab. Eénmalig: injecteert de trigger-knop in de KPI-kaart en
+  // bindt een delegated click-handler die de popover toont.
+  var hrSigOplossenWired = false;
+  function wireHrSignaleringenOplossen() {
+    if (hrSigOplossenWired || !global.besaOplossen) return;
+    var valEl = $("mob-hr-signaleringen");
+    var card = valEl ? valEl.closest(".mob-kpi") : null;
+    if (!card) return;
+    hrSigOplossenWired = true;
+    card.insertAdjacentHTML("beforeend", global.besaOplossen.triggerHtml({ "data-mob-sig-oplossen": "1" }));
+    card.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-mob-sig-oplossen]");
+      if (!btn) return;
+      e.preventDefault();
+      global.besaOplossen.openPopover(btn, {
+        uitleg: "Bekijk en behandel de open AI-signaleringen.",
+        knopLabel: "Naar signaleringen",
+        onGaNaar: function () { showView("signaleringen"); },
+      });
+    });
   }
 
   // ── AI-SIGNALERINGEN ─────────────────────────────────────────────────────────

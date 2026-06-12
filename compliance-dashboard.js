@@ -98,12 +98,29 @@
     });
   }
 
+  // De tabel-head zit statisch in de HTML; voeg de "Oplossen"-kolomkop
+  // idempotent toe vanuit JS (we mogen alleen dit bestand bewerken).
+  function ensureOplossenHeader(tbody) {
+    if (!window.besaOplossen) return;
+    var table = tbody && tbody.closest ? tbody.closest("table") : null;
+    var headRow = table ? table.querySelector("thead tr") : null;
+    if (!headRow) return;
+    if (headRow.querySelector("th.cd-oplossen-th")) return;
+    var th = document.createElement("th");
+    th.className = "cd-oplossen-th";
+    th.textContent = "Actie";
+    headRow.appendChild(th);
+  }
+
   function renderTable() {
     var tbody = $("cd-tbody");
     if (!tbody) return;
+    ensureOplossenHeader(tbody);
+    var heeftOplossen = !!window.besaOplossen;
+    var emptyColspan = heeftOplossen ? 8 : 7;
     var list = visibleRows();
     if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="cd-empty">Geen medewerkers gevonden.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + emptyColspan + '" class="cd-empty">Geen medewerkers gevonden.</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(function (r) {
@@ -115,6 +132,7 @@
         + "<td>" + numCell(r.binnenkort_docs, false) + "</td>"
         + "<td>" + jaNee(r.onboarding_afgerond) + "</td>"
         + "<td>" + jaNee(r.contract_getekend) + "</td>"
+        + (heeftOplossen ? "<td>" + window.besaOplossen.triggerHtml({ "data-mid": r.medewerker_id }) + "</td>" : "")
         + "</tr>";
     }).join("");
   }
@@ -129,11 +147,23 @@
     var tbody = $("cd-tbody");
     if (tbody) {
       tbody.addEventListener("click", function (e) {
+        var trigger = e.target.closest && e.target.closest(".besa-oplossen-trigger");
+        if (trigger && window.besaOplossen) {
+          e.stopPropagation();
+          window.besaOplossen.openPopover(trigger, {
+            uitleg: "Open het dossier om de verlopen/ontbrekende VOG of documenten te uploaden of te verlengen.",
+            knopLabel: "Naar dossier",
+            onGaNaar: function () { openDossier(trigger.getAttribute("data-mid")); },
+          });
+          return;
+        }
         var tr = e.target.closest && e.target.closest("tr.cd-row");
         if (tr) openDossier(tr.getAttribute("data-mid"));
       });
       tbody.addEventListener("keydown", function (e) {
         if (e.key !== "Enter" && e.key !== " ") return;
+        // Enter/Spatie op de "Oplossen"-knop activeert die knop, niet de rij-nav.
+        if (e.target.closest && e.target.closest(".besa-oplossen-trigger")) return;
         var tr = e.target.closest && e.target.closest("tr.cd-row");
         if (tr) { e.preventDefault(); openDossier(tr.getAttribute("data-mid")); }
       });

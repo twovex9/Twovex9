@@ -131,6 +131,7 @@
       if (issues.length > 0) {
         var persnr = mw.personeelsnummer != null ? " (" + mw.personeelsnummer + ")" : "";
         out.push({
+          id: mw.id,
           name: ((mw.voornaam || "") + " " + (mw.achternaam || "")).trim() + persnr,
           issues: issues,
         });
@@ -724,7 +725,19 @@
         r.issues.forEach(function (iss) {
           var sub = document.createElement("div");
           sub.className = "sa-val-issue";
-          sub.textContent = iss;
+          var label = document.createElement("span");
+          label.className = "sa-val-issue-text";
+          label.textContent = iss;
+          sub.appendChild(label);
+          if (window.besaOplossen) {
+            var solveHtml = oplossenBtnForIssue(iss, r.id);
+            if (solveHtml) {
+              var act = document.createElement("span");
+              act.className = "sa-val-issue-act";
+              act.innerHTML = solveHtml;
+              sub.appendChild(act);
+            }
+          }
           item.appendChild(sub);
         });
         listEl.appendChild(item);
@@ -733,6 +746,53 @@
     var count = rows.length;
     if (sumEl) sumEl.textContent = count + " medewerkers met onvolledige gegevens";
     if (chipEl) chipEl.hidden = count === 0;
+    if (window.besaOplossen) window.besaOplossen.bindSignals(listEl);
+  }
+
+  /**
+   * Bepaalt voor een validatie-issue de juiste "Oplossen →"-knop:
+   *   - kilometer/km-declaratie → cross-page navBtn naar kilometers
+   *   - niet-goedgekeurde / unapproved uren → cross-page navBtn naar werkuren
+   *   - ontbrekende NAW/IBAN/startdatum/persoonsgegevens → in-page triggerHtml
+   *     met data-emp-id; de delegated handler deeplinkt naar het medewerkerdossier.
+   * Geeft een lege string terug als er geen bestemming bekend is.
+   */
+  function oplossenBtnForIssue(issue, empId) {
+    if (!window.besaOplossen) return "";
+    var t = String(issue || "").toLowerCase();
+    if (t.indexOf("kilometer") !== -1 || t.indexOf("km-declaratie") !== -1) {
+      return window.besaOplossen.navBtn(
+        "kilometers",
+        "Naar kilometers",
+        issue
+      );
+    }
+    if (
+      t.indexOf("unapproved") !== -1 ||
+      t.indexOf("niet-goedgekeurd") !== -1 ||
+      t.indexOf("niet goedgekeurd") !== -1 ||
+      t.indexOf("uren") !== -1
+    ) {
+      return window.besaOplossen.navBtn(
+        "werkuren",
+        "Naar urenregistratie",
+        issue
+      );
+    }
+    if (
+      t.indexOf("iban") !== -1 ||
+      t.indexOf("startdatum") !== -1 ||
+      t.indexOf("e-mail") !== -1 ||
+      t.indexOf("email") !== -1 ||
+      t.indexOf("naw") !== -1 ||
+      t.indexOf("persoonsgegeven") !== -1 ||
+      t.indexOf("ontbreekt") !== -1
+    ) {
+      return window.besaOplossen.triggerHtml(
+        empId != null ? { "data-emp-id": empId } : {}
+      );
+    }
+    return "";
   }
 
   function renderHistory() {
@@ -973,6 +1033,37 @@
 
   if (monthSel) monthSel.addEventListener("change", renderValidation);
   if (yearSel) yearSel.addEventListener("change", renderValidation);
+
+  // Dossier-deeplink: de "Oplossen →"-knoppen bij ontbrekende persoonsgegevens
+  // (NAW/IBAN/startdatum) hebben geen data-sig-url, dus bindSignals laat ze met
+  // rust. We vangen ze hier op en openen een popover die naar het medewerker-
+  // dossier deeplinkt via sessionStorage (zelfde patroon als elders).
+  if (listEl) {
+    listEl.addEventListener("click", function (e) {
+      if (!window.besaOplossen) return;
+      var btn = e.target.closest ? e.target.closest("[data-emp-id]") : null;
+      if (!btn || !listEl.contains(btn)) return;
+      if (btn.hasAttribute("data-sig-url")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var empId = btn.getAttribute("data-emp-id");
+      window.besaOplossen.openPopover(btn, {
+        uitleg:
+          "Persoonsgegevens (zoals NAW, IBAN of startdatum) ontbreken in het dossier. Vul ze aan om deze medewerker mee te kunnen exporteren.",
+        knopLabel: "Naar dossier",
+        onGaNaar: function () {
+          try {
+            sessionStorage.setItem(
+              "selectedEmployee",
+              JSON.stringify({ empId: empId })
+            );
+          } catch (err) {}
+          window.location.href = "medewerker";
+        },
+      });
+    });
+  }
+
   if (genBtn) genBtn.addEventListener("click", generateExport);
   var shiftBtn = document.getElementById("sa-generate-shift-btn");
   if (shiftBtn) shiftBtn.addEventListener("click", generateShiftExport);

@@ -19,6 +19,26 @@
   function clientLink(id, label) {
     return '<a href="client-detail?id=' + encodeURIComponent(id || "") + '" class="client-detail-inline-a">' + esc(label) + "</a>";
   }
+  function ensureOplossenHeader(tbodyId, label) {
+    var tbody = $(tbodyId);
+    if (!tbody) return;
+    var table = tbody.closest ? tbody.closest("table") : null;
+    if (!table) return;
+    var headRow = table.querySelector("thead tr");
+    if (!headRow || headRow.querySelector("th[data-col='oplossen']")) return;
+    var th = document.createElement("th");
+    th.setAttribute("data-col", "oplossen");
+    th.textContent = label || "";
+    headRow.appendChild(th);
+  }
+  function oplossenCel(clientId) {
+    if (!window.besaOplossen) return "<td></td>";
+    return "<td>" + window.besaOplossen.navBtn(
+      "client-detail?id=" + encodeURIComponent(clientId || ""),
+      "Naar dossier",
+      "Open het cliëntdossier om de openstaande issues (zorgplan/beschikking/signalering) op te lossen."
+    ) + "</td>";
+  }
   function kpiTile(label, value, klasse) {
     return '<div class="cmd-kpi-tile' + (klasse ? " " + klasse : "") + '"><div class="cmd-kpi-value">' + esc(value) + '</div><div class="cmd-kpi-label">' + esc(label) + "</div></div>";
   }
@@ -83,6 +103,7 @@
       kpiTile("Evaluatie binnen 30d", k.evaluaties_30d || 0, "cmd-kpi--oranje") +
       kpiTile("Zonder actief zorgplan", k.zonder_zorgplan || 0, "cmd-kpi--rood") +
       kpiTile("Open dossier-issues", k.open_issues_totaal || 0);
+    ensureOplossenHeader("cmd-gw-tbody", "Oplossen");
     var rows = (d.clienten || []).map(function (c) {
       var dagen = c.dagen_tot_evaluatie;
       var evalCel = c.evaluatiemoment
@@ -96,9 +117,12 @@
         "<td>" + evalCel + "</td>" +
         "<td>" + (c.signaleringsplan_actief ? "✓" : '<span class="cmd-mut">—</span>') + "</td>" +
         "<td>" + (Number(c.open_issues) > 0 ? '<span class="cmd-pill cmd-pill--rood">' + esc(c.open_issues) + "</span>" : "0") + "</td>" +
+        (Number(c.open_issues) > 0 ? oplossenCel(c.client_id) : "<td></td>") +
       "</tr>";
     }).join("");
-    $("cmd-gw-tbody").innerHTML = rows || '<tr><td colspan="7" class="client-detail-placeholder">Geen cliënten in uw caseload.</td></tr>';
+    var gwTbody = $("cmd-gw-tbody");
+    gwTbody.innerHTML = rows || '<tr><td colspan="8" class="client-detail-placeholder">Geen cliënten in uw caseload.</td></tr>';
+    if (window.besaOplossen) window.besaOplossen.bindSignals(gwTbody);
   }
 
   async function loadZc() {
@@ -109,12 +133,16 @@
       return "<tr><td>" + esc(x.locatie) + "</td><td>" + esc(x.totaal) + "</td><td>" + esc(x.actief) +
         "</td><td>" + esc(x.gepauzeerd) + "</td><td>" + esc(x.wachtlijst) + "</td><td>" + esc(x.intake_gepland) + "</td></tr>";
     }).join("") || '<tr><td colspan="6" class="client-detail-placeholder">—</td></tr>';
-    $("cmd-zc-issues-tbody").innerHTML = (d.top_open_issues || []).map(function (i) {
+    ensureOplossenHeader("cmd-zc-issues-tbody", "Oplossen");
+    var zcIssuesTbody = $("cmd-zc-issues-tbody");
+    zcIssuesTbody.innerHTML = (d.top_open_issues || []).map(function (i) {
       return "<tr><td>" + clientLink(i.client_id, i.naam || "—") + "</td>" +
         '<td><span class="cmd-pill cmd-pill--rood">' + esc(i.rood) + "</span></td>" +
         '<td><span class="cmd-pill cmd-pill--oranje">' + esc(i.oranje) + "</span></td>" +
-        "<td>" + esc(i.aantal_issues) + "</td></tr>";
-    }).join("") || '<tr><td colspan="4" class="client-detail-placeholder">Geen openstaande issues.</td></tr>';
+        "<td>" + esc(i.aantal_issues) + "</td>" +
+        oplossenCel(i.client_id) + "</tr>";
+    }).join("") || '<tr><td colspan="5" class="client-detail-placeholder">Geen openstaande issues.</td></tr>';
+    if (window.besaOplossen) window.besaOplossen.bindSignals(zcIssuesTbody);
   }
 
   async function loadDir() {

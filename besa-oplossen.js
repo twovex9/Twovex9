@@ -232,9 +232,10 @@
     var re = String(relType || "").toLowerCase();
     var id = relId != null && relId !== "" ? encodeURIComponent(String(relId)) : "";
     function nav(url, knop, uitleg) { return { url: url, knop: knop, uitleg: uitleg }; }
-    // Cliënt-gerelateerd (dossier-issue / ondertekening / algemene cliënt) → dossier
+    // Dossier-issue: related_entity_id is hier de ISSUE-id (geen cliënt-id), dus
+    // NIET deep-linken naar client-detail — dat zou "cliënt niet gevonden" geven.
     if (re === "client_dossier_issue" || t.indexOf("dossier_issue") !== -1) {
-      return nav(id ? "client-detail?id=" + id : "clienten", "Naar dossier", "Open het cliëntdossier om de dossier-issues op te lossen.");
+      return nav("clienten", "Naar cliënten", "Open het cliëntdossier van de betreffende cliënt om de dossier-issues op te lossen.");
     }
     if (re === "client" || t === "client_ondertekening" || t.indexOf("ondertekening") !== -1) {
       return nav(id ? "client-detail?id=" + id : "clienten", "Naar dossier", "Open het cliëntdossier.");
@@ -267,11 +268,13 @@
     if (re === "verlof" || t.indexOf("verlof") !== -1) {
       return nav("verlof", "Naar verlof", "Behandel de verlofaanvraag.");
     }
-    // Dienst-uitnodiging → uitnodigingen; overige planning → planning
-    if (t === "dienst_uitnodiging" || t.indexOf("uitnodiging") !== -1) {
+    // Persoonlijke dienst-uitnodiging → uitnodigingen-inbox. Exacte match, zodat
+    // de accept/reject-meldingen (_geaccepteerd/_geweigerd, gericht aan planner/
+    // HR) NIET hier landen maar doorvallen naar planning.
+    if (t === "dienst_uitnodiging") {
       return nav("mijn-uitnodigingen", "Naar uitnodigingen", "Reageer op de dienst-uitnodiging.");
     }
-    if (re === "planning") {
+    if (re === "planning" || t.indexOf("uitnodiging") !== -1) {
       return nav("planning", "Naar planning", "Open de planning.");
     }
     // Incidenten

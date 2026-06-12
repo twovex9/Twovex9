@@ -36,7 +36,12 @@ for (const file of readdirSync(projectRoot)) {
   const m = html.match(REPORTER_RE);
   if (!m) { noAnchor++; continue; }
   const version = (m[1].match(/\?v=([^"]+)/) || [, "918f1ad"])[1];
-  const tag = `\n  <script src="besa-oplossen.js?v=${version}" defer></script>`;
+  // NIET defer: besa-oplossen.js doet bij load geen DOM-toegang (zet enkel
+  // window.besaOplossen), en sommige pagina's hebben een NIET-deferred page-script
+  // dat anders eerder draait dan een deferred besa-oplossen.js → window.besaOplossen
+  // undefined bij eerste render. Non-defer garandeert beschikbaarheid voor elk
+  // page-script, ongeacht hun defer-status.
+  const tag = `\n  <script src="besa-oplossen.js?v=${version}"></script>`;
   html = html.replace(REPORTER_RE, `$1${tag}`);
   if (!dryRun) writeFileSync(full, html);
   added++;
