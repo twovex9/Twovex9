@@ -119,6 +119,12 @@
     if (dy + h > vh - m) dy = y - h - pad;
     if (dy < m) dy = m;
     t.style.left = dx + "px"; t.style.top = dy + "px";
+    // Zoom-correctie (html{zoom:1.1}): meet waar de tip echt landde en corrigeer
+    // het verschil, zodat hij recht onder de muis blijft en niet buiten beeld
+    // schuift. Zelfde patroon als beschikkingen-dashboard.js.
+    var rr = t.getBoundingClientRect();
+    t.style.left = Math.round((parseFloat(t.style.left) || 0) + (dx - rr.left)) + "px";
+    t.style.top = Math.round((parseFloat(t.style.top) || 0) + (dy - rr.top)) + "px";
   }
   function hideTip() { if (tipEl) tipEl.hidden = true; }
 
