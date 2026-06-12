@@ -157,6 +157,54 @@
   }
 
   // ============================================================
+  // 2b. Dashboard-signalen → oplossing (cross-page navigatie)
+  //    Dashboards tonen signalen {domein/dom, ernst, tekst}. Anders dan de
+  //    detail-pagina's (tabs) navigeert een dashboard-fix naar een ANDERE
+  //    pagina. We leiden de bestemming af uit domein + trefwoorden in de tekst.
+  //    Retour: {uitleg, knop, url} — onGaNaar doet window.location = url.
+  // ============================================================
+  function signalFix(domein, tekst) {
+    var s = (String(domein || "") + " " + String(tekst || "")).toLowerCase();
+    function nav(url, knop, uitleg) { return { url: url, knop: knop, uitleg: uitleg }; }
+    // Afgekeurde / af te handelen declaraties → Facturen te beoordelen
+    if (s.indexOf("afgekeurd") !== -1 || s.indexOf("afgewezen") !== -1 ||
+        (s.indexOf("declarati") !== -1 && (s.indexOf("open") !== -1 || s.indexOf("beoordel") !== -1))) {
+      return nav("facturen-te-beoordelen", "Naar Facturen", "Bekijk en (her)beoordeel de betreffende declaraties op de pagina Facturen te beoordelen.");
+    }
+    // Open/onstaande diensten of bezetting → Planning
+    if (s.indexOf("open dienst") !== -1 || s.indexOf("openstaande dienst") !== -1 ||
+        s.indexOf("bezetting") !== -1 || s.indexOf("planningsgat") !== -1) {
+      return nav("planning", "Naar Planning", "Vul de openstaande diensten in op de planning.");
+    }
+    // Verlies / resultaat / liquiditeit / marge → Financiën per locatie
+    if (s.indexOf("verlies") !== -1 || s.indexOf("resultaat") !== -1 ||
+        s.indexOf("liquiditeit") !== -1 || s.indexOf("marge") !== -1) {
+      return nav("financien-locaties", "Naar Financiën", "Bekijk de kosten en opbrengsten per locatie om het resultaat te verbeteren.");
+    }
+    // VOG / documenten / compliance → Compliance-dashboard
+    if (s.indexOf("vog") !== -1 || s.indexOf("document") !== -1 || s.indexOf("complian") !== -1) {
+      return nav("compliance-dashboard", "Naar Compliance", "Bekijk welke medewerkers documenten missen of verlopen documenten hebben.");
+    }
+    // Verzuim / ziek → HR-dashboard
+    if (s.indexOf("verzuim") !== -1 || s.indexOf("ziek") !== -1) {
+      return nav("hr-dashboard", "Naar HR-dashboard", "Bekijk het ziekteverzuim en de betrokken medewerkers.");
+    }
+    // Contracten → HR
+    if (s.indexOf("contract") !== -1) {
+      return nav("hr", "Naar HR", "Verleng of werk de aflopende contracten bij in HR.");
+    }
+    // Beschikkingen → Beschikkingen
+    if (s.indexOf("beschikking") !== -1) {
+      return nav("beschikkingen", "Naar Beschikkingen", "Werk de betreffende beschikking(en) bij.");
+    }
+    // Incidenten → Incidenten
+    if (s.indexOf("incident") !== -1) {
+      return nav("incidenten", "Naar Incidenten", "Behandel de openstaande incidenten.");
+    }
+    return null;
+  }
+
+  // ============================================================
   // 3. Herbruikbare popover — "uitleg + spring-knop"
   // ============================================================
 
@@ -282,10 +330,51 @@
       ' aria-label="Hoe los ik dit op?">Oplossen →</button>';
   }
 
+  // Herbruikbare bind voor dashboard-signaalstrips: klik op "Oplossen →" opent de
+  // popover en navigeert naar de andere pagina (data-sig-url/-knop/-uitleg op de
+  // knop). Eénmalig per container.
+  function bindSignals(container) {
+    if (!container || container.__oplosSigBound) return;
+    container.__oplosSigBound = true;
+    container.addEventListener("click", function (ev) {
+      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
+      if (!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (isOpenFor(btn)) { closePopover(); return; }
+      var url = btn.getAttribute("data-sig-url");
+      if (!url) return;
+      openPopover(btn, {
+        uitleg: btn.getAttribute("data-sig-uitleg") || "",
+        knopLabel: btn.getAttribute("data-sig-knop") || "Naar de juiste pagina",
+        onGaNaar: function () { try { global.location.href = url; } catch (e) { /* */ } },
+      });
+    });
+  }
+
+  // Huidige paginanaam (zonder pad/extensie) — om self-links te onderdrukken.
+  function currentPageName() {
+    try {
+      var p = (global.location.pathname || "").replace(/\/+$/, "").split("/").pop() || "";
+      return p.replace(/\.html$/, "");
+    } catch (e) { return ""; }
+  }
+
+  // Bouw de signaal-fix-knop (of "") voor een {domein, tekst}-signaal. Geen knop
+  // als de bestemming de huidige pagina is (zinloze self-link).
+  function signalBtn(domein, tekst) {
+    var fix = signalFix(domein, tekst);
+    if (!fix || fix.url === currentPageName()) return "";
+    return triggerHtml({ "data-sig-url": fix.url, "data-sig-knop": fix.knop, "data-sig-uitleg": fix.uitleg });
+  }
+
   global.besaOplossen = {
     clientFix: clientFix,
     clientFixByText: clientFixByText,
     medewerkerFix: medewerkerFix,
+    signalFix: signalFix,
+    signalBtn: signalBtn,
+    bindSignals: bindSignals,
     openPopover: openPopover,
     closePopover: closePopover,
     isOpenFor: isOpenFor,

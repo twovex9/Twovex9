@@ -922,8 +922,13 @@
       var d = el("div", "fin-signal " + (s.ernst === "rood" ? "fin-signal--rood" : "fin-signal--oranje"));
       d.appendChild(el("span", "fin-signal-dom", s.dom));
       d.appendChild(el("span", "fin-signal-txt", s.tekst));
+      if (window.besaOplossen) {
+        var btnHtml = window.besaOplossen.signalBtn(s.dom, s.tekst);
+        if (btnHtml) d.insertAdjacentHTML("beforeend", btnHtml);
+      }
       box.appendChild(d);
     });
+    if (window.besaOplossen) window.besaOplossen.bindSignals(box);
   }
 
   /* ---- open diensten per locatie (page-sectie, operationeel) ---- */

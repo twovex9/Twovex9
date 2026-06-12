@@ -84,10 +84,13 @@
     }
     box.innerHTML = sorted.map(function (s) {
       var cls = s.ernst === "rood" ? "md-signal--rood" : "md-signal--oranje";
+      var btn = window.besaOplossen ? window.besaOplossen.signalBtn(s.domein, s.tekst) : "";
       return '<div class="md-signal ' + cls + '">'
         + '<span class="md-signal-dom">' + escHtml(s.domein || "") + "</span>"
-        + '<span class="md-signal-txt">' + escHtml(s.tekst || "") + "</span></div>";
+        + '<span class="md-signal-txt">' + escHtml(s.tekst || "") + "</span>"
+        + btn + "</div>";
     }).join("");
+    if (window.besaOplossen) window.besaOplossen.bindSignals(box);
   }
 
   // ─── Tegels + snelle statistieken ────────────────────────────────────────

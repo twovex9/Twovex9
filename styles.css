@@ -13471,6 +13471,13 @@ button.planning-erm-new {
   margin-top: 11px;
 }
 
+/* Dashboard-signaalstrips: "Oplossen →" rechts in de signaal-rij */
+.md-signal .besa-oplossen-trigger,
+.fin-signal .besa-oplossen-trigger,
+.vl-krit-item .besa-oplossen-trigger {
+  margin-left: auto;
+}
+
 .planning-erm-when {
   font-size: 13px;
   font-weight: 900;
