@@ -173,44 +173,100 @@
     return set;
   }
 
+  // Label van de actieve dropdown-kop (bv. "Organisatie") voor de aria-label.
+  function activeSectionLabel() {
+    var kop = doc.querySelector(".top-nav-item--dropdown .top-link--dropdown.is-active");
+    if (!kop) return "Sectie";
+    return (kop.textContent || "Sectie").replace(/\s+/g, " ").trim();
+  }
+
+  // Sommige pagina's hebben wél de standaard 2-koloms app-shell-grid (met een
+  // gereserveerde sidebar-kolom) maar GEEN zijbalk-element — de linkerkolom is
+  // dan een lege strook (bv. Organisatie: teams/rollen/gebruikers). Daar maken we
+  // een echte modulenav-zijbalk aan die de lege plek vult. We doen dit alleen als
+  // de sidebar-plek écht leeg is (geen enkele <aside> in de app-shell), zodat we
+  // nooit een full-width/aangepaste layout (planning, dashboards) verstoren.
+  function createSidebarIfSlotEmpty() {
+    var appShell = doc.querySelector(".app-shell");
+    if (!appShell) return null;
+    if (appShell.querySelector("aside")) return null; // plek al bezet
+    var main = appShell.querySelector("main.content") || appShell.querySelector(".content");
+    if (!main || main.parentElement !== appShell) return null; // onbekende layout → niet ingrijpen
+
+    var aside = doc.createElement("aside");
+    aside.className = "sidebar";
+    aside.setAttribute("data-sidebar-mirror-created", "1");
+    aside.setAttribute("aria-label", activeSectionLabel());
+    var nav = doc.createElement("nav");
+    nav.className = "side-nav";
+    aside.appendChild(nav);
+    appShell.insertBefore(aside, main);
+
+    // Inklap-knop + uitklap-handle toevoegen (anders mist deze zijbalk de toggle
+    // en is hij bij een ingeklapte voorkeur onbereikbaar).
+    try {
+      if (typeof global.besaInitSidebarCollapse === "function") global.besaInitSidebarCollapse();
+    } catch (e) {}
+
+    return { aside: aside, container: nav };
+  }
+
+  function shouldAdd(item, present, permsReady) {
+    if (present[item.page]) return false;        // staat al in de zijbalk
+    // Alleen toevoegen wat de huidige rol mag zien. Vóór perm-load slaan we
+    // strikte/afgeschermde pagina's over en vullen ze in de latere pass aan
+    // (geen flits van niet-toegestane items).
+    if (permsReady && !pageAccessible(item.page)) return false;
+    if (!permsReady) {
+      var map = global.BESA_PAGE_PERMISSIONS || {};
+      if (map[item.page]) return false; // gegate pagina → wachten tot perms geladen
+    }
+    return true;
+  }
+
+  function appendLink(container, item, present, curPage) {
+    var a = doc.createElement("a");
+    a.setAttribute("href", item.page.replace(/\.html$/, "")); // clean URL, zoals de rest
+    a.className = "side-link";
+    a.setAttribute(MARK, "1");
+    a.textContent = item.label || item.page.replace(/\.html$/, "");
+    if (item.page === curPage) {
+      a.classList.add("is-active");
+      a.setAttribute("aria-current", "page");
+    }
+    present[item.page] = true;
+    container.appendChild(a);
+  }
+
   function sync() {
     var dd = activeDropdownLinks();
     if (!dd.length) return;
     var ddPages = dd.map(function (d) { return d.page; });
-
-    var found = findModuleSidebar(ddPages);
-    if (!found) return;
-
-    var present = existingSidebarPages(found.aside);
     var curPage = currentPage();
     var permsReady = permsLoaded();
+
+    var found = findModuleSidebar(ddPages);
+
+    if (!found) {
+      // Geen bestaande modulenav-zijbalk. Bepaal eerst of er iets toe te voegen is
+      // (zo nee, géén lege zijbalk aanmaken). Dan de lege sidebar-plek vullen.
+      var present0 = {};
+      var toAdd = dd.filter(function (it) { return shouldAdd(it, present0, permsReady); });
+      if (!toAdd.length) return;
+      var created = createSidebarIfSlotEmpty();
+      if (!created) return;
+      var present = {};
+      toAdd.forEach(function (it) { appendLink(created.container, it, present, curPage); });
+      return toAdd.length;
+    }
+
+    var presentE = existingSidebarPages(found.aside);
     var appended = 0;
-
     dd.forEach(function (item) {
-      if (present[item.page]) return;          // staat al in de zijbalk
-      // Alleen toevoegen wat de huidige rol mag zien. Vóór perm-load slaan we
-      // strikte/afgeschermde pagina's over en vullen ze in de latere pass aan
-      // (geen flits van niet-toegestane items).
-      if (permsReady && !pageAccessible(item.page)) return;
-      if (!permsReady) {
-        var map = global.BESA_PAGE_PERMISSIONS || {};
-        if (map[item.page]) return; // gegate pagina → wachten tot perms geladen
-      }
-
-      var a = doc.createElement("a");
-      a.setAttribute("href", item.page.replace(/\.html$/, "")); // clean URL, zoals de rest
-      a.className = "side-link";
-      a.setAttribute(MARK, "1");
-      a.textContent = item.label || item.page.replace(/\.html$/, "");
-      if (item.page === curPage) {
-        a.classList.add("is-active");
-        a.setAttribute("aria-current", "page");
-      }
-      present[item.page] = true;
-      found.container.appendChild(a);
+      if (!shouldAdd(item, presentE, permsReady)) return;
+      appendLink(found.container, item, presentE, curPage);
       appended++;
     });
-
     return appended;
   }
 

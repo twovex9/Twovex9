@@ -53,6 +53,12 @@
     handle.addEventListener("click", function () { apply("expanded"); set("expanded"); });
   }
 
+  // Herbruikbaar maken: sidebar-mirror.js injecteert op sommige pagina's pas ná
+  // DOMContentLoaded een .sidebar in de (lege) sidebar-kolom. Die moet dan alsnog
+  // de inklap-knop + uitklap-handle krijgen. init() is idempotent (checkt op een
+  // bestaande knop), dus een tweede aanroep is veilig.
+  window.besaInitSidebarCollapse = init;
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
