@@ -231,40 +231,60 @@
   let openItem = null;
   let closeTimer = null;
 
+  // html{zoom:1.1} schaalt de hele interface. getBoundingClientRect levert
+  // VISUELE px (incl. die zoom), maar style.left/top op een position:fixed
+  // dropdown wordt als LAYOUT-lengte geïnterpreteerd en daarna NÓG EENS met de
+  // zoom geschaald. Zonder correctie schuift het menu daardoor naar rechts/onder
+  // (oplopend hoe verder naar rechts de knop staat). Deel daarom alle visuele
+  // coords door de zoom vóór we ze als style-lengte zetten.
+  function effectiveZoom() {
+    let z = 1;
+    try {
+      const n = parseFloat(getComputedStyle(document.documentElement).zoom);
+      if (n && isFinite(n) && n > 0) z = n;
+    } catch (e) {
+      /* zoom-property onbekend → geen correctie */
+    }
+    return z;
+  }
+
   function positionDropdown(item) {
     const dd = item.querySelector(".top-dropdown");
     if (!dd) return;
+    const z = effectiveZoom();
     const margin = 8;
     const gap = 4;
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const r = item.getBoundingClientRect();
+    const r = item.getBoundingClientRect(); // VISUELE coords (incl. zoom)
     // Reset zodat we de natuurlijke maten meten.
     dd.style.left = "0px";
     dd.style.right = "auto";
     dd.style.maxHeight = "";
     dd.style.overflowX = "";
     dd.style.overflowY = "";
-    // Horizontale klem. Gebruik de VISUELE breedte (getBoundingClientRect),
-    // consistent met de trigger-positie r — zo klopt de klem ook als de pagina
-    // geschaald/gezoomd wordt.
-    const w = dd.getBoundingClientRect().width || 300;
-    let left = r.left;
-    if (left + w > vw - margin) left = vw - margin - w;
-    if (left < margin) left = margin;
-    dd.style.left = Math.round(left) + "px";
+    // Visuele viewport-randen (zelfde ruimte als r): clientWidth/innerHeight zijn
+    // layout-px → × zoom om in de visuele ruimte te komen.
+    const vwRight = document.documentElement.clientWidth * z;
+    const vh = (window.innerHeight || document.documentElement.clientHeight) * z;
+    const w = dd.getBoundingClientRect().width || 300; // VISUEEL
+    // De linkerrand van het menu lijnt EXACT uit met de linkerrand van de knop;
+    // alleen als het menu anders rechts uit beeld zou lopen schuift het naar
+    // links (en nooit voorbij de linkermarge).
+    let leftV = r.left;
+    if (leftV + w > vwRight - margin) leftV = vwRight - margin - w;
+    if (leftV < margin) leftV = margin;
+    dd.style.left = Math.round(leftV / z) + "px";
     // Verticale klem: past het menu onder de knop? Zo niet → tegen de knop
     // plakken (geen brug nodig) en interne scroll, zodat het NOOIT onderaan
     // het scherm wordt afgekapt (belangrijk voor de hoge HR/Cliënten mega-menu's
     // op korte of ingezoomde schermen).
-    const avail = vh - (r.bottom + gap) - margin;
-    if (dd.scrollHeight > avail) {
-      dd.style.top = Math.round(r.bottom) + "px";
-      dd.style.maxHeight = Math.max(140, vh - r.bottom - margin) + "px";
+    const availV = vh - (r.bottom + gap) - margin;
+    if (dd.scrollHeight * z > availV) {
+      dd.style.top = Math.round(r.bottom / z) + "px";
+      dd.style.maxHeight = Math.round(Math.max(140 * z, vh - r.bottom - margin) / z) + "px";
       dd.style.overflowX = "hidden";
       dd.style.overflowY = "auto";
     } else {
-      dd.style.top = Math.round(r.bottom + gap) + "px";
+      dd.style.top = Math.round((r.bottom + gap) / z) + "px";
     }
   }
 
