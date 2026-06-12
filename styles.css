@@ -27266,6 +27266,15 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
    (.topbar min-height: 52px) zodat er geen los magic number rondzwerft: wijzigt
    de topbar ooit, dan volgt alles via deze ene token. */
 body.page-management-dashboard { --md-topbar-h: 52px; }
+/* KRITIEK voor het scrollen: de globale `body{overflow:hidden}` (scroll-lock voor
+   het standaard app-shell-patroon, waar `.content` intern scrollt) vergrendelt op
+   dit dashboard juist de gebruiker-scroll. Omdat `html{overflow:visible}` is,
+   propageert CSS de overflow van `body` naar de viewport — `hidden` betekent dan:
+   geen scrollbar, geen muiswiel, geen touch-scroll (alleen programmatisch/anker
+   scrollen blijft werken, wat de bug verraderlijk maakte). Het dashboard scrollt
+   het HELE document (sticky topbar + zijbalk), dus de body moet hier net als een
+   gewone pagina meegroeien en zichtbaar overlopen. */
+body.page-management-dashboard { height: auto; min-height: 100dvh; overflow: visible; }
 body.page-management-dashboard .app-shell { height: auto; min-height: 100dvh; }
 body.page-management-dashboard .content--mgmt-dashboard { overflow: visible; min-height: 0; }
 body.page-management-dashboard .sidebar {
