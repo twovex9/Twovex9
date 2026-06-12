@@ -27277,6 +27277,14 @@ body.page-management-dashboard .sidebar {
 }
 body.page-management-dashboard #md-top,
 body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-topbar-h) + 12px); }
+/* Trailing spacer (hoogte via JS in --md-spacer-h) zodat ook de onderste
+   secties tot onder de sticky topbar kunnen scrollen — anders "doet" de
+   onderste zijbalk-link niets. Onzichtbaar, vangt geen klikken. */
+.content--mgmt-dashboard .md-scroll-spacer {
+  flex: 0 0 auto;
+  height: var(--md-spacer-h, 0px);
+  pointer-events: none;
+}
 
 .md-header { align-items: flex-start; }
 .md-subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; text-transform: capitalize; }
