@@ -79,6 +79,15 @@
       border-radius: 8px;
       font-size: 13px;
     }
+    .login-forgot-ok {
+      margin: 0 0 4px;
+      padding: 10px 12px;
+      background: #e9f7ee;
+      border: 1px solid #b7e2c6;
+      color: #1d7a3f;
+      border-radius: 8px;
+      font-size: 13px;
+    }
     .login-btn {
       margin-top: 6px;
       width: 100%;
@@ -185,10 +194,22 @@
     <div class="login-modal-card" role="dialog" aria-modal="true" aria-labelledby="login-forgot-title">
       <h2 id="login-forgot-title" class="login-modal-title">Wachtwoord vergeten</h2>
       <p class="login-modal-body">
-        Gelieve iemand met de rol <strong>eigenaar</strong>, <strong>admin</strong> of <strong>directeur</strong> te contacteren.
+        Vul je e-mailadres in. We sturen je een e-mail met een link waarmee je zelf een nieuw wachtwoord kunt kiezen.
       </p>
+
+      <p class="login-error" id="login-forgot-error" role="alert" hidden></p>
+      <p class="login-forgot-ok" id="login-forgot-ok" role="status" hidden></p>
+
+      <form class="login-form" id="login-forgot-form" autocomplete="on" novalidate>
+        <div class="login-field">
+          <label for="login-forgot-email">E-mailadres</label>
+          <input type="email" id="login-forgot-email" name="email" required autocomplete="username" placeholder="naam@etfalkmaar.nl">
+        </div>
+        <button type="submit" class="login-btn" id="login-forgot-submit">Stuur reset-link</button>
+      </form>
+
       <p class="login-modal-body login-modal-body--muted">
-        Zij kunnen je wachtwoord resetten via de Gebruikers-tab. Daarna log je opnieuw in met het tijdelijke wachtwoord en kies je een nieuw eigen wachtwoord.
+        Komt de e-mail niet aan? Dan kan ook iemand met de rol <strong>eigenaar</strong>, <strong>admin</strong> of <strong>directeur</strong> je wachtwoord resetten via de Gebruikers-tab.
       </p>
       <div class="login-modal-actions">
         <button type="button" class="login-btn" id="login-forgot-close">Sluiten</button>
@@ -218,18 +239,82 @@
         errEl.hidden = true;
       }
 
-      // "Wachtwoord vergeten?" modal — alleen admin-tier kan resetten.
-      // Per user-keuze #5: geen e-mail recovery, alleen mondeling contact.
+      // "Wachtwoord vergeten?" modal — zelfbediening via reset-mail
+      // (resetPasswordForEmail). De handmatige reset door een beheerder
+      // (Eigenaar/Admin/Directeur) via de Gebruikers-tab blijft daarnaast bestaan.
       var forgotLink = document.getElementById("login-forgot");
       var forgotModal = document.getElementById("login-forgot-modal");
       var forgotClose = document.getElementById("login-forgot-close");
-      function openForgot(e) { if (e) e.preventDefault(); forgotModal.hidden = false; forgotClose.focus(); }
+      var forgotForm = document.getElementById("login-forgot-form");
+      var forgotEmail = document.getElementById("login-forgot-email");
+      var forgotSubmit = document.getElementById("login-forgot-submit");
+      var forgotErr = document.getElementById("login-forgot-error");
+      var forgotOk = document.getElementById("login-forgot-ok");
+
+      function forgotClearMsg() {
+        forgotErr.hidden = true; forgotErr.textContent = "";
+        forgotOk.hidden = true; forgotOk.textContent = "";
+      }
+      function forgotShowErr(msg) {
+        forgotOk.hidden = true;
+        forgotErr.textContent = msg || "Onbekende fout";
+        forgotErr.hidden = false;
+      }
+      function forgotShowOk(msg) {
+        forgotErr.hidden = true;
+        forgotOk.textContent = msg || "";
+        forgotOk.hidden = false;
+      }
+      function openForgot(e) {
+        if (e) e.preventDefault();
+        forgotClearMsg();
+        // Neem een al ingevuld login-e-mailadres over als handig startpunt.
+        if (emailEl && emailEl.value && !forgotEmail.value) forgotEmail.value = emailEl.value.trim();
+        forgotModal.hidden = false;
+        setTimeout(function () { forgotEmail.focus(); }, 50);
+      }
       function closeForgot() { forgotModal.hidden = true; forgotLink.focus(); }
       forgotLink.addEventListener("click", openForgot);
       forgotClose.addEventListener("click", closeForgot);
       forgotModal.addEventListener("click", function (e) { if (e.target === forgotModal) closeForgot(); });
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && !forgotModal.hidden) closeForgot();
+      });
+
+      forgotForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        forgotClearMsg();
+
+        var email = String(forgotEmail.value || "").trim();
+        if (!email || email.indexOf("@") === -1) {
+          forgotShowErr("Vul een geldig e-mailadres in.");
+          return;
+        }
+        if (!window.besaSupabase) {
+          forgotShowErr("Verbinding met de server kon niet worden opgezet. Vernieuw de pagina.");
+          return;
+        }
+
+        forgotSubmit.disabled = true;
+        forgotSubmit.textContent = "Bezig met versturen…";
+
+        try {
+          // redirectTo wijst naar de pagina waar de gebruiker een nieuw
+          // wachtwoord kiest. Dit pad moet als Redirect URL in Supabase
+          // (Authentication → URL Configuration) zijn toegestaan.
+          var redirectTo = window.location.origin + "/wachtwoord-herstellen";
+          await window.besaSupabase.auth.resetPasswordForEmail(email, { redirectTo: redirectTo });
+          // Bewust neutrale melding: we verraden niet of dit adres bestaat
+          // (voorkomt het aftasten van geldige accounts).
+          forgotShowOk("Als dit e-mailadres bij ons bekend is, ontvang je binnen enkele minuten een e-mail met een reset-link. Controleer ook je spam-map.");
+          forgotForm.reset();
+        } catch (err) {
+          // Ook bij een fout neutraal blijven, maar wel een hint geven.
+          forgotShowOk("Als dit e-mailadres bij ons bekend is, ontvang je binnen enkele minuten een e-mail met een reset-link. Controleer ook je spam-map.");
+        } finally {
+          forgotSubmit.disabled = false;
+          forgotSubmit.textContent = "Stuur reset-link";
+        }
       });
 
       // Wachtt tot besaSupabase beschikbaar is. Als de gebruiker al een sessie
