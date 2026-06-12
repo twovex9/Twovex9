@@ -86,6 +86,41 @@
     return CLIENT_FIXES[String(issueType || "")] || null;
   }
 
+  // Tekst-gebaseerde variant: voor plekken die alleen vrije tekst leveren (geen
+  // issue_type), zoals de Samenvatting-kaart ("Geen actief zorgplan", "Geen
+  // lopende beschikking", "Nog geen rapportages", …). Leidt de bestemming af uit
+  // trefwoorden en hergebruikt waar mogelijk de uitleg uit CLIENT_FIXES.
+  function clientFixByText(tekst) {
+    var t = String(tekst || "").toLowerCase();
+    if (!t) return null;
+    if (t.indexOf("zorgplan") !== -1) {
+      return clientFix(t.indexOf("evaluatie") !== -1 ? "zorgplan_evaluatie_verlopen" : "zorgplan_ontbreekt");
+    }
+    if (t.indexOf("signalering") !== -1) return clientFix("signaleringsplan_ontbreekt");
+    if (t.indexOf("beschikking") !== -1) {
+      return clientFix(t.indexOf("verlopen") !== -1 ? "beschikking_verlopen" : "beschikking_ontbreekt");
+    }
+    if (t.indexOf("identiteit") !== -1 || t.indexOf("document") !== -1) {
+      return clientFix("verplichte_documenten_ontbreken");
+    }
+    if (t.indexOf("verklaring") !== -1 || t.indexOf("onderteken") !== -1 || t.indexOf("handteken") !== -1) {
+      return clientFix("handtekening_ontbreekt");
+    }
+    if (t.indexOf("rapportage") !== -1) {
+      return { uitleg: "Er zijn nog geen rapportages vastgelegd. Voeg een rapportage toe op het tabblad Rapportages.", knop: "Ga naar Rapportages", tab: "r" };
+    }
+    if (t.indexOf("incident") !== -1) {
+      return { uitleg: "Bekijk en behandel de incidenten van deze cliënt op het tabblad Incidenten.", knop: "Ga naar Incidenten", tab: "i" };
+    }
+    if (t.indexOf("contact") !== -1) {
+      return { uitleg: "Leg een contactmoment vast op het tabblad Contactlogboek.", knop: "Ga naar Contactlogboek", tab: "g" };
+    }
+    if (t.indexOf("intake") !== -1) {
+      return { uitleg: "Start of vervolg de intake op het tabblad Intake.", knop: "Ga naar Intake", tab: "k" };
+    }
+    return null;
+  }
+
   // ============================================================
   // 2. Medewerker-waarschuwingen → oplossing
   //    De warning-items komen uit medewerker-warnings.js. Het `type`/`label`
@@ -174,11 +209,17 @@
       "</button>";
     document.body.appendChild(pop);
 
-    // Positioneer onder het anker; val terug naar boven als het buiten beeld
-    // valt. Anker-coördinaten door de zoom delen (zie effectiveZoom).
+    // Positioneer onder het anker. Anker-coördinaten door de zoom delen (zie
+    // effectiveZoom) zodat ze in dezelfde layout-ruimte zitten als offsetWidth.
+    // HORIZONTAAL (user-eis 2026-06-12): standaard lijnt de LINKERkant van de
+    // popover uit met de linkerkant van de "Oplossen"-knop. Zou de popover
+    // daardoor rechts buiten beeld vallen, dan lijnt in plaats daarvan de
+    // RECHTERkant van de popover uit met de rechterkant van de knop — zo blijft
+    // hij altijd aan de knop verankerd én volledig in beeld.
     var z = effectiveZoom(pop) || 1;
     var r = anchorEl.getBoundingClientRect();
     var aLeft = r.left / z;
+    var aRight = r.right / z;
     var aTop = r.top / z;
     var aBottom = r.bottom / z;
     var pw = pop.offsetWidth;
@@ -186,8 +227,13 @@
     var vw = document.documentElement.clientWidth;
     var vh = document.documentElement.clientHeight;
     var left = aLeft + global.scrollX;
-    var maxLeft = global.scrollX + vw - pw - 8;
-    if (left > maxLeft) left = Math.max(global.scrollX + 8, maxLeft);
+    // Valt de links-uitgelijnde popover rechts buiten beeld? → rechts-uitlijnen
+    // op de knop (rechterkant popover = rechterkant knop).
+    if (aLeft + pw > vw - 8) {
+      left = aRight - pw + global.scrollX;
+    }
+    // Veiligheidsondergrens: nooit links buiten beeld.
+    if (left < global.scrollX + 8) left = global.scrollX + 8;
     var top = aBottom + global.scrollY + 6;
     if (aBottom + ph + 10 > vh) {
       top = Math.max(global.scrollY + 8, aTop + global.scrollY - ph - 6);
@@ -238,6 +284,7 @@
 
   global.besaOplossen = {
     clientFix: clientFix,
+    clientFixByText: clientFixByText,
     medewerkerFix: medewerkerFix,
     openPopover: openPopover,
     closePopover: closePopover,
