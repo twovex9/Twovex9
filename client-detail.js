@@ -2577,7 +2577,13 @@
       var puntenHtml = punten.length
         ? '<ul class="cd-ai-punten">' + punten.map(function (p) {
             var ernst = p && (p.ernst === "rood" || p.ernst === "oranje") ? p.ernst : "info";
-            return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">' + escapeHtml((p && p.tekst) || "") + '</li>';
+            var tekst = (p && p.tekst) || "";
+            // Samenvatting levert vrije tekst → bestemming via clientFixByText.
+            var fix = (window.besaOplossen && window.besaOplossen.clientFixByText)
+              ? window.besaOplossen.clientFixByText(tekst) : null;
+            return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">'
+              + '<span class="cd-ai-punt-txt">' + escapeHtml(tekst) + '</span>'
+              + cdOplosBtn(fix) + '</li>';
           }).join("") + '</ul>'
         : '<p class="cd-ai-ok">Geen aandachtspunten — het dossier is op orde.</p>';
 
@@ -2607,6 +2613,7 @@
       }
 
       body.innerHTML = puntenHtml + '<div class="cd-ai-feiten">' + feiten.join("") + '</div>';
+      bindCdOplossen(body);
       craSetVisible(kaart, true);
     } catch (err) {
       // Geen rechten of fout → kaart stil verbergen (samenvatting is een extraatje).
@@ -2638,45 +2645,58 @@
       if (!rows.length) { craSetVisible(kaart, false); return; }
       lijst.innerHTML = rows.map(function (i) {
         var ernst = i.ernst === "rood" || i.ernst === "oranje" ? i.ernst : "info";
-        // "Oplossen →"-knop als er voor dit issue_type een vaste tab-bestemming is.
-        var fix = (window.besaOplossen && window.besaOplossen.clientFix)
-          ? window.besaOplossen.clientFix(i.issue_type) : null;
-        var btn = fix
-          ? window.besaOplossen.triggerHtml({ "data-issue-type": i.issue_type })
-          : "";
         return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">'
           + '<span class="cd-ai-punt-txt">' + escapeHtml(i.tekst || "") + '</span>'
-          + btn + '</li>';
+          + cdOplosBtn(window.besaOplossen && window.besaOplossen.clientFix
+              ? window.besaOplossen.clientFix(i.issue_type) : null)
+          + '</li>';
       }).join("");
-      bindIssuesOplossen(lijst);
+      bindCdOplossen(lijst);
       craSetVisible(kaart, true);
     } catch (e) {
       craSetVisible(kaart, false);
     }
   }
 
-  // Eénmalig: klik op "Oplossen →" opent de uitleg-popover; de spring-knop
-  // daarin schakelt naar het juiste cliëntdossier-tabblad (via de bestaande
-  // tab-knop) en scrollt het paneel in beeld.
-  function bindIssuesOplossen(lijst) {
-    if (!lijst || lijst.__oplosBound) return;
-    lijst.__oplosBound = true;
-    lijst.addEventListener("click", function (ev) {
+  // Helper: bouw de "Oplossen →"-knop voor een fix-object (of "" als er geen
+  // bestemming is). De bestemming + uitleg gaan mee als data-attributen zodat de
+  // click-handler ze terugleest — werkt voor zowel Dossier-issues (clientFix) als
+  // de Samenvatting (clientFixByText).
+  function cdOplosBtn(fix) {
+    if (!fix || !window.besaOplossen) return "";
+    return window.besaOplossen.triggerHtml({
+      "data-fix-tab": fix.tab,
+      "data-fix-knop": fix.knop,
+      "data-fix-uitleg": fix.uitleg,
+    });
+  }
+
+  // Eénmalig per container: klik op "Oplossen →" opent de uitleg-popover; de
+  // spring-knop schakelt naar het juiste cliëntdossier-tabblad (via de bestaande
+  // tab-knop) en scrollt instant naar de tab-strip.
+  function bindCdOplossen(container) {
+    if (!container || container.__oplosBound) return;
+    container.__oplosBound = true;
+    container.addEventListener("click", function (ev) {
       var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
       if (!btn || !window.besaOplossen) return;
       ev.preventDefault();
       ev.stopPropagation();
       if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
-      var fix = window.besaOplossen.clientFix(btn.getAttribute("data-issue-type"));
-      if (!fix) return;
+      var tab = btn.getAttribute("data-fix-tab");
+      if (!tab) return;
       window.besaOplossen.openPopover(btn, {
-        uitleg: fix.uitleg,
-        knopLabel: fix.knop,
+        uitleg: btn.getAttribute("data-fix-uitleg") || "",
+        knopLabel: btn.getAttribute("data-fix-knop") || "Ga naar tabblad",
         onGaNaar: function () {
-          var tabBtn = document.querySelector('.client-detail-tab[data-cd-panel="' + fix.tab + '"]');
+          var tabBtn = document.querySelector('.client-detail-tab[data-cd-panel="' + tab + '"]');
           if (tabBtn) tabBtn.click();
-          var pan = document.getElementById("cd-pan-" + fix.tab);
-          if (pan) { try { pan.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* */ } }
+          // Instant (NIET smooth) naar de stabiele tab-strip. Een smooth
+          // scrollIntoView op het paneel vocht met het muiswiel → terugscrollen
+          // leek geblokkeerd (user-eis 2026-06-12). Instant + een vast element
+          // dat niet van hoogte verandert bij tab-wissel = geen scroll-trap.
+          var tabs = document.querySelector(".client-detail-tabs");
+          if (tabs) { try { tabs.scrollIntoView({ block: "start" }); } catch (e) { /* */ } }
         },
       });
     });

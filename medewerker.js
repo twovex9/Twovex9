@@ -1158,8 +1158,10 @@ function renderEmployeeWarnings(empId) {
         onGaNaar: function () {
           var tb = document.querySelector('.emp-tab[data-tab="' + tab + '"]');
           if (tb) tb.click();
-          var panel = document.querySelector('.emp-tab-panel[data-panel="' + tab + '"]');
-          if (panel) { try { panel.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* */ } }
+          // Instant (NIET smooth) naar de stabiele tab-strip — smooth scroll
+          // vocht met het muiswiel (user-eis 2026-06-12).
+          var tabs = document.querySelector(".emp-tabs");
+          if (tabs) { try { tabs.scrollIntoView({ block: "start" }); } catch (e) { /* */ } }
         },
       });
     });
