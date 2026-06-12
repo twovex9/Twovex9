@@ -2130,8 +2130,11 @@ function showDienstReasonPopover(anchorEl, warnings, it) {
   const aBottom = r.bottom / z;
   const pw = pop.offsetWidth;
   const ph = pop.offsetHeight;
-  const vw = document.documentElement.clientWidth;
-  const vh = document.documentElement.clientHeight;
+  // KRITIEK: clientWidth/clientHeight zijn visueel (gezoomd); pw/ph + style.left
+  // zijn layout (pre-zoom). Delen door de zoom → zelfde ruimte, anders valt de
+  // popover ~10% buiten beeld (zie besa-oplossen.js).
+  const vw = document.documentElement.clientWidth / z;
+  const vh = document.documentElement.clientHeight / z;
   // Standaard links-uitgelijnd op het anker; valt dat rechts buiten beeld, dan
   // rechts-uitlijnen (rechterkant popover = rechterkant anker). Zelfde regel als
   // de "Oplossen"-popover (besa-oplossen.js).

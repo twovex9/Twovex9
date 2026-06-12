@@ -163,7 +163,12 @@
       }
       data.forEach(function (n) {
         var row = document.createElement("a");
-        row.href = "notifications.html#notif-" + n.id;
+        // Spring direct naar de bron-/oplospagina van de melding (i.p.v. enkel
+        // de notificatielijst). Valt terug op de notificatielijst als er geen
+        // bestemming bekend is. besa-oplossen.js draait in elke topbar mee.
+        var nfix = (window.besaOplossen && window.besaOplossen.notificationFix)
+          ? window.besaOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
+        row.href = nfix ? nfix.url : ("notifications.html#notif-" + n.id);
         row.dataset.notifId = n.id;
         row.style.cssText = "display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;text-decoration:none;color:var(--text);transition:background 0.15s ease";
         if (!n.is_read) {

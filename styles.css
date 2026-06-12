@@ -13477,6 +13477,22 @@ button.planning-erm-new {
 .vl-krit-item .besa-oplossen-trigger {
   margin-left: auto;
 }
+/* .vl-krit-item is een grid met vaste kolommen; alleen rijen MET een
+   "Oplossen"-knop krijgen een extra kolom zodat de knop niet wrapt. */
+.vl-krit-item:has(.besa-oplossen-trigger) {
+  grid-template-columns: auto minmax(110px, 1fr) 1fr auto auto;
+}
+/* Metric-tegels (flex-column kaart): knop onderaan met wat lucht. */
+.md-metric .besa-oplossen-trigger {
+  margin-top: 8px;
+  align-self: flex-start;
+}
+/* In een tabel-cel: knop compact, niet rekken. */
+td .besa-oplossen-trigger,
+.md-loc-table .besa-oplossen-trigger,
+.vl-table .besa-oplossen-trigger {
+  white-space: nowrap;
+}
 
 .planning-erm-when {
   font-size: 13px;
@@ -27684,6 +27700,9 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
   .md-perinc-grid { grid-template-columns: 1fr; }
   .vl-krit-item { grid-template-columns: auto 1fr; }
   .vl-krit-tijd, .vl-krit-type { grid-column: 2; }
+  /* Op smal scherm krijgt de "Oplossen"-knop een eigen plek rechts naast de naam. */
+  .vl-krit-item:has(.besa-oplossen-trigger) { grid-template-columns: auto 1fr auto; }
+  .vl-krit-item .besa-oplossen-trigger { grid-column: 3; grid-row: 1; }
 }
 
 /* --------------------------------------------------------------------------

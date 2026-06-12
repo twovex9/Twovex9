@@ -105,8 +105,13 @@
         if (!n.is_read && window.notificationsDB && window.notificationsDB.markRead) {
           window.notificationsDB.markRead(n.id);
         }
-        // Navigeer naar gerelateerd item indien beschikbaar
-        if (n.related_entity_type === "nieuws" && n.related_entity_id) {
+        // Navigeer naar de bron-/oplospagina van de melding (centrale router in
+        // besa-oplossen.js); val terug op het oude nieuws-gedrag.
+        var nfix = (window.besaOplossen && window.besaOplossen.notificationFix)
+          ? window.besaOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
+        if (nfix && nfix.url) {
+          window.location.href = nfix.url;
+        } else if (n.related_entity_type === "nieuws" && n.related_entity_id) {
           window.location.href = "home.html?nieuws=" + encodeURIComponent(n.related_entity_id);
         }
       });
