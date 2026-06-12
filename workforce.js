@@ -179,7 +179,7 @@
   // ─── Capaciteit & tekorten ─────────────────────────────────────────────────────
   function loadCapaciteit() {
     var tb = $("wf-cap-tbody");
-    tb.innerHTML = '<tr><td colspan="8" class="prod-loading">Laden…</td></tr>';
+    tb.innerHTML = '<tr><td colspan="9" class="prod-loading">Laden…</td></tr>';
     window.workforceDB.capaciteit(periodStart(), periodEnd()).then(function (rows) {
       state.capRows = Array.isArray(rows) ? rows : [];
       renderCapaciteit();
@@ -193,13 +193,39 @@
       return true;
     });
   }
+  // Voeg (eenmalig) de "Oplossen"-kolomkop toe in de statische thead, zodat de
+  // extra actie-kolom uitgelijnd blijft met de rij-cellen die we hieronder
+  // injecteren. De thead staat in workforce-planning.html; we mogen hier alleen
+  // workforce.js bewerken, dus de <th> komt via JS.
+  function ensureCapOplossenHead() {
+    if (!window.besaOplossen) return;
+    var table = $("wf-cap-table");
+    var headRow = table ? table.querySelector("thead tr") : null;
+    if (!headRow || headRow.querySelector('[data-col="oplossen"]')) return;
+    var th = document.createElement("th");
+    th.setAttribute("data-col", "oplossen");
+    th.innerHTML = '<span class="th-label">Actie</span>';
+    headRow.appendChild(th);
+  }
   function renderCapaciteit() {
     var rows = capFiltered();
     var tb = $("wf-cap-tbody");
+    var heeftOplos = !!window.besaOplossen;
+    if (heeftOplos) ensureCapOplossenHead();
+    var colspan = heeftOplos ? 9 : 8;
     if (!rows.length) {
-      tb.innerHTML = '<tr><td colspan="8" class="prod-empty-cell">Geen locaties met diensten in deze periode.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="' + colspan + '" class="prod-empty-cell">Geen locaties met diensten in deze periode.</td></tr>';
     } else {
       tb.innerHTML = rows.map(function (r) {
+        // Bij een tekort (status rood/oranje, open_uren > 0): knop naar de
+        // planning om de openstaande diensten van deze locatie in te vullen.
+        var oplosCel = "";
+        if (heeftOplos) {
+          var btn = (Number(r.open_uren) > 0 && (r.status === "rood" || r.status === "oranje"))
+            ? window.besaOplossen.navBtn("planning", "Naar planning", "Vul de openstaande diensten van deze locatie in.")
+            : "";
+          oplosCel = '<td data-col="oplossen">' + btn + '</td>';
+        }
         return '<tr>' +
           '<td>' + escapeHtml(r.locatie || "—") + '</td>' +
           '<td>' + (r.open_diensten || 0) + ' <span class="prod-muted">/ ' + (r.diensten_totaal || 0) + '</span></td>' +
@@ -209,9 +235,11 @@
           '<td>' + fmtUren(r.loondienst_voorkeur_uren) + ' u</td>' +
           '<td style="min-width:140px">' + dekkingBar(r.dekkingsgraad, r.status) + '</td>' +
           '<td>' + statusPill(r.status) + '</td>' +
+          oplosCel +
         '</tr>';
       }).join("");
     }
+    if (heeftOplos) window.besaOplossen.bindSignals(tb);
     $("wf-cap-range").textContent = rows.length + " van " + state.capRows.length;
 
     // KPI-strip

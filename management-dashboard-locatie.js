@@ -222,13 +222,38 @@
   function cell(status, txt) {
     return '<span class="vl-cell">' + dot(status) + '<span class="vl-cell-txt">' + F.escHtml(txt) + "</span></span>";
   }
+  // "Oplossen →"-knop voor een verkeerslicht-rij die op rood/oranje staat. Kiest de
+  // bestemming op de zwaarste deelstatus: resultaat → financiën, anders open diensten
+  // → planning, anders incidenten → incidenten. Geen knop bij groene rijen.
+  function isWarn(s) { return s === "rood" || s === "oranje"; }
+  function vlFixBtn(r) {
+    if (!global.besaOplossen || !isWarn(r.statusOverall)) return "";
+    var st = r.status || {};
+    var url, knop, uitleg;
+    if (isWarn(st.resultaat)) {
+      url = "financien-locaties"; knop = "Naar Financiën";
+      uitleg = "Deze locatie is verliesgevend. Bekijk omzet, kosten en resultaat per locatie in Financiën.";
+    } else if (isWarn(st.open)) {
+      url = "planning"; knop = "Naar Planning";
+      uitleg = "Deze locatie heeft open diensten deze week. Wijs medewerkers toe via de Planning.";
+    } else if (isWarn(st.incidenten)) {
+      url = "incidenten"; knop = "Naar Incidenten";
+      uitleg = "Deze locatie heeft openstaande incidenten. Pak de opvolging op via Incidenten.";
+    } else if (isWarn(st.bezetting)) {
+      url = "planning"; knop = "Naar Planning";
+      uitleg = "De bezetting van deze locatie is te laag. Vul de plekken in via de Planning.";
+    } else {
+      return "";
+    }
+    return global.besaOplossen.navBtn(url, knop, uitleg);
+  }
 
   // ─── 1. Verkeerslicht-tabel ─────────────────────────────────────────────────────
   function renderVerkeerslicht() {
     var box = $("md-vl-body"); if (!box || !model) return;
     if (!model.rijen.length) { box.innerHTML = '<p class="md-news-empty">Geen locatiegegevens beschikbaar.</p>'; return; }
     var head = '<thead><tr>'
-      + '<th>Locatie</th><th>Open diensten</th><th>Incidenten (30d)</th><th>Bezetting vandaag</th><th>Verzuim</th><th>Resultaat (maand)</th>'
+      + '<th>Locatie</th><th>Open diensten</th><th>Incidenten (30d)</th><th>Bezetting vandaag</th><th>Verzuim</th><th>Resultaat (maand)</th><th></th>'
       + '</tr></thead>';
     var rows = model.rijen.map(function (r) {
       var openWeek = r.fin ? r.fin.open_diensten_week : r.planning.openVandaag;
@@ -243,9 +268,11 @@
         + "<td>" + cell(r.status.bezetting, bezTxt) + "</td>"
         + "<td>" + cell(r.status.verzuim, verzTxt) + "</td>"
         + "<td>" + cell(r.status.resultaat, resTxt) + "</td>"
+        + '<td class="vl-fix">' + vlFixBtn(r) + "</td>"
         + "</tr>";
     }).join("");
     box.innerHTML = '<div class="table-wrapper"><table class="employees-table vl-table">' + head + "<tbody>" + rows + "</tbody></table></div>";
+    if (global.besaOplossen) global.besaOplossen.bindSignals(box);
     // Legenda-teller
     var counts = { groen: 0, oranje: 0, rood: 0 };
     model.rijen.forEach(function (r) { counts[r.statusOverall]++; });
