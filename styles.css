@@ -14772,7 +14772,12 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
   line-height: 1;
 }
 
-@media (max-width: 1280px) {
+/* Smalle/kleine-laptop-breedte: de toolbar stapelt zodat de periode-titel
+   ("Week 24 Juni 2026") nooit onder de knoppen-groep verdwijnt. De grens ligt op
+   1440px omdat de breedste toolbar (filter-zijbalk + alle actieknoppen) tot ±1387px
+   viewport te weinig ruimte heeft voor de 3-koloms-rij — de middelste 1fr-kolom werd
+   daar tot 0px geknepen waardoor de periode-titel de knoppen overlapte. */
+@media (max-width: 1440px) {
   .planning-erm-toolbar {
     grid-template-columns: 1fr;
   }
@@ -15046,6 +15051,94 @@ html[data-sidebar="collapsed"] .planning-layout--erm { grid-template-columns: mi
 
 .planning-erm-card .planning-erm-foot {
   display: none;
+}
+
+/* =====================================================================
+   Week-/dagrooster op een klein scherm: kaart-inhoud schaalt mee met de
+   KOLOMBREEDTE (container query), niet met de viewport. Zo blijft op een
+   kleine laptop of een halfscherm-tabblad alles leesbaar BINNEN het vak —
+   de tijd, de naam, de locatie en de medewerker-status — zonder dat we
+   horizontaal hoeven te scrollen (eigenaarseis: alle 7 dagen in beeld,
+   kleiner lettertype i.p.v. afgekapte tekst).
+   - Elke dag-cel is een breedte-container.
+   - Wordt een kolom smal, dan zakt de titelrij naar twee regels (naam boven,
+     tijd eronder over de volle breedte) en schaalt de tekst mee. De "!"-
+     waarschuwingsknop verhuist naar de hoek zodat de tijd-regel volledig past.
+   ===================================================================== */
+#planning-week-grid .planning-erm-cell--body {
+  container-type: inline-size;
+}
+
+@container (max-width: 165px) {
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card {
+    padding: 9px 8px 9px 9px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card__top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+    margin-bottom: 6px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-name {
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 15px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-when-w {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-when {
+    font-size: 11.5px;
+    letter-spacing: 0;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card-loc {
+    font-size: 11px;
+    min-width: 0;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card-loc > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card-person {
+    font-size: 10.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* "!"-waarschuwingsknop naar de kaarthoek zodat de tijd de volle regel krijgt. */
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-overlap {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+  }
+}
+
+@container (max-width: 116px) {
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card {
+    padding: 7px 6px 7px 7px;
+    border-left-width: 5px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-name {
+    font-size: 11px;
+    font-weight: 700;
+    padding-right: 13px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-when {
+    font-size: 10.5px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card-loc {
+    font-size: 9.5px;
+  }
+  #planning-week-grid .planning-erm-cell--body .planning-erm-card .planning-erm-card-person {
+    font-size: 9.5px;
+    padding: 1px 4px;
+  }
 }
 
 /* ---- Verberg de oude planning-main-head als hij nu hidden is ---- */
