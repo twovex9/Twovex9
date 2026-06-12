@@ -198,8 +198,23 @@
       return nav("beschikkingen", "Naar Beschikkingen", "Werk de betreffende beschikking(en) bij.");
     }
     // Incidenten → Incidenten
-    if (s.indexOf("incident") !== -1) {
-      return nav("incidenten", "Naar Incidenten", "Behandel de openstaande incidenten.");
+    if (s.indexOf("incident") !== -1 || s.indexOf("klacht") !== -1) {
+      return nav("incidenten", "Naar Incidenten", "Behandel de openstaande incidenten en klachten.");
+    }
+    // Domein-fallbacks: vang signalen waarvan de tekst geen trefwoord bevat,
+    // op basis van het domein-label (bv. "4 diensten vandaag niet ingevuld").
+    var d = String(domein || "").toLowerCase();
+    if (d.indexOf("planning") !== -1 || s.indexOf("dienst") !== -1 || s.indexOf("ingevuld") !== -1) {
+      return nav("planning", "Naar Planning", "Vul de openstaande diensten in op de planning.");
+    }
+    if (d.indexOf("financ") !== -1) {
+      return nav("financien-locaties", "Naar Financiën", "Bekijk de financiën per locatie.");
+    }
+    if (d.indexOf("hr") !== -1 || d.indexOf("personeel") !== -1) {
+      return nav("hr-dashboard", "Naar HR-dashboard", "Bekijk de HR-signalen en betrokken medewerkers.");
+    }
+    if (d.indexOf("incident") !== -1 || d.indexOf("klacht") !== -1) {
+      return nav("incidenten", "Naar Incidenten", "Behandel de openstaande incidenten en klachten.");
     }
     return null;
   }
