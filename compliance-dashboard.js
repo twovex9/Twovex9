@@ -162,6 +162,8 @@
       });
       tbody.addEventListener("keydown", function (e) {
         if (e.key !== "Enter" && e.key !== " ") return;
+        // Enter/Spatie op de "Oplossen"-knop activeert die knop, niet de rij-nav.
+        if (e.target.closest && e.target.closest(".besa-oplossen-trigger")) return;
         var tr = e.target.closest && e.target.closest("tr.cd-row");
         if (tr) { e.preventDefault(); openDossier(tr.getAttribute("data-mid")); }
       });
