@@ -220,6 +220,72 @@
   }
 
   // ============================================================
+  // 2c. Notificaties → bron-/oplospagina
+  //    notification-bell.js (in ELKE topbar) + notifications.html tonen
+  //    meldingen. Tot nu toe navigeerde alleen 'nieuws'. Deze router mapt het
+  //    server-type/related_entity_type naar de juiste pagina (met deep-link via
+  //    related_entity_id waar zinvol). type-waarden geverifieerd in productie.
+  //    Retour {url, knop, uitleg} of null (bv. 'systeem'-melding).
+  // ============================================================
+  function notificationFix(type, relType, relId) {
+    var t = String(type || "").toLowerCase();
+    var re = String(relType || "").toLowerCase();
+    var id = relId != null && relId !== "" ? encodeURIComponent(String(relId)) : "";
+    function nav(url, knop, uitleg) { return { url: url, knop: knop, uitleg: uitleg }; }
+    // Cliënt-gerelateerd (dossier-issue / ondertekening / algemene cliënt) → dossier
+    if (re === "client_dossier_issue" || t.indexOf("dossier_issue") !== -1) {
+      return nav(id ? "client-detail?id=" + id : "clienten", "Naar dossier", "Open het cliëntdossier om de dossier-issues op te lossen.");
+    }
+    if (re === "client" || t === "client_ondertekening" || t.indexOf("ondertekening") !== -1) {
+      return nav(id ? "client-detail?id=" + id : "clienten", "Naar dossier", "Open het cliëntdossier.");
+    }
+    // Aanmeldingen
+    if (re === "aanmelding" || t.indexOf("aanmelding") !== -1) {
+      return nav("aanmeldingen", "Naar aanmeldingen", "Behandel de aanmelding.");
+    }
+    // Beschikkingen (incl. verloop-herinnering)
+    if (re === "beschikking" || t.indexOf("beschikking") !== -1) {
+      return nav("beschikkingen", "Naar beschikkingen", "Werk de beschikking bij (bijv. verlengen).");
+    }
+    // Compliance / documenten
+    if (re === "compliance" || t.indexOf("doc_verloop") !== -1) {
+      return nav("compliance-dashboard", "Naar compliance", "Bekijk de verlopen of binnenkort verlopende documenten.");
+    }
+    // Kilometers
+    if (re.indexOf("kilometer") !== -1 || re.indexOf("km_") !== -1 || re === "km_generatie" || t.indexOf("km_") !== -1) {
+      return nav("kilometers", "Naar kilometers", "Behandel de kilometerdeclaratie.");
+    }
+    // Taken
+    if (re === "taken" || t.indexOf("taak") !== -1) {
+      return nav("taken", "Naar taken", "Open de taak.");
+    }
+    // Verzuim / poortwachter
+    if (re === "verzuim" || t.indexOf("poortwachter") !== -1) {
+      return nav("verzuim", "Naar verzuim", "Bekijk het verzuimdossier.");
+    }
+    // Verlof
+    if (re === "verlof" || t.indexOf("verlof") !== -1) {
+      return nav("verlof", "Naar verlof", "Behandel de verlofaanvraag.");
+    }
+    // Dienst-uitnodiging → uitnodigingen; overige planning → planning
+    if (t === "dienst_uitnodiging" || t.indexOf("uitnodiging") !== -1) {
+      return nav("mijn-uitnodigingen", "Naar uitnodigingen", "Reageer op de dienst-uitnodiging.");
+    }
+    if (re === "planning") {
+      return nav("planning", "Naar planning", "Open de planning.");
+    }
+    // Incidenten
+    if (re.indexOf("incident") !== -1 || t.indexOf("incident") !== -1) {
+      return nav("incidenten", "Naar incidenten", "Behandel het incident.");
+    }
+    // Nieuws (al ondersteund elders; hier voor de bel)
+    if (re === "nieuws" || t.indexOf("nieuws") !== -1) {
+      return nav(id ? "home?nieuws=" + id : "home", "Naar nieuws", "Open het nieuwsbericht.");
+    }
+    return null;
+  }
+
+  // ============================================================
   // 3. Herbruikbare popover — "uitleg + spring-knop"
   // ============================================================
 
@@ -287,8 +353,13 @@
     var aBottom = r.bottom / z;
     var pw = pop.offsetWidth;
     var ph = pop.offsetHeight;
-    var vw = document.documentElement.clientWidth;
-    var vh = document.documentElement.clientHeight;
+    // KRITIEK: clientWidth/clientHeight zijn VISUELE (gezoomde) maten, terwijl
+    // pw/ph (offsetWidth) en style.left LAYOUT-maten (pre-zoom) zijn. Delen door
+    // de zoom brengt de viewport in dezelfde layout-ruimte; anders denkt de code
+    // dat de popover past terwijl hij visueel ~10% buiten beeld valt (de bug
+    // waardoor de popover op dashboards rechts werd afgekapt).
+    var vw = document.documentElement.clientWidth / z;
+    var vh = document.documentElement.clientHeight / z;
     var left = aLeft + global.scrollX;
     // Valt de links-uitgelijnde popover rechts buiten beeld? → rechts-uitlijnen
     // op de knop (rechterkant popover = rechterkant knop).
@@ -383,12 +454,22 @@
     return triggerHtml({ "data-sig-url": fix.url, "data-sig-knop": fix.knop, "data-sig-uitleg": fix.uitleg });
   }
 
+  // "Oplossen →"-knop met een vaste bestemmingspagina (voor issue-lijsten zonder
+  // {domein,tekst}-signaal, bv. aflopende contracten → HR). Onderdrukt self-links;
+  // werkt met bindSignals (leest data-sig-url).
+  function navBtn(url, knop, uitleg) {
+    if (!url || url === currentPageName()) return "";
+    return triggerHtml({ "data-sig-url": url, "data-sig-knop": knop, "data-sig-uitleg": uitleg });
+  }
+
   global.besaOplossen = {
     clientFix: clientFix,
     clientFixByText: clientFixByText,
     medewerkerFix: medewerkerFix,
     signalFix: signalFix,
     signalBtn: signalBtn,
+    navBtn: navBtn,
+    notificationFix: notificationFix,
     bindSignals: bindSignals,
     openPopover: openPopover,
     closePopover: closePopover,
