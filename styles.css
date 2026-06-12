@@ -13383,6 +13383,94 @@ button.planning-erm-new {
   line-height: 1.35;
 }
 
+/* ============================================================
+   "Oplossen →"-knop + popover (besa-oplossen.js)
+   Eén herbruikbaar component voor élke foutmelding/issue: een klein
+   trigger-knopje "Oplossen →" naast de melding opent een popover met
+   uitleg + een spring-knop naar de juiste tab/plek.
+   ============================================================ */
+.besa-oplossen-trigger {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  font-size: var(--font-table-head);
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.besa-oplossen-trigger:hover,
+.besa-oplossen-trigger:focus-visible {
+  background: var(--blue);
+  color: #fff;
+  outline: none;
+}
+
+.besa-oplossen-pop {
+  position: absolute;
+  z-index: 6200;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.28);
+  padding: 12px 14px;
+}
+.besa-oplossen-pop-head {
+  font-size: var(--font-table-head);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.besa-oplossen-pop-body {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.besa-oplossen-pop-go {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Cliëntdossier-issue rij: melding links, "Oplossen →" rechts */
+.cd-ai-punt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cd-ai-punt-txt {
+  min-width: 0;
+}
+
+/* Medewerker-waarschuwing rij: melding links, "Oplossen →" rechts */
+.emp-warnings-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.emp-warnings-item-main {
+  min-width: 0;
+}
+
+/* Planning reden-popover: spring-knop onder de uitleg-lijst */
+.planning-reason-pop-go {
+  width: 100%;
+  justify-content: center;
+  margin-top: 11px;
+}
+
 .planning-erm-when {
   font-size: 13px;
   font-weight: 900;

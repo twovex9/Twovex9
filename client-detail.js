@@ -2638,12 +2638,48 @@
       if (!rows.length) { craSetVisible(kaart, false); return; }
       lijst.innerHTML = rows.map(function (i) {
         var ernst = i.ernst === "rood" || i.ernst === "oranje" ? i.ernst : "info";
-        return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">' + escapeHtml(i.tekst || "") + '</li>';
+        // "Oplossen →"-knop als er voor dit issue_type een vaste tab-bestemming is.
+        var fix = (window.besaOplossen && window.besaOplossen.clientFix)
+          ? window.besaOplossen.clientFix(i.issue_type) : null;
+        var btn = fix
+          ? window.besaOplossen.triggerHtml({ "data-issue-type": i.issue_type })
+          : "";
+        return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">'
+          + '<span class="cd-ai-punt-txt">' + escapeHtml(i.tekst || "") + '</span>'
+          + btn + '</li>';
       }).join("");
+      bindIssuesOplossen(lijst);
       craSetVisible(kaart, true);
     } catch (e) {
       craSetVisible(kaart, false);
     }
+  }
+
+  // Eénmalig: klik op "Oplossen →" opent de uitleg-popover; de spring-knop
+  // daarin schakelt naar het juiste cliëntdossier-tabblad (via de bestaande
+  // tab-knop) en scrollt het paneel in beeld.
+  function bindIssuesOplossen(lijst) {
+    if (!lijst || lijst.__oplosBound) return;
+    lijst.__oplosBound = true;
+    lijst.addEventListener("click", function (ev) {
+      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
+      if (!btn || !window.besaOplossen) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
+      var fix = window.besaOplossen.clientFix(btn.getAttribute("data-issue-type"));
+      if (!fix) return;
+      window.besaOplossen.openPopover(btn, {
+        uitleg: fix.uitleg,
+        knopLabel: fix.knop,
+        onGaNaar: function () {
+          var tabBtn = document.querySelector('.client-detail-tab[data-cd-panel="' + fix.tab + '"]');
+          if (tabBtn) tabBtn.click();
+          var pan = document.getElementById("cd-pan-" + fix.tab);
+          if (pan) { try { pan.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* */ } }
+        },
+      });
+    });
   }
   renderIssuesKaart();
 
