@@ -159,6 +159,12 @@
     if (dx + w > vw - mrg) dx = x - w - pad; if (dx < mrg) dx = mrg;
     if (dy + h > vh - mrg) dy = y - h - pad; if (dy < mrg) dy = mrg;
     t.style.left = dx + "px"; t.style.top = dy + "px";
+    // Zoom-correctie (html{zoom:1.1}): meet waar de tip echt landde en corrigeer
+    // het verschil, zodat hij recht onder de muis blijft en niet buiten beeld
+    // schuift. Zelfde patroon als beschikkingen-dashboard.js / financien-locaties.js.
+    var rr = t.getBoundingClientRect();
+    t.style.left = Math.round((parseFloat(t.style.left) || 0) + (dx - rr.left)) + "px";
+    t.style.top = Math.round((parseFloat(t.style.top) || 0) + (dy - rr.top)) + "px";
   }
   function hideTip() { if (tipEl) tipEl.hidden = true; }
   function escapeHtml(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
