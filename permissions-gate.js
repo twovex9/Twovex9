@@ -199,6 +199,21 @@
       return;
     }
     if (d === "denied") {
+      // Blokkeer de pagina NOOIT op (tijdelijk) lege rollen. Een lege rollenset
+      // betekent vrijwel altijd een koude of door cross-tab sessie-collisie
+      // verstoorde permissie-cache — NIET dat de gebruiker geen toegang heeft.
+      // Het ondoorzichtige full-screen deny-paneel (position:fixed; inset:0)
+      // zou op pagina's met één scroll-route (bv. het management-dashboard, waar
+      // body{overflow:hidden} en alleen het document scrollt) ALLES dichtzetten
+      // (scroll én klik) zonder herstel zolang de DB-load traag is of leeg
+      // terugkomt. Daarom: alleen echt weigeren als de rollen BEKEND én
+      // ontoereikend zijn. Bij lege rollen tonen we de pagina (de data wordt
+      // sowieso server-side via RLS beschermd) en laat de autoritatieve stap 2
+      // (na DB-load) een eventuele echte weigering alsnog beslissen.
+      if (getRoleNames().length === 0) {
+        if (decided === null) revealPage();
+        return;
+      }
       if (decided === "denied") return;
       decided = "denied";
       denyPage();
@@ -229,6 +244,14 @@
     // 3) Fail-safe: als er na korte tijd nog niets beslist is (DB hangt), de
     //    content alsnog tonen i.p.v. eindeloos blanco te blijven.
     try { global.setTimeout(function () { if (decided === null) revealPage(); }, 3000); } catch (e) {}
+
+    // 4) Ultiem vangnet: zelfs als de Promise-keten hierboven onverwacht throwt
+    //    voordat de fail-safe geregistreerd is, onthul de content uiterlijk bij
+    //    window 'load' zodat de pagina nooit permanent verborgen/geblokkeerd
+    //    blijft. Idempotent — revealPage voegt alleen een class toe.
+    try {
+      global.addEventListener("load", function () { if (decided === null) revealPage(); });
+    } catch (e) { /* ok */ }
   }
 
   // Start zodra het script geladen is — de Promises binnen run() wachten zelf.
