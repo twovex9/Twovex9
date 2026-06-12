@@ -27277,12 +27277,17 @@ body.page-management-dashboard .sidebar {
 }
 body.page-management-dashboard #md-top,
 body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-topbar-h) + 12px); }
-/* Trailing spacer (hoogte via JS in --md-spacer-h) zodat ook de onderste
-   secties tot onder de sticky topbar kunnen scrollen — anders "doet" de
-   onderste zijbalk-link niets. Onzichtbaar, vangt geen klikken. */
-.content--mgmt-dashboard .md-scroll-spacer {
+/* Trailing spacer (PURE CSS — géén JS/ResizeObserver) zodat ook de onderste
+   secties tot onder de sticky topbar kunnen scrollen wanneer je op een
+   onderste zijbalk-link klikt. Een vaste vh-hoogte is zoom-/DPI-onafhankelijk
+   en kan nooit een meet-/observer-lus veroorzaken. Onzichtbaar, vangt geen
+   klikken. (vh i.p.v. een gemeten waarde: ~60% viewport dekt het grootste
+   tekort van de laatste sectie ruim af.) */
+.content--mgmt-dashboard::after {
+  content: "";
+  display: block;
   flex: 0 0 auto;
-  height: var(--md-spacer-h, 0px);
+  height: 60vh;
   pointer-events: none;
 }
 
