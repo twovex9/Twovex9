@@ -19,6 +19,7 @@
     search: "",
     showArchived: false,
     rolesModalUserId: null,
+    rolesModalOriginal: null, // { roleId: true } — rollen bij openen, voor diff bij Opslaan
   };
 
   function el(id) { return document.getElementById(id); }
@@ -281,13 +282,20 @@
     if (!u) return;
     if (u.id === state.actorId) return; // eigen rollen niet bewerkbaar
     state.rolesModalUserId = userId;
+    // Originele rolset vastleggen zodat we bij Opslaan kunnen diffen.
+    var orig = {};
+    rolesOf(u).forEach(function (r) { orig[r.id] = true; });
+    state.rolesModalOriginal = orig;
     el("gebr-roles-modal-sub").textContent = fmtNaam(u) + " · " + (u.email || "");
     renderRolesModalList(u);
+    var doneBtn = el("gebr-roles-modal-done");
+    if (doneBtn) { doneBtn.disabled = false; doneBtn.textContent = "Opslaan"; }
     el("gebr-roles-modal").hidden = false;
   }
   function closeRolesModal() {
     el("gebr-roles-modal").hidden = true;
     state.rolesModalUserId = null;
+    state.rolesModalOriginal = null;
   }
   function renderRolesModalList(u) {
     var have = {};
@@ -306,35 +314,69 @@
     }).join("");
   }
 
-  async function onToggleRole(roleId, checked, cb) {
+  // Alleen lokaal stagen — nog NIET opslaan. Pas op "Opslaan" wordt gediffd en weggeschreven.
+  function onToggleRole(roleId, checked, cb) {
+    var lbl = cb.closest(".gebr-role-opt");
+    if (lbl) lbl.classList.toggle("is-on", checked);
+  }
+
+  // Diff de aangevinkte rollen tegen de originele set en schrijf de wijzigingen weg.
+  async function saveRolesModal() {
     var u = state.users.find(function (x) { return x.id === state.rolesModalUserId; });
-    if (!u || !u.email) return;
-    if (!window.bs2RolesDB) { toast("error", "Rollen-module niet geladen."); cb.checked = !checked; return; }
-    var role = state.roles.find(function (r) { return r.id === roleId; });
-    var roleNaam = role ? role.name : "rol";
-    cb.disabled = true;
+    if (!u || !u.email) { closeRolesModal(); return; }
+    if (!window.bs2RolesDB) { toast("error", "Rollen-module niet geladen."); return; }
+    var orig = state.rolesModalOriginal || {};
+
+    // Gewenste rolset uit de checkboxes lezen.
+    var desired = {};
+    Array.prototype.slice.call(document.querySelectorAll("#gebr-roles-modal-list .gebr-role-cb")).forEach(function (cb) {
+      if (cb.checked) desired[cb.getAttribute("data-role")] = true;
+    });
+
+    // Bepaal toe te voegen en te verwijderen rollen.
+    var toAdd = Object.keys(desired).filter(function (id) { return !orig[id]; });
+    var toRemove = Object.keys(orig).filter(function (id) { return !desired[id]; });
+
+    if (!toAdd.length && !toRemove.length) { closeRolesModal(); return; }
+
+    var doneBtn = el("gebr-roles-modal-done");
+    var cancelBtn = el("gebr-roles-modal-cancel");
+    if (doneBtn) { doneBtn.disabled = true; doneBtn.textContent = "Bezig…"; }
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    function roleName(id) {
+      var role = state.roles.find(function (r) { return r.id === id; });
+      return role ? role.name : "rol";
+    }
+    function roleObj(id) {
+      var role = state.roles.find(function (r) { return r.id === id; });
+      return { id: id, name: role ? role.name : "rol", slug: role ? role.slug : null };
+    }
+
     try {
-      if (checked) {
-        await window.bs2RolesDB.addUser(roleId, u.email, fmtNaam(u));
-        if (!rolesOf(u).some(function (r) { return r.id === roleId; })) {
-          u.rollen = rolesOf(u).concat([{ id: roleId, name: roleNaam, slug: role ? role.slug : null }]);
+      var i;
+      for (i = 0; i < toAdd.length; i++) {
+        await window.bs2RolesDB.addUser(toAdd[i], u.email, fmtNaam(u));
+        if (!rolesOf(u).some(function (r) { return r.id === toAdd[i]; })) {
+          u.rollen = rolesOf(u).concat([roleObj(toAdd[i])]);
         }
-        toast("added", roleNaam + " toegekend aan " + fmtNaam(u));
-      } else {
-        await window.bs2RolesDB.removeUser(roleId, u.email);
-        u.rollen = rolesOf(u).filter(function (r) { return r.id !== roleId; });
-        toast("deleted", roleNaam + " verwijderd bij " + fmtNaam(u));
+      }
+      for (i = 0; i < toRemove.length; i++) {
+        await window.bs2RolesDB.removeUser(toRemove[i], u.email);
+        u.rollen = rolesOf(u).filter(function (r) { return r.id !== toRemove[i]; });
       }
       u.rollen.sort(function (a, b) { return String(a.name).localeCompare(String(b.name), "nl"); });
-      // live re-render rij + modal-markering
-      var lbl = cb.closest(".gebr-role-opt");
-      if (lbl) lbl.classList.toggle("is-on", checked);
       updateRowChips(u);
+
+      var parts = [];
+      if (toAdd.length) parts.push(toAdd.map(roleName).join(", ") + " toegekend");
+      if (toRemove.length) parts.push(toRemove.map(roleName).join(", ") + " verwijderd");
+      toast("saved", "Rollen opgeslagen — " + parts.join("; ") + " bij " + fmtNaam(u));
+      closeRolesModal();
     } catch (err) {
-      cb.checked = !checked; // revert
-      toast("error", "Rol wijzigen mislukt: " + (err && err.message || err));
-    } finally {
-      cb.disabled = false;
+      toast("error", "Rollen opslaan mislukt: " + (err && err.message || err));
+      if (doneBtn) { doneBtn.disabled = false; doneBtn.textContent = "Opslaan"; }
+      if (cancelBtn) cancelBtn.disabled = false;
     }
   }
 
@@ -427,7 +469,8 @@
 
     // Rollen-modal
     el("gebr-roles-modal-close").addEventListener("click", closeRolesModal);
-    el("gebr-roles-modal-done").addEventListener("click", closeRolesModal);
+    el("gebr-roles-modal-cancel").addEventListener("click", closeRolesModal);
+    el("gebr-roles-modal-done").addEventListener("click", saveRolesModal);
     el("gebr-roles-modal").addEventListener("click", function (e) {
       if (e.target === el("gebr-roles-modal")) closeRolesModal();
     });
