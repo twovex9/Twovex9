@@ -187,25 +187,51 @@
 
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    // Chunked fetch: PostgREST default limit is 1000 per query.
-    // Voor facturen (990+ records) preventief paginatie zodat we niet
-    // bij groei door 1000-grens vallen.
+    // Chunked fetch: PostgREST geeft max 1000 rijen per query (facturen ~990,
+    // groeit door 1000 heen). Voorheen strikt sequentieel; nu eerste chunk mét
+    // exacte telling, daarna resterende chunks PARALLEL — identieke data én
+    // volgorde (zelfde ORDER BY + aaneengesloten .range()-vensters). Valt terug
+    // op sequentieel als de telling ontbreekt. Bij <1000 rijen exact 1 query,
+    // net als voorheen (geen regressie voor de huidige omvang).
     var chunkSize = 1000;
-    var all = [];
-    var offset = 0;
-    while (true) {
-      var res = await global.besaSupabase
-        .from(TABLE)
-        .select("*")
+    function page(withCount, offset) {
+      var sel = withCount
+        ? global.besaSupabase.from(TABLE).select("*", { count: "exact" })
+        : global.besaSupabase.from(TABLE).select("*");
+      return sel
         .order("factuurnummer", { ascending: false })
         .order("id", { ascending: true })
         .range(offset, offset + chunkSize - 1);
-      if (res.error) throw res.error;
-      var batch = res.data || [];
-      all = all.concat(batch);
-      if (batch.length < chunkSize) break;
-      offset += chunkSize;
-      if (offset > 50000) break;
+    }
+    var first = await page(true, 0);
+    if (first.error) throw first.error;
+    var all = first.data || [];
+    var total = (typeof first.count === "number") ? first.count : null;
+
+    if (total === null) {
+      // Telling onbekend → sequentieel verder, exact zoals voorheen.
+      if (all.length >= chunkSize) {
+        var offset = chunkSize;
+        while (true) {
+          var res = await page(false, offset);
+          if (res.error) throw res.error;
+          var batch = res.data || [];
+          all = all.concat(batch);
+          if (batch.length < chunkSize) break;
+          offset += chunkSize;
+          if (offset > 50000) break;
+        }
+      }
+    } else if (total > all.length) {
+      var promises = [];
+      for (var off = chunkSize; off < total && off <= 50000; off += chunkSize) {
+        promises.push(page(false, off));
+      }
+      var rest = await Promise.all(promises);
+      for (var i = 0; i < rest.length; i += 1) {
+        if (rest[i].error) throw rest[i].error;
+        all = all.concat(rest[i].data || []);
+      }
     }
     return all.map(rowToObj).filter(Boolean);
   }
