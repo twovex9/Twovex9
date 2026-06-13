@@ -10,7 +10,8 @@
   "scripts": {
     "build": "node scripts/minify.mjs && node scripts/bust-cache.mjs",
     "build:bust": "node scripts/bust-cache.mjs",
-    "build:check": "node scripts/bust-cache.mjs --check",
+    "build:check": "node scripts/check-consistency.mjs && node scripts/bust-cache.mjs --check",
+    "check:consistency": "node scripts/check-consistency.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install chromium"
