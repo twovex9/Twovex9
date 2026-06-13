@@ -16459,7 +16459,14 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-xl); padding: 16px 20px;
   display: flex; flex-direction: column; gap: 10px;
+  /* min-width:0 zodat de kaart binnen de flex-kolom mag krimpen; anders dwingt
+     de bredere tabel (width:max-content) de kaart buiten de content-rand. */
+  min-width: 0;
 }
+/* .fi-card is geen .table-card, dus zijn .table-wrapper mist de generieke
+   overflow-x: auto. Zonder dit loopt de Reconciliatie-tabel (incl. # ZZP'ers)
+   op smalle/halve schermen buiten de kaartrand i.p.v. horizontaal te scrollen. */
+.fi-card .table-wrapper { overflow-x: auto; overflow-y: hidden; }
 .fi-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .fi-card-head .inv-section-title { margin: 0; }
 .fi-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
