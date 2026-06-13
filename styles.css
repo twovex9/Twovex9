@@ -30066,3 +30066,69 @@ html[data-loading="1"]::after {
   font-size: var(--font-table-cell);
   color: var(--red);
 }
+
+/* ==========================================================================
+   ETF TRIADE — gevulde merk-KPI-tegels (richting U, open item #67)
+   De gedeelde NEUTRALE quick-stat/KPI-rijen krijgen de logo-triade
+   (blauw -> lime -> mint), cyclisch via :nth-child — geen HTML-wijziging.
+   Tegels met eigen betekenis-kleur (geld .bd-money, incidenten .id-kpi,
+   semantische .md-metric / .cmd-kpi) blijven ongemoeid. Tekstkleur volgt
+   per vulkleur voor leesbaarheid; werkt in light én dark.
+   ========================================================================== */
+
+/* Vulkleur 1 — blauw */
+.md-quickstats > .md-qstat:nth-child(3n + 1),
+.bz-kpis > .bz-kpi:nth-child(3n + 1),
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link):nth-child(3n + 1) {
+  background: var(--etf-blue);
+  border-color: transparent;
+  --tile-fg: #ffffff;
+  --tile-fg-muted: rgba(255, 255, 255, 0.86);
+}
+/* Vulkleur 2 — lime */
+.md-quickstats > .md-qstat:nth-child(3n + 2),
+.bz-kpis > .bz-kpi:nth-child(3n + 2),
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link):nth-child(3n + 2) {
+  background: var(--etf-lime);
+  border-color: transparent;
+  --tile-fg: #22330c;
+  --tile-fg-muted: #33500f;
+}
+/* Vulkleur 3 — mint */
+.md-quickstats > .md-qstat:nth-child(3n),
+.bz-kpis > .bz-kpi:nth-child(3n),
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link):nth-child(3n) {
+  background: var(--etf-mint);
+  border-color: transparent;
+  --tile-fg: #173b31;
+  --tile-fg-muted: #2c5e4f;
+}
+
+/* Dark: blauwe vulling iets dieper zodat witte tekst leesbaar blijft */
+[data-theme="dark"] .md-quickstats > .md-qstat:nth-child(3n + 1),
+[data-theme="dark"] .bz-kpis > .bz-kpi:nth-child(3n + 1),
+[data-theme="dark"]
+  .mob-kpis:not(.mob-kpis--controle)
+  > .mob-kpi:not(.mob-kpi--link):nth-child(3n + 1) {
+  background: var(--etf-blue-deep);
+}
+
+/* Tekstkleuren overnemen uit de tile-vars (waarde = vol, label/sub = gedempt) */
+.md-quickstats > .md-qstat .md-qstat-val {
+  color: var(--tile-fg, var(--text));
+}
+.md-quickstats > .md-qstat .md-qstat-lbl {
+  color: var(--tile-fg-muted, var(--text-muted));
+}
+.bz-kpis > .bz-kpi .bz-kpi-value,
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link) .mob-kpi-value {
+  color: var(--tile-fg, var(--text));
+}
+.bz-kpis > .bz-kpi .bz-kpi-label,
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link) .mob-kpi-label {
+  color: var(--tile-fg-muted, var(--text-muted));
+}
+.bz-kpis > .bz-kpi .bz-kpi-sub,
+.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link) .mob-kpi-sub {
+  color: var(--tile-fg-muted, var(--text-secondary));
+}

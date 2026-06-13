@@ -1,8 +1,34 @@
 # 67 — ETF Triade (richting U): dashboard KPI-tegels volkleuren
 
-**Status:** ⏳ TODO (vervolg op de app-brede recolor)
+**Status:** ✅ Gedaan voor de neutrale KPI-rijen (PR volgt). Semantisch-gekleurde
+rijen blijven bewust ongemoeid (zie hieronder).
 **Datum:** 2026-06-13
 **Context:** Website-redesign brainstorm → gekozen richting **U (ETF Triade)**.
+
+## Uitgevoerd (2026-06-13)
+
+De gevulde merk-tegels (blauw → lime → mint) zijn toegepast op de **gedeelde
+neutrale KPI-rijen** via `:nth-child`-cycling in `styles.css` — geen HTML-/JS-
+wijziging nodig:
+
+- `.md-quickstats > .md-qstat` → management-, hr-, compliance- en planner-dashboard
+- `.bz-kpis > .bz-kpi` → bezetting
+- `.mob-kpis:not(.mob-kpis--controle) > .mob-kpi:not(.mob-kpi--link)` → mobiliteit
+  (de klikbare controle-tegels houden hun hover-gedrag)
+
+Tekstkleur volgt per vulkleur (wit op blauw, donker op lime/mint) via
+`--tile-fg`/`--tile-fg-muted`; werkt in light én dark (blauw wordt in dark
+iets dieper voor leesbaarheid). Geverifieerd met een render van de echte
+classes + `styles.css` (light + dark).
+
+**Bewust NIET ingekleurd** (houden hun betekenis-kleur):
+- `.bd-money` (geld: rood=openstaand, oranje=wacht, groen=betaald)
+- `.id-kpi` (incidenten: per-status kleuren)
+- `.md-metric` en `.cmd-kpi` (semantische rood/oranje/groen op de waarde)
+
+### Eventueel later
+- JS-gegenereerde rijen `.cmd-kpis` en `.md-metric-grid` dragen al semantische
+  kleuren; alleen als de gebruiker daar óók de triade wil, kan dat per JS-template.
 
 ## Wat is al gedaan
 
