@@ -15,7 +15,10 @@
  *    in dezelfde coördinatenruimte als de sectie-rects — daardoor is de
  *    vergelijking ongevoelig voor de globale html{zoom:1.1}.
  *
- * Alleen actief op de management-dashboard pagina.
+ * Actief op elke pagina met de body-class `page-management-dashboard` en een
+ * `.side-nav` met anker-links (`href="#..."`) naar secties op de pagina. Dat is
+ * naast het management-dashboard ook het planner-dashboard, dat dezelfde
+ * dashboard-shell + sectie-zijbalk hergebruikt.
  */
 (function () {
   "use strict";

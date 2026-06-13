@@ -27553,6 +27553,17 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .md-subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: var(--font-md); text-transform: capitalize; }
 .md-header-actions { display: flex; align-items: center; gap: 12px; }
 .md-updated { font-size: var(--font-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+/* "Open planning" is een <a> die als .btn-primary wordt gestyled. Zonder reset
+   krijgt een anker de browser-default onderstreping (een lijntje midden door de
+   knop) en wordt de pill niet netjes verticaal gecentreerd t.o.v. de echte
+   <button> ernaast. inline-flex + centreren + text-decoration:none laat de link
+   exact als een knop renderen. */
+.md-refresh-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
 
 /* Signaleringsstrip */
 .md-signals { display: flex; flex-direction: column; gap: 8px; }
