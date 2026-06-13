@@ -14,20 +14,23 @@
   <title>Inloggen — Future Flow</title>
   <link rel="stylesheet" href="styles.css?v=918f1ad">
   <style>
+    /* Login — volledig op de huisstijl-tokens uit styles.css (licht + donker).
+       Geen losse hex/px meer; dark-mode kantelt automatisch mee via :root-tokens. */
     body {
       margin: 0;
       min-height: 100vh;
-      background: #f5f7fb;
+      background: var(--bg-muted);
+      color: var(--text);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     .login-card {
       width: min(420px, 92vw);
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(20, 38, 80, 0.10), 0 2px 6px rgba(20, 38, 80, 0.05);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-pop);
       padding: 36px 32px 28px;
     }
     .login-logo {
@@ -38,106 +41,111 @@
     }
     .login-title {
       margin: 0 0 4px;
-      font-size: 22px;
-      font-weight: 600;
-      color: #1a2540;
+      font-size: var(--font-4xl);
+      font-weight: 700;
+      color: var(--text);
       text-align: center;
     }
     .login-sub {
       margin: 0 0 22px;
-      font-size: 14px;
-      color: #6b7798;
+      font-size: var(--font-md);
+      color: var(--text-muted);
       text-align: center;
     }
     .login-form { display: flex; flex-direction: column; gap: 14px; }
     .login-field { display: flex; flex-direction: column; gap: 6px; }
     .login-field label {
-      font-size: 13px;
+      font-size: var(--font-rg);
       font-weight: 500;
-      color: #1a2540;
+      color: var(--text);
     }
     .login-field input {
       width: 100%;
       box-sizing: border-box;
       padding: 11px 13px;
-      border: 1px solid #d4dae8;
-      border-radius: 8px;
-      font-size: 15px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--r-xs);
+      background: var(--surface);
+      color: var(--text);
+      font-size: var(--font-lg);
+      font-family: inherit;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .login-field input:focus {
-      border-color: #2962ff;
-      box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.15);
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-soft);
     }
     .login-error {
       margin: 0;
       padding: 10px 12px;
-      background: #fdecec;
-      border: 1px solid #f5c2c2;
-      color: #a3302a;
-      border-radius: 8px;
-      font-size: 13px;
+      background: var(--red-soft);
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: var(--r-xs);
+      font-size: var(--font-rg);
     }
     .login-btn {
       margin-top: 6px;
       width: 100%;
       padding: 12px 16px;
-      background: #2962ff;
+      background: var(--blue);
       color: #fff;
       border: none;
-      border-radius: 8px;
-      font-size: 15px;
+      border-radius: var(--r-pill);
+      font-size: var(--font-lg);
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      font-family: inherit;
+      transition: filter 0.15s;
     }
-    .login-btn:hover:not(:disabled) { background: #1f54e0; }
-    .login-btn:disabled { background: #9bb4f3; cursor: not-allowed; }
+    .login-btn:hover:not(:disabled) { filter: brightness(0.93); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .login-foot {
       margin-top: 18px;
-      font-size: 12px;
-      color: #6b7798;
+      font-size: var(--font-sm);
+      color: var(--text-muted);
       text-align: center;
     }
     .login-foot:not(:first-of-type) { margin-top: 6px; }
     .login-forgot-link {
-      color: #2962ff;
+      color: var(--blue);
       text-decoration: none;
-      font-size: 13px;
+      font-size: var(--font-rg);
     }
     .login-forgot-link:hover { text-decoration: underline; }
 
     .login-modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(20, 38, 80, 0.55);
+      background: rgba(0, 0, 0, 0.5);
       display: flex; align-items: center; justify-content: center;
       z-index: 9999;
       padding: 16px;
     }
     .login-modal-overlay[hidden] { display: none; }
     .login-modal-card {
-      background: #fff;
+      background: var(--surface);
       width: min(440px, 92vw);
-      border-radius: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
       padding: 28px 28px 22px;
-      box-shadow: 0 18px 60px rgba(20, 38, 80, 0.18);
+      box-shadow: var(--shadow-pop);
     }
     .login-modal-title {
       margin: 0 0 14px;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1a2540;
+      font-size: var(--font-2xl);
+      font-weight: 700;
+      color: var(--text);
     }
     .login-modal-body {
       margin: 0 0 12px;
-      font-size: 14px;
+      font-size: var(--font-md);
       line-height: 1.5;
-      color: #1a2540;
+      color: var(--text);
     }
     .login-modal-body--muted {
-      color: #6b7798;
-      font-size: 13px;
+      color: var(--text-muted);
+      font-size: var(--font-rg);
     }
     .login-modal-actions {
       display: flex;
