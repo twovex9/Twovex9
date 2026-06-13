@@ -24,18 +24,18 @@
   <style>
     /* ── ZZP proforma-overzicht: nieuwe componenten (var()-tokens → dark-mode gratis) ── */
     .zf-loc-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 14px;}
-    .zf-loc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s,box-shadow .12s;text-align:left;}
+    .zf-loc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;cursor:pointer;transition:border-color .12s,box-shadow .12s;text-align:left;}
     .zf-loc:hover,.zf-loc:focus-visible{border-color:var(--blue);box-shadow:0 1px 8px rgba(58, 143, 196,.10);outline:none;}
     .zf-loc.is-active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset;}
     .zf-loc-naam{display:block;font-size:12.5px;font-weight:650;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .zf-loc-bedrag{display:block;font-size:16px;font-weight:750;color:var(--text);letter-spacing:-.01em;}
-    .zf-loc-sub{display:block;font-size:11px;color:var(--text-muted,var(--text-muted));margin-top:2px;}
+    .zf-loc-bedrag{display:block;font-size:var(--font-xl);font-weight:750;color:var(--text);letter-spacing:-.01em;}
+    .zf-loc-sub{display:block;font-size:var(--font-xs);color:var(--text-muted,var(--text-muted));margin-top:2px;}
     .zf-loc--all .zf-loc-naam{color:var(--blue);}
-    .zf-sec-t{font-size:14px;font-weight:700;color:var(--text);margin:0;}
-    .zf-sec-s{font-size:12px;color:var(--text-muted,var(--text-muted));margin:2px 0 0;}
+    .zf-sec-t{font-size:var(--font-md);font-weight:700;color:var(--text);margin:0;}
+    .zf-sec-s{font-size:var(--font-sm);color:var(--text-muted,var(--text-muted));margin:2px 0 0;}
     .zf-strip-head{display:flex;align-items:baseline;justify-content:space-between;margin:4px 0 9px;gap:12px;flex-wrap:wrap;}
     /* status-pills */
-    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.7;white-space:nowrap;}
+    .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:var(--r-pill);font-size:var(--font-xs);font-weight:650;line-height:1.7;white-space:nowrap;}
     .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:var(--text-secondary);}
     .zf-pill--ingediend{background:rgba(58, 143, 196,.14);color:var(--blue);}
     .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:var(--pink);}
@@ -54,7 +54,7 @@
     .zf-sig--oranje{background:var(--yellow);box-shadow:0 0 0 2px rgba(245,158,11,.18);}
     .zf-row{cursor:pointer;}
     .zf-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zf-bureau-tag{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,var(--text-muted));background:var(--chip-bg,rgba(100,116,139,.10));border-radius:5px;padding:1px 6px;margin-left:6px;}
+    .zf-bureau-tag{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,var(--text-muted));background:var(--chip-bg,rgba(100,116,139,.10));border-radius:var(--r-xs);padding:1px 6px;margin-left:6px;}
     .zf-gen-note{font-size:11.5px;color:var(--text-muted,var(--text-muted));}
   </style>
 </head>
