@@ -360,7 +360,11 @@
 
     var wrap = document.createElement("div");
     wrap.id = "besa-auth-badge";
-    wrap.style.cssText = "position:relative;display:inline-flex;align-items:center;margin-left:auto;padding:0 14px";
+    // Compacte cluster rechtsboven: kleine tussenruimte naar het belletje
+    // (padding-left) en dicht tegen de rechterhoek (kleine padding-right +
+    // de topbar-padding). Voorheen 14px aan beide kanten — dat duwde de
+    // avatar onnodig ver van de bel én van de hoek, wat bovenaan ruimte kostte.
+    wrap.style.cssText = "position:relative;display:inline-flex;align-items:center;margin-left:auto;padding:0 4px";
 
     var avatarBtn = document.createElement("button");
     avatarBtn.type = "button";
