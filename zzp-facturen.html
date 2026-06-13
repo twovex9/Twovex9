@@ -25,22 +25,22 @@
     /* ── ZZP proforma-overzicht: nieuwe componenten (var()-tokens → dark-mode gratis) ── */
     .zf-loc-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 14px;}
     .zf-loc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s,box-shadow .12s;text-align:left;}
-    .zf-loc:hover,.zf-loc:focus-visible{border-color:var(--accent,#2563eb);box-shadow:0 1px 8px rgba(37,99,235,.10);outline:none;}
-    .zf-loc.is-active{border-color:var(--accent,#2563eb);box-shadow:0 0 0 1px var(--accent,#2563eb) inset;}
+    .zf-loc:hover,.zf-loc:focus-visible{border-color:var(--accent,#3a8fc4);box-shadow:0 1px 8px rgba(58, 143, 196,.10);outline:none;}
+    .zf-loc.is-active{border-color:var(--accent,#3a8fc4);box-shadow:0 0 0 1px var(--accent,#3a8fc4) inset;}
     .zf-loc-naam{display:block;font-size:12.5px;font-weight:650;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .zf-loc-bedrag{display:block;font-size:16px;font-weight:750;color:var(--text);letter-spacing:-.01em;}
     .zf-loc-sub{display:block;font-size:11px;color:var(--text-muted,#64748b);margin-top:2px;}
-    .zf-loc--all .zf-loc-naam{color:var(--accent,#2563eb);}
+    .zf-loc--all .zf-loc-naam{color:var(--accent,#3a8fc4);}
     .zf-sec-t{font-size:14px;font-weight:700;color:var(--text);margin:0;}
     .zf-sec-s{font-size:12px;color:var(--text-muted,#64748b);margin:2px 0 0;}
     .zf-strip-head{display:flex;align-items:baseline;justify-content:space-between;margin:4px 0 9px;gap:12px;flex-wrap:wrap;}
     /* status-pills */
     .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.7;white-space:nowrap;}
     .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
-    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
+    .zf-pill--ingediend{background:rgba(58, 143, 196,.14);color:#1d4ed8;}
     .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
-    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
-    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
+    .zf-pill--goedgekeurd{background:rgba(140, 198, 63,.15);color:#15803d;}
+    .zf-pill--afgewezen{background:rgba(207, 75, 58,.14);color:#b91c1c;}
     .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
     [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
     [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
@@ -50,7 +50,7 @@
     [data-theme="dark"] .zf-pill--klaar_voor_betaling{background:rgba(45,212,191,.22);color:#5eead4;}
     /* signaal-stip 🔴/🟠 */
     .zf-sig{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:middle;}
-    .zf-sig--rood{background:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.18);}
+    .zf-sig--rood{background:#cf4b3a;box-shadow:0 0 0 2px rgba(207, 75, 58,.18);}
     .zf-sig--oranje{background:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18);}
     .zf-row{cursor:pointer;}
     .zf-num{text-align:right;font-variant-numeric:tabular-nums;}

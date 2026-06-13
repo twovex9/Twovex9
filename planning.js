@@ -60,7 +60,7 @@ const DEFAULT_AFDELINGEN = [
   "Zorg & dienstverlening",
 ];
 
-const GRID_ACCENT = ["#2563eb", "#16a34a", "#ca8a04", "#dc2626", "#7c3aed", "#db2777"];
+const GRID_ACCENT = ["#3a8fc4", "#5f8a23", "#c2830d", "#cf4b3a", "#7c3aed", "#db2777"];
 /** Vaste groep-kopjes voor 1-op-1/ambulant en achterwacht. Deze diensten worden
  *  — los van hun woonlocatie — onder één eigen kop gebundeld (user-eis 2026-06-06):
  *  alle 1-op-1's bij elkaar in één kopje, en de achterwacht helemaal onderaan
@@ -335,14 +335,14 @@ const PLANNING_LOCATIE_KLEUREN = {
   "magdalenenstraat": "#ec4899",
   "magdalenstraat": "#ec4899",
   "breedstraat": "#3b82f6",
-  "leonard bramerstraat": "#16a34a",
-  "leonard-bramerstraat": "#16a34a",
+  "leonard bramerstraat": "#5f8a23",
+  "leonard-bramerstraat": "#5f8a23",
   "zijperstraat": "#f97316",
   "voorburggracht": "#8b5cf6",
   "varnebroek": "#0891b2",
-  "achterwacht": "#dc2626",
+  "achterwacht": "#cf4b3a",
   "openstaande diensten": "#64748b",
-  "ambulant extern": "#ca8a04",
+  "ambulant extern": "#c2830d",
   "wlz": "#10b981",
 };
 

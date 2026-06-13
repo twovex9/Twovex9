@@ -172,15 +172,15 @@
         row.dataset.notifId = n.id;
         row.style.cssText = "display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;text-decoration:none;color:var(--text);transition:background 0.15s ease";
         if (!n.is_read) {
-          row.style.background = "var(--blue-soft,rgba(37,99,235,0.05))";
+          row.style.background = "var(--blue-soft,rgba(58, 143, 196,0.05))";
         }
         row.innerHTML = '<div style="font-size:13px;font-weight:500;line-height:1.4">' + escapeHtml(n.title) + '</div>'
           + '<div style="font-size:11px;color:var(--text-muted)">' + escapeHtml(formatTimeAgo(n.created_at)) + '</div>';
         row.addEventListener("mouseover", function () {
-          row.style.background = n.is_read ? "var(--surface-alt,#f7f8fa)" : "var(--blue-soft,rgba(37,99,235,0.08))";
+          row.style.background = n.is_read ? "var(--surface-alt,#f7f8fa)" : "var(--blue-soft,rgba(58, 143, 196,0.08))";
         });
         row.addEventListener("mouseout", function () {
-          row.style.background = n.is_read ? "transparent" : "var(--blue-soft,rgba(37,99,235,0.05))";
+          row.style.background = n.is_read ? "transparent" : "var(--blue-soft,rgba(58, 143, 196,0.05))";
         });
         row.addEventListener("click", function (e) {
           // Markeer als gelezen voor navigation, maar laat href doorgaan
@@ -304,7 +304,7 @@
       + '"></span>';
 
     wrap.addEventListener("mouseover", function () {
-      wrap.style.background = "var(--blue-soft, rgba(37,99,235,0.08))";
+      wrap.style.background = "var(--blue-soft, rgba(58, 143, 196,0.08))";
     });
     wrap.addEventListener("mouseout", function () {
       wrap.style.background = "transparent";

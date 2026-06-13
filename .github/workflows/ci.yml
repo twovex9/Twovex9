@@ -126,6 +126,28 @@ jobs:
           fi
           echo "No forbidden browser-popup calls found in production code"
 
+      # --- Huisstijl: geen oude palet-kleuren (ETF Triade consistentie) ---
+      - name: House-style color consistency
+        run: |
+          set -e
+          # Na de ETF-recolor (richting U) mogen de OUDE merk-kleuren nergens
+          # meer in de app-code staan — alles loopt via :root-tokens, zodat
+          # light/dark + huisstijl overal kloppen. scripts/ = eenmalige BS2-
+          # migratie/console-tooling en valt buiten de app-UI (niet gescand).
+          FILES=$(ls styles.css *.html *.js 2>/dev/null || true)
+          HEX='#(2563eb|16a34a|dc2626|ca8a04)'
+          RGBA='rgba\((37, ?99, ?235|22, ?163, ?74|220, ?38, ?38|202, ?138, ?4),'
+          HITS=$(grep -niE "$HEX|$RGBA" $FILES 2>/dev/null || true)
+          if [ -n "$HITS" ]; then
+            echo "Oude palet-kleuren gevonden — gebruik de :root-tokens i.p.v. hardcoded oud-merk:"
+            echo "$HITS" | sed 's/^/  /'
+            echo ""
+            echo "Mapping: #2563eb->var(--blue)  #16a34a->var(--green)  #dc2626->var(--red)  #ca8a04->var(--yellow)"
+            echo "rgba-tinten -> var(--*-soft). Zie .claude/huisstijl.md (ETF Triade)."
+            exit 1
+          fi
+          echo "Geen oude palet-kleuren in app-code (ETF Triade consistent)"
+
       # --- Secrets-leak basic scan ---
       - name: Secrets-leak basic scan
         run: |

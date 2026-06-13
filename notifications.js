@@ -82,7 +82,7 @@
         "transition:background 0.15s ease",
       ].join(";");
       if (!n.is_read) {
-        row.style.background = "var(--blue-soft, rgba(37,99,235,0.04))";
+        row.style.background = "var(--blue-soft, rgba(58, 143, 196,0.04))";
       }
       var unreadDot = n.is_read ? "" :
         '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:8px;vertical-align:middle"></span>';
@@ -94,12 +94,12 @@
       row.addEventListener("mouseover", function () {
         row.style.background = n.is_read
           ? "var(--surface-alt, #f7f8fa)"
-          : "var(--blue-soft, rgba(37,99,235,0.08))";
+          : "var(--blue-soft, rgba(58, 143, 196,0.08))";
       });
       row.addEventListener("mouseout", function () {
         row.style.background = n.is_read
           ? "transparent"
-          : "var(--blue-soft, rgba(37,99,235,0.04))";
+          : "var(--blue-soft, rgba(58, 143, 196,0.04))";
       });
       row.addEventListener("click", function () {
         if (!n.is_read && window.notificationsDB && window.notificationsDB.markRead) {
