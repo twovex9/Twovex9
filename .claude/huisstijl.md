@@ -31,7 +31,7 @@ De interface draait op het ETF-logo-palet (blauw / lime / mint). Gebruik **altij
 
 Dark mode (`[data-theme="dark"]`) = ETF Dark (richting V); de tokens kantelen automatisch mee, dus code die tokens gebruikt klopt in beide thema's.
 
-**CI bewaakt dit**: de stap *"House-style color consistency"* in `.github/workflows/ci.yml` laat de build **falen** zodra een oude palet-kleur (hex of rgba) in `*.css`/`*.html`/`*.js` belandt. Nieuwe code blijft zo vanzelf consistent.
+**CI bewaakt dit**: de stap *"House-style color consistency"* in `.github/workflows/ci.yml` laat de build **falen** zodra een oude palet-kleur (hex of rgba) in `*.css`/`*.html`/`*.js` belandt. Aanvullend draait `scripts/check-consistency.mjs` (via `npm run build:check`, dus ook in CI) en faalt op: ETF-merkkleuren als losse hex in HTML, losse `border-radius:<n>px` in css/html/js, en losse `font-size:<n>px` in HTML — gebruik altijd de `--blue/--green/--red/--yellow` / `--r-*` / `--font-*` tokens (var-fallbacks + `<meta theme-color>` + `:0`/`:50%` mogen). Nieuwe code blijft zo vanzelf consistent.
 
 Gevulde KPI-tegels op dashboards: zie de `.md-quickstats` / `.bz-kpis` / `.mob-kpis` regels in `styles.css` (zoekterm `ETF TRIADE`) — neutrale KPI-rijen krijgen automatisch blauw → lime → mint via `:nth-child`.
 
