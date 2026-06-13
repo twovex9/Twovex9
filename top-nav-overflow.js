@@ -66,6 +66,7 @@
     "mijn-uren.html": "Mijn uren",
     // Planning
     "planning.html": "Planning",
+    "planner-dashboard.html": "Planning",
     "planning-beheer.html": "Planning",
     "beschikbaarheid-overzicht.html": "Planning",
     "open-diensten.html": "Planning",
@@ -78,8 +79,11 @@
     "productie-urenregistratie.html": "Urenregistratie",
     "urendeclaraties.html": "Urenregistratie",
     "uren-budgettering.html": "Urenregistratie",
+    "workforce-planning.html": "Urenregistratie",
     // HR
     "hr.html": "HR",
+    "hr-dashboard.html": "HR",
+    "compliance-dashboard.html": "HR",
     "medewerker.html": "HR",
     "medewerker-detail.html": "HR",
     "medewerkers-overzicht.html": "HR",
@@ -108,6 +112,7 @@
     "nieuws.html": "HR",
     // Cliënten
     "clienten.html": "Cliënten",
+    "clientmodule-dashboard.html": "Cliënten",
     "aanmeldingen.html": "Cliënten",
     "wachtlijst.html": "Cliënten",
     "client-detail.html": "Cliënten",
@@ -127,12 +132,14 @@
     // Incidenten en klachten (één gecombineerde top-level dropdown)
     "incidenten.html": "Incidenten en klachten",
     "incidenten-dashboard.html": "Incidenten en klachten",
+    "incidenten-analyse.html": "Incidenten en klachten",
     "incidenten-categorieen.html": "Incidenten en klachten",
     "incident-melden.html": "Incidenten en klachten",
     "verbeteringsmaatregelen.html": "Incidenten en klachten",
     "klachten.html": "Incidenten en klachten",
     // Kilometers
     "kilometers.html": "Kilometers",
+    "mobiliteit-dashboard.html": "Kilometers",
     "km-afstanden.html": "Kilometers",
     "km-afwijkingen.html": "Kilometers",
     // Facturen (top)
