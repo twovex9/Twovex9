@@ -192,41 +192,15 @@
 </div>
     </header>
 
-    <aside class="sidebar sidebar--clienten-nav" aria-label="Cliënten">
-      <nav class="side-nav" aria-label="Cliënten module">
-        <a href="clienten" class="side-link">Cliënten</a>
-        <a href="zorgsoorten" class="side-link">Zorgsoorten</a>
-        <div class="side-group" data-side-group="cl-beschikkingen">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-beschikkingen-btn" aria-expanded="false" aria-controls="cl-nav-beschikkingen-sub" aria-label="Beschikkingen, open submenu">
-            <span class="side-group__label">Beschikkingen</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-beschikkingen-sub" role="group" aria-label="Beschikkingen" hidden>
-            <a href="beschikkingen-dashboard" class="side-link side-link--nested">Dashboard</a>
-            <a href="beschikkingen" class="side-link side-link--nested">Overzicht</a>
-            <a href="facturen" class="side-link side-link--nested">Facturen</a>
-          </div>
-        </div>
-        <a href="organisatie" class="side-link">Organisatie</a>
-        <a href="gemeenten" class="side-link">Gemeenten</a>
-        <a href="facturen-importeren" class="side-link">Facturen importeren</a>
-        <div class="side-group" data-side-group="cl-incidenten">
-          <button type="button" class="side-link side-link--sub side-group__toggle" id="cl-nav-incidenten-btn" aria-expanded="true" aria-controls="cl-nav-incidenten-sub" aria-label="Incidenten, sluit submenu">
-            <span class="side-group__label">Incidenten</span>
-            <span class="side-chev" aria-hidden="true"></span>
-          </button>
-          <div class="side-group__panel" id="cl-nav-incidenten-sub" role="group" aria-label="Incidenten">
-            <a href="incidenten" class="side-link side-link--nested">Incidenten overzicht</a>
-            <a href="incidenten-dashboard" class="side-link side-link--nested is-active" aria-current="page">Dashboard</a>
-            <a href="incidenten-categorieen" class="side-link side-link--nested">Categorieën</a>
-            <a href="verbeteringsmaatregelen" class="side-link side-link--nested">Verbeteringsmaatregelen</a>
-          </div>
-        </div>
+    <aside class="sidebar" aria-label="Incidenten en klachten">
+      <nav class="side-nav">
+        <a href="incidenten" class="side-link">Incidenten overzicht</a>
+        <a href="incidenten-dashboard" class="side-link is-active" aria-current="page">Dashboard</a>
+        <a href="incidenten-analyse" class="side-link">Analyse &amp; kwaliteit</a>
+        <a href="incidenten-categorieen" class="side-link">Categorieën</a>
+        <a href="verbeteringsmaatregelen" class="side-link">Verbeteringsmaatregelen</a>
+        <a href="klachten" class="side-link">Klachten</a>
       </nav>
-      <div class="sidebar-footer">
-        <a class="side-nav-exit" href="hr">← Alle HR</a>
-        <span class="sidebar-hr-mark" aria-hidden="true">HR</span>
-      </div>
     </aside>
 
     <main class="content content--inc-dashboard">
