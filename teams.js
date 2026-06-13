@@ -255,7 +255,7 @@
         // Automatisch lid via de locatiekoppeling → read-only (beheer via HR).
         return '<div style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm,8px);">' +
           '<span style="flex:1;">' + naam + '</span>' +
-          '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--blue-soft);color:var(--blue);white-space:nowrap;">via locatie</span>' +
+          '<span style="font-size:11px;padding:2px 8px;border-radius:var(--r-pill);background:var(--blue-soft);color:var(--blue);white-space:nowrap;">via locatie</span>' +
           '</div>';
       }
       // Handmatig lidmaatschap → rol-keuze + verwijderen.

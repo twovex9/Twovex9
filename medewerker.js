@@ -2713,7 +2713,7 @@ function initLocatiesSection() {
         const tag = document.createElement("span");
         tag.textContent = "kantoor";
         tag.title = "Kantoor-/overheadlocatie — telt niet mee voor planning-zichtbaarheid";
-        tag.style.cssText = "margin-left:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:999px;background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45)";
+        tag.style.cssText = "margin-left:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:var(--r-pill);background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45)";
         left.append(tag);
       }
       const check = document.createElement("span");
