@@ -971,8 +971,8 @@
   <script src="competenties-data.js?v=918f1ad"></script>
   <script src="verlof-data.js?v=918f1ad"></script>
   <script src="dienst-detail.js?v=918f1ad"></script>
-  <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export — lazy op idle (perf), niet render-blokkerend -->
+  <script src="besa-lazy-libs.js" data-libs="xlsx20" defer></script>
   <script src="planning-generator.js?v=918f1ad"></script>
   <script src="besa-time-typing.js?v=918f1ad"></script>
   <script src="planning.js?v=918f1ad"></script>
