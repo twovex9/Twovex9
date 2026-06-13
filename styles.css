@@ -84,6 +84,7 @@ html.besa-page-ready main.content { visibility: visible; }
   --sidebar-bg: #ffffff;
   --sidebar-active: #e0efe9;  /* ETF mint-tint voor actief menu-item */
 
+  --r-2xs: 4px;
   --r-xs: 10px;
   --r-sm: 14px;
   --r-md: 18px;
@@ -12933,7 +12934,7 @@ button.planning-erm-new {
   padding: 7px 8px 8px 10px;
   line-height: 1.2;
   border-left-width: 9px;
-  border-radius: var(--r-xs) var(--r-xs) var(--r-xs) var(--r-xs);
+  border-radius: var(--r-2xs) var(--r-xs) var(--r-xs) var(--r-xs);
   gap: 0;
 }
 
@@ -13321,7 +13322,7 @@ button.planning-erm-new {
   line-height: 1;
   color: #fff;
   background: var(--ps-b91c1c);
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   flex-shrink: 0;
 }
 
@@ -17774,7 +17775,7 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 .bd-leg-s {
   width: 10px;
   height: 10px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   flex-shrink: 0;
 }
 .bd-leg--g .bd-leg-s {
@@ -17854,7 +17855,7 @@ html[data-planning-top="collapsed"] .planning-top-toggle__hint:not(:empty) { dis
 .bd-stack-seg {
   min-height: 1px;
   width: 100%;
-  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  border-radius: var(--r-2xs) var(--r-xs) 0 0;
 }
 .bd-s--g {
   background: var(--green);
@@ -18358,7 +18359,7 @@ a.bd-vbar-col:hover .bd-vbar { filter: brightness(0.93); }
 .bd-donut-leg-s {
   width: 12px;
   height: 12px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   flex-shrink: 0;
 }
 .bd-donut-leg-n { font-weight: 800; color: var(--text); margin-left: auto; padding-left: 12px; }
@@ -20994,7 +20995,7 @@ button.besc-dtl-tab:hover {
   grid-column: 1 / 3; grid-row: 2 / 3;
   height: 6px;
   background: var(--bg-muted, var(--ps-f3f4f6));
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   overflow: hidden;
 }
 .id-bar-fill { height: 100%; border-radius: var(--r-xs); transition: width 320ms ease; }
@@ -21045,7 +21046,7 @@ button.besc-dtl-tab:hover {
 .id-hm-scale {
   display: inline-block;
   width: 100px; height: 8px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   background: linear-gradient(90deg, rgba(58, 143, 196, 0.10), rgba(58, 143, 196, 0.95));
 }
 
@@ -21086,7 +21087,7 @@ button.besc-dtl-tab:hover {
 .id-toplist-bar {
   height: 4px;
   background: var(--bg-muted, var(--ps-f3f4f6));
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   overflow: hidden;
 }
 .id-toplist-bar-fill {
@@ -21287,7 +21288,7 @@ button.besc-dtl-tab:hover {
   background: rgba(58, 143, 196, 0.06);
   border: 1px solid rgba(58, 143, 196, 0.18);
   border-left-width: 3px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   padding: 10px 12px;
   font-size: 12.5px;
   color: var(--text-secondary);
@@ -22573,13 +22574,13 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 .fzz-sec-s { font-size: var(--font-ui-badge); color: var(--text-muted); margin: 2px 0 0; }
 .fzz-legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .fzz-leg { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-ui-badge); color: var(--text-secondary); }
-.fzz-leg-s { width: 12px; height: 12px; border-radius: var(--r-xs); display: inline-block; }
+.fzz-leg-s { width: 12px; height: 12px; border-radius: var(--r-2xs); display: inline-block; }
 .fzz-leg--exp .fzz-leg-s { background: var(--blue); }
 .fzz-leg--ok .fzz-leg-s { background: var(--green); }
 .fzz-leg--in .fzz-leg-s { background: var(--yellow); }
 .fzz-col { height: 230px; display: flex; flex-direction: column; justify-content: flex-end; flex: 1 1 0; min-width: 0; border: 0; background: transparent; cursor: pointer; padding: 0; }
 .fzz-pair { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 100%; }
-.fzz-stick { width: 16px; max-width: 18px; border-radius: var(--r-xs) var(--r-xs) 0 0; overflow: hidden; }
+.fzz-stick { width: 16px; max-width: 18px; border-radius: var(--r-2xs) var(--r-xs) 0 0; overflow: hidden; }
 .fzz-stick--exp { background: var(--blue); }
 .fzz-stick--in { display: flex; flex-direction: column; }
 .fzz-seg { width: 100%; display: block; }
@@ -25157,7 +25158,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .bd-tip-sw {
   width: 10px;
   height: 10px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   flex: 0 0 auto;
 }
 .bd-tip-nm {
@@ -26248,7 +26249,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
   color: var(--blue, #3a8fc4);
   background: rgba(58, 143, 196, 0.12);
   padding: 0 4px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-2xs);
   min-width: 14px;
   text-align: center;
   line-height: 14px;
@@ -26860,7 +26861,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 
 /* Patroon-strip: 12 weekblokjes, kleurintensiteit = aantal doorgegeven dagen */
 .bz-strip { display: inline-flex; gap: 2px; align-items: center; }
-.bz-cell { width: 11px; height: 18px; border-radius: var(--r-xs); background: var(--line); }
+.bz-cell { width: 11px; height: 18px; border-radius: var(--r-2xs); background: var(--line); }
 .bz-cell--l0 { background: var(--line); }
 .bz-cell--l1 { background: color-mix(in srgb, var(--blue) 28%, var(--surface)); }
 .bz-cell--l2 { background: color-mix(in srgb, var(--blue) 58%, var(--surface)); }
@@ -27110,7 +27111,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .fin-mcol:hover { background: var(--row-hover, rgba(0,0,0,0.04)); }
 .fin-mcol.is-active { background: var(--row-hover, rgba(0,0,0,0.06)); box-shadow: inset 0 0 0 1px var(--line); }
 .fin-mcol-bars { flex: 1 1 auto; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 4px; min-height: 0; }
-.fin-mbar { width: 38%; max-width: 26px; min-height: 2px; border-radius: var(--r-xs) var(--r-xs) 0 0; }
+.fin-mbar { width: 38%; max-width: 26px; min-height: 2px; border-radius: var(--r-2xs) var(--r-xs) 0 0; }
 .fin-mbar--omzet { background: var(--green); }
 .fin-mbar--kosten { background: var(--red); }
 .fin-mcol-lbl { font-size: var(--font-xs); color: var(--text-muted); text-align: center; }
@@ -27407,7 +27408,7 @@ button.besa-dr-day.is-edge:hover { background: var(--blue); }
 .vz-prog-txt { font-size: var(--font-rg); color: var(--text-secondary); }
 .vz-prog-txt b { color: var(--text); }
 .vz-prog-pct { font-size: var(--font-sm); font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.vz-prog-track { height: 8px; background: var(--bg-muted); border-radius: var(--r-xs); overflow: hidden; }
+.vz-prog-track { height: 8px; background: var(--bg-muted); border-radius: var(--r-2xs); overflow: hidden; }
 .vz-prog-fill { display: block; height: 100%; background: var(--green); border-radius: var(--r-xs); transition: width 320ms ease; }
 
 /* Poortwachter-tijdlijn */
@@ -27705,7 +27706,7 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 /* Mini week-trend (staafjes) */
 .vl-trend { display: flex; align-items: flex-end; gap: 8px; min-height: 92px; padding-top: 6px; }
 .vl-trend-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 28px; }
-.vl-trend-bar { width: 70%; max-width: 30px; min-height: 4px; background: var(--blue); border-radius: var(--r-xs) var(--r-xs) 0 0; }
+.vl-trend-bar { width: 70%; max-width: 30px; min-height: 4px; background: var(--blue); border-radius: var(--r-2xs) var(--r-xs) 0 0; }
 .vl-trend-lbl { font-size: var(--font-2xs); color: var(--text-muted); }
 .vl-trend-val { font-size: var(--font-xs); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
