@@ -57,7 +57,7 @@
       bar.style.cssText = [
         "position:fixed", "top:16px", "left:50%", "transform:translateX(-50%)",
         "z-index:5000", "max-width:min(520px,94vw)", "display:flex",
-        "align-items:flex-start", "gap:10px", "padding:13px 16px", "border-radius:14px",
+        "align-items:flex-start", "gap:10px", "padding:13px 16px", "border-radius:var(--r-sm)",
         "background:var(--surface,#fff)", "color:var(--text,#111)",
         "border:1px solid var(--red,#cf4b3a)", "box-shadow:0 12px 40px rgba(0,0,0,.22)",
         "font-size:14px", "line-height:1.4", "font-family:inherit"

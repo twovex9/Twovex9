@@ -130,7 +130,7 @@
           var nipBadge = document.createElement("span");
           nipBadge.textContent = "Niet in planning";
           nipBadge.title = "Kantoor-/overheadlocatie — telt niet mee voor planning-zichtbaarheid";
-          nipBadge.style.cssText = "margin-left:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45);white-space:nowrap;vertical-align:middle";
+          nipBadge.style.cssText = "margin-left:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);background:rgba(234,179,8,.16);color:var(--text);border:1px solid rgba(234,179,8,.45);white-space:nowrap;vertical-align:middle";
           tdNaam.appendChild(nipBadge);
         }
         tr.appendChild(tdNaam);
