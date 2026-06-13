@@ -159,24 +159,52 @@
 
   async function fetchAll() {
     if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    // Chunked fetch: PostgREST default limit is 1000 per query. Voor grotere
-    // datasets (planning kan duizenden records hebben) loopen we via .range()
-    // in chunks van 1000 tot we minder records terugkrijgen dan chunkSize.
+    // Chunked fetch: PostgREST geeft max 1000 rijen per query. De planning kan
+    // duizenden records hebben. Voorheen werden de chunks STRIKT SEQUENTIEEL
+    // opgehaald (elke chunk wachtte op de vorige) → bij 4000+ rijen ~5 round-
+    // trips ná elkaar. Nu halen we de eerste chunk mét exacte telling op en
+    // daarna alle resterende chunks PARALLEL. Identieke data én volgorde
+    // (zelfde ORDER BY + aaneengesloten .range()-vensters), maar ~5 seriële
+    // round-trips → ~2. Valt terug op sequentieel als de telling ontbreekt.
     var chunkSize = 1000;
-    var all = [];
-    var offset = 0;
-    while (true) {
-      var res = await global.besaSupabase
-        .from(TABLE)
-        .select("*")
+    function page(withCount, offset) {
+      var sel = withCount
+        ? global.besaSupabase.from(TABLE).select("*", { count: "exact" })
+        : global.besaSupabase.from(TABLE).select("*");
+      return sel
         .order("start_iso", { ascending: true, nullsFirst: false })
         .range(offset, offset + chunkSize - 1);
-      if (res.error) throw res.error;
-      var batch = res.data || [];
-      all = all.concat(batch);
-      if (batch.length < chunkSize) break;
-      offset += chunkSize;
-      if (offset > 50000) break; // safety
+    }
+    var first = await page(true, 0);
+    if (first.error) throw first.error;
+    var all = first.data || [];
+    var total = (typeof first.count === "number") ? first.count : null;
+
+    if (total === null) {
+      // Telling onbekend → sequentieel verder, exact zoals voorheen.
+      if (all.length >= chunkSize) {
+        var offset = chunkSize;
+        while (true) {
+          var res = await page(false, offset);
+          if (res.error) throw res.error;
+          var batch = res.data || [];
+          all = all.concat(batch);
+          if (batch.length < chunkSize) break;
+          offset += chunkSize;
+          if (offset > 50000) break; // safety
+        }
+      }
+    } else if (total > all.length) {
+      // Resterende chunks parallel ophalen.
+      var promises = [];
+      for (var off = chunkSize; off < total && off <= 50000; off += chunkSize) {
+        promises.push(page(false, off));
+      }
+      var rest = await Promise.all(promises);
+      for (var i = 0; i < rest.length; i += 1) {
+        if (rest[i].error) throw rest[i].error;
+        all = all.concat(rest[i].data || []);
+      }
     }
     return all.map(rowToObj).filter(Boolean);
   }
