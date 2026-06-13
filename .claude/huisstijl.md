@@ -16,6 +16,25 @@ Pas deze regel **standaard altijd** toe op alles wat je toevoegt of wijzigt in d
 
 Geen losse `font-size`, `color: #...` of `border-radius: 12px` in nieuwe code. Gebruik de variabele of bestaande utility-class.
 
+### ETF Triade (richting U) — de actieve huiskleuren
+
+De interface draait op het ETF-logo-palet (blauw / lime / mint). Gebruik **altijd** deze tokens; introduceer nooit de oude kleuren opnieuw.
+
+| Rol | Token | Light | Oud (VERBODEN) |
+|---|---|---|---|
+| Huiskleur / primair | `--blue` | `#3a8fc4` | ~~`#2563eb`~~ / ~~`rgba(37,99,235,*)`~~ |
+| Succes / actief | `--green` | `#5f8a23` (lime) | ~~`#16a34a`~~ / ~~`rgba(22,163,74,*)`~~ |
+| Waarschuwing | `--yellow` | `#c2830d` | ~~`#ca8a04`~~ / ~~`rgba(202,138,4,*)`~~ |
+| Fout / gevaar | `--red` | `#cf4b3a` | ~~`#dc2626`~~ / ~~`rgba(220,38,38,*)`~~ |
+| Zachte tint (achtergrond) | `--*-soft` | — | losse `rgba(<oud>,*)` |
+| Merk-tegels/accenten | `--etf-blue` / `--etf-lime` / `--etf-mint` (+ `*-deep`) | logo | — |
+
+Dark mode (`[data-theme="dark"]`) = ETF Dark (richting V); de tokens kantelen automatisch mee, dus code die tokens gebruikt klopt in beide thema's.
+
+**CI bewaakt dit**: de stap *"House-style color consistency"* in `.github/workflows/ci.yml` laat de build **falen** zodra een oude palet-kleur (hex of rgba) in `*.css`/`*.html`/`*.js` belandt. Nieuwe code blijft zo vanzelf consistent.
+
+Gevulde KPI-tegels op dashboards: zie de `.md-quickstats` / `.bz-kpis` / `.mob-kpis` regels in `styles.css` (zoekterm `ETF TRIADE`) — neutrale KPI-rijen krijgen automatisch blauw → lime → mint via `:nth-child`.
+
 ## Verplichte component-classes (her-)gebruiken
 
 | Onderdeel | Class | Mag NIET vervangen worden door |

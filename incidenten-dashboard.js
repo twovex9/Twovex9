@@ -489,8 +489,8 @@
     var total = afw + beh + op;
     var segments = [
       { key: "in_afwachting", label: "In afwachting", value: afw, color: "var(--yellow, #f59e0b)" },
-      { key: "in_behandeling", label: "In behandeling", value: beh, color: "var(--blue, #2563eb)" },
-      { key: "opgelost", label: "Opgelost", value: op, color: "var(--green, #16a34a)" },
+      { key: "in_behandeling", label: "In behandeling", value: beh, color: "var(--blue, #3a8fc4)" },
+      { key: "opgelost", label: "Opgelost", value: op, color: "var(--green, #5f8a23)" },
     ];
 
     var size = 200, r = 70, c = size / 2, sw = 28;
@@ -604,7 +604,7 @@
       for (var c = 0; c < 7; c++) {
         var v = grid[r][c];
         var alpha = max === 0 ? 0 : 0.10 + (v / max) * 0.85;
-        var bg = v === 0 ? "var(--bg-muted, #f3f4f6)" : "rgba(37, 99, 235, " + alpha.toFixed(2) + ")";
+        var bg = v === 0 ? "var(--bg-muted, #f3f4f6)" : "rgba(58, 143, 196, " + alpha.toFixed(2) + ")";
         var fg = (max > 0 && v / max > 0.5) ? "#fff" : "var(--text)";
         html += '<div class="id-hm-cell" title="' + SLOTS[r].lbl + ' — ' + DAY_LABELS[c] + ': ' + v + ' incident' + (v === 1 ? '' : 'en') + '" style="background:' + bg + ';color:' + fg + '">' + (v || "") + '</div>';
       }
@@ -751,9 +751,9 @@
     // allemaal (geen top-5-afkapping). by_location komt uit de BS2-locatie
     // (data.bs2_scrape.location → locatieBs2); de BS1-FK locatie_id is bij
     // de gereconcilieerde incidenten leeg.
-    renderBars("id-bars-categorie", function (r) { return r.categorie || "Overig"; }, { top: 99, color: "var(--blue, #2563eb)" });
+    renderBars("id-bars-categorie", function (r) { return r.categorie || "Overig"; }, { top: 99, color: "var(--blue, #3a8fc4)" });
     renderBars("id-bars-locatie", function (r) { return (r.locatieBs2 && r.locatieBs2.name) || null; }, {
-      top: 99, color: "var(--green, #16a34a)",
+      top: 99, color: "var(--green, #5f8a23)",
       labelFn: function (k) { return k; },
     });
     renderHeatmap();

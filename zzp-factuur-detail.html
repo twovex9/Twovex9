@@ -20,15 +20,15 @@
   <meta name="apple-mobile-web-app-title" content="Future Flow">
   <style>
     .zf-back{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-muted,#64748b);text-decoration:none;margin:0 0 8px;}
-    .zf-back:hover{color:var(--accent,#2563eb);}
+    .zf-back:hover{color:var(--accent,#3a8fc4);}
     .zd-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--text-muted,#64748b);margin-top:3px;}
     .zd-meta strong{color:var(--text);font-weight:600;}
     .zf-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:999px;font-size:12px;font-weight:650;}
     .zf-pill--klaargezet{background:rgba(100,116,139,.14);color:#475569;}
-    .zf-pill--ingediend{background:rgba(37,99,235,.14);color:#1d4ed8;}
+    .zf-pill--ingediend{background:rgba(58, 143, 196,.14);color:#1d4ed8;}
     .zf-pill--in_behandeling{background:rgba(168,85,247,.16);color:#7e22ce;}
-    .zf-pill--goedgekeurd{background:rgba(22,163,74,.15);color:#15803d;}
-    .zf-pill--afgewezen{background:rgba(220,38,38,.14);color:#b91c1c;}
+    .zf-pill--goedgekeurd{background:rgba(140, 198, 63,.15);color:#15803d;}
+    .zf-pill--afgewezen{background:rgba(207, 75, 58,.14);color:#b91c1c;}
     .zf-pill--klaar_voor_betaling{background:rgba(13,148,136,.16);color:#0f766e;}
     [data-theme="dark"] .zf-pill--klaargezet{background:rgba(148,163,184,.18);color:#cbd5e1;}
     [data-theme="dark"] .zf-pill--ingediend{background:rgba(59,130,246,.22);color:#93c5fd;}
@@ -55,13 +55,13 @@
     .zd-inp{width:74px;font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;text-align:right;background:var(--card,var(--surface));color:var(--text);font-variant-numeric:tabular-nums;}
     tr.zd-removed{opacity:.5;}
     tr.zd-removed .zd-omschrijving{text-decoration:line-through;}
-    tr.zd-changed td{background:rgba(220,38,38,.05);}
+    tr.zd-changed td{background:rgba(207, 75, 58,.05);}
     .zd-del-btn{font:inherit;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card,var(--surface));color:#b91c1c;cursor:pointer;}
     .zd-del-btn.is-removed{color:#15803d;}
     .zd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
     .zd-sig-note{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
     .zd-sig{display:inline-block;width:10px;height:10px;border-radius:50%;}
-    .zd-sig--rood{background:#dc2626;} .zd-sig--oranje{background:#f59e0b;}
+    .zd-sig--rood{background:#cf4b3a;} .zd-sig--oranje{background:#f59e0b;}
     .zd-hint{font-size:11.5px;color:var(--text-muted,#64748b);grid-column:1/-1;}
     /* [hidden] moet winnen van display:grid/inline-flex (bekende valkuil) */
     .zd-zzpcard[hidden]{display:none;}
@@ -71,19 +71,19 @@
     .zd-grp--pf{color:var(--text-muted,#64748b);}
     .zd-grp--ing{color:#1d4ed8;}
     [data-theme="dark"] .zd-grp--ing{color:#93c5fd;}
-    td.zd-ing{background:rgba(37,99,235,.05);}
+    td.zd-ing{background:rgba(58, 143, 196,.05);}
     [data-theme="dark"] td.zd-ing{background:rgba(59,130,246,.10);}
     td.zd-chg{color:#b91c1c;font-weight:700;}
     [data-theme="dark"] td.zd-chg{color:#fca5a5;}
     .zd-banner{border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px;}
-    .zd-banner--afgewezen{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.25);}
-    .zd-banner--goedgekeurd{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.25);}
-    .zd-banner--ingediend{background:rgba(37,99,235,.07);color:#1d4ed8;border:1px solid rgba(37,99,235,.22);}
+    .zd-banner--afgewezen{background:rgba(207, 75, 58,.08);color:#b91c1c;border:1px solid rgba(207, 75, 58,.25);}
+    .zd-banner--goedgekeurd{background:rgba(140, 198, 63,.08);color:#15803d;border:1px solid rgba(140, 198, 63,.25);}
+    .zd-banner--ingediend{background:rgba(58, 143, 196,.07);color:#1d4ed8;border:1px solid rgba(58, 143, 196,.22);}
     .zd-betaalveld{margin-top:10px;}
     .zd-betaalveld label{display:block;font-size:12px;margin-bottom:4px;font-weight:600;}
     .zd-termijn-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
     .zd-termijn-opts button{padding:4px 12px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:transparent;cursor:pointer;font:inherit;font-size:13px;color:var(--text,inherit);}
-    .zd-termijn-opts button.is-active{background:#2563eb;color:#fff;border-color:#2563eb;}
+    .zd-termijn-opts button.is-active{background:#3a8fc4;color:#fff;border-color:#3a8fc4;}
     .zd-betaalveld input{width:120px;box-sizing:border-box;padding:7px 8px;border-radius:8px;border:1px solid var(--border,#d1d5db);background:var(--bg,#fff);color:var(--text,inherit);font:inherit;}
     .zd-betaalveld .zd-betaaldatum-prev{font-size:12px;margin-top:6px;opacity:.85;}
     .zd-opm-card{border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:14px 16px;margin-top:16px;background:var(--surface,#fff);color:var(--text,inherit);}
@@ -91,8 +91,8 @@
     .zd-opm-card .zd-opm-sub{font-size:12px;opacity:.7;margin:0 0 12px;}
     .zd-opm-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
     .zd-opm{border-radius:10px;padding:8px 12px;font-size:13px;border:1px solid var(--border,#e5e7eb);}
-    .zd-opm--zzp{background:rgba(37,99,235,.12);}
-    .zd-opm--controleur{background:rgba(22,163,74,.12);}
+    .zd-opm--zzp{background:rgba(58, 143, 196,.12);}
+    .zd-opm--controleur{background:rgba(140, 198, 63,.12);}
     .zd-opm-head{font-size:11px;opacity:.7;margin-bottom:3px;display:flex;justify-content:space-between;gap:10px;}
     .zd-opm-empty{font-size:13px;opacity:.65;margin-bottom:12px;}
     .zd-opm-form{display:flex;flex-direction:column;gap:6px;}

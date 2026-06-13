@@ -86,7 +86,7 @@
       "  transition:background .12s,border-color .12s;",
       "}",
       ".besa-cal-nav:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
-      ".besa-cal-nav:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:2px;}",
+      ".besa-cal-nav:focus-visible{outline:2px solid var(--blue,#3a8fc4);outline-offset:2px;}",
 
       ".besa-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}",
       ".besa-cal-dow span{text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#737373);padding:4px 0;}",
@@ -100,10 +100,10 @@
       "  transition:background .1s,color .1s;",
       "}",
       ".besa-cal-day:hover:not([disabled]){background:var(--fill-hover,rgba(0,0,0,.06));}",
-      ".besa-cal-day:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:-2px;}",
+      ".besa-cal-day:focus-visible{outline:2px solid var(--blue,#3a8fc4);outline-offset:-2px;}",
       ".besa-cal-day.is-other{color:var(--text-muted,#9ca3af);opacity:.55;}",
-      ".besa-cal-day.is-today{box-shadow:inset 0 0 0 1.5px var(--blue,#2563eb);font-weight:650;}",
-      ".besa-cal-day.is-selected{background:var(--blue,#2563eb)!important;color:#fff!important;font-weight:650;}",
+      ".besa-cal-day.is-today{box-shadow:inset 0 0 0 1.5px var(--blue,#3a8fc4);font-weight:650;}",
+      ".besa-cal-day.is-selected{background:var(--blue,#3a8fc4)!important;color:#fff!important;font-weight:650;}",
       ".besa-cal-day[disabled]{color:var(--text-muted,#9ca3af);opacity:.35;cursor:not-allowed;}",
 
       ".besa-cal-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#e5e5e5);}",
@@ -114,7 +114,7 @@
       "}",
       ".besa-cal-btn:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
       ".besa-cal-btn--clear{color:var(--text-muted,#737373);}",
-      ".besa-cal-btn--today{color:var(--blue,#2563eb);border-color:var(--blue-soft,rgba(37,99,235,.4));}",
+      ".besa-cal-btn--today{color:var(--blue,#3a8fc4);border-color:var(--blue-soft,rgba(58, 143, 196,.4));}",
     ].join("\n");
     var style = document.createElement("style");
     style.id = "besa-cal-styles";
