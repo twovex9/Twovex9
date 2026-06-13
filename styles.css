@@ -22403,6 +22403,18 @@ a.im-bijlage-name:hover { color: var(--blue); text-decoration: underline; }
 
 .content--fact-tb { padding-top: 24px; }
 
+/* Periodekeuze rechtsboven (Per maand | Periode + maandkiezer): de segment-
+   knoppen en de maandkiezer blijven als één geheel op dezelfde regel. Zonder
+   dit wrapt de maandkiezer bij smallere vensters (half/klein tabblad) naar een
+   tweede regel en zakt hij in de "Te beoordelen"-kaart. Door nowrap zakt het
+   hele blok netjes als geheel onder de titel i.p.v. de kaarten in te lopen. */
+.content--fact-tb .header-actions { align-items: flex-start; }
+.content--fact-tb .bd-periode { flex-wrap: nowrap; }
+/* Op telefoonbreedte staan de kaarten toch al gestapeld: wrap weer toestaan. */
+@media (max-width: 480px) {
+  .content--fact-tb .bd-periode { flex-wrap: wrap; }
+}
+
 /* 2 stat-cards bovenaan */
 .fact-tb-stats {
   display: grid;
