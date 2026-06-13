@@ -313,6 +313,11 @@
     profielLink.addEventListener("mouseout", function () { profielLink.style.background = "transparent"; });
     dd.appendChild(profielLink);
 
+    // Thema-switcher (systeem / donker / licht) tussen "Mijn profiel" en "Uitloggen".
+    if (window.besaTheme && typeof window.besaTheme.buildSwitcher === "function") {
+      try { dd.appendChild(window.besaTheme.buildSwitcher()); } catch (e) { /* */ }
+    }
+
     // Uitloggen knop met shortcut
     var logoutBtn = document.createElement("button");
     logoutBtn.type = "button";
