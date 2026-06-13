@@ -25,13 +25,13 @@
   <meta name="apple-mobile-web-app-title" content="Future Flow">
   <style id="planning-ai-styles">
     /* ── Overlap-waarschuwing: medewerker dubbel ingeroosterd ── */
-    .planning-overlap-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid #cf4b3a;border-radius:9px;color:var(--red);font-size:13px;line-height:1.45;}
+    .planning-overlap-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid var(--red);border-radius:9px;color:var(--red);font-size:13px;line-height:1.45;}
     .planning-overlap-banner[hidden]{display:none;}
-    .planning-overlap-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#cf4b3a;color:#fff;font-weight:700;font-size:13px;}
+    .planning-overlap-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:13px;}
     .planning-overlap-banner__body{flex:1;min-width:0;}
     .planning-overlap-banner__title{font-weight:700;}
     .planning-overlap-banner__names{opacity:.92;}
-    .planning-overlap-banner__btn{flex:none;align-self:center;background:#cf4b3a;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+    .planning-overlap-banner__btn{flex:none;align-self:center;background:var(--red);color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
     .planning-overlap-banner__btn:hover{background:var(--red);}
     [data-theme="dark"] .planning-overlap-banner{background:rgba(207, 75, 58,.13);border-color:rgba(207, 75, 58,.42);border-left-color:var(--red);color:var(--red);}
     /* Detail-lijst: per medewerker de concrete overlappende diensten (dienst + tijd + locatie).
@@ -42,9 +42,9 @@
     .planning-overlap-banner__details:empty{display:none;}
     .planning-overlap-conf__more{margin-top:1px;font-size:12px;font-weight:600;opacity:.9;}
     /* Context-balk boven de gefilterde lijst (alleen dubbel-ingeroosterde diensten). */
-    .planning-overlap-listbar{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:10px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid #cf4b3a;border-radius:9px;color:var(--red);font-size:13px;line-height:1.4;}
+    .planning-overlap-listbar{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:10px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid var(--red);border-radius:9px;color:var(--red);font-size:13px;line-height:1.4;}
     .planning-overlap-listbar[hidden]{display:none;}
-    .planning-overlap-listbar__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#cf4b3a;color:#fff;font-weight:700;font-size:13px;}
+    .planning-overlap-listbar__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:13px;}
     .planning-overlap-listbar__txt{flex:1;min-width:0;font-weight:600;}
     .planning-overlap-listbar__actions{flex:none;display:flex;gap:8px;align-items:center;}
     .planning-overlap-listbar__btn{white-space:nowrap;}
@@ -57,9 +57,9 @@
     @keyframes planningJustEdited{0%{box-shadow:0 0 0 0 rgba(58, 143, 196,.55);}100%{box-shadow:0 0 0 7px rgba(58, 143, 196,0);}}
     .planning-erm-card--justedited{outline:2px solid var(--blue);outline-offset:1px;animation:planningJustEdited 1.3s ease-out 2;border-radius:10px;}
     /* Beschikking-urenbewaking-banner (cliënt zit boven de beschikte uren/week). */
-    .planning-besch-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid #cf4b3a;border-radius:9px;color:var(--red);font-size:13px;line-height:1.45;}
+    .planning-besch-banner{display:flex;align-items:flex-start;gap:11px;margin:2px 0 12px;padding:11px 14px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid var(--red);border-radius:9px;color:var(--red);font-size:13px;line-height:1.45;}
     .planning-besch-banner[hidden]{display:none;}
-    .planning-besch-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#cf4b3a;color:#fff;font-weight:700;font-size:13px;}
+    .planning-besch-banner__ico{flex:none;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:13px;}
     .planning-besch-banner__body{flex:1;min-width:0;}
     .planning-besch-banner__title{font-weight:700;}
     .planning-besch-banner__details{margin-top:8px;display:flex;flex-direction:column;gap:5px;padding-right:5px;}
@@ -84,7 +84,7 @@
     .planning-erm-tb-ai svg{width:15px;height:15px;}
 
     /* ── Generator-voorstel: waarschuwing in de modal ── */
-    .plgen-warn{display:flex;align-items:flex-start;gap:10px;margin:0 0 12px;padding:10px 13px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid #cf4b3a;border-radius:8px;color:var(--red);font-size:12.5px;line-height:1.4;}
+    .plgen-warn{display:flex;align-items:flex-start;gap:10px;margin:0 0 12px;padding:10px 13px;background:var(--surface-alt);border:1px solid var(--red-soft);border-left:4px solid var(--red);border-radius:8px;color:var(--red);font-size:12.5px;line-height:1.4;}
     .plgen-warn__ico{flex:none;font-weight:700;}
     [data-theme="dark"] .plgen-warn{background:rgba(207, 75, 58,.13);border-color:rgba(207, 75, 58,.42);border-left-color:var(--red);color:var(--red);}
 
@@ -103,7 +103,7 @@
     .plai-switch input{position:absolute;opacity:0;width:0;height:0;}
     .plai-switch__slider{position:absolute;inset:0;background:var(--surface-alt);border-radius:999px;transition:background .15s;cursor:pointer;}
     .plai-switch__slider::before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25);}
-    .plai-switch input:checked + .plai-switch__slider{background:#3a8fc4;}
+    .plai-switch input:checked + .plai-switch__slider{background:var(--blue);}
     .plai-switch input:checked + .plai-switch__slider::before{transform:translateX(18px);}
     [data-theme="dark"] .plai-row{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12);}
     [data-theme="dark"] .plai-switch__slider{background:var(--surface-alt);}
@@ -112,8 +112,8 @@
     .planning-loc-row{display:flex;gap:8px;align-items:stretch;}
     .planning-loc-row > select{flex:1 1 auto;min-width:0;}
     .planning-loc-addbtn{flex:0 0 auto;white-space:nowrap;border:1px solid var(--border);background:var(--surface-alt);color:var(--text-primary);border-radius:8px;padding:0 12px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;}
-    .planning-loc-addbtn:hover{background:var(--bg-card-hover,var(--surface));border-color:var(--brand,#3a8fc4);}
-    .planning-loc-addbtn[aria-expanded="true"]{background:var(--brand,#3a8fc4);border-color:var(--brand,#3a8fc4);color:#fff;}
+    .planning-loc-addbtn:hover{background:var(--bg-card-hover,var(--surface));border-color:var(--blue);}
+    .planning-loc-addbtn[aria-expanded="true"]{background:var(--blue);border-color:var(--blue);color:#fff;}
     .planning-loc-newform{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-alt);}
     .planning-loc-newhint{margin:0 0 8px;font-size:.8rem;color:var(--text-muted);}
     .planning-loc-newgrid{display:grid;grid-template-columns:1fr 1fr 70px;gap:8px;}
