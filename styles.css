@@ -2462,6 +2462,14 @@ h1 {
 .table-wrapper {
   min-width: 0;
   width: 100%;
+  /* Horizontaal scrollen moet altijd werken zodra de kolommen niet meer passen
+     (werkpatronen-regel #1), óók voor table-wrappers die NIET in een .table-card
+     zitten — zoals de tabellen op "Mijn gegevens" (documenten, loonstroken,
+     salarisontwikkeling, jaaropgaven, verzuim). Zonder dit groeit .employees-table
+     (width: max-content) buiten de kaart en loopt de halve tabel het scherm uit op
+     smalle schermen (tablet-halfscherm). .table-card .table-wrapper voegt hier nog
+     verticale scroll + max-height aan toe voor de grote datatabellen. */
+  overflow-x: auto;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
 }
