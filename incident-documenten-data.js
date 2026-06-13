@@ -29,7 +29,7 @@
  *  - incidentDocsDB.remove(id) → Promise<true>
  *  - incidentDocsDB.generateId() → "id_..."
  *
- * Events: "besa:incident-documenten-updated" met { incidentId } in detail.
+ * Events: "ff:incident-documenten-updated" met { incidentId } in detail.
  */
 (function (global) {
   "use strict";
@@ -46,7 +46,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[incidentDocsDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Incident-documenten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Incident-documenten — " + action, err);
   }
 
   // ---------------------------------------------------------------------------
@@ -81,17 +81,17 @@
   }
 
   function getPublicUrl(storagePath) {
-    if (!storagePath || !global.besaSupabase) return "";
+    if (!storagePath || !global.ffSupabase) return "";
     try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
+      var res = global.ffSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
       if (res && res.data && res.data.publicUrl) return res.data.publicUrl;
     } catch (e) { /* */ }
     return "";
   }
 
   function uploadToStorage(path, blob, mime) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .storage.from(BUCKET)
       .upload(path, blob, {
         contentType: mime || "application/octet-stream",
@@ -104,8 +104,8 @@
   }
 
   function deleteFromStorage(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve();
-    return global.besaSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
+    if (!path || !global.ffSupabase) return Promise.resolve();
+    return global.ffSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
       if (res.error) console.warn("[incidentDocsDB] storage remove warning:", res.error);
     });
   }
@@ -167,7 +167,7 @@
 
   function dispatchUpdated(incidentId) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:incident-documenten-updated", {
+      global.dispatchEvent(new CustomEvent("ff:incident-documenten-updated", {
         detail: { incidentId: incidentId || null },
       }));
     } catch (e) { /* */ }
@@ -201,8 +201,8 @@
   // ---------------------------------------------------------------------------
 
   function fetchByIncidentId(incidentId) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .from(TABLE).select("*")
       .eq("incident_id", incidentId)
       .order("uploaddatum", { ascending: false })
@@ -213,7 +213,7 @@
   }
 
   function insertRow(payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE).insert(payload).select().single()
       .then(function (res) {
         if (res.error) throw res.error;
@@ -222,7 +222,7 @@
   }
 
   function updateRow(id, payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE).update(payload).eq("id", id).select().single()
       .then(function (res) {
         if (res.error) throw res.error;
@@ -231,7 +231,7 @@
   }
 
   function deleteRow(id) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE).delete().eq("id", id)
       .then(function (res) {
         if (res.error) throw res.error;
@@ -294,7 +294,7 @@
     var fileMime = doc.fileMime || "";
     var fileSize = Number(doc.fileSize || 0);
 
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
 
     return maybeUploadFile(doc.incidentId, docId, fileDataUrl, fileName, fileMime)
       .then(function (uploadRes) {
@@ -329,7 +329,7 @@
     cacheUpsertOne(merged);
     dispatchUpdated(merged.incidentId);
 
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
 
     var payload = metadataPayload(merged);
     delete payload.id; delete payload.incident_id;

@@ -1,7 +1,7 @@
 // Idempotente sweep: voeg de "Klachten"-link toe aan de Cliënten-dropdown,
 // direct ná de "Incidenten"-dropdownlink, op elke pagina die die dropdown heeft.
 // Voor niet-bevoegde rollen wordt de link automatisch verborgen door
-// permissions-nav-hide.js. Run vanuit besa-suite-etf/: `node scripts/add-klachten-nav.mjs`
+// permissions-nav-hide.js. Run vanuit future-flow/: `node scripts/add-klachten-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

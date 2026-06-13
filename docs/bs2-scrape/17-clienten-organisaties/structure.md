@@ -1,7 +1,7 @@
 # Module 17 — Cliënten Organisaties — STRUCTURE
 
 **BS2 URL**: `/clients/organizations`
-**BS1 URL**: `https://besa-suite.vercel.app/organisatie.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/organisatie.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

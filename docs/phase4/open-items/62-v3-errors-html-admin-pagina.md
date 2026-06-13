@@ -12,11 +12,11 @@ In Fase 0.5 (eigen monitoring zonder Sentry) is het volgende gebouwd:
   - Tabel `public.client_errors` (id, ts, user_id, url, message, stack, user_agent, severity, handled)
   - Helper `public.is_admin_tier()` voor eigenaar/admin/directeur
   - RLS: insert door élke authenticated, select/update/delete alleen admin-tier
-- ✅ Script `besa-suite-etf/error-reporter.js`:
+- ✅ Script `future-flow/error-reporter.js`:
   - `window.onerror` + `unhandledrejection` → `client_errors` insert
   - Throttle 5s per error-message
   - Buffer + flush bij sessie-beschikbaar
-  - Publieke API: `besaReportError`, `besaReportWarning`
+  - Publieke API: `ffReportError`, `ffReportWarning`
 - ✅ Ingeladen op alle 49 HTML pages (na `supabase-client.js`)
 
 **Wat nog ontbreekt** (deze open-item):
@@ -25,11 +25,11 @@ Admin-tier UI om de `client_errors` te bekijken + beheren.
 
 ## Ontwerp
 
-Nieuwe pagina `besa-suite-etf/errors.html`:
+Nieuwe pagina `future-flow/errors.html`:
 
 - Standaard BS1 shell (topbar + sidebar) zoals `audit.html`
 - Sidebar-link onder "Configuratie" of "Beheer" sectie
-- Alleen zichtbaar voor admin-tier (`besaCan('manage_errors')` of `is_admin_tier()` check)
+- Alleen zichtbaar voor admin-tier (`ffCan('manage_errors')` of `is_admin_tier()` check)
 - Tabel met kolommen:
   - Timestamp
   - User (voornaam + achternaam uit `profiles` join)
@@ -45,7 +45,7 @@ Nieuwe pagina `besa-suite-etf/errors.html`:
 
 ## Data-laag
 
-Nieuwe `besa-suite-etf/client-errors-data.js`:
+Nieuwe `future-flow/client-errors-data.js`:
 
 ```js
 window.clientErrorsDB = {

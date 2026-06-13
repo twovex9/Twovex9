@@ -4,7 +4,7 @@
  * Reads gaan via window.opleidingenDB.getAllSync() (cache).
  * Writes gaan via de async API van window.opleidingenDB en worden door die
  * module ook in Supabase weggeschreven. Re-render gebeurt automatisch via
- * het "besa:opleidingen-updated" event.
+ * het "ff:opleidingen-updated" event.
  *
  * Backward-compatibility: voor pagina's die opleidingen.js inlezen voor de
  * helper-functies (zoals oude opleiding-detail.html dat deed), exposen we
@@ -232,7 +232,7 @@ function oplFmtDate(iso) {
     }
   }
 
-  window.addEventListener("besa:opleidingen-updated", function () {
+  window.addEventListener("ff:opleidingen-updated", function () {
     render();
   });
 

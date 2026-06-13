@@ -1,5 +1,5 @@
 /*
- * besa-searchable-select.js
+ * ff-searchable-select.js
  * -----------------------------------------------------------------------------
  * Maakt een bestaande native <select> doorzoekbaar: je kunt letters typen om de
  * lijst te filteren (bijv. een medewerkers- of clientnaam) in plaats van te
@@ -10,7 +10,7 @@
  * Gebruik: zet data-searchable op de <select> in de HTML. Het script enhanced
  * deze automatisch (ook selects die later met opties gevuld worden - de opties
  * worden live uit de <select> gelezen). Of roep handmatig aan:
- *   window.besaSearchableSelect.enhance(selectEl);
+ *   window.ffSearchableSelect.enhance(selectEl);
  *
  * Volledig op design-tokens -> werkt in licht en donker.
  */
@@ -292,7 +292,7 @@
     mo.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  global.besaSearchableSelect = { enhance: enhance, enhanceAll: enhanceAll };
+  global.ffSearchableSelect = { enhance: enhance, enhanceAll: enhanceAll };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

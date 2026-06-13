@@ -15,7 +15,7 @@
  *   - afronden(intakeId) → Promise (throw bij fout)
  *   - zetStatus(clientId, status, toelichting) → Promise (throw bij fout)
  *
- * Events: `besa:client-intake-updated` (window) na elke mutatie.
+ * Events: `ff:client-intake-updated` (window) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -24,25 +24,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[clientIntakeDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Cliënt-intake — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Cliënt-intake — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:client-intake-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:client-intake-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   // ── Rol-context (fail-closed: geen context = niet beoordelen) ──────────────
   async function getContext() {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc("clientreis_context");
+      var r = await global.ffSupabase.rpc("clientreis_context");
       if (r.error) throw r.error;
       _context = r.data || { kan_beoordelen: false, rollen: [] };
       return _context;
@@ -59,7 +59,7 @@
       if (!clientId) return { intake: null, onderdelen: [] };
       await ensureSupabase();
       // status desc sorteert "lopend" vóór "afgerond"; daarbinnen nieuwste eerst.
-      var ri = await global.besaSupabase
+      var ri = await global.ffSupabase
         .from("client_intakes")
         .select("*")
         .eq("client_id", clientId)
@@ -69,7 +69,7 @@
       if (ri.error) throw ri.error;
       var intake = Array.isArray(ri.data) && ri.data.length ? ri.data[0] : null;
       if (!intake) return { intake: null, onderdelen: [] };
-      var ro = await global.besaSupabase
+      var ro = await global.ffSupabase
         .from("client_intake_onderdelen")
         .select("*")
         .eq("intake_id", intake.id)
@@ -85,7 +85,7 @@
   // ── Mutaties: géén catch — page-script toont showError bij falen ───────────
   async function onderdeelOpslaan(id, inhoud, afgerond) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("intake_onderdeel_opslaan", {
+    var r = await global.ffSupabase.rpc("intake_onderdeel_opslaan", {
       p_id: id,
       p_inhoud: inhoud == null ? "" : String(inhoud),
       p_afgerond: !!afgerond,
@@ -97,7 +97,7 @@
 
   async function afronden(intakeId) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("intake_afronden", { p_intake_id: intakeId });
+    var r = await global.ffSupabase.rpc("intake_afronden", { p_intake_id: intakeId });
     if (r.error) throw r.error;
     dispatchUpdated("afronden");
     return r.data;
@@ -106,7 +106,7 @@
   async function zetStatus(clientId, status, toelichting) {
     await ensureSupabase();
     var t = toelichting == null ? "" : String(toelichting).trim();
-    var r = await global.besaSupabase.rpc("clientreis_zet_status", {
+    var r = await global.ffSupabase.rpc("clientreis_zet_status", {
       p_client_id: clientId,
       p_status: status,
       p_toelichting: t ? t : null,

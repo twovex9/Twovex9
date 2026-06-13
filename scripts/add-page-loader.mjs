@@ -9,7 +9,7 @@
  *      paint, plus een harde fallback-timer die het attribuut na 10s weghaalt
  *      (zodat de overlay NOOIT blijft hangen, ook niet als het externe script
  *      faalt te laden).
- *   2. <script src="besa-page-loader.js?v=..." defer> dat het attribuut weghaalt
+ *   2. <script src="ff-page-loader.js?v=..." defer> dat het attribuut weghaalt
  *      zodra de echte lay-out geschilderd is.
  *
  * De versie-token (?v=...) wordt per pagina overgenomen van het bestaande
@@ -36,7 +36,7 @@ const dryRun = args.includes("--check") || args.includes("--dry-run");
 const DEFAULT_VERSION = "918f1ad";
 
 // Inline snippet: zet data-loading vóór paint + installeer een lichte
-// netwerk-teller (window.__ffNet) zodat besa-page-loader.js de overlay pas
+// netwerk-teller (window.__ffNet) zodat ff-page-loader.js de overlay pas
 // weghaalt wanneer de initiële data-fetches (Supabase) binnen zijn — niet al
 // na de eerste lege paint. Plus een harde 15s veiligheidsklep zodat de overlay
 // nooit blijft hangen, ook niet als het externe script faalt te laden.
@@ -60,7 +60,7 @@ const EXISTING_SNIPPET_REGEX = /<script>\/\*ff-loading\*\/[^]*?<\/script>/i;
 
 // Anker: het bestaande inline thema-snippet (zet data-theme vóór paint).
 const THEME_SNIPPET_REGEX =
-  /<script>\(function\(\)\{[^]*?getItem\((['"])besa-theme\1\)[^]*?<\/script>/i;
+  /<script>\(function\(\)\{[^]*?getItem\((['"])ff-theme\1\)[^]*?<\/script>/i;
 
 const htmlFiles = readdirSync(projectRoot)
   .filter((f) => f.endsWith(".html"))
@@ -101,7 +101,7 @@ for (const file of htmlFiles) {
   // Versie-token overnemen van theme.js-include op deze pagina.
   const verMatch = original.match(/theme\.js\?v=([A-Za-z0-9._-]+)/);
   const version = verMatch ? verMatch[1] : DEFAULT_VERSION;
-  const loaderScript = `<script src="besa-page-loader.js?v=${version}" defer></script>`;
+  const loaderScript = `<script src="ff-page-loader.js?v=${version}" defer></script>`;
 
   // Indent van de anker-regel overnemen.
   const anchorIdx = original.indexOf(match[0]);

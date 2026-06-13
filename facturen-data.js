@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module alle facturen en overschrijft
  *    `window.FACTUREN_BULK` met de DB-records. Elk record bevat een vast
  *    `id` (bv. "f_0001") en een `archived` boolean. De UI (facturen.js)
- *    luistert naar `besa:facturen-updated` om opnieuw te renderen.
+ *    luistert naar `ff:facturen-updated` om opnieuw te renderen.
  *  - localStorage onder "facturenItemsV1" = read-cache zodat een tweede
  *    page-load instant data heeft, ook vóór de Supabase-fetch klaar is.
  *  - Schrijfacties (add/archive/restore/delete) gaan async naar Supabase;
@@ -132,7 +132,7 @@
 
   function dispatchUpdated() {
     try {
-      global.dispatchEvent(new CustomEvent("besa:facturen-updated"));
+      global.dispatchEvent(new CustomEvent("ff:facturen-updated"));
     } catch (e) { /* */ }
   }
 
@@ -166,11 +166,11 @@
    *  overzicht. `archived === true` → enkel gearchiveerde rijen, `false` →
    *  enkel actieve rijen, `undefined` → alles. */
   async function fetchPage(opts) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var o = opts || {};
     var offset = Math.max(0, parseInt(o.offset, 10) || 0);
     var limit = Math.max(1, parseInt(o.limit, 10) || 25);
-    var q = global.besaSupabase
+    var q = global.ffSupabase
       .from(TABLE)
       .select("*", { count: "exact" })
       .order("factuurnummer", { ascending: false })
@@ -186,7 +186,7 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     // Chunked fetch: PostgREST default limit is 1000 per query.
     // Voor facturen (990+ records) preventief paginatie zodat we niet
     // bij groei door 1000-grens vallen.
@@ -194,7 +194,7 @@
     var all = [];
     var offset = 0;
     while (true) {
-      var res = await global.besaSupabase
+      var res = await global.ffSupabase
         .from(TABLE)
         .select("*")
         .order("factuurnummer", { ascending: false })
@@ -215,9 +215,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (global.localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -237,7 +237,7 @@
 
       console.info("[facturenDB] Eenmalige migratie van " + sup.length + " supplement-facturen naar Supabase…");
       var payload = sup.map(function (r) { return objToInsertPayload(r); });
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -310,9 +310,9 @@
   // CRUD
   // ---------------------------------------------------------------------------
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -328,13 +328,13 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     merged.id = id;
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -355,9 +355,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);
@@ -375,10 +375,10 @@
    *  wordt verwijderd, zodat de bijbehorende facturen ook in Supabase weg
    *  zijn (anders bleven ze bij volgende refresh terugkomen). */
   async function removeByImportJobId(jobId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!jobId) return 0;
     // Filter via JSONB-pad — Supabase ondersteunt eq op data->>importJobId.
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .filter("data->>importJobId", "eq", String(jobId));

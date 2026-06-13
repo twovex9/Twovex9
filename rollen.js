@@ -75,5 +75,5 @@
     wire(); render();
     if (DB() && DB().ready) Promise.resolve(DB().ready).then(render, render);
   });
-  window.addEventListener("besa:bs2-roles-updated", render);
+  window.addEventListener("ff:bs2-roles-updated", render);
 })();

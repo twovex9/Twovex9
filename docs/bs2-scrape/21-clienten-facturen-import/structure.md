@@ -1,7 +1,7 @@
 # Module 21 — Cliënten Facturen importeren — STRUCTURE
 
 **BS2 URL**: `/clients/import-csv`
-**BS1 URL**: `https://besa-suite.vercel.app/facturen-importeren.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/facturen-importeren.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

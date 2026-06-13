@@ -26,7 +26,7 @@ Volledige port van alle 15 BS2 resources (5497 records) naar BS1 Supabase.
 **PowerShell (Windows):**
 
 ```powershell
-cd "C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf"
+cd "C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow"
 $env:SUPABASE_SERVICE_KEY = "PLAK_HIER_DE_SERVICE_KEY"
 node scripts/bs2-full-import.mjs
 ```
@@ -34,7 +34,7 @@ node scripts/bs2-full-import.mjs
 **Bash (Linux/Mac/WSL):**
 
 ```bash
-cd "/c/Users/sonck/OneDrive/Desktop/ETF/besa suite git clone/besa-suite-etf"
+cd "/c/Users/sonck/OneDrive/Desktop/ETF/Future Flow git clone/future-flow"
 export SUPABASE_SERVICE_KEY="PLAK_HIER_DE_SERVICE_KEY"
 node scripts/bs2-full-import.mjs
 ```

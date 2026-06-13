@@ -43,7 +43,7 @@
 - [x] C6. Data: 144 records, 11 categorieën
 - [x] C7. Status storage snake_case, display proper case (geen mismatch voor user)
 - [x] C8. CRUD via incident-melden.html (full-page form)
-- [x] C9. besa:incidenten-updated event
+- [x] C9. ff:incidenten-updated event
 - [x] C10. parity.md: 100% functioneel, geen bugs
 
 ## D. ULTRA-DEEP ✅

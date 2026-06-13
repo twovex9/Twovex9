@@ -20,7 +20,7 @@
 
 Bij elke nieuwe sessie:
 
-1. Read `besa-suite-etf/CLAUDE.md` (auto-load)
+1. Read `future-flow/CLAUDE.md` (auto-load)
 2. Read `docs/phase4/99-v1-eindrapport.md` (state)
 3. Read **dit document** (next step)
 4. Read `docs/phase4/open-items/README.md` (open items index)
@@ -33,7 +33,7 @@ Bij elke nieuwe sessie:
 
 User-quote: *"Het is wel belangrijk dat je zelf de extensietool op Google Chrome gebruikt om dit zelf ook te controleren. Ik ga dit niet controleren."*
 
-Na elke merge MOET Claude zelf via `mcp__Claude_in_Chrome__*` tools verifiëren op `https://besa-suite.vercel.app`:
+Na elke merge MOET Claude zelf via `mcp__Claude_in_Chrome__*` tools verifiëren op `https://futureflow-app.vercel.app`:
 
 1. `navigate` naar wijzigde pagina('s)
 2. `get_page_text` + `read_page` → content rendert?
@@ -253,6 +253,6 @@ Claude herinnert hieraan aan begin van elke sessie als ze nog niet gedaan zijn.
 
 Bij elke sprint-completion update Claude dit document:
 - Sprint-tabel: status → ✅ DONE + PR#
-- En memory file `project_besa_v2_parity.md` met dezelfde status
+- En memory file `project_ff_v2_parity.md` met dezelfde status
 
 Bij sessie-start leest Claude beide en weet exact waar te beginnen.

@@ -8,13 +8,13 @@
 //   npm run test:e2e           # runt alle tests headless
 //   npm run test:e2e:ui        # interactive mode met test browser
 //
-// Tests draaien tegen `BESA_BASE_URL` (default: production besa-suite.vercel.app).
-// Voor lokaal testen: BESA_BASE_URL=http://localhost:8000 npm run test:e2e
+// Tests draaien tegen `FF_BASE_URL` (default: production futureflow-app.vercel.app).
+// Voor lokaal testen: FF_BASE_URL=http://localhost:8000 npm run test:e2e
 
 import { defineConfig, devices } from "@playwright/test";
 
-const BASE_URL = process.env.BESA_BASE_URL || "https://besa-suite.vercel.app";
-const HAS_E2E_CREDS = !!process.env.BESA_E2E_EMAIL && !!process.env.BESA_E2E_PASSWORD;
+const BASE_URL = process.env.FF_BASE_URL || "https://futureflow-app.vercel.app";
+const HAS_E2E_CREDS = !!process.env.FF_E2E_EMAIL && !!process.env.FF_E2E_PASSWORD;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -28,7 +28,7 @@ export default defineConfig({
   ],
   // Sprint 11 / S11 — global-setup voor authenticated tests
   // Schrijft tests/e2e/.auth/storage.json met sessie-cookies.
-  // Skipt graceful als BESA_E2E_EMAIL niet gezet is.
+  // Skipt graceful als FF_E2E_EMAIL niet gezet is.
   globalSetup: "./tests/e2e/auth-setup.mjs",
   use: {
     baseURL: BASE_URL,

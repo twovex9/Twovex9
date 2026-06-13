@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var STORAGE = "besaUrenBudgetV1";
+  var STORAGE = "ffUrenBudgetV1";
   // ISO-weken per jaar: 52 of 53. 28 december valt altijd in de laatste
   // ISO-week, dus de week van 28-dec geeft het aantal weken. Voorheen stond dit
   // hard op 52 → in 53-weken-jaren (bv. 2026, 2020, 2032) was week 53 niet te
@@ -498,7 +498,7 @@
   // Wanneer de Supabase-bootstrap of een externe wijziging de cache vernieuwt
   // (bv. eerste page-load op een nieuwe browser), opnieuw de tabel vullen
   // zodat de uren meteen zichtbaar zijn.
-  window.addEventListener("besa:uren-budget-updated", function () {
+  window.addEventListener("ff:uren-budget-updated", function () {
     try { renderTbody(); } catch (e) { /* */ }
   });
 })();

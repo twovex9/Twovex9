@@ -213,7 +213,7 @@
     document.addEventListener("keydown", function (ev) {
       if (ev.key === "Escape" && modal && !modal.hasAttribute("hidden")) { ev.stopPropagation(); closeSickModal(); }
     });
-    window.addEventListener("besa:main-employees-updated", function () {
+    window.addEventListener("ff:main-employees-updated", function () {
       var id = qs("id");
       var e = window.mainEmployeesDB && window.mainEmployeesDB.getByIdSync(id);
       if (e) renderEmployee(e);

@@ -59,7 +59,7 @@
 
 ## Audit & events
 
-- `besa:verzuim-updated` event op window bij verzuimDB-mutaties (push)
+- `ff:verzuim-updated` event op window bij verzuimDB-mutaties (push)
 - Schrijven naar Supabase tabel `medewerker_verzuim_perioden`
 - Type-veld: `'kort'` of `'lang'`
 - Geen aparte audit-log entries voor verzuim mutaties (binnen scope van module 12)
@@ -67,4 +67,4 @@
 ## Network
 
 - Push naar Supabase via PostgREST (`/rest/v1/medewerker_verzuim_perioden`)
-- Bij auth-error: handled door `besa-sync-reporter.js` + `besaHandleAuthFailure`
+- Bij auth-error: handled door `ff-sync-reporter.js` + `ffHandleAuthFailure`

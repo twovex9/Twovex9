@@ -685,7 +685,7 @@
         colPanel.setAttribute("hidden", ""); colBtn.setAttribute("aria-expanded", "false");
       });
     }
-    window.addEventListener("besa:invoices-updated", render);
+    window.addEventListener("ff:invoices-updated", render);
   }
 
   // Eerste RPC-resultaat → bouw selector + render alles.

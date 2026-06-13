@@ -16,7 +16,7 @@
  *   - Kolom-zichtbaarheid via Kolommen-knop.
  *   - Modal toevoegen / bewerken.
  *   - Slider-confirm voor archiveren / definitief verwijderen.
- *   - Live re-render bij `besa:verbeteringsmaatregelen-updated`.
+ *   - Live re-render bij `ff:verbeteringsmaatregelen-updated`.
  */
 (function () {
   "use strict";
@@ -673,8 +673,8 @@
       });
     });
 
-    window.addEventListener("besa:verbeteringsmaatregelen-updated", renderTable);
-    window.addEventListener("besa:clienten-updated", renderTable);
+    window.addEventListener("ff:verbeteringsmaatregelen-updated", renderTable);
+    window.addEventListener("ff:clienten-updated", renderTable);
   }
 
   function init() {

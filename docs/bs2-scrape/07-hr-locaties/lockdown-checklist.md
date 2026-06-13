@@ -47,7 +47,7 @@ Live test op locaties.html + locatie-detail.html na PR #81.
 - [x] C6. Data-pariteit BS1=BS2=11 ✅ (na cleanup 12 duplicates)
 - [x] C7. Content spot-check: naam/adres match
 - [x] C8. CRUD complete
-- [x] C9. besa:locaties-updated event
+- [x] C9. ff:locaties-updated event
 - [x] C10. parity.md: 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅)

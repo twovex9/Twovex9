@@ -24,8 +24,8 @@
   var canManage = false;
   function computeCanManage() {
     try {
-      return !!(((typeof window.besaIsAdminTier === "function") && window.besaIsAdminTier())
-        || ((typeof window.besaCan === "function") && window.besaCan("manage", "admins-documents")));
+      return !!(((typeof window.ffIsAdminTier === "function") && window.ffIsAdminTier())
+        || ((typeof window.ffCan === "function") && window.ffCan("manage", "admins-documents")));
     } catch (e) { return false; }
   }
   function applyManageVisibility() {
@@ -171,16 +171,16 @@
     try {
       var patch = { name: (document.getElementById("bd-edit-naam").value || "").trim() };
       if (state.pendingRemove && item.storagePath) {
-        try { await window.besaSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {}
+        try { await window.ffSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {}
         patch.storagePath = null; patch.fileName = null; patch.fileExtension = null; patch.fileSize = null;
       } else if (state.pendingFile) {
         var file = state.pendingFile;
         var ext = (file.name.match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
         var sp = id + "/" + file.name.replace(/[\\/:*?"<>|]+/g, "_");
         var ab = await file.arrayBuffer();
-        var upl = await window.besaSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
+        var upl = await window.ffSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
         if (upl.error) throw upl.error;
-        if (item.storagePath && item.storagePath !== sp) { try { await window.besaSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {} }
+        if (item.storagePath && item.storagePath !== sp) { try { await window.ffSupabase.storage.from("beleid-documenten").remove([item.storagePath]); } catch (e) {} }
         patch.storagePath = sp; patch.fileName = file.name; patch.fileExtension = ext; patch.fileSize = file.size;
       }
       await window.beleidDocumentenDB.update(id, patch);
@@ -231,7 +231,7 @@
         var id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ("d_" + Date.now());
         var ext = (file.name.match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
         var sp = id + "/" + file.name.replace(/[\\/:*?"<>|]+/g, "_");
-        var upl = await window.besaSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
+        var upl = await window.ffSupabase.storage.from("beleid-documenten").upload(sp, new Blob([ab], { type: file.type || "application/octet-stream" }), { upsert: true, contentType: file.type || "application/octet-stream" });
         if (upl.error) throw upl.error;
         await window.beleidDocumentenDB.add({ id: id, name: file.name.replace(/\.[a-z0-9]+$/i, ""), storagePath: sp, fileName: file.name, fileExtension: ext, fileSize: file.size });
         if (window.showActionFeedback) window.showActionFeedback("saved", file.name);
@@ -352,7 +352,7 @@
       else if (ed && !ed.hasAttribute("hidden")) { ev.stopPropagation(); closeEdit(); }
     });
 
-    window.addEventListener("besa:beleid-documenten-updated", render);
+    window.addEventListener("ff:beleid-documenten-updated", render);
   }
 
   function init() {
@@ -364,8 +364,8 @@
     window.beleidDocumentenDB.ready.then(render);
     // Authoritatief na permissie-load: beheer-knoppen tonen/verbergen + tabel herrenderen.
     try {
-      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-        window.besaPermissionsReady.then(function () { applyManageVisibility(); render(); });
+      if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+        window.ffPermissionsReady.then(function () { applyManageVisibility(); render(); });
       }
     } catch (e) { /* status quo (read-only) */ }
   }

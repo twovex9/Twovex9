@@ -33,7 +33,7 @@ const test = base.extend({
 });
 ```
 
-Voordeel: geen dependency op `playwright.config.mjs` project-split uit S11. Mergt onafhankelijk; werkt zodra `BESA_E2E_EMAIL` + `BESA_E2E_PASSWORD` env-vars gezet zijn.
+Voordeel: geen dependency op `playwright.config.mjs` project-split uit S11. Mergt onafhankelijk; werkt zodra `FF_E2E_EMAIL` + `FF_E2E_PASSWORD` env-vars gezet zijn.
 
 **Graceful skip** zoals S11: `test.skip(!HAS_CREDS, ...)` op suite-niveau.
 
@@ -49,14 +49,14 @@ Heuristic-based selectors (`[data-cd-tab="..."]` OR `button:has-text("...")`) zo
 ## Test plan
 
 - [ ] CI groen — alle 28 tests draaien (8 nieuwe skippen graceful zonder creds)
-- [ ] Lokaal met `BESA_E2E_EMAIL/PASSWORD`: 8 nieuwe tests pass
+- [ ] Lokaal met `FF_E2E_EMAIL/PASSWORD`: 8 nieuwe tests pass
 - [ ] Geen merge-conflict met PR #35 (S11) — beide editen verschillende files
 
 ## User-actie (optioneel — voor lokaal runnen)
 
 ```powershell
-\$env:BESA_E2E_EMAIL = "e2e-test@besasolutions.nl"
-\$env:BESA_E2E_PASSWORD = "..."
+\$env:FF_E2E_EMAIL = "e2e-test@besasolutions.nl"
+\$env:FF_E2E_PASSWORD = "..."
 npm run test:e2e
 ```
 

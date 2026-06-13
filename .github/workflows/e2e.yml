@@ -7,7 +7,7 @@ name: E2E (Playwright)
 #   - manual workflow_dispatch (handmatig vanuit Actions tab)
 #
 # Tests draaien NIET op elke PR/push:
-#   - Authenticated tests vereisen BESA_E2E_EMAIL/PASSWORD secrets
+#   - Authenticated tests vereisen FF_E2E_EMAIL/PASSWORD secrets
 #   - Chromium install (~120MB) is duur per run
 #   - E2E tests duren ~30s per spec
 #
@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Override BESA_BASE_URL (default: production)"
+        description: "Override FF_BASE_URL (default: production)"
         required: false
-        default: "https://besa-suite.vercel.app"
+        default: "https://futureflow-app.vercel.app"
 
 jobs:
   e2e:
@@ -33,11 +33,11 @@ jobs:
     timeout-minutes: 15
 
     env:
-      BESA_BASE_URL: ${{ github.event.inputs.base_url || 'https://besa-suite.vercel.app' }}
+      FF_BASE_URL: ${{ github.event.inputs.base_url || 'https://futureflow-app.vercel.app' }}
       # Authenticated tests skippen graceful als deze secrets niet gezet zijn.
       # Zie Settings > Secrets and variables > Actions om ze toe te voegen.
-      BESA_E2E_EMAIL: ${{ secrets.BESA_E2E_EMAIL }}
-      BESA_E2E_PASSWORD: ${{ secrets.BESA_E2E_PASSWORD }}
+      FF_E2E_EMAIL: ${{ secrets.FF_E2E_EMAIL }}
+      FF_E2E_PASSWORD: ${{ secrets.FF_E2E_PASSWORD }}
 
     steps:
       - name: Checkout

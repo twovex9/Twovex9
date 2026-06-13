@@ -5,7 +5,7 @@
 
 ## Methode
 
-Gemeten via Chrome MCP `javascript_tool` op productie (`https://besa-suite.vercel.app`) na PR #6 merge (commit 2c787fa) met cache-busting actief. Test-browser was warm (geen cold cache), simuleert daily-use scenario.
+Gemeten via Chrome MCP `javascript_tool` op productie (`https://futureflow-app.vercel.app`) na PR #6 merge (commit 2c787fa) met cache-busting actief. Test-browser was warm (geen cold cache), simuleert daily-use scenario.
 
 Metrieken uit `performance.getEntriesByType('navigation')[0]`:
 - **DCL** (DOMContentLoaded): tijd vanaf navigatie tot HTML+sync-scripts geparsed

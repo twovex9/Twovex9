@@ -198,8 +198,8 @@
     if (s) s.addEventListener("input", function () { state.search = this.value || ""; render(); });
     var g = $("fi-only-gap");
     if (g) g.addEventListener("change", function () { state.onlyGap = this.checked; render(); });
-    window.addEventListener("besa:invoices-updated", render);
-    window.addEventListener("besa:medewerkers-updated", render);
+    window.addEventListener("ff:invoices-updated", render);
+    window.addEventListener("ff:medewerkers-updated", render);
   }
 
   // Planning-verwacht per maand uit de read-only RPC (window.facturenZzpDB).

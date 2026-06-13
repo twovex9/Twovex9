@@ -3,10 +3,10 @@
  * pdf-export.js — Fase E.9 — Generieke PDF/print helper
  *
  * 2 entry-points:
- *   - besaPdfExport.printPage() → standaard browser-print (Ctrl+P equivalent)
+ *   - ffPdfExport.printPage() → standaard browser-print (Ctrl+P equivalent)
  *     Gebruikt de @media print CSS in styles.css voor layout-optimalisatie.
  *
- *   - besaPdfExport.downloadTableAsPdf(tableId, filename, title)
+ *   - ffPdfExport.downloadTableAsPdf(tableId, filename, title)
  *     → genereert echte PDF via jsPDF (vereist jsPDF CDN loaded)
  *     Voor facturen/beschikkingen/rapportages die als PDF moeten downloaden.
  *
@@ -88,7 +88,7 @@
     doc.save(filename || "export-" + Date.now() + ".pdf");
   }
 
-  global.besaPdfExport = {
+  global.ffPdfExport = {
     printPage: printPage,
     downloadTableAsPdf: downloadTableAsPdf,
   };

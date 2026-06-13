@@ -9,7 +9,7 @@
  *
  * Bron van waarheid: Supabase tabel `inwerk_voortgang`.
  * Cache: in-memory per medewerker (`_byMw`) — read-on-demand, geen localStorage.
- * Event: `besa:inwerk-voortgang-updated`.
+ * Event: `ff:inwerk-voortgang-updated`.
  *
  * Gebruik:
  *   await window.inwerkVoortgangDB.listForMedewerker(empId);
@@ -24,7 +24,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:inwerk-voortgang-updated", { detail: { source: source || "inwerk-voortgang-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:inwerk-voortgang-updated", { detail: { source: source || "inwerk-voortgang-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -41,8 +41,8 @@
   }
 
   async function ensureSupabaseReady() {
-    if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-      try { await global.besaSupabaseReady; } catch (e) { /* */ }
+    if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+      try { await global.ffSupabaseReady; } catch (e) { /* */ }
     }
   }
 
@@ -51,11 +51,11 @@
     var key = String(medewerkerId);
     if (_busy[key]) return _byMw[key] || [];
     if (_byMw[key] && !force) return _byMw[key];
-    if (!global.besaSupabase) return _byMw[key] || [];
+    if (!global.ffSupabase) return _byMw[key] || [];
     _busy[key] = true;
     try {
       await ensureSupabaseReady();
-      var res = await global.besaSupabase.from(TABLE).select("*").eq("medewerker_id", key);
+      var res = await global.ffSupabase.from(TABLE).select("*").eq("medewerker_id", key);
       if (res.error) throw res.error;
       _byMw[key] = (res.data || []).map(rowToObj).filter(Boolean);
       dispatchUpdated("list");

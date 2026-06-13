@@ -18,41 +18,41 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[managementDashboardDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Management-dashboard — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Management-dashboard — " + action, err);
   }
 
   async function ensureSupabase() {
     // Cold-load vangrail: wacht tot de sessie gerehydrateerd is (anders leest een
     // anonieme client door de RPC-gate 0 / een fout — les uit cold-load bugs).
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   /** Laad het dashboard-aggregaat. p_month = 'YYYY-MM' of null (=laatste maand met omzet). */
   async function load(month) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("management_dashboard_v1", { p_month: month || null });
+      var res = await global.ffSupabase.rpc("management_dashboard_v1", { p_month: month || null });
       if (res.error) throw res.error;
       _data = res.data || null;
       // Bestuurs-KPI's (G50/G51/G54) los: can_view_management-gated RPC. Mag de
       // hoofd-render nooit breken — bij een fout blijft _bestuur gewoon null.
       try {
-        var bk = await global.besaSupabase.rpc("hr_bestuur_kpis");
+        var bk = await global.ffSupabase.rpc("hr_bestuur_kpis");
         if (!bk.error) _bestuur = (bk.data && bk.data[0]) || null;
       } catch (e) { /* bestuurs-KPI's optioneel */ }
       // Per-locatie financiën + open diensten (gegate Eigenaar/Directeur/Finance). Optioneel:
       // bij een fout/geen-toegang blijft de per-locatie sectie gewoon verborgen.
       try {
-        var fl = await global.besaSupabase.rpc("financien_locaties_dashboard", { p_start: null, p_end: null });
+        var fl = await global.ffSupabase.rpc("financien_locaties_dashboard", { p_start: null, p_end: null });
         _locaties = (!fl.error && fl.data && !fl.data.unauthorized) ? fl.data : null;
       } catch (e) { /* per-locatie optioneel */ }
       try {
-        var od = await global.besaSupabase.rpc("planning_open_diensten_per_locatie", { p_locatie: null, p_dagen: 7 });
+        var od = await global.ffSupabase.rpc("planning_open_diensten_per_locatie", { p_locatie: null, p_dagen: 7 });
         _open = (!od.error && od.data && !od.data.unauthorized) ? od.data : null;
       } catch (e) { /* open diensten optioneel */ }
       try {
-        global.dispatchEvent(new CustomEvent("besa:management-dashboard-updated", { detail: { source: "load" } }));
+        global.dispatchEvent(new CustomEvent("ff:management-dashboard-updated", { detail: { source: "load" } }));
       } catch (e) { /* */ }
     } catch (err) {
       reportSilent("laden", err);
@@ -76,6 +76,6 @@
     refresh: function () { return load(null); },
   };
 
-  if (global.besaSupabase) bootstrap();
-  else global.addEventListener("besa:supabase-ready", bootstrap, { once: true });
+  if (global.ffSupabase) bootstrap();
+  else global.addEventListener("ff:supabase-ready", bootstrap, { once: true });
 })(window);

@@ -25,21 +25,21 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[facturenZzpDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Facturen ZZP-overzicht — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Facturen ZZP-overzicht — " + action, err);
   }
 
   async function ensureSupabase() {
     // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest
     // een anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   /** Laad het ZZP-maandaggregaat voor een periode (ISO YYYY-MM-DD of null = laatste factuurmaand). */
   async function load(startISO, endISO) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("facturen_zzp_dashboard", {
+      var res = await global.ffSupabase.rpc("facturen_zzp_dashboard", {
         p_start: startISO || null,
         p_end: endISO || null,
       });
@@ -56,7 +56,7 @@
   async function detail(ym) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("facturen_zzp_maand_detail", { p_ym: ym });
+      var res = await global.ffSupabase.rpc("facturen_zzp_maand_detail", { p_ym: ym });
       if (res.error) throw res.error;
       return Array.isArray(res.data) ? res.data : [];
     } catch (err) {
@@ -80,6 +80,6 @@
     refresh: function () { return load(_period.start, _period.end); },
   };
 
-  if (global.besaSupabase) bootstrap();
-  else global.addEventListener("besa:supabase-ready", bootstrap, { once: true });
+  if (global.ffSupabase) bootstrap();
+  else global.addEventListener("ff:supabase-ready", bootstrap, { once: true });
 })(window);

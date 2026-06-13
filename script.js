@@ -89,7 +89,7 @@ function populateSelectFromList(selectId, options, placeholder) {
 let filterFunctie = null;
 let filterOpleiding = null;
 // Werkende filter-chips voor Locatie/Bureau/Contracttype/Fase/Dienstverband/Competenties
-// (gebouwd via window.besaFilterChips.createSearchSelectChip — HR-stijl).
+// (gebouwd via window.ffFilterChips.createSearchSelectChip — HR-stijl).
 let filterLocatie = null;
 let filterBureau = null;
 let filterContracttype = null;
@@ -110,14 +110,14 @@ let refreshEmployeesPagination = () => {};
 let applyEmployeesPaginationOnly = () => {};
 const EMPLOYEE_EDITS_STORAGE_KEY = "employeeEditsById";
 const EMPLOYEE_ITEMS_STORAGE_KEY = "employeeItems";
-const BESA_BULK_IMPORT_KEY = "besaEmpBulkV2026a";
+const FF_BULK_IMPORT_KEY = "ffEmpBulkV2026a";
 
 function mergeBesuBulkEmployeesOnce() {
-  if (typeof BESA_EMPLOYEES_BULK === "undefined" || !Array.isArray(BESA_EMPLOYEES_BULK) || BESA_EMPLOYEES_BULK.length === 0) {
+  if (typeof FF_EMPLOYEES_BULK === "undefined" || !Array.isArray(FF_EMPLOYEES_BULK) || FF_EMPLOYEES_BULK.length === 0) {
     return;
   }
   try {
-    if (window.localStorage.getItem(BESA_BULK_IMPORT_KEY)) return;
+    if (window.localStorage.getItem(FF_BULK_IMPORT_KEY)) return;
   } catch {
     return;
   }
@@ -126,7 +126,7 @@ function mergeBesuBulkEmployeesOnce() {
     existing.map((x) => String(x.email || "").toLowerCase().trim()).filter(Boolean)
   );
   const toAdd = [];
-  BESA_EMPLOYEES_BULK.forEach((row) => {
+  FF_EMPLOYEES_BULK.forEach((row) => {
     const em = String(row.email || "").toLowerCase().trim();
     if (!em || seen.has(em)) return;
     seen.add(em);
@@ -136,7 +136,7 @@ function mergeBesuBulkEmployeesOnce() {
     writeEmployeeItems([...existing, ...toAdd]);
   }
   try {
-    window.localStorage.setItem(BESA_BULK_IMPORT_KEY, "1");
+    window.localStorage.setItem(FF_BULK_IMPORT_KEY, "1");
   } catch {
     /* */
   }
@@ -945,8 +945,8 @@ function initEmployeesActionToggle() {
   if (!toggle) return;
   toggle.addEventListener("change", () => { applyTableFilters(); });
   const reapply = () => { if (toggle.checked) applyTableFilters(); };
-  window.addEventListener("besa:doc-status-painted", reapply);
-  window.addEventListener("besa:medewerker-warnings-updated", reapply);
+  window.addEventListener("ff:doc-status-painted", reapply);
+  window.addEventListener("ff:medewerker-warnings-updated", reapply);
 }
 
 const tbody = document.querySelector("table.employees-table:not(.nieuws-table) tbody");
@@ -973,7 +973,7 @@ if (tbody) {
   initEmployeesStatusSort();
 
   // Bij Supabase-bootstrap of mutatie elders: cache opnieuw inladen.
-  window.addEventListener("besa:medewerkers-updated", () => {
+  window.addEventListener("ff:medewerkers-updated", () => {
     loadEmployeesFromStorage(tbody);
     ensureEmployeeRowIds(tbody);
     applySavedEmployeeEditsToTable(tbody);
@@ -1217,7 +1217,7 @@ function sortTableByColumn(colId, direction) {
 //
 // De documentstatussen worden asynchroon berekend (medewerker-doc-status.js
 // + medewerker-warnings.js), dus we hersorteren telkens wanneer ze (her)-
-// berekend zijn (event "besa:doc-status-painted"). De sort is idempotent: hij
+// berekend zijn (event "ff:doc-status-painted"). De sort is idempotent: hij
 // verplaatst alleen rijen als de volgorde echt wijzigt — dat voorkomt een
 // herhaal-loop met de MutationObserver in medewerker-doc-status.js (die op
 // tbody-childList let en bij elke verplaatsing opnieuw zou verven).
@@ -1272,13 +1272,13 @@ function sortTableByDocStatus() {
 }
 
 // Sorteer telkens als de statussen (her)berekend zijn. Alleen listeners — de
-// eerste paint van medewerker-doc-status.js firet "besa:doc-status-painted"
+// eerste paint van medewerker-doc-status.js firet "ff:doc-status-painted"
 // ná dat script.js is geladen, dus deze handler vangt 'm.
 function initEmployeesStatusSort() {
   const tableBody = document.querySelector("table.employees-table:not(.nieuws-table) tbody");
   if (!tableBody) return;
-  window.addEventListener("besa:doc-status-painted", sortTableByDocStatus);
-  window.addEventListener("besa:medewerker-warnings-updated", sortTableByDocStatus);
+  window.addEventListener("ff:doc-status-painted", sortTableByDocStatus);
+  window.addEventListener("ff:medewerker-warnings-updated", sortTableByDocStatus);
 }
 
 /** Toont één pijl (↑ asc / ↓ desc) bij de actieve kolom; andere kolommen tonen weer ⇅ */
@@ -1471,7 +1471,7 @@ function applyTableFilters() {
 
 /**
  * Initialiseer de 6 simpele filter-chips (Locatie, Bureau, Contracttype, Fase,
- * Dienstverband, Competenties) via window.besaFilterChips.createSearchSelectChip.
+ * Dienstverband, Competenties) via window.ffFilterChips.createSearchSelectChip.
  * Opties komen uit:
  *   - locatiesDB / bureausDB / competentiesDB (live Supabase-data)
  *   - unieke waarden uit medewerkersDB voor Contracttype/Fase/Dienstverband
@@ -1480,7 +1480,7 @@ function applyTableFilters() {
  * automatisch bij relevante updates zodat verse data direct in de chips zit.
  */
 function initEmployeeChips() {
-  if (!window.besaFilterChips || typeof window.besaFilterChips.createSearchSelectChip !== "function") return;
+  if (!window.ffFilterChips || typeof window.ffFilterChips.createSearchSelectChip !== "function") return;
 
   // Filter ook lege placeholders ("—", "-", "n.v.t.") en orphan-achtige
   // strings (bv. base64 / "[object" rommel) eruit, zodat de dropdown alleen
@@ -1507,7 +1507,7 @@ function initEmployeeChips() {
     // Voorkom dubbele init bij re-run: detecteer aanwezige wrap.
     if (btn.dataset.chipInited === "1") return null;
     btn.dataset.chipInited = "1";
-    return window.besaFilterChips.createSearchSelectChip({
+    return window.ffFilterChips.createSearchSelectChip({
       button: btn,
       label: label,
       options: options,
@@ -1537,7 +1537,7 @@ function initEmployeeChips() {
 }
 
 // Init zodra alle data-lagen bootstrappped zijn. We luisteren op de relevante
-// 'besa:*-updated' events zodat nieuwe locaties/bureaus/competenties direct in
+// 'ff:*-updated' events zodat nieuwe locaties/bureaus/competenties direct in
 // de chips komen zonder pagina-refresh. Eerste init: zodra de eerste relevante
 // update binnenkomt OF na DOMContentLoaded met een korte vertraging.
 function setupChipsInitialization() {
@@ -1554,7 +1554,7 @@ function setupChipsInitialization() {
       });
     if (allWrapped) inited = true;
   };
-  ["besa:locaties-updated", "besa:bureaus-updated", "besa:competenties-updated", "besa:medewerkers-updated"].forEach((ev) => {
+  ["ff:locaties-updated", "ff:bureaus-updated", "ff:competenties-updated", "ff:medewerkers-updated"].forEach((ev) => {
     window.addEventListener(ev, tryInit);
   });
   // Initiële poging na DOMContentLoaded + kleine vertraging zodat data-lagen klaar zijn.
@@ -1807,13 +1807,13 @@ function initHeaderActionsOverflow() {
 initHeaderActionsOverflow();
 
 // ---------------------------------------------------------------------------
-// Medewerker export (CSV/TXT/Excel/PDF) via besa-export.js
+// Medewerker export (CSV/TXT/Excel/PDF) via ff-export.js
 // ---------------------------------------------------------------------------
 function initEmployeeExport() {
   const btn = document.getElementById("employee-export-btn");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    if (typeof window.besaExport !== "function") {
+    if (typeof window.ffExport !== "function") {
       if (typeof window.showActionFeedback === "function") {
         window.showActionFeedback("error", "Export-helper niet geladen");
       }
@@ -1834,7 +1834,7 @@ function initEmployeeExport() {
       "Startdatum": m.startdatum || "",
       "Einde contract": m.einddatum || m.eindeContract || "",
     }));
-    window.besaExport({
+    window.ffExport({
       filename: "medewerkers",
       title: "Medewerkers",
       columns: ["Voornaam", "Achternaam", "E-mailadres", "Telefoon", "Fase", "Dienstverband", "Functie", "Opleiding", "Contracttype", "Werktype", "Startdatum", "Einde contract"],

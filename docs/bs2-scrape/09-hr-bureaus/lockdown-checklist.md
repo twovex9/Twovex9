@@ -49,7 +49,7 @@ Live test op bureaus.html + bureau-detail.html na PR #85.
 - [x] C6. Data-pariteit BS1=BS2=4 ✅ (cleanup 1 garbage)
 - [x] C7. Content spot-check: 4 namen identiek
 - [x] C8. CRUD complete
-- [x] C9. besa:bureaus-updated event
+- [x] C9. ff:bureaus-updated event
 - [x] C10. parity.md: 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅)

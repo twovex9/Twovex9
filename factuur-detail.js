@@ -168,7 +168,7 @@
     var e0 = $("fdtl-error"); if (e0) e0.hidden = true;
     if (btn) { btn.disabled = true; btn.textContent = "Opslaan…"; }
     try {
-      var sb = window.besaSupabase;
+      var sb = window.ffSupabase;
       if (!sb) throw new Error("Supabase niet beschikbaar");
       var newRaw = Object.assign({}, (ROW.raw && typeof ROW.raw === "object") ? ROW.raw : {});
       newRaw.status = curCode;
@@ -203,10 +203,10 @@
 
   async function waitForSupabase(ms) {
     var t0 = Date.now();
-    while (!window.besaSupabase && Date.now() - t0 < (ms || 8000)) {
+    while (!window.ffSupabase && Date.now() - t0 < (ms || 8000)) {
       await new Promise(function (r) { setTimeout(r, 150); });
     }
-    return window.besaSupabase || null;
+    return window.ffSupabase || null;
   }
 
   async function init() {

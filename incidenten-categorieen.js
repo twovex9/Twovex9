@@ -15,7 +15,7 @@
  *   - Modal toevoegen.
  *   - Modal bewerken.
  *   - Slider-confirm modal voor deactiveren / definitief verwijderen.
- *   - Live re-render bij `besa:incident-categorieen-updated`.
+ *   - Live re-render bij `ff:incident-categorieen-updated`.
  */
 (function () {
   "use strict";
@@ -554,7 +554,7 @@
     });
 
     // Live re-render bij data-changes
-    window.addEventListener("besa:incident-categorieen-updated", renderTable);
+    window.addEventListener("ff:incident-categorieen-updated", renderTable);
   }
 
   function init() {

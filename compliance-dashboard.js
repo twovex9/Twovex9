@@ -101,7 +101,7 @@
   // De tabel-head zit statisch in de HTML; voeg de "Oplossen"-kolomkop
   // idempotent toe vanuit JS (we mogen alleen dit bestand bewerken).
   function ensureOplossenHeader(tbody) {
-    if (!window.besaOplossen) return;
+    if (!window.ffOplossen) return;
     var table = tbody && tbody.closest ? tbody.closest("table") : null;
     var headRow = table ? table.querySelector("thead tr") : null;
     if (!headRow) return;
@@ -116,7 +116,7 @@
     var tbody = $("cd-tbody");
     if (!tbody) return;
     ensureOplossenHeader(tbody);
-    var heeftOplossen = !!window.besaOplossen;
+    var heeftOplossen = !!window.ffOplossen;
     var emptyColspan = heeftOplossen ? 8 : 7;
     var list = visibleRows();
     if (!list.length) {
@@ -132,7 +132,7 @@
         + "<td>" + numCell(r.binnenkort_docs, false) + "</td>"
         + "<td>" + jaNee(r.onboarding_afgerond) + "</td>"
         + "<td>" + jaNee(r.contract_getekend) + "</td>"
-        + (heeftOplossen ? "<td>" + window.besaOplossen.triggerHtml({ "data-mid": r.medewerker_id }) + "</td>" : "")
+        + (heeftOplossen ? "<td>" + window.ffOplossen.triggerHtml({ "data-mid": r.medewerker_id }) + "</td>" : "")
         + "</tr>";
     }).join("");
   }
@@ -147,10 +147,10 @@
     var tbody = $("cd-tbody");
     if (tbody) {
       tbody.addEventListener("click", function (e) {
-        var trigger = e.target.closest && e.target.closest(".besa-oplossen-trigger");
-        if (trigger && window.besaOplossen) {
+        var trigger = e.target.closest && e.target.closest(".ff-oplossen-trigger");
+        if (trigger && window.ffOplossen) {
           e.stopPropagation();
-          window.besaOplossen.openPopover(trigger, {
+          window.ffOplossen.openPopover(trigger, {
             uitleg: "Open het dossier om de verlopen/ontbrekende VOG of documenten te uploaden of te verlengen.",
             knopLabel: "Naar dossier",
             onGaNaar: function () { openDossier(trigger.getAttribute("data-mid")); },
@@ -163,7 +163,7 @@
       tbody.addEventListener("keydown", function (e) {
         if (e.key !== "Enter" && e.key !== " ") return;
         // Enter/Spatie op de "Oplossen"-knop activeert die knop, niet de rij-nav.
-        if (e.target.closest && e.target.closest(".besa-oplossen-trigger")) return;
+        if (e.target.closest && e.target.closest(".ff-oplossen-trigger")) return;
         var tr = e.target.closest && e.target.closest("tr.cd-row");
         if (tr) { e.preventDefault(); openDossier(tr.getAttribute("data-mid")); }
       });
@@ -346,7 +346,7 @@
       console.error("[compliance-dashboard] laden mislukt:", err);
       var tbody = $("cd-tbody");
       if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="cd-empty">Kon de compliance-gegevens niet laden (' + escHtml(err && err.message ? err.message : "onbekende fout") + ").</td></tr>";
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Compliance-dashboard — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Compliance-dashboard — laden", err);
     }
   }
 

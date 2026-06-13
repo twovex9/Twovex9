@@ -227,7 +227,7 @@
   // → planning, anders incidenten → incidenten. Geen knop bij groene rijen.
   function isWarn(s) { return s === "rood" || s === "oranje"; }
   function vlFixBtn(r) {
-    if (!global.besaOplossen || !isWarn(r.statusOverall)) return "";
+    if (!global.ffOplossen || !isWarn(r.statusOverall)) return "";
     var st = r.status || {};
     var url, knop, uitleg;
     if (isWarn(st.resultaat)) {
@@ -245,7 +245,7 @@
     } else {
       return "";
     }
-    return global.besaOplossen.navBtn(url, knop, uitleg);
+    return global.ffOplossen.navBtn(url, knop, uitleg);
   }
 
   // ─── 1. Verkeerslicht-tabel ─────────────────────────────────────────────────────
@@ -272,7 +272,7 @@
         + "</tr>";
     }).join("");
     box.innerHTML = '<div class="table-wrapper"><table class="employees-table vl-table">' + head + "<tbody>" + rows + "</tbody></table></div>";
-    if (global.besaOplossen) global.besaOplossen.bindSignals(box);
+    if (global.ffOplossen) global.ffOplossen.bindSignals(box);
     // Legenda-teller
     var counts = { groen: 0, oranje: 0, rood: 0 };
     model.rijen.forEach(function (r) { counts[r.statusOverall]++; });

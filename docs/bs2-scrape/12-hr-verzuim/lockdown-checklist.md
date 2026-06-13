@@ -58,7 +58,7 @@ Live test op verzuim.html 2026-05-14.
 - [x] C6. Data: 14 records (11 lang + 3 kort) — matches Phase 3 import
 - [x] C7. Content spot-check: kolom-structuur identiek
 - [x] C8. CRUD: bewerken/verwijderen direct vanaf overzicht; aanmaken via medewerker-detail (Module 27)
-- [x] C9. besa:verzuim-updated event op window
+- [x] C9. ff:verzuim-updated event op window
 - [x] C10. parity.md: structural Bug #33 (sidebar) + functioneel 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)

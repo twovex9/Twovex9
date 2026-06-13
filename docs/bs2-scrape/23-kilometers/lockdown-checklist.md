@@ -47,7 +47,7 @@
 - [x] C6. Data: 0 records BS1 vs 16 BS2 (Bug #53 doc — niet blokkerend)
 - [x] C7. Content scope: BS1 toont alleen huidige user's records (filter)
 - [x] C8. CRUD: add (choice→manual/kantoor) / edit / purge alle werken
-- [x] C9. besa:kilometers-updated event
+- [x] C9. ff:kilometers-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Exporteren / Reset / 2 add-types)
 
 ## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅

@@ -1,6 +1,6 @@
-/* tijd-klok.css — stijl voor de analoge-klok-tijdkiezer (window.BesaKlok).
+/* tijd-klok.css — stijl voor de analoge-klok-tijdkiezer (window.FfKlok).
  *
- * Volledig thema-bewust via de besa CSS-variabelen (--surface/--text/--line/
+ * Volledig thema-bewust via de ff CSS-variabelen (--surface/--text/--line/
  * --blue/…), zodat de picker in licht én donker correct oogt. Bewust GEEN
  * niet-bestaande vars (--card/--primary/…) — zie de dark-mode-lessen. */
 

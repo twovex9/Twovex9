@@ -631,6 +631,6 @@
     }
   }
 
-  window.addEventListener("besa:zorgsoorten-updated", render);
+  window.addEventListener("ff:zorgsoorten-updated", render);
   initialRender();
 })();

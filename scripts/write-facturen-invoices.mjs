@@ -13,7 +13,7 @@
  * Idempotent: invoices = upsert op id; child-rijen worden per factuur
  * vervangen (delete-by-invoice_id → insert). Veilig om te herdraaien.
  *
- * DRAAIEN (PowerShell, vanuit besa-suite-etf/):
+ * DRAAIEN (PowerShell, vanuit future-flow/):
  *   node --env-file=scripts/.env scripts/write-facturen-invoices.mjs
  *
  * Vereist in scripts/.env de Supabase service_role key (één van:

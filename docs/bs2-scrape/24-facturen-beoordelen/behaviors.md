@@ -30,4 +30,4 @@
 - Per kolom header → ASC/DESC toggle
 
 ## Events
-- `besa:facturen-updated` op window bij mutaties
+- `ff:facturen-updated` op window bij mutaties

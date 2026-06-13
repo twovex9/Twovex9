@@ -87,7 +87,7 @@ Per BS2-module hebben we tijdens Fase A:
 ### Workflow voor go-live
 1. User runt JS-snippet in BS2 console (`https://etf.acceptance.besasuite.nl/home`)
 2. Browser triggert auto-download `bs2-export-full.json`
-3. User plaatst in `besa-suite-etf/scripts/bs2-exports/`
+3. User plaatst in `future-flow/scripts/bs2-exports/`
 4. User runt `node scripts/bs2-full-import.mjs`
 5. Verificatie: counts BS1 ≥ BS2
 

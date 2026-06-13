@@ -348,7 +348,7 @@
 
   // Re-render bij data-updates
   function setupEvents() {
-    ["besa:werkuren-updated", "besa:planning-updated", "besa:medewerkers-updated", "besa:clienten-updated"].forEach(function (evt) {
+    ["ff:werkuren-updated", "ff:planning-updated", "ff:medewerkers-updated", "ff:clienten-updated"].forEach(function (evt) {
       window.addEventListener(evt, function () {
         if (!state.medewerker) loadMedewerker();
         renderAll();

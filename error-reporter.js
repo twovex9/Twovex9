@@ -15,7 +15,7 @@
  *     is (bv. tijdens page-load); flush zodra mogelijk
  *   - Skipt anonymous (= geen sessie) — die kunnen niet schrijven door RLS
  *
- * Laad direct na supabase-client.js, vóór besa-sync-reporter.js.
+ * Laad direct na supabase-client.js, vóór ff-sync-reporter.js.
  *
  * Admin-pagina `errors.html` toont de gelogde errors voor admin-tier
  * (eigenaar/admin/directeur).
@@ -23,8 +23,8 @@
 (function (global) {
   "use strict";
 
-  if (global.__besaErrorReporterInstalled) return;
-  global.__besaErrorReporterInstalled = true;
+  if (global.__ffErrorReporterInstalled) return;
+  global.__ffErrorReporterInstalled = true;
 
   var THROTTLE_MS = 5000;
   var MAX_STACK_LEN = 4000;
@@ -44,16 +44,16 @@
   }
 
   function getSupabase() {
-    // window.besaSupabase = geconfigureerde client (BS1 conventie, zie supabase-client.js)
+    // window.ffSupabase = geconfigureerde client (BS1 conventie, zie supabase-client.js)
     // Fallback naar window.supabase voor edge cases (= globale van CDN, normaal niet bruikbaar)
-    if (global.besaSupabase) return global.besaSupabase;
+    if (global.ffSupabase) return global.ffSupabase;
     return null;
   }
 
   function getCurrentUserId() {
     try {
-      if (global.besaCurrentProfile && global.besaCurrentProfile.id) {
-        return global.besaCurrentProfile.id;
+      if (global.ffCurrentProfile && global.ffCurrentProfile.id) {
+        return global.ffCurrentProfile.id;
       }
     } catch (e) { /* */ }
     return null;
@@ -169,7 +169,7 @@
 
   // Bij profile-update of auth-state-change: flush buffer
   if (typeof global.addEventListener === "function") {
-    global.addEventListener("besa:profile-updated", flushBuffer);
+    global.addEventListener("ff:profile-updated", flushBuffer);
     // Probeer ook periodiek te flushen voor pre-auth buffered errors
     var flushInterval = setInterval(function () {
       if (getSupabase() && getCurrentUserId()) {
@@ -181,7 +181,7 @@
   }
 
   // Publieke API voor handmatig loggen vanuit page-scripts
-  global.besaReportError = function (message, opts) {
+  global.ffReportError = function (message, opts) {
     opts = opts || {};
     report({
       message: message,
@@ -190,7 +190,7 @@
     });
   };
 
-  global.besaReportWarning = function (message, opts) {
+  global.ffReportWarning = function (message, opts) {
     opts = opts || {};
     report({
       message: message,

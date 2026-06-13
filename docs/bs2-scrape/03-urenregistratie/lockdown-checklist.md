@@ -35,7 +35,7 @@ Override-teksten (alleen user):
 
 ## B. BS1-test hardcore (10/10 ✅)
 
-Live test op `https://besa-suite.vercel.app/werkuren.html` + `werkuren-labels.html` na PR #70.
+Live test op `https://futureflow-app.vercel.app/werkuren.html` + `werkuren-labels.html` na PR #70.
 
 - [x] **B1**. Navigate BS1 — werkuren.html "Geregistreerde uren" h1 + "1 mei - 31 mei" period
 - [x] **B2-B3**. Scroll top↔bottom OK
@@ -62,7 +62,7 @@ Live test op `https://besa-suite.vercel.app/werkuren.html` + `werkuren-labels.ht
 - [x] **C6**. Data-pariteit: 4227 werkuren records geïmporteerd vanuit planning records. 968 in mei 2026, 51 distinct medewerkers (BS2 toonde 16 — BS1 heeft meer vanuit historisch planning data)
 - [x] **C7**. Content spot-check: 5 random records vergeleken op datum/starttijd/eindtijd/dienst/label
 - [x] **C8**. Test-record CRUD: werkurenDB.add/update/delete + werkurenLabelsDB.add/update/archive/restore/delete allen werken
-- [x] **C9**. Realtime/event-bus: `besa:werkuren-updated` + `besa:werkuren-labels-updated` events firen
+- [x] **C9**. Realtime/event-bus: `ff:werkuren-updated` + `ff:werkuren-labels-updated` events firen
 - [x] **C10**. parity.md eindscore: 100% functionele pariteit (data-import: planning→werkuren mapping)
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅)

@@ -18,7 +18,7 @@
  *  - registerSickness(id, firstDayIso) / endSickness(id) → Promise<doc>
  *  - delete(id) → Promise<true>
  *
- * Events: `besa:main-employees-updated` (window) na elke mutatie/bootstrap.
+ * Events: `ff:main-employees-updated` (window) na elke mutatie/bootstrap.
  * DATA-SLIM (bindende les): zware data.bs2_scrape NOOIT in de cache —
  * on-demand via getRawBs2().
  */
@@ -121,18 +121,18 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:main-employees-updated", { detail: { source: source || "data" } }));
+      global.dispatchEvent(new CustomEvent("ff:main-employees-updated", { detail: { source: source || "data" } }));
     } catch (e) { /* */ }
   }
 
   function reportSilent(action, err) {
     console.error("[mainEmployeesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medewerkers — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Medewerkers — " + action, err);
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select(SLIM_COLS);
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select(SLIM_COLS);
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -172,9 +172,9 @@
 
   // On-demand: volledige BS2-raw (data.bs2_scrape) — bewust NIET in de cache.
   async function getRawBs2(id) {
-    if (!global.besaSupabase || id == null) return null;
+    if (!global.ffSupabase || id == null) return null;
     try {
-      var res = await global.besaSupabase.from(TABLE).select("data").eq("id", id).single();
+      var res = await global.ffSupabase.from(TABLE).select("data").eq("id", id).single();
       if (res.error) throw res.error;
       var d = res.data && res.data.data;
       return (d && (d.bs2_scrape || d)) || null;
@@ -185,12 +185,12 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var doc = Object.assign({}, rec || {});
     var payload = objToPayload(doc);
     payload.id = doc.id || genId();
     payload.archived = !!doc.archived;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select(SLIM_COLS).single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select(SLIM_COLS).single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(sortItems(readCache().concat([obj])));
@@ -199,11 +199,11 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var payload = objToPayload(partial || {});
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select(SLIM_COLS).single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select(SLIM_COLS).single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -225,9 +225,9 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
     dispatchUpdated("remove");

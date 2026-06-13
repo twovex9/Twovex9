@@ -41,7 +41,7 @@
 - [x] C4. Storage bucket `beleidsdocumenten` voor file-uploads (PDF/Word)
 - [x] C5. Trigger laatst_gewijzigd
 - [x] C6. CRUD via beleidsdocumentenDB (add/update/archive/restore/delete)
-- [x] C7. besa:beleidsdocumenten-updated event op window
+- [x] C7. ff:beleidsdocumenten-updated event op window
 - [x] C8. File-data flow: form-input → readFileAsDataUrl → data-laag → Storage upload + row INSERT met storage_path
 - [x] C9. ID-pattern `bd_<volgnummer>` (+ `bd_H01`/`bd_H03` voor non-integer cases)
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Nr./Type/Bestand/Gearchiveerd-toggle)

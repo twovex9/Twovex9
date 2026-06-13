@@ -14,9 +14,9 @@ import { test, expect } from "@playwright/test";
 test.describe("Publieke content checks", () => {
   test("login.html bevat correcte branding", async ({ page }) => {
     await page.goto("/login.html");
-    // Branding moet zichtbaar zijn — ETF / Besa Suite
+    // Branding moet zichtbaar zijn — ETF / Future Flow
     const body = await page.locator("body").textContent();
-    expect(body).toMatch(/Besa|ETF/i);
+    expect(body).toMatch(/Ff|ETF/i);
   });
 
   test("login.html script-load-order is correct", async ({ page }) => {

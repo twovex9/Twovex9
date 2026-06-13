@@ -5,7 +5,7 @@
 //
 // De link wordt voor niet-bevoegde rollen automatisch verborgen door
 // permissions-nav-hide.js (strict: alleen Eigenaar/Directeur). Run vanuit
-// besa-suite-etf/: `node scripts/add-financien-nav.mjs`
+// future-flow/: `node scripts/add-financien-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

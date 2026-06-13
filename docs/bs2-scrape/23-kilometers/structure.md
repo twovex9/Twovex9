@@ -1,7 +1,7 @@
 # Module 23 — Kilometers — STRUCTURE
 
 **BS2 URL**: `/mileage/declarations`
-**BS1 URL**: `https://besa-suite.vercel.app/kilometers.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/kilometers.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

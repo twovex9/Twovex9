@@ -26,7 +26,7 @@
  *  - verzuimDocsDB.getFileUrl(id) → Promise<signedUrl|null>
  *  - verzuimDocsDB.generateId() → "vzd_..."
  *
- * Events: "besa:verzuim-documenten-updated" met { verzuimId } in detail.
+ * Events: "ff:verzuim-documenten-updated" met { verzuimId } in detail.
  */
 (function (global) {
   "use strict";
@@ -48,7 +48,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[verzuimDocsDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim-documenten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Verzuim-documenten — " + action, err);
   }
 
   // ---------------------------------------------------------------------------
@@ -82,8 +82,8 @@
   }
 
   function uploadToStorage(path, blob, mime) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .storage.from(BUCKET)
       .upload(path, blob, { contentType: mime || "application/octet-stream", upsert: true })
       .then(function (res) {
@@ -93,15 +93,15 @@
   }
 
   function deleteFromStorage(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve();
-    return global.besaSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
+    if (!path || !global.ffSupabase) return Promise.resolve();
+    return global.ffSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
       if (res.error) console.warn("[verzuimDocsDB] storage remove warning:", res.error);
     });
   }
 
   function signedUrlForPath(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve(null);
-    return global.besaSupabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_TTL)
+    if (!path || !global.ffSupabase) return Promise.resolve(null);
+    return global.ffSupabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_TTL)
       .then(function (res) {
         if (res.error) throw res.error;
         return (res.data && (res.data.signedUrl || res.data.signedURL)) || null;
@@ -160,7 +160,7 @@
 
   function dispatchUpdated(verzuimId) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:verzuim-documenten-updated", {
+      global.dispatchEvent(new CustomEvent("ff:verzuim-documenten-updated", {
         detail: { verzuimId: verzuimId || null },
       }));
     } catch (e) { /* */ }
@@ -188,8 +188,8 @@
   // Supabase calls
   // ---------------------------------------------------------------------------
   function fetchByVerzuimId(verzuimId) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .from(TABLE).select("*")
       .eq("verzuim_id", verzuimId)
       .order("uploaddatum", { ascending: false })
@@ -202,8 +202,8 @@
   // Haal ALLE documenten op (over alle verzuimtrajecten) zodat het dashboard
   // per casus een documenttelling kan tonen zonder per casus te fetchen.
   function refreshAll() {
-    if (!global.besaSupabase) return Promise.resolve(readCache());
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.resolve(readCache());
+    return global.ffSupabase
       .from(TABLE).select("*")
       .order("uploaddatum", { ascending: false })
       .then(function (res) {
@@ -217,17 +217,17 @@
   }
 
   function insertRow(payload) {
-    return global.besaSupabase.from(TABLE).insert(payload).select().single()
+    return global.ffSupabase.from(TABLE).insert(payload).select().single()
       .then(function (res) { if (res.error) throw res.error; return rowToObj(res.data); });
   }
 
   function updateRow(id, payload) {
-    return global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single()
+    return global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single()
       .then(function (res) { if (res.error) throw res.error; return rowToObj(res.data); });
   }
 
   function deleteRow(id) {
-    return global.besaSupabase.from(TABLE).delete().eq("id", id)
+    return global.ffSupabase.from(TABLE).delete().eq("id", id)
       .then(function (res) { if (res.error) throw res.error; return true; });
   }
 
@@ -282,7 +282,7 @@
 
   function add(doc) {
     if (!doc || !doc.verzuimId) return Promise.reject(new Error("verzuimId verplicht"));
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
     var docId = doc.id || generateId();
     var fileDataUrl = doc.fileData || "";
     var fileName = doc.fileName || "";
@@ -325,7 +325,7 @@
     var merged = Object.assign({}, existing, partial || {}, { id: id, laatstGewijzigd: isoNow() });
     cacheUpsertOne(merged);
     dispatchUpdated(merged.verzuimId);
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
     var payload = metadataPayload(merged);
     delete payload.id; delete payload.verzuim_id;
     payload.storage_path = existing.storagePath || null;

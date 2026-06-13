@@ -9,8 +9,8 @@
  *    handelbaar omdat audit-rijen klein zijn en er niet veel per beschikking
  *    zijn (paar tientallen).
  *  - Schrijfactie `add` is async naar Supabase; cache wordt geüpdatet en
- *    `besa:beschikking-audit-updated` event firet voor live re-render.
- *  - Eénmalige migratie van legacy localStorage["besa_besc_audit_v1"]
+ *    `ff:beschikking-audit-updated` event firet voor live re-render.
+ *  - Eénmalige migratie van legacy localStorage["ff_besc_audit_v1"]
  *    (object met bescId-keys → array[]) bij eerste boot na deploy.
  *
  * Gebruik:
@@ -22,14 +22,14 @@
  *     gebruiker: "Jason Sonck",
  *     details: "Beschikking opgeslagen",
  *   });
- *   window.addEventListener("besa:beschikking-audit-updated", rerender);
+ *   window.addEventListener("ff:beschikking-audit-updated", rerender);
  */
 (function (global) {
   "use strict";
 
   var TABLE = "beschikking_audit_log";
   var CACHE_KEY = "beschikking_audit_log_v1";
-  var LEGACY_KEY = "besa_besc_audit_v1";
+  var LEGACY_KEY = "ff_besc_audit_v1";
   var MIGRATION_FLAG = "beschikkingAuditMigratedToSupabase.v1";
 
   var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,8 +52,8 @@
 
   function dispatchUpdated(source) {
     var d = { detail: { source: source || "beschikking-audit-data" } };
-    try { global.dispatchEvent(new CustomEvent("besa:beschikking-audit-updated", d)); } catch (e) { /* */ }
-    try { if (global.document) global.document.dispatchEvent(new CustomEvent("besa:beschikking-audit-updated", d)); } catch (e2) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:beschikking-audit-updated", d)); } catch (e) { /* */ }
+    try { if (global.document) global.document.dispatchEvent(new CustomEvent("ff:beschikking-audit-updated", d)); } catch (e2) { /* */ }
   }
 
   // Frontend-conventie blijft camelCase + korte keys (t/act/user/details/
@@ -94,13 +94,13 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     // PostgREST capt standaard op 1000 rijen. De audit-tabel is na de
     // BS2-reconciliatie >1000 (1181+), dus pagineer met .range() tot alles
     // binnen is — anders missen oudere BS2-audit-rijen (bv. per beschikking).
     var all = [], from = 0, PAGE = 1000;
     for (;;) {
-      var res = await global.besaSupabase
+      var res = await global.ffSupabase
         .from(TABLE)
         .select("*")
         .order("t", { ascending: false })
@@ -118,9 +118,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -164,7 +164,7 @@
       }
 
       console.info("[beschikkingAuditDB] Eenmalige migratie van " + rows.length + " audit-rijen naar Supabase…");
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(rows)
         .select();
@@ -213,7 +213,7 @@
   // met een tijdelijke client-side id zodat de UI direct ververst, en wachten
   // op het Supabase-antwoord om de echte UUID + timestamp te krijgen.
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!rec || !rec.bescId) throw new Error("bescId verplicht");
     var payload = objToInsertPayload(rec);
     // Optimistic insert in cache (met tijdelijke id) zodat audit-tabel direct
@@ -236,7 +236,7 @@
     writeCache(cache);
     dispatchUpdated("add-optimistic");
 
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()

@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module alle categorieën en cachet ze onder
  *    "incident_categorieen_v1" zodat een tweede page-load instant data heeft.
  *  - Schrijfacties (add/update/archive/restore/delete) gaan async naar Supabase;
- *    de cache wordt geüpdatet en het update-event `besa:incident-categorieen-updated`
+ *    de cache wordt geüpdatet en het update-event `ff:incident-categorieen-updated`
  *    wordt gefired voor live re-renders.
  *
  * Categorie-archivering = "deactiveren" in de UI: archived=true betekent
@@ -27,7 +27,7 @@
  *   - incidentCategorieenDB.restore(id)   → activeren
  *   - incidentCategorieenDB.delete(id)
  *
- * Events: "besa:incident-categorieen-updated" op window.
+ * Events: "ff:incident-categorieen-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -41,8 +41,8 @@
 
   function reportSilent(action, err) {
     try { console.error("[incidentCategorieenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Incident-categorieën — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Incident-categorieën — " + action, err);
     }
   }
 
@@ -63,7 +63,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:incident-categorieen-updated", {
+      global.dispatchEvent(new CustomEvent("ff:incident-categorieen-updated", {
         detail: { source: source || "incident-categorieen-data" },
       }));
     } catch (e) { /* */ }
@@ -117,8 +117,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("volgorde", { ascending: true, nullsFirst: false })
@@ -172,10 +172,10 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
     if (!payload.naam) throw new Error("Naam is verplicht");
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
@@ -188,10 +188,10 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var payload = objToUpdatePayload(partial || {});
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
@@ -208,9 +208,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });

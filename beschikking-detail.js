@@ -229,7 +229,7 @@
   }
 
   // Re-render badge + achterstand bij urendeclaraties-bootstrap
-  window.addEventListener("besa:urendeclaraties-updated", function () {
+  window.addEventListener("ff:urendeclaraties-updated", function () {
     try {
       var mm = /[?&]id=([^&]+)/.exec(window.location.search);
       if (!mm) return;
@@ -395,7 +395,7 @@
         aangemaakt: new Date().toISOString(),
       });
       closeTarAddModal();
-      // UI ververst zichzelf via besa:beschikking-tarieven-updated event.
+      // UI ververst zichzelf via ff:beschikking-tarieven-updated event.
       if (typeof showSaveModal === "function") showSaveModal("Tarief is toegevoegd.");
       else showToast("Tarief toegevoegd.");
     } catch (err) {
@@ -522,7 +522,7 @@
         var bd = document.createElement("div");
         bd.className = "bdtl-note-body bdtl-note-body--in-list";
         bd.setAttribute("data-note-id", n.id);
-        bd.innerHTML = window.besaSanitizeHtml(n.bodyHtml || "<p>—</p>");
+        bd.innerHTML = window.ffSanitizeHtml(n.bodyHtml || "<p>—</p>");
         li.appendChild(bd);
         ul.appendChild(li);
       }
@@ -580,7 +580,7 @@
         else showToast("Notitie toegevoegd.");
       }
       clearBdtlNoteEditor();
-      // UI ververst zichzelf via besa:beschikking-notities-updated event.
+      // UI ververst zichzelf via ff:beschikking-notities-updated event.
     } catch (err) {
       reportNotitiesError("opslaan mislukt", err);
     } finally {
@@ -611,8 +611,8 @@
   }
 
   function clientFasePillClass(fase) {
-    if (typeof window.besaFaseClientPillClass === "function") {
-      return window.besaFaseClientPillClass(fase);
+    if (typeof window.ffFaseClientPillClass === "function") {
+      return window.ffFaseClientPillClass(fase);
     }
     var t = String(fase || "").toLowerCase();
     if (t === "in aanvraag") return "cl-fase-pill cl-fase-pill--in-aanvraag";
@@ -630,8 +630,8 @@
   }
 
   function faseBescToDotClass(f) {
-    if (typeof window.besaFaseBescDotClass === "function") {
-      return window.besaFaseBescDotClass(f);
+    if (typeof window.ffFaseBescDotClass === "function") {
+      return window.ffFaseBescDotClass(f);
     }
     f = String(f || "").toLowerCase();
     if (f === "in_aanvraag") return "bdtl-fase-dot bdtl-fase-dot--fase-in-aanvraag";
@@ -1040,10 +1040,10 @@
 
   // Audit-rijen worden in Supabase opgeslagen via window.beschikkingAuditDB
   // (zie beschikking-audit-data.js). De legacy localStorage-key
-  // "besa_besc_audit_v1" wordt automatisch eenmalig gemigreerd bij eerste
+  // "ff_besc_audit_v1" wordt automatisch eenmalig gemigreerd bij eerste
   // boot. LS_BESC_AUDIT_COLS blijft in localStorage want dat is UI-state
   // (kolomvoorkeur per gebruiker, niet inhoudelijke data).
-  var LS_BESC_AUDIT_COLS = "besa_besc_audit_cols_v1";
+  var LS_BESC_AUDIT_COLS = "ff_besc_audit_cols_v1";
   var bdtlAudPage = 1;
   var BDTL_AUD_COLS = [
     { id: "ts", label: "Tijdstempel" },
@@ -1059,7 +1059,7 @@
     var t = av && av.textContent ? String(av.textContent).trim() : "";
     if (t) return t;
     try {
-      var s = localStorage.getItem("besa_display_name");
+      var s = localStorage.getItem("ff_display_name");
       if (s && s.trim()) return s.trim();
     } catch (e) { /* */ }
     return "Huidige gebruiker";
@@ -1067,7 +1067,7 @@
 
   function bdtlSimIp() {
     try {
-      var k = "besa_sim_ip_v1";
+      var k = "ff_sim_ip_v1";
       var v = localStorage.getItem(k);
       if (v) return v;
       var n = 100 + Math.floor(Math.random() * 150);
@@ -1107,7 +1107,7 @@
     } catch (e2) {
       ua = "";
     }
-    // Fire-and-forget: UI ververst zichzelf via besa:beschikking-audit-updated
+    // Fire-and-forget: UI ververst zichzelf via ff:beschikking-audit-updated
     // event zodra Supabase de definitieve rij heeft teruggegeven (de cache
     // krijgt eerst een optimistic insert, daarna replacement).
     window.beschikkingAuditDB.add({
@@ -1762,7 +1762,7 @@
             if (all0[j2] && all0[j2].id === bid) {
               bdtlNoteEditingId = bid;
               var ed2 = document.getElementById("bdtl-note-editor");
-              if (ed2) ed2.innerHTML = window.besaSanitizeHtml(all0[j2].bodyHtml || "");
+              if (ed2) ed2.innerHTML = window.ffSanitizeHtml(all0[j2].bodyHtml || "");
               var h2b = document.getElementById("bdtl-note-composer-h2");
               if (h2b) h2b.textContent = "Notitie bewerken";
               var hih2 = document.getElementById("bdtl-note-editing-hint");
@@ -1809,7 +1809,7 @@
             try {
               await window.beschikkingNotitiesDB.remove(delId);
               if (bdtlNoteEditingId === delId) clearBdtlNoteEditor();
-              // UI ververst zichzelf via besa:beschikking-notities-updated event.
+              // UI ververst zichzelf via ff:beschikking-notities-updated event.
               if (typeof window.showActionFeedback === "function") {
                 window.showActionFeedback("deleted", "Notitie");
               } else if (typeof showSaveModal === "function") {
@@ -1900,21 +1900,21 @@
     // Live re-render bij elke wijziging in de Supabase-data-lagen (incl.
     // bootstrap, andere tab, externe sync). De handlers zijn no-op als
     // er nog geen beschikking geladen is.
-    window.addEventListener("besa:beschikking-tarieven-updated", function () {
+    window.addEventListener("ff:beschikking-tarieven-updated", function () {
       try { if (loadedBesc && loadedBesc.id) renderBdtlTarievenTable(); } catch (e) { /* */ }
     });
-    window.addEventListener("besa:beschikking-notities-updated", function () {
+    window.addEventListener("ff:beschikking-notities-updated", function () {
       try {
         if (!loadedBesc || !loadedBesc.id) return;
         renderBdtlNotesList();
         updateBdtlSideNotesSummary();
       } catch (e) { /* */ }
     });
-    window.addEventListener("besa:beschikking-audit-updated", function () {
+    window.addEventListener("ff:beschikking-audit-updated", function () {
       try { if (loadedBesc && loadedBesc.id) renderBdtlAuditTable(); } catch (e) { /* */ }
     });
     // PR #7 — herbereken openstaand bedrag wanneer facturen/betalingen wijzigen.
-    window.addEventListener("besa:facturen-updated", function () {
+    window.addEventListener("ff:facturen-updated", function () {
       try { if (loadedBesc && loadedBesc.id) bdtlUpdateOpenstaand(loadedBesc); } catch (e) { /* */ }
     });
     // Cold-start vangrail (lesson #13): run() draait 1× op DOMContentLoaded.
@@ -1928,7 +1928,7 @@
         if (getBeschikkingById(rid)) run();               // cache nu warm → toon beschikking
       } catch (e) { /* */ }
     }
-    window.addEventListener("besa:beschikkingen-updated", bdtlMaybeRerunOnData);
+    window.addEventListener("ff:beschikkingen-updated", bdtlMaybeRerunOnData);
     document.addEventListener("beschikkingen:changed", bdtlMaybeRerunOnData);
   }
 

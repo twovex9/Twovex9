@@ -1,7 +1,7 @@
 # Module 16 — Cliënten Beschikkingen — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/dispositions/overview`
-**BS1 URL**: `https://besa-suite.vercel.app/beschikkingen.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/beschikkingen.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

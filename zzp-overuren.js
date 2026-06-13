@@ -103,7 +103,7 @@
   function start() {
     wire();
     if (window.zzpFacturenDB) {
-      if (window.besaSupabaseReady) window.besaSupabaseReady.then(laad); else laad();
+      if (window.ffSupabaseReady) window.ffSupabaseReady.then(laad); else laad();
     }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

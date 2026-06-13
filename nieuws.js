@@ -154,7 +154,7 @@ function createNewsActiesCell(isArchivedView) {
 
 // persistTableToNewsStorage is een no-op geworden: de DOM is geen source of truth
 // meer. Toegevoegde / gewijzigde items gaan direct via nieuwsDB naar Supabase
-// en de tabel wordt herbouwd uit de cache na elk besa:nieuws-updated event.
+// en de tabel wordt herbouwd uit de cache na elk ff:nieuws-updated event.
 function persistTableToNewsStorage() { /* no-op - data zit in Supabase via nieuwsDB */ }
 
 // Voegt een nieuw item toe (als het nog geen serverside-id heeft) of werkt een
@@ -792,7 +792,7 @@ function initNewsAddModal() {
       closeModal();
       const saved = await upsertNewsItem(item);
       if (!saved) return; // fout is al gemeld door upsertNewsItem
-      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+      // Tabel re-rendert automatisch via ff:nieuws-updated event.
       if (typeof window.showActionFeedback === "function") {
         window.showActionFeedback("added", `Nieuwsbericht “${titel}”`);
       }
@@ -896,7 +896,7 @@ function initNewsEditPanel() {
     naamInput.value = title;
 
     const inhoud = tr.getAttribute("data-news-inhoud");
-    editor.innerHTML = inhoud && inhoud.trim() ? window.besaSanitizeHtml(inhoud) : NEWS_EDIT_DEFAULT_HTML;
+    editor.innerHTML = inhoud && inhoud.trim() ? window.ffSanitizeHtml(inhoud) : NEWS_EDIT_DEFAULT_HTML;
     syncEditEditorEmpty();
 
     clearEditImages();
@@ -957,7 +957,7 @@ function initNewsEditPanel() {
       if (!updatedItem) return;
       const saved = await upsertNewsItem(updatedItem);
       if (!saved) return; // fout al gemeld
-      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+      // Tabel re-rendert automatisch via ff:nieuws-updated event.
       if (typeof window.showActionFeedback === "function") {
         const titel = updatedItem.titel ? `Nieuwsbericht “${updatedItem.titel}”` : "Nieuwsbericht";
         window.showActionFeedback("saved", titel);
@@ -1243,7 +1243,7 @@ function initNewsPurgeModal() {
     closePurgeModal();
     if (deletedId) {
       deleteNewsItem(deletedId);
-      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+      // Tabel re-rendert automatisch via ff:nieuws-updated event.
     }
     showNewsToast(`Nieuws${deletedTitle ? ` "${deletedTitle}"` : ""} definitief verwijderd`);
   }
@@ -1288,7 +1288,7 @@ function initNewsRestore() {
     const id = tr?.dataset?.newsId;
     if (!id) return;
     restoreNewsItem(id);
-    // Tabel re-rendert automatisch via besa:nieuws-updated event.
+    // Tabel re-rendert automatisch via ff:nieuws-updated event.
     showNewsToast("Nieuwsbericht hersteld");
   });
 }
@@ -1349,7 +1349,7 @@ function initNewsDeleteModal() {
     closeDeleteModal();
     if (deletedId) {
       archiveNewsItem(deletedId);
-      // Tabel re-rendert automatisch via besa:nieuws-updated event.
+      // Tabel re-rendert automatisch via ff:nieuws-updated event.
     }
     showNewsToast(`Nieuws${deletedTitle ? ` "${deletedTitle}"` : ""} is gearchiveerd`);
   }
@@ -1396,7 +1396,7 @@ initNewsEditPanel();
 // Re-render de tabel telkens als de Supabase data-laag een wijziging meldt
 // (na bootstrap-fetch, na add/update/archive/restore/delete door deze of een
 // andere tab/sessie).
-window.addEventListener("besa:nieuws-updated", () => {
+window.addEventListener("ff:nieuws-updated", () => {
   loadNewsTableFromStorage();
   syncColumnVisibilityFromMenu();
   applyNewsSearch();

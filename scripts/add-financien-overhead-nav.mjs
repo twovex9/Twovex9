@@ -1,7 +1,7 @@
 // Idempotente sweep: voeg de "Overhead / kantoor"-sublink toe aan het Financiën-
 // dropdown op elke pagina die het al heeft (anker = de "Locaties"-sublink). De link
 // wordt voor niet-bevoegde rollen verborgen door permissions-nav-hide.js (strict).
-// Run vanuit besa-suite-etf/: `node scripts/add-financien-overhead-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-financien-overhead-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

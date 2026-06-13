@@ -7,7 +7,7 @@
  *  - In-memory `_mem` is de sync-bron binnen de sessie; localStorage = best-effort
  *    read-cache (de gedeelde browserquota kan vol zitten, dus niet enkel daarop leunen).
  *  - Schrijfacties (add/update/archive/restore) gaan async naar Supabase; daarna
- *    wordt `besa:klachten-updated` gefired voor live re-renders.
+ *    wordt `ff:klachten-updated` gefired voor live re-renders.
  *  - DIEHARD: er is GEEN hard-delete. De tabel heeft bewust geen DELETE-policy;
  *    "verwijderen" = archiveren (archived=true). Geen remove()/delete() in de API.
  *
@@ -18,7 +18,7 @@
  *     status:"nieuw", prioriteit:"middel", melderNaam:"...", melderType:"client" });
  *   await window.klachtenDB.update(id, { status:"in_behandeling" });
  *   await window.klachtenDB.archive(id);
- *   window.addEventListener("besa:klachten-updated", function () { rerender(); });
+ *   window.addEventListener("ff:klachten-updated", function () { rerender(); });
  */
 (function (global) {
   "use strict";
@@ -31,7 +31,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[klachtenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Klachten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Klachten — " + action, err);
   }
 
   function strOrNull(v) {
@@ -59,7 +59,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:klachten-updated", { detail: { source: source || "klachten-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:klachten-updated", { detail: { source: source || "klachten-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -111,8 +111,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("ontvangen_op", { ascending: false });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("ontvangen_op", { ascending: false });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -145,8 +145,8 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).insert(objToInsertPayload(rec)).select().single();
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).insert(objToInsertPayload(rec)).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var list = currentList().slice(); list.unshift(obj);
@@ -155,14 +155,14 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToInsertPayload(merged);
     delete payload.id;
     payload.laatst_gewijzigd = new Date().toISOString();
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var list = currentList().slice();
@@ -205,6 +205,6 @@
     ],
   };
 
-  if (global.besaSupabase) bootstrap();
-  else global.addEventListener("besa:supabase-ready", bootstrap, { once: true });
+  if (global.ffSupabase) bootstrap();
+  else global.addEventListener("ff:supabase-ready", bootstrap, { once: true });
 })(typeof window !== "undefined" ? window : this);

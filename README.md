@@ -1,8 +1,8 @@
-# BESA Suite — BS1 (vanilla HTML/JS + Supabase)
+# Future Flow — BS1 (vanilla HTML/JS + Supabase)
 
-In-house herbouw van BESA-suite 2 in eigen vanilla web-stack, gehost op Vercel met Supabase als backend.
+In-house herbouw van BS2 in eigen vanilla web-stack, gehost op Vercel met Supabase als backend.
 
-**Live**: <https://besa-suite.vercel.app>
+**Live**: <https://futureflow-app.vercel.app>
 
 ## Wat zit hier in
 
@@ -23,7 +23,7 @@ Dit is **BS1** — eigen ontwikkeling die feature-parity heeft met BS2 (`https:/
 ## Project structuur
 
 ```
-besa-suite-etf/
+future-flow/
 ├── *.html                  35 pagina's (medewerkers, cliënten, beschikkingen, etc.)
 ├── *.js                    page-scripts + data-lagen (*-data.js)
 ├── styles.css              alle styling met design-tokens
@@ -52,8 +52,8 @@ besa-suite-etf/
 ### 1. Eerste keer setup
 
 ```powershell
-git clone https://github.com/ETFalkmaar/besa-suite-.git
-cd besa-suite-/besa-suite-etf
+git clone https://github.com/twovex9/twovex9.git
+cd Future Flow-/future-flow
 
 # Verifieer alle tools aanwezig (~10 sec)
 pwsh -ExecutionPolicy Bypass -File scripts\setup-machine.ps1
@@ -78,7 +78,7 @@ Supabase config is hardcoded in `supabase-client.js` (anon key — public, RLS b
 
 1. Volg `CLAUDE.md` + `.claude/huisstijl.md` + `.claude/werkpatronen.md`
 2. `git add` + `git commit` + `git push origin main` (Vercel deploy automatisch)
-3. Verifie via Chrome op `https://besa-suite.vercel.app/<page>.html`
+3. Verifie via Chrome op `https://futureflow-app.vercel.app/<page>.html`
 
 ### 4. Database wijzigingen
 

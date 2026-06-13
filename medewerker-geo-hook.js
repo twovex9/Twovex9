@@ -1,7 +1,7 @@
 /* global window, document */
 /**
  * medewerker-geo-hook.js — koppelt de "Auto-bereken"-knop op het
- * medewerker-detail aan window.besaGeoDistance.
+ * medewerker-detail aan window.ffGeoDistance.
  *
  * Flow bij klik op #emp-geo-calc-btn:
  *   1. Lees thuisadres uit emp-postcode / emp-huisnummer / emp-toevoeging / emp-plaats
@@ -9,7 +9,7 @@
  *      #emp-loondienst-locaties-chips (DOM, voor MVP — chip-tekst = naam)
  *   3. Match naam tegen window.locatiesDB.getAllSync() → vind postcode +
  *      huisnummer + plaats van de locatie
- *   4. Roep window.besaGeoDistance.calculateEnkeleReis(home, loc)
+ *   4. Roep window.ffGeoDistance.calculateEnkeleReis(home, loc)
  *   5. Vul emp-location-distance.value met de berekende km en toon
  *      status-bericht in #emp-geo-status (success groen / error rood)
  *
@@ -82,7 +82,7 @@
 
   async function onCalc() {
     var btn = $("emp-geo-calc-btn");
-    if (!btn || !window.besaGeoDistance) return;
+    if (!btn || !window.ffGeoDistance) return;
     var home = getHomeAdres();
     if (!home.postcode || !home.huisnummer) {
       showStatus("Vul eerst postcode en huisnummer in bij Thuisadres.", "err");
@@ -107,7 +107,7 @@
     var oldLabel = btn.textContent;
     showStatus("Bezig met opzoeken (PDOK + OSRM)…", "info");
 
-    var result = await window.besaGeoDistance.calculateEnkeleReis(
+    var result = await window.ffGeoDistance.calculateEnkeleReis(
       home,
       {
         postcode: locatie.postcode,

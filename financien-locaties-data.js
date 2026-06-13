@@ -20,21 +20,21 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[financienLocatiesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Financiën-locaties — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Financiën-locaties — " + action, err);
   }
 
   async function ensureSupabase() {
     // Cold-load vangrail: wacht tot de sessie gerehydrateerd is (anders leest een
     // anonieme client door RLS/gate 0 rijen — les uit eerdere cold-load bugs).
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   /** Laad het dashboard-aggregaat voor een periode (ISO YYYY-MM-DD of null = default-maand). */
   async function load(startISO, endISO) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("financien_locaties_dashboard", {
+      var res = await global.ffSupabase.rpc("financien_locaties_dashboard", {
         p_start: startISO || null,
         p_end: endISO || null,
       });
@@ -52,7 +52,7 @@
   async function openDiensten(locatie, dagen) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("planning_open_diensten_per_locatie", {
+      var res = await global.ffSupabase.rpc("planning_open_diensten_per_locatie", {
         p_locatie: (locatie === "" || locatie == null) ? null : locatie,
         p_dagen: dagen || 14,
       });
@@ -68,7 +68,7 @@
   async function detail(location, startISO, endISO) {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("financien_locatie_maand_detail", {
+      var res = await global.ffSupabase.rpc("financien_locatie_maand_detail", {
         p_location: location,
         p_start: startISO || null,
         p_end: endISO || null,
@@ -84,7 +84,7 @@
   // ─── Onkosten-CRUD (handmatige kosten per locatie) ───────────────────────
   async function currentUserEmail() {
     try {
-      var u = await global.besaSupabase.auth.getUser();
+      var u = await global.ffSupabase.auth.getUser();
       return (u && u.data && u.data.user && u.data.user.email) || null;
     } catch (e) { return null; }
   }
@@ -95,7 +95,7 @@
       bedrag: row.bedrag, van_ym: row.van_ym, tot_ym: row.tot_ym || null,
       aangemaakt_door: await currentUserEmail(),
     };
-    var res = await global.besaSupabase.from("financien_locatie_onkosten").insert(payload);
+    var res = await global.ffSupabase.from("financien_locatie_onkosten").insert(payload);
     if (res.error) throw res.error;
   }
   async function updateOnkost(id, fields) {
@@ -105,12 +105,12 @@
       if (k in fields) patch[k] = fields[k];
     });
     patch.laatst_gewijzigd = new Date().toISOString();
-    var res = await global.besaSupabase.from("financien_locatie_onkosten").update(patch).eq("id", id);
+    var res = await global.ffSupabase.from("financien_locatie_onkosten").update(patch).eq("id", id);
     if (res.error) throw res.error;
   }
   async function archiveOnkost(id) {
     await ensureSupabase();
-    var res = await global.besaSupabase.from("financien_locatie_onkosten")
+    var res = await global.ffSupabase.from("financien_locatie_onkosten")
       .update({ archived: true, laatst_gewijzigd: new Date().toISOString() }).eq("id", id);
     if (res.error) throw res.error;
   }
@@ -125,7 +125,7 @@
   }
   async function listPersoneel() {
     await ensureSupabase();
-    var res = await global.besaSupabase.from("financien_overhead_personeel")
+    var res = await global.ffSupabase.from("financien_overhead_personeel")
       .select("*").eq("archived", false).order("locatie", { ascending: true }).order("naam", { ascending: true });
     if (res.error) throw res.error;
     return res.data || [];
@@ -142,7 +142,7 @@
       van_ym: row.van_ym, tot_ym: row.tot_ym || null,
       aangemaakt_door: await currentUserEmail(),
     };
-    var res = await global.besaSupabase.from("financien_overhead_personeel").insert(payload);
+    var res = await global.ffSupabase.from("financien_overhead_personeel").insert(payload);
     if (res.error) throw res.error;
   }
   async function updatePersoneel(id, fields) {
@@ -152,19 +152,19 @@
       if (k in fields) patch[k] = fields[k];
     });
     patch.laatst_gewijzigd = new Date().toISOString();
-    var res = await global.besaSupabase.from("financien_overhead_personeel").update(patch).eq("id", id);
+    var res = await global.ffSupabase.from("financien_overhead_personeel").update(patch).eq("id", id);
     if (res.error) throw res.error;
   }
   async function archivePersoneel(id) {
     await ensureSupabase();
-    var res = await global.besaSupabase.from("financien_overhead_personeel")
+    var res = await global.ffSupabase.from("financien_overhead_personeel")
       .update({ archived: true, laatst_gewijzigd: new Date().toISOString() }).eq("id", id);
     if (res.error) throw res.error;
   }
   /** Alle niet-gearchiveerde handmatige onkosten (voor de Overhead-beheerpagina). */
   async function listOnkosten() {
     await ensureSupabase();
-    var res = await global.besaSupabase.from("financien_locatie_onkosten")
+    var res = await global.ffSupabase.from("financien_locatie_onkosten")
       .select("*").eq("archived", false).order("locatie", { ascending: true }).order("categorie", { ascending: true });
     if (res.error) throw res.error;
     return res.data || [];
@@ -174,7 +174,7 @@
   /** Capaciteit (aantal kamers) van een locatie instellen. p_kamers null = wissen. */
   async function zetKamers(locatie, kamers) {
     await ensureSupabase();
-    var res = await global.besaSupabase.rpc("financien_zet_locatie_kamers", {
+    var res = await global.ffSupabase.rpc("financien_zet_locatie_kamers", {
       p_locatie: locatie,
       p_kamers: (kamers === "" || kamers == null) ? null : Math.round(Number(kamers)),
     });
@@ -186,7 +186,7 @@
   /** Een cliënt aan een locatie koppelen/verplaatsen; locatie leeg = ontkoppelen. */
   async function koppelClient(clientId, locatie) {
     await ensureSupabase();
-    var res = await global.besaSupabase.rpc("financien_koppel_client_locatie", {
+    var res = await global.ffSupabase.rpc("financien_koppel_client_locatie", {
       p_client_id: clientId,
       p_locatie: locatie || "",
     });
@@ -198,7 +198,7 @@
   /** Alle in-zorg cliënten (id, naam, clientnummer, huidige locatie) voor de koppel-keuzelijst. */
   async function koppelbareClienten() {
     await ensureSupabase();
-    var res = await global.besaSupabase.rpc("financien_koppelbare_clienten", {});
+    var res = await global.ffSupabase.rpc("financien_koppelbare_clienten", {});
     if (res.error) throw res.error;
     if (res.data && res.data.unauthorized) return [];
     return (res.data && res.data.clienten) || [];
@@ -209,7 +209,7 @@
     if (_locNames) return _locNames;
     await ensureSupabase();
     try {
-      var res = await global.besaSupabase.from("locaties").select("naam,archived");
+      var res = await global.ffSupabase.from("locaties").select("naam,archived");
       if (res.error) throw res.error;
       var seen = {}, out = [];
       (res.data || []).forEach(function (r) {
@@ -253,6 +253,6 @@
     archivePersoneel: archivePersoneel,
   };
 
-  if (global.besaSupabase) bootstrap();
-  else global.addEventListener("besa:supabase-ready", bootstrap, { once: true });
+  if (global.ffSupabase) bootstrap();
+  else global.addEventListener("ff:supabase-ready", bootstrap, { once: true });
 })(window);

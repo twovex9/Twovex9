@@ -37,7 +37,7 @@ async function fetchAll() {
   var all = [];
   var offset = 0;
   while (true) {
-    var res = await global.besaSupabase.from(TABLE).select("*")
+    var res = await global.ffSupabase.from(TABLE).select("*")
       .order(...)
       .range(offset, offset + chunkSize - 1);
     if (res.error) throw res.error;

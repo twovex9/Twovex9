@@ -30,13 +30,13 @@ Playwright-based E2E test-suite skelet. Vangt regressies in pre-merge of pre-rel
 - `login.html` zelf veroorzaakt geen redirect-loop
 
 **`03-page-content.spec.mjs`** (7 tests):
-- login.html toont Besa/ETF branding
+- login.html toont Future Flow/ETF branding
 - Script-load-order correct (CDN vóór supabase-client.js)
 - CSS-statics responden met `Cache-Control: immutable, max-age=31536000`
 - vercel.json `/` → `/home.html` redirect werkt
 - 4 kritieke routes returneren geen 404
 
-**Totaal: 22 tests**, alle headless tegen `BESA_BASE_URL` (default productie).
+**Totaal: 22 tests**, alle headless tegen `FF_BASE_URL` (default productie).
 
 ## Wat NIET in v1 zit (bewust)
 
@@ -47,15 +47,15 @@ Playwright-based E2E test-suite skelet. Vangt regressies in pre-merge of pre-rel
 ## Gebruik
 
 ```powershell
-cd besa-suite-etf
+cd future-flow
 npm install                     # installeert Playwright
 npm run test:e2e:install        # downloadt chromium (~120MB, eenmalig)
 npm run test:e2e                # runt alle 22 tests (~1 min)
 npm run test:e2e:ui             # interactive mode met browser-UI
 ```
 
-Default target = productie (`https://besa-suite.vercel.app`).
-Voor lokaal: `$env:BESA_BASE_URL = "http://localhost:8000"` voordat je runt.
+Default target = productie (`https://futureflow-app.vercel.app`).
+Voor lokaal: `$env:FF_BASE_URL = "http://localhost:8000"` voordat je runt.
 
 ## Effort voor v2 uitbreidingen
 

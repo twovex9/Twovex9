@@ -190,8 +190,8 @@
   // ── rollen ──────────────────────────────────────────────────────────────
   async function loadRoles() {
     try {
-      if (!window.besaSupabase) return;
-      var res = await window.besaSupabase.from("bs2_roles").select("slug,name");
+      if (!window.ffSupabase) return;
+      var res = await window.ffSupabase.from("bs2_roles").select("slug,name");
       if (res.error || !res.data) return;
       var names = res.data
         .filter(function (r) { return r && r.name && WERKVLOER_SLUGS.indexOf(r.slug) === -1; })
@@ -498,7 +498,7 @@
       }
     });
 
-    window.addEventListener("besa:sharepoint-updated", render);
+    window.addEventListener("ff:sharepoint-updated", render);
   }
 
   function init() {

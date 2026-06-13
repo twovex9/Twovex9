@@ -12,8 +12,8 @@
  * bij page-refresh / tab-switch.
  *
  * Gebruik vanuit page-script:
- *   window.besaReadAudit.log("Cliënt", clientId);
- *   window.besaReadAudit.log("Medewerker", empId);
+ *   window.ffReadAudit.log("Cliënt", clientId);
+ *   window.ffReadAudit.log("Medewerker", empId);
  */
 (function (global) {
   "use strict";
@@ -27,8 +27,8 @@
 
   async function log(resource, resourceId) {
     if (!resource || !resourceId) return;
-    if (!global.besaSupabase) {
-      console.warn("[read-audit] besaSupabase niet geladen, skip");
+    if (!global.ffSupabase) {
+      console.warn("[read-audit] ffSupabase niet geladen, skip");
       return;
     }
     var key = makeKey(resource, resourceId);
@@ -48,7 +48,7 @@
     } catch (e) { /* swallow */ }
 
     try {
-      var res = await global.besaSupabase.rpc("log_read_audit", {
+      var res = await global.ffSupabase.rpc("log_read_audit", {
         p_resource: resource,
         p_resource_id: String(resourceId),
         p_user_label: userLabel,
@@ -61,7 +61,7 @@
     }
   }
 
-  global.besaReadAudit = {
+  global.ffReadAudit = {
     log: log,
   };
 })(typeof window !== "undefined" ? window : this);

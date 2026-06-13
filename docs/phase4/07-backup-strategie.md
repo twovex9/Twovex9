@@ -11,7 +11,7 @@
 | **Supabase Storage** | buckets `client-documents`, `medewerker-documenten` | PDF's, scans, bestanden gekoppeld aan parent-records via `storage_path` | bedrijfskritisch — bestanden zijn niet reproduceerbaar |
 | **Supabase auth.users** | (deel van project) | gebruikersaccounts + sessies | bedrijfskritisch — login-toegang verlies |
 | **Supabase migrations** | `supabase/schema.sql` + applied migrations log | DB-structuur, RLS-policies, triggers | herbouwbaar uit code, maar tijd-intensief |
-| **GitHub repo** | `ETFalkmaar/besa-suite-` | source code | gerepliceerd door git zelf — laag risico |
+| **GitHub repo** | `twovex9/twovex9` | source code | gerepliceerd door git zelf — laag risico |
 | **Vercel config** | `vercel.json` + env vars in dashboard | deploy-config, env-vars | herbouwbaar — laag risico |
 
 ## Backup-strategieën per onderdeel
@@ -48,7 +48,7 @@ Voor extra zekerheid: maandelijkse manuele export naar lokale schijf of S3/Googl
 $env:PGPASSWORD = "<DB_PASSWORD>"
 pg_dump "postgresql://postgres.ukjflilnhigozfoxowmj:[password]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres" `
   --schema=public --no-owner --no-acl `
-  > "C:\backups\besa-suite-$(Get-Date -Format 'yyyyMMdd').sql"
+  > "C:\backups\Future Flow-$(Get-Date -Format 'yyyyMMdd').sql"
 $env:PGPASSWORD = $null  # opruimen
 ```
 

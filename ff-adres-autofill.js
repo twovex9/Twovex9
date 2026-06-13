@@ -1,12 +1,12 @@
 /* global window, document */
 /**
- * besa-adres-autofill.js — postcode + huisnummer → straat + plaats automatisch.
+ * ff-adres-autofill.js — postcode + huisnummer → straat + plaats automatisch.
  *
  * Bij invoer van een geldige NL-postcode (1234 AB) + huisnummer wordt via de
  * PDOK Locatieserver (Kadaster/BZK — gratis, geen API-key) de straatnaam en
  * woonplaats opgehaald en in de straat/plaats-velden gezet. Hergebruikt de
  * cache/retry-infrastructuur van geo-distance.js
- * (window.besaGeoDistance.lookupAdres). Geen aparte data-laag.
+ * (window.ffGeoDistance.lookupAdres). Geen aparte data-laag.
  *
  * Werkt declaratief op een vaste registry van bekende adres-veldsets. Triggert
  * ALLEEN op echte gebruikersinvoer (input/blur). Programmatic .value (hydrate
@@ -14,9 +14,9 @@
  * overschreven. Bij geen-match of fout blijven bestaande waarden onaangeroerd.
  *
  * Public API:
- *   window.besaAdresAutofill.attach({postcode, huisnummer, straat, plaats})
+ *   window.ffAdresAutofill.attach({postcode, huisnummer, straat, plaats})
  *     — element-id's; wired één veldset (idempotent, no-op bij ontbrekende velden)
- *   window.besaAdresAutofill.init() — (her)scan de registry op de pagina
+ *   window.ffAdresAutofill.init() — (her)scan de registry op de pagina
  */
 (function () {
   "use strict";
@@ -24,9 +24,9 @@
   // NL-postcode: 4 cijfers (niet met 0 beginnend) + 2 letters, spatie optioneel.
   var POSTCODE_RE = /^[1-9][0-9]{3}\s*[A-Za-z]{2}$/;
   var DEBOUNCE_MS = 550;
-  var STYLE_ID = "besa-adres-autofill-style";
+  var STYLE_ID = "ff-adres-autofill-style";
 
-  // Bekende adres-veldsets in de besa-suite (statische HTML). Een set wordt
+  // Bekende adres-veldsets in de Future Flow (statische HTML). Een set wordt
   // alleen gewired als al z'n velden op de pagina aanwezig zijn.
   var REGISTRY = [
     // medewerker.html — thuisadres
@@ -55,21 +55,21 @@
   // PDOK-lookup via geo-distance.js (cache + retry). Geen fallback-dataPad:
   // geo-distance.js is een lokaal script dat naast deze module geladen wordt.
   async function lookup(postcode, huisnummer) {
-    if (window.besaGeoDistance && typeof window.besaGeoDistance.lookupAdres === "function") {
-      return window.besaGeoDistance.lookupAdres({ postcode: postcode, huisnummer: huisnummer });
+    if (window.ffGeoDistance && typeof window.ffGeoDistance.lookupAdres === "function") {
+      return window.ffGeoDistance.lookupAdres({ postcode: postcode, huisnummer: huisnummer });
     }
-    throw new Error("besaGeoDistance.lookupAdres niet beschikbaar (geo-distance.js niet geladen)");
+    throw new Error("ffGeoDistance.lookupAdres niet beschikbaar (geo-distance.js niet geladen)");
   }
 
   function injectStyleOnce() {
     if (document.getElementById(STYLE_ID)) return;
     var css =
-      ".besa-adres-status{display:block;margin:6px 2px 0;font-size:12px;line-height:1.45;" +
+      ".ff-adres-status{display:block;margin:6px 2px 0;font-size:12px;line-height:1.45;" +
         "color:var(--text-muted,#737373);min-height:1em;}" +
-      ".besa-adres-status:empty{display:none;}" +
-      ".besa-adres-status.is-ok{color:var(--bas-ok,#15803d);}" +
-      ".besa-adres-status.is-err{color:var(--bas-err,#b45309);}" +
-      ".besa-adres-status .bas-spin{display:inline-block;width:11px;height:11px;" +
+      ".ff-adres-status:empty{display:none;}" +
+      ".ff-adres-status.is-ok{color:var(--bas-ok,#15803d);}" +
+      ".ff-adres-status.is-err{color:var(--bas-err,#b45309);}" +
+      ".ff-adres-status .bas-spin{display:inline-block;width:11px;height:11px;" +
         "margin-right:6px;vertical-align:-1px;border:2px solid currentColor;" +
         "border-right-color:transparent;border-radius:50%;animation:bas-spin .7s linear infinite;}" +
       "@keyframes bas-spin{to{transform:rotate(360deg)}}" +
@@ -83,7 +83,7 @@
 
   function setStatus(el, kind, text, withSpinner) {
     if (!el) return;
-    el.className = "besa-adres-status" + (kind ? " is-" + kind : "");
+    el.className = "ff-adres-status" + (kind ? " is-" + kind : "");
     el.textContent = "";
     if (withSpinner) {
       var sp = document.createElement("span");
@@ -96,7 +96,7 @@
   // Status-regel net ná de adres-rij/-veld plaatsen (full-width onder het blok).
   function makeStatusEl(plaatsEl) {
     var status = document.createElement("div");
-    status.className = "besa-adres-status";
+    status.className = "ff-adres-status";
     status.setAttribute("aria-live", "polite");
     var anchor =
       plaatsEl.closest(".emp-address-grid,.loc-addr-grid") ||
@@ -210,7 +210,7 @@
     }
   }
 
-  window.besaAdresAutofill = { attach: attach, init: init };
+  window.ffAdresAutofill = { attach: attach, init: init };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

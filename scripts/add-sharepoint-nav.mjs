@@ -8,7 +8,7 @@
 // (gebruikt de bestands-EOL i.p.v. bare \n). Géén regel-verwijdering, dus
 // geen lege-regel-valkuil.
 //
-// Run vanuit besa-suite-etf/:  node scripts/add-sharepoint-nav.mjs
+// Run vanuit future-flow/:  node scripts/add-sharepoint-nav.mjs
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

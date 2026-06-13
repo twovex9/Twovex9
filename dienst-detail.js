@@ -400,7 +400,7 @@
   // in de grid én de teamlid-kolom in de tabel de toewijzing direct tonen (anders blijft
   // de tegel leeg en lijkt het toewijzen "mislukt"). De legacy single-teamlid-kolom toont
   // de eerst-toegewezen medewerker; de detail-sectie "Toegewezen (N/M)" blijft de volledige
-  // lijst tonen. planningDB.update() dispatcht besa:planning-updated → grid + tabel re-renderen.
+  // lijst tonen. planningDB.update() dispatcht ff:planning-updated → grid + tabel re-renderen.
   async function syncTeamlidColumn(dienstId) {
     if (!dienstId || !global.planningDB || !global.dienstUitnodigingenDB) return;
     var dienst = getDienst(dienstId);
@@ -524,7 +524,7 @@
     if (pickerCache.dienstId === dienst.id && pickerCache.overlapByMid && pickerCache.verzuimByMid) {
       return { overlapByMid: pickerCache.overlapByMid, verzuimByMid: pickerCache.verzuimByMid };
     }
-    var supa = global.besaSupabase;
+    var supa = global.ffSupabase;
     var overlapByMid = {};
     var verzuimByMid = {};
     var verlofByMid = {};
@@ -808,7 +808,7 @@
   // video-eis eigenaar 2026-06-07. De knoppen zijn in read-only modus al verborgen
   // (.planning-readonly CSS); deze guard blokkeert de actie ook bij DOM-manipulatie.
   function canEditPlanning() {
-    try { return (typeof window.besaPlanningCanEdit !== "function") || window.besaPlanningCanEdit(); }
+    try { return (typeof window.ffPlanningCanEdit !== "function") || window.ffPlanningCanEdit(); }
     catch (e) { return true; }
   }
   function denyEdit() {
@@ -1033,10 +1033,10 @@
     });
 
     // Listen for refresh events
-    window.addEventListener("besa:dienst-uitnodigingen-updated", function (e) {
+    window.addEventListener("ff:dienst-uitnodigingen-updated", function (e) {
       if (e && e.detail && e.detail.dienstId === currentDienstId) refreshAllSections();
     });
-    window.addEventListener("besa:dienst-activiteiten-updated", function (e) {
+    window.addEventListener("ff:dienst-activiteiten-updated", function (e) {
       if (e && e.detail && e.detail.dienstId === currentDienstId) refreshAllSections();
     });
   }

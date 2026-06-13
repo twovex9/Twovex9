@@ -8,17 +8,17 @@ Dit document is de **single source of truth** voor de huidige status van BS1. He
 ## TL;DR voor nieuwe sessies
 
 > **Lees in deze volgorde voor onboarding**:
-> 1. `besa-suite-etf/CLAUDE.md` — projectregels (auto-loaded)
+> 1. `future-flow/CLAUDE.md` — projectregels (auto-loaded)
 > 2. Dit document — actuele status
 > 3. `docs/phase4/open-items/README.md` — open items index
 > 4. `docs/phase4/06-professional-finish.md` — originele roadmap (status per item nu hieronder)
 
 ## Wat is BS1?
 
-In-house herbouw van BESA-suite 2 (BS2 — productie-demo `https://etf.acceptance.besasuite.nl`) in **eigen vanilla HTML/JS/CSS stack** met:
+In-house herbouw van BS2 (BS2 — productie-demo `https://etf.acceptance.besasuite.nl`) in **eigen vanilla HTML/JS/CSS stack** met:
 - Eigen Supabase Postgres + Storage backend (`ukjflilnhigozfoxowmj`)
 - Auto-deploy via Vercel uit GitHub `main` branch
-- Live op `https://besa-suite.vercel.app`
+- Live op `https://futureflow-app.vercel.app`
 - Eigen huisstijl + UX (zie `.claude/huisstijl.md`)
 
 ## Eindcijfers data (live op 2026-05-13)
@@ -101,7 +101,7 @@ Alleen items die user-input of een v2 sprint vereisen:
 ## Architectuur eindstand
 
 ```
-besa-suite-etf/
+future-flow/
 ├── *.html (54)              35 pagina's + 16 detail-views + 3 misc
 ├── *.js (~30 data-lagen)    Supabase-first patroon (sectie 6 werkpatronen)
 ├── styles.css               Design tokens + 18k+ regels
@@ -158,7 +158,7 @@ besa-suite-etf/
 **Workflow vastgelegd in**:
 - `CLAUDE.md` Git-sectie — feature-branch + PR (geen direct push naar main)
 - `werkpatronen.md` sectie 7 — full workflow + verboden patronen
-- Memory `feedback_besa_workflow.md` — overleeft sessie-compactie
+- Memory `feedback_ff_workflow.md` — overleeft sessie-compactie
 
 ## Acties voor ETF-admin direct
 

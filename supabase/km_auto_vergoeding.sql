@@ -89,7 +89,7 @@ where not exists (select 1 from public.private_app_config where sleutel = 'km_pu
 
 -- Herbruikbare ontvangersgroep voor km-meldingen: planning/HR-rollen (zelfde
 -- set als de dienst-aanmelden edge-function: bs2_roles/bs2_role_users).
-create or replace function public.besa_planner_hr_user_ids()
+create or replace function public.ff_planner_hr_user_ids()
 returns setof uuid
 language sql stable security definer set search_path = public
 as $$
@@ -104,8 +104,8 @@ as $$
         and ru.user_email is not null
     );
 $$;
-revoke all on function public.besa_planner_hr_user_ids() from public, anon, authenticated;
-grant execute on function public.besa_planner_hr_user_ids() to service_role;
+revoke all on function public.ff_planner_hr_user_ids() from public, anon, authenticated;
+grant execute on function public.ff_planner_hr_user_ids() to service_role;
 
 create or replace function public.km_genereer_vorige_maand(p_dry_run boolean default false)
 returns table (
@@ -294,10 +294,10 @@ begin
   end loop;
 
   -- HR-signaal: dagen die niet automatisch berekend konden worden (locatie/
-  -- afstand onbekend). Naar planning/HR (besa_planner_hr_user_ids), idempotent
+  -- afstand onbekend). Naar planning/HR (ff_planner_hr_user_ids), idempotent
   -- per maand per ontvanger.
   if not p_dry_run and c_nodist > 0 then
-    for v_uid in select public.besa_planner_hr_user_ids() loop
+    for v_uid in select public.ff_planner_hr_user_ids() loop
       if not exists (
         select 1 from public.notifications n
         where n.user_id = v_uid and n.type = 'km_generatie_signaal'
@@ -356,7 +356,7 @@ select cron.schedule(
 -- PR3 — Afwijkingen: medewerker wijzigt/verwijdert een AUTOMATISCH berekende rit
 -- ----------------------------------------------------------------------------
 -- De frontend logt de afwijking (oud -> nieuw + reden); een trigger informeert
--- planning/HR (besa_planner_hr_user_ids) zodat zij kunnen uitzoeken waarom de
+-- planning/HR (ff_planner_hr_user_ids) zodat zij kunnen uitzoeken waarom de
 -- kilometers verschillen.
 create table if not exists public.kilometer_afwijkingen (
   id uuid primary key default gen_random_uuid(),
@@ -395,7 +395,7 @@ declare
 begin
   select coalesce(nullif(btrim(voornaam || ' ' || achternaam), ''), 'Een medewerker')
     into v_naam from public.medewerkers where id = new.medewerker_id;
-  for v_uid in select public.besa_planner_hr_user_ids() loop
+  for v_uid in select public.ff_planner_hr_user_ids() loop
     insert into public.notifications (user_id, type, title, body, related_entity_type, related_entity_id)
     values (
       v_uid, 'km_afwijking',

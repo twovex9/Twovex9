@@ -1,7 +1,7 @@
 # Module 27 — Medewerker-detail — STRUCTURE
 
 **BS2 URL**: `/hr/employees/{id}/details`
-**BS1 URL**: `https://besa-suite.vercel.app/medewerker.html?id={id}`
+**BS1 URL**: `https://futureflow-app.vercel.app/medewerker.html?id={id}`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

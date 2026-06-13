@@ -4,19 +4,19 @@
 // Gebruikt storageState uit auth-setup.mjs (zie playwright.config.mjs).
 // Test-user moet bestaan in Supabase Auth — zie tests/README.md.
 //
-// Slim skip pattern: als BESA_E2E_EMAIL niet gezet is, hele suite skipt
+// Slim skip pattern: als FF_E2E_EMAIL niet gezet is, hele suite skipt
 // zonder failures. Lokaal:
-//   $env:BESA_E2E_EMAIL = "..."
-//   $env:BESA_E2E_PASSWORD = "..."
+//   $env:FF_E2E_EMAIL = "..."
+//   $env:FF_E2E_PASSWORD = "..."
 //   npm run test:e2e
 
 import { test, expect } from "@playwright/test";
 
 // Hele suite skipt als geen credentials — voorkomt CI-fail bij PR's zonder secrets
-const HAS_CREDS = !!process.env.BESA_E2E_EMAIL && !!process.env.BESA_E2E_PASSWORD;
+const HAS_CREDS = !!process.env.FF_E2E_EMAIL && !!process.env.FF_E2E_PASSWORD;
 
 test.describe("Authenticated tests", () => {
-  test.skip(!HAS_CREDS, "BESA_E2E_EMAIL/PASSWORD niet gezet — skip authenticated suite");
+  test.skip(!HAS_CREDS, "FF_E2E_EMAIL/PASSWORD niet gezet — skip authenticated suite");
 
   test("home.html laadt voor ingelogde user (geen redirect naar login)", async ({ page }) => {
     await page.goto("/home.html");

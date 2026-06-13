@@ -22,5 +22,5 @@ All 4 modals (na Bug #61 fix): X / Escape / Overlay close-ways ✅
 - "Vrijgeven voor planning" status
 
 ## Events
-- `besa:medewerker-updated` event op window
-- `besa:medewerkers-updated` voor cross-page sync
+- `ff:medewerker-updated` event op window
+- `ff:medewerkers-updated` voor cross-page sync

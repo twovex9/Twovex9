@@ -1,6 +1,6 @@
 /* global window, document, getComputedStyle */
 /**
- * besa-oplossen.js — centraal "oplos-register" + herbruikbare popover.
+ * ff-oplossen.js — centraal "oplos-register" + herbruikbare popover.
  *
  * User-eis (spraakmemo 2026-06-12): bij elke foutmelding/issue in de app een
  * knop "Oplossen →". Klik opent een klein popover met (a) een korte uitleg
@@ -330,13 +330,13 @@
     closePopover();
     if (!anchorEl || !opts) return;
     var pop = document.createElement("div");
-    pop.className = "besa-oplossen-pop";
+    pop.className = "ff-oplossen-pop";
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", "Hoe los ik dit op");
     pop.innerHTML =
-      '<div class="besa-oplossen-pop-head">Hoe los ik dit op?</div>' +
-      '<div class="besa-oplossen-pop-body">' + esc(opts.uitleg || "") + "</div>" +
-      '<button type="button" class="btn-primary besa-oplossen-pop-go">' +
+      '<div class="ff-oplossen-pop-head">Hoe los ik dit op?</div>' +
+      '<div class="ff-oplossen-pop-body">' + esc(opts.uitleg || "") + "</div>" +
+      '<button type="button" class="btn-primary ff-oplossen-pop-go">' +
         esc(opts.knopLabel || "Ga naar de juiste plek") + " →" +
       "</button>";
     document.body.appendChild(pop);
@@ -378,7 +378,7 @@
     pop.style.left = left + "px";
     pop.style.top = top + "px";
 
-    var goBtn = pop.querySelector(".besa-oplossen-pop-go");
+    var goBtn = pop.querySelector(".ff-oplossen-pop-go");
     if (goBtn) {
       goBtn.addEventListener("click", function (e) {
         e.preventDefault();
@@ -415,7 +415,7 @@
         attrs += " " + k + '="' + esc(dataAttrs[k]) + '"';
       });
     }
-    return '<button type="button" class="besa-oplossen-trigger"' + attrs +
+    return '<button type="button" class="ff-oplossen-trigger"' + attrs +
       ' aria-label="Hoe los ik dit op?">Oplossen →</button>';
   }
 
@@ -426,7 +426,7 @@
     if (!container || container.__oplosSigBound) return;
     container.__oplosSigBound = true;
     container.addEventListener("click", function (ev) {
-      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
+      var btn = ev.target.closest && ev.target.closest(".ff-oplossen-trigger");
       if (!btn) return;
       ev.preventDefault();
       ev.stopPropagation();
@@ -465,7 +465,7 @@
     return triggerHtml({ "data-sig-url": url, "data-sig-knop": knop, "data-sig-uitleg": uitleg });
   }
 
-  global.besaOplossen = {
+  global.ffOplossen = {
     clientFix: clientFix,
     clientFixByText: clientFixByText,
     medewerkerFix: medewerkerFix,

@@ -36,7 +36,7 @@
  *     }
  *
  * Public:
- *   window.besaOrtEngine = {
+ *   window.ffOrtEngine = {
  *     computeOrtForEmployee(medewerkerId, year, month),
  *     computeOrtForRecord(record, ortRules, feestdagen),
  *     resolveCaoForEmployee(medewerker),
@@ -367,7 +367,7 @@
     };
   }
 
-  global.besaOrtEngine = {
+  global.ffOrtEngine = {
     computeOrtForEmployee: computeOrtForEmployee,
     computeOrtForRecord: computeOrtForRecord,
     splitRecordByOrtRules: splitRecordByOrtRules,

@@ -207,8 +207,8 @@
   }
 
   function faseDotClass(f) {
-    if (typeof window.besaFaseClientSdotClass === "function") {
-      return window.besaFaseClientSdotClass(f);
+    if (typeof window.ffFaseClientSdotClass === "function") {
+      return window.ffFaseClientSdotClass(f);
     }
     var t = String(f || "").toLowerCase();
     if (t === "in zorg") return "client-detail-sdot--fase-in-zorg";
@@ -233,11 +233,11 @@
         function finish() {
           if (settled) return;
           settled = true;
-          window.removeEventListener("besa:clienten-updated", onClientenUpdated);
+          window.removeEventListener("ff:clienten-updated", onClientenUpdated);
           resolve();
         }
         function onClientenUpdated() { if (getClientenById(qid)) finish(); }
-        window.addEventListener("besa:clienten-updated", onClientenUpdated);
+        window.addEventListener("ff:clienten-updated", onClientenUpdated);
         window.setTimeout(finish, 6000);
       });
     }
@@ -309,23 +309,23 @@
 
   // Cliëntreis-pill in de vcard (read-only; kolom clienten.reis_status wordt
   // server-side beheerd door de fase-sync-trigger). Re-sync op
-  // besa:clienten-updated zodat een koude load met verouderde cache (zonder
+  // ff:clienten-updated zodat een koude load met verouderde cache (zonder
   // reisStatus) na de bootstrap-fetch alsnog de juiste status toont.
   var reisPill = document.getElementById("cd-reis-pill");
   function syncReisPill() {
     if (!reisPill) return;
     var cur = (typeof getClientenById === "function" && getClientenById(qid)) || c;
     var slug = cur && cur.reisStatus ? String(cur.reisStatus) : "";
-    if (slug && window.besaClientreis && typeof window.besaClientreis.label === "function") {
-      reisPill.textContent = window.besaClientreis.label(slug);
-      reisPill.className = window.besaClientreis.pillClass(slug);
+    if (slug && window.ffClientreis && typeof window.ffClientreis.label === "function") {
+      reisPill.textContent = window.ffClientreis.label(slug);
+      reisPill.className = window.ffClientreis.pillClass(slug);
     } else {
       reisPill.textContent = "—";
       reisPill.className = "cr-pill cr-pill--onbekend";
     }
   }
   syncReisPill();
-  window.addEventListener("besa:clienten-updated", syncReisPill);
+  window.addEventListener("ff:clienten-updated", syncReisPill);
 
   // ── Cliëntreis-acties (fase 2): volgende-stap-knoppen in de vcard.
   // Alleen zichtbaar voor beoordelaars (rpc clientreis_context); de echte
@@ -400,8 +400,8 @@
   }
   // Inline bevestig-strookje in de vcard (geen modal) met optionele toelichting.
   function craRenderConfirm(status, label) {
-    var statusLabel = (window.besaClientreis && typeof window.besaClientreis.label === "function")
-      ? window.besaClientreis.label(status)
+    var statusLabel = (window.ffClientreis && typeof window.ffClientreis.label === "function")
+      ? window.ffClientreis.label(status)
       : status;
     reisActies.innerHTML =
       '<div class="cra-confirm">' +
@@ -451,7 +451,7 @@
     });
   }
   syncReisActies();
-  window.addEventListener("besa:clienten-updated", syncReisActies);
+  window.addEventListener("ff:clienten-updated", syncReisActies);
 
   document.getElementById("cd-f-vn").value = c.voornaam != null ? String(c.voornaam) : "";
   document.getElementById("cd-f-an").value = c.achternaam != null ? String(c.achternaam) : "";
@@ -592,7 +592,7 @@
   async function fetchGwList() {
     if (_gwListCache) return _gwListCache;
     try {
-      var sb = window.besaSupabase;
+      var sb = window.ffSupabase;
       if (!sb) return [];
       var roleRes = await sb.from("bs2_roles").select("id").eq("slug", "gedragswetenschapper").limit(1);
       if (roleRes.error || !roleRes.data || !roleRes.data.length) return [];
@@ -770,7 +770,7 @@
   /**
    * Render Betalingen-tab: lijst alle facturen die aan deze cliënt zijn gekoppeld
    * (via facturen.client_id of cliënt-clientnummer match). Toont samenvatting +
-   * tabel. Reageert ook op `besa:facturen-updated` event voor live-refresh.
+   * tabel. Reageert ook op `ff:facturen-updated` event voor live-refresh.
    */
   function renderBetalingen() {
     var tbody = document.getElementById("cd-bet-tbody");
@@ -860,7 +860,7 @@
   }
 
   // Live-refresh wanneer facturen-data verandert
-  window.addEventListener("besa:facturen-updated", function () {
+  window.addEventListener("ff:facturen-updated", function () {
     // Alleen renderen als de Betalingen-tab actief is (vermijd onnodig werk)
     var panP = document.getElementById("cd-pan-p");
     if (panP && !panP.hidden) renderBetalingen();
@@ -919,8 +919,8 @@
     // Chronologisch nieuwste boven (data-laag sorteert al desc), geen groepering.
     list.innerHTML = events.map(function (ev) {
       if (!ev) return "";
-      var icoon = (window.besaClientreis && typeof window.besaClientreis.icoon === "function")
-        ? window.besaClientreis.icoon(ev.event_type)
+      var icoon = (window.ffClientreis && typeof window.ffClientreis.icoon === "function")
+        ? window.ffClientreis.icoon(ev.event_type)
         : "";
       var meta = [];
       if (ev.created_by_naam) meta.push("door " + escapeHtml(ev.created_by_naam));
@@ -1120,7 +1120,7 @@
         try {
           await window.clientIntakeDB.onderdeelOpslaan(kaart.getAttribute("data-cdi-id"), ta ? ta.value : "", !!(cb && cb.checked));
           if (window.showActionFeedback) window.showActionFeedback("saved", "Intake-onderdeel");
-          // her-render volgt via besa:client-intake-updated
+          // her-render volgt via ff:client-intake-updated
         } catch (err) {
           if (window.showError) window.showError("Opslaan mislukt: " + (err && err.message || err));
           btn.disabled = false;
@@ -1177,7 +1177,7 @@
         try {
           await window.clientOndertekeningenDB.intrekken(btn.getAttribute("data-cdo-id"));
           if (window.showActionFeedback) window.showActionFeedback("saved", "Ondertekening ingetrokken");
-          // her-render volgt via besa:client-ondertekeningen-updated
+          // her-render volgt via ff:client-ondertekeningen-updated
         } catch (err) {
           if (window.showError) window.showError("Intrekken mislukt: " + (err && err.message || err));
           renderIntake();
@@ -1278,7 +1278,7 @@
         cdtSetVisible(ondSaveBtn, false);
         cdtSetVisible(ondResult, true);
         if (ondCancelBtn) ondCancelBtn.textContent = "Sluiten";
-        // tabel her-rendert via besa:client-ondertekeningen-updated
+        // tabel her-rendert via ff:client-ondertekeningen-updated
       } catch (err) {
         if (window.showError) window.showError("Aanvragen mislukt: " + (err && err.message || err));
       } finally {
@@ -1310,11 +1310,11 @@
   }
 
   // Live-refresh (alleen renderen als de Intake-tab actief is)
-  window.addEventListener("besa:client-intake-updated", function () {
+  window.addEventListener("ff:client-intake-updated", function () {
     var panK = document.getElementById("cd-pan-k");
     if (panK && !panK.hidden) renderIntake();
   });
-  window.addEventListener("besa:client-ondertekeningen-updated", function () {
+  window.addEventListener("ff:client-ondertekeningen-updated", function () {
     var panK = document.getElementById("cd-pan-k");
     if (panK && !panK.hidden) renderIntake();
   });
@@ -1494,7 +1494,7 @@
   });
 
   // Live-refresh wanneer contacten-data verandert
-  window.addEventListener("besa:client-contacten-updated", function () {
+  window.addEventListener("ff:client-contacten-updated", function () {
     var panC = document.getElementById("cd-pan-c");
     if (panC && !panC.hidden) renderContacten();
   });
@@ -1755,7 +1755,7 @@
   });
 
   // Live-refresh
-  window.addEventListener("besa:client-rapportages-updated", function () {
+  window.addEventListener("ff:client-rapportages-updated", function () {
     var panR = document.getElementById("cd-pan-r");
     if (panR && !panR.hidden) renderRapportages();
   });
@@ -1769,7 +1769,7 @@
     if (!f3UserIdPromise) {
       f3UserIdPromise = (async function () {
         try {
-          var s = await window.besaSupabase.auth.getSession();
+          var s = await window.ffSupabase.auth.getSession();
           return (s && s.data && s.data.session && s.data.session.user && s.data.session.user.id) || null;
         } catch (e) { return null; }
       })();
@@ -2160,7 +2160,7 @@
       }
     }
   });
-  window.addEventListener("besa:zorgplannen-updated", function () {
+  window.addEventListener("ff:zorgplannen-updated", function () {
     if (pans.z && !pans.z.hidden) renderZorgplannen();
   });
 
@@ -2330,7 +2330,7 @@
       }
     }
   });
-  window.addEventListener("besa:signaleringsplannen-updated", function () {
+  window.addEventListener("ff:signaleringsplannen-updated", function () {
     if (pans.s && !pans.s.hidden) renderSignaleringsplannen();
   });
 
@@ -2470,7 +2470,7 @@
       }
     }
   });
-  window.addEventListener("besa:client-contactlog-updated", function () {
+  window.addEventListener("ff:client-contactlog-updated", function () {
     if (pans.g && !pans.g.hidden) renderContactlog();
   });
 
@@ -2550,7 +2550,7 @@
       vmEmpty.hidden = vmRows.length > 0;
     }
   }
-  ["besa:incidenten-updated", "besa:klachten-updated", "besa:verbeteringsmaatregelen-updated"].forEach(function (ev) {
+  ["ff:incidenten-updated", "ff:klachten-updated", "ff:verbeteringsmaatregelen-updated"].forEach(function (ev) {
     window.addEventListener(ev, function () {
       if (pans.i && !pans.i.hidden) renderKwaliteit();
     });
@@ -2567,8 +2567,8 @@
     var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
     if (!cl) return;
     try {
-      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
-      var r = await window.besaSupabase.rpc("client_ai_samenvatting", { p_client_id: cl.id });
+      if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.ffSupabase.rpc("client_ai_samenvatting", { p_client_id: cl.id });
       if (r.error) throw r.error;
       var d = r.data || {};
       if (!d.ok) { craSetVisible(kaart, false); return; }
@@ -2579,8 +2579,8 @@
             var ernst = p && (p.ernst === "rood" || p.ernst === "oranje") ? p.ernst : "info";
             var tekst = (p && p.tekst) || "";
             // Samenvatting levert vrije tekst → bestemming via clientFixByText.
-            var fix = (window.besaOplossen && window.besaOplossen.clientFixByText)
-              ? window.besaOplossen.clientFixByText(tekst) : null;
+            var fix = (window.ffOplossen && window.ffOplossen.clientFixByText)
+              ? window.ffOplossen.clientFixByText(tekst) : null;
             return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">'
               + '<span class="cd-ai-punt-txt">' + escapeHtml(tekst) + '</span>'
               + cdOplosBtn(fix) + '</li>';
@@ -2638,8 +2638,8 @@
     var cl = (typeof getClientenById === "function" && getClientenById(qid)) || c;
     if (!cl) return;
     try {
-      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
-      var r = await window.besaSupabase.rpc("client_dossier_issues_voor_client", { p_client_id: cl.id });
+      if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.ffSupabase.rpc("client_dossier_issues_voor_client", { p_client_id: cl.id });
       if (r.error) { craSetVisible(kaart, false); return; }
       var rows = Array.isArray(r.data) ? r.data : [];
       if (!rows.length) { craSetVisible(kaart, false); return; }
@@ -2647,8 +2647,8 @@
         var ernst = i.ernst === "rood" || i.ernst === "oranje" ? i.ernst : "info";
         return '<li class="cd-ai-punt cd-ai-punt--' + ernst + '">'
           + '<span class="cd-ai-punt-txt">' + escapeHtml(i.tekst || "") + '</span>'
-          + cdOplosBtn(window.besaOplossen && window.besaOplossen.clientFix
-              ? window.besaOplossen.clientFix(i.issue_type) : null)
+          + cdOplosBtn(window.ffOplossen && window.ffOplossen.clientFix
+              ? window.ffOplossen.clientFix(i.issue_type) : null)
           + '</li>';
       }).join("");
       bindCdOplossen(lijst);
@@ -2663,8 +2663,8 @@
   // click-handler ze terugleest — werkt voor zowel Dossier-issues (clientFix) als
   // de Samenvatting (clientFixByText).
   function cdOplosBtn(fix) {
-    if (!fix || !window.besaOplossen) return "";
-    return window.besaOplossen.triggerHtml({
+    if (!fix || !window.ffOplossen) return "";
+    return window.ffOplossen.triggerHtml({
       "data-fix-tab": fix.tab,
       "data-fix-knop": fix.knop,
       "data-fix-uitleg": fix.uitleg,
@@ -2678,14 +2678,14 @@
     if (!container || container.__oplosBound) return;
     container.__oplosBound = true;
     container.addEventListener("click", function (ev) {
-      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
-      if (!btn || !window.besaOplossen) return;
+      var btn = ev.target.closest && ev.target.closest(".ff-oplossen-trigger");
+      if (!btn || !window.ffOplossen) return;
       ev.preventDefault();
       ev.stopPropagation();
-      if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
+      if (window.ffOplossen.isOpenFor(btn)) { window.ffOplossen.closePopover(); return; }
       var tab = btn.getAttribute("data-fix-tab");
       if (!tab) return;
-      window.besaOplossen.openPopover(btn, {
+      window.ffOplossen.openPopover(btn, {
         uitleg: btn.getAttribute("data-fix-uitleg") || "",
         knopLabel: btn.getAttribute("data-fix-knop") || "Ga naar tabblad",
         onGaNaar: function () {
@@ -2758,7 +2758,7 @@
     if (!reden) { try { document.getElementById("cd-uit-f-reden").focus(); } catch (e) {} return; }
     this.disabled = true;
     try {
-      var r = await window.besaSupabase.rpc("client_uitstroom_starten", {
+      var r = await window.ffSupabase.rpc("client_uitstroom_starten", {
         p_client_id: cl.id, p_reden: reden,
         p_vervolgplek: (document.getElementById("cd-uit-f-vervolg").value || "").trim() || null,
         p_uitstroom_datum: document.getElementById("cd-uit-f-datum").value || null,
@@ -2782,7 +2782,7 @@
     if (!cl) return;
     this.disabled = true;
     try {
-      var r = await window.besaSupabase.rpc("client_nazorg_starten", {
+      var r = await window.ffSupabase.rpc("client_nazorg_starten", {
         p_client_id: cl.id,
         p_afspraken: (document.getElementById("cd-naz-f-afspraken").value || "").trim() || null,
       });
@@ -2810,7 +2810,7 @@
     if (!ok) return;
     this.disabled = true;
     try {
-      var r = await window.besaSupabase.rpc("client_dossier_sluiten", {
+      var r = await window.ffSupabase.rpc("client_dossier_sluiten", {
         p_client_id: cl.id,
         p_reden: (document.getElementById("cd-slt-f-reden").value || "").trim() || null,
       });
@@ -2860,8 +2860,8 @@
     if (!cl) return;
     tbody.innerHTML = '<tr><td colspan="5" class="client-detail-placeholder">Laden…</td></tr>';
     try {
-      if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
-      var r = await window.besaSupabase.rpc("client_audit_trail", { p_client_id: cl.id, p_limit: 200 });
+      if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* */ } }
+      var r = await window.ffSupabase.rpc("client_audit_trail", { p_client_id: cl.id, p_limit: 200 });
       if (r.error) throw r.error;
       var d = r.data || {};
       if (!d.ok) {
@@ -3437,11 +3437,11 @@
   });
 
   // Live-refresh
-  window.addEventListener("besa:client-medicatie-updated", function () {
+  window.addEventListener("ff:client-medicatie-updated", function () {
     var panM = document.getElementById("cd-pan-m");
     if (panM && !panM.hidden) renderMedicatie();
   });
-  window.addEventListener("besa:client-medicatie-aftekening-updated", function () {
+  window.addEventListener("ff:client-medicatie-aftekening-updated", function () {
     var panM = document.getElementById("cd-pan-m");
     if (panM && !panM.hidden) renderMedAftekenlijst();
   });
@@ -3706,7 +3706,7 @@
   });
 
   // Live-refresh
-  window.addEventListener("besa:client-vragenlijsten-updated", function () {
+  window.addEventListener("ff:client-vragenlijsten-updated", function () {
     var panQ = document.getElementById("cd-pan-q");
     if (panQ && !panQ.hidden) renderVragenlijsten();
   });
@@ -3718,18 +3718,18 @@
   // geen betalings-/factuurgegevens zien. Alleen admin-tier (admin/eigenaar/
   // directeur) of Finance/Cliëntbeheer. Identieke audience als de Tarief-kolom in
   // Beschikkingen. Verberg de tab-knop direct (synchroon) zodat er geen flits is
-  // vóór besaPermissionsReady beslist; daarna definitief tonen of verwijderen.
+  // vóór ffPermissionsReady beslist; daarna definitief tonen of verwijderen.
   (function gateBetalingenTab() {
     var tabBtn0 = document.getElementById("cd-tab-p");
     if (tabBtn0) { tabBtn0.style.display = "none"; }
-    var ready = (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function")
-      ? window.besaPermissionsReady
+    var ready = (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function")
+      ? window.ffPermissionsReady
       : Promise.resolve();
     ready.then(function () {
       return !!(
-        (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) ||
-        (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function" &&
-          window.besaPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
+        (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) ||
+        (window.ffPermissions && typeof window.ffPermissions.hasAnyRole === "function" &&
+          window.ffPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
       );
     }).catch(function () {
       return false; // fail-closed: bij twijfel verbergen
@@ -3890,7 +3890,7 @@
     var bescSortDir = "asc";
 
     // Tarief-kolom is rol-gegate (Finance/Cliëntbeheer/admin-tier).
-    // Fail-closed: tot besaPermissionsReady besloten heeft renderen we niets,
+    // Fail-closed: tot ffPermissionsReady besloten heeft renderen we niets,
     // daarna wordt de kolom (incl. header + kolomkiezer-item) definitief
     // verwijderd wanneer de gebruiker hem niet mag zien.
     var cdbKanTariefZien = false;
@@ -3912,8 +3912,8 @@
     }
 
     function cdbFaseDotClass(f) {
-      return (typeof window.besaFaseBescDotClass === "function")
-        ? window.besaFaseBescDotClass(f)
+      return (typeof window.ffFaseBescDotClass === "function")
+        ? window.ffFaseBescDotClass(f)
         : "bdtl-fase-dot bdtl-fase-dot--fase-onbekend";
     }
 
@@ -4135,7 +4135,7 @@
       if (cdbTariefBeslist) cdbRender();
     };
 
-    // --- Tarief-gate (na besaPermissionsReady; fail-closed) -------------------
+    // --- Tarief-gate (na ffPermissionsReady; fail-closed) -------------------
     function cdbApplyTariefGate() {
       if (cdbKanTariefZien) return;
       var th = document.getElementById("cdb-th-tarief");
@@ -4147,14 +4147,14 @@
     }
 
     (function cdbInitTariefGate() {
-      var ready = (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function")
-        ? window.besaPermissionsReady
+      var ready = (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function")
+        ? window.ffPermissionsReady
         : Promise.resolve();
       ready.then(function () {
         cdbKanTariefZien = !!(
-          (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) ||
-          (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function" &&
-            window.besaPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
+          (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) ||
+          (window.ffPermissions && typeof window.ffPermissions.hasAnyRole === "function" &&
+            window.ffPermissions.hasAnyRole(["Finance", "Cliëntbeheer"]))
         );
       }).catch(function () {
         cdbKanTariefZien = false;
@@ -4167,7 +4167,7 @@
 
     // Live verversen wanneer de beschikkingen-data wijzigt (alleen als de tab
     // zichtbaar is; bij tab-activatie rendert setTab sowieso opnieuw).
-    window.addEventListener("besa:beschikkingen-updated", function () {
+    window.addEventListener("ff:beschikkingen-updated", function () {
       if (!cdbTariefBeslist) return;
       var pan = document.getElementById("cd-pan-b");
       if (pan && !pan.hidden) cdbRender();
@@ -4225,7 +4225,7 @@
       closeCdbColPanel();
     });
 
-    // --- Export (echt, via window.besaExport) ---------------------------------
+    // --- Export (echt, via window.ffExport) ---------------------------------
     var CDB_EXPORT_COLS = [
       { col: "naam", label: "Naam / product", get: function (b) { return b.naam || ""; } },
       { col: "productcode", label: "Productcode", get: function (b) { return b.productcode || ""; } },
@@ -4238,7 +4238,7 @@
     ];
 
     function cdbDoExport() {
-      if (typeof window.besaExport !== "function") {
+      if (typeof window.ffExport !== "function") {
         if (typeof window.showActionFeedback === "function") {
           window.showActionFeedback("error", "Export", "Export-module is niet geladen.");
         }
@@ -4255,7 +4255,7 @@
         cols.forEach(function (cdef) { o[cdef.label] = cdef.get(b); });
         return o;
       });
-      window.besaExport({
+      window.ffExport({
         filename: "beschikkingen" + (nm ? "-" + nm.toLowerCase().replace(/\s+/g, "-") : ""),
         title: "Beschikkingen" + (nm ? " — " + nm : ""),
         data: data,
@@ -4278,8 +4278,8 @@
     var cdbAddFasePill = document.getElementById("cdb-add-client-fase");
 
     function cdbBescFasePillClass(f) {
-      if (typeof window.besaFaseClientPillClass === "function") {
-        return window.besaFaseClientPillClass(f);
+      if (typeof window.ffFaseClientPillClass === "function") {
+        return window.ffFaseClientPillClass(f);
       }
       var t = String(f || "").toLowerCase();
       if (t === "in zorg") return "cl-fase-pill cl-fase-pill--in-zorg";
@@ -5106,7 +5106,7 @@
       });
     }
 
-    window.addEventListener("besa:client-documents-updated", function (ev) {
+    window.addEventListener("ff:client-documents-updated", function (ev) {
       var detail = ev && ev.detail;
       if (!detail || String(detail.clientId) === String(c.id)) {
         render();

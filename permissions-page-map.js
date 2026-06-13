@@ -5,11 +5,11 @@
  * Twee modes per pagina:
  *   1. `null` — altijd open voor ingelogde users (home, eigen profiel, etc.)
  *   2. `{ action, entity }` — vertaalt naar BS2-permissie-slug `<action>-<entity>`
- *      en wordt gechecked via `besaCan(action, entity)`.
+ *      en wordt gechecked via `ffCan(action, entity)`.
  *   3. `{ allowedRoles: [...] }` — strikte rol-lijst (BS2-naam, bv. "HR", "Eigenaar").
  *      Voor uitzonderingen op BS2's eigen permissie-model (bv. salarishuis).
  *
- * Admin-tier rollen (Eigenaar/Admin/Directeur) krijgen altijd toegang (besaCan bypass).
+ * Admin-tier rollen (Eigenaar/Admin/Directeur) krijgen altijd toegang (ffCan bypass).
  *
  * Slug-conventie volgt `bs2_permissions.slug` 1-op-1 (146 slugs over 17 groepen).
  *
@@ -292,5 +292,5 @@
     "instellingen.html": null,
   };
 
-  global.BESA_PAGE_PERMISSIONS = PAGE_PERMISSIONS;
+  global.FF_PAGE_PERMISSIONS = PAGE_PERMISSIONS;
 })(typeof window !== "undefined" ? window : this);

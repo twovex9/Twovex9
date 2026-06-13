@@ -17,13 +17,13 @@
 
   function reportSilent(action, err) {
     console.error("[gebruikersDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Gebruikers — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Gebruikers — " + action, err);
   }
 
   async function callEdge(action, args) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen.");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen.");
     var body = Object.assign({ action: action }, args || {});
-    var res = await global.besaSupabase.functions.invoke("admin-user-mgmt", { body: body });
+    var res = await global.ffSupabase.functions.invoke("admin-user-mgmt", { body: body });
     if (res.error) {
       // res.error van .functions.invoke is een FunctionsHttpError; payload zit in .context
       var msg = res.error.message || "Onbekende fout";

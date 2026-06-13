@@ -46,9 +46,9 @@
   var visibleTabs = [];
   var activeTab = null;
 
-  function adminTier() { try { return !!(global.besaIsAdminTier && global.besaIsAdminTier()); } catch (e) { return false; } }
+  function adminTier() { try { return !!(global.ffIsAdminTier && global.ffIsAdminTier()); } catch (e) { return false; } }
   function hasAnyRole(roles) {
-    try { return !!(global.besaPermissions && global.besaPermissions.hasAnyRole(roles)); } catch (e) { return false; }
+    try { return !!(global.ffPermissions && global.ffPermissions.hasAnyRole(roles)); } catch (e) { return false; }
   }
   function canSeeTab(tab) {
     if (adminTier()) return true;
@@ -61,8 +61,8 @@
 
   // ── RPC-helper ──────────────────────────────────────────────────────────────
   async function rpc(name, args) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
-    var res = await global.besaSupabase.rpc(name, args || {});
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
+    var res = await global.ffSupabase.rpc(name, args || {});
     if (res.error) throw res.error;
     return res.data;
   }
@@ -214,17 +214,17 @@
   // bindt een delegated click-handler die de popover toont.
   var hrSigOplossenWired = false;
   function wireHrSignaleringenOplossen() {
-    if (hrSigOplossenWired || !global.besaOplossen) return;
+    if (hrSigOplossenWired || !global.ffOplossen) return;
     var valEl = $("mob-hr-signaleringen");
     var card = valEl ? valEl.closest(".mob-kpi") : null;
     if (!card) return;
     hrSigOplossenWired = true;
-    card.insertAdjacentHTML("beforeend", global.besaOplossen.triggerHtml({ "data-mob-sig-oplossen": "1" }));
+    card.insertAdjacentHTML("beforeend", global.ffOplossen.triggerHtml({ "data-mob-sig-oplossen": "1" }));
     card.addEventListener("click", function (e) {
       var btn = e.target.closest("[data-mob-sig-oplossen]");
       if (!btn) return;
       e.preventDefault();
-      global.besaOplossen.openPopover(btn, {
+      global.ffOplossen.openPopover(btn, {
         uitleg: "Bekijk en behandel de open AI-signaleringen.",
         knopLabel: "Naar signaleringen",
         onGaNaar: function () { showView("signaleringen"); },
@@ -333,7 +333,7 @@
   }
   function reportErr(waar, err) {
     console.error("[mobiliteit] " + waar + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Mobiliteit — " + waar, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Mobiliteit — " + waar, err);
   }
 
   // ── Tab-besturing ────────────────────────────────────────────────────────────
@@ -365,7 +365,7 @@
 
   // ── Init ─────────────────────────────────────────────────────────────────────
   async function init() {
-    try { if (global.besaPermissionsReady) await global.besaPermissionsReady; } catch (e) { /* */ }
+    try { if (global.ffPermissionsReady) await global.ffPermissionsReady; } catch (e) { /* */ }
     try { if (global.profilesDB && global.profilesDB.ready) await global.profilesDB.ready; } catch (e) { /* */ }
 
     visibleTabs = TAB_ORDER.filter(canSeeTab);
@@ -389,8 +389,8 @@
       var dr = defaultRange();
       sEl.value = dr.van;
       eEl.value = dr.tot;
-      if (global.BesaDateRange) {
-        global.BesaDateRange.mount({ container: box, startInput: sEl, endInput: eEl, allowEmpty: false, year: new Date().getFullYear() });
+      if (global.FfDateRange) {
+        global.FfDateRange.mount({ container: box, startInput: sEl, endInput: eEl, allowEmpty: false, year: new Date().getFullYear() });
       }
       sEl.addEventListener("change", reloadPeriodViews);
       eEl.addEventListener("change", reloadPeriodViews);
@@ -399,8 +399,8 @@
     wireSignaleringen();
 
     // Live-refresh op data-events
-    global.addEventListener("besa:km-signaleringen-updated", function () { if (activeTab === "signaleringen") renderSignaleringen(); });
-    global.addEventListener("besa:km-checkins-updated", function () { if (activeTab === "hr") loadHR(); });
+    global.addEventListener("ff:km-signaleringen-updated", function () { if (activeTab === "signaleringen") renderSignaleringen(); });
+    global.addEventListener("ff:km-checkins-updated", function () { if (activeTab === "hr") loadHR(); });
 
     showView(visibleTabs[0]);
   }

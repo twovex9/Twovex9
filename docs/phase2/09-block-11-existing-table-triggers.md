@@ -34,7 +34,7 @@ Direct daarna in `audit_log`:
 - `Medewerker | <uuid> | bewerken | "Abdelmajid Bentla"`
 - `Factuur | f_0001 | bewerken | "Factuur 20260026"`
 
-Live zichtbaar op `besa-suite.vercel.app/audit.html`.
+Live zichtbaar op `futureflow-app.vercel.app/audit.html`.
 
 ## audit.html — Filter uitbreiding
 

@@ -1,7 +1,7 @@
 # Module 13 — HR Nieuws — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/hr/announcements`
-**BS1 URL**: `https://besa-suite.vercel.app/nieuws.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/nieuws.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page top-level

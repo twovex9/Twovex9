@@ -228,7 +228,7 @@
   //     Vakantieverlof, Totaal verlofuren, Vroege/Late/Geen ploegen/Waakdienst,
   //     Totaal gewerkte uren.
   //   - 1 rij per Loondienst-medewerker met aggregaties uit:
-  //       - besaOrtEngine.computeOrtForEmployee → ORT %/dienst/totaal
+  //       - ffOrtEngine.computeOrtForEmployee → ORT %/dienst/totaal
   //       - kilometerDeclaratiesDB → Werk/Woon km + vergoeding
   //       - verlofDB → vakantieverlof + totaal verlofuren
   //   - 4 toelichting-rijen onderaan (rij 32-35 in BS2-mei-export)
@@ -400,8 +400,8 @@
 
   function getCurrentUserDisplayName() {
     try {
-      if (window.besaCurrentProfile && (window.besaCurrentProfile.voornaam || window.besaCurrentProfile.achternaam)) {
-        return ((window.besaCurrentProfile.voornaam || "") + " " + (window.besaCurrentProfile.achternaam || "")).trim();
+      if (window.ffCurrentProfile && (window.ffCurrentProfile.voornaam || window.ffCurrentProfile.achternaam)) {
+        return ((window.ffCurrentProfile.voornaam || "") + " " + (window.ffCurrentProfile.achternaam || "")).trim();
       }
     } catch (e) { /* */ }
     return "Onbekend";
@@ -429,8 +429,8 @@
 
     // Per medewerker aggregeren
     var aggregates = loondienstMw.map(function (mw) {
-      var ort = window.besaOrtEngine
-        ? window.besaOrtEngine.computeOrtForEmployee(mw.id, yearInt, monthInt)
+      var ort = window.ffOrtEngine
+        ? window.ffOrtEngine.computeOrtForEmployee(mw.id, yearInt, monthInt)
         : { ortUren: {}, diensttypeUren: {}, totaalGewerkteUren: 0 };
       var km = aggregateKilometers(mw.id, yearInt, monthInt);
       var verlof = aggregateVerlof(mw, yearInt, monthInt);
@@ -729,7 +729,7 @@
           label.className = "sa-val-issue-text";
           label.textContent = iss;
           sub.appendChild(label);
-          if (window.besaOplossen) {
+          if (window.ffOplossen) {
             var solveHtml = oplossenBtnForIssue(iss, r.id);
             if (solveHtml) {
               var act = document.createElement("span");
@@ -746,7 +746,7 @@
     var count = rows.length;
     if (sumEl) sumEl.textContent = count + " medewerkers met onvolledige gegevens";
     if (chipEl) chipEl.hidden = count === 0;
-    if (window.besaOplossen) window.besaOplossen.bindSignals(listEl);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(listEl);
   }
 
   /**
@@ -758,10 +758,10 @@
    * Geeft een lege string terug als er geen bestemming bekend is.
    */
   function oplossenBtnForIssue(issue, empId) {
-    if (!window.besaOplossen) return "";
+    if (!window.ffOplossen) return "";
     var t = String(issue || "").toLowerCase();
     if (t.indexOf("kilometer") !== -1 || t.indexOf("km-declaratie") !== -1) {
-      return window.besaOplossen.navBtn(
+      return window.ffOplossen.navBtn(
         "kilometers",
         "Naar kilometers",
         issue
@@ -773,7 +773,7 @@
       t.indexOf("niet goedgekeurd") !== -1 ||
       t.indexOf("uren") !== -1
     ) {
-      return window.besaOplossen.navBtn(
+      return window.ffOplossen.navBtn(
         "werkuren",
         "Naar urenregistratie",
         issue
@@ -788,7 +788,7 @@
       t.indexOf("persoonsgegeven") !== -1 ||
       t.indexOf("ontbreekt") !== -1
     ) {
-      return window.besaOplossen.triggerHtml(
+      return window.ffOplossen.triggerHtml(
         empId != null ? { "data-emp-id": empId } : {}
       );
     }
@@ -1040,14 +1040,14 @@
   // dossier deeplinkt via sessionStorage (zelfde patroon als elders).
   if (listEl) {
     listEl.addEventListener("click", function (e) {
-      if (!window.besaOplossen) return;
+      if (!window.ffOplossen) return;
       var btn = e.target.closest ? e.target.closest("[data-emp-id]") : null;
       if (!btn || !listEl.contains(btn)) return;
       if (btn.hasAttribute("data-sig-url")) return;
       e.preventDefault();
       e.stopPropagation();
       var empId = btn.getAttribute("data-emp-id");
-      window.besaOplossen.openPopover(btn, {
+      window.ffOplossen.openPopover(btn, {
         uitleg:
           "Persoonsgegevens (zoals NAW, IBAN of startdatum) ontbreken in het dossier. Vul ze aan om deze medewerker mee te kunnen exporteren.",
         knopLabel: "Naar dossier",
@@ -1108,9 +1108,9 @@
     }
 
     async function loadConfig() {
-      if (!window.besaSupabase) return;
+      if (!window.ffSupabase) return;
       try {
-        var res = await window.besaSupabase.rpc("saladmin_mail_config_get");
+        var res = await window.ffSupabase.rpc("saladmin_mail_config_get");
         if (res.error) throw res.error;
         var c = res.data || {};
         F.ontvanger.value = c.ontvanger || "";
@@ -1135,7 +1135,7 @@
 
     async function saveConfig(e) {
       e.preventDefault();
-      if (!window.besaSupabase) return;
+      if (!window.ffSupabase) return;
       var saveBtn = document.getElementById("sa-mail-save");
       if (saveBtn) saveBtn.disabled = true;
       try {
@@ -1152,7 +1152,7 @@
           p_smtp_user: F.user.value.trim(),
           p_smtp_pass: F.pass.value, // leeg = behoud bestaand wachtwoord
         };
-        var res = await window.besaSupabase.rpc("saladmin_mail_config_zet", payload);
+        var res = await window.ffSupabase.rpc("saladmin_mail_config_zet", payload);
         if (res.error) throw res.error;
         fb("saved", "E-mailinstellingen opgeslagen");
         closeModal();
@@ -1177,7 +1177,7 @@
 
     async function sendExport() {
       if (typeof window.XLSX === "undefined") { fb("error", "Versturen mislukt", "SheetJS niet geladen — vernieuw de pagina."); return; }
-      if (!window.besaSupabase) { fb("error", "Versturen mislukt", "Supabase niet geladen."); return; }
+      if (!window.ffSupabase) { fb("error", "Versturen mislukt", "Supabase niet geladen."); return; }
       var month = monthSel ? monthSel.value : (new Date().getMonth() + 1);
       var year = yearSel ? yearSel.value : new Date().getFullYear();
       var period = fmtPeriod(month, year);
@@ -1200,7 +1200,7 @@
       var origTxt = sendBtn ? sendBtn.innerHTML : "";
       if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "Bezig met versturen…"; }
       try {
-        var res = await window.besaSupabase.functions.invoke("salarisexport-mail", {
+        var res = await window.ffSupabase.functions.invoke("salarisexport-mail", {
           body: {
             xlsx_base64: b64,
             filename: built.filename,
@@ -1618,7 +1618,7 @@
 
   // Re-render zodra de Supabase-bootstrap de cache heeft gevuld (eerste page-
   // load op een nieuwe browser).
-  window.addEventListener("besa:saladmin-updated", function () {
+  window.addEventListener("ff:saladmin-updated", function () {
     try { renderHistory(); } catch (e) { /* */ }
   });
 })();

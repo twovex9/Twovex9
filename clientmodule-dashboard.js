@@ -13,7 +13,7 @@
     return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
   }
   function reisLabel(slug) {
-    if (window.besaClientreis && typeof window.besaClientreis.label === "function") return window.besaClientreis.label(slug);
+    if (window.ffClientreis && typeof window.ffClientreis.label === "function") return window.ffClientreis.label(slug);
     return slug || "—";
   }
   function clientLink(id, label) {
@@ -32,8 +32,8 @@
     headRow.appendChild(th);
   }
   function oplossenCel(clientId) {
-    if (!window.besaOplossen) return "<td></td>";
-    return "<td>" + window.besaOplossen.navBtn(
+    if (!window.ffOplossen) return "<td></td>";
+    return "<td>" + window.ffOplossen.navBtn(
       "client-detail?id=" + encodeURIComponent(clientId || ""),
       "Naar dossier",
       "Open het cliëntdossier om de openstaande issues (zorgplan/beschikking/signalering) op te lossen."
@@ -55,8 +55,8 @@
   var actief = null;
 
   async function fetchCtx() {
-    if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
-    var r = await window.besaSupabase.rpc("clientdash_context");
+    if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* */ } }
+    var r = await window.ffSupabase.rpc("clientdash_context");
     if (r.error) throw r.error;
     return r.data || ctx;
   }
@@ -94,7 +94,7 @@
   }
 
   async function loadGw() {
-    var r = await window.besaSupabase.rpc("clientdash_caseload_gw");
+    var r = await window.ffSupabase.rpc("clientdash_caseload_gw");
     if (r.error) { if (window.showError) window.showError("Caseload GW: " + r.error.message); return; }
     var d = r.data || {};
     var k = d.kpi || {};
@@ -122,11 +122,11 @@
     }).join("");
     var gwTbody = $("cmd-gw-tbody");
     gwTbody.innerHTML = rows || '<tr><td colspan="8" class="client-detail-placeholder">Geen cliënten in uw caseload.</td></tr>';
-    if (window.besaOplossen) window.besaOplossen.bindSignals(gwTbody);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(gwTbody);
   }
 
   async function loadZc() {
-    var r = await window.besaSupabase.rpc("clientdash_zorgcoordinator");
+    var r = await window.ffSupabase.rpc("clientdash_zorgcoordinator");
     if (r.error) { if (window.showError) window.showError("Zorgcoörd: " + r.error.message); return; }
     var d = r.data || {};
     $("cmd-zc-loc-tbody").innerHTML = (d.per_locatie || []).map(function (x) {
@@ -142,11 +142,11 @@
         "<td>" + esc(i.aantal_issues) + "</td>" +
         oplossenCel(i.client_id) + "</tr>";
     }).join("") || '<tr><td colspan="5" class="client-detail-placeholder">Geen openstaande issues.</td></tr>';
-    if (window.besaOplossen) window.besaOplossen.bindSignals(zcIssuesTbody);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(zcIssuesTbody);
   }
 
   async function loadDir() {
-    var r = await window.besaSupabase.rpc("clientdash_directeur");
+    var r = await window.ffSupabase.rpc("clientdash_directeur");
     if (r.error) { if (window.showError) window.showError("Directeur: " + r.error.message); return; }
     var d = r.data || {};
     var k = d.kpi || {};
@@ -175,7 +175,7 @@
   }
 
   async function loadEig() {
-    var r = await window.besaSupabase.rpc("clientdash_eigenaar");
+    var r = await window.ffSupabase.rpc("clientdash_eigenaar");
     if (r.error) { if (window.showError) window.showError("Eigenaar: " + r.error.message); return; }
     var d = r.data || {};
     var demo = d.demografie || {};
@@ -193,7 +193,7 @@
   }
 
   async function loadKpi() {
-    var r = await window.besaSupabase.rpc("clientdash_kpi");
+    var r = await window.ffSupabase.rpc("clientdash_kpi");
     if (r.error) { if (window.showError) window.showError("KPI: " + r.error.message); return; }
     var d = r.data || {};
     var k = d.kpi || {};

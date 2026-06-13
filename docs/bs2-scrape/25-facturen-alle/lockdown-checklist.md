@@ -42,7 +42,7 @@
 - [x] C6. Data: 990 records, 5 unique statuses (Module 24 normalisatie verified)
 - [x] C7. Spot-check Ingediend (15) + Goedgekeurd (12) + Concept (7) + Betaald (224) + Gedeclareerd... (732)
 - [x] C8. CRUD: add/edit/archive/purge alle werken
-- [x] C9. besa:facturen-updated event
+- [x] C9. ff:facturen-updated event
 - [x] C10. parity.md: BS1 uitgebreid superset
 
 ## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅

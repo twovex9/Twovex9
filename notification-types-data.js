@@ -4,7 +4,7 @@
  *
  * Public API: notificationTypesDB.{ready, refresh, getAllSync, getByIdSync,
  *   add, update, archive, restore, delete}
- * Events: besa:notification-types-updated
+ * Events: ff:notification-types-updated
  */
 (function (global) {
   "use strict";
@@ -47,11 +47,11 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
   }
   function dispatchUpdated(s) {
-    try { global.dispatchEvent(new CustomEvent("besa:notification-types-updated", { detail: { source: s || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:notification-types-updated", { detail: { source: s || "data" } })); } catch (e) { /* */ }
   }
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("naam", { ascending: true });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("naam", { ascending: true });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -67,7 +67,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[notificationTypesDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Notification types — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Notification types — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -76,7 +76,7 @@
   async function add(rec) {
     var doc = Object.assign({}, rec || {});
     if (!doc.id) doc.id = generateId();
-    var res = await global.besaSupabase.from(TABLE).insert(objToPayload(doc)).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(objToPayload(doc)).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(readCache().concat([obj]));
@@ -88,7 +88,7 @@
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToPayload(merged);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -101,7 +101,7 @@
   async function archive(id) { return update(id, { archived: true }); }
   async function restore(id) { return update(id, { archived: false }); }
   async function remove(id) {
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
     dispatchUpdated("remove");

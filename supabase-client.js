@@ -3,7 +3,7 @@
  *
  * Wat dit bestand doet:
  *  - Initialiseert de Supabase JS client met project URL + anon key.
- *  - Exposeert window.besaSupabase (de client zelf) en window.besaAuth (helpers).
+ *  - Exposeert window.ffSupabase (de client zelf) en window.ffAuth (helpers).
  *
  * Auth-status (AAN per 2026-05-08):
  *  - Login staat AAN (AUTH_ENABLED = true). auth-guard.js redirect ongeauthenticeerde
@@ -11,14 +11,14 @@
  *  - RLS staat aan op alle public-tabellen met `to authenticated`-policies.
  *    Anon-key heeft géén toegang tot data — login is verplicht.
  *  - persistSession volgt AUTH_ENABLED.
- *  - login.html biedt de inlog-UI via besaAuth.signIn(...) onder de motorkap.
+ *  - login.html biedt de inlog-UI via ffAuth.signIn(...) onder de motorkap.
  *  - Maak eerste user aan via Supabase Dashboard → Auth → Add user (zie
  *    setup_supabase_mcp.md voor instructies).
  *
  * Vereisten per HTML-page (in deze volgorde):
  *  1. <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
  *  2. <script src="supabase-client.js"></script>
- *  3. <script src="besa-sync-reporter.js"></script>
+ *  3. <script src="ff-sync-reporter.js"></script>
  *  4. <script src="auth-guard.js"></script>   ← skip op login.html
  *  5. ...alle data-layers en page-script(s)
  *
@@ -40,11 +40,11 @@
 
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     console.error(
-      "[besa-supabase] @supabase/supabase-js is niet geladen. Voeg de CDN-script-tag" +
+      "[ff-supabase] @supabase/supabase-js is niet geladen. Voeg de CDN-script-tag" +
       " toe vóór dit bestand: <script src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\"></script>"
     );
-    window.besaSupabase = null;
-    window.besaAuth = {
+    window.ffSupabase = null;
+    window.ffAuth = {
       isEnabled: function () { return false; },
       getCurrentUser: function () { return Promise.resolve(null); },
       signIn: function () { return Promise.reject(new Error("Supabase niet geladen")); },
@@ -60,11 +60,11 @@
       detectSessionInUrl: AUTH_ENABLED,
       // Standaard storageKey is "supabase.auth.token". Hou expliciet zodat
       // we 'm bij logout doelgericht kunnen wissen.
-      storageKey: "sb-besa-auth",
+      storageKey: "sb-ff-auth",
     },
   });
 
-  window.besaSupabase = client;
+  window.ffSupabase = client;
 
   // ---------------------------------------------------------------------------
   // Sessie-rehydratie-guard (root-cause fix 2026-05-19)
@@ -72,7 +72,7 @@
   // Bewezen via Chrome-MCP: supabase-js herstelt de PERSISTENTE sessie niet
   // altijd betrouwbaar op page-load. getSession()/getUser() gaven instant
   // "Auth session missing!" (geen lock, geen hang) terwijl
-  // localStorage["sb-besa-auth"] een 100% geldige, NIET-verlopen sessie
+  // localStorage["sb-ff-auth"] een 100% geldige, NIET-verlopen sessie
   // bevatte (JWT role=authenticated, exp ~40min vooruit). Gevolg:
   // élke RLS-query (`to authenticated`) gaf 0 rijen terug → Rollen leeg,
   // rol-detail kaatste terug, "willekeurig uitgelogd"-gevoel. Een enkele
@@ -81,16 +81,16 @@
   //
   // Daarom: vóór auth-guard.js en de data-lagen draaien, één keer de
   // opgeslagen sessie expliciet in de client zetten als de client zelf
-  // (nog) geen sessie heeft. window.besaSupabaseReady resolve't ná deze
+  // (nog) geen sessie heeft. window.ffSupabaseReady resolve't ná deze
   // poging zodat consumers er deterministisch op kunnen wachten.
   //
   // Hard verbod (eerdere pijnlijke les #284): NOOIT auth.refreshSession()
   // hier — dat roteert de refresh-token en veroorzaakt "Invalid Refresh
   // Token"-loops. setSession() met een NIET-verlopen access-token doet
   // puur een lokale install (geen netwerk, geen rotatie).
-  function besaReadStoredSession() {
+  function ffReadStoredSession() {
     try {
-      var raw = window.localStorage.getItem("sb-besa-auth");
+      var raw = window.localStorage.getItem("sb-ff-auth");
       if (!raw) return null;
       var o = JSON.parse(raw);
       var s = (o && (o.currentSession || o.session)) || o;
@@ -98,32 +98,32 @@
       return s;
     } catch (e) { return null; }
   }
-  function besaSessionStillFresh(s) {
+  function ffSessionStillFresh(s) {
     try {
       if (!s.expires_at) return true; // onbekend → laat de client beslissen
       var nowSec = Math.floor(Date.now() / 1000);
       return (Number(s.expires_at) - nowSec) > 30; // ≥30s marge
     } catch (e) { return false; }
   }
-  window.besaSupabaseReady = (async function () {
+  window.ffSupabaseReady = (async function () {
     if (!AUTH_ENABLED) return;
     // Bewuste logout (idle-timeout / Uitloggen / bevestigd-verlopen) zet
-    // localStorage["besa-logout"]="1". Dan NIET rehydrateren — anders zet
+    // localStorage["ff-logout"]="1". Dan NIET rehydrateren — anders zet
     // deze guard de zojuist opgeruimde sessie terug en bounce't login.html
     // de gebruiker meteen weer de app in (idle-logout "plakte" niet). De
     // marker wordt in login.html gewist ná een geslaagde echte login.
     // Voor een VALSE/transiënte null (geen marker) blijft rehydratie aan
     // → #289/#293-bescherming intact.
     try {
-      if (window.sessionStorage.getItem("besa-logout") === "1"
-        || window.localStorage.getItem("besa-logout") === "1") return;
+      if (window.sessionStorage.getItem("ff-logout") === "1"
+        || window.localStorage.getItem("ff-logout") === "1") return;
     } catch (e) { /* */ }
     try {
       var gs = await client.auth.getSession();
       if (gs && gs.data && gs.data.session) return; // client heeft 'm al
     } catch (e) { /* val door naar rehydratie */ }
-    var s = besaReadStoredSession();
-    if (!s || !besaSessionStillFresh(s)) return; // niets/te oud → niets doen
+    var s = ffReadStoredSession();
+    if (!s || !ffSessionStillFresh(s)) return; // niets/te oud → niets doen
     try {
       await client.auth.setSession({
         access_token: s.access_token,
@@ -132,11 +132,11 @@
     } catch (e) {
       // Stil: geen logout, geen console-spam. Bij een echt ongeldige
       // sessie handelt auth-guard.js de redirect netjes af.
-      try { console.warn("[besa-supabase] rehydratie overgeslagen:", e && e.message || e); } catch (e2) { /* */ }
+      try { console.warn("[ff-supabase] rehydratie overgeslagen:", e && e.message || e); } catch (e2) { /* */ }
     }
   })();
 
-  window.besaAuth = {
+  window.ffAuth = {
     isEnabled: function () { return AUTH_ENABLED; },
     getCurrentUser: async function () {
       if (!AUTH_ENABLED) return null;

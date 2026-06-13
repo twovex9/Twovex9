@@ -25,7 +25,7 @@ test.describe("Smoke tests", () => {
     await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
 
     // Verifieer titel + login-elementen
-    await expect(page).toHaveTitle(/Inloggen|Login|Besa/);
+    await expect(page).toHaveTitle(/Inloggen|Login|Ff/);
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
 

@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module alle nieuws-items en cachet ze onder
  *    "nieuws_v1" zodat een tweede page-load instant data heeft.
  *  - Schrijfacties (add/update/archive/restore/delete) gaan async naar Supabase;
- *    de cache wordt geüpdatet en het update-event `besa:nieuws-updated`
+ *    de cache wordt geüpdatet en het update-event `ff:nieuws-updated`
  *    wordt gefired voor live re-renders.
  *  - Eénmalige migratie van legacy localStorage["newsItems"] naar Supabase
  *    bij eerste bootstrap na deploy.
@@ -17,7 +17,7 @@
  *   var items = window.nieuwsDB.getAllSync();
  *   var saved = await window.nieuwsDB.add({ titel: "Test", inhoud: "<p>...</p>" });
  *   await window.nieuwsDB.archive(id);
- *   window.addEventListener("besa:nieuws-updated", function () { rerender(); });
+ *   window.addEventListener("ff:nieuws-updated", function () { rerender(); });
  */
 (function (global) {
   "use strict";
@@ -59,7 +59,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:nieuws-updated", { detail: { source: source || "nieuws-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:nieuws-updated", { detail: { source: source || "nieuws-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -120,8 +120,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: false });
@@ -132,9 +132,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -154,7 +154,7 @@
 
       console.info("[nieuwsDB] Eenmalige migratie van " + legacy.length + " nieuwsberichten naar Supabase…");
       var payload = legacy.map(function (r) { return objToInsertPayload(r); });
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -200,9 +200,9 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -217,12 +217,12 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -242,9 +242,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);

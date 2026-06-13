@@ -25,5 +25,5 @@
 
 ## Schema sync
 
-- `besa:urendeclaraties-updated` event op window
+- `ff:urendeclaraties-updated` event op window
 - Schrijven naar Supabase via PostgREST

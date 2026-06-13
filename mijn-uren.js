@@ -319,10 +319,10 @@
       if (e.key === "Escape" && !$("mu-edit-modal").hidden) hideModal("mu-edit-modal");
     });
 
-    window.addEventListener("besa:werkuren-updated", render);
-    window.addEventListener("besa:profile-updated", function () { refreshMe(); render(); });
-    window.addEventListener("besa:medewerkers-updated", render);
-    window.addEventListener("besa:clienten-updated", function () { /* dropdown ververst bij openen */ });
+    window.addEventListener("ff:werkuren-updated", render);
+    window.addEventListener("ff:profile-updated", function () { refreshMe(); render(); });
+    window.addEventListener("ff:medewerkers-updated", render);
+    window.addEventListener("ff:clienten-updated", function () { /* dropdown ververst bij openen */ });
   }
 
   function refreshMe() {

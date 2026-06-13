@@ -48,7 +48,7 @@
     var ids = invs.map(function (x) { return x.dienst_id; });
     var planById = {};
     try {
-      var r = await window.besaSupabase.from("planning")
+      var r = await window.ffSupabase.from("planning")
         .select("id, start_iso, einde_iso, diensttype, locatie, client, teamlid")
         .in("id", ids);
       if (!r.error) (r.data || []).forEach(function (p) { planById[p.id] = p; });

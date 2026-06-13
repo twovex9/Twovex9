@@ -39,7 +39,7 @@
 - [x] C4. 1-op-1 met `auth.users` via auto-create trigger
 - [x] C5. Status "Actief" hardcoded green-pill (geen archived in profile-tabel)
 - [x] C6. profilesDB data-laag: getAllSync / refresh / getCurrentSync / update / isAdmin
-- [x] C7. besa:profile-updated event op window → re-render
+- [x] C7. ff:profile-updated event op window → re-render
 - [x] C8. TD-cellen hebben `data-col` attribuut (Bug #64-pattern al goed)
 - [x] C9. User-count gap (BS2 120 vs BS1 1) is v3 Fase G item, niet Module 32 bug
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (5 tabs incl. Mijn profiel + Mijn notificaties)

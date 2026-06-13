@@ -116,7 +116,7 @@ baa24ed  fix(scripts): v3 — check constraints + NOT NULL defaults
 
 ## Verifieer in productie
 
-Open `https://besa-suite.vercel.app` → log in → bekijk:
+Open `https://futureflow-app.vercel.app` → log in → bekijk:
 - Medewerkers-pagina: 198 records
 - Cliënten-pagina: 161 records
 - Facturen-pagina: 990 records

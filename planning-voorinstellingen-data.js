@@ -18,7 +18,7 @@
  *   await window.planningVoorinstellingenDB.delete(id);
  *
  * Cache: localStorage 'planning_voorinstellingen_v1' (per-device).
- * Event: 'besa:planning-voorinstellingen-updated' op data-mutatie.
+ * Event: 'ff:planning-voorinstellingen-updated' op data-mutatie.
  */
 (function (global) {
   "use strict";
@@ -40,7 +40,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:planning-voorinstellingen-updated", {
+      global.dispatchEvent(new CustomEvent("ff:planning-voorinstellingen-updated", {
         detail: { source: source || "planning-voorinstellingen-data" }
       }));
     } catch (e) { /* */ }
@@ -48,22 +48,22 @@
 
   function reportSilent(action, err) {
     console.error("[planningVoorinstellingenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Planning voorinstellingen — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Planning voorinstellingen — " + action, err);
     }
   }
 
   async function currentUserId() {
-    if (!global.besaSupabase) return null;
+    if (!global.ffSupabase) return null;
     try {
-      var s = await global.besaSupabase.auth.getSession();
+      var s = await global.ffSupabase.auth.getSession();
       return s && s.data && s.data.session ? s.data.session.user.id : null;
     } catch (e) { return null; }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("naam", { ascending: true });
@@ -102,7 +102,7 @@
     var naam = String(payload && payload.naam || "").trim();
     if (!naam) throw new Error("Naam is verplicht");
     var filterState = payload && payload.filter_state ? payload.filter_state : {};
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert({ user_id: uid, naam: naam, filter_state: filterState })
       .select()
@@ -121,7 +121,7 @@
     var body = {};
     if (patch.naam != null) body.naam = String(patch.naam).trim();
     if (patch.filter_state != null) body.filter_state = patch.filter_state;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(body)
       .eq("id", id)
@@ -137,7 +137,7 @@
 
   async function remove(id) {
     if (!id) throw new Error("id ontbreekt");
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);

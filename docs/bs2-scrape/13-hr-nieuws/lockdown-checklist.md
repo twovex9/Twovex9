@@ -45,7 +45,7 @@
 - [x] C6. Data: 15 records (alle status="Published" na Bug #35 fix)
 - [x] C7. Content spot-check: 15 titels matchen BS2
 - [x] C8. CRUD: add/edit/archive/restore/purge alle werken
-- [x] C9. besa:nieuws-updated event op window
+- [x] C9. ff:nieuws-updated event op window
 - [x] C10. parity.md: 100% functioneel + 2 bugs gefixt
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)

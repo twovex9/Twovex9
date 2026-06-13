@@ -27,4 +27,4 @@
 - 1 toggle (Naam)
 
 ## Events
-- `besa:gemeenten-updated` event op window
+- `ff:gemeenten-updated` event op window

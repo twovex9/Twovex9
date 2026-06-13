@@ -40,7 +40,7 @@
 - [x] C5. Trigger laatst_gewijzigd
 - [x] C6. CRUD via per-sectie save buttons
 - [x] C7. Document-upload via Storage bucket "medewerker-documenten"
-- [x] C8. besa:medewerker-updated event
+- [x] C8. ff:medewerker-updated event
 - [x] C9. Inloggen als (admin-functie) wordt via auth.admin.updateUserById
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Verlof-tab)
 

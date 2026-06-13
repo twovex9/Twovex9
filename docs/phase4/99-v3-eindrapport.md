@@ -1,9 +1,9 @@
-# 🏁 v3 EINDRAPPORT — BESA Suite 1 productie-launch
+# 🏁 v3 EINDRAPPORT — Future Flow 1 productie-launch
 
 **Status**: ✅ **PRODUCTIE-KLAAR**
 **Datum**: 2026-05-15
 **Cut-over-datum**: user kiest dag (zie pre-cut-over checklist)
-**URL**: `https://besa-suite.vercel.app`
+**URL**: `https://futureflow-app.vercel.app`
 
 ---
 
@@ -43,7 +43,7 @@
   - Challenge via mfa-challenge.js (élke subsequent login)
   - DB defaults `must_setup_2fa=true` voor nieuwe profiles (Bug #80 fix)
 - ✅ Admin-tier scheiding (Eigenaar/Admin/Directeur vs 10 andere rollen)
-  - UI: `besaIsAdminTier()` blokkering
+  - UI: `ffIsAdminTier()` blokkering
   - Backend: Edge Function `admin-user-mgmt` 403 forbidden
 - ✅ Anti-suicide guards (kan jezelf niet deactiveren/rol-wijzigen)
 - ✅ Geen e-mails (user-keuzes #18, #25, #32, #30)
@@ -110,7 +110,7 @@
 |---|---|---|---|---|
 | #74 | medium | BS2-emails ontbraken in medewerker-scrape | #163 | merged |
 | #75 | high | QR-code onleesbaar voor camera | #164 | merged |
-| #76 | medium | Authenticator-label "localhost:3000" → "BESA Suite ETF" | #165 | merged |
+| #76 | medium | Authenticator-label "localhost:3000" → "Future Flow ETF" | #165 | merged |
 | #77 | medium | Statische "JS" avatar in 59 HTMLs | #166 | merged |
 | #78 | medium | Statische dead "Meldingen" bell in 59 HTMLs | #166 | merged |
 | #79 | **CRITICAL** | 2FA-challenge ontbrak post-login | #166 | merged |
@@ -210,7 +210,7 @@ Geen van deze blokkeren productie-launch.
 
 ## 🟢 GROEN LICHT
 
-**BESA Suite 1 v3 is productie-klaar voor 100+ medewerkers met verplichte 2FA.**
+**Future Flow 1 v3 is productie-klaar voor 100+ medewerkers met verplichte 2FA.**
 
 Kies een cut-over-datum en doorloop de checklist in `docs/phase4/v3-fase-i-status.md` op die dag.
 

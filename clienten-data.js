@@ -7,7 +7,7 @@
  *  - localStorage onder key "clientenItems" = read-cache. Synchrone reads vanuit
  *    bestaande paginacode blijven werken zolang de cache geladen is.
  *  - Schrijfacties gaan async naar Supabase; bij succes wordt de cache geüpdatet
- *    en wordt het event "besa:clienten-updated" gedispatched.
+ *    en wordt het event "ff:clienten-updated" gedispatched.
  *  - Backward-compat globals (`getClientenItems`, `upsertClienten`,
  *    `setClientenItems`, `deleteClientenById`, `getClientenById`, etc.) blijven
  *    bestaan zodat alle 9 HTML-pagina's die clienten-data.js laden niets hoeven
@@ -38,7 +38,7 @@
   // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
   function reportSilent(action, err) {
     console.error("[clientenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Cliënten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Cliënten — " + action, err);
   }
 
   // ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@
 
   function dispatchUpdated() {
     try {
-      window.dispatchEvent(new CustomEvent("besa:clienten-updated"));
+      window.dispatchEvent(new CustomEvent("ff:clienten-updated"));
     } catch (e) {
       /* */
     }
@@ -212,14 +212,14 @@
   // Supabase fetch + bootstrap
   // ---------------------------------------------------------------------------
   async function fetchAll() {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
     // Wacht op de sessie-rehydratie (supabase-client.js) vóór de eerste query.
     // Zonder dit kan een koude direct-load (lege cache) de SELECT anoniem
     // uitvoeren → 0 rijen ZONDER error (RLS authenticated-only, lesson #13) →
     // client-detail toont onterecht "niet gevonden". De await is een no-op als
     // de client al een sessie heeft.
-    if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* */ } }
-    var res = await window.besaSupabase
+    if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* */ } }
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("achternaam", { ascending: true })
@@ -235,9 +235,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (window.localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!window.besaSupabase) return false;
+      if (!window.ffSupabase) return false;
 
-      var head = await window.besaSupabase
+      var head = await window.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -254,7 +254,7 @@
 
       console.info("[clientenDB] Eenmalige migratie van " + local.length + " cliënten naar Supabase…");
       var payload = local.map(function (c) { return objToInsertPayload(c); });
-      var ins = await window.besaSupabase
+      var ins = await window.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -277,8 +277,8 @@
   function trySubscribeRealtimeCl(attempt) {
     // Bug #73 fix: defensieve retry-pattern voor non-defer script-load scenarios
     if (realtimeSubscribedCl) return;
-    if (window.besaRealtime && typeof window.besaRealtime.subscribe === "function") {
-      window.besaRealtime.subscribe("clienten", function () { refresh(); });
+    if (window.ffRealtime && typeof window.ffRealtime.subscribe === "function") {
+      window.ffRealtime.subscribe("clienten", function () { refresh(); });
       realtimeSubscribedCl = true;
       return;
     }
@@ -321,9 +321,9 @@
   // CRUD
   // ---------------------------------------------------------------------------
   async function add(client) {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(client);
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -343,14 +343,14 @@
   }
 
   async function update(id, partial) {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     // Fase E.11 — optimistic-locking check: voorkomt overwrite van wijzigingen door andere user
     var existing = getByIdSync(id) || {};
-    if (window.besaOptimisticLock && existing.laatstGewijzigd) {
-      var safe = await window.besaOptimisticLock.check("clienten", id, existing.laatstGewijzigd);
+    if (window.ffOptimisticLock && existing.laatstGewijzigd) {
+      var safe = await window.ffOptimisticLock.check("clienten", id, existing.laatstGewijzigd);
       if (!safe) {
-        var answer = await window.besaOptimisticLock.showConflictModal({
+        var answer = await window.ffOptimisticLock.showConflictModal({
           recordName: (existing.voornaam || "") + " " + (existing.achternaam || ""),
         });
         if (answer !== "reload") {
@@ -365,7 +365,7 @@
     var merged = Object.assign({}, existing, partial || {});
     merged.id = id;
     var payload = objToUpdatePayload(merged);
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -390,9 +390,9 @@
   }
 
   async function remove(id) {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);
@@ -429,7 +429,7 @@
     var cache = currentList();
     if (!cache.length) {
       // Triggert bootstrap (no-op als al gestart). Geeft tussentijds [] terug,
-      // re-render gebeurt via "besa:clienten-updated" (bootstrap vult _mem,
+      // re-render gebeurt via "ff:clienten-updated" (bootstrap vult _mem,
       // ook als de localStorage-cache niet geschreven kon worden).
       bootstrap();
     }
@@ -497,7 +497,7 @@
     dispatchUpdated();
 
     // En vervolgens fire-and-forget naar Supabase synchroniseren.
-    if (window.besaSupabase) {
+    if (window.ffSupabase) {
       var p = idx >= 0
         ? update(client.id, merged)
         : add(merged);
@@ -513,7 +513,7 @@
     var cache = currentList().filter(function (c) { return c && String(c.id) !== String(id); });
     setData(cache);
     dispatchUpdated();
-    if (window.besaSupabase) {
+    if (window.ffSupabase) {
       remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     }
     return true;

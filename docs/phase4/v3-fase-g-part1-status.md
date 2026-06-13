@@ -41,9 +41,9 @@ Beide scripts `<script defer>` NA `permissions.js`.
 ## 2 HARDCORE CLEAN RUNS
 
 ### CLEAN RUN #1 — Helpdesk-modal flow
-- besaHelpdesk + besaOnboarding loaded ✅
-- Help-button present + wired (data-besa-helpdesk-wired=1) ✅
-- `besaHelpdesk.show()` opent modal ✅
+- ffHelpdesk + ffOnboarding loaded ✅
+- Help-button present + wired (data-ff-helpdesk-wired=1) ✅
+- `ffHelpdesk.show()` opent modal ✅
 - Modal toont tel `+31-XXX-XXXXXX` + email `admin@etfalkmaar.nl` ✅
 - "verstuurt zelf geen e-mails" disclaimer present ✅
 - Escape sluit modal ✅
@@ -51,7 +51,7 @@ Beide scripts `<script defer>` NA `permissions.js`.
 - Console = 0 errors ✅
 
 ### CLEAN RUN #2 ZONDER fix tussendoor — Onboarding-flow detection
-- besaOnboarding keys: [check, showPasswordModal, show2faModal] ✅
+- ffOnboarding keys: [check, showPasswordModal, show2faModal] ✅
 - profile flags: must_change_password=false, must_setup_2fa=false ✅
 - Geen blocking modal getriggerd (correct — flags false → no block) ✅
 - MFA factor count: 0 (admin nog niet enrolled, normaal voor test-account) ✅

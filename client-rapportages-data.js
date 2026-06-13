@@ -26,7 +26,7 @@
  *   await window.clientRapportagesDB.update(id, { status: "afgerond" });
  *   await window.clientRapportagesDB.archive(id);
  *   await window.clientRapportagesDB.remove(id);
- *   window.addEventListener("besa:client-rapportages-updated", rerender);
+ *   window.addEventListener("ff:client-rapportages-updated", rerender);
  */
 (function (global) {
   "use strict";
@@ -77,7 +77,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:client-rapportages-updated", {
+      global.dispatchEvent(new CustomEvent("ff:client-rapportages-updated", {
         detail: { source: source || "client-rapportages-data" }
       }));
     } catch (e) { /* */ }
@@ -85,15 +85,15 @@
 
   function reportSilent(action, err) {
     console.error("[clientRapportagesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Rapportages — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Rapportages — " + action, err);
     }
   }
 
   function publicUrlFor(storagePath) {
-    if (!storagePath || !global.besaSupabase) return null;
+    if (!storagePath || !global.ffSupabase) return null;
     try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
+      var res = global.ffSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
       return (res && res.data && res.data.publicUrl) || null;
     } catch (e) { return null; }
   }
@@ -149,7 +149,7 @@
   async function currentAuteur() {
     var id = null;
     try {
-      var s = await global.besaSupabase.auth.getSession();
+      var s = await global.ffSupabase.auth.getSession();
       id = (s && s.data && s.data.session && s.data.session.user && s.data.session.user.id) || null;
     } catch (e) { /* */ }
     var naam = null;
@@ -162,8 +162,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("rapport_datum", { ascending: false, nullsFirst: false })
@@ -199,11 +199,11 @@
   }
 
   async function uploadFileIfNeeded(clientId, recordId, fileData, fileName) {
-    if (!fileData || !global.besaSupabase) return null;
+    if (!fileData || !global.ffSupabase) return null;
     var blob = (fileData instanceof Blob) ? fileData : dataUrlToBlob(fileData);
     if (!blob) return null;
     var path = String(clientId) + "/rapport-" + String(recordId) + "-" + safeFileName(fileName || "rapport.pdf");
-    var up = await global.besaSupabase.storage.from(BUCKET).upload(path, blob, {
+    var up = await global.ffSupabase.storage.from(BUCKET).upload(path, blob, {
       cacheControl: "3600",
       upsert: true,
     });
@@ -237,7 +237,7 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!rec || !rec.clientId) throw new Error("clientId verplicht");
     if (!rec.titel || !String(rec.titel).trim()) throw new Error("titel verplicht");
 
@@ -248,7 +248,7 @@
     if (!auteur.id) throw new Error("Geen actieve sessie — log opnieuw in");
     payload.auteur_id = auteur.id; // vereist door RLS-insert-policy (fase 3)
     payload.auteur_naam = auteur.naam;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
 
@@ -257,7 +257,7 @@
       try {
         var path = await uploadFileIfNeeded(obj.clientId, obj.id, rec.fileData, rec.fileName);
         if (path) {
-          var upd = await global.besaSupabase.from(TABLE).update({ storage_path: path }).eq("id", obj.id).select().single();
+          var upd = await global.ffSupabase.from(TABLE).update({ storage_path: path }).eq("id", obj.id).select().single();
           if (!upd.error) obj = rowToObj(upd.data);
         }
       } catch (err) {
@@ -273,7 +273,7 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
@@ -289,7 +289,7 @@
     }
 
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -304,16 +304,16 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
     var existing = getByIdSync(id);
     // Verwijder file uit storage indien aanwezig
     if (existing && existing.storagePath) {
       try {
-        await global.besaSupabase.storage.from(BUCKET).remove([existing.storagePath]);
+        await global.ffSupabase.storage.from(BUCKET).remove([existing.storagePath]);
       } catch (e) { /* niet kritiek */ }
     }
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
     writeCache(cache);

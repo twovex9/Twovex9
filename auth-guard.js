@@ -12,8 +12,8 @@
  *   3. Luistert op auth-state changes: als een sessie elders wordt
  *      ingetrokken (bv. password reset, andere tab uitlogt), wordt deze
  *      tab automatisch naar login gestuurd.
- *   4. (Stage 8d) Levert window.besaHandleAuthFailure(err): wordt door
- *      besa-sync-reporter.js aangeroepen zodra een data-call met een
+ *   4. (Stage 8d) Levert window.ffHandleAuthFailure(err): wordt door
+ *      ff-sync-reporter.js aangeroepen zodra een data-call met een
  *      auth-fout (PGRST301, 401, JWT expired, ...) terugkomt. Doet één
  *      nette logout + redirect en is idempotent.
  *   5. (Stage 8d) Pollt actief de sessie wanneer de tab opnieuw zichtbaar
@@ -21,21 +21,21 @@
  *      ziet falen voordat hij doorheeft dat zijn sessie verlopen is.
  *
  * Vereisten:
- *   - Wordt geladen NA supabase-client.js + besa-sync-reporter.js maar VÓÓR
+ *   - Wordt geladen NA supabase-client.js + ff-sync-reporter.js maar VÓÓR
  *     alle data-layers en page-scripts.
  *   - Mag NIET op login.html worden geladen (zou een redirect-loop geven).
- *   - Werkt alleen als window.besaAuth.isEnabled() === true.
+ *   - Werkt alleen als window.ffAuth.isEnabled() === true.
  */
 (function () {
   "use strict";
 
-  if (!window.besaAuth || typeof window.besaAuth.isEnabled !== "function") {
+  if (!window.ffAuth || typeof window.ffAuth.isEnabled !== "function") {
     return;
   }
-  if (!window.besaAuth.isEnabled()) {
+  if (!window.ffAuth.isEnabled()) {
     return;
   }
-  if (!window.besaSupabase || !window.besaSupabase.auth) {
+  if (!window.ffSupabase || !window.ffSupabase.auth) {
     return;
   }
 
@@ -64,11 +64,11 @@
 
   function clearLocalCaches() {
     try {
-      // sb-besa-auth NIET wissen: een (vals-positieve) logout mag de nog
+      // sb-ff-auth NIET wissen: een (vals-positieve) logout mag de nog
       // geldige Supabase-sessie nooit slopen → anders kan de user niet meer
       // terug inloggen (cascade). Een ECHTE logout doet auth.signOut() dat
       // de GoTrue-sessie zelf netjes verwijdert.
-      var keysToKeep = { theme: 1, locale: 1, "sb-besa-auth": 1, "besa-logout": 1 };
+      var keysToKeep = { theme: 1, locale: 1, "sb-ff-auth": 1, "ff-logout": 1 };
       var toRemove = [];
       for (var i = 0; i < window.localStorage.length; i += 1) {
         var k = window.localStorage.key(i);
@@ -92,7 +92,7 @@
   // opruimen.)
   // ---------------------------------------------------------------------------
   var intentionalLogoutDone = false;
-  function besaIntentionalLogout(loginUrl) {
+  function ffIntentionalLogout(loginUrl) {
     if (intentionalLogoutDone) return;
     intentionalLogoutDone = true;
     redirectInFlight = true; // onderdruk SIGNED_OUT/visibility-dubbeltrigger
@@ -101,9 +101,9 @@
     // localStorage-opruiming geraakt (live bleek de localStorage-marker in
     // het signOut/redirect-venster soms verdwenen). De rehydratie-guard
     // checkt beide → secundaire bescherming altijd betrouwbaar.
-    try { window.sessionStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
-    try { window.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
-    try { window.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
+    try { window.sessionStorage.setItem("ff-logout", "1"); } catch (e) { /* */ }
+    try { window.localStorage.setItem("ff-logout", "1"); } catch (e) { /* */ }
+    try { window.localStorage.removeItem("sb-ff-auth"); } catch (e) { /* */ }
     clearLocalCaches(); // overige caches; marker + theme/locale blijven
     var done = false;
     function go() {
@@ -113,8 +113,8 @@
       catch (e) { window.location.href = loginUrl; }
     }
     try {
-      var p = window.besaSupabase && window.besaSupabase.auth
-        && window.besaSupabase.auth.signOut();
+      var p = window.ffSupabase && window.ffSupabase.auth
+        && window.ffSupabase.auth.signOut();
       if (p && typeof p.then === "function") {
         p.then(go, go);          // server-side revoke (best-effort)
         setTimeout(go, 1200);    // mag nooit blokkeren
@@ -123,7 +123,7 @@
     } catch (e) { /* */ }
     go();
   }
-  window.besaIntentionalLogout = besaIntentionalLogout;
+  window.ffIntentionalLogout = ffIntentionalLogout;
 
   function performLogoutAndRedirect(opts) {
     if (redirectInFlight) return;
@@ -142,7 +142,7 @@
       } catch (e) { /* */ }
     }
 
-    besaIntentionalLogout(loginUrl);
+    ffIntentionalLogout(loginUrl);
   }
 
   // ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@
   //
   // ⚠️ NOOIT zelf auth.refreshSession() aanroepen: dat ROTEERT de
   // refresh-token. Bij het laden van een pagina vuren meerdere data-calls
-  // tegelijk; één transiënte 401 → besaHandleAuthFailure → een handmatige
+  // tegelijk; één transiënte 401 → ffHandleAuthFailure → een handmatige
   // refreshSession racet met Supabase's eigen autoRefreshToken én met
   // andere triggers → "Invalid Refresh Token" → ECHTE logout-loop
   // (precies wat #284 per ongeluk veroorzaakte op /rollen).
@@ -164,7 +164,7 @@
   // GEBLEKEN ROOT CAUSE (breadcrumb-diagnose): op zwaardere pagina's
   // (rollen.html) lost auth-guard's getSession() OP vóór de Supabase-client
   // de sessie uit localStorage heeft gehydrateerd (navigator-lock-race) →
-  // getSession() geeft transient null terwijl `sb-besa-auth` mét geldige
+  // getSession() geeft transient null terwijl `sb-ff-auth` mét geldige
   // refresh_token gewoon in localStorage staat → onterechte logout.
   // Daarom: localStorage is de autoritatieve bron. Staat er een geldige
   // opgeslagen sessie → je bent NIET uitgelogd (Supabase hydrateert/ververst
@@ -172,7 +172,7 @@
   // helemaal geen bruikbare opgeslagen sessie is.
   function storedSessionLooksValid() {
     try {
-      var raw = window.localStorage.getItem("sb-besa-auth");
+      var raw = window.localStorage.getItem("sb-ff-auth");
       if (!raw) return false;
       var o = JSON.parse(raw);
       var sess = o && (o.currentSession || o.session || o);
@@ -188,13 +188,13 @@
     if (_logoutCheckP) return _logoutCheckP;
     _logoutCheckP = (async function () {
       try {
-        var s = await window.besaSupabase.auth.getSession();
+        var s = await window.ffSupabase.auth.getSession();
         if (s && s.data && s.data.session && s.data.session.user) return false;
       } catch (e) { /* */ }
       if (storedSessionLooksValid()) return false; // sessie in storage → niet uitloggen
       await new Promise(function (r) { setTimeout(r, 1500); });
       try {
-        var s2 = await window.besaSupabase.auth.getSession();
+        var s2 = await window.ffSupabase.auth.getSession();
         if (s2 && s2.data && s2.data.session && s2.data.session.user) return false;
       } catch (e) { /* */ }
       if (storedSessionLooksValid()) return false;
@@ -204,9 +204,9 @@
     return _logoutCheckP;
   }
 
-  // Stage 8d: globaal beschikbaar voor besa-sync-reporter en eventueel
+  // Stage 8d: globaal beschikbaar voor ff-sync-reporter en eventueel
   // andere modules die een verlopen sessie willen melden.
-  window.besaHandleAuthFailure = function (err) {
+  window.ffHandleAuthFailure = function (err) {
     if (redirectInFlight) return;
     confirmReallyLoggedOut().then(function (really) {
       if (really) {
@@ -265,16 +265,16 @@
   var dropdownOpen = false;
 
   function closeAvatarDropdown() {
-    var dd = document.getElementById("besa-avatar-dropdown");
+    var dd = document.getElementById("ff-avatar-dropdown");
     if (dd) dd.remove();
-    var avatar = document.getElementById("besa-avatar-btn");
+    var avatar = document.getElementById("ff-avatar-btn");
     if (avatar) avatar.setAttribute("aria-expanded", "false");
     dropdownOpen = false;
   }
 
   function buildAvatarDropdown(user) {
     var dd = document.createElement("div");
-    dd.id = "besa-avatar-dropdown";
+    dd.id = "ff-avatar-dropdown";
     dd.setAttribute("role", "menu");
     dd.setAttribute("aria-label", "Gebruikersmenu");
     dd.style.cssText = [
@@ -314,8 +314,8 @@
     dd.appendChild(profielLink);
 
     // Thema-switcher (systeem / donker / licht) tussen "Mijn profiel" en "Uitloggen".
-    if (window.besaTheme && typeof window.besaTheme.buildSwitcher === "function") {
-      try { dd.appendChild(window.besaTheme.buildSwitcher()); } catch (e) { /* */ }
+    if (window.ffTheme && typeof window.ffTheme.buildSwitcher === "function") {
+      try { dd.appendChild(window.ffTheme.buildSwitcher()); } catch (e) { /* */ }
     }
 
     // Uitloggen knop met shortcut
@@ -343,7 +343,7 @@
   }
 
   function avatarOutsideClick(e) {
-    var avatar = document.getElementById("besa-auth-badge");
+    var avatar = document.getElementById("ff-auth-badge");
     if (avatar && !avatar.contains(e.target)) {
       closeAvatarDropdown();
     } else {
@@ -353,13 +353,13 @@
 
   function injectUserBadge(user) {
     if (!user || !user.email) return;
-    if (document.getElementById("besa-auth-badge")) return;
+    if (document.getElementById("ff-auth-badge")) return;
 
     var topbar = document.querySelector(".topbar");
     if (!topbar) return;
 
     var wrap = document.createElement("div");
-    wrap.id = "besa-auth-badge";
+    wrap.id = "ff-auth-badge";
     // Compacte cluster rechtsboven: kleine tussenruimte naar het belletje
     // (padding-left) en dicht tegen de rechterhoek (kleine padding-right +
     // de topbar-padding). Voorheen 14px aan beide kanten — dat duwde de
@@ -368,7 +368,7 @@
 
     var avatarBtn = document.createElement("button");
     avatarBtn.type = "button";
-    avatarBtn.id = "besa-avatar-btn";
+    avatarBtn.id = "ff-avatar-btn";
     avatarBtn.title = user.email;
     avatarBtn.setAttribute("aria-label", "Gebruikersmenu " + (user.email || ""));
     avatarBtn.setAttribute("aria-haspopup", "menu");
@@ -409,10 +409,10 @@
       }
     });
 
-    window.addEventListener("besa:profile-updated", function () {
+    window.addEventListener("ff:profile-updated", function () {
       avatarBtn.textContent = getInitials(user);
       // Update dropdown header if open
-      var dd = document.getElementById("besa-avatar-dropdown");
+      var dd = document.getElementById("ff-avatar-dropdown");
       if (dd) {
         var nameEl = dd.querySelector("div div");
         if (nameEl) nameEl.textContent = getFullName(user) || "Gebruiker";
@@ -443,7 +443,7 @@
 
   function listenForAuthChange() {
     try {
-      window.besaSupabase.auth.onAuthStateChange(function (event, session) {
+      window.ffSupabase.auth.onAuthStateChange(function (event, session) {
         // Alleen reageren op een ECHTE SIGNED_OUT (niet op transiënte
         // null-sessie-events tijdens een token-refresh — die clause gaf
         // willekeurig uitloggen + flikker). En zelfs SIGNED_OUT eerst
@@ -490,7 +490,7 @@
   (async function init() {
     var session = null;
     try {
-      var res = await window.besaSupabase.auth.getSession();
+      var res = await window.ffSupabase.auth.getSession();
       session = res && res.data ? res.data.session : null;
     } catch (e) { /* */ }
 
@@ -513,7 +513,7 @@
       for (var attempt = 0; attempt < 16 && (!session || !session.user); attempt += 1) {
         await new Promise(function (r) { setTimeout(r, 350); });
         try {
-          var resN = await window.besaSupabase.auth.getSession();
+          var resN = await window.ffSupabase.auth.getSession();
           session = resN && resN.data ? resN.data.session : null;
         } catch (e) { /* */ }
       }
@@ -535,7 +535,7 @@
     // Zet IDLE_LOGOUT_ENABLED weer op true om het BS2-achtige session-timeout-
     // gedrag te herstellen.
     var IDLE_LOGOUT_ENABLED = false;
-    try { window.besaIdleLogoutEnabled = IDLE_LOGOUT_ENABLED; } catch (e) { /* */ }
+    try { window.ffIdleLogoutEnabled = IDLE_LOGOUT_ENABLED; } catch (e) { /* */ }
     if (IDLE_LOGOUT_ENABLED) {
       attachIdleTimeout();  // Fase E.12 — session-timeout idle-detector
     }
@@ -577,13 +577,13 @@
       if (warningShown) return;
       warningShown = true;
       warningEl = document.createElement("div");
-      warningEl.id = "besa-idle-warning";
+      warningEl.id = "ff-idle-warning";
       warningEl.style.cssText = "position:fixed;top:20px;right:20px;background:var(--yellow-soft,#fef9c3);color:var(--text,#1a1a1a);" +
         "padding:14px 18px;border-radius:var(--r-md,8px);box-shadow:0 6px 24px rgba(0,0,0,0.18);" +
         "z-index:99999;font-family:var(--font-base,sans-serif);font-size:13px;max-width:320px;" +
         "border-left:3px solid var(--yellow,#facc15);";
       warningEl.innerHTML = '<strong>Sessie verloopt bijna</strong><br>' +
-        '<span id="besa-idle-countdown">Je wordt over ' + secondsLeft + ' seconden uitgelogd.</span><br>' +
+        '<span id="ff-idle-countdown">Je wordt over ' + secondsLeft + ' seconden uitgelogd.</span><br>' +
         '<span style="color:var(--text-muted,#666);font-size:12px;">Beweeg muis of toets om te blijven ingelogd.</span>';
       document.body.appendChild(warningEl);
     }
@@ -597,13 +597,13 @@
         if (warningEl) warningEl.remove();
         if (idleCheckTimer) { try { clearInterval(idleCheckTimer); } catch (e) { /* */ } }
         try {
-          besaIntentionalLogout(buildLoginUrl() + "&idle=1");
+          ffIntentionalLogout(buildLoginUrl() + "&idle=1");
         } catch (e) { window.location.href = buildLoginUrl() + "&idle=1"; }
       } else if (elapsed >= WARNING_MS) {
         var secondsLeft = Math.max(0, Math.ceil((IDLE_MS - elapsed) / 1000));
         if (!warningShown) showWarning(secondsLeft);
         else {
-          var cd = document.getElementById("besa-idle-countdown");
+          var cd = document.getElementById("ff-idle-countdown");
           if (cd) cd.textContent = "Je wordt over " + secondsLeft + " seconden uitgelogd.";
         }
       }

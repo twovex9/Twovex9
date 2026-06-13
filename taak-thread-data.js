@@ -9,7 +9,7 @@
  * RLS dwingt af dat je alleen comments/bijlagen ziet van taken die je via de
  * hiërarchie mag zien (zie migratie taak_comments_bijlagen_tabellen).
  *
- * Events: `besa:taak-thread-updated` (detail { taakId }) na elke mutatie.
+ * Events: `ff:taak-thread-updated` (detail { taakId }) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -18,18 +18,18 @@
   var T_BIJLAGEN = "taak_bijlagen";
   var BUCKET = "taak-bijlagen";
 
-  function client() { return global.besaSupabase || null; }
+  function client() { return global.ffSupabase || null; }
 
   function reportSilent(action, err) {
     console.error("[taakThreadDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Taak-draad — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Taak-draad — " + action, err);
   }
 
   function isoNow() { return new Date().toISOString(); }
 
   function emit(taakId) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:taak-thread-updated", { detail: { taakId: taakId } }));
+      global.dispatchEvent(new CustomEvent("ff:taak-thread-updated", { detail: { taakId: taakId } }));
     } catch (e) { /* */ }
   }
 
@@ -55,7 +55,7 @@
 
   // Huidige gebruiker → { id (auth.users.id), naam }.
   function currentUser() {
-    var prof = global.besaCurrentProfile ||
+    var prof = global.ffCurrentProfile ||
       (global.profilesDB && global.profilesDB.getCurrentSync && global.profilesDB.getCurrentSync());
     var id = (prof && prof.id) || null;
     var naam = "";

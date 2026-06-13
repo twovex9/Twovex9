@@ -26,7 +26,7 @@
  *   locNormalizeRecord(o)      → ongewijzigd (operatie op cliëntside object)
  *
  * Events:
- *   "besa:locaties-updated" op `window` na elke mutatie of bootstrap.
+ *   "ff:locaties-updated" op `window` na elke mutatie of bootstrap.
  */
 
 /* ── Pure utility-functies (worden ook door andere pagina's gebruikt) ── */
@@ -108,7 +108,7 @@ function locFmtDate(iso) {
 
   var CACHE_KEY = "hr_locaties";
   var TABLE = "locaties";
-  var EVENT_NAME = "besa:locaties-updated";
+  var EVENT_NAME = "ff:locaties-updated";
 
   function rowToObj(row) {
     if (!row) return null;
@@ -149,11 +149,11 @@ function locFmtDate(iso) {
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[locatiesDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: true });
@@ -203,9 +203,9 @@ function locFmtDate(iso) {
   async function add(input) {
     var payload = buildPayload(input);
     if (!payload.naam) throw new Error("Naam is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     payload.archived = false;
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -220,7 +220,7 @@ function locFmtDate(iso) {
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
 
     // Bouw merged-object op zodat adres opnieuw kan worden samengesteld als
     // adresvelden zijn meegegeven.
@@ -248,7 +248,7 @@ function locFmtDate(iso) {
     }
     if (Object.keys(dbPatch).length === 0) return current.id ? current : null;
 
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -266,8 +266,8 @@ function locFmtDate(iso) {
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (l) { return l.id !== id; });
     writeCache(list);
@@ -338,7 +338,7 @@ function locFmtDate(iso) {
   global.locatiesDB = api;
   global.getLocaties = getLocatiesCompat;
   // Gedeelde helper voor planning.js én planning-generator.js (één bron van waarheid).
-  global.besaMwZichtbaarInPlanning = mwZichtbaarInPlanning;
+  global.ffMwZichtbaarInPlanning = mwZichtbaarInPlanning;
 
   // Auto-bootstrap zodra dit script laadt.
   bootstrap();

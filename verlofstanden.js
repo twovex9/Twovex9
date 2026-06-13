@@ -367,8 +367,8 @@
       if (id) window.location.href = "medewerker?id=" + encodeURIComponent(id);
     });
 
-    window.addEventListener("besa:medewerker-verlof-overgedragen-updated", render);
-    window.addEventListener("besa:medewerkers-updated", render);
+    window.addEventListener("ff:medewerker-verlof-overgedragen-updated", render);
+    window.addEventListener("ff:medewerkers-updated", render);
   }
 
   function init() {

@@ -29,8 +29,8 @@ BS1 planning.html krijgt opgeslagen filter-voorinstellingen, mirror van BS2.
 Volgt het canonical patroon (sectie 6a-d in werkpatronen.md):
 - `window.planningVoorinstellingenDB.{ready, add, update, delete, getAllSync, refresh}`
 - Cache `planning_voorinstellingen_v1`
-- Event `besa:planning-voorinstellingen-updated`
-- Foutfeedback via `besa-sync-reporter.js`
+- Event `ff:planning-voorinstellingen-updated`
+- Foutfeedback via `ff-sync-reporter.js`
 
 ### UI (`planning.html` + `planning.js`)
 

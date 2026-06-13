@@ -16,7 +16,7 @@
  *   - fetchVoorClient(clientId) → Promise<rows[]> (incl. medewerker-naam/functie)
  *   - add({clientId, medewerkerId, rol}) → Promise<row> (throw bij fout)
  *   - remove(id) → Promise<boolean>
- * Events: `besa:client-medewerkers-updated` (window) na elke mutatie.
+ * Events: `ff:client-medewerkers-updated` (window) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -33,21 +33,21 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[clientMedewerkersDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Cliënt-team — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Cliënt-team — " + action, err);
   }
 
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:client-medewerkers-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:client-medewerkers-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   async function currentUser() {
     try {
-      var s = await global.besaSupabase.auth.getSession();
+      var s = await global.ffSupabase.auth.getSession();
       return (s && s.data && s.data.session && s.data.session.user) || null;
     } catch (e) { return null; }
   }
@@ -64,7 +64,7 @@
     try {
       if (!clientId) return [];
       await ensureSupabase();
-      var r = await global.besaSupabase
+      var r = await global.ffSupabase
         .from(TABLE)
         .select("*, medewerkers(voornaam, achternaam, functie, archived)")
         .eq("client_id", clientId)
@@ -103,7 +103,7 @@
       created_by: user ? user.id : null,
       created_by_naam: currentNaam(),
     };
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     dispatchUpdated("add");
     return res.data;
@@ -112,7 +112,7 @@
   async function remove(id) {
     await ensureSupabase();
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     dispatchUpdated("remove");
     return true;

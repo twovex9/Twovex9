@@ -16,7 +16,7 @@
 
 ### ✅ Fase E.11 — Optimistic-lock JS (via PR #141 + #142 wiring)
 - `optimistic-lock.js` LIVE op CDN (200 OK)
-- `window.besaOptimisticLock` beschikbaar op 59 HTML-pagina's (na PR #142 wiring)
+- `window.ffOptimisticLock` beschikbaar op 59 HTML-pagina's (na PR #142 wiring)
 - 2 methods: `check(table, id, clientUpdatedAt)` + `showConflictModal({recordName})`
 - Conflict-modal × 3 close-ways: X / Escape / Overlay
 
@@ -88,7 +88,7 @@
 ## Volgende Fase E sub-fasen
 
 - **E.6** Read-audit DATA-LAAG integratie (call `log_read_audit()` vanuit cliënt-/medewerker-data-lagen bij SELECT)
-- **E.11** Optimistic-lock DATA-LAAG integratie (call `besaOptimisticLock.check()` vanuit update()-methods)
+- **E.11** Optimistic-lock DATA-LAAG integratie (call `ffOptimisticLock.check()` vanuit update()-methods)
 - **E.14** DSR-flow (anonymiseer + GDPR-export buttons)
 - **E.7** Real-time Supabase channels
 - **E.10** Bulk-acties UI + RPC

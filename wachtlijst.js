@@ -205,12 +205,12 @@
     try {
       await window.wachtlijstDB.plaatsen(clientId);
       state.confirmId = null;
-      // De data-laag dispatcht besa:wachtlijst-updated → overzicht ververst zichzelf.
+      // De data-laag dispatcht ff:wachtlijst-updated → overzicht ververst zichzelf.
       if (window.showActionFeedback) window.showActionFeedback("saved", "Plaatsing gepland");
     } catch (ex) {
       var msg = (ex && ex.message) || "Plaatsing plannen mislukt. Probeer het opnieuw.";
       if (window.showError) window.showError(msg);
-      else if (window.besaReportSyncFailure) window.besaReportSyncFailure("Wachtlijst — plaatsen", ex);
+      else if (window.ffReportSyncFailure) window.ffReportSyncFailure("Wachtlijst — plaatsen", ex);
     } finally {
       state.busy = false;
       if (okBtn) okBtn.disabled = false;
@@ -259,7 +259,7 @@
       if (tr) openDossier(tr.getAttribute("data-id"));
     });
 
-    window.addEventListener("besa:wachtlijst-updated", function () { load(); });
+    window.addEventListener("ff:wachtlijst-updated", function () { load(); });
   }
 
   async function boot() {

@@ -1,5 +1,5 @@
 // Idempotente sweep: voeg "Reconciliatie per locatie" toe aan de Facturen-dropdown,
-// direct NA de "Overuren te beoordelen"-link. Run vanuit besa-suite-etf/:
+// direct NA de "Overuren te beoordelen"-link. Run vanuit future-flow/:
 //   node scripts/add-reconciliatie-nav.mjs
 import fs from "node:fs";
 import path from "node:path";

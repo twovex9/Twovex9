@@ -15,7 +15,7 @@
 
 ## Client-side (LIVE deployed)
 
-- `bulk-actions.js` met `window.besaBulkActions.archiveClienten/Medewerkers(ids, archived)`
+- `bulk-actions.js` met `window.ffBulkActions.archiveClienten/Medewerkers(ids, archived)`
 - 59 HTML pagina's wired met `<script src="bulk-actions.js?v=ba1" defer>`
 
 ---
@@ -45,7 +45,7 @@
 ## Eindstand E.10
 
 - ✅ Server-side RPCs LIVE voor zowel text-PK als uuid-PK
-- ✅ JS-helper `besaBulkActions` werkt out-of-the-box
+- ✅ JS-helper `ffBulkActions` werkt out-of-the-box
 - ✅ Audit-trail per bulk-call met `BULK:N` resource_id pattern
 - ✅ 2 HARDCORE CLEAN RUNS PASS ZONDER fix tussendoor
 - ✅ 0 console-errors

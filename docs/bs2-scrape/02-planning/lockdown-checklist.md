@@ -36,7 +36,7 @@ Voltooid in eerdere PR #49 + #51 + #52 + #53 + #56 — gedocumenteerd in `struct
 
 ## B. BS1-test hardcore (10/10 ✅)
 
-Live test op `https://besa-suite.vercel.app/planning.html` + `planning-beheer.html` na PR #63+#64+#65+#66+#67 merge.
+Live test op `https://futureflow-app.vercel.app/planning.html` + `planning-beheer.html` na PR #63+#64+#65+#66+#67 merge.
 
 - [x] **B1**. Navigate BS1 planning — `ss_6613fg1xk` toont volledige planning met week 20 mei 2026 + sidebar filters + KPI-cards + grid met 237 cards
 - [x] **B2**. Scroll BS1 top→bottom — scrollHeight=107px (page-height fits viewport, no scroll needed)
@@ -62,7 +62,7 @@ Live test op `https://besa-suite.vercel.app/planning.html` + `planning-beheer.ht
 - [x] **C6**. Data-volume-pariteit — `planning: 4461 = 4461` (BS2=BS1), `comp_diensttypes: 9 distinct = 9` (alle BS2 diensttype-strings gemigreerd), `medewerkers: 196 actief = 196` (gehist 198 totaal vs BS2 100 — meer historisch in BS1)
 - [x] **C7**. Data-content-spot-check 5 random records — diensttype/teamlid/client/start_iso/einde_iso content identiek aan BS2 voor Bella van Meurs / Kiyaro Lambert / Waakdienst / 1 op 1 / etc.
 - [x] **C8**. Test-record CRUD-cycle — `planningDB.add` + `update` + `delete` allen werken, counts kloppen
-- [x] **C9**. Realtime/event-bus — `besa:planning-updated` event firet bij mutaties, UI re-rendert automatisch
+- [x] **C9**. Realtime/event-bus — `ff:planning-updated` event firet bij mutaties, UI re-rendert automatisch
 - [x] **C10**. parity.md eindscore — 100% functionele pariteit; bekende cross-cutting Fase E gaps (optimistic-locking + print-CSS) niet-Module-02-specifiek
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — zonder fix tussendoor)

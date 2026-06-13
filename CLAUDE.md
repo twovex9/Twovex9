@@ -1,4 +1,4 @@
-# Besa Suite — projectinstructies voor Claude Code
+# Future Flow — projectinstructies voor Claude Code
 
 ## 🚨 USER HARDCORE-INSTRUCTIE (BINDEND, HOOGSTE PRIORITEIT)
 
@@ -28,8 +28,8 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
 - **Bevestigen:** archiveren én verwijderen via `showSliderConfirmModal` / `showArchiveConfirm` (params: `okLabel`/`cancelLabel`). Herstellen = direct, geen modal. Slider-stijl niet aanpassen (12px hoog, vol `var(--blue)` bij 100%, witte thumb met blauwe rand).
 - **Feedback:** `showSaveModal`, `showActionFeedback`, `showSliderConfirmModal`, `showArchiveConfirm`. Geen `alert`/`confirm`/`prompt`.
 - **Floating panels:** `floating-panels.js` (geen eigen positionering).
-- **HTML script-volgorde** (verplicht, in deze volgorde): Supabase CDN → `supabase-client.js` → `besa-sync-reporter.js` → `auth-guard.js` → `profiles-data.js` → relevante `<naam>-data.js` → page-script(s).
-- **Auth (Stage 8a+):** `auth-guard.js` op elke pagina behalve `login.html`. RLS sinds 8c is `to authenticated`-only. Auth-fouten centraal afhandelen via `besa-sync-reporter.js` + `besaHandleAuthFailure`.
+- **HTML script-volgorde** (verplicht, in deze volgorde): Supabase CDN → `supabase-client.js` → `ff-sync-reporter.js` → `auth-guard.js` → `profiles-data.js` → relevante `<naam>-data.js` → page-script(s).
+- **Auth (Stage 8a+):** `auth-guard.js` op elke pagina behalve `login.html`. RLS sinds 8c is `to authenticated`-only. Auth-fouten centraal afhandelen via `ff-sync-reporter.js` + `ffHandleAuthFailure`.
 - **PK/FK types:** check altijd of target-tabel `id` `text` of `uuid` is — match het FK-type exact (zie tabel in werkpatronen sectie 6a-bis).
 - **Storage:** bestand-uploads naar Supabase Storage met `storage_path text`-kolom, geen base64 in `text`/`jsonb`.
 - **Git (sectie 7):** **na elke logisch afgeronde wijziging direct committen + feature-branch + PR aanmaken**. Claude's sandbox blokkeert directe push naar `main` (hard-coded safety rule). Workflow:
@@ -40,7 +40,7 @@ Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via d
   5. Vercel deployed automatisch na merge
   Bij merge-conflicten: `git merge origin/main` in feature-branch, los conflict op, push opnieuw. Géén force-push, géén direct-to-main.
 
-  **PR-output format**: na het mergen rapporteren als **"✅ gemerged (PR #N)"** + de link ter transparantie; user hoeft niet meer te klikken. **Uitzondering — eerst user-confirm:** onomkeerbare/risicovolle acties (data-`DELETE`/`DROP`/`TRUNCATE` per DIEHARD, security, grote/onzekere wijzigingen). Details: werkpatronen sectie 7 + memory `feedback_besa_self_merge`.
+  **PR-output format**: na het mergen rapporteren als **"✅ gemerged (PR #N)"** + de link ter transparantie; user hoeft niet meer te klikken. **Uitzondering — eerst user-confirm:** onomkeerbare/risicovolle acties (data-`DELETE`/`DROP`/`TRUNCATE` per DIEHARD, security, grote/onzekere wijzigingen). Details: werkpatronen sectie 7 + memory `feedback_ff_self_merge`.
 
 - **🚨 04-open-items.md anti-conflict regel** (geüpdatet 2026-05-12 v2):
   - Items 1-28: blijven in `04-open-items.md` (geschiedenis).
@@ -54,7 +54,7 @@ Bij elk verzoek dat afwijkt van de bovenstaande regels: eerst expliciete bevesti
 
 ## Actief project: BS2 → BS1 port — VOLTOOID
 
-We bouwen secties van **BESA-suite 2** na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
+We bouwen secties van **BS2** na in deze codebase met behoud van BS1's eigen stijl en eigen Supabase backend.
 
 ### Phase status
 
@@ -79,7 +79,7 @@ medewerkers 103 actief, cliënten 93 actief, beschikkingen 251, facturen 990, pl
 - Fasen staan in vaste volgorde in v3-plan (0→A→B→C→D→E→F→G→I→H)
 - Triple-check per fase + 4-pass eindverificatie in Fase H
 - Per gap-fix: feature-branch + PR + "Klik om te mergen" link aan user
-- Na merge: status update → ✅ DONE in v3-plan + memory `project_besa_v2_parity.md`
+- Na merge: status update → ✅ DONE in v3-plan + memory `project_ff_v2_parity.md`
 - Bij blocker (rol-omschakeling, service-role-key, DPA-vraag, BS2-sessie verlopen): stop + vraag user
 - Eindstand: BS1 100% letterlijk BS2-kopie + productie-klaar met verplichte 2FA, Supabase Pro, DPA's, daily backup, monitoring (Sentry), helpdesk-link, ETF-branded e-mails
 
@@ -88,7 +88,7 @@ Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerst
 ### Persistente werkwijze-regels (gelden ALTIJD)
 
 1. **Hard rule**: destructieve acties (DELETE/DROP/TRUNCATE) ALTIJD user-confirm vragen.
-2. **🚨 ZELF live verifiëren via Chrome MCP** — onderbreek de user NIET met "open de site en check". Open BS1 `https://besa-suite.vercel.app` via `mcp__Claude_in_Chrome__navigate` + `get_page_text` + `read_page` zelf. Onderbreek alleen wanneer:
+2. **🚨 ZELF live verifiëren via Chrome MCP** — onderbreek de user NIET met "open de site en check". Open BS1 `https://futureflow-app.vercel.app` via `mcp__Claude_in_Chrome__navigate` + `get_page_text` + `read_page` zelf. Onderbreek alleen wanneer:
    - Een stap volledig afgerond is met rapport
    - User iets fysiek moet doen dat Claude niet kan (service_role key uit dashboard kopiëren, in Supabase Studio handmatig SQL plakken, JS-snippet in BS2 console runnen, etc.)
 3. **Doorgaan tot stap klaar is** — niet onderweg pauzeren voor "wil je dit?" tenzij echt destructief.
@@ -115,16 +115,16 @@ Voor toekomstige BS2-data refresh: zie `docs/phase4/open-items/38-bs2-sync-eerst
 |---|---|---|---|
 | **BS2 (target, sandbox)** | `https://etf.acceptance.besasuite.nl/home` | Alles: klikken, toevoegen, wijzigen, **verwijderen** — bedoeld voor inspectie | — |
 | Supabase dashboard | `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj` | Lezen, navigeren | **Nooit** verwijderen via dashboard; gebruik Supabase MCP voor wijzigingen |
-| Vercel dashboard | `https://vercel.com/etfalkmaars-projects/besa-suite` | Lezen, deploys/logs bekijken | **Nooit** verwijderen (project, deploys, env, domains) |
-| GitHub repo | `https://github.com/ETFalkmaar/besa-suite-` | Lezen, push naar `main` (geautoriseerd in werkpatronen sec. 7) | Geen `--force` push, geen branch/release-deletes |
-| BS1 lokaal | `besa-suite-etf/` | Volledige write conform huisstijl + werkpatronen | — |
+| Vercel dashboard | `https://vercel.com/etfalkmaars-projects/futureflow-app` | Lezen, deploys/logs bekijken | **Nooit** verwijderen (project, deploys, env, domains) |
+| GitHub repo | `https://github.com/twovex9/twovex9` | Lezen, push naar `main` (geautoriseerd in werkpatronen sec. 7) | Geen `--force` push, geen branch/release-deletes |
+| BS1 lokaal | `future-flow/` | Volledige write conform huisstijl + werkpatronen | — |
 
 User is op alle 4 externe sites al ingelogd in Chrome; per-domein Chrome-extensie permissie moet user éénmalig via popup goedkeuren.
 
 ### Werkwijze
 
 - **Plan-file** (volledig stappenplan, Phase 0 pre-flight, risico's): `C:\Users\sonck\.claude\plans\ik-wil-een-beetje-temporal-scott.md`
-- **Cross-session memory** (overleeft context-compactie): `C:\Users\sonck\.claude\projects\C--Users-sonck-OneDrive-Desktop-ETF-besa-suite-git-clone\memory\MEMORY.md`
+- **Cross-session memory** (overleeft context-compactie): `C:\Users\sonck\.claude\projects\C--Users-sonck-OneDrive-Desktop-ETF-Future Flow-git-clone\memory\MEMORY.md`
 - **BS2 toegang**: gebruiker logt vooraf zelf in op BS2 in Chrome → ik neem tab over via `mcp__Claude_in_Chrome__*` tools. Login-flow nooit zelf uitvoeren met user-credentials.
 - **Aanpak per sectie**: inspect BS2 (DOM + DevTools network + screenshots) → datamodel afleiden → migration via `mcp__supabase__apply_migration` (niet `supabase/schema.sql` overschrijven) → bouwen in BS1-stijl conform `huisstijl.md` + `werkpatronen.md` → push naar `main` → Vercel auto-deploy → visueel verifiëren BS1 ↔ BS2 zij-aan-zij.
 - **Werksessie-protocol**: pre-flight checks (git / Vercel / Supabase MCP / Chrome ext) verplicht voor we porting-werk starten. Bij hervatting na compactie: memory + plan-file + huisstijl + werkpatronen eerst herlezen.

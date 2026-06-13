@@ -1,7 +1,7 @@
 // Idempotente sweep: voeg de "Zorgsoorten"-sublink toe aan het Financiën-dropdown op
 // elke pagina die het al heeft (anker = de "Overhead / kantoor"-sublink). De link wordt
 // voor niet-bevoegde rollen verborgen door permissions-nav-hide.js (strict).
-// Run vanuit besa-suite-etf/: `node scripts/add-financien-zorgsoorten-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-financien-zorgsoorten-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

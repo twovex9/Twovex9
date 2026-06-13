@@ -63,7 +63,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
   }
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:audit-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:audit-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   function mergeSorted(items) {
@@ -76,8 +76,8 @@
   }
 
   async function fetchBesch() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE_BESCH).select("*")
       .order("t", { ascending: false })
       .limit(MAX_PER_SOURCE);
@@ -89,8 +89,8 @@
   }
 
   async function fetchGeneric() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE_GENERIC).select("*")
       .order("aanmaakdatum", { ascending: false })
       .limit(MAX_PER_SOURCE);
@@ -120,7 +120,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[auditDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Audit — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Audit — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -142,7 +142,7 @@
   }
 
   // ---- Server-side paginatie/sortering/filtering over public.audit_log ----
-  // (de generieke stream waar besa-audit.js + triggers naar schrijven; dit
+  // (de generieke stream waar ff-audit.js + triggers naar schrijven; dit
   // is de juiste enkele bron voor de top-bar Audit. Legacy
   // beschikking_audit_log blijft eruit zodat server-paginatie + sort klopt.)
   var SORT_MAP = {
@@ -152,7 +152,7 @@
 
   async function fetchPage(opts) {
     opts = opts || {};
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var page = Math.max(1, Number(opts.page) || 1);
     var perPage = Math.max(1, Number(opts.perPage) || 30);
     var from = (page - 1) * perPage;
@@ -160,7 +160,7 @@
     var sortCol = SORT_MAP[opts.sortKey] || "aanmaakdatum";
     var asc = opts.sortDir === "asc";
 
-    var q = global.besaSupabase.from(TABLE_GENERIC).select("*", { count: "exact" });
+    var q = global.ffSupabase.from(TABLE_GENERIC).select("*", { count: "exact" });
     if (opts.resource) q = q.eq("resource", opts.resource);
     if (opts.actie) q = q.eq("actie", opts.actie);
     if (opts.veroorzaker) q = q.eq("gebruiker_label", opts.veroorzaker);
@@ -186,9 +186,9 @@
 
   async function fetchFilterOptions() {
     var empty = { resources: [], acties: [], veroorzakers: [] };
-    if (!global.besaSupabase) return empty;
+    if (!global.ffSupabase) return empty;
     try {
-      var res = await global.besaSupabase.rpc("audit_log_filter_options");
+      var res = await global.ffSupabase.rpc("audit_log_filter_options");
       if (res.error) throw res.error;
       var d = res.data || {};
       return {

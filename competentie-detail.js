@@ -6,7 +6,7 @@
  * bootstrap (Supabase fetch) klaar is en proberen we het opnieuw.
  *
  * De Medewerkers-tab wordt door de gedeelde module
- * window.besaDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
+ * window.ffDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
  * gefilterd op deze competentie).
  */
 (function () {
@@ -54,10 +54,10 @@
 
   function ensureMedewerkersTab(comp) {
     if (medewerkersTab) return;
-    if (!window.besaDetailMedewerkersTab || typeof window.besaDetailMedewerkersTab.init !== "function") return;
+    if (!window.ffDetailMedewerkersTab || typeof window.ffDetailMedewerkersTab.init !== "function") return;
     const container = document.getElementById("comp-medewerkers-list");
     if (!container) return;
-    medewerkersTab = window.besaDetailMedewerkersTab.init({
+    medewerkersTab = window.ffDetailMedewerkersTab.init({
       container: container,
       entityType: "competentie",
       entityId: compId,
@@ -227,12 +227,12 @@
       const comp = findComp();
       if (comp) {
         resolved = true;
-        window.removeEventListener("besa:competenties-updated", onUpdate);
+        window.removeEventListener("ff:competenties-updated", onUpdate);
         renderHero(comp);
         ensureMedewerkersTab(comp);
       }
     }
-    window.addEventListener("besa:competenties-updated", onUpdate);
+    window.addEventListener("ff:competenties-updated", onUpdate);
 
     // Vangnet: na bootstrap nog steeds geen match? Ga terug naar de lijst.
     if (window.competentiesDB && window.competentiesDB.ready) {
@@ -245,7 +245,7 @@
   } else {
     // Cache had de comp al; toch nog luisteren voor eventuele live-updates
     // (bv. naam veranderd in een andere tab).
-    window.addEventListener("besa:competenties-updated", () => {
+    window.addEventListener("ff:competenties-updated", () => {
       const comp = findComp();
       if (comp) renderHero(comp);
     });

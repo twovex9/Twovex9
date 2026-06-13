@@ -1,7 +1,7 @@
 # Module 33 — Instellingen / Entiteiten — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/settings/entities`
-**BS1 URL**: `https://besa-suite.vercel.app/instellingen.html` (Entiteiten-tab)
+**BS1 URL**: `https://futureflow-app.vercel.app/instellingen.html` (Entiteiten-tab)
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

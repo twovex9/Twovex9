@@ -1,7 +1,7 @@
 # Module 20 — Cliënten Uren budgetering — STRUCTURE
 
 **BS2 URL**: `/clients/weekly-budget`
-**BS1 URL**: `https://besa-suite.vercel.app/uren-budgettering.html` (filename behoudt double-t)
+**BS1 URL**: `https://futureflow-app.vercel.app/uren-budgettering.html` (filename behoudt double-t)
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

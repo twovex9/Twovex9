@@ -1,4 +1,4 @@
-/* besa-page-loader.js — globale laad-animatie (FOUC-preventie).
+/* ff-page-loader.js — globale laad-animatie (FOUC-preventie).
  *
  * Achtergrond: dit is een multi-page app. Elke pagina is statische HTML die
  * daarna door JS met data wordt gevuld. Daardoor flitste heel even de rauwe

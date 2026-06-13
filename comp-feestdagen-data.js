@@ -25,7 +25,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
   }
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:comp-feestdagen-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:comp-feestdagen-updated")); } catch (e) { /* */ }
   }
 
   function rowToObj(row) {
@@ -48,8 +48,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("datum_ts", { ascending: true });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("datum_ts", { ascending: true });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -57,8 +57,8 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
-      var head = await global.besaSupabase.from(TABLE).select("id", { count: "exact", head: true });
+      if (!global.ffSupabase) return false;
+      var head = await global.ffSupabase.from(TABLE).select("id", { count: "exact", head: true });
       if (head.error) return false;
       if ((head.count || 0) > 0) {
         try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
@@ -70,7 +70,7 @@
         return false;
       }
       console.info("[compFeestdagenDB] Migratie van " + local.length + " feestdagen…");
-      var ins = await global.besaSupabase.from(TABLE).insert(local.map(objToInsertPayload)).select();
+      var ins = await global.ffSupabase.from(TABLE).insert(local.map(objToInsertPayload)).select();
       if (ins.error) {
         console.error("[compFeestdagenDB] Migratie mislukt:", ins.error);
         return false;
@@ -101,14 +101,14 @@
 
   function reportSilent(action, err) {
     console.error("[compFeestdagenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Feestdagen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Feestdagen — " + action, err);
   }
 
   async function pushAll(items) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!Array.isArray(items)) return;
     try {
-      var existingHead = await global.besaSupabase.from(TABLE).select("id");
+      var existingHead = await global.ffSupabase.from(TABLE).select("id");
       if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
@@ -116,7 +116,7 @@
 
       if (items.length) {
         var payload = items.map(objToInsertPayload);
-        var ups = await global.besaSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
+        var ups = await global.ffSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
         if (ups.error) reportSilent("upsert", ups.error);
       }
       // DIEHARD delete-guard (zelfde patroon als urendeclaraties-data.js / planning-data.js):
@@ -127,7 +127,7 @@
         toDelete = [];
       }
       if (toDelete.length) {
-        var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
+        var del = await global.ffSupabase.from(TABLE).delete().in("id", toDelete);
         if (del.error) reportSilent("delete", del.error);
       }
     } catch (err) {

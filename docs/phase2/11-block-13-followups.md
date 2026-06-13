@@ -15,7 +15,7 @@ Block 12 noemde 4 optionele follow-up items. Block 13 levert ze alle vier.
 - `notification-bell.js`: nieuwe self-init module die topbar mutaties observeert en zelf inserts vóór de auth-badge
 - Counter telt rijen uit `public.audit_log` + `public.beschikking_audit_log` waar tijdstip > `lastSeen` (localStorage-key per browser)
 - Klik op bel = markeer als gezien (nu) + naar `audit.html`
-- Refresh: bij init, elke 60s polling, op `besa:audit-updated` event, en bij `visibilitychange` terug naar visible
+- Refresh: bij init, elke 60s polling, op `ff:audit-updated` event, en bij `visibilitychange` terug naar visible
 - Default-window van 7 dagen als geen lastSeen
 - `99+` overflow-label bij >99
 - 52 HTML-pages bijgewerkt via `scripts/add-notification-bell-script.mjs` (idempotent)
@@ -41,7 +41,7 @@ Block 12 noemde 4 optionele follow-up items. Block 13 levert ze alle vier.
 - Legacy fallback: `sessionStorage.selectedEmployee.voornaam` als die er nog is
 - Geen voornaam → "Welkom" zonder naam + subtle CTA-link onder de subtitle:
   > [Vul je voornaam in via Instellingen](instellingen.html) voor een persoonlijke begroeting.
-- Re-render via bestaande `besa:profile-updated` listener — zodra de gebruiker zijn voornaam in Instellingen opslaat verschijnt direct de naam, nudge verdwijnt
+- Re-render via bestaande `ff:profile-updated` listener — zodra de gebruiker zijn voornaam in Instellingen opslaat verschijnt direct de naam, nudge verdwijnt
 - `styles.css`: `.home-nudge` / `.home-nudge-link` met `var(--blue)` + `--text-muted`
 
 ## 4. Profile notification preferences M2M — `2e158ed`
@@ -71,7 +71,7 @@ create table public.profile_notification_preferences (
 `profile-notification-prefs-data.js`:
 - API: `getForProfile(id)`, `getEffective(profileId, typeId, defaultAan)`, `setEnabled(profileId, typeId, enabled)`, `remove(profileId, typeId)`
 - `setEnabled` doet upsert met `onConflict: "profile_id,notification_type_id"`
-- Local cache + `besa:notification-prefs-updated` event
+- Local cache + `ff:notification-prefs-updated` event
 - `reportSilent` helper voor centraal fout-feedback (sectie 6c-bis)
 
 ### UI
@@ -81,7 +81,7 @@ create table public.profile_notification_preferences (
   - Lijst van actieve types met `<label class="switch">` toggle
   - Effective state via `getEffective(profileId, typeId, defaultAan)` (default-fallback wanneer geen pref-row)
   - Auto-save bij toggle wijziging
-  - Re-render op `besa:notification-prefs-updated` of `besa:notification-types-updated`
+  - Re-render op `ff:notification-prefs-updated` of `ff:notification-types-updated`
 - `styles.css`: `.inst-mn-list` / `.inst-mn-row` flex-row layout
 - Toont kanaal-label (In-app / E-mail / SMS / Push) + beschrijving onder de naam
 

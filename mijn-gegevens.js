@@ -16,8 +16,8 @@
   }
 
   async function fetchMyData() {
-    if (!window.besaSupabase) throw new Error("Supabase niet geladen");
-    const res = await window.besaSupabase.rpc("gdpr_my_data_export");
+    if (!window.ffSupabase) throw new Error("Supabase niet geladen");
+    const res = await window.ffSupabase.rpc("gdpr_my_data_export");
     if (res.error) throw res.error;
     return res.data;
   }

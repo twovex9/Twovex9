@@ -1,7 +1,7 @@
 # Module 32 — Instellingen / Gebruikers — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/settings/users`
-**BS1 URL**: `https://besa-suite.vercel.app/instellingen.html` (Gebruikers-tab)
+**BS1 URL**: `https://futureflow-app.vercel.app/instellingen.html` (Gebruikers-tab)
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

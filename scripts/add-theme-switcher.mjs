@@ -5,7 +5,7 @@
  * Idempotent: slaat bestanden over die al gepatcht zijn of geen <head>
  * hebben (bv. partial-snippets). Wijzigt verder NIETS in de bestanden.
  *
- * Run vanuit besa-suite-etf/:  node scripts/add-theme-switcher.mjs
+ * Run vanuit future-flow/:  node scripts/add-theme-switcher.mjs
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const FOUC =
-  `<script>(function(){try{var t=localStorage.getItem('besa-theme');` +
+  `<script>(function(){try{var t=localStorage.getItem('ff-theme');` +
   `document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}` +
   `catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
 const LOADER = `<script src="theme.js?v=th1" defer></script>`;

@@ -1,5 +1,5 @@
 /* sidebar-collapse.js — inklapbare sectie-zijbalk.
- * Standaard UITGEKLAPT. Keuze onthouden in localStorage (besa-sidebar:
+ * Standaard UITGEKLAPT. Keuze onthouden in localStorage (ff-sidebar:
  * expanded|collapsed). FOUC-preventie: een kleine inline-snippet in de
  * <head> zet data-sidebar vóór de eerste paint (zie codemod). Dit bestand
  * injecteert de inklap-pijl (alleen op pagina's MET .sidebar — dus niet
@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var KEY = "besa-sidebar";
+  var KEY = "ff-sidebar";
   var root = document.documentElement;
 
   function get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
@@ -29,10 +29,10 @@
   function init() {
     var sidebar = document.querySelector(".sidebar");
     if (!sidebar) return;                          // home/login: geen toggle
-    if (document.getElementById("besa-sidebar-collapse")) return;
+    if (document.getElementById("ff-sidebar-collapse")) return;
 
     var btn = document.createElement("button");
-    btn.id = "besa-sidebar-collapse";
+    btn.id = "ff-sidebar-collapse";
     btn.type = "button";
     btn.className = "sidebar-collapse-btn";
     btn.setAttribute("aria-label", "Zijbalk inklappen");
@@ -41,7 +41,7 @@
     sidebar.insertBefore(btn, sidebar.firstChild);
 
     var handle = document.createElement("button");
-    handle.id = "besa-sidebar-expand";
+    handle.id = "ff-sidebar-expand";
     handle.type = "button";
     handle.className = "sidebar-expand-handle";
     handle.setAttribute("aria-label", "Zijbalk uitklappen");
@@ -57,7 +57,7 @@
   // DOMContentLoaded een .sidebar in de (lege) sidebar-kolom. Die moet dan alsnog
   // de inklap-knop + uitklap-handle krijgen. init() is idempotent (checkt op een
   // bestaande knop), dus een tweede aanroep is veilig.
-  window.besaInitSidebarCollapse = init;
+  window.ffInitSidebarCollapse = init;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

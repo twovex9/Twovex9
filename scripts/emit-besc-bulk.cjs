@@ -49,7 +49,7 @@ out.push("/** Geïmporteerd uit scripts/besc-bulk-pipe.txt; niet handmatig bewer
 out.push("(function (g) {");
 out.push("  \"use strict\";");
 out.push("  g.BESC_BULK_DATA_VER = \"2\";");
-out.push("  g.BESA_BESC = " + JSON.stringify(rows) + ";");
+out.push("  g.FF_BESC = " + JSON.stringify(rows) + ";");
 out.push("})(typeof window !== \"undefined\" ? window : this);");
 var dest = path.join(__dirname, "..", "beschikkingen-besc-bulk.js");
 fs.writeFileSync(dest, out.join("\n") + "\n", "utf8");

@@ -405,7 +405,7 @@
     if (okBtn) okBtn.disabled = true;
     try {
       await window.aanmeldingenDB.beoordeel(state.detailId, state.pendingActie, toel || null);
-      // De data-laag dispatcht besa:aanmeldingen-updated → lijst ververst zichzelf.
+      // De data-laag dispatcht ff:aanmeldingen-updated → lijst ververst zichzelf.
       closeModal();
       if (window.showActionFeedback) window.showActionFeedback("saved", "Beoordeling");
     } catch (ex) {
@@ -469,7 +469,7 @@
       if (e.key === "Escape" && !$("anm-modal").hasAttribute("hidden")) closeModal();
     });
 
-    window.addEventListener("besa:aanmeldingen-updated", function () { load(); });
+    window.addEventListener("ff:aanmeldingen-updated", function () { load(); });
   }
 
   async function boot() {

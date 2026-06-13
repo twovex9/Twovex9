@@ -175,9 +175,9 @@
 
   // ── Tijd kiezen via de analoge klok ─────────────────────────────────────
   function kiesTijd(welke) {
-    if (!window.BesaKlok || !window.BesaKlok.kies) return;
+    if (!window.FfKlok || !window.FfKlok.kies) return;
     var huidig = welke === "begin" ? editBegin : editEind;
-    window.BesaKlok.kies({
+    window.FfKlok.kies({
       titel: welke === "begin" ? "Begintijd" : "Eindtijd",
       waarde: huidig,
       nuKnop: true,
@@ -236,7 +236,7 @@
     });
 
     // Externe wijzigingen (bv. realtime) → her-render.
-    window.addEventListener("besa:mijn-beschikbaarheid-updated", render);
+    window.addEventListener("ff:mijn-beschikbaarheid-updated", render);
   }
 
   // ── Init ────────────────────────────────────────────────────────────────
@@ -244,7 +244,7 @@
     bindEvents();
     showGate("Even geduld…", "Je beschikbaarheid wordt geladen.");
 
-    try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (window.ffSupabaseReady) await window.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     try { if (window.profilesDB && window.profilesDB.ready) await window.profilesDB.ready; } catch (e) { /* doorgaan */ }
 
     var prof = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : null;
@@ -262,10 +262,10 @@
     // Uitzondering: admin-tier (Eigenaar/Directeur/HR/…) mag de pagina altijd zien,
     // voor beheer en om de ZZP-ervaring te kunnen bekijken/demonstreren.
     var adminTier = false;
-    try { adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()); } catch (e) { /* */ }
+    try { adminTier = (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()); } catch (e) { /* */ }
     if (!adminTier) {
       try {
-        var r = await window.besaSupabase.from("medewerkers")
+        var r = await window.ffSupabase.from("medewerkers")
           .select("dienstverband").eq("id", medewerkerId).maybeSingle();
         var dv = r && r.data ? (r.data.dienstverband || "") : "";
         if (dv === "Loondienst" || dv === "Stagiair") {

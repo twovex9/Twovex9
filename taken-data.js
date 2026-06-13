@@ -17,7 +17,7 @@
  *  - takenDB.delete(id) → Promise<true>
  *  - takenDB.getForMedewerkerSync(medewerkerId) → Array
  *
- * Events: `besa:taken-updated` (window) na elke mutatie/bootstrap.
+ * Events: `ff:taken-updated` (window) na elke mutatie/bootstrap.
  */
 (function (global) {
   "use strict";
@@ -178,13 +178,13 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:taken-updated", { detail: { source: source || "data" } }));
+      global.dispatchEvent(new CustomEvent("ff:taken-updated", { detail: { source: source || "data" } }));
     } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -202,7 +202,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[takenDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Taken — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Taken — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -217,14 +217,14 @@
 
   async function getCurrentUserId() {
     try {
-      if (!global.besaAuth) return null;
-      var user = await global.besaAuth.getCurrentUser();
+      if (!global.ffAuth) return null;
+      var user = await global.ffAuth.getCurrentUser();
       return user ? user.id : null;
     } catch (e) { return null; }
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var doc = Object.assign({}, rec || {});
     if (!doc.id) doc.id = generateId();
     if (!doc.aangemaaktDoorId) doc.aangemaaktDoorId = await getCurrentUserId();
@@ -232,7 +232,7 @@
     // Maker vastleggen (auth.users.id): nodig voor de voltooid-melding én de
     // INSERT-RLS-policy. Alleen bij aanmaken — update raakt dit nooit aan.
     payload.aangemaakt_door_id = doc.aangemaaktDoorId || null;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(sortItems(readCache().concat([obj])));
@@ -241,7 +241,7 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
@@ -250,7 +250,7 @@
     // Maker nooit overschrijven bij een update (objToPayload zet 'm niet, maar
     // wees expliciet — zo blijft de voltooi-melding altijd naar de échte maker).
     delete payload.aangemaakt_door_id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -346,8 +346,8 @@
   async function getContext() {
     if (_context) return _context;
     try {
-      if (global.besaSupabase) {
-        var r = await global.besaSupabase.rpc("taken_mijn_context");
+      if (global.ffSupabase) {
+        var r = await global.ffSupabase.rpc("taken_mijn_context");
         if (!r.error && r.data) { _context = r.data; return _context; }
       }
     } catch (e) { /* val terug op null → UI gebruikt client-side rol-heuristiek */ }
@@ -356,9 +356,9 @@
   function getContextSync() { return _context; }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
     writeCache(cache);

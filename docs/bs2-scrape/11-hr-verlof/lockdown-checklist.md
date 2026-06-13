@@ -56,7 +56,7 @@ Live test op verlof.html.
 - [x] C6. Data: 0 records (legitieme empty-state, BS1-only feature)
 - [x] C7. Content spot-check: kolomstructuur
 - [x] C8. CRUD + state-machine: complete
-- [x] C9. besa:verlof-updated event
+- [x] C9. ff:verlof-updated event
 - [x] C10. parity.md: BS1-only feature, 100% functioneel
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor)
@@ -75,7 +75,7 @@ Live test op verlof.html.
 
 ## E. POST-RESTRUCTURE CLEAN RUNS — Bug #32 sidebar-relocation (2/2 ✅ ZONDER fix tussendoor)
 
-Na PR #93 merge: top-bar Verlof verwijderd + sidebar-groep met 4 sub-items toegevoegd. Vers getest in nieuwe structuur op `https://besa-suite.vercel.app/verlof.html`.
+Na PR #93 merge: top-bar Verlof verwijderd + sidebar-groep met 4 sub-items toegevoegd. Vers getest in nieuwe structuur op `https://futureflow-app.vercel.app/verlof.html`.
 
 ### Post-restructure verify (Chrome MCP, fresh navigate)
 - ✅ `index.html` top-bar Verlof count = 0

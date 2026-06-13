@@ -13,7 +13,7 @@
  *  - getRawBs2(id) → Promise (on-demand volledige BS2-raw)
  *  - getFileUrl(id) → Promise<string|null> (publieke URL)
  *  - add / update / archive / restore / delete
- * Event: `besa:beleid-documenten-updated`. DATA-SLIM `_mem`.
+ * Event: `ff:beleid-documenten-updated`. DATA-SLIM `_mem`.
  */
 (function (global) {
   "use strict";
@@ -83,16 +83,16 @@
   }
 
   function dispatchUpdated(src) {
-    try { global.dispatchEvent(new CustomEvent("besa:beleid-documenten-updated", { detail: { source: src || "data" } })); } catch (e) {}
+    try { global.dispatchEvent(new CustomEvent("ff:beleid-documenten-updated", { detail: { source: src || "data" } })); } catch (e) {}
   }
   function reportSilent(action, err) {
     console.error("[beleidDocumentenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Beleid — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Beleid — " + action, err);
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select(SLIM_COLS);
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select(SLIM_COLS);
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -117,9 +117,9 @@
   }
 
   async function getRawBs2(id) {
-    if (!global.besaSupabase || id == null) return null;
+    if (!global.ffSupabase || id == null) return null;
     try {
-      var res = await global.besaSupabase.from(TABLE).select("data").eq("id", id).single();
+      var res = await global.ffSupabase.from(TABLE).select("data").eq("id", id).single();
       if (res.error) throw res.error;
       var d = res.data && res.data.data;
       return (d && (d.bs2_scrape || d)) || null;
@@ -132,31 +132,31 @@
   // nodig; createSignedUrl zou dat wél vereisen en faalde met "Object not
   // found" omdat er geen storage-SELECT-policy voor deze bucket was.
   async function getFileUrl(id) {
-    if (!global.besaSupabase || id == null) return null;
+    if (!global.ffSupabase || id == null) return null;
     var row = getByIdSync(id);
     if (!row || !row.storagePath) return null;
     try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(row.storagePath);
+      var res = global.ffSupabase.storage.from(BUCKET).getPublicUrl(row.storagePath);
       return (res && res.data && res.data.publicUrl) || null;
     } catch (err) { reportSilent("getFileUrl", err); return null; }
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var doc = Object.assign({}, rec || {}), payload = objToPayload(doc);
     payload.id = doc.id || genId();
     payload.archived = !!doc.archived;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select(SLIM_COLS).single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select(SLIM_COLS).single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(sortItems(readCache().concat([obj]))); dispatchUpdated("add");
     return obj;
   }
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     var payload = objToPayload(partial || {}); delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select(SLIM_COLS).single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select(SLIM_COLS).single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data), cache = readCache();
     var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
@@ -167,13 +167,13 @@
   async function archive(id) { return update(id, { archived: true }); }
   async function restore(id) { return update(id, { archived: false }); }
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
     var row = getByIdSync(id);
     if (row && row.storagePath) {
-      try { await global.besaSupabase.storage.from(BUCKET).remove([row.storagePath]); } catch (e) { /* best-effort */ }
+      try { await global.ffSupabase.storage.from(BUCKET).remove([row.storagePath]); } catch (e) { /* best-effort */ }
     }
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
     dispatchUpdated("remove");

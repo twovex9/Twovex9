@@ -7,7 +7,7 @@
  * - `pushAll(arr)` bulk-sync (upsert + delete).
  *
  * UI rendert <tr>-rijen dynamisch op basis van getAllSync() of het
- * besa:urendeclaraties-updated event.
+ * ff:urendeclaraties-updated event.
  */
 (function (global) {
   "use strict";
@@ -35,7 +35,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* */ }
   }
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:urendeclaraties-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:urendeclaraties-updated")); } catch (e) { /* */ }
   }
 
   function rowToObj(row) {
@@ -78,8 +78,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("jaar", { ascending: false })
@@ -105,21 +105,21 @@
 
   function reportSilent(action, err) {
     console.error("[urendeclaratiesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Urendeclaraties — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Urendeclaraties — " + action, err);
   }
 
   async function pushAll(items) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!Array.isArray(items)) return;
     try {
-      var existingHead = await global.besaSupabase.from(TABLE).select("id");
+      var existingHead = await global.ffSupabase.from(TABLE).select("id");
       if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
       var toDelete = existingIds.filter(function (id) { return localIds.indexOf(id) === -1; });
 
       if (items.length) {
-        var ups = await global.besaSupabase.from(TABLE).upsert(items.map(objToInsertPayload), { onConflict: "id" });
+        var ups = await global.ffSupabase.from(TABLE).upsert(items.map(objToInsertPayload), { onConflict: "id" });
         if (ups.error) reportSilent("upsert", ups.error);
       }
       // DIEHARD delete-guard (zelfde patroon als planning-data.js pushFullCache): een
@@ -130,7 +130,7 @@
         toDelete = [];
       }
       if (toDelete.length) {
-        var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
+        var del = await global.ffSupabase.from(TABLE).delete().in("id", toDelete);
         if (del.error) reportSilent("delete", del.error);
       }
     } catch (err) {
@@ -144,13 +144,13 @@
    * Reden is verplicht wanneer uren wordt gezet.
    */
   async function setOverride(id, uren, reden) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     var clearOverride = (uren == null || uren === "");
     if (!clearOverride && (!reden || !String(reden).trim())) {
       throw new Error("Reden is verplicht bij override");
     }
-    var profile = global.besaCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
+    var profile = global.ffCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
     var byId = profile ? (profile.id || null) : null;
     var byName = "";
     if (profile) {
@@ -169,7 +169,7 @@
         override_at: new Date().toISOString(),
       };
     }
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();

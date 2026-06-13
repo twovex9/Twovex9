@@ -19,7 +19,7 @@
  *  - beleidsdocumentenDB.archive(id) / restore(id) → Promise<doc>
  *  - beleidsdocumentenDB.delete(id) → Promise<true>  -- ook bestand uit Storage
  *
- * Events: `besa:beleidsdocumenten-updated` (window) na elke mutatie/bootstrap.
+ * Events: `ff:beleidsdocumenten-updated` (window) na elke mutatie/bootstrap.
  */
 (function (global) {
   "use strict";
@@ -59,17 +59,17 @@
   }
 
   function getPublicUrl(storagePath) {
-    if (!storagePath || !global.besaSupabase) return "";
+    if (!storagePath || !global.ffSupabase) return "";
     try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
+      var res = global.ffSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
       if (res && res.data && res.data.publicUrl) return res.data.publicUrl;
     } catch (e) { /* */ }
     return "";
   }
 
   function uploadToStorage(path, blob, mime) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase.storage.from(BUCKET).upload(path, blob, {
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase.storage.from(BUCKET).upload(path, blob, {
       contentType: mime || "application/octet-stream",
       upsert: true,
     }).then(function (res) {
@@ -79,8 +79,8 @@
   }
 
   function deleteFromStorage(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve();
-    return global.besaSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
+    if (!path || !global.ffSupabase) return Promise.resolve();
+    return global.ffSupabase.storage.from(BUCKET).remove([path]).then(function (res) {
       if (res.error) console.warn("[beleidsdocumentenDB] storage remove warning:", res.error);
     });
   }
@@ -141,13 +141,13 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:beleidsdocumenten-updated", { detail: { source: source || "data" } }));
+      global.dispatchEvent(new CustomEvent("ff:beleidsdocumenten-updated", { detail: { source: source || "data" } }));
     } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("volgnummer", { ascending: true });
@@ -168,7 +168,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[beleidsdocumentenDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Beleidsdocumenten — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Beleidsdocumenten — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -182,7 +182,7 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var doc = Object.assign({}, rec || {});
     if (!doc.id) doc.id = generateId();
     doc.archived = !!doc.archived;
@@ -198,7 +198,7 @@
     }
 
     var payload = metadataPayload(doc);
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = sortedByVolgnummer(readCache().concat([obj]));
@@ -208,7 +208,7 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
@@ -225,7 +225,7 @@
 
     var payload = metadataPayload(merged);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -240,13 +240,13 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
     var existing = getByIdSync(id);
     if (existing && existing.storagePath) {
       await deleteFromStorage(existing.storagePath);
     }
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
     writeCache(cache);

@@ -5,17 +5,17 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
   var cache = [];
 
   function reportSilent(action, err) {
     console.error("[dienstwisselsDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Dienstwissels — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Dienstwissels — " + action, err);
   }
 
   function emit() {
-    try { window.dispatchEvent(new Event("besa:dienstwissels-updated")); } catch (e) {}
+    try { window.dispatchEvent(new Event("ff:dienstwissels-updated")); } catch (e) {}
   }
 
   async function fetchAll() {

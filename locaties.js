@@ -744,6 +744,6 @@
     }
   }
 
-  window.addEventListener("besa:locaties-updated", render);
+  window.addEventListener("ff:locaties-updated", render);
   initialRender();
 })();

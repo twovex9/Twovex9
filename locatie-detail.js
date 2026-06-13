@@ -1,7 +1,7 @@
 /* locatie-detail.js — detailpagina locatie (Supabase data-laag via window.locatiesDB).
  *
  * De Medewerkers-tab wordt door de gedeelde module
- * window.besaDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
+ * window.ffDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
  * gefilterd op deze locatie).
  */
 (function () {
@@ -72,10 +72,10 @@
 
   function ensureMedewerkersTab(loc) {
     if (medewerkersTab) return;
-    if (!window.besaDetailMedewerkersTab || typeof window.besaDetailMedewerkersTab.init !== "function") return;
+    if (!window.ffDetailMedewerkersTab || typeof window.ffDetailMedewerkersTab.init !== "function") return;
     var container = document.getElementById("loc-medewerkers-list");
     if (!container) return;
-    medewerkersTab = window.besaDetailMedewerkersTab.init({
+    medewerkersTab = window.ffDetailMedewerkersTab.init({
       container: container,
       entityType: "locatie",
       entityId: locId,
@@ -234,7 +234,7 @@
     return false;
   }
 
-  window.addEventListener("besa:locaties-updated", function () {
+  window.addEventListener("ff:locaties-updated", function () {
     var loc = findLocatieCached();
     if (!loc) {
       window.location.href = "locaties.html";

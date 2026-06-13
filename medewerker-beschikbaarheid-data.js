@@ -17,17 +17,17 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
   var TABLE = "medewerker_beschikbaarheid";
-  var EVENT_NAME = "besa:beschikbaarheid-updated";
+  var EVENT_NAME = "ff:beschikbaarheid-updated";
 
   var _mem = [];                       // laatst opgehaalde rijen
   var _range = { van: null, tot: null };
 
   function reportSilent(action, err) {
     console.error("[beschikbaarheidDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Beschikbaarheid — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Beschikbaarheid — " + action, err);
   }
 
   function emit() {
@@ -41,7 +41,7 @@
   async function fetchRange(vanISO, totISO) {
     // Cold-load vangrail: wacht tot de Supabase-client echt klaar is, anders
     // levert een anonieme/te-vroege query 0 rijen op (zie data-laag-lessen).
-    try { if (global.besaSupabaseReady) await global.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (global.ffSupabaseReady) await global.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     try {
       var all = [];
       var from = 0;

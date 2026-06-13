@@ -36,7 +36,7 @@ Voor v2: minimaal "geen wildwest" — `medewerker` zonder begeleidende rol kan g
 
 ## Live verificatie (Chrome MCP)
 
-Admin session via `besa-suite.vercel.app`:
+Admin session via `futureflow-app.vercel.app`:
 
 | Tabel | Count voor admin | RLS-error |
 |---|---:|---|

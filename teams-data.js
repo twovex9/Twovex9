@@ -68,19 +68,19 @@
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:teams-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:teams-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   async function fetchAllTeams() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("naam", { ascending: true });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("naam", { ascending: true });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
 
   async function fetchAllMembers() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(MEMBERS_TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(MEMBERS_TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(memberToObj).filter(Boolean);
   }
@@ -100,7 +100,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[teamsDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Teams — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Teams — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -116,10 +116,10 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToPayload(rec);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(CACHE_KEY, readCache(CACHE_KEY).concat([obj]));
@@ -128,13 +128,13 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToPayload(merged);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache(CACHE_KEY);
@@ -149,9 +149,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(CACHE_KEY, readCache(CACHE_KEY).filter(function (r) { return r && String(r.id) !== String(id); }));
     writeCache(MEMBERS_CACHE_KEY, readCache(MEMBERS_CACHE_KEY).filter(function (m) { return m && String(m.team_id) !== String(id); }));
@@ -229,9 +229,9 @@
   }
 
   async function addMember(teamId, medewerkerId, rol) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var safeRol = ["lid", "leider", "assistent"].indexOf(rol) >= 0 ? rol : "lid";
-    var res = await global.besaSupabase.from(MEMBERS_TABLE).insert({
+    var res = await global.ffSupabase.from(MEMBERS_TABLE).insert({
       team_id: teamId, medewerker_id: medewerkerId, rol_in_team: safeRol,
     }).select().single();
     if (res.error) throw res.error;
@@ -244,8 +244,8 @@
   }
 
   async function removeMember(teamId, medewerkerId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(MEMBERS_TABLE)
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(MEMBERS_TABLE)
       .delete().eq("team_id", teamId).eq("medewerker_id", medewerkerId);
     if (res.error) throw res.error;
     writeCache(MEMBERS_CACHE_KEY, readCache(MEMBERS_CACHE_KEY).filter(function (m) {
@@ -256,9 +256,9 @@
   }
 
   async function setMemberRole(teamId, medewerkerId, rol) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var safeRol = ["lid", "leider", "assistent"].indexOf(rol) >= 0 ? rol : "lid";
-    var res = await global.besaSupabase.from(MEMBERS_TABLE)
+    var res = await global.ffSupabase.from(MEMBERS_TABLE)
       .update({ rol_in_team: safeRol }).eq("team_id", teamId).eq("medewerker_id", medewerkerId).select().single();
     if (res.error) throw res.error;
     var obj = memberToObj(res.data);

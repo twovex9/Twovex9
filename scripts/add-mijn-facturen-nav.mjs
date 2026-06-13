@@ -1,7 +1,7 @@
 // Idempotente sweep: voeg een "Mijn facturen"-top-link toe direct NA de "Home"-
 // top-link op elke pagina met de topbar. Open voor elke ingelogde gebruiker
 // (page-map null); ZZP'ers vinden zo hun eigen proforma-facturen.
-// Run vanuit besa-suite-etf/: `node scripts/add-mijn-facturen-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-mijn-facturen-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

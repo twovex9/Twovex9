@@ -20,12 +20,12 @@
 (function (global) {
   "use strict";
 
-  var CHECKED_FLAG = "besa-mfa-challenge-running";
+  var CHECKED_FLAG = "ff-mfa-challenge-running";
 
   async function getAAL() {
-    if (!global.besaSupabase) return null;
+    if (!global.ffSupabase) return null;
     try {
-      var res = await global.besaSupabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      var res = await global.ffSupabase.auth.mfa.getAuthenticatorAssuranceLevel();
       return res.data || null;
     } catch (e) {
       return null;
@@ -33,9 +33,9 @@
   }
 
   async function getVerifiedTotpFactor() {
-    if (!global.besaSupabase) return null;
+    if (!global.ffSupabase) return null;
     try {
-      var res = await global.besaSupabase.auth.mfa.listFactors();
+      var res = await global.ffSupabase.auth.mfa.listFactors();
       if (res.error || !res.data) return null;
       var totp = (res.data.totp || []).find(function (f) { return f.status === "verified"; });
       return totp || null;
@@ -47,7 +47,7 @@
   function buildOverlay() {
     var overlay = document.createElement("div");
     overlay.className = "modal-overlay";
-    overlay.id = "besa-mfa-challenge-modal";
+    overlay.id = "ff-mfa-challenge-modal";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.style.cssText =
@@ -74,28 +74,28 @@
       '<div style="padding:22px 26px;display:flex;flex-direction:column;gap:14px;">' +
         '<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">' +
           '6-cijferige code' +
-          '<input type="text" id="besa-mfa-ch-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" required ' +
+          '<input type="text" id="ff-mfa-ch-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" required ' +
             'style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);font:inherit;letter-spacing:3px;text-align:center;font-size:20px;">' +
         '</label>' +
-        '<p id="besa-mfa-ch-err" style="margin:0;color:var(--red);font-size:13px;display:none;"></p>' +
+        '<p id="ff-mfa-ch-err" style="margin:0;color:var(--red);font-size:13px;display:none;"></p>' +
         '<div style="display:flex;gap:8px;justify-content:space-between;align-items:center;">' +
-          '<button type="button" class="btn-outline" id="besa-mfa-ch-logout">Uitloggen</button>' +
-          '<button type="button" class="btn-primary" id="besa-mfa-ch-submit">Verifieer</button>' +
+          '<button type="button" class="btn-outline" id="ff-mfa-ch-logout">Uitloggen</button>' +
+          '<button type="button" class="btn-primary" id="ff-mfa-ch-submit">Verifieer</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(built.overlay);
 
     // Auto-focus input
     setTimeout(function () {
-      var input = document.getElementById("besa-mfa-ch-code");
+      var input = document.getElementById("ff-mfa-ch-code");
       if (input) input.focus();
     }, 80);
 
     return new Promise(function (resolve) {
-      var submitBtn = document.getElementById("besa-mfa-ch-submit");
-      var input = document.getElementById("besa-mfa-ch-code");
-      var errEl = document.getElementById("besa-mfa-ch-err");
-      var logoutBtn = document.getElementById("besa-mfa-ch-logout");
+      var submitBtn = document.getElementById("ff-mfa-ch-submit");
+      var input = document.getElementById("ff-mfa-ch-code");
+      var errEl = document.getElementById("ff-mfa-ch-err");
+      var logoutBtn = document.getElementById("ff-mfa-ch-logout");
 
       async function doVerify() {
         var code = String(input.value || "").trim();
@@ -108,9 +108,9 @@
         submitBtn.disabled = true;
         submitBtn.textContent = "Verifieren…";
         try {
-          var ch = await global.besaSupabase.auth.mfa.challenge({ factorId: factor.id });
+          var ch = await global.ffSupabase.auth.mfa.challenge({ factorId: factor.id });
           if (ch.error) throw ch.error;
-          var ver = await global.besaSupabase.auth.mfa.verify({
+          var ver = await global.ffSupabase.auth.mfa.verify({
             factorId: factor.id,
             challengeId: ch.data.id,
             code: code,
@@ -135,17 +135,17 @@
       logoutBtn.addEventListener("click", function () {
         // Consistente, bewuste logout (zelfde pad als idle/avatar): marker
         // + synchrone purge zodat de rehydratie-guard niet terugbounce't.
-        if (typeof global.besaIntentionalLogout === "function") {
-          global.besaIntentionalLogout("login.html");
+        if (typeof global.ffIntentionalLogout === "function") {
+          global.ffIntentionalLogout("login.html");
           return;
         }
         // Fallback (auth-guard niet geladen): zelf marker + purge.
-        try { global.sessionStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
-        try { global.localStorage.setItem("besa-logout", "1"); } catch (e) { /* */ }
-        try { global.localStorage.removeItem("sb-besa-auth"); } catch (e) { /* */ }
+        try { global.sessionStorage.setItem("ff-logout", "1"); } catch (e) { /* */ }
+        try { global.localStorage.setItem("ff-logout", "1"); } catch (e) { /* */ }
+        try { global.localStorage.removeItem("sb-ff-auth"); } catch (e) { /* */ }
         try {
-          var p = global.besaSupabase && global.besaSupabase.auth
-            && global.besaSupabase.auth.signOut();
+          var p = global.ffSupabase && global.ffSupabase.auth
+            && global.ffSupabase.auth.signOut();
           if (p && typeof p.then === "function") {
             p.then(function () { global.location.replace("login.html"); },
                    function () { global.location.replace("login.html"); });
@@ -188,7 +188,7 @@
     }
   }
 
-  global.besaMfaChallenge = { check: checkAndChallenge };
+  global.ffMfaChallenge = { check: checkAndChallenge };
 
   init();
 })(typeof window !== "undefined" ? window : this);

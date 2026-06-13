@@ -8,8 +8,8 @@
  *   3. Plak HEEL DEZE FILE in de console + Enter
  *   4. Wacht ~30-60 seconden (progress in console)
  *   5. Browser triggert auto-download: bs2-export-full.json
- *   6. Verplaats bestand naar: besa-suite-etf/scripts/bs2-exports/bs2-export-full.json
- *   7. Run vanuit besa-suite-etf/:
+ *   6. Verplaats bestand naar: future-flow/scripts/bs2-exports/bs2-export-full.json
+ *   7. Run vanuit future-flow/:
  *        node scripts/bs2-full-import.mjs           (her-importeert alles)
  *        node scripts/bs2-fk-resolve.mjs            (lost FK's op)
  *        node scripts/bs2-fix-client-id.mjs         (gebruikt bewaarde data.bs2_id)
@@ -147,8 +147,8 @@
 
   console.log("[BS2 snippet] Download getriggerd: bs2-export-full.json");
   console.log("[BS2 snippet] Volgende stap:");
-  console.log("  1. Verplaats bestand naar besa-suite-etf/scripts/bs2-exports/bs2-export-full.json");
-  console.log("  2. cd besa-suite-etf && node scripts/bs2-full-import.mjs");
+  console.log("  1. Verplaats bestand naar future-flow/scripts/bs2-exports/bs2-export-full.json");
+  console.log("  2. cd future-flow && node scripts/bs2-full-import.mjs");
 
   // Ook naar window voor inspectie
   window.__bs2Export = out;

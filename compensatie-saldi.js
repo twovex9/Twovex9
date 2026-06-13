@@ -366,7 +366,7 @@
 
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
   // ververst (eerste page-load op een nieuwe browser).
-  window.addEventListener("besa:comp-saldi-updated", function () {
+  window.addEventListener("ff:comp-saldi-updated", function () {
     try {
       allRows = loadRows();
       render();

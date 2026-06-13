@@ -3,7 +3,7 @@
 // bestaande "Te beoordelen"-dropdownlink (href="facturen-te-beoordelen" met
 // class top-dropdown-link). De link wordt voor niet-bevoegde rollen automatisch
 // verborgen door permissions-nav-hide.js (action view / entity invoices).
-// Run vanuit besa-suite-etf/: `node scripts/add-zzp-proforma-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-zzp-proforma-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

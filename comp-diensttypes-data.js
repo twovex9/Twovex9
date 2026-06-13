@@ -27,7 +27,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
   }
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:comp-diensttypes-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:comp-diensttypes-updated")); } catch (e) { /* */ }
   }
 
   function rowToObj(row) {
@@ -65,8 +65,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("aanmaakdatum", { ascending: true });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("aanmaakdatum", { ascending: true });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -74,8 +74,8 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
-      var head = await global.besaSupabase.from(TABLE).select("id", { count: "exact", head: true });
+      if (!global.ffSupabase) return false;
+      var head = await global.ffSupabase.from(TABLE).select("id", { count: "exact", head: true });
       if (head.error) return false;
       if ((head.count || 0) > 0) {
         try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
@@ -87,7 +87,7 @@
         return false;
       }
       console.info("[compDiensttypesDB] Migratie van " + local.length + " configs…");
-      var ins = await global.besaSupabase.from(TABLE).insert(local.map(objToInsertPayload)).select();
+      var ins = await global.ffSupabase.from(TABLE).insert(local.map(objToInsertPayload)).select();
       if (ins.error) {
         console.error("[compDiensttypesDB] Migratie mislukt:", ins.error);
         return false;
@@ -118,14 +118,14 @@
 
   function reportSilent(action, err) {
     console.error("[compDiensttypesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Diensttypes — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Diensttypes — " + action, err);
   }
 
   async function pushAll(items) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!Array.isArray(items)) return;
     try {
-      var existingHead = await global.besaSupabase.from(TABLE).select("id");
+      var existingHead = await global.ffSupabase.from(TABLE).select("id");
       if (existingHead.error) { reportSilent("pushAll select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
@@ -133,7 +133,7 @@
 
       if (items.length) {
         var payload = items.map(objToInsertPayload);
-        var ups = await global.besaSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
+        var ups = await global.ffSupabase.from(TABLE).upsert(payload, { onConflict: "id" });
         if (ups.error) reportSilent("upsert", ups.error);
       }
       // DIEHARD delete-guard (zelfde patroon als urendeclaraties-data.js / planning-data.js):
@@ -144,7 +144,7 @@
         toDelete = [];
       }
       if (toDelete.length) {
-        var del = await global.besaSupabase.from(TABLE).delete().in("id", toDelete);
+        var del = await global.ffSupabase.from(TABLE).delete().in("id", toDelete);
         if (del.error) reportSilent("delete", del.error);
       }
     } catch (err) {
@@ -159,9 +159,9 @@
   }
 
   async function add(obj) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
     var payload = objToInsertPayload(obj);
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var row = rowToObj(res.data);
     var cur = readCache();
@@ -172,12 +172,12 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, patch || {});
     var payload = objToInsertPayload(merged);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var row = rowToObj(res.data);
     var cur = readCache().map(function (r) { return String(r.id) === String(id) ? row : r; });
@@ -190,8 +190,8 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cur = readCache().filter(function (r) { return String(r.id) !== String(id); });
     writeCache(cur);

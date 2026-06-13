@@ -1,7 +1,7 @@
 # Module 14 — Cliënten overview — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/clients/overview`
-**BS1 URL**: `https://besa-suite.vercel.app/clienten.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/clienten.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

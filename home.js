@@ -223,7 +223,7 @@ function initNewsModal() {
     title.textContent = item.titel || "Nieuwsbericht";
     author.textContent = item.auteur || "HR team";
     date.textContent = formatNlShortDate(item.aanmaakdatum);
-    content.innerHTML = window.besaSanitizeHtml(item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>");
+    content.innerHTML = window.ffSanitizeHtml(item.inhoud?.trim() || "<p>Geen inhoud beschikbaar.</p>");
     if (item.image) {
       image.src = item.image;
       image.hidden = false;
@@ -363,5 +363,5 @@ renderHomeNews();
 
 // Stage 9b: re-render zodra Supabase nieuws of profiel-data binnenkomt
 // (bootstrap-call uit nieuws-data.js / profiles-data.js).
-window.addEventListener("besa:nieuws-updated", renderHomeNews);
-window.addEventListener("besa:profile-updated", renderHomeNews);
+window.addEventListener("ff:nieuws-updated", renderHomeNews);
+window.addEventListener("ff:profile-updated", renderHomeNews);

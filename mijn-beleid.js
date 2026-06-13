@@ -20,7 +20,7 @@
     { slug: "personeelshandboek", titel: "Personeelshandboek" },
   ];
 
-  function supa() { if (!window.besaSupabase) throw new Error("Supabase client niet geladen"); return window.besaSupabase; }
+  function supa() { if (!window.ffSupabase) throw new Error("Supabase client niet geladen"); return window.ffSupabase; }
   function tbody() { return document.getElementById("mb-tbody"); }
   function esc(s) { var t = document.createElement("div"); t.textContent = s == null ? "" : String(s); return t.innerHTML; }
   function fmtDatum(iso) {
@@ -29,7 +29,7 @@
   }
   function midOf(p) { return p ? (p.medewerkerId || p.medewerker_id || null) : null; }
   function currentMid() {
-    try { if (window.profilesDB && window.profilesDB.getCurrentSync) { var m = midOf(window.profilesDB.getCurrentSync()); if (m) return m; } return midOf(window.besaCurrentProfile); } catch (e) { return null; }
+    try { if (window.profilesDB && window.profilesDB.getCurrentSync) { var m = midOf(window.profilesDB.getCurrentSync()); if (m) return m; } return midOf(window.ffCurrentProfile); } catch (e) { return null; }
   }
 
   var byslug = {};
@@ -58,7 +58,7 @@
     } catch (err) {
       console.error("[mijn-beleid] laden mislukt:", err);
       if (tbody()) tbody().innerHTML = '<tr><td colspan="3" class="mu-empty">Kon het beleid niet laden.</td></tr>';
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Mijn beleid — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Mijn beleid — laden", err);
     }
   }
 
@@ -91,7 +91,7 @@
     });
     await load(mid);
   }
-  function boot() { start(); window.addEventListener("besa:profile-updated", start); }
+  function boot() { start(); window.addEventListener("ff:profile-updated", start); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();

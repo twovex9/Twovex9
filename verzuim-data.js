@@ -22,7 +22,7 @@
  *   window.verzuimDB.update(id, patch)      → Promise<obj>
  *   window.verzuimDB.delete(id)             → Promise<true>
  *
- * Event: besa:verzuim-updated
+ * Event: ff:verzuim-updated
  */
 (function (global) {
   "use strict";
@@ -52,12 +52,12 @@
   }
 
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:verzuim-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:verzuim-updated")); } catch (e) { /* */ }
   }
 
   function reportSilent(action, err) {
     console.error("[verzuimDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Verzuim — " + action, err);
   }
 
   function normType(t) {
@@ -99,8 +99,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*")
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*")
       .order("eerst_ziektedag", { ascending: false, nullsFirst: false });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
@@ -111,8 +111,8 @@
   // een gevulde tabel (de normale situatie) doet dit niets.
   async function maybeMigrateLegacy() {
     try {
-      if (!global.besaSupabase) return;
-      var head = await global.besaSupabase.from(TABLE).select("id", { count: "exact", head: true });
+      if (!global.ffSupabase) return;
+      var head = await global.ffSupabase.from(TABLE).select("id", { count: "exact", head: true });
       if (head.error || (head.count || 0) > 0) return;
       function readLegacy(key, type) {
         try {
@@ -127,7 +127,7 @@
       var payload = readLegacy(LEGACY_LANG, "lang").concat(readLegacy(LEGACY_KORT, "kort"));
       if (!payload.length) return;
       console.info("[verzuimDB] Eenmalige migratie van " + payload.length + " verzuim-records…");
-      var ins = await global.besaSupabase.from(TABLE).insert(payload);
+      var ins = await global.ffSupabase.from(TABLE).insert(payload);
       if (ins.error) reportSilent("migratie", ins.error);
     } catch (err) { reportSilent("migratie", err); }
   }
@@ -164,9 +164,9 @@
   }
 
   async function add(obj) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(obj);
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var saved = rowToObj(res.data);
     var cache = readCache().slice();
@@ -177,7 +177,7 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("id verplicht");
     var upd = {};
     if (patch && "type" in patch) upd.type = normType(patch.type);
@@ -187,7 +187,7 @@
     if (patch && "werkelijkeTerug" in patch) upd.werkelijke_terug = patch.werkelijkeTerug || null;
     if (patch && "beschrijving" in patch) upd.beschrijving = patch.beschrijving == null ? "" : String(patch.beschrijving);
     if (patch && "status" in patch) upd.status = patch.status || "Actief";
-    var res = await global.besaSupabase.from(TABLE).update(upd).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var saved = rowToObj(res.data);
     var cache = readCache().slice();
@@ -199,9 +199,9 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
     dispatchUpdated();

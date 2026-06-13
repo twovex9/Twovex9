@@ -1,7 +1,7 @@
 # Module 01: Home — BS1 PARITY-CHECK
 
 **Gescraped op**: 2026-05-13 (retroactief, na BS2 batches voltooid)
-**BS1-URL getest**: `https://besa-suite.vercel.app/home.html`
+**BS1-URL getest**: `https://futureflow-app.vercel.app/home.html`
 **Test-account**: `sonck802@gmail.com` (admin-tier)
 **BS2-equivalent**: `https://etf.acceptance.besasuite.nl/home`
 
@@ -42,7 +42,7 @@
 | User-avatar JS | ✅ Aanwezig, toont email + Uitloggen-link |
 | Help-icoon (?) | ✅ Aanwezig (geen action verbonden) |
 | Top-nav links | ✅ 14 items (BS2 had 13 — BS1 heeft Verlof EXTRA in top-nav) |
-| Globals geladen | ✅ besaSupabase, nieuwsDB, profilesDB allemaal `object` |
+| Globals geladen | ✅ ffSupabase, nieuwsDB, profilesDB allemaal `object` |
 | Console errors | ✅ 0 errors |
 
 ## Per BS2-actie systematische parity-vergelijking

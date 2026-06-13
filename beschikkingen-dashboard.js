@@ -5,7 +5,7 @@
  *   GROEN  betaald · ORANJE gedeclareerd-wacht-op-betaling · ROOD nog te declareren.
  * De rode kaart heeft twee sub-bedragen over de EERDERE maanden: achterstand
  * (nog te declareren, rood) en onbetaald (gedeclareerd maar niet betaald, oranje).
- * Alle cijfers komen uit window.besaDashboardDB (RPC beschikkingen_dashboard_v2).
+ * Alle cijfers komen uit window.ffDashboardDB (RPC beschikkingen_dashboard_v2).
  * KPI's/sub-bedragen/maandstaven zijn klikbaar → drill-down modal.
  */
 (function () {
@@ -63,7 +63,7 @@
   var selEnd = null;         // ym
   var winMin = null, winMax = null;
 
-  function curData() { return (window.besaDashboardDB && window.besaDashboardDB.getData()) || null; }
+  function curData() { return (window.ffDashboardDB && window.ffDashboardDB.getData()) || null; }
   function periodeLabel() {
     if (!selStart) return "";
     if (selStart === selEnd) return ymLabel(selStart, true);
@@ -204,7 +204,7 @@
     var body = openModal("Verloopt binnen 60 dagen", rows.length + (rows.length === 1 ? " beschikking" : " beschikkingen"));
     if (!body) return;
     if (!rows.length) { emptyRow(body, "Geen beschikkingen die binnen 60 dagen verlopen."); return; }
-    var hasOplos = !!window.besaOplossen;
+    var hasOplos = !!window.ffOplossen;
     var t = buildTable(hasOplos
       ? ["Cliënt", "Beschikking", "Zorgsoort", "Einddatum", "Resteert", ""]
       : ["Cliënt", "Beschikking", "Zorgsoort", "Einddatum", "Resteert"]);
@@ -220,13 +220,13 @@
       if (hasOplos) {
         var actTd = el("td", "bd-td-act");
         var url = r.id ? "beschikking-detail?id=" + encodeURIComponent(r.id) : "beschikkingen";
-        actTd.innerHTML = window.besaOplossen.navBtn(url, "Naar beschikking", "Verleng of werk de aflopende beschikking bij.");
+        actTd.innerHTML = window.ffOplossen.navBtn(url, "Naar beschikking", "Verleng of werk de aflopende beschikking bij.");
         tr.appendChild(actTd);
       }
       t.tb.appendChild(tr);
     });
     body.appendChild(t.tbl);
-    if (window.besaOplossen) window.besaOplossen.bindSignals(body);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(body);
   }
 
   function showPendingReqModal() {
@@ -295,10 +295,10 @@
         if (loaded) return;
         loaded = true;
         panel.appendChild(el("p", "bd-mrow-loading", "Laden…"));
-        window.besaDashboardDB.detail(it.ym, kind).then(function (det) {
+        window.ffDashboardDB.detail(it.ym, kind).then(function (det) {
           clear(panel);
           if (!det || !det.length) { panel.appendChild(el("p", "bd-modal-empty", "Geen details.")); return; }
-          var hasOplos = !!window.besaOplossen;
+          var hasOplos = !!window.ffOplossen;
           var heads = kind === "to_declare"
             ? ["Cliënt", "Beschikking", "Geschat bedrag"]
             : ["Cliënt", "Beschikking", "Factuur", "Bedrag"];
@@ -329,13 +329,13 @@
                 knop = "Naar facturen";
                 uitleg = "Volg de declaratie op in de facturen-flow.";
               }
-              actTd.innerHTML = window.besaOplossen.navBtn(url, knop, uitleg);
+              actTd.innerHTML = window.ffOplossen.navBtn(url, knop, uitleg);
               tr.appendChild(actTd);
             }
             t.tb.appendChild(tr);
           });
           panel.appendChild(t.tbl);
-          if (window.besaOplossen) window.besaOplossen.bindSignals(panel);
+          if (window.ffOplossen) window.ffOplossen.bindSignals(panel);
           if (kind === "to_declare") {
             panel.appendChild(el("p", "bd-mrow-note", "Bedrag is een schatting op basis van het gemiddelde maandbedrag uit de eigen factuurhistorie van de beschikking."));
           }
@@ -461,7 +461,7 @@
   }
   function setMode(m) { mode = m; }
   function reload() {
-    var p = window.besaDashboardDB.load(selStart ? selStart + "-01" : null, selEnd ? selEnd + "-01" : null);
+    var p = window.ffDashboardDB.load(selStart ? selStart + "-01" : null, selEnd ? selEnd + "-01" : null);
     p.then(render);
   }
 
@@ -534,7 +534,7 @@
   async function init() {
     wireControls();
     try {
-      if (window.besaDashboardDB && window.besaDashboardDB.ready) await window.besaDashboardDB.ready;
+      if (window.ffDashboardDB && window.ffDashboardDB.ready) await window.ffDashboardDB.ready;
     } catch (e) { /* reporter meldde al */ }
     render();
   }

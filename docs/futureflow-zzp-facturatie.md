@@ -1,6 +1,6 @@
 # Future Flow — ZZP/inhuur proforma-facturatie (native)
 
-> Spec uit inwerk-gesprek **2026-06-03** (Jason). Future Flow (FF = deze BESA-suite) wordt de
+> Spec uit inwerk-gesprek **2026-06-03** (Jason). Future Flow (FF = deze app) wordt de
 > **zelfstandige bron**: de proforma-factuur komt uit FF's **eigen planning** (`planning`-tabel),
 > niet meer uit BS2. BS2-facturen (`invoices`) blijven als **historie** bewaard (DIEHARD: niets
 > verwijderen). Strikt **los** van `facturen` (cliënt→beschikking→gemeente, disposition-model).
@@ -102,5 +102,5 @@ overuren-lus: `overuren_status text` (null|aangevraagd|goedgekeurd|afgewezen),
   per locatie en totaal (uitbreiding facturen-indiening + Financiën › Locaties).
 
 ## Werkomgeving
-- Repo: **`C:\Users\sonck\dev\besa-suite-etf`** (buiten OneDrive; commit+push per blok). Remote
-  `ETFalkmaar/besa-suite-`. Mobiel: `…\OneDrive\…\besa-suite-mobile`.
+- Repo: **`C:\Users\sonck\dev\future-flow`** (buiten OneDrive; commit+push per blok). Remote
+  `twovex9/twovex9`. Mobiel: `…\OneDrive\…\Future Flow-mobile`.

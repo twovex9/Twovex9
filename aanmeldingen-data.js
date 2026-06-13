@@ -16,7 +16,7 @@
  *   - beoordeel(id, actie, toelichting) → Promise<Object> (aanmelding_beoordeel, throwt bij fout)
  *   - signedUrl(storagePath) → Promise<string|null>      (signed URL, 600s geldig)
  *
- * Events: `besa:aanmeldingen-updated` (window) na elke succesvolle beoordeling.
+ * Events: `ff:aanmeldingen-updated` (window) na elke succesvolle beoordeling.
  */
 (function (global) {
   "use strict";
@@ -26,25 +26,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[aanmeldingenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Aanmeldingen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Aanmeldingen — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:aanmeldingen-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:aanmeldingen-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   // ── Read-RPC's met fallback (UI breekt nooit) ───────────────────────────────
   async function callRpc(fn, args, label, fallback) {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc(fn, args || {});
+      var r = await global.ffSupabase.rpc(fn, args || {});
       if (r.error) throw r.error;
       return r.data == null ? fallback : r.data;
     } catch (err) {
@@ -70,7 +70,7 @@
   // ── Detail (geen fallback — throwt zodat de modal de fout toont) ────────────
   async function detail(id) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("aanmelding_detail", { p_id: id });
+    var r = await global.ffSupabase.rpc("aanmelding_detail", { p_id: id });
     if (r.error) throw r.error;
     if (r.data == null) throw new Error("Aanmelding niet gevonden");
     return r.data;
@@ -79,7 +79,7 @@
   // ── Beoordelen (mutatie — throwt door naar het page-script) ────────────────
   async function beoordeel(id, actie, toelichting) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("aanmelding_beoordeel", {
+    var r = await global.ffSupabase.rpc("aanmelding_beoordeel", {
       p_id: id,
       p_actie: actie,
       p_toelichting: toelichting || null,
@@ -94,7 +94,7 @@
     try {
       if (!storagePath) return null;
       await ensureSupabase();
-      var r = await global.besaSupabase.storage.from(BUCKET).createSignedUrl(storagePath, 600);
+      var r = await global.ffSupabase.storage.from(BUCKET).createSignedUrl(storagePath, 600);
       if (r.error) throw r.error;
       return (r.data && r.data.signedUrl) || null;
     } catch (err) {

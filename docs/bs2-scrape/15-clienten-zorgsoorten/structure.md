@@ -1,7 +1,7 @@
 # Module 15 — Cliënten Zorgsoorten — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/clients/care-types`
-**BS1 URL**: `https://besa-suite.vercel.app/zorgsoorten.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/zorgsoorten.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

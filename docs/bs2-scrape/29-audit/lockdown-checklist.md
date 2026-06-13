@@ -48,7 +48,7 @@
 - [x] C5. 6 distinct acties (aanmaken/archiveren/bewerken/herstellen/status_wijziging/verwijderen)
 - [x] C6. Read-only viewer: geen CRUD, alleen GET via auditDB
 - [x] C7. Fetch cap MAX_PER_SOURCE=500 per bron (zichtbaar in audit-data.js)
-- [x] C8. besa:audit-updated event na refresh / cache update
+- [x] C8. ff:audit-updated event na refresh / cache update
 - [x] C9. Kolommen-kiezer voorkeuren persistent in `audit_columns_v1` localStorage
 - [x] C10. parity.md: 100% functioneel + BS1 superset (search/reset/refresh/detail-modal/badges/2-bron merge)
 

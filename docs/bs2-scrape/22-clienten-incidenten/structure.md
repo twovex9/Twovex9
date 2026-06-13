@@ -1,7 +1,7 @@
 # Module 22 — Cliënten Incidenten — STRUCTURE
 
 **BS2 URL**: `/clients/manage-incidents`
-**BS1 URL**: `https://besa-suite.vercel.app/incidenten.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/incidenten.html`
 **BS1 detail-page**: `incident-melden.html` (incident creation/editing form)
 **Scrape datum**: 2026-05-14
 

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "besa.facturenImportJobs";
+  var STORAGE_KEY = "ff.facturenImportJobs";
   var MAX_BYTES = 20 * 1024 * 1024;
   var ALLOWED_EXT = ["svg", "png", "xlsx", "xls", "csv", "jpg", "jpeg", "pdf", "docx", "doc"];
   var ALLOWED_HUMAN = "SVG, PNG, Excel, CSV, JPG, PDF of .docx";
@@ -407,7 +407,7 @@
 
   function dispatchFacturenUpdated() {
     try {
-      window.dispatchEvent(new CustomEvent("besa:facturen-updated", { detail: { source: "facturen-importeren" } }));
+      window.dispatchEvent(new CustomEvent("ff:facturen-updated", { detail: { source: "facturen-importeren" } }));
     } catch (e) { /* */ }
   }
 
@@ -467,7 +467,7 @@
             var jobs = readJSONList(STORAGE_KEY).filter(function (j) { return j.id !== id; });
             writeJSONList(STORAGE_KEY, jobs);
             try {
-              window.dispatchEvent(new CustomEvent("besa:facturen-updated", { detail: { source: "facturen-importeren" } }));
+              window.dispatchEvent(new CustomEvent("ff:facturen-updated", { detail: { source: "facturen-importeren" } }));
             } catch (e2) { /* */ }
             renderHistory();
             if (typeof window.showActionFeedback === "function") {
@@ -476,8 +476,8 @@
           })
           .catch(function (err) {
             console.error("[facturen-importeren] removeByImportJobId mislukt:", err);
-            if (window.besaReportSyncFailure) {
-              window.besaReportSyncFailure("Importjob verwijderen", err);
+            if (window.ffReportSyncFailure) {
+              window.ffReportSyncFailure("Importjob verwijderen", err);
             } else if (typeof window.showSaveModal === "function") {
               window.showSaveModal("Verwijderen mislukt: " + (err && err.message ? err.message : "onbekende fout"));
             }

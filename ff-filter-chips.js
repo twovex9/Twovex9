@@ -1,6 +1,6 @@
 /* global window, document */
 /**
- * besa-filter-chips.js — herbruikbare filter-chip-componenten in HR-huisstijl.
+ * ff-filter-chips.js — herbruikbare filter-chip-componenten in HR-huisstijl.
  *
  * Gebruikt EXACT dezelfde CSS classes als de officiële Functie/Opleiding-chips
  * op HR > Medewerkers (.filter-chip--radio, .filter-chip-plus,
@@ -321,7 +321,7 @@
     };
   }
 
-  w.besaFilterChips = {
+  w.ffFilterChips = {
     createSearchSelectChip: createSearchSelectChip,
     createDateRangeChip: createDateRangeChip,
   };

@@ -7,17 +7,17 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
   var cacheByDienst = {};
 
   function reportSilent(action, err) {
     console.error("[dienstUitnodigingenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Uitnodigingen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Uitnodigingen — " + action, err);
   }
 
   function emit(dienstId) {
-    try { window.dispatchEvent(new CustomEvent("besa:dienst-uitnodigingen-updated", { detail: { dienstId: dienstId } })); } catch (e) { /* */ }
+    try { window.dispatchEvent(new CustomEvent("ff:dienst-uitnodigingen-updated", { detail: { dienstId: dienstId } })); } catch (e) { /* */ }
   }
 
   async function fetchForDienst(dienstId) {

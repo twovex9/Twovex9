@@ -19,7 +19,7 @@
  *   - BEHOUD    `view-clients`      → NIET aanraken: cliënt-detail blijft bereikbaar
  *                                     vanuit een incident ("cliënt naar voren laten
  *                                     komen / naar de cliënt kijken"). incidenten.js
- *                                     leest clientenDB sowieso direct, niet via besaCan.
+ *                                     leest clientenDB sowieso direct, niet via ffCan.
  *   - TOEVOEG   `browse-mileage-declarations` → Kilometers-dropdown ("Kilometer
  *                                     declaraties") wordt zichtbaar ("die kan je wel
  *                                     laten staan"). De 2 beheer-subpagina's blijven
@@ -109,7 +109,7 @@ async function main() {
     console.log("Rollback toegepast: browse-clients/browse-care-types terug, browse-mileage-declarations weg.");
   } else {
     // Apply: REMOVE eruit, ADD erin (is_hierarchical=false, zoals de leaf-rollen
-    // Planner/Medewerker die deze slug al hebben — besaCan negeert is_hierarchical sowieso).
+    // Planner/Medewerker die deze slug al hebben — ffCan negeert is_hierarchical sowieso).
     const removed = await del(REMOVE);
     console.log(`Verwijderd (${removed.length}):`, removed.map((x) => x.permission_slug).join(", ") || "(niets — al weg)");
     await ins(ADD.map((s) => ({ role_id: ROLE_ID, permission_slug: s, is_hierarchical: false })));

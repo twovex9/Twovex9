@@ -33,4 +33,4 @@
 - Per kolom header click → ASC/DESC
 
 ## Events
-- `besa:facturen-updated` op window
+- `ff:facturen-updated` op window

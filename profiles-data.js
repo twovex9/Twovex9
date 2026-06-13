@@ -18,21 +18,21 @@
  *   - window.profilesDB.isAdmin()         → boolean shortcut op huidig profiel.
  *
  * Ook beschikbaar:
- *   - window.besaCurrentProfile           → reactief object, gevuld na bootstrap.
+ *   - window.ffCurrentProfile           → reactief object, gevuld na bootstrap.
  *
  * Events:
- *   - "besa:profile-updated" op window na elke mutatie of bootstrap.
+ *   - "ff:profile-updated" op window na elke mutatie of bootstrap.
  */
 (function (global) {
   "use strict";
 
   var TABLE = "profiles";
-  var CACHE_KEY = "besaProfilesV1";
-  var CURRENT_KEY = "besaCurrentProfileV1";
+  var CACHE_KEY = "ffProfilesV1";
+  var CURRENT_KEY = "ffCurrentProfileV1";
 
   function reportSilent(action, err) {
     console.error("[profilesDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Profielen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Profielen — " + action, err);
   }
 
   function readCache() {
@@ -64,7 +64,7 @@
   }
 
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:profile-updated")); }
+    try { global.dispatchEvent(new CustomEvent("ff:profile-updated")); }
     catch (e) { /* */ }
   }
 
@@ -109,8 +109,8 @@
   // Supabase fetch + bootstrap
   // ---------------------------------------------------------------------------
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("achternaam", { ascending: true })
@@ -124,9 +124,9 @@
   // relevant zijn: loondienst/stagiair worden via het rooster ingepland en hebben die
   // tabs niet nodig (video-feedback eigenaar 2026-06-07). Leeg = onbekend/niet gekoppeld.
   async function fetchDienstverband(medewerkerId) {
-    if (!medewerkerId || !global.besaSupabase) return "";
+    if (!medewerkerId || !global.ffSupabase) return "";
     try {
-      var r = await global.besaSupabase
+      var r = await global.ffSupabase
         .from("medewerkers")
         .select("dienstverband")
         .eq("id", medewerkerId)
@@ -136,11 +136,11 @@
   }
 
   async function fetchCurrent() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var sess = await global.besaSupabase.auth.getSession();
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var sess = await global.ffSupabase.auth.getSession();
     var user = sess && sess.data && sess.data.session ? sess.data.session.user : null;
     if (!user) return null;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .eq("id", user.id)
@@ -159,8 +159,8 @@
         var current = await fetchCurrent();
         if (current) {
           writeCurrent(current);
-          global.besaCurrentProfile = current;
-          global.besaCurrentDienstverband = current.dienstverband || "";
+          global.ffCurrentProfile = current;
+          global.ffCurrentDienstverband = current.dienstverband || "";
         }
         var all = await fetchAll();
         writeCache(all);
@@ -181,13 +181,13 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!global.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!global.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var dbPatch = objToUpdatePayload(patch);
     if (Object.keys(dbPatch).length === 0) {
       var existing = readCache().find(function (p) { return p && p.id === id; });
       return existing || null;
     }
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -197,10 +197,10 @@
     var updated = rowToObj(res.data);
     var list = readCache().map(function (p) { return p && p.id === id ? updated : p; });
     writeCache(list);
-    if (global.besaCurrentProfile && global.besaCurrentProfile.id === id) {
+    if (global.ffCurrentProfile && global.ffCurrentProfile.id === id) {
       // Dienstverband zit niet op de profiles-rij; behoud de eerder opgehaalde waarde.
-      updated.dienstverband = global.besaCurrentProfile.dienstverband || "";
-      global.besaCurrentProfile = updated;
+      updated.dienstverband = global.ffCurrentProfile.dienstverband || "";
+      global.ffCurrentProfile = updated;
       writeCurrent(updated);
     }
     dispatchUpdated();
@@ -217,7 +217,7 @@
     return null;
   }
   function getCurrentSync() {
-    return global.besaCurrentProfile || readCurrent();
+    return global.ffCurrentProfile || readCurrent();
   }
   function isAdmin() {
     var p = getCurrentSync();
@@ -225,14 +225,14 @@
   }
 
   function getDienstverbandSync() {
-    if (global.besaCurrentDienstverband) return global.besaCurrentDienstverband;
+    if (global.ffCurrentDienstverband) return global.ffCurrentDienstverband;
     var p = getCurrentSync();
     return (p && p.dienstverband) || "";
   }
 
   // Initiele cache uit localStorage zodat sync-getters meteen iets hebben.
-  global.besaCurrentProfile = readCurrent();
-  global.besaCurrentDienstverband = (global.besaCurrentProfile && global.besaCurrentProfile.dienstverband) || "";
+  global.ffCurrentProfile = readCurrent();
+  global.ffCurrentDienstverband = (global.ffCurrentProfile && global.ffCurrentProfile.dienstverband) || "";
 
   global.profilesDB = {
     get ready() { return readyPromise || bootstrap(); },

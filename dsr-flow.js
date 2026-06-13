@@ -38,7 +38,7 @@
       showSection();
     } else {
       // Re-check op profile-update (bootstrap async)
-      window.addEventListener("besa:profile-updated", function () {
+      window.addEventListener("ff:profile-updated", function () {
         if (isAdminTier()) showSection();
       });
     }
@@ -62,7 +62,7 @@
     btn.innerHTML = "Exporteren…";
 
     try {
-      var res = await window.besaSupabase.rpc("export_client_data", { p_client_id: clientId });
+      var res = await window.ffSupabase.rpc("export_client_data", { p_client_id: clientId });
       if (res.error) throw res.error;
       var jsonText = JSON.stringify(res.data, null, 2);
       var blob = new Blob([jsonText], { type: "application/json" });
@@ -110,7 +110,7 @@
     btn.innerHTML = "Anonymiseren…";
 
     try {
-      var res = await window.besaSupabase.rpc("anonymize_client", { p_client_id: clientId });
+      var res = await window.ffSupabase.rpc("anonymize_client", { p_client_id: clientId });
       if (res.error) throw res.error;
       if (window.showActionFeedback) window.showActionFeedback("deleted", "Cliënt geanonymiseerd");
       // Reload zodat UI nieuwe ANON-token toont

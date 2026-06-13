@@ -218,7 +218,7 @@
     var btn = $("kma-edit-recalc");
     if (btn) { btn.disabled = true; btn.textContent = "Berekenen…"; }
     try {
-      var r = await window.besaGeoDistance.calculateEnkeleReis(homeAdres(mw), locAdres(loc));
+      var r = await window.ffGeoDistance.calculateEnkeleReis(homeAdres(mw), locAdres(loc));
       if (r && r.km != null) {
         $("kma-edit-km").value = r.km;
         $("kma-edit-hint").textContent = "Berekend: " + nlNum(r.km) + " km (enkele reis). Klik Opslaan om over te nemen.";
@@ -251,7 +251,7 @@
 
   async function recalcBatch(onlyMissing) {
     if (state.busy) return;
-    if (!window.besaGeoDistance) { if (window.showError) window.showError("Kaartservice niet geladen."); return; }
+    if (!window.ffGeoDistance) { if (window.showError) window.showError("Kaartservice niet geladen."); return; }
     loadData();
     var pairs = [];
     state.mws.forEach(function (mw) {
@@ -274,7 +274,7 @@
     for (var i = 0; i < pairs.length; i++) {
       var p = pairs[i];
       try {
-        var r = await window.besaGeoDistance.calculateEnkeleReis(homeAdres(p.mw), locAdres(p.loc));
+        var r = await window.ffGeoDistance.calculateEnkeleReis(homeAdres(p.mw), locAdres(p.loc));
         if (r && r.km != null) {
           await window.kmAfstandenDB.upsert({ medewerkerId: p.mw.id, locatieId: p.loc.id, kmEnkel: r.km, bron: "auto" });
           ok++;
@@ -322,7 +322,7 @@
     });
 
     // Live re-render na elke matrix-mutatie.
-    window.addEventListener("besa:km-afstanden-updated", function () { if (!state.busy) render(); });
+    window.addEventListener("ff:km-afstanden-updated", function () { if (!state.busy) render(); });
   }
 
   // --- Boot ------------------------------------------------------------------

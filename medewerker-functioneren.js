@@ -3,14 +3,14 @@
  * Functioneringscyclus (gesprekken/doelen/verbetertrajecten/waarschuwingen) +
  * gestructureerde opleidingen/certificeringen per medewerker.
  * Office-only (RLS via is_office_staff; de detailpagina is sowieso HR/office-gegate).
- * Config-gedreven CRUD rechtstreeks via besaSupabase (RLS-gescoped).
+ * Config-gedreven CRUD rechtstreeks via ffSupabase (RLS-gescoped).
  */
 (function () {
   "use strict";
 
   function supa() {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
-    return window.besaSupabase;
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
+    return window.ffSupabase;
   }
   function esc(s) { var t = document.createElement("div"); t.textContent = s == null ? "" : String(s); return t.innerHTML; }
   function fmtDate(d) {
@@ -193,7 +193,7 @@
     } catch (err) {
       console.error("[functioneren] laden mislukt:", err);
       root.innerHTML = '<div class="emp-opleiding-empty">Kon de gegevens niet laden.</div>';
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Functioneren — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Functioneren — laden", err);
     }
   }
 
@@ -239,7 +239,7 @@
     } catch (err) {
       console.error("[functioneren] opslaan mislukt:", err);
       if (errEl) { errEl.textContent = "Opslaan mislukt: " + (err && err.message ? err.message : "onbekende fout"); errEl.hidden = false; }
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Functioneren — opslaan", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Functioneren — opslaan", err);
     }
   }
 
@@ -267,7 +267,7 @@
     if (!document.getElementById("emp-functioneren-root")) return;
     renderAll();
     // Herlaad als een andere medewerker geselecteerd wordt (zelfde tab-navigatie).
-    window.addEventListener("besa:selected-employee-changed", renderAll);
+    window.addEventListener("ff:selected-employee-changed", renderAll);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();

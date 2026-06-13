@@ -32,7 +32,7 @@
 3. **Search** — debounced filter op section + rol naam (case-insensitive)
 4. **Empty-state styling** — `.rollen-card--empty` voor 0-user rollen
 5. **Totaal-counter** — live "X rollen, Y gebruikers"
-6. **Cache + Live-refresh** — `besa:org-rollen-updated` event + localStorage cache
+6. **Cache + Live-refresh** — `ff:org-rollen-updated` event + localStorage cache
 
 ## v3 deferred (Fase E + G)
 

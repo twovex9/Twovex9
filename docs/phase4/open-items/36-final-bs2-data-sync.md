@@ -83,4 +83,4 @@ Optionele extra triggers (parallel of daarna):
 
 ## Waar dit terug te vinden
 
-Bij elke nieuwe sessie wordt `04-open-items.md` herlezen, en deze file is dáár geïndexeerd via `open-items/README.md`. Plus deze regel in memory `feedback_besa_workflow.md` over het "later" plan.
+Bij elke nieuwe sessie wordt `04-open-items.md` herlezen, en deze file is dáár geïndexeerd via `open-items/README.md`. Plus deze regel in memory `feedback_ff_workflow.md` over het "later" plan.

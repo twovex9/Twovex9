@@ -207,7 +207,7 @@
     return false;
   }
 
-  window.addEventListener("besa:bureaus-updated", function () {
+  window.addEventListener("ff:bureaus-updated", function () {
     var bur = findBureauCached();
     if (!bur) {
       window.location.href = "bureaus.html";

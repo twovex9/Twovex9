@@ -6,16 +6,16 @@
 // opnieuw in te loggen).
 //
 // Vereist environment variables (lokaal in .env, gitignored):
-//   BESA_E2E_EMAIL=...     (test-user in Supabase Auth)
-//   BESA_E2E_PASSWORD=...
+//   FF_E2E_EMAIL=...     (test-user in Supabase Auth)
+//   FF_E2E_PASSWORD=...
 //
 // Test-user moet bestaan: maak via Supabase dashboard >
 // Auth > Users > Add user, OF via Supabase MCP create_user.
 // Aanbevolen email: e2e-test@besasolutions.nl met rol "medewerker".
 //
 // Run:
-//   $env:BESA_E2E_EMAIL = "..."
-//   $env:BESA_E2E_PASSWORD = "..."
+//   $env:FF_E2E_EMAIL = "..."
+//   $env:FF_E2E_PASSWORD = "..."
 //   npm run test:e2e:authenticated
 
 import { chromium } from "@playwright/test";
@@ -28,13 +28,13 @@ const __dirname = dirname(__filename);
 const STORAGE_PATH = join(__dirname, ".auth", "storage.json");
 
 export default async function globalSetup() {
-  const email = process.env.BESA_E2E_EMAIL;
-  const password = process.env.BESA_E2E_PASSWORD;
-  const baseUrl = process.env.BESA_BASE_URL || "https://besa-suite.vercel.app";
+  const email = process.env.FF_E2E_EMAIL;
+  const password = process.env.FF_E2E_PASSWORD;
+  const baseUrl = process.env.FF_BASE_URL || "https://futureflow-app.vercel.app";
 
   if (!email || !password) {
     console.warn(
-      "[auth-setup] BESA_E2E_EMAIL / BESA_E2E_PASSWORD niet gezet — " +
+      "[auth-setup] FF_E2E_EMAIL / FF_E2E_PASSWORD niet gezet — " +
       "authenticated tests slaan over. Zet env-vars om te runnen."
     );
     // Schrijf lege state zodat tests met storageState graceful skippen

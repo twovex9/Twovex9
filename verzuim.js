@@ -406,7 +406,7 @@
   }
   function currentUserId() {
     try {
-      var p = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : window.besaCurrentProfile;
+      var p = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : window.ffCurrentProfile;
       return p && p.id ? p.id : null;
     } catch (e) { return null; }
   }
@@ -1062,24 +1062,24 @@
   // ---------------------------------------------------------------------------
   // Live re-render bij externe wijzigingen
   // ---------------------------------------------------------------------------
-  window.addEventListener("besa:verzuim-updated", function () {
+  window.addEventListener("ff:verzuim-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderCaseHead();
     renderDash();
   });
-  window.addEventListener("besa:verzuim-mijlpalen-updated", function () {
+  window.addEventListener("ff:verzuim-mijlpalen-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderPoort();
     renderKPIs();
     if (dashView && !dashView.hidden) renderCaseList();
   });
-  window.addEventListener("besa:verzuim-contactmomenten-updated", function () {
+  window.addEventListener("ff:verzuim-contactmomenten-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderContacts();
     if (dashView && !dashView.hidden) renderCaseList();
   });
-  window.addEventListener("besa:verzuim-documenten-updated", function () {
+  window.addEventListener("ff:verzuim-documenten-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderDocs();
     if (dashView && !dashView.hidden) renderCaseList();
   });
-  window.addEventListener("besa:verzuim-acties-updated", function () {
+  window.addEventListener("ff:verzuim-acties-updated", function () {
     if (currentId && detailView && !detailView.hidden) renderActies();
   });
 

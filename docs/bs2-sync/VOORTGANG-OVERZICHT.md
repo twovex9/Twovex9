@@ -121,7 +121,7 @@ Nog te doen: live 2 CLEAN RUNS (overzicht 151 + drilldown 89 + detail-tabs).
     `bs2_disposition_audit`1180. Migrations toegepast.
   * DB-verificatie: drill-down consistent (dashboard 89 = beschikkingen
     fase=Actief 89, totaal 151); controle-beschikking *fasehuis* veld-voor-veld
-    = BS2; `besaSupabase.from('beschikkingen').select count` = 151, error null.
+    = BS2; `ffSupabase.from('beschikkingen').select count` = 151, error null.
 
 ### >>> DE ENE OPEN BUG (hier verdergaan) <<<
 `beschikkingen.html`-overzicht toont **"0 van 0"** (lege cache) of stale **134**
@@ -137,7 +137,7 @@ Nog te doen: live 2 CLEAN RUNS (overzicht 151 + drilldown 89 + detail-tabs).
   row->item normalisatie (rond regel 490-540: `f0=fase.toLowerCase()` etc.) tegen
   de nieuwe kolommen. Daarna cache-bust `beschikkingen-data.js?v=...` in
   beschikkingen.html. Patroon: zie hoe andere data-lagen (incidenten-data.js)
-  altijd `bootstrap()` draaien + `besa:..-updated` event → re-render.
+  altijd `bootstrap()` draaien + `ff:..-updated` event → re-render.
 - Verifieer daarna (2 CLEAN RUNS, user-eis): overzicht = **151**;
   dashboard-kaart "Actieve Beschikkingen" klik → `beschikkingen.html?fase=Actief`
   = **89** (consistent); beschikking-detail toont 5 tabs (Details/Facturen/
@@ -149,7 +149,7 @@ URL-param drill-down-reader in `beschikkingen-overzicht.js` (zorgt dat
 `?fase=Actief` werkt), alle scrape-scripts, continuïteitsdocs. De
 `beschikkingen-data.js`-fix hoort ook op deze branch (of nieuwe PR) →
 mergen → Vercel deployt → 2 CLEAN RUNS.
-Merge-link: https://github.com/ETFalkmaar/besa-suite-/pull/190
+Merge-link: https://github.com/twovex9/twovex9/pull/190
 (PR #187/#188/#189 zijn al gemerged.)
 
 ### Bestanden / bron

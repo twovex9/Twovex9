@@ -46,7 +46,7 @@
 - [x] C6. Data: 160 records (na Test Client cleanup), 3 clean fase-values
 - [x] C7. Content spot-check: 12 BS1-only records, 148 met bs2_id in data jsonb
 - [x] C8. CRUD: add/archive/restore/purge alle werken
-- [x] C9. besa:clienten-updated event
+- [x] C9. ff:clienten-updated event
 - [x] C10. parity.md: functioneel 100%, data-count gap → Fase B/D scope
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)

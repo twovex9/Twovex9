@@ -14,7 +14,7 @@
  *     laatst voltooide pagina (state-file). Dedup op `id`. Aan het eind:
  *     unieke telling == server meta.total + gap-check (ontbrekende id's).
  *
- * GEBRUIK (vanuit map besa-suite-etf):
+ * GEBRUIK (vanuit map future-flow):
  *   1. Draai het token-snippet in de BS2-console → download bs2-token.txt
  *      (naar je Downloads). Dat is je eigen sessie-JWT; lokaal, nooit gecommit.
  *   2.  node scripts/scrape-bs2-audit-logs.mjs

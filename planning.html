@@ -1,13 +1,13 @@
 ﻿<!doctype html>
 <html lang="nl">
 <head>
-  <script>/*besa-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-besa-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
-  <script>(function(){try{var t=localStorage.getItem('besa-theme');var d=t==='dark'||(t==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');var s=localStorage.getItem('besa-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+  <script>/*ff-auth-preguard*/(function(){try{var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');if(seg==='login'||seg==='login.html')return;if(!localStorage.getItem('sb-ff-auth')){location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}}catch(e){}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('ff-theme');var d=t==='dark'||(t==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');var s=localStorage.getItem('ff-sidebar');document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   <script>/*ff-loading*/(function(){try{var d=document.documentElement;d.setAttribute('data-loading','1');if(window.__ffNet)return;var n={p:0,last:0,t0:Date.now()};window.__ffNet=n;if(window.fetch){var of=window.fetch;window.fetch=function(){n.p++;var r;try{r=of.apply(this||window,arguments)}catch(e){n.p--;n.last=Date.now();throw e}if(r&&typeof r.then==='function'){return r.then(function(x){n.p--;n.last=Date.now();return x},function(e){n.p--;n.last=Date.now();throw e})}n.p--;n.last=Date.now();return r}}if(window.XMLHttpRequest&&XMLHttpRequest.prototype){var os=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(){var x=this,done=false;n.p++;function fin(){if(done)return;done=true;n.p--;n.last=Date.now()}try{x.addEventListener('loadend',fin)}catch(e){}try{return os.apply(this,arguments)}catch(e){fin();throw e}}}setTimeout(function(){d.removeAttribute('data-loading')},15000)}catch(e){}})();</script>
-  <script src="besa-page-loader.js?v=918f1ad" defer></script>
-  <script>/*planning-top-collapse-preset*/(function(){try{var uid='anon',raw=localStorage.getItem('sb-besa-auth');if(raw){var j=JSON.parse(raw);uid=(j&&j.user&&j.user.id)||(j&&j.currentSession&&j.currentSession.user&&j.currentSession.user.id)||'anon';}var c=localStorage.getItem('besa-planning-top-collapsed:'+uid)==='1';document.documentElement.setAttribute('data-planning-top',c?'collapsed':'expanded');}catch(e){}})();</script>
+  <script src="ff-page-loader.js?v=918f1ad" defer></script>
+  <script>/*planning-top-collapse-preset*/(function(){try{var uid='anon',raw=localStorage.getItem('sb-ff-auth');if(raw){var j=JSON.parse(raw);uid=(j&&j.user&&j.user.id)||(j&&j.currentSession&&j.currentSession.user&&j.currentSession.user.id)||'anon';}var c=localStorage.getItem('ff-planning-top-collapsed:'+uid)==='1';document.documentElement.setAttribute('data-planning-top',c?'collapsed':'expanded');}catch(e){}})();</script>
   <script src="theme.js?v=918f1ad" defer></script>
-  <script src="besa-calendar.js?v=918f1ad" defer></script>
+  <script src="ff-calendar.js?v=918f1ad" defer></script>
   <script src="sidebar-collapse.js?v=918f1ad" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -137,10 +137,10 @@
 </head>
 <body class="page--planning-erm">
   <script src="save-feedback.js?v=918f1ad" defer></script>
-  <script src="besa-export.js?v=918f1ad" defer></script>
+  <script src="ff-export.js?v=918f1ad" defer></script>
   <script src="floating-panels.js?v=918f1ad" defer></script>
-  <script src="besa-oplossen.js?v=918f1ad"></script>
-  <script src="besa-searchable-select.js?v=918f1ad" defer></script>
+  <script src="ff-oplossen.js?v=918f1ad"></script>
+  <script src="ff-searchable-select.js?v=918f1ad" defer></script>
 
   <div class="app-shell app-shell--home app-shell--planning-erm">
     <header class="topbar topbar--erm">
@@ -651,7 +651,7 @@
             </div>
             <div class="planning-dienst-dt">
               <label class="visually-hidden" for="dienst-starttime">Starttijd</label>
-              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-starttime" required step="60" data-besa-timetype placeholder="uu:mm" />
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-starttime" required step="60" data-ff-timetype placeholder="uu:mm" />
               <span class="planning-dienst-ico" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               </span>
@@ -667,7 +667,7 @@
             </div>
             <div class="planning-dienst-dt">
               <label class="visually-hidden" for="dienst-eindtime">Eindtijd</label>
-              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-eindtime" required step="60" data-besa-timetype placeholder="uu:mm" />
+              <input type="time" class="planning-dienst-input planning-dienst-input--dt" id="dienst-eindtime" required step="60" data-ff-timetype placeholder="uu:mm" />
             </div>
           </div>
         </div>
@@ -934,8 +934,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=918f1ad"></script>
   <script src="error-reporter.js?v=918f1ad"></script>
-  <script src="besa-sanitize.js?v=918f1ad"></script>
-  <script src="besa-sync-reporter.js?v=918f1ad"></script>
+  <script src="ff-sanitize.js?v=918f1ad"></script>
+  <script src="ff-sync-reporter.js?v=918f1ad"></script>
   <script src="optimistic-lock.js?v=918f1ad" defer></script>
   <script src="realtime-sync.js?v=918f1ad" defer></script>
   <script src="bulk-actions.js?v=918f1ad" defer></script>
@@ -950,7 +950,7 @@
   <script src="mfa-challenge.js?v=918f1ad" defer></script>
   <script src="auth-guard.js?v=918f1ad"></script>
   <script src="profiles-data.js?v=918f1ad"></script>
-  <script src="besa-audit.js?v=918f1ad" defer></script>
+  <script src="ff-audit.js?v=918f1ad" defer></script>
   <script src="notifications-data.js?v=918f1ad"></script>
   <script src="notification-bell.js?v=918f1ad" defer></script>
   <script src="planning-data.js?v=918f1ad"></script>
@@ -974,7 +974,7 @@
   <!-- Module 2 Bug #91 fix: SheetJS voor echte XLSX export (geen npm dep, vanaf CDN) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="planning-generator.js?v=918f1ad"></script>
-  <script src="besa-time-typing.js?v=918f1ad"></script>
+  <script src="ff-time-typing.js?v=918f1ad"></script>
   <script src="planning.js?v=918f1ad"></script>
 
   <!-- Module 2 Bug #91: Export-modal met 'Splitsen per cliënt' toggle -->

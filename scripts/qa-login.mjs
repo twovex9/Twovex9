@@ -2,7 +2,7 @@
 /**
  * qa-login.mjs — haal sessie-tokens (access + refresh) op voor een QA-rolaccount via
  * de password-grant, zodat ik die in de browser kan injecteren met
- * window.besaSupabase.auth.setSession(...) (zie memory reference-qa-testaccounts).
+ * window.ffSupabase.auth.setSession(...) (zie memory reference-qa-testaccounts).
  *
  * Gebruik:
  *   node scripts/qa-login.mjs medewerker

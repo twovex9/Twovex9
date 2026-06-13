@@ -74,6 +74,6 @@
 
 ## Schema events
 
-- `besa:nieuws-updated` event op window bij mutaties
+- `ff:nieuws-updated` event op window bij mutaties
 - Push naar `public.nieuws` via PostgREST
-- Auth-error: handled via `besa-sync-reporter.js` + `besaHandleAuthFailure`
+- Auth-error: handled via `ff-sync-reporter.js` + `ffHandleAuthFailure`

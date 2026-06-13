@@ -25,7 +25,7 @@
  *   Bestanden: getBestandenSync(mapId) · getBestandByIdSync(id)
  *              uploadBestand(file, mapId) · updateBestand(id, partial)
  *              replaceFile(id, file) · deleteBestand(id) · getFileUrl(id)
- * Event: `besa:sharepoint-updated`.
+ * Event: `ff:sharepoint-updated`.
  */
 (function (global) {
   "use strict";
@@ -131,16 +131,16 @@
   }
 
   function dispatchUpdated(src) {
-    try { global.dispatchEvent(new CustomEvent("besa:sharepoint-updated", { detail: { source: src || "data" } })); } catch (e) {}
+    try { global.dispatchEvent(new CustomEvent("ff:sharepoint-updated", { detail: { source: src || "data" } })); } catch (e) {}
   }
   function reportSilent(action, err) {
     console.error("[sharepointDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("SharePoint — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("SharePoint — " + action, err);
   }
 
   function client() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    return global.besaSupabase;
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    return global.ffSupabase;
   }
 
   async function fetchAllPaged(table, cols, orderCol) {

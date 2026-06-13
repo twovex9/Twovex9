@@ -180,8 +180,8 @@
         var st = x.open > 0 ? F.vlBezetting(pct) : "groen";
         var label = x.open > 0 ? "Onderbezet — " + x.open + " open" : (pct > 100 ? "Overbezet" : "Volledig bezet");
         var afwijkend = x.open > 0 || pct > 100;
-        var solve = afwijkend && window.besaOplossen
-          ? window.besaOplossen.navBtn("planning", "Naar planning", "Vul de openstaande diensten van deze locatie in of herverdeel de bezetting.")
+        var solve = afwijkend && window.ffOplossen
+          ? window.ffOplossen.navBtn("planning", "Naar planning", "Vul de openstaande diensten van deze locatie in of herverdeel de bezetting.")
           : "";
         return "<tr>"
           + '<td class="vl-loc">' + dot(st) + "<span>" + F.escHtml(loc) + "</span></td>"
@@ -195,7 +195,7 @@
       bb.innerHTML = '<div class="table-wrapper"><table class="employees-table vl-table">'
         + '<thead><tr><th>Locatie</th><th class="vl-num">Bezet/vereist</th><th class="vl-num">Bezetting</th><th class="vl-num">Open</th><th>Status</th><th>Oplossen</th></tr></thead>'
         + "<tbody>" + rows + "</tbody></table></div>";
-      if (window.besaOplossen) window.besaOplossen.bindSignals(bb);
+      if (window.ffOplossen) window.ffOplossen.bindSignals(bb);
     }
 
     // Ziekmeldingen met impact

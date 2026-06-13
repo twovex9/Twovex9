@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * v3 Fase E.11 — Wire optimistic-lock.js naar alle HTML pagina's
- * met `besa-sync-reporter.js` (de standaard load-sequence-anchor).
+ * met `ff-sync-reporter.js` (de standaard load-sequence-anchor).
  *
  * Idempotent: skipt als script al aanwezig.
  */
@@ -12,7 +12,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 
-const ANCHOR = '<script src="besa-sync-reporter.js"';
+const ANCHOR = '<script src="ff-sync-reporter.js"';
 const NEW_LINE = '  <script src="optimistic-lock.js?v=ol1" defer></script>';
 
 const htmlFiles = fs.readdirSync(repoRoot)

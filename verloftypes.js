@@ -134,7 +134,7 @@
       });
     }
 
-    window.addEventListener("besa:verloftypes-updated", render);
+    window.addEventListener("ff:verloftypes-updated", render);
   }
 
   async function start() {

@@ -8,7 +8,7 @@
  * beschikbaar van 07:00 tot 23:00"), zowel op de self-service pagina als in de
  * office-invoer van het kantoor-overzicht.
  *
- * Publieke API (window.BesaKlok):
+ * Publieke API (window.FfKlok):
  *   kies({ titel, waarde, nuKnop }) -> Promise<string|null>
  *       Opent de picker. Resolved met "HH:MM" bij OK, of null bij annuleren.
  *   enhance(inputEl, { titel })
@@ -321,5 +321,5 @@
     return btn;
   }
 
-  global.BesaKlok = { kies: kies, enhance: enhance };
+  global.FfKlok = { kies: kies, enhance: enhance };
 })(window);

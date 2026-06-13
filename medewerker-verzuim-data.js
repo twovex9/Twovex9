@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module ALLE rijen (over alle medewerkers)
  *    en cachet ze onder "medewerker_verzuim_perioden_v1".
  *  - Schrijfacties (add/update/remove) gaan async naar Supabase; de cache
- *    wordt geüpdatet en `besa:medewerker-verzuim-updated` event firet voor
+ *    wordt geüpdatet en `ff:medewerker-verzuim-updated` event firet voor
  *    live re-render.
  *  - Eénmalige migratie van legacy localStorage["employeeEditsById"] →
  *    elke `[empId].verzuim.kort[]` en `[empId].verzuim.lang[]` worden 1×
@@ -27,7 +27,7 @@
  *     beschrijving: "<p>Griep</p>", status: "Actief"
  *   });
  *   await window.medewerkerVerzuimDB.remove(id);
- *   window.addEventListener("besa:medewerker-verzuim-updated", rerender);
+ *   window.addEventListener("ff:medewerker-verzuim-updated", rerender);
  */
 (function (global) {
   "use strict";
@@ -66,7 +66,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:medewerker-verzuim-updated", { detail: { source: source || "medewerker-verzuim-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:medewerker-verzuim-updated", { detail: { source: source || "medewerker-verzuim-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -128,8 +128,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("eerst_ziektedag", { ascending: false });
@@ -140,9 +140,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -191,7 +191,7 @@
       }
 
       console.info("[medewerkerVerzuimDB] Eenmalige migratie van " + rows.length + " verzuim-perioden naar Supabase…");
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(rows)
         .select();
@@ -235,11 +235,11 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!rec || !rec.medewerkerId) throw new Error("medewerkerId verplicht");
     if (!normalizeIsoDate(rec.eerstZiektedag)) throw new Error("eerstZiektedag verplicht");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -254,12 +254,12 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -276,9 +276,9 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);

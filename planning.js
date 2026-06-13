@@ -421,7 +421,7 @@ function resolveDiensttypeKey(raw) {
 
 function readClienten() {
   // Module 2 Bug #92 fix: gebruik centrale clientenDB (individuele cliënten),
-  // NIET bureaus (organisaties). Sync automatisch via besa:clienten-updated event.
+  // NIET bureaus (organisaties). Sync automatisch via ff:clienten-updated event.
   try {
     if (window.clientenDB && typeof window.clientenDB.getAllSync === "function") {
       const all = window.clientenDB.getAllSync() || [];
@@ -846,7 +846,7 @@ function makePlanningId() {
 function buildDataState() {
   const heldBack = getHeldBackPlanningNames();
   // Verberg medewerkers die uitsluitend op kantoor/overhead-locaties zijn ingedeeld.
-  const zichtbaar = (typeof window.besaMwZichtbaarInPlanning === "function") ? window.besaMwZichtbaarInPlanning : () => true;
+  const zichtbaar = (typeof window.ffMwZichtbaarInPlanning === "function") ? window.ffMwZichtbaarInPlanning : () => true;
   const employees = readEmployees().filter((e) => !heldBack.has(getEmployeeName(e).toLowerCase()) && zichtbaar(e));
   const medewerkers = employees.map(getEmployeeName).filter(Boolean);
   const teamlead = employees
@@ -1046,9 +1046,9 @@ var PLANNING_EDIT_ROLES = [
 
 function planningCanEdit() {
   try {
-    if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-    var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
-      ? (window.besaPermissions.getRoleNames() || []) : [];
+    if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+    var roles = (window.ffPermissions && typeof window.ffPermissions.getRoleNames === "function")
+      ? (window.ffPermissions.getRoleNames() || []) : [];
     if (!roles.length) return true; // rollen nog niet geladen → niet onterecht afschermen
     for (var i = 0; i < roles.length; i++) {
       if (PLANNING_EDIT_ROLES.indexOf(roles[i]) !== -1) return true;
@@ -1057,13 +1057,13 @@ function planningCanEdit() {
   } catch (e) { return true; }
 }
 // Globaal beschikbaar zodat dienst-detail.js de paneel-acties kan gaten.
-try { window.besaPlanningCanEdit = planningCanEdit; } catch (e) { /* */ }
+try { window.ffPlanningCanEdit = planningCanEdit; } catch (e) { /* */ }
 
 function planningIsFullPlanner() {
   try {
-    if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-    var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
-      ? (window.besaPermissions.getRoleNames() || []) : [];
+    if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+    var roles = (window.ffPermissions && typeof window.ffPermissions.getRoleNames === "function")
+      ? (window.ffPermissions.getRoleNames() || []) : [];
     if (!roles.length) return true; // rollen nog niet geladen → niet onterecht afschermen
     for (var i = 0; i < roles.length; i++) {
       if (PLANNING_FULL_ROLES.indexOf(roles[i]) !== -1) return true;
@@ -1117,7 +1117,7 @@ function loadPlanningOwnLocaties() {
     var medId = planningOwnMedId();
     if (!medId) return;                                   // profiel nog niet geladen → later opnieuw
     if (planningOwnLocatiesForMed === medId && planningOwnLocaties) return; // al geladen voor deze medewerker
-    var sb = window.besaSupabase;
+    var sb = window.ffSupabase;
     if (!sb || typeof sb.from !== "function") return;     // client nog niet klaar → later opnieuw
     planningOwnLocatiesForMed = medId;
     sb.from("medewerker_locaties")
@@ -1152,12 +1152,12 @@ function planningOwnLocatieSet() {
  * zijn ÉN bewerk-recht bevestigen, wordt read-only opgeheven. Zo kan een rol zonder
  * bewerk-recht (HR/Facilitair/werkvloer) NOOIT — ook niet kortstondig tijdens de
  * async permissie-load — de planner-bewerk-UI te zien krijgen. De functie wordt
- * her-aangeroepen zodra permissies/planning-data binnen zijn (besaPermissionsReady,
- * besa:planning-updated, besa:profile-updated, besa:medewerkers-updated). */
+ * her-aangeroepen zodra permissies/planning-data binnen zijn (ffPermissionsReady,
+ * ff:planning-updated, ff:profile-updated, ff:medewerkers-updated). */
 function applyPlanningRoleMode() {
   try {
-    var loaded = !!(window.besaPermissions && typeof window.besaPermissions.debug === "function"
-      && window.besaPermissions.debug().loaded);
+    var loaded = !!(window.ffPermissions && typeof window.ffPermissions.debug === "function"
+      && window.ffPermissions.debug().loaded);
     var canEdit = loaded ? planningCanEdit() : false; // niet-geladen → read-only (veilig)
     document.body.classList.toggle("planning-readonly", !canEdit);
   } catch (e) {
@@ -2029,7 +2029,7 @@ function buildShiftCardEl(it, gi, overlapIds) {
             if (typeof window.showActionFeedback === "function") window.showActionFeedback("deleted", "Planningsregel");
           };
           // Gerichte delete via de data-laag (werkt _mem + Supabase bij, dispatcht
-          // besa:planning-updated → re-render). Geen bulk-overwrite meer.
+          // ff:planning-updated → re-render). Geen bulk-overwrite meer.
           if (window.planningDB && window.planningDB.delete) {
             window.planningDB.delete(it.id).then(feedback).catch(function (e) { console.error("[planning] verwijderen mislukt:", e); });
           } else { feedback(); }
@@ -2132,12 +2132,12 @@ function showDienstReasonPopover(anchorEl, warnings, it) {
   const ph = pop.offsetHeight;
   // KRITIEK: clientWidth/clientHeight zijn visueel (gezoomd); pw/ph + style.left
   // zijn layout (pre-zoom). Delen door de zoom → zelfde ruimte, anders valt de
-  // popover ~10% buiten beeld (zie besa-oplossen.js).
+  // popover ~10% buiten beeld (zie ff-oplossen.js).
   const vw = document.documentElement.clientWidth / z;
   const vh = document.documentElement.clientHeight / z;
   // Standaard links-uitgelijnd op het anker; valt dat rechts buiten beeld, dan
   // rechts-uitlijnen (rechterkant popover = rechterkant anker). Zelfde regel als
-  // de "Oplossen"-popover (besa-oplossen.js).
+  // de "Oplossen"-popover (ff-oplossen.js).
   let left = aLeft + window.scrollX;
   if (aLeft + pw > vw - 8) left = aRight - pw + window.scrollX;
   if (left < window.scrollX + 8) left = window.scrollX + 8;
@@ -2170,7 +2170,7 @@ function copyItem(it) {
   s.setTime(s.getTime() + 3600000);
   e.setTime(s.getTime() + dur);
   const n = normalizeItem({ ...it, id: makePlanningId(), start: toIsoLocal(s), einde: toIsoLocal(e) });
-  // Gericht toevoegen via de data-laag (dispatcht besa:planning-updated → re-render).
+  // Gericht toevoegen via de data-laag (dispatcht ff:planning-updated → re-render).
   if (window.planningDB && window.planningDB.add) {
     window.planningDB.add(n).catch(function (err) { console.error("[planning] kopiëren mislukt:", err); });
   }
@@ -3328,14 +3328,14 @@ function makeKoppelRow(prefill) {
     inp.step = "60";
     inp.className = "planning-dienst-input";
     inp.setAttribute("data-k", k);
-    inp.setAttribute("data-besa-timetype", "");
+    inp.setAttribute("data-ff-timetype", "");
     inp.setAttribute("placeholder", "uu:mm");
     inp.value = val || "";
     w.appendChild(l);
     w.appendChild(inp);
     // Direct verrijken (vlot typbaar uu:mm); fallback voor de observer.
-    if (window.BesaTimeTyping && typeof window.BesaTimeTyping.enhance === "function") {
-      window.BesaTimeTyping.enhance(inp);
+    if (window.FfTimeTyping && typeof window.FfTimeTyping.enhance === "function") {
+      window.FfTimeTyping.enhance(inp);
     }
     return w;
   };
@@ -4295,7 +4295,7 @@ function fillDienstPanelForItem(item) {
   setVal("dienst-aantal", item.vereistAantalMedewerkers ?? 1);
   setVal("dienst-competentie", item.competenties || "");
   const rt = document.getElementById("dienst-beschrijving");
-  if (rt) rt.innerHTML = window.besaSanitizeHtml(item.beschrijving || "");
+  if (rt) rt.innerHTML = window.ffSanitizeHtml(item.beschrijving || "");
   const h = document.getElementById("dienst-herhaal");
   if (h) h.checked = Boolean(item.herhaal);
   // Reset hints; daarna heroverwegen
@@ -4415,7 +4415,7 @@ function initDienstPanel() {
   koppelBlok?.addEventListener("input", () => updateKoppelTel());
   koppelBlok?.addEventListener("change", () => updateKoppelTel());
   // Zorgsoort-keuzelijst verversen zodra de zorgsoorten (incl. tarieven) laden of wijzigen.
-  window.addEventListener("besa:zorgsoorten-updated", () => { if (document.getElementById("dienst-zorgsoort")) fillZorgsoortSelect(); });
+  window.addEventListener("ff:zorgsoorten-updated", () => { if (document.getElementById("dienst-zorgsoort")) fillZorgsoortSelect(); });
   // Inline "nieuwe locatie / cliëntwoning" aanmaken vanuit de dienst-flow
   // (eigenaarseis 2026-06-11): planner kan zonder de planning te verlaten een
   // nieuwe woonlocatie aanmaken waar een nieuwe cliënt woont.
@@ -4595,7 +4595,7 @@ function initDienstPanel() {
         }
       }
     }
-    // Gericht toevoegen via de data-laag (dispatcht besa:planning-updated → re-render).
+    // Gericht toevoegen via de data-laag (dispatcht ff:planning-updated → re-render).
     if (window.planningDB && window.planningDB.add) {
       Promise.all(toAdd.map((o) => window.planningDB.add(o))).catch(function (e) { console.error("[planning] toevoegen mislukt:", e); });
     }
@@ -4825,14 +4825,14 @@ function exportPlanningCsv() {
 function planningTopCollapseKey() {
   var uid = "anon";
   try {
-    var raw = localStorage.getItem("sb-besa-auth");
+    var raw = localStorage.getItem("sb-ff-auth");
     if (raw) {
       var j = JSON.parse(raw);
       uid = (j && j.user && j.user.id) ||
             (j && j.currentSession && j.currentSession.user && j.currentSession.user.id) || "anon";
     }
   } catch (e) { /* */ }
-  return "besa-planning-top-collapsed:" + uid;
+  return "ff-planning-top-collapsed:" + uid;
 }
 function planningTopIsCollapsed() {
   return document.documentElement.getAttribute("data-planning-top") === "collapsed";
@@ -5454,7 +5454,7 @@ function initPlanningPage() {
     // deze pagina niet betrouwbaar te vuren, waardoor de spinner telkens pas op de
     // 12s-veiligheidsklep verdween). done() sluit meteen — het rooster is dan al zichtbaar.
     // planning.js draait synchroon tijdens het parsen, VÓÓR de defer-geladen
-    // besa-page-loader.js — window.FFLoader bestaat hier dus nog niet. Daarom
+    // ff-page-loader.js — window.FFLoader bestaat hier dus nog niet. Daarom
     // verbergen we de spinner door het data-loading-attribuut direct te
     // verwijderen (dat is precies wat de loader intern ook doet), en roepen we
     // FFLoader.done() defensief aan zodra die wél bestaat zodat de loader-state
@@ -5487,17 +5487,17 @@ function initPlanningPage() {
   // modus opnieuw bepalen, de locatie-koppeling (her)laden en her-renderen
   // (getBaseFiltered scoopt dan op de eigen locatie(s) + eigen diensten).
   try {
-    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-      window.besaPermissionsReady.then(function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
+    if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+      window.ffPermissionsReady.then(function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
     }
   } catch (e) { /* */ }
   // Supabase-client kan ná de eerste render klaarkomen → locatie-koppeling alsnog laden.
   try {
-    if (window.besaSupabaseReady && typeof window.besaSupabaseReady.then === "function") {
-      window.besaSupabaseReady.then(function () { loadPlanningOwnLocaties(); });
+    if (window.ffSupabaseReady && typeof window.ffSupabaseReady.then === "function") {
+      window.ffSupabaseReady.then(function () { loadPlanningOwnLocaties(); });
     }
   } catch (e) { /* */ }
-  window.addEventListener("besa:profile-updated", function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
+  window.addEventListener("ff:profile-updated", function () { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); });
   initDienstPanel();
   initViewModal();
   initNav();
@@ -5532,7 +5532,7 @@ function initPlanningPage() {
   });
   // Wanneer de Supabase-bootstrap of een externe sync de planning-cache
   // vernieuwt, vragen we het rooster opnieuw te tekenen.
-  window.addEventListener("besa:planning-updated", () => {
+  window.addEventListener("ff:planning-updated", () => {
     // Staat de dienst-detail open terwijl de planning muteert? Dan is dít de dienst die
     // de gebruiker zojuist aanpaste — onthoud 'm zodat "Terug naar rooster" daar landt.
     if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
@@ -5542,31 +5542,31 @@ function initPlanningPage() {
   });
   // Toewijzen/uitnodigen muteert eerst de uitnodigingen (teamlid-sync volgt async); leg
   // de laatst-aangepaste dienst ook hier vast zodat de terugspring betrouwbaar werkt.
-  window.addEventListener("besa:dienst-uitnodigingen-updated", () => {
+  window.addEventListener("ff:dienst-uitnodigingen-updated", () => {
     if (ui.viewingId) ui.lastAdjustedId = ui.viewingId;
   });
-  window.addEventListener("besa:comp-diensttypes-updated", () => {
+  window.addEventListener("ff:comp-diensttypes-updated", () => {
     try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Module 2 Bug #92: cliënt-dropdown sync wanneer cliënten elders in systeem worden gewijzigd
-  window.addEventListener("besa:clienten-updated", () => {
+  window.addEventListener("ff:clienten-updated", () => {
     try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
-  window.addEventListener("besa:medewerkers-updated", () => {
+  window.addEventListener("ff:medewerkers-updated", () => {
     try { applyPlanningRoleMode(); loadPlanningOwnLocaties(); scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Locaties bepalen welke medewerkers planbaar zijn (kantoor/overhead = verborgen);
   // her-render zodra de locatie-data laadt of wijzigt.
-  window.addEventListener("besa:locaties-updated", () => {
+  window.addEventListener("ff:locaties-updated", () => {
     try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Release 7: vrijgave-status van onboarders kan de selecteerbare medewerkers wijzigen.
-  window.addEventListener("besa:onboarding-updated", () => {
+  window.addEventListener("ff:onboarding-updated", () => {
     try { scheduleRenderAllViews(); } catch (e) { /* */ }
   });
   // Sprint 4 / S4: filter-voorinstellingen lijst rendert direct uit cache + live-refresh
   try { renderPresetsList(); } catch (e) { /* */ }
-  window.addEventListener("besa:planning-voorinstellingen-updated", () => {
+  window.addEventListener("ff:planning-voorinstellingen-updated", () => {
     try { renderPresetsList(); } catch (e) { /* */ }
   });
   if (window.planningVoorinstellingenDB && window.planningVoorinstellingenDB.ready) {

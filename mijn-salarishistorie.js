@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  function supa() { if (!window.besaSupabase) throw new Error("Supabase client niet geladen"); return window.besaSupabase; }
+  function supa() { if (!window.ffSupabase) throw new Error("Supabase client niet geladen"); return window.ffSupabase; }
   function tbody() { return document.getElementById("msh-tbody"); }
   function esc(s) { var t = document.createElement("div"); t.textContent = s == null ? "" : String(s); return t.innerHTML; }
   function fmtDatum(iso) {
@@ -26,7 +26,7 @@
   function currentMid() {
     try {
       if (window.profilesDB && window.profilesDB.getCurrentSync) { var m = midOf(window.profilesDB.getCurrentSync()); if (m) return m; }
-      return midOf(window.besaCurrentProfile);
+      return midOf(window.ffCurrentProfile);
     } catch (e) { return null; }
   }
 
@@ -62,11 +62,11 @@
     } catch (err) {
       console.error("[mijn-salarishistorie] laden mislukt:", err);
       tb.innerHTML = '<tr><td colspan="5" class="mu-empty">Kon de salarishistorie niet laden.</td></tr>';
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Mijn salarishistorie — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Mijn salarishistorie — laden", err);
     }
   }
 
-  function boot() { load(); window.addEventListener("besa:profile-updated", load); }
+  function boot() { load(); window.addEventListener("ff:profile-updated", load); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();

@@ -45,7 +45,7 @@
 - [x] C6. Data: per cliënt × jaar × week records
 - [x] C7. Helper `setCell(clientId, jaar, week, uren)` voor single-cell save
 - [x] C8. CRUD via cell-edit on blur
-- [x] C9. besa:uren-budget-updated event
+- [x] C9. ff:uren-budget-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset (Bulk bewerken)
 
 ## D. ULTRA-DEEP ✅

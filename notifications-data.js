@@ -13,17 +13,17 @@
  *   - markAllRead(): markeer ALLE als gelezen
  *   - refresh(): herlaad
  *
- * Event: `besa:notifications-updated` op window bij elke wijziging.
+ * Event: `ff:notifications-updated` op window bij elke wijziging.
  */
 (function (global) {
   "use strict";
 
-  if (!global.besaSupabase) {
-    console.warn("[notificationsDB] besaSupabase ontbreekt — notifications zijn niet beschikbaar");
+  if (!global.ffSupabase) {
+    console.warn("[notificationsDB] ffSupabase ontbreekt — notifications zijn niet beschikbaar");
     return;
   }
 
-  var supa = global.besaSupabase;
+  var supa = global.ffSupabase;
   var cache = [];
   var readsCache = {}; // notification_id → read_at iso
   var currentUserId = null;
@@ -31,19 +31,19 @@
 
   function reportSilent(action, err) {
     console.error("[notificationsDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Notificaties — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Notificaties — " + action, err);
   }
 
   function emit() {
     try {
-      window.dispatchEvent(new Event("besa:notifications-updated"));
+      window.dispatchEvent(new Event("ff:notifications-updated"));
     } catch (e) { /* */ }
   }
 
   async function getCurrentUserId() {
     if (currentUserId) return currentUserId;
-    if (global.besaCurrentProfile && global.besaCurrentProfile.id) {
-      currentUserId = global.besaCurrentProfile.id;
+    if (global.ffCurrentProfile && global.ffCurrentProfile.id) {
+      currentUserId = global.ffCurrentProfile.id;
       return currentUserId;
     }
     if (!supa.auth) return null;
@@ -164,7 +164,7 @@
   }
 
   // Hervat bij profielwijziging (na login)
-  window.addEventListener("besa:profile-updated", function () {
+  window.addEventListener("ff:profile-updated", function () {
     currentUserId = null;
     readyPromise = null;
     bootstrap();

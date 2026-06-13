@@ -152,7 +152,7 @@
       showLoading();
     }
 
-    window.addEventListener("besa:gemeenten-updated", function () {
+    window.addEventListener("ff:gemeenten-updated", function () {
       var r2 = findGemeenteCached(gemeenteId);
       if (!r2) {
         showError("Gemeente niet gevonden.");

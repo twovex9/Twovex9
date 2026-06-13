@@ -153,7 +153,7 @@ E-mail-flow is **expliciet niet** overgenomen (user-keuze #18: "GEEN e-mails ooi
 ## 7. Real-time-gaps
 
 - Supabase Realtime channels niet enabled op meeste tabellen
-- BS1 data-lagen luisteren naar custom events (`besa:<naam>-updated`) maar niet naar postgres_changes
+- BS1 data-lagen luisteren naar custom events (`ff:<naam>-updated`) maar niet naar postgres_changes
 - Fix: `supabase.channel().on('postgres_changes', ...)` in elke data-laag
 - Prio: Med — werkt zonder voor 1-user, kritiek voor 100+
 
@@ -165,7 +165,7 @@ E-mail-flow is **expliciet niet** overgenomen (user-keuze #18: "GEEN e-mails ooi
 
 BS2 e-mails zijn vervangen door:
 - In-app `notifications` tabel + `notification-bell.js` topbar
-- `besa:notification-received` event voor live update
+- `ff:notification-received` event voor live update
 - `notification_reads` per-user read-state
 
 ✅ Geen actie nodig.
@@ -290,7 +290,7 @@ Per user-keuze #14: 1-op-1 BS2-spiegel, 12 rollen scrapen (skip medewerkertest).
 ### Fix (Fase F)
 - Migration: `profiles.rol` enum naar 13 BS2-rollen
 - RLS-policies refactor met `current_user_rol()` helper
-- UI-conditionals: `besaCan(action, entity)` in `profiles-data.js`
+- UI-conditionals: `ffCan(action, entity)` in `profiles-data.js`
 - Sidebar-filter per rol
 - 12 test-accounts per rol → side-by-side parity
 

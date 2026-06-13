@@ -20,7 +20,7 @@
  *   .upsert({medewerkerId, locatieId, kmEnkel, bron}) -> insert/update
  *   .remove(mwId, locId)           -> cel verwijderen
  *
- * Event: "besa:km-afstanden-updated" op window (na elke mutatie + bootstrap).
+ * Event: "ff:km-afstanden-updated" op window (na elke mutatie + bootstrap).
  */
 (function (global) {
   "use strict";
@@ -30,8 +30,8 @@
 
   function reportSilent(action, err) {
     try { console.error("[kmAfstandenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Woon-werk afstanden — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Woon-werk afstanden — " + action, err);
     }
   }
 
@@ -49,7 +49,7 @@
   }
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:km-afstanden-updated", {
+      global.dispatchEvent(new CustomEvent("ff:km-afstanden-updated", {
         detail: { source: source || "km-afstanden-data" },
       }));
     } catch (e) { /* */ }
@@ -75,8 +75,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("id,medewerker_id,locatie_id,km_enkel,bron,laatst_berekend,aanmaakdatum,laatst_gewijzigd");
     if (res.error) throw res.error;
@@ -91,8 +91,8 @@
       try {
         // Cold direct-load: wacht op auth/Supabase-sessie vóór de eerste query
         // (anders levert anonieme RLS 0 rijen — lesson #13).
-        if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-          try { await global.besaSupabaseReady; } catch (e) { /* */ }
+        if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+          try { await global.ffSupabaseReady; } catch (e) { /* */ }
         }
         var rows = await fetchAll();
         setList(rows);
@@ -133,7 +133,7 @@
    * overschreven (HR-correctie blijft staan bij her-berekenen).
    */
   async function upsert(p) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!p || !p.medewerkerId || !p.locatieId) throw new Error("medewerkerId + locatieId vereist");
     var bron = p.bron === "handmatig" ? "handmatig" : "auto";
     if (bron === "auto") {
@@ -149,7 +149,7 @@
       laatst_berekend: nowIso,
       laatst_gewijzigd: nowIso,
     };
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .upsert(row, { onConflict: "medewerker_id,locatie_id" })
       .select().single();
@@ -166,9 +166,9 @@
   }
 
   async function remove(mwId, locId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!mwId || !locId) throw new Error("medewerkerId + locatieId vereist");
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).delete()
       .eq("medewerker_id", mwId).eq("locatie_id", locId);
     if (res.error) throw res.error;

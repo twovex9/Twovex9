@@ -2,7 +2,7 @@
 
 **Datum**: 2026-05-12
 **Commit**: `f421046`
-**Status**: ✅ Live op besa-suite.vercel.app/home.html
+**Status**: ✅ Live op futureflow-app.vercel.app/home.html
 
 ## Doel
 Cosmetische match met BS2 nieuws-feed styling (zie inventaris `01-home.md`):
@@ -35,7 +35,7 @@ Modal-detail gebruikt ook het korte format.
 ```
 
 ## Verificatie
-Live op `besa-suite.vercel.app/home.html`:
+Live op `futureflow-app.vercel.app/home.html`:
 - "Donovan Austin" → **mei 11, 2026** met **DA**-avatar
 - "Valerie Koster" → **mei 8, 2026** met **VK**-avatar
 - "Valerie Koster" → **mei 6, 2026** met **VK**-avatar

@@ -12,7 +12,7 @@
  * bekijken".
  *
  * GEBRUIK (productie BS2, jouw eigen sessie):
- *  1. Log normaal in op BESA Suite 2.
+ *  1. Log normaal in op BS2.
  *  2. Ga naar  HR → Medewerkers  (de medewerkerslijst).
  *  3. F12 → tabblad "Console" → plak dit HELE script → Enter.
  *     Je ziet blauw: "[mwdoc] GEWAPEND".

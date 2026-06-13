@@ -1024,11 +1024,11 @@
   // melding read-only inclusief status "opgepakt" en terugkoppeling.
   function incidentUserCanManage() {
     try {
-      var adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
-      var can = (typeof window.besaCan === "function");
+      var adminTier = (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier());
+      var can = (typeof window.ffCan === "function");
       return !!(adminTier
-        || (can && window.besaCan("view", "incident-dashboard"))
-        || (can && window.besaCan("handle", "incidents")));
+        || (can && window.ffCan("view", "incident-dashboard"))
+        || (can && window.ffCan("handle", "incidents")));
     } catch (e) { return true; } // bij twijfel: bestaand gedrag (bewerkbaar)
   }
 
@@ -1125,9 +1125,9 @@
     if (rec && rec.id && window.incidentDocsDB) {
       window.incidentDocsDB.list(rec.id).then(renderBijlagen).catch(function (err) {
         console.error("[incident-melden] bijlagen laden mislukt:", err);
-        // besa-sync-reporter handelt eventuele auth-fouten en globale toast af.
-        if (typeof window.besaReportSyncFailure === "function") {
-          window.besaReportSyncFailure("Incidenten — Bijlagen ophalen", err);
+        // ff-sync-reporter handelt eventuele auth-fouten en globale toast af.
+        if (typeof window.ffReportSyncFailure === "function") {
+          window.ffReportSyncFailure("Incidenten — Bijlagen ophalen", err);
         }
         renderBijlagen();
       });
@@ -1382,8 +1382,8 @@
     if ($("im-taak-add")) $("im-taak-add").addEventListener("click", submitTaak);
     if ($("im-taak-collab-add")) $("im-taak-collab-add").addEventListener("click", addTaakCollab);
 
-    ["besa:clienten-updated", "besa:medewerkers-updated", "besa:locaties-updated",
-     "besa:profile-updated", "besa:incident-categorieen-updated"].forEach(function (evt) {
+    ["ff:clienten-updated", "ff:medewerkers-updated", "ff:locaties-updated",
+     "ff:profile-updated", "ff:incident-categorieen-updated"].forEach(function (evt) {
       window.addEventListener(evt, function () {
         populateDropdowns();
         renderBetrokkenList();
@@ -1392,10 +1392,10 @@
       });
     });
 
-    window.addEventListener("besa:incident-documenten-updated", function () {
+    window.addEventListener("ff:incident-documenten-updated", function () {
       renderBijlagen();
     });
-    window.addEventListener("besa:incident-taken-updated", function () {
+    window.addEventListener("ff:incident-taken-updated", function () {
       if (state.editingId) renderTaken();
     });
   }
@@ -1434,7 +1434,7 @@
     // Vangnet: als het incident pas ná init beschikbaar komt (late bootstrap
     // of realtime-update) en we staan nog in add-mode terwijl er een ?id= is,
     // alsnog naar edit-mode schakelen.
-    window.addEventListener("besa:incidenten-updated", function () {
+    window.addEventListener("ff:incidenten-updated", function () {
       if (state.editingId) return;
       var qs = new URLSearchParams(window.location.search);
       var id = qs.get("id");

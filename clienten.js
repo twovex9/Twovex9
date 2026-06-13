@@ -140,8 +140,8 @@
   }
 
   function fasePillClass(f) {
-    if (typeof window.besaFaseClientPillClass === "function") {
-      return window.besaFaseClientPillClass(f);
+    if (typeof window.ffFaseClientPillClass === "function") {
+      return window.ffFaseClientPillClass(f);
     }
     var t = String(f || "").toLowerCase();
     if (t === "in zorg") return "cl-fase-pill cl-fase-pill--in-zorg";
@@ -425,9 +425,9 @@
       showToast("Niets te exporteren");
       return;
     }
-    // Generieke export-keuzemodal (CSV/TXT/Excel/PDF). Helper in besa-export.js.
-    if (typeof window.besaExport === "function") {
-      window.besaExport({
+    // Generieke export-keuzemodal (CSV/TXT/Excel/PDF). Helper in ff-export.js.
+    if (typeof window.ffExport === "function") {
+      window.ffExport({
         filename: "clienten",
         title: "Cliënten",
         columns: ["Voornaam", "Achternaam", "Cliëntnummer", "Locatie", "Fase", "Gemeente", "Organisatie", "Required forms", "Uit zorg datum", "Gearchiveerd"],
@@ -448,7 +448,7 @@
       });
       return;
     }
-    // Fallback (oude CSV-only export) als besa-export.js niet geladen is.
+    // Fallback (oude CSV-only export) als ff-export.js niet geladen is.
     var headers = ["Voornaam", "Achternaam", "Cliëntnummer", "Locatie", "Fase", "Gemeente", "Organisatie", "Required forms", "Uit zorg datum", "Gearchiveerd"];
     var rows = items.map(function (c) {
       return [
@@ -732,26 +732,26 @@
   // te rapporteren). Verberg de "+ Cliënt toevoegen"-knop en de acties-kolom (archiveren/
   // verwijderen). De clienten-RLS blokkeert schrijven door deze rollen sowieso server-side;
   // dit houdt de UI schoon. De rollenlijst spiegelt public.is_office_clientviewer.
-  function besaCanWriteClients() {
+  function ffCanWriteClients() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      var roles = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
-        ? window.besaPermissions.getRoleNames() : [];
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      var roles = (window.ffPermissions && typeof window.ffPermissions.getRoleNames === "function")
+        ? window.ffPermissions.getRoleNames() : [];
       var office = ["Eigenaar", "Directeur", "Admin", "HR", "Planner", "Cliëntbeheer", "Zorgcoördinator", "Gedragswetenschapper"];
       for (var i = 0; i < roles.length; i++) { if (office.indexOf(roles[i]) !== -1) return true; }
       return false;
     } catch (e) { return true; } // bij twijfel niets verbergen (RLS beschermt toch)
   }
-  function besaApplyClientReadonly() {
-    var ro = !besaCanWriteClients();
-    try { document.body.classList.toggle("besa-clienten-readonly", ro); } catch (e) {}
+  function ffApplyClientReadonly() {
+    var ro = !ffCanWriteClients();
+    try { document.body.classList.toggle("ff-clienten-readonly", ro); } catch (e) {}
     var addBtn = document.getElementById("cl-add-open-btn");
     if (addBtn) addBtn.style.display = ro ? "none" : "";
   }
-  besaApplyClientReadonly();
+  ffApplyClientReadonly();
   try {
-    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-      window.besaPermissionsReady.then(besaApplyClientReadonly);
+    if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+      window.ffPermissionsReady.then(ffApplyClientReadonly);
     }
   } catch (e) { /* */ }
 
@@ -882,7 +882,7 @@
     var s = document.getElementById("cl-purge-slider");
     if (s && parseInt(s.value, 10) < 100) return;
     // DIEHARD: definitief verwijderen vereist expliciete beheer-permissie (manage-clients).
-    if (typeof window.besaCan === "function" && !window.besaCan("manage-clients")) {
+    if (typeof window.ffCan === "function" && !window.ffCan("manage-clients")) {
       if (typeof showToast === "function") showToast("Geen rechten om een cliënt definitief te verwijderen.");
       closePurge();
       return;
@@ -929,7 +929,7 @@
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
   // heeft bijgewerkt. Zorgt dat een nieuwe browser/sessie ook direct alle
   // cliënten ziet zonder handmatige refresh.
-  window.addEventListener("besa:clienten-updated", function () {
+  window.addEventListener("ff:clienten-updated", function () {
     try { render(); refreshClOrgDatalist(); } catch (e) { /* */ }
   });
 })();

@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module alle incidenten en cachet ze onder
  *    "incidenten_v1" zodat een tweede page-load instant data heeft.
  *  - Schrijfacties (add/update/archive/restore/delete) gaan async naar Supabase;
- *    de cache wordt geüpdatet en het update-event `besa:incidenten-updated`
+ *    de cache wordt geüpdatet en het update-event `ff:incidenten-updated`
  *    wordt gefired voor live re-renders.
  *  - Geen legacy-migratie nodig (incidenten is nieuw vanaf Stage 9c).
  *
@@ -21,7 +21,7 @@
  *     omschrijving: "...", genomenMaatregelen: "...",
  *   });
  *   await window.incidentenDB.archive(id);
- *   window.addEventListener("besa:incidenten-updated", function () { rerender(); });
+ *   window.addEventListener("ff:incidenten-updated", function () { rerender(); });
  */
 (function (global) {
   "use strict";
@@ -132,7 +132,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[incidentenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Incidenten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Incidenten — " + action, err);
   }
 
   function readCache() {
@@ -163,7 +163,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:incidenten-updated", {
+      global.dispatchEvent(new CustomEvent("ff:incidenten-updated", {
         detail: { source: source || "incidenten-data" },
       }));
     } catch (e) { /* */ }
@@ -259,8 +259,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("incident_datum", { ascending: false });
@@ -300,9 +300,9 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -317,12 +317,12 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -342,9 +342,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);
@@ -361,8 +361,8 @@
   // detailweergave die een ruw BS2-veld nodig heeft dat niet in de
   // kolommen/slimme afgeleiden zit.
   async function getRawBs2(id) {
-    if (!global.besaSupabase || id == null) return null;
-    var res = await global.besaSupabase
+    if (!global.ffSupabase || id == null) return null;
+    var res = await global.ffSupabase
       .from(TABLE).select("data").eq("id", id).single();
     if (res.error) throw res.error;
     var d = res.data && res.data.data;

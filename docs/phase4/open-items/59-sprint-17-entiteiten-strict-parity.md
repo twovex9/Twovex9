@@ -7,7 +7,7 @@
 
 ## Nieuwe absolute regel (user 2026-05-13)
 
-> "Het is belangrijk dat alles gekopieerd is, alle informatie van BESA Suite 2. Heel gemakkelijk, dus niets optioneel. Als het op BESA Suite 2 staat, moet dit op onze BESA Suite ook. Altijd. Moet. Altijd."
+> "Het is belangrijk dat alles gekopieerd is, alle informatie van BS2. Heel gemakkelijk, dus niets optioneel. Als het op BS2 staat, moet dit op onze Future Flow ook. Altijd. Moet. Altijd."
 
 S17 stond eerder als ⏸️ OPTIONEEL in master-plan. Per nieuwe regel: dit MOET geïmplementeerd.
 

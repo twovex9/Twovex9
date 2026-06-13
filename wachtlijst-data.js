@@ -15,7 +15,7 @@
  *   - plaatsen(clientId) → Promise<Object>              (clientreis_zet_status →
  *       plaatsing_gepland — throwt door naar het page-script)
  *
- * Events: `besa:wachtlijst-updated` (window) na elke succesvolle plaatsing.
+ * Events: `ff:wachtlijst-updated` (window) na elke succesvolle plaatsing.
  */
 (function (global) {
   "use strict";
@@ -24,25 +24,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[wachtlijstDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Wachtlijst — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Wachtlijst — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:wachtlijst-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:wachtlijst-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   // ── Read-RPC met fallback (alleen voor de rol-context) ─────────────────────
   async function callRpc(fn, args, label, fallback) {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc(fn, args || {});
+      var r = await global.ffSupabase.rpc(fn, args || {});
       if (r.error) throw r.error;
       return r.data == null ? fallback : r.data;
     } catch (err) {
@@ -63,7 +63,7 @@
   // ── Overzicht (geen fallback — throwt zodat de pagina de fout toont) ────────
   async function overzicht() {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("wachtlijst_overzicht", {});
+    var r = await global.ffSupabase.rpc("wachtlijst_overzicht", {});
     if (r.error) throw r.error;
     if (r.data == null) throw new Error("Wachtlijst-overzicht leverde geen data");
     return r.data;
@@ -72,7 +72,7 @@
   // ── Plaatsing plannen (mutatie — throwt door naar het page-script) ──────────
   async function plaatsen(clientId) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("clientreis_zet_status", {
+    var r = await global.ffSupabase.rpc("clientreis_zet_status", {
       p_client_id: clientId,
       p_status: "plaatsing_gepland",
       p_toelichting: null,

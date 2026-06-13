@@ -12,7 +12,7 @@ const MONTHS = new Set("januari februari maart april mei juni juli augustus sept
 
 const defaultJsonl = path.join(
   process.env.USERPROFILE || "C:/Users/sonck",
-  ".cursor/projects/c-Users-sonck-Desktop-besa-suite/agent-transcripts/4ddc0ce3-acc4-4469-a195-5fc47a8761df/4ddc0ce3-acc4-4469-a195-5fc47a8761df.jsonl"
+  ".cursor/projects/c-Users-sonck-Desktop-Future Flow/agent-transcripts/4ddc0ce3-acc4-4469-a195-5fc47a8761df/4ddc0ce3-acc4-4469-a195-5fc47a8761df.jsonl"
 );
 
 function isEmail(s) {
@@ -160,7 +160,7 @@ for (let e = 0; e < emIdx.length; e++) {
 const outPath = path.join(__dirname, "..", "employees-bulk.js");
 fs.writeFileSync(
   outPath,
-  `/* Auto: node scripts/build-employee-bulk.mjs */\nwindow.BESA_EMPLOYEES_BULK = ${JSON.stringify(rows, null, 0)};\n`,
+  `/* Auto: node scripts/build-employee-bulk.mjs */\nwindow.FF_EMPLOYEES_BULK = ${JSON.stringify(rows, null, 0)};\n`,
   "utf8"
 );
 console.log("Opgeslagen", outPath, "medewerkers:", rows.length);

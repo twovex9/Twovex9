@@ -8,11 +8,11 @@
  * competentie / opleiding / locatie gekoppeld zijn.
  *
  * Bron-van-waarheid: window.medewerkersDB. Re-rendert automatisch bij
- * besa:medewerkers-updated, besa:locaties-updated, besa:bureaus-updated,
- * besa:competenties-updated, besa:opleidingen-updated.
+ * ff:medewerkers-updated, ff:locaties-updated, ff:bureaus-updated,
+ * ff:competenties-updated, ff:opleidingen-updated.
  *
  * API:
- *   window.besaDetailMedewerkersTab.init({
+ *   window.ffDetailMedewerkersTab.init({
  *     container,            // HTMLElement waarin de tab gerenderd wordt
  *     entityType,           // "competentie" | "opleiding" | "locatie"
  *     entityId,             // id van de entity
@@ -464,7 +464,7 @@
 
     // ── Filter-chips wiring ──
     function rebuildChips() {
-      if (!w.besaFilterChips || typeof w.besaFilterChips.createSearchSelectChip !== "function") return;
+      if (!w.ffFilterChips || typeof w.ffFilterChips.createSearchSelectChip !== "function") return;
       var allEmps = getMedewerkers();
       var optsFromDB = function (db, key) {
         var items = (db && typeof db.getAllSync === "function") ? db.getAllSync() || [] : [];
@@ -492,7 +492,7 @@
         if (!btn) return;
         if (btn.dataset.chipInited === "1") return;
         btn.dataset.chipInited = "1";
-        chips[d.key] = w.besaFilterChips.createSearchSelectChip({
+        chips[d.key] = w.ffFilterChips.createSearchSelectChip({
           button: btn,
           label: d.label,
           options: d.options,
@@ -608,9 +608,9 @@
     // Exporteren
     if (exportBtn) {
       exportBtn.addEventListener("click", function () {
-        if (typeof w.besaExport !== "function") {
+        if (typeof w.ffExport !== "function") {
           if (typeof w.showActionFeedback === "function") {
-            w.showActionFeedback("error", "Export niet beschikbaar", "besa-export.js niet geladen.");
+            w.showActionFeedback("error", "Export niet beschikbaar", "ff-export.js niet geladen.");
           }
           return;
         }
@@ -625,7 +625,7 @@
             "Functie": e.functie || "",
           };
         });
-        w.besaExport({
+        w.ffExport({
           filename: exportFilename,
           title: exportTitle,
           data: data,
@@ -662,11 +662,11 @@
 
     // Re-render bij relevante data-events
     var REFRESH_EVENTS = [
-      "besa:medewerkers-updated",
-      "besa:locaties-updated",
-      "besa:bureaus-updated",
-      "besa:competenties-updated",
-      "besa:opleidingen-updated",
+      "ff:medewerkers-updated",
+      "ff:locaties-updated",
+      "ff:bureaus-updated",
+      "ff:competenties-updated",
+      "ff:opleidingen-updated",
     ];
     REFRESH_EVENTS.forEach(function (ev) {
       w.addEventListener(ev, function () { rebuildChips(); renderTable(); });
@@ -681,5 +681,5 @@
     };
   }
 
-  w.besaDetailMedewerkersTab = { init: init };
+  w.ffDetailMedewerkersTab = { init: init };
 })(window);

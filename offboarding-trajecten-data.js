@@ -10,7 +10,7 @@
  *
  * Bron van waarheid: Supabase tabel `offboarding_trajecten`.
  * Cache: localStorage "offboarding_trajecten_v1" + in-memory `_mem` (DATA-SLIM).
- * Event: `besa:offboarding-updated`.
+ * Event: `ff:offboarding-updated`.
  */
 (function (global) {
   "use strict";
@@ -38,7 +38,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:offboarding-updated", { detail: { source: source || "offboarding-trajecten-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:offboarding-updated", { detail: { source: source || "offboarding-trajecten-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -58,15 +58,15 @@
   }
 
   async function ensureSupabaseReady() {
-    if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-      try { await global.besaSupabaseReady; } catch (e) { /* */ }
+    if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+      try { await global.ffSupabaseReady; } catch (e) { /* */ }
     }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     await ensureSupabaseReady();
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -106,7 +106,7 @@
 
   // Start (of haal bestaand) offboarding-traject voor een medewerker.
   async function start(medewerkerId, opts) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medewerkerId) throw new Error("medewerkerId verplicht");
     var existing = getForMedewerkerSync(medewerkerId);
     if (existing) return existing;
@@ -114,7 +114,7 @@
     var payload = { medewerker_id: String(medewerkerId), status: "lopend", data: {} };
     if (safe.einddatum) payload.einddatum = safe.einddatum;
     if (safe.aangemaaktDoor) payload.aangemaakt_door = safe.aangemaaktDoor;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);
@@ -123,9 +123,9 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("id verplicht");
-    var res = await global.besaSupabase.from(TABLE).update(patch || {}).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(patch || {}).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);

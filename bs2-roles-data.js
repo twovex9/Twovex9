@@ -17,7 +17,7 @@
  *   addUser(roleId, email, naam), removeUser(roleId, email)
  *
  * Alle mutaties: await Supabase, daarna showActionFeedback (wordt door
- * besa-audit.js automatisch in de audit gelogd met de echte gebruiker).
+ * ff-audit.js automatisch in de audit gelogd met de echte gebruiker).
  */
 (function (global) {
   "use strict";
@@ -26,15 +26,15 @@
   var readyPromise = null;
 
   function sb() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    return global.besaSupabase;
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    return global.ffSupabase;
   }
   function dispatch(src) {
-    try { global.dispatchEvent(new CustomEvent("besa:bs2-roles-updated", { detail: { source: src || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:bs2-roles-updated", { detail: { source: src || "data" } })); } catch (e) { /* */ }
   }
   // ⚠️ Een falende READ van een rollen-lijst mag NOOIT de hele app
-  // uitloggen. besaReportSyncFailure classificeert een 401/403 als
-  // auth-fout → besaHandleAuthFailure → logout. Tijdens page-load racet
+  // uitloggen. ffReportSyncFailure classificeert een 401/403 als
+  // auth-fout → ffHandleAuthFailure → logout. Tijdens page-load racet
   // dit met de sessie-hydratie → /rollen bounce naar login. Daarom: enkel
   // console.warn, NIET escaleren.
   function reportSilent(action, err) {
@@ -47,10 +47,10 @@
   // null* terug, terwijl de sessie wél geldig op schijf staat én de
   // Supabase-client de JWT gewoon meestuurt zodra de eerste query loopt.
   // Dit is exact de #289-aanpak (storedSessionLooksValid in auth-guard.js):
-  // localStorage["sb-besa-auth"] is de betrouwbare bron-van-waarheid.
+  // localStorage["sb-ff-auth"] is de betrouwbare bron-van-waarheid.
   function storedSessionLooksValid() {
     try {
-      var raw = global.localStorage.getItem("sb-besa-auth");
+      var raw = global.localStorage.getItem("sb-ff-auth");
       if (!raw) return false;
       var o = JSON.parse(raw);
       var sess = (o && (o.currentSession || o.session)) || o;
@@ -70,7 +70,7 @@
     var deadline = Date.now() + (maxMs || 8000);
     while (Date.now() < deadline) {
       try {
-        var s = await global.besaSupabase.auth.getSession();
+        var s = await global.ffSupabase.auth.getSession();
         if (s && s.data && s.data.session && s.data.session.user) return true;
       } catch (e) { /* */ }
       if (storedSessionLooksValid()) return true;
@@ -127,8 +127,8 @@
         // de persistente sessie deterministisch terug in de client vóór we
         // queries vuren. Zonder dit gaf de client soms instant "Auth
         // session missing" → 0 rijen → lege Rollen / rol-detail-bounce.
-        if (global.besaSupabaseReady) {
-          try { await global.besaSupabaseReady; } catch (e) { /* */ }
+        if (global.ffSupabaseReady) {
+          try { await global.ffSupabaseReady; } catch (e) { /* */ }
         }
         // Niet vuren vóór er een sessie is (voorkomt 401-race op page-load
         // die /rollen naar login bouncete).

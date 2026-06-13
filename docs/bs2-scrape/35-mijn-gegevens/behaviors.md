@@ -23,7 +23,7 @@
 
 ## Download JSON-button
 - Klik → genereer JSON-blob met alle data over current user
-- File-naam: `mijn-besa-data-<datum>.json`
+- File-naam: `mijn-ff-data-<datum>.json`
 - Triggers browser-download via `<a download>` of `URL.createObjectURL`
 
 ## Vernieuwen-button

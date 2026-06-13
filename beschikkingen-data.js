@@ -11,7 +11,7 @@
  *    (backward-compat voor de overzicht-/dashboard-pagina's).
  *  - Runtime-verrijking: clientLabel + locatie worden afgeleid uit de
  *    clienten-cache (clienten-data.js). Daarom wordt bij elk
- *    "besa:clienten-updated" event de cache opnieuw uit de raw rows
+ *    "ff:clienten-updated" event de cache opnieuw uit de raw rows
  *    opgebouwd zodat de gerenderde labels meteen in sync staan.
  *
  * Backward-compat globals (gebruikt door beschikkingen.js, beschikkingen-overzicht.js,
@@ -85,7 +85,7 @@
   // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
   function reportSilent(action, err) {
     console.error("[beschikkingenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Beschikkingen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Beschikkingen — " + action, err);
   }
 
   // ---------------------------------------------------------------------------
@@ -255,16 +255,16 @@
     try {
       global.localStorage.setItem("beschikkingen:changedAt", String(Date.now()));
     } catch (e2) { /* */ }
-    try { global.dispatchEvent(mkEv("besa:beschikkingen-updated")); } catch (e3) { /* */ }
-    try { if (global.document) global.document.dispatchEvent(mkEv("besa:beschikkingen-updated")); } catch (e4) { /* */ }
+    try { global.dispatchEvent(mkEv("ff:beschikkingen-updated")); } catch (e3) { /* */ }
+    try { if (global.document) global.document.dispatchEvent(mkEv("ff:beschikkingen-updated")); } catch (e4) { /* */ }
   }
 
   // ---------------------------------------------------------------------------
   // Supabase fetch + bootstrap
   // ---------------------------------------------------------------------------
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("eind_iso", { ascending: false, nullsFirst: false })
@@ -277,9 +277,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (global.localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -296,7 +296,7 @@
 
       console.info("[beschikkingenDB] Eenmalige migratie van " + local.length + " beschikkingen naar Supabase…");
       var payload = local.map(function (r) { return objToInsertPayload(r); });
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -364,7 +364,7 @@
 
   // Wanneer de clienten-cache verandert (bv. bootstrap klaar of edit), bouwen
   // we de afgeleide objecten opnieuw zodat clientLabel/locatie meteen klopt.
-  global.addEventListener("besa:clienten-updated", function () {
+  global.addEventListener("ff:clienten-updated", function () {
     if (rawRows && rawRows.length) {
       rebuildCacheFromRaw();
       notifyChanged();
@@ -375,9 +375,9 @@
   // CRUD (async)
   // ---------------------------------------------------------------------------
   async function add(row) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(row);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -393,13 +393,13 @@
   }
 
   async function updateRow(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     merged.id = id;
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -419,9 +419,9 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);
@@ -470,7 +470,7 @@
     readCache().forEach(function (r) { if (r && r.id) oldMap[r.id] = r; });
     writeCache(items);
     notifyChanged();
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
 
     // Adds + updates
     items.forEach(function (r) {
@@ -513,7 +513,7 @@
     writeCache(cache);
     notifyChanged();
 
-    if (global.besaSupabase) {
+    if (global.ffSupabase) {
       add(row).catch(function (err) { reportSilent("toevoegen", err); });
     }
     return row;
@@ -570,7 +570,7 @@
     var cache = readCache().filter(function (r) { return r && r.id !== id; });
     writeCache(cache);
     notifyChanged();
-    if (global.besaSupabase) {
+    if (global.ffSupabase) {
       remove(id).catch(function (err) { reportSilent("verwijderen", err); });
     }
   }
@@ -584,7 +584,7 @@
         // Schrijf naar cache + sync
         writeCache(cache);
         notifyChanged();
-        if (global.besaSupabase) {
+        if (global.ffSupabase) {
           updateRow(id, cache[i]).catch(function (err) { reportSilent("bijwerken", err); });
         }
         return cache[i];

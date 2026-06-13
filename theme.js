@@ -7,7 +7,7 @@
  * zelf NIETS meer in de topbar. Volledig additief; één `git revert` van de
  * commit verwijdert het hele systeem.
  *
- * Modi (opgeslagen in localStorage onder "besa-theme"):
+ * Modi (opgeslagen in localStorage onder "ff-theme"):
  *   - "system" → volgt de OS-voorkeur (prefers-color-scheme), live bijgewerkt.
  *   - "dark"   → altijd donker.
  *   - "light"  → altijd licht (tevens de fallback wanneer niets is opgeslagen).
@@ -15,7 +15,7 @@
 (function () {
   "use strict";
 
-  var KEY = "besa-theme";
+  var KEY = "ff-theme";
   var MODES = ["system", "dark", "light"];
   var root = document.documentElement;
 
@@ -103,7 +103,7 @@
 
   function refreshSwitchers() {
     var mode = getMode();
-    var groups = document.querySelectorAll(".besa-theme-switch");
+    var groups = document.querySelectorAll(".ff-theme-switch");
     for (var i = 0; i < groups.length; i++) {
       var btns = groups[i].querySelectorAll("button[data-mode]");
       for (var j = 0; j < btns.length; j++) {
@@ -126,7 +126,7 @@
     row.appendChild(label);
 
     var group = document.createElement("div");
-    group.className = "besa-theme-switch";
+    group.className = "ff-theme-switch";
     group.setAttribute("role", "group");
     group.setAttribute("aria-label", "Thema kiezen");
     group.style.cssText = "display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:var(--r-md,10px);background:var(--surface-alt,#f7f8fa)";
@@ -160,7 +160,7 @@
     return row;
   }
 
-  window.besaTheme = {
+  window.ffTheme = {
     getMode: getMode,
     setMode: setMode,
     resolved: function () { return resolve(getMode()); },

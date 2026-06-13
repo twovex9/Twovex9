@@ -2,7 +2,7 @@
 
 **Status**: 🚀 ACTIEF vanaf 2026-05-13
 **Plan-file**: `C:\Users\sonck\.claude\plans\ik-wil-een-beetje-temporal-scott.md`
-**Memory**: `~/.claude/projects/.../memory/project_besa_v2_parity.md`
+**Memory**: `~/.claude/projects/.../memory/project_ff_v2_parity.md`
 
 ## Doel
 
@@ -32,7 +32,7 @@ Zie plan-file + memory voor volledige tabel. Highlights:
 - **Cut-over**: big-bang op user-gekozen datum
 - **Supabase plan**: upgrade naar Pro ($25/mnd) + EU-region
 - **DNS-records**: SPF+DKIM+DMARC voor `etfalkmaar.nl` via Resend
-- **Productie-URL**: blijft `https://besa-suite.vercel.app`
+- **Productie-URL**: blijft `https://futureflow-app.vercel.app`
 - **Documentatie**: GEEN aparte handleidingen (baas wordt admin)
 - **Monitoring**: Sentry + Supabase logs + Vercel deploy-notifications
 - **Daily backup**: Supabase scheduled Edge Function 03:00 + 30d retention
@@ -159,8 +159,8 @@ Alleen stoppen voor:
 
 ## Bij hervatting na compactie
 
-1. Lees `besa-suite-etf/CLAUDE.md`
-2. Lees memory `project_besa_v2_parity.md`
+1. Lees `future-flow/CLAUDE.md`
+2. Lees memory `project_ff_v2_parity.md`
 3. Lees plan-file
 4. Check status alle fases in memory
 5. Vind eerste `⏳ TODO` of `🟡 IN PROGRESS`

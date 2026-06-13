@@ -35,7 +35,7 @@
  *  - clientDocsDB.remove(id) → Promise<true>
  *  - clientDocsDB.maybeMigrateFromClient(client) → Promise<number>
  *
- * Events: "besa:client-documents-updated" met { clientId } in detail.
+ * Events: "ff:client-documents-updated" met { clientId } in detail.
  */
 (function (global) {
   "use strict";
@@ -89,9 +89,9 @@
   }
 
   function getPublicUrl(storagePath) {
-    if (!storagePath || !global.besaSupabase) return "";
+    if (!storagePath || !global.ffSupabase) return "";
     try {
-      var res = global.besaSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
+      var res = global.ffSupabase.storage.from(BUCKET).getPublicUrl(storagePath);
       // De client geeft { data: { publicUrl } } terug.
       if (res && res.data && res.data.publicUrl) return res.data.publicUrl;
     } catch (e) { /* */ }
@@ -99,8 +99,8 @@
   }
 
   function uploadToStorage(path, blob, mime) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .storage
       .from(BUCKET)
       .upload(path, blob, {
@@ -114,8 +114,8 @@
   }
 
   function deleteFromStorage(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve();
-    return global.besaSupabase
+    if (!path || !global.ffSupabase) return Promise.resolve();
+    return global.ffSupabase
       .storage
       .from(BUCKET)
       .remove([path])
@@ -226,7 +226,7 @@
 
   function dispatchUpdated(clientId) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:client-documents-updated", {
+      global.dispatchEvent(new CustomEvent("ff:client-documents-updated", {
         detail: { clientId: clientId || null },
       }));
     } catch (e) { /* */ }
@@ -260,8 +260,8 @@
   // ---------------------------------------------------------------------------
 
   function fetchByClientId(clientId) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .from(TABLE)
       .select("*")
       .eq("client_id", clientId)
@@ -273,7 +273,7 @@
   }
 
   function insertRow(payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -285,7 +285,7 @@
   }
 
   function updateRow(id, payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -298,7 +298,7 @@
   }
 
   function deleteRow(id) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id)
@@ -341,7 +341,7 @@
       .then(function (uploadRes) {
         if (!uploadRes.storagePath) return false;
         // Update DB: zet storage_path en wis file_data.
-        return global.besaSupabase
+        return global.ffSupabase
           .from(TABLE)
           .update({ storage_path: uploadRes.storagePath, file_data: "" })
           .eq("id", row.id)
@@ -428,7 +428,7 @@
     cacheUpsertOne(localDoc);
     dispatchUpdated(localDoc.clientId);
 
-    if (!global.besaSupabase) {
+    if (!global.ffSupabase) {
       return Promise.reject(new Error("Supabase client niet geladen"));
     }
 
@@ -470,7 +470,7 @@
     cacheUpsertOne(merged);
     dispatchUpdated(merged.clientId);
 
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
 
     var fileName = merged.fileName || (partial && partial.fileName) || existing.fileName || "";
     var fileMime = merged.fileMime || (partial && partial.fileMime) || existing.fileMime || "";
@@ -544,7 +544,7 @@
       if (global.localStorage.getItem(flag) === "1") return Promise.resolve(0);
     } catch (e) { /* */ }
 
-    if (!global.besaSupabase) return Promise.resolve(0);
+    if (!global.ffSupabase) return Promise.resolve(0);
 
     return fetchByClientId(client.id).then(function (existing) {
       // Als er al docs in de tabel staan, gaan we niet meer migreren.

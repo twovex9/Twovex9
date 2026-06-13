@@ -22,7 +22,7 @@
  *   zzpFacturenDB.getDetail(id)               → Promise<{factuur, regels, transitions}>
  *   zzpFacturenDB.genereer(jaar, maand)       → Promise<{aangemaakt,...}>
  *
- * Event: "besa:zzp-facturen-updated" op window.
+ * Event: "ff:zzp-facturen-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -34,7 +34,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[zzpFacturenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("ZZP-facturen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("ZZP-facturen — " + action, err);
   }
   function readCache() {
     try { var p = JSON.parse(localStorage.getItem(CACHE) || "[]"); return Array.isArray(p) ? p : []; }
@@ -45,7 +45,7 @@
     catch (e) { /* quota — _mem is de bron */ }
   }
   function dispatchUpdated(src) {
-    try { global.dispatchEvent(new CustomEvent("besa:zzp-facturen-updated", { detail: { source: src || "zzp-facturen-data" } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:zzp-facturen-updated", { detail: { source: src || "zzp-facturen-data" } })); }
     catch (e) { /* */ }
   }
 
@@ -128,10 +128,10 @@
 
   // PostgREST cap't 1000 rijen/request → pagineren (groeit ~71/maand).
   async function fetchAllRows() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var all = [], from = 0, size = 1000;
     for (;;) {
-      var res = await global.besaSupabase
+      var res = await global.ffSupabase
         .from(T_FAC).select(FAC_COLS)
         .order("jaar", { ascending: false }).order("maand", { ascending: false })
         .order("proforma_bedrag", { ascending: false })
@@ -151,7 +151,7 @@
     if (readCache().length) dispatchUpdated("cache");
     readyPromise = (async function () {
       try {
-        if (global.besaSupabaseReady) await global.besaSupabaseReady;
+        if (global.ffSupabaseReady) await global.ffSupabaseReady;
         setFac(await fetchAllRows());
         dispatchUpdated("bootstrap");
       } catch (err) { reportSilent("Bootstrap", err); }
@@ -159,7 +159,7 @@
     return readyPromise;
   }
   async function refresh() {
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
     _reg = {}; _tr = {};
     setFac(await fetchAllRows());
     dispatchUpdated("refresh");
@@ -177,9 +177,9 @@
     if (facId == null) return [];
     var s = String(facId);
     if (_reg[s]) return _reg[s];
-    if (!global.besaSupabase) return [];
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.from(T_REG)
+    if (!global.ffSupabase) return [];
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.from(T_REG)
       .select("id,factuur_id,planning_dienst_id,datum,dag,start_iso,einde_iso,pauze_uren," +
               "proforma_uren,proforma_tarief,proforma_bedrag,omschrijving," +
               "ingediend_uren,ingediend_tarief,ingediend_bedrag,verwijderd,gewijzigd," +
@@ -195,9 +195,9 @@
     if (facId == null) return [];
     var s = String(facId);
     if (_tr[s]) return _tr[s];
-    if (!global.besaSupabase) return [];
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.from(T_TR)
+    if (!global.ffSupabase) return [];
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.from(T_TR)
       .select("id,factuur_id,status,actor_email,actor_naam,actor_type,comment,data,created_at")
       .eq("factuur_id", facId)
       .order("created_at", { ascending: true });
@@ -209,8 +209,8 @@
   // Volledige detail incl. logo_url + extra_gegevens (zwaar — niet in lijst-cache).
   async function getDetail(facId) {
     if (facId == null) return null;
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.from(T_FAC)
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.from(T_FAC)
       .select(FAC_COLS + ",logo_url,extra_gegevens").eq("id", facId).single();
     if (res.error) { reportSilent("Detail laden", res.error); return null; }
     var f = facRowToObj(res.data);
@@ -222,9 +222,9 @@
 
   // Proforma genereren voor een werk-maand (idempotent, niet-destructief).
   async function genereer(jaar, maand) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("genereer_zzp_proforma", { p_jaar: jaar, p_maand: maand });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("genereer_zzp_proforma", { p_jaar: jaar, p_maand: maand });
     if (res.error) throw res.error;
     await refresh();
     return res.data;
@@ -240,24 +240,24 @@
 
   // Logo uploaden naar Storage → publieke URL (publieke bucket zzp-factuur-logos).
   async function uploadLogo(factuurId, file) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
     var ext = (String(file.name || "").match(/\.([a-z0-9]+)$/i) || [, "png"])[1].toLowerCase();
     var path = String(factuurId) + "/logo-" + Date.now() + "." + ext;
-    var up = await global.besaSupabase.storage.from("zzp-factuur-logos")
+    var up = await global.ffSupabase.storage.from("zzp-factuur-logos")
       .upload(path, file, { upsert: true, contentType: file.type || ("image/" + ext) });
     if (up.error) throw up.error;
-    var pub = global.besaSupabase.storage.from("zzp-factuur-logos").getPublicUrl(path);
+    var pub = global.ffSupabase.storage.from("zzp-factuur-logos").getPublicUrl(path);
     return (pub && pub.data && pub.data.publicUrl) || "";
   }
 
   // Opslaan/indienen via de DB-RPC (één code-pad; change-detectie 🔴/🟠 + herbereken
   // gebeuren server-side). opts = {eigenFactuurnummer, logoUrl, extra, regels[], indienen}.
   async function opslaan(factuurId, opts) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
     opts = opts || {};
-    var res = await global.besaSupabase.rpc("zzp_factuur_opslaan", {
+    var res = await global.ffSupabase.rpc("zzp_factuur_opslaan", {
       p_factuur_id: factuurId,
       p_eigen_factuurnummer: opts.eigenFactuurnummer != null ? opts.eigenFactuurnummer : null,
       p_logo_url: opts.logoUrl != null ? opts.logoUrl : null,
@@ -276,9 +276,9 @@
   // Controleur keurt een ingediende factuur goed/af. Reden verplicht bij afwijzen;
   // betaaltermijn (dagen) verplicht bij goedkeuren → betaaldatum + melding naar ZZP'er.
   async function beoordelen(factuurId, actie, reden, betaaltermijnDagen) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_factuur_beoordelen", {
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_factuur_beoordelen", {
       p_factuur_id: factuurId, p_actie: actie, p_reden: reden || null,
       p_betaaltermijn_dagen: (betaaltermijnDagen != null && betaaltermijnDagen !== "") ? Number(betaaltermijnDagen) : null,
     });
@@ -291,9 +291,9 @@
 
   // Opmerking / vraag plaatsen bij een factuur (ZZP'er → financiën, of reviewer → ZZP'er).
   async function plaatsOpmerking(factuurId, tekst) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_factuur_opmerking", {
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_factuur_opmerking", {
       p_factuur_id: factuurId, p_tekst: tekst,
     });
     if (res.error) throw res.error;
@@ -303,22 +303,22 @@
   }
 
   function isReviewer() {
-    return !!((global.besaIsAdminTier && global.besaIsAdminTier()) ||
-      (global.besaCan && global.besaCan("view", "invoices")));
+    return !!((global.ffIsAdminTier && global.ffIsAdminTier()) ||
+      (global.ffCan && global.ffCan("view", "invoices")));
   }
 
   // Fase 4 — teamleider: openstaande uren-wijzigingen + goed-/afkeuren (planning-bijwerking).
   async function getOpenOveruren() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_overuren_open");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_overuren_open");
     if (res.error) throw res.error;
     return res.data || {};
   }
   async function overurenBeoordelen(regelId, actie, reden) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_overuren_beoordelen", {
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_overuren_beoordelen", {
       p_regel_id: regelId, p_actie: actie, p_reden: reden || null,
     });
     if (res.error) throw res.error;
@@ -328,34 +328,34 @@
 
   // Fase 6 — reconciliatie per locatie + totaal (read-only).
   async function getReconciliatie(jaar, maand) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_reconciliatie", { p_jaar: jaar || null, p_maand: maand || null });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_reconciliatie", { p_jaar: jaar || null, p_maand: maand || null });
     if (res.error) throw res.error;
     return res.data || {};
   }
 
   // Fase 5 — Detacheringsbureau-portaal.
   async function getBureauContext() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_bureau_context");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_bureau_context");
     if (res.error) throw res.error;
     return res.data || {};
   }
   async function getBureauOverzicht(jaar, maand, bureau) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_bureau_overzicht", {
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_bureau_overzicht", {
       p_jaar: jaar || null, p_maand: maand || null, p_bureau: bureau || null,
     });
     if (res.error) throw res.error;
     return res.data || {};
   }
   async function bureauAccordeer(factuurId, factuurnummer) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_bureau_accordeer", {
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_bureau_accordeer", {
       p_factuur_id: factuurId, p_factuurnummer: factuurnummer || null,
     });
     if (res.error) throw res.error;
@@ -364,31 +364,31 @@
   }
   // Reviewer-beheer: koppel/ontkoppel een login-e-mail aan een bureau + lijst.
   async function listBureauUsers() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.from("bureau_users").select("user_email, bureau_id, aangemaakt_door, aanmaakdatum, bureaus(naam)");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.from("bureau_users").select("user_email, bureau_id, aangemaakt_door, aanmaakdatum, bureaus(naam)");
     if (res.error) throw res.error;
     return res.data || [];
   }
   async function linkBureauUser(email, bureauId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_bureau_link_user", { p_email: email, p_bureau_id: bureauId });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_bureau_link_user", { p_email: email, p_bureau_id: bureauId });
     if (res.error) throw res.error;
     if (res.data && res.data.error) throw new Error(res.data.error);
     return res.data;
   }
   async function unlinkBureauUser(email) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.rpc("zzp_bureau_unlink_user", { p_email: email });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.rpc("zzp_bureau_unlink_user", { p_email: email });
     if (res.error) throw res.error;
     return res.data;
   }
   async function listBureaus() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    if (global.besaSupabaseReady) await global.besaSupabaseReady;
-    var res = await global.besaSupabase.from("bureaus").select("id, naam, standaard_uurtarief").order("naam");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) await global.ffSupabaseReady;
+    var res = await global.ffSupabase.from("bureaus").select("id, naam, standaard_uurtarief").order("naam");
     if (res.error) throw res.error;
     return res.data || [];
   }

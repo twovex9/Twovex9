@@ -27,7 +27,7 @@
 
   function pageAccessible(page, adminTier) {
     if (!page) return true;
-    var map = global.BESA_PAGE_PERMISSIONS || {};
+    var map = global.FF_PAGE_PERMISSIONS || {};
     var req = map[page];
     if (req === null || req === undefined) return true;
 
@@ -36,8 +36,8 @@
     // Bv. persoonlijke werkvloer-tabs (Mijn beschikbaarheid/Mijn facturen) voor bestuur.
     if (Array.isArray(req.deniedRoles)) {
       try {
-        var dRoles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
-          ? global.besaPermissions.getRoleNames()
+        var dRoles = (global.ffPermissions && typeof global.ffPermissions.getRoleNames === "function")
+          ? global.ffPermissions.getRoleNames()
           : [];
         for (var d = 0; d < req.deniedRoles.length; d++) {
           if (dRoles.indexOf(req.deniedRoles[d]) !== -1) return false;
@@ -52,8 +52,8 @@
 
     if (Array.isArray(req.allowedRoles)) {
       try {
-        var roles = (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
-          ? global.besaPermissions.getRoleNames()
+        var roles = (global.ffPermissions && typeof global.ffPermissions.getRoleNames === "function")
+          ? global.ffPermissions.getRoleNames()
           : [];
         for (var i = 0; i < req.allowedRoles.length; i++) {
           if (roles.indexOf(req.allowedRoles[i]) !== -1) return true;
@@ -63,7 +63,7 @@
     }
     if (req.action) {
       try {
-        return (typeof global.besaCan === "function") && global.besaCan(req.action, req.entity);
+        return (typeof global.ffCan === "function") && global.ffCan(req.action, req.entity);
       } catch (e) { return false; }
     }
     return true;
@@ -86,7 +86,7 @@
 
   // Onthul de topnav (zet de visibility:hidden uit styles.css uit). Idempotent.
   function reveal() {
-    try { global.document.documentElement.classList.add("besa-nav-ready"); } catch (e) {}
+    try { global.document.documentElement.classList.add("ff-nav-ready"); } catch (e) {}
   }
 
   // Zijn de permissies al geladen (uit de localStorage-cache of de DB)? Zo ja,
@@ -94,8 +94,8 @@
   // geen niet-toegekende items flitsen.
   function permsLoaded() {
     try {
-      return !!(global.besaPermissions && typeof global.besaPermissions.debug === "function"
-        && global.besaPermissions.debug().loaded);
+      return !!(global.ffPermissions && typeof global.ffPermissions.debug === "function"
+        && global.ffPermissions.debug().loaded);
     } catch (e) { return false; }
   }
 
@@ -107,19 +107,19 @@
   // niet-gekoppeld account) → niets verbergen, niet onterecht blokkeren.
   function isLoondienstLike() {
     try {
-      var dv = global.besaCurrentDienstverband
-        || (global.besaCurrentProfile && global.besaCurrentProfile.dienstverband) || "";
+      var dv = global.ffCurrentDienstverband
+        || (global.ffCurrentProfile && global.ffCurrentProfile.dienstverband) || "";
       return dv === "Loondienst" || dv === "Stagiair";
     } catch (e) { return false; }
   }
   var ZZP_SELF_SERVICE = ["mijn-proforma-facturen.html", "mijn-beschikbaarheid.html", "mijn-uitnodigingen.html"];
 
   function applyHiding() {
-    // Niet draaien vóór de permissies geladen zijn: besaCan() geeft dan false voor
+    // Niet draaien vóór de permissies geladen zijn: ffCan() geeft dan false voor
     // álles, en de destructieve dropdown-item-removal (a.remove() in stap 1) zou
     // toegankelijke items definitief slopen — onherstelbaar bij een latere re-run.
-    // De normale callers draaien pas ná besaPermissionsReady; deze guard beschermt
-    // vooral de besa:profile-updated-listener, die vóór de perm-load kan vuren
+    // De normale callers draaien pas ná ffPermissionsReady; deze guard beschermt
+    // vooral de ff:profile-updated-listener, die vóór de perm-load kan vuren
     // (het profiel laadt soms eerder dan de permissies bij een koude cache).
     if (!permsLoaded()) return;
 
@@ -127,7 +127,7 @@
     // per link alsnog op rol worden gecontroleerd (zie pageAccessible).
     var adminTier = false;
     try {
-      adminTier = (typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier());
+      adminTier = (typeof global.ffIsAdminTier === "function" && global.ffIsAdminTier());
     } catch (e) { /* bij twijfel niets verbergen — behoud bestaand gedrag */ return; }
 
     var doc = global.document;
@@ -213,7 +213,7 @@
   function run() {
     // 1) Warme cache: pas de afscherming DIRECT (synchroon) toe vóór de eerste
     //    paint en onthul de nav. Geen `await` → geen flits van extra items.
-    //    (besaCurrentDienstverband staat na de eerste bootstrap óók in de cache,
+    //    (ffCurrentDienstverband staat na de eerste bootstrap óók in de cache,
     //    dus ook de dienstverband-afscherming is hier al meegenomen.)
     if (permsLoaded()) { applyHiding(); reveal(); }
     // 2) Na de DB-load opnieuw toepassen (bij koude cache wordt hier voor het eerst
@@ -221,15 +221,15 @@
     //    dienstverband bekend is vóór de eerste reveal → geen flits van de
     //    ZZP-self-service-tabs bij een koude cache.
     try {
-      var navReady = (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function")
-        ? global.besaPermissionsReady : global.Promise.resolve();
+      var navReady = (global.ffPermissionsReady && typeof global.ffPermissionsReady.then === "function")
+        ? global.ffPermissionsReady : global.Promise.resolve();
       var profReady = (global.profilesDB && global.profilesDB.ready && typeof global.profilesDB.ready.then === "function")
         ? global.profilesDB.ready : global.Promise.resolve();
       global.Promise.all([navReady, profReady]).then(function () { applyHiding(); reveal(); });
     } catch (e) { reveal(); }
     // 2b) Dienstverband kan ná de eerste afscherming binnenkomen (koude cache); pas
     //     dan opnieuw toe zodat de ZZP-tabs alsnog verdwijnen voor loondienst.
-    try { global.addEventListener("besa:profile-updated", function () { applyHiding(); }); } catch (e) {}
+    try { global.addEventListener("ff:profile-updated", function () { applyHiding(); }); } catch (e) {}
     // 3) Fail-safe: onthul sowieso na korte tijd, zodat een eventuele scriptfout
     //    de topnav nooit permanent verborgen laat.
     try { global.setTimeout(reveal, 3000); } catch (e) {}

@@ -2,7 +2,7 @@
 
 **Status**: ACTIEF
 **Start**: 2026-05-12
-**Doel**: BESA-suite 1 is 100% functioneel equivalent van BESA-suite 2 — data + UI + features. Elke functie werkt, elke pagina rendert correct, geen gaps.
+**Doel**: Future Flow 1 is 100% functioneel equivalent van BS2 — data + UI + features. Elke functie werkt, elke pagina rendert correct, geen gaps.
 
 ## Achtergrond (waar we vandaan komen)
 
@@ -112,7 +112,7 @@ Per item uit gap-analyse 4A3 "Ontbrekende features":
 ### Fase 4F — Eindrapport + commit + memory-update
 
 - `docs/phase4/99-final-success.md`
-- Update `project_besa_phase4.md` memory naar "VOLTOOID"
+- Update `project_ff_phase4.md` memory naar "VOLTOOID"
 - Update `CLAUDE.md` Phase 4 sectie naar "voltooid"
 - Final push
 

@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 globalThis.window = {};
 require("../ort-engine.js");
-const eng = globalThis.window.besaOrtEngine;
+const eng = globalThis.window.ffOrtEngine;
 
 const rules = [{ dag: "Maandag - Vrijdag", start: "22:00", end: "06:00", percentage: 140, priority: 5 }];
 function dateOnWeekday(targetDay) { // 0=zo..6=za

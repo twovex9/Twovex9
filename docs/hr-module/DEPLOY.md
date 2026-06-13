@@ -3,8 +3,8 @@
 Beknopte operationele referentie voor deze codebase. Vult `CLAUDE.md` aan.
 
 ## Canonieke productie-URL's
-- **Web (desktop):** `https://futureflow-etf.vercel.app` — deployt vanaf **`ETFalkmaar/besa-suite-`** branch `main` (remote `etf`). NIET `twovex9/Twovex9` (dood).
-- **Mobiel (PWA):** `https://future-flow-mobile.vercel.app` — deployt vanaf **`twovex9/future-flow-mobile`** branch `main` (Vercel-project `besa-suite-mobile`). Let op: `besa-suite-mobile.vercel.app` deployt NIET van main.
+- **Web (desktop):** `https://futureflow-app.vercel.app` — deployt vanaf **`twovex9/twovex9`** branch `main` (remote `etf`). NIET `twovex9/Twovex9` (dood).
+- **Mobiel (PWA):** `https://future-flow-mobile.vercel.app` — deployt vanaf **`twovex9/future-flow-mobile`** branch `main` (Vercel-project `Future Flow-mobile`). Let op: `future-flow-mobile.vercel.app` deployt NIET van main.
 - **Supabase (prod):** project `ukjflilnhigozfoxowmj`. ⚠️ De Supabase-MCP wijst naar een OUD project — niet gebruiken voor data/DDL.
 
 ## DDL / SQL op productie (zonder dashboard)
@@ -29,13 +29,13 @@ node scripts/db-exec.mjs "begin; set local role authenticated; \
 qa-uids: medewerker `9a04354d-…`, hr `9930455d-…`, eigenaar `4fd38491-…`, directeur `515d2a1a-…`.
 
 ## Web-deploy (ETFalkmaar)
-`gh` = ETFalkmaar (heeft rechten op besa-suite-):
+`gh` = ETFalkmaar (heeft rechten op Future Flow-):
 ```bash
 git fetch etf && git switch -C feature/<naam> etf/main
 # … wijzigen + committen …
 git push -u etf feature/<naam>
-gh pr create -R ETFalkmaar/besa-suite- --base main --head feature/<naam> --title "…" --body "…"
-gh pr merge <N> -R ETFalkmaar/besa-suite- --merge --delete-branch
+gh pr create -R twovex9/twovex9 --base main --head feature/<naam> --title "…" --body "…"
+gh pr merge <N> -R twovex9/twovex9 --merge --delete-branch
 ```
 De build **auto-verviest alle `?v=`-assetquery's naar de commit-short-hash** — handmatige cache-bust-bumps zijn overbodig.
 

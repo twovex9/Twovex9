@@ -20,8 +20,8 @@
   // (video-eis eigenaar 2026-06-07): geen override-knop en geen maand-vergrendelen.
   function udCanEdit() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      return (typeof window.besaCan === "function") && window.besaCan("manage", "employee-registered-hours");
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      return (typeof window.ffCan === "function") && window.ffCan("manage", "employee-registered-hours");
     } catch (e) { return false; }
   }
 
@@ -456,7 +456,7 @@
   if (selMaand) selMaand.addEventListener("change", refreshLockUiFromDb);
 
   // Live-refresh wanneer een andere tab een (un)lock doet
-  window.addEventListener("besa:locked-months-updated", refreshLockUiFromDb);
+  window.addEventListener("ff:locked-months-updated", refreshLockUiFromDb);
 
   if (lockBtn) {
     lockBtn.addEventListener("click", async function () {
@@ -568,7 +568,7 @@
 
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
   // ververst (eerste page-load op een nieuwe browser).
-  window.addEventListener("besa:urendeclaraties-updated", function () {
+  window.addEventListener("ff:urendeclaraties-updated", function () {
     try {
       renderRows();
       applyColumnToggles();
@@ -579,8 +579,8 @@
   // Re-render zodra permissies geladen zijn → override-knop + maand-vergrendelen
   // tonen/verbergen volgens bewerk-recht (kijkfunctie HR/Facilitair).
   try {
-    if (window.besaPermissionsReady && window.besaPermissionsReady.then) {
-      window.besaPermissionsReady.then(function () {
+    if (window.ffPermissionsReady && window.ffPermissionsReady.then) {
+      window.ffPermissionsReady.then(function () {
         try { renderRows(); applyColumnToggles(); filterRows(); refreshLockUiFromDb(); } catch (e) { /* */ }
       });
     }

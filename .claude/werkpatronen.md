@@ -9,9 +9,9 @@ Pas deze patronen **standaard** toe op elke nieuwe of gewijzigde functionaliteit
 1. **De data MOET direct naar Supabase worden geschreven** via een dedicated `<naam>-data.js` data-laag (zie `6b` voor de bestaande modules).
 2. **`localStorage` mag nooit de bron-van-waarheid zijn.** Het mag alleen als read-cache (offline fallback / snelle eerste render) of voor pure UI-state (kolomvoorkeuren, filter-toggles, sortering).
 3. **Voor bestand-uploads (afbeeldingen, PDF's, documenten) gebruik je Supabase Storage** met `storage_path` in de tabel — nooit base64 in een `text`/`jsonb`-kolom (zie sectie `6c`).
-4. **Bij elke schrijfactie wacht je het Supabase-resultaat af** met `await`. Bij failure → toon een rode `showError` of laat `besa-sync-reporter.js` zijn werk doen. **Nooit silent catch.**
+4. **Bij elke schrijfactie wacht je het Supabase-resultaat af** met `await`. Bij failure → toon een rode `showError` of laat `ff-sync-reporter.js` zijn werk doen. **Nooit silent catch.**
 5. **Bestaat er nog geen tabel of data-laag voor wat de gebruiker vraagt?** Maak ze dan eerst aan (SQL in `supabase/schema.sql` + nieuwe `<naam>-data.js`-module volgens het stappenplan in `6a`) **voordat** je page-code schrijft die de data zou opslaan. Het uitstellen "doe ik later wel" is verboden.
-6. **Elke nieuwe HTML-pagina** laadt verplicht in deze volgorde: Supabase CDN → `supabase-client.js` → `besa-sync-reporter.js` → `auth-guard.js` → `profiles-data.js` → alle relevante `<naam>-data.js` → page-script(s). Mis er één en je krijgt silent failures.
+6. **Elke nieuwe HTML-pagina** laadt verplicht in deze volgorde: Supabase CDN → `supabase-client.js` → `ff-sync-reporter.js` → `auth-guard.js` → `profiles-data.js` → alle relevante `<naam>-data.js` → page-script(s). Mis er één en je krijgt silent failures.
 7. **Toekomstige AI-sessies en mensen die deze codebase aanraken**: deze regel staat boven al je andere prioriteiten qua dataopslag. De gebruiker hoeft hier nooit meer expliciet om te vragen — het is de default.
 
 Concreet: als de gebruiker zegt "voeg een veld X toe" of "maak een formulier voor Y", dan is de impliciete eis altijd "...en sla het automatisch op in Supabase, zodat het op alle apparaten en sessies beschikbaar is." Niet vragen, gewoon doen.
@@ -253,7 +253,7 @@ Bij twijfel: zoek `create table if not exists public.<naam>` in `schema.sql` en 
    };
    ```
 
-   Patroon: cache in `localStorage` als snelle read-laag, schrijfacties zijn `async` Supabase-calls, daarna cache + `pushToGlobalBulk` updaten en `besa:<naam>-updated` event firen voor live re-render.
+   Patroon: cache in `localStorage` als snelle read-laag, schrijfacties zijn `async` Supabase-calls, daarna cache + `pushToGlobalBulk` updaten en `ff:<naam>-updated` event firen voor live re-render.
 3. **HTML-page laadt verplicht deze 3 scripts**, in deze volgorde, vóór de page-script:
 
    ```html
@@ -285,7 +285,7 @@ Bij twijfel: zoek `create table if not exists public.<naam>` in `schema.sql` en 
 | Incidenten | `incidentenDB` | `incidenten` | `incidenten-data.js` |
 | Profielen + rollen | `profilesDB` | `profiles` (1-op-1 met `auth.users`) | `profiles-data.js` |
 
-Voor sub-data per parent (zoals tarieven/notities/audit per beschikking, of notities per medewerker) hebben de modules een extra synchrone helper `getForBescSync(bescId)` of `getForMedewerkerSync(empId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `besa:<naam>-updated` event.
+Voor sub-data per parent (zoals tarieven/notities/audit per beschikking, of notities per medewerker) hebben de modules een extra synchrone helper `getForBescSync(bescId)` of `getForMedewerkerSync(empId)`. Gebruik die in render-functies; de data wordt automatisch ververst via het bijbehorende `ff:<naam>-updated` event.
 
 **Pas op met `employeeEditsById` (legacy):** dit object in localStorage bevatte oorspronkelijk `verzuim`, `verlofOvergedragen`, `notities` en `documenten` per medewerker. Vanaf Stage 4 worden die één voor één weggemigreerd:
 
@@ -301,11 +301,11 @@ Voor append-only logs (audit-trails, activity feeds) zonder edit/delete-flow: ge
 
 ### 6d. Authenticatie — verplicht op elke pagina (Stage 8a+)
 
-Login staat AAN sinds Stage 8a. Elke pagina (behalve `login.html` zelf) moet `auth-guard.js` laden direct na `besa-sync-reporter.js`. De script-volgorde in elke HTML-page is dus:
+Login staat AAN sinds Stage 8a. Elke pagina (behalve `login.html` zelf) moet `auth-guard.js` laden direct na `ff-sync-reporter.js`. De script-volgorde in elke HTML-page is dus:
 
 1. `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2` (CDN)
-2. `supabase-client.js` (initialiseert client + `besaAuth` helpers, AUTH_ENABLED=true)
-3. `besa-sync-reporter.js` (centrale fout-feedback)
+2. `supabase-client.js` (initialiseert client + `ffAuth` helpers, AUTH_ENABLED=true)
+3. `ff-sync-reporter.js` (centrale fout-feedback)
 4. `auth-guard.js` (sessie-check + redirect + logout-knop in topbar)
 5. `profiles-data.js` (Stage 8b — laadt profiel + rol van huidige user)
 6. Alle overige data-layer modules
@@ -315,7 +315,7 @@ Login staat AAN sinds Stage 8a. Elke pagina (behalve `login.html` zelf) moet `au
 - Doet `getSession()` bij init. Geen sessie → redirect naar `login.html?next=<huidige-url>` zodat de gebruiker na login terugkomt op dezelfde plek.
 - Wel sessie → injecteert rechtsboven in `.topbar` een blok met `<voornaam achternaam> · Uitloggen` (valt terug op email als profiel nog leeg is). Klik op Uitloggen wist de Supabase-sessie EN alle localStorage caches (om data-lekken naar volgende gebruiker te voorkomen) en stuurt naar `login.html`.
 - Luistert op `auth.onAuthStateChange` om automatisch te redirecten als een sessie elders verloopt.
-- Update het topbar-label automatisch zodra `besa:profile-updated` event vuurt (na profiel-bootstrap of -wijziging).
+- Update het topbar-label automatisch zodra `ff:profile-updated` event vuurt (na profiel-bootstrap of -wijziging).
 
 Nieuwe pagina toevoegen? Vergeet `auth-guard.js` + `profiles-data.js` niet, anders is de pagina onbeveiligd of mist de UI de rol-check. Het PowerShell-commando dat alle 35 pagina's tegelijk patcht zit in de Stage 8a/8b commit-history.
 
@@ -325,17 +325,17 @@ Wil je later auth tijdelijk uitzetten (bv. voor lokaal debugging)? Zet `AUTH_ENA
 
 Sinds Stage 8d wordt een verlopen JWT (PostgREST `PGRST301`/`PGRST302`, HTTP `401`/`403`, of message `JWT expired` / `Invalid Refresh Token` / `Auth session missing`) niet meer als rode "sync mislukt"-toast getoond. In plaats daarvan:
 
-1. `besa-sync-reporter.js` herkent de fout via `besaIsAuthError(err)` en delegeert naar `window.besaHandleAuthFailure(err)`.
+1. `ff-sync-reporter.js` herkent de fout via `ffIsAuthError(err)` en delegeert naar `window.ffHandleAuthFailure(err)`.
 2. `auth-guard.js` levert die handler en doet één nette `signOut()` + `clearLocalCaches()` + `window.location.replace("login.html?next=<huidige-url>")`. Idempotent via `redirectInFlight`-flag.
 3. Een korte info-toast `"Sessie verlopen — log opnieuw in om door te gaan."` wordt nog getoond vóór de redirect (mits `showActionFeedback` beschikbaar is).
 4. `auth-guard.js` checkt ook proactief de sessie bij `visibilitychange` en `focus` events. Dat voorkomt dat een tab die lang in de achtergrond stond eerst een rij data-calls fail't voordat de gebruiker het door heeft.
 
 Wat dit betekent voor data-lagen en page-scripts:
-- Niets doen. Bestaande `try/catch` met `reportSilent()` of `showError()` werkt door — auth-fouten worden door `besa-sync-reporter.js` onderschept vóór de toast.
-- Wil je in een eigen `await`-flow checken of een fout een auth-fout is? Gebruik `window.besaIsAuthError(err)` en handel zelf af, of laat 'm gewoon doorvallen naar de `catch` waar `besaReportSyncFailure` wordt aangeroepen.
+- Niets doen. Bestaande `try/catch` met `reportSilent()` of `showError()` werkt door — auth-fouten worden door `ff-sync-reporter.js` onderschept vóór de toast.
+- Wil je in een eigen `await`-flow checken of een fout een auth-fout is? Gebruik `window.ffIsAuthError(err)` en handel zelf af, of laat 'm gewoon doorvallen naar de `catch` waar `ffReportSyncFailure` wordt aangeroepen.
 
 Verboden in Stage 8d+:
-- ❌ Een eigen redirect naar login schrijven in een page-script. Gebruik altijd `window.besaHandleAuthFailure(err)` zodat je de centrale logout-flow + cache-wis krijgt.
+- ❌ Een eigen redirect naar login schrijven in een page-script. Gebruik altijd `window.ffHandleAuthFailure(err)` zodat je de centrale logout-flow + cache-wis krijgt.
 - ❌ Catch-en op een data-call en alleen `console.error` doen — dan mist auth-detectie (zie sectie 6c-bis: gebruik `reportSilent`).
 
 #### 6d-ter. RLS authenticated-only sinds Stage 8c
@@ -379,8 +379,8 @@ Toegang vanuit JS:
 - `window.profilesDB.isAdmin()` — boolean shortcut.
 - `window.profilesDB.getAllSync()` — alle profielen (voor user-pickers).
 - `window.profilesDB.update(id, patch)` — wijzigt naam/email; rol-wijziging vereist admin (RLS).
-- `window.besaCurrentProfile` — direct beschikbaar object (gevuld vanuit cache).
-- Event `besa:profile-updated` op `window` na elke mutatie of bootstrap.
+- `window.ffCurrentProfile` — direct beschikbaar object (gevuld vanuit cache).
+- Event `ff:profile-updated` op `window` na elke mutatie of bootstrap.
 
 Default-rol voor nieuwe users via Dashboard: `medewerker`. Eerste user (backfill) krijgt `admin`. Toekomstige rol-wijziging gaat via SQL of (later) een admin-pagina. SQL-helpers `public.is_admin(uuid)` en `public.current_user_rol()` gebruiken we vanaf Stage 8c in alle RLS-policies om read/write per rol te beperken.
 
@@ -406,11 +406,11 @@ Verplichte oplossing:
    ```js
    function reportSilent(action, err) {
      console.error("[xxxDB] " + action + " mislukt:", err);
-     if (global.besaReportSyncFailure) global.besaReportSyncFailure("Domein — " + action, err);
+     if (global.ffReportSyncFailure) global.ffReportSyncFailure("Domein — " + action, err);
    }
    ```
 2. Vervang elke `console.error("[xxxDB] yyy mislukt:", err)` door `reportSilent("yyy", err)`.
-3. `besa-sync-reporter.js` MOET in de HTML worden geladen direct na `supabase-client.js`. De helper toont een gethrottlede toast (`showActionFeedback`) of fallback-modal aan de gebruiker en re-toont dezelfde domain-fout maximaal 1× per 5 sec.
+3. `ff-sync-reporter.js` MOET in de HTML worden geladen direct na `supabase-client.js`. De helper toont een gethrottlede toast (`showActionFeedback`) of fallback-modal aan de gebruiker en re-toont dezelfde domain-fout maximaal 1× per 5 sec.
 
 Page-scripts hoeven hierna niets meer te wrappen — alle bestaande aanroepen naar push-functies krijgen automatisch foutfeedback. Voor expliciete await-handling in `add()/update()/remove()` blijft de Promise-rejection het normale pad (page-script vangt `.catch()` zelf op met `showError`).
 

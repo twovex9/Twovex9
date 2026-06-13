@@ -67,7 +67,7 @@ Live test na PR #79.
 - [x] C6. Data-volume-pariteit: BS1=BS2=69 ✅ (na cleanup)
 - [x] C7. Content spot-check: naam/skj match
 - [x] C8. CRUD-cycle: alle 5 ops werken
-- [x] C9. Realtime: `besa:opleidingen-updated` event
+- [x] C9. Realtime: `ff:opleidingen-updated` event
 - [x] C10. parity.md: 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor)

@@ -14,13 +14,13 @@
  *   - Foutmeldingen onderscheiden tussen: PDOK-faal / OSRM-faal / netwerk
  *
  * Public API:
- *   await window.besaGeoDistance.geocode({postcode, huisnummer, plaats})
+ *   await window.ffGeoDistance.geocode({postcode, huisnummer, plaats})
  *     → {lat, lng, label} of null bij geen match
- *   await window.besaGeoDistance.routeKm(fromLatLng, toLatLng)
+ *   await window.ffGeoDistance.routeKm(fromLatLng, toLatLng)
  *     → km (number) of null bij fout
- *   await window.besaGeoDistance.calculateEnkeleReis(home, location)
+ *   await window.ffGeoDistance.calculateEnkeleReis(home, location)
  *     → {km, home, location} of {error: "..."}
- *   window.besaGeoDistance.clearCache()
+ *   window.ffGeoDistance.clearCache()
  *     → wist localStorage geocode + route cache (debug)
  */
 (function () {
@@ -28,8 +28,8 @@
 
   var PDOK = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free";
   var OSRM = "https://router.project-osrm.org/route/v1/driving";
-  var CACHE_KEY_GEO = "besa_geo_pdok_cache_v1";
-  var CACHE_KEY_OSRM = "besa_geo_osrm_cache_v1";
+  var CACHE_KEY_GEO = "ff_geo_pdok_cache_v1";
+  var CACHE_KEY_OSRM = "ff_geo_osrm_cache_v1";
   var TTL_GEO_MS = 30 * 24 * 3600 * 1000;  // 30 dagen
   var TTL_OSRM_MS = 7 * 24 * 3600 * 1000;  // 7 dagen
   var RETRY_DELAY_MS = 2000;
@@ -295,7 +295,7 @@
     try { window.localStorage.removeItem(CACHE_KEY_OSRM); } catch (e) {}
   }
 
-  window.besaGeoDistance = {
+  window.ffGeoDistance = {
     geocode: geocode,
     geocodeText: geocodeText,
     lookupAdres: lookupAdres,
