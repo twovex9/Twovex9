@@ -112,7 +112,7 @@ function oplFmtDate(iso) {
     td.textContent = message;
     td.style.textAlign = "center";
     td.style.padding = "24px";
-    td.style.color = "#9ca3af";
+    td.style.color = "var(--text-muted)";
     tr.appendChild(td);
     tbody.appendChild(tr);
   }

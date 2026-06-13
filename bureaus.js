@@ -90,7 +90,7 @@
       tdE.textContent = "Geen bureau's gevonden";
       tdE.style.textAlign = "center";
       tdE.style.padding = "24px";
-      tdE.style.color = "#9ca3af";
+      tdE.style.color = "var(--text-muted)";
       trE.appendChild(tdE);
       tbody.appendChild(trE);
     } else {
@@ -536,7 +536,7 @@
     if (cached.length > 0) {
       render();
     } else if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:#9ca3af;">Bureau\'s laden…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">Bureau\'s laden…</td></tr>';
     }
   }
 
