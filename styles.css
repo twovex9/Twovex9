@@ -27678,7 +27678,12 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .vl-table tbody tr:hover { background: var(--surface-alt); }
 .vl-table .vl-num { text-align: right; font-variant-numeric: tabular-nums; }
 .vl-table th.vl-num { text-align: right; }
-.vl-loc { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+/* Géén display:flex op de <td> zelf: dat haalt de cel uit de table-layout,
+   waardoor de onderrand op de eigen content-hoogte i.p.v. de rijhoogte valt
+   en de scheidslijn onder de Locatie-kolom een stukje "wegzakt". De dot lijnt
+   via vertical-align uit, dus de cel blijft een gewone table-cell. */
+.vl-loc { font-weight: 600; }
+.vl-loc .vl-dot { margin-right: 8px; }
 .vl-cell { display: inline-flex; align-items: center; gap: 7px; }
 .vl-cell-txt { font-variant-numeric: tabular-nums; }
 .vl-row--rood td:first-child { box-shadow: inset 3px 0 0 var(--red); }
