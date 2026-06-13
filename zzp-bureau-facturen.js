@@ -159,7 +159,7 @@
       box.innerHTML = rows.length ? rows.map(function (r) {
         var bn = (r.bureaus && r.bureaus.naam) || "?";
         return '<div class="zb-mgmt-item"><span>' + esc(r.user_email) + " → <b>" + esc(bn) + "</b></span>" +
-          '<a href="#" data-unlink="' + esc(r.user_email) + '" style="color:#b91c1c">ontkoppelen</a></div>';
+          '<a href="#" data-unlink="' + esc(r.user_email) + '" style="color:var(--red)">ontkoppelen</a></div>';
       }).join("") : '<div style="padding-top:6px">Nog geen bureau-logins gekoppeld.</div>';
     } catch (e) { box.innerHTML = '<div style="padding-top:6px">Lijst laden mislukt.</div>'; }
   }

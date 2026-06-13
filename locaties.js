@@ -107,7 +107,7 @@
       tdE.textContent = "Geen locaties gevonden";
       tdE.style.textAlign = "center";
       tdE.style.padding = "24px";
-      tdE.style.color = "#9ca3af";
+      tdE.style.color = "var(--text-muted)";
       trE.appendChild(tdE);
       tbody.appendChild(trE);
     } else {
@@ -740,7 +740,7 @@
     if (cached.length > 0) {
       render();
     } else if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#9ca3af;">Locaties laden…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">Locaties laden…</td></tr>';
     }
   }
 

@@ -67,14 +67,12 @@
       ".besa-adres-status{display:block;margin:6px 2px 0;font-size:12px;line-height:1.45;" +
         "color:var(--text-muted,#737373);min-height:1em;}" +
       ".besa-adres-status:empty{display:none;}" +
-      ".besa-adres-status.is-ok{color:var(--bas-ok,#15803d);}" +
-      ".besa-adres-status.is-err{color:var(--bas-err,#b45309);}" +
+      ".besa-adres-status.is-ok{color:var(--green);}" +
+      ".besa-adres-status.is-err{color:var(--yellow);}" +
       ".besa-adres-status .bas-spin{display:inline-block;width:11px;height:11px;" +
         "margin-right:6px;vertical-align:-1px;border:2px solid currentColor;" +
         "border-right-color:transparent;border-radius:50%;animation:bas-spin .7s linear infinite;}" +
-      "@keyframes bas-spin{to{transform:rotate(360deg)}}" +
-      ":root{--bas-ok:#15803d;--bas-err:#b45309;}" +
-      "[data-theme=\"dark\"]{--bas-ok:#4ade80;--bas-err:#fbbf24;}";
+      "@keyframes bas-spin{to{transform:rotate(360deg)}}";
     var st = document.createElement("style");
     st.id = STYLE_ID;
     st.textContent = css;
