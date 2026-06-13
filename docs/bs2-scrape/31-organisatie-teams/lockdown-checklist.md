@@ -42,8 +42,8 @@
 - [x] C5. FK team_leider_id matches medewerkers.id (uuid)
 - [x] C6. FK locatie_id matches locaties.id (uuid)
 - [x] C7. CRUD via teamsDB (add/update/archive/restore/delete)
-- [x] C8. besa:teams-updated event op window
-- [x] C9. Cascade re-renders bij besa:medewerkers-updated en besa:locaties-updated
+- [x] C8. ff:teams-updated event op window
+- [x] C9. Cascade re-renders bij ff:medewerkers-updated en ff:locaties-updated
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (Search/Beschrijving/Members-modal)
 
 ## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅

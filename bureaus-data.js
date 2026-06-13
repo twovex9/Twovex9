@@ -24,7 +24,7 @@
  *   getBureaus()  → leest uit cache (was: localStorage)
  *
  * Events:
- *   "besa:bureaus-updated" op `window` na elke mutatie of bootstrap.
+ *   "ff:bureaus-updated" op `window` na elke mutatie of bootstrap.
  *
  * Cache-formaat:
  *   { id, naam, standaardUurtarief, feePerUur,
@@ -36,7 +36,7 @@
 
   var CACHE_KEY = "hr_bureaus";
   var TABLE = "bureaus";
-  var EVENT_NAME = "besa:bureaus-updated";
+  var EVENT_NAME = "ff:bureaus-updated";
 
   function rowToObj(row) {
     if (!row) return null;
@@ -83,11 +83,11 @@
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[bureausDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: true });
@@ -146,7 +146,7 @@
     var src = input || {};
     var naam = String(src.naam || "").trim();
     if (!naam) throw new Error("Naam is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var payload = {
       naam: naam,
       standaard_uurtarief: toMoneyOrNull(src.standaardUurtarief),
@@ -156,7 +156,7 @@
     TEXT_FIELDS.forEach(function (f) {
       payload[f[1]] = textOrNull(src[f[0]]);
     });
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -171,7 +171,7 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var dbPatch = {};
     if (typeof patch.naam === "string") dbPatch.naam = patch.naam.trim();
     if (Object.prototype.hasOwnProperty.call(patch, "standaardUurtarief")) {
@@ -190,7 +190,7 @@
       var existing = readCache().find(function (b) { return b.id === id; });
       return existing || null;
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -208,8 +208,8 @@
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (b) { return b.id !== id; });
     writeCache(list);

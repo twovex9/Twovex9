@@ -1,7 +1,7 @@
 # Module 18 — Cliënten Gemeenten — STRUCTURE
 
 **BS2 URL**: `/clients/municipalities`
-**BS1 URL**: `https://besa-suite.vercel.app/gemeenten.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/gemeenten.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

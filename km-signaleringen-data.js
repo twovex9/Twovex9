@@ -7,11 +7,11 @@
 (function (global) {
   "use strict";
   var T = "km_signaleringen";
-  var CACHE = "besa_km_signaleringen_v1";
+  var CACHE = "ff_km_signaleringen_v1";
 
   function reportSilent(action, err) {
     console.error("[kmSignaleringenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Signaleringen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Signaleringen — " + action, err);
   }
   function readCache() {
     try { var r = JSON.parse(global.localStorage.getItem(CACHE) || "[]"); return Array.isArray(r) ? r : []; }
@@ -48,12 +48,12 @@
     };
   }
   function dispatchUpdated(reason) {
-    try { global.dispatchEvent(new CustomEvent("besa:km-signaleringen-updated", { detail: { reason: reason } })); } catch (e) {}
+    try { global.dispatchEvent(new CustomEvent("ff:km-signaleringen-updated", { detail: { reason: reason } })); } catch (e) {}
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(T)
       .select("id,signaal_type,ernst,medewerker_id,medewerker_naam,client_id,client_naam,locatie_id,locatie_naam,record_id,declaratie_id,jaar,maand,titel,omschrijving,waarde,drempel,status,behandeld_door,behandeld_op,aanmaakdatum")
       .order("aanmaakdatum", { ascending: false })
@@ -76,20 +76,20 @@
 
   // Roep de server-side heuristiek-engine aan en herlaad daarna de lijst.
   async function genereer() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.rpc("km_genereer_signaleringen", { p_dry_run: false });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.rpc("km_genereer_signaleringen", { p_dry_run: false });
     if (res.error) throw res.error;
     await refresh();
     return (res.data && res.data[0]) || res.data || null;
   }
 
   async function setStatus(id, status, profielId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (id == null) throw new Error("id vereist");
     var upd = { status: status, laatst_gewijzigd: new Date().toISOString() };
     if (status === "open") { upd.behandeld_door = null; upd.behandeld_op = null; }
     else { upd.behandeld_door = profielId || null; upd.behandeld_op = new Date().toISOString(); }
-    var res = await global.besaSupabase.from(T).update(upd).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(T).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var l = list();

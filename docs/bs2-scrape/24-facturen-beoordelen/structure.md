@@ -1,7 +1,7 @@
 # Module 24 — Facturen te beoordelen — STRUCTURE
 
 **BS2 URL**: `/invoices-module/invoices-to-review`
-**BS1 URL**: `https://besa-suite.vercel.app/facturen-te-beoordelen.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/facturen-te-beoordelen.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

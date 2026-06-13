@@ -24,8 +24,8 @@ Migration `create_beleidsdocumenten`:
 - `window.beleidsdocumentenDB` API: `ready`, `refresh`, `getAllSync`, `getByIdSync`, `add`, `update`, `archive`, `restore`, `delete`
 - Storage upload via `uploadToStorage()`, dataURL→Blob conversie, public URLs in cache
 - Cache in `localStorage["beleidsdocumenten_v1"]`, gesorteerd op volgnummer
-- Event `besa:beleidsdocumenten-updated` voor live re-renders
-- Bootstrap met fail-feedback via `besaReportSyncFailure` indien Supabase faalt
+- Event `ff:beleidsdocumenten-updated` voor live re-renders
+- Bootstrap met fail-feedback via `ffReportSyncFailure` indien Supabase faalt
 
 ### B2.4 — Admin page (`beleid.html`, 200 regels)
 - Standaard BS1 topbar (kopie van bestaande pattern)
@@ -45,7 +45,7 @@ Migration `create_beleidsdocumenten`:
 - `submitAddForm()` async: leest file als data-URL → `add()` of `update()` op data-laag
 - Archive & Purge slider-modals met 100%-confirm pattern conform werkpatronen 3a
 - Event-delegation op tbody voor edit/archive/restore/purge
-- `besa:beleidsdocumenten-updated` listener voor live updates
+- `ff:beleidsdocumenten-updated` listener voor live updates
 
 ### B2.6 — Data port: 15 BS2-protocollen ingevoegd via `execute_sql`
 | ID | Naam | Type |
@@ -69,13 +69,13 @@ Migration `create_beleidsdocumenten`:
 Alleen metadata — PDF/Word-bestanden zelf moeten nog door user geüpload worden via de nieuwe admin-page. Volgnummers 01-08 en 24-25 ontbreken (niet zichtbaar in BS2 page 1; pagina 2 niet gecaptured).
 
 ### B2.7 — Nav-link integration (deferred)
-De top-nav verwijst nog naar `werkruimte.html#beleid` op alle 30+ HTML files. Update naar `beleid.html` zou een mass-edit door alle pages vereisen. **Toegang voor nu via direct URL**: `https://besa-suite.vercel.app/beleid.html`.
+De top-nav verwijst nog naar `werkruimte.html#beleid` op alle 30+ HTML files. Update naar `beleid.html` zou een mass-edit door alle pages vereisen. **Toegang voor nu via direct URL**: `https://futureflow-app.vercel.app/beleid.html`.
 
 Aparte mini-taak voor later: regex-replace `href="werkruimte.html#beleid"` → `href="beleid.html"` in alle BS1 HTML files.
 
 ### B2.8 — Verify
 - Vercel build `655cc1c`: status Ready (Just now by ETheFuture)
-- Live URL: `https://besa-suite.vercel.app/beleid.html` → toont alle 15 protocollen
+- Live URL: `https://futureflow-app.vercel.app/beleid.html` → toont alle 15 protocollen
 - Console clean (alleen onschadelijke Chrome-extensie warning)
 - Network: GET supabase REST `/beleidsdocumenten?select=*&order=volgnummer.asc` → 200
 
@@ -92,5 +92,5 @@ Aparte mini-taak voor later: regex-replace `href="werkruimte.html#beleid"` → `
 
 - **medewerker-documenten-data.js is een goede template** voor Storage-backed data-lagen — copy structure + adapt scope
 - **Race condition** tussen `render()` op lege cache en bootstrap fetchAll: opgelost door `.ready.then(render)` na initial render
-- **De CLAUDE.md script-volgorde-regel** voorkomt silent failures: vergeet niet `besa-sync-reporter.js` + `auth-guard.js` + `profiles-data.js` vóór de data-laag
+- **De CLAUDE.md script-volgorde-regel** voorkomt silent failures: vergeet niet `ff-sync-reporter.js` + `auth-guard.js` + `profiles-data.js` vóór de data-laag
 - **Public bucket** is OK voor beleidsdocumenten (toegankelijk via auth-guarded pages alleen)

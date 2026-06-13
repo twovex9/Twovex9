@@ -16,7 +16,7 @@
     calamiteit: "Calamiteit", doktersbezoek: "Doktersbezoek", onbetaald: "Onbetaald", anders: "Anders",
   };
 
-  function supa() { if (!window.besaSupabase) throw new Error("Supabase client niet geladen"); return window.besaSupabase; }
+  function supa() { if (!window.ffSupabase) throw new Error("Supabase client niet geladen"); return window.ffSupabase; }
   function $(id) { return document.getElementById(id); }
   function esc(s) { var t = document.createElement("div"); t.textContent = s == null ? "" : String(s); return t.innerHTML; }
   function fmtDate(d) { if (!d) return "—"; var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d)); return m ? (m[3] + "-" + m[2] + "-" + m[1]) : esc(d); }
@@ -24,7 +24,7 @@
   function currentMid() {
     try {
       if (window.profilesDB && window.profilesDB.getCurrentSync) { var m = midOf(window.profilesDB.getCurrentSync()); if (m) return m; }
-      return midOf(window.besaCurrentProfile);
+      return midOf(window.ffCurrentProfile);
     } catch (e) { return null; }
   }
   function fmtNum(n) { if (n == null || isNaN(Number(n))) return "—"; var v = Number(n); return (Math.round(v * 10) / 10).toString().replace(".", ","); }
@@ -108,7 +108,7 @@
     } catch (err) {
       console.error("[mijn-verlof] indienen mislukt:", err);
       if (errEl) { errEl.textContent = "Indienen mislukt: " + (err && err.message ? err.message : "onbekende fout"); errEl.hidden = false; }
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Mijn verlof — indienen", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Mijn verlof — indienen", err);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = "Aanvraag indienen"; }
     }
@@ -131,10 +131,10 @@
   function wire(mid) {
     if ($("mv-add-btn")) $("mv-add-btn").addEventListener("click", function () { if ($("mv-form")) $("mv-form").hidden = !$("mv-form").hidden; });
     fillTypes();
-    window.addEventListener("besa:verloftypes-updated", fillTypes);
+    window.addEventListener("ff:verloftypes-updated", fillTypes);
     if ($("mv-cancel")) $("mv-cancel").addEventListener("click", function () { if ($("mv-form")) $("mv-form").hidden = true; });
     if ($("mv-submit")) $("mv-submit").addEventListener("click", function () { submit(mid); });
-    window.addEventListener("besa:verlof-updated", function () { loadAanvragen(mid); });
+    window.addEventListener("ff:verlof-updated", function () { loadAanvragen(mid); });
   }
 
   async function start() {
@@ -149,7 +149,7 @@
     await Promise.all([loadSaldo(mid), loadAanvragen(mid)]);
   }
 
-  function boot() { start(); window.addEventListener("besa:profile-updated", start); }
+  function boot() { start(); window.addEventListener("ff:profile-updated", start); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();

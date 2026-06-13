@@ -15,17 +15,17 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
   var TABLE = "medewerker_beschikbaarheid";
-  var EVENT_NAME = "besa:mijn-beschikbaarheid-updated";
+  var EVENT_NAME = "ff:mijn-beschikbaarheid-updated";
 
   var _map = {};               // datum(yyyy-mm-dd) → { status, begin, eind }
   var _range = { van: null, tot: null };
 
   function reportSilent(action, err) {
     console.error("[mijnBeschikbaarheidDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Mijn beschikbaarheid — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Mijn beschikbaarheid — " + action, err);
   }
   function emit() {
     try { window.dispatchEvent(new Event(EVENT_NAME)); } catch (e) { /* ok */ }
@@ -39,7 +39,7 @@
   /** Eigen beschikbaarheid in [vanISO, totISO] (inclusief) → map per datum. */
   async function fetchMaand(userId, vanISO, totISO) {
     if (!userId) { _map = {}; emit(); return _map; }
-    try { if (global.besaSupabaseReady) await global.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (global.ffSupabaseReady) await global.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     try {
       var r = await supa
         .from(TABLE)

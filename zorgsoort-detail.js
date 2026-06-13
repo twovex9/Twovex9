@@ -135,7 +135,7 @@
     return false;
   }
 
-  window.addEventListener("besa:zorgsoorten-updated", function () {
+  window.addEventListener("ff:zorgsoorten-updated", function () {
     var item = findZorgsoortCached();
     if (!item) {
       window.location.href = "zorgsoorten.html";

@@ -9,7 +9,7 @@
  *   - Kamerbeheer : kamers toevoegen (los/bulk), bewerken, archiveren (rol-gegate).
  *
  * Data uit bezetting_overzicht() (SECURITY DEFINER). Mutaties via de bezetting_*-RPC's.
- * Real-time multi-user via realtime-sync.js (besa:bezetting-updated → re-render).
+ * Real-time multi-user via realtime-sync.js (ff:bezetting-updated → re-render).
  */
 (function (global) {
   "use strict";
@@ -57,9 +57,9 @@
   var visibleTabs = [];
   var activeTab = null;
 
-  function adminTier() { try { return !!(global.besaIsAdminTier && global.besaIsAdminTier()); } catch (e) { return false; } }
+  function adminTier() { try { return !!(global.ffIsAdminTier && global.ffIsAdminTier()); } catch (e) { return false; } }
   function hasAnyRole(roles) {
-    try { return !!(global.besaPermissions && global.besaPermissions.hasAnyRole(roles)); } catch (e) { return false; }
+    try { return !!(global.ffPermissions && global.ffPermissions.hasAnyRole(roles)); } catch (e) { return false; }
   }
   function canSeeTab(tab) {
     var r = TAB_ROLES[tab];
@@ -596,7 +596,7 @@
 
   // ── Init ─────────────────────────────────────────────────────────────────────
   async function init() {
-    try { if (global.besaPermissionsReady) await global.besaPermissionsReady; } catch (e) { /* */ }
+    try { if (global.ffPermissionsReady) await global.ffPermissionsReady; } catch (e) { /* */ }
     try { if (global.profilesDB && global.profilesDB.ready) await global.profilesDB.ready; } catch (e) { /* */ }
 
     visibleTabs = TAB_ORDER.filter(canSeeTab);
@@ -684,7 +684,7 @@
     });
 
     // Live re-render bij data-updates (eigen mutatie + realtime van andere users)
-    global.addEventListener("besa:bezetting-updated", renderAll);
+    global.addEventListener("ff:bezetting-updated", renderAll);
 
     // Data laden + eerste render
     try { if (global.bezettingDB && global.bezettingDB.ready) await global.bezettingDB.ready; } catch (e) { /* */ }

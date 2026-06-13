@@ -27,4 +27,4 @@
 - 1 toggle (Naam)
 
 ## Events
-- `besa:organisaties-updated` event op window
+- `ff:organisaties-updated` event op window

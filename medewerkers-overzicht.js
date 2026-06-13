@@ -207,7 +207,7 @@
       window.location.href = "medewerker-detail.html?id=" + encodeURIComponent(tr.getAttribute("data-id"));
     });
 
-    window.addEventListener("besa:main-employees-updated", render);
+    window.addEventListener("ff:main-employees-updated", render);
   }
 
   function init() {

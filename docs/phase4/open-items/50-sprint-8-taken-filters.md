@@ -45,7 +45,7 @@ NIET-meegenomen voor v2 (out of 3u scope):
 
 **populateTeamlidFilter(sel)**:
 - Vult dropdown met alle niet-gearchiveerde medewerkers, alfabetisch gesorteerd
-- Refresh-listener op `besa:medewerkers-updated` event
+- Refresh-listener op `ff:medewerkers-updated` event
 
 **resetAllFilters()**:
 - Mirror BS2 "Reset" knop

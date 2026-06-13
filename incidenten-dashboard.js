@@ -4,7 +4,7 @@
  *
  * Bron-van-waarheid: window.incidentenDB (Supabase). Alle visualisaties
  * worden gerenderd uit de in-memory cache van de data-layer en automatisch
- * opnieuw getekend zodra er een mutatie is (besa:incidenten-updated).
+ * opnieuw getekend zodra er een mutatie is (ff:incidenten-updated).
  *
  * Geen externe charting library: alle charts zijn pure SVG / HTML / CSS.
  */
@@ -109,7 +109,7 @@
   // ---------------------------------------------------------------------------
   // Date-range presets
   // ---------------------------------------------------------------------------
-  // BS1-huisstijl datum-range component (besa-daterange.js). De preset-
+  // BS1-huisstijl datum-range component (ff-daterange.js). De preset-
   // knoppen (7d/30d/…) zetten de verborgen inputs direct; daarna syncen we
   // de pill zodat hij de gekozen periode toont.
   var drWidget = null;
@@ -1157,8 +1157,8 @@
     });
 
     // Live updates
-    ["besa:incidenten-updated", "besa:clienten-updated",
-     "besa:medewerkers-updated", "besa:locaties-updated"].forEach(function (evt) {
+    ["ff:incidenten-updated", "ff:clienten-updated",
+     "ff:medewerkers-updated", "ff:locaties-updated"].forEach(function (evt) {
       window.addEventListener(evt, renderAll);
     });
 
@@ -1178,8 +1178,8 @@
     wireUp();
     var box = $("id-period-range");
     var sEl = $("id-date-from"), eEl = $("id-date-to");
-    if (box && sEl && eEl && window.BesaDateRange) {
-      drWidget = window.BesaDateRange.mount({
+    if (box && sEl && eEl && window.FfDateRange) {
+      drWidget = window.FfDateRange.mount({
         container: box,
         startInput: sEl,
         endInput: eEl,

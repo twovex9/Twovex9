@@ -20,7 +20,7 @@
  *    actieve uitklapmenu.
  *  - Permissie-bewust: een onderwerp dat de huidige rol niet mag zien wordt niet
  *    toegevoegd. De toegangscheck spiegelt permissions-nav-hide.js (zelfde
- *    BESA_PAGE_PERMISSIONS / besaCan / admin-tier-logica), zodat de zijbalk
+ *    FF_PAGE_PERMISSIONS / ffCan / admin-tier-logica), zodat de zijbalk
  *    consistent is met het (eveneens afgeschermde) hover-menu.
  *  - Idempotent + zoom-veilig: kan meermaals draaien (na perm-load, na
  *    profiel-update) zonder dubbele items.
@@ -58,8 +58,8 @@
 
   function roleNames() {
     try {
-      if (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function") {
-        return global.besaPermissions.getRoleNames() || [];
+      if (global.ffPermissions && typeof global.ffPermissions.getRoleNames === "function") {
+        return global.ffPermissions.getRoleNames() || [];
       }
     } catch (e) {}
     return [];
@@ -67,7 +67,7 @@
 
   function adminTier() {
     try {
-      return !!(typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier());
+      return !!(typeof global.ffIsAdminTier === "function" && global.ffIsAdminTier());
     } catch (e) { return false; }
   }
 
@@ -76,7 +76,7 @@
   // zoals de afscherming dat doet.
   function pageAccessible(page) {
     if (!page) return true;
-    var map = global.BESA_PAGE_PERMISSIONS || {};
+    var map = global.FF_PAGE_PERMISSIONS || {};
     var req = map[page];
     if (req === null || req === undefined) return true;
 
@@ -99,7 +99,7 @@
     }
     if (req.action) {
       try {
-        return (typeof global.besaCan === "function") && global.besaCan(req.action, req.entity);
+        return (typeof global.ffCan === "function") && global.ffCan(req.action, req.entity);
       } catch (e) { return false; }
     }
     return true;
@@ -107,11 +107,11 @@
 
   // Permissies geladen? (zelfde signaal als permissions-nav-hide.js.) Voordat ze
   // geladen zijn geeft pageAccessible voor strikte pagina's mogelijk een verkeerd
-  // antwoord; we draaien onze definitieve pass daarom ná besaPermissionsReady.
+  // antwoord; we draaien onze definitieve pass daarom ná ffPermissionsReady.
   function permsLoaded() {
     try {
-      return !!(global.besaPermissions && typeof global.besaPermissions.debug === "function"
-        && global.besaPermissions.debug().loaded);
+      return !!(global.ffPermissions && typeof global.ffPermissions.debug === "function"
+        && global.ffPermissions.debug().loaded);
     } catch (e) { return false; }
   }
 
@@ -205,7 +205,7 @@
     // Inklap-knop + uitklap-handle toevoegen (anders mist deze zijbalk de toggle
     // en is hij bij een ingeklapte voorkeur onbereikbaar).
     try {
-      if (typeof global.besaInitSidebarCollapse === "function") global.besaInitSidebarCollapse();
+      if (typeof global.ffInitSidebarCollapse === "function") global.ffInitSidebarCollapse();
     } catch (e) {}
 
     return { aside: aside, container: nav };
@@ -218,7 +218,7 @@
     // (geen flits van niet-toegestane items).
     if (permsReady && !pageAccessible(item.page)) return false;
     if (!permsReady) {
-      var map = global.BESA_PAGE_PERMISSIONS || {};
+      var map = global.FF_PAGE_PERMISSIONS || {};
       if (map[item.page]) return false; // gegate pagina → wachten tot perms geladen
     }
     return true;
@@ -278,15 +278,15 @@
     // 2) Definitieve pass ná permissie- + profiel-load: nu kunnen we ook de
     //    gegate onderwerpen permissie-correct toevoegen.
     try {
-      var navReady = (global.besaPermissionsReady && typeof global.besaPermissionsReady.then === "function")
-        ? global.besaPermissionsReady : global.Promise.resolve();
+      var navReady = (global.ffPermissionsReady && typeof global.ffPermissionsReady.then === "function")
+        ? global.ffPermissionsReady : global.Promise.resolve();
       var profReady = (global.profilesDB && global.profilesDB.ready && typeof global.profilesDB.ready.then === "function")
         ? global.profilesDB.ready : global.Promise.resolve();
       global.Promise.all([navReady, profReady]).then(function () { try { sync(); } catch (e) {} });
     } catch (e) {}
 
     // 3) Dienstverband/rol kan ná de eerste pass binnenkomen (koude cache).
-    try { global.addEventListener("besa:profile-updated", function () { try { sync(); } catch (e) {} }); } catch (e) {}
+    try { global.addEventListener("ff:profile-updated", function () { try { sync(); } catch (e) {} }); } catch (e) {}
   }
 
   if (doc.readyState === "loading") {

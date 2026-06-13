@@ -75,7 +75,7 @@
       tb.addEventListener("click", function (e) { var tr = e.target.closest(".mp-row"); if (tr) openRow(tr); });
       tb.addEventListener("keydown", function (e) { if (e.key === "Enter") { var tr = e.target.closest(".mp-row"); if (tr) openRow(tr); } });
     }
-    window.addEventListener("besa:zzp-facturen-updated", render);
+    window.addEventListener("ff:zzp-facturen-updated", render);
     function go() { if (window.zzpFacturenDB) { zzpFacturenDB.ready.then(render); render(); } }
     if (window.profilesDB && window.profilesDB.ready) { window.profilesDB.ready.then(go); go(); }
     else go();

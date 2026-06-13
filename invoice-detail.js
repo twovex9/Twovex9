@@ -598,7 +598,7 @@
     $("inv-review-confirm").addEventListener("click", confirmReview);
     var pb = $("inv-print-btn");
     if (pb) pb.addEventListener("click", function () { window.print(); });
-    window.addEventListener("besa:invoices-updated", function () { load().catch(function () {}); });
+    window.addEventListener("ff:invoices-updated", function () { load().catch(function () {}); });
   }
 
   async function init() {

@@ -76,17 +76,17 @@
   }
 
   async function geocodeLocatie(loc) {
-    if (!loc || !global.besaGeoDistance) return null;
+    if (!loc || !global.ffGeoDistance) return null;
     try {
       if (loc.postcode || loc.plaats) {
-        var g = await global.besaGeoDistance.geocode({
+        var g = await global.ffGeoDistance.geocode({
           postcode: loc.postcode || "", huisnummer: loc.huisnummer || "",
           toevoeging: loc.toevoeging || "", plaats: loc.plaats || "",
         });
         if (g) return g;
       }
       var txt = [loc.straat, loc.huisnummer, loc.plaats].filter(Boolean).join(" ").trim() || loc.adres || loc.naam;
-      if (txt && global.besaGeoDistance.geocodeText) return await global.besaGeoDistance.geocodeText(txt);
+      if (txt && global.ffGeoDistance.geocodeText) return await global.ffGeoDistance.geocodeText(txt);
     } catch (e) { /* */ }
     return null;
   }
@@ -201,5 +201,5 @@
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", init);
   else init();
 
-  global.BesaKmCheckin = { mount: build };
+  global.FfKmCheckin = { mount: build };
 })(window);

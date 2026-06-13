@@ -1,7 +1,7 @@
 # Module 2 — Planning Overzicht — v3 LOCKDOWN (2026-05-15)
 
 **Status**: ✅ 30/30 + 2 CLEAN RUNS ZONDER fix tussendoor — wacht op user-bevestiging
-**Live URL BS1**: `https://besa-suite.vercel.app/planning.html`
+**Live URL BS1**: `https://futureflow-app.vercel.app/planning.html`
 **Live URL BS2**: `https://etf.acceptance.besasuite.nl/planning/overview`
 **Test-account**: `sonck802@gmail.com` (Admin, Jason Sonck)
 
@@ -84,7 +84,7 @@
 | # | Item | Verwacht | Werkelijk | Status |
 |---|---|---|---|---|
 | 29 | 0 BS1 console errors | Alleen Chrome-extensie noise OK | ✅ alleen extension noise | ✅ |
-| 30 | Realtime sync events listeners aanwezig | besa:clienten-updated + besa:medewerkers-updated wired | ✅ | ✅ |
+| 30 | Realtime sync events listeners aanwezig | ff:clienten-updated + ff:medewerkers-updated wired | ✅ | ✅ |
 
 ---
 
@@ -130,6 +130,6 @@
 ✅ **5 bugs gefixt + gemerged** (PR #177 + #178 + #179)
 ✅ **2 CLEAN RUNS** zonder fix tussendoor — identieke state
 ✅ **0 BS1 console errors**
-✅ **Visueel + functioneel verified live** op https://besa-suite.vercel.app/planning.html
+✅ **Visueel + functioneel verified live** op https://futureflow-app.vercel.app/planning.html
 
 **Wacht op user-bevestiging vóór doorgaan naar Module 3 (Urenregistratie).**

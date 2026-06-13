@@ -41,6 +41,6 @@
 - 12/12 close-ways werkend ✅
 
 ## Events
-- `besa:teams-updated` → re-render
-- `besa:medewerkers-updated` → re-render (cascade)
-- `besa:locaties-updated` → re-render (cascade)
+- `ff:teams-updated` → re-render
+- `ff:medewerkers-updated` → re-render (cascade)
+- `ff:locaties-updated` → re-render (cascade)

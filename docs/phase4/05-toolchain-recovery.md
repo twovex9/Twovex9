@@ -4,25 +4,25 @@
 
 ## Project-overzicht
 
-- **BS1 (target)**: vanilla HTML/JS app in `besa-suite-etf/`, hosted op Vercel: `https://besa-suite.vercel.app`
+- **BS1 (target)**: vanilla HTML/JS app in `future-flow/`, hosted op Vercel: `https://futureflow-app.vercel.app`
 - **BS1 Supabase**: project `ukjflilnhigozfoxowmj`, dashboard `https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj`
 - **BS2 (source)**: productie-demo, alleen UI: `https://etf.acceptance.besasuite.nl/home`, API: `https://api.etf.acceptance.besasuite.nl`
-- **GitHub repo**: `https://github.com/ETFalkmaar/besa-suite-`
-- **Local working dir**: `C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf`
+- **GitHub repo**: `https://github.com/twovex9/twovex9`
+- **Local working dir**: `C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow`
 
 ## Bij sessie-start — leesvolgorde
 
-1. `besa-suite-etf/CLAUDE.md` (auto-geladen)
-2. `besa-suite-etf/.claude/huisstijl.md` + `werkpatronen.md` (auto-geladen)
-3. `besa-suite-etf/docs/phase4/00-plan.md` (canonical plan)
-4. `besa-suite-etf/docs/phase4/03-eindstatus.md` (laatste eindstand)
-5. `besa-suite-etf/docs/phase4/04-open-items.md` (toekomstig werk)
+1. `future-flow/CLAUDE.md` (auto-geladen)
+2. `future-flow/.claude/huisstijl.md` + `werkpatronen.md` (auto-geladen)
+3. `future-flow/docs/phase4/00-plan.md` (canonical plan)
+4. `future-flow/docs/phase4/03-eindstatus.md` (laatste eindstand)
+5. `future-flow/docs/phase4/04-open-items.md` (toekomstig werk)
 6. Memory `~/.claude/projects/.../memory/MEMORY.md` (index)
-7. Memory `project_besa_phase4.md` + `feedback_besa_workflow.md`
+7. Memory `project_ff_phase4.md` + `feedback_ff_workflow.md`
 
 ## Permissions setup (eenmalig per machine)
 
-Bestand: `besa-suite-etf/.claude/settings.local.json` (gitignored, per-user).
+Bestand: `future-flow/.claude/settings.local.json` (gitignored, per-user).
 
 ```json
 {
@@ -62,7 +62,7 @@ Bestand: `besa-suite-etf/.claude/settings.local.json` (gitignored, per-user).
 Eenmalig via PowerShell aanmaken:
 
 ```powershell
-$path = "C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf\.claude\settings.local.json"
+$path = "C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow\.claude\settings.local.json"
 $json = @'
 ... (bovenstaande JSON) ...
 '@
@@ -150,7 +150,7 @@ Enter → bestand downloadt automatisch.
 ### Stap 3: Bestand plaatsen
 
 Verplaats het bestand uit Downloads naar:
-`C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf\scripts\bs2-exports\bs2-export-full.json`
+`C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow\scripts\bs2-exports\bs2-export-full.json`
 
 (overschrijft de oude — `.gitignore` blokkeert commit).
 
@@ -166,7 +166,7 @@ Verplaats het bestand uit Downloads naar:
 PowerShell:
 
 ```powershell
-cd "C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf"
+cd "C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow"
 $env:SUPABASE_SERVICE_KEY = "PLAK_HIER_DE_SERVICE_ROLE_KEY"
 node scripts/bs2-full-import.mjs
 node scripts/bs2-fk-resolve.mjs
@@ -193,13 +193,13 @@ Indien dupes: zie SQL-patroon in `docs/phase4/03-eindstatus.md` (medewerker/cli�
 Per persistente regel: Claude opent zelf BS1-pagina's via `mcp__Claude_in_Chrome__navigate`. Geen user-vraag.
 
 ```
-besa-suite.vercel.app/index.html       (medewerkers)
-besa-suite.vercel.app/clienten.html
-besa-suite.vercel.app/beschikkingen.html
-besa-suite.vercel.app/facturen.html
-besa-suite.vercel.app/planning.html
-besa-suite.vercel.app/incidenten.html
-besa-suite.vercel.app/verzuim.html
+futureflow-app.vercel.app/index.html       (medewerkers)
+futureflow-app.vercel.app/clienten.html
+futureflow-app.vercel.app/beschikkingen.html
+futureflow-app.vercel.app/facturen.html
+futureflow-app.vercel.app/planning.html
+futureflow-app.vercel.app/incidenten.html
+futureflow-app.vercel.app/verzuim.html
 ```
 
 Hard refresh (`Ctrl+Shift+R`) na deploy om browser-cache te wissen.
@@ -248,6 +248,6 @@ Hard refresh (`Ctrl+Shift+R`) na deploy om browser-cache te wissen.
 ## Eindcontact
 
 Bij problemen of beslissing-punten:
-- User instructie via Persona Memory (`feedback_besa_workflow.md`)
+- User instructie via Persona Memory (`feedback_ff_workflow.md`)
 - Plan-doc (`docs/phase4/00-plan.md`) bevat 6-fase structuur
 - Open-items (`docs/phase4/04-open-items.md`) bevat alle toekomstig werk

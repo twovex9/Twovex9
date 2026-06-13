@@ -219,9 +219,9 @@
     });
     var pStart = $("fact-tb-period-start"), pEnd = $("fact-tb-period-end");
     var pCont = $("fact-tb-period");
-    if (pStart && pEnd && pCont && window.BesaDateRange && window.BesaDateRange.mount) {
+    if (pStart && pEnd && pCont && window.FfDateRange && window.FfDateRange.mount) {
       try {
-        window.BesaDateRange.mount({
+        window.FfDateRange.mount({
           container: pCont, startInput: pStart, endInput: pEnd,
           allowEmpty: true, emptyLabel: "Periode",
         });
@@ -255,7 +255,7 @@
         colPanel.setAttribute("hidden", ""); colBtn.setAttribute("aria-expanded", "false");
       });
     }
-    window.addEventListener("besa:invoices-updated", render);
+    window.addEventListener("ff:invoices-updated", render);
   }
 
   function init() {

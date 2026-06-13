@@ -17,8 +17,8 @@
 - `tr { page-break-inside: avoid }` voor nette pagination
 
 ### 🖨️ JS-helper `pdf-export.js`
-- `besaPdfExport.printPage()` → `window.print()`
-- `besaPdfExport.downloadTableAsPdf(tableId, filename, title)` → echte PDF blob
+- `ffPdfExport.printPage()` → `window.print()`
+- `ffPdfExport.downloadTableAsPdf(tableId, filename, title)` → echte PDF blob
 - jsPDF + jspdf-autotable lazy-loaded vanaf CDN (geen overhead op pages die geen PDF nodig hebben)
 - A4 landscape, 8pt font, headers grijs
 - Respecteert Kolommen-kiezer `col-hidden` classes
@@ -31,7 +31,7 @@
 ## 2 HARDCORE CLEAN RUNS
 
 ### CLEAN RUN #1 — clienten.html
-- `besaPdfExport` loaded, 2 methods: [printPage, downloadTableAsPdf] ✅
+- `ffPdfExport` loaded, 2 methods: [printPage, downloadTableAsPdf] ✅
 - `has_print_media` = true (CSS @media print rules detected) ✅
 - Table `cl-table` aanwezig ✅
 - `downloadTableAsPdf('cl-table', 'test-export.pdf', 'Test Export Run 1')` → PDF blob 120963 bytes ✅
@@ -39,7 +39,7 @@
 - Console = 0 errors ✅
 
 ### CLEAN RUN #2 ZONDER fix tussendoor — index.html (medewerkers)
-- `besaPdfExport` loaded ✅
+- `ffPdfExport` loaded ✅
 - `has_print_media` = true ✅
 - Medewerker table heeft geen `id` attribuut (pre-existing BS1 quirk, niet Fase E.9 issue)
 - Na temp-id assignment → `downloadTableAsPdf(...)` → PDF blob 276380 bytes ✅

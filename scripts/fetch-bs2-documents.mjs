@@ -8,7 +8,7 @@
  *   - Token = jouw eigen sessie-JWT (bs2-token.txt of env BS2_PROD_TOKEN).
  *     Alleen lokaal gebruikt, nergens heen gestuurd, nooit gecommit.
  *
- * GEBRUIK (vanuit de map besa-suite-etf):
+ * GEBRUIK (vanuit de map future-flow):
  *   node scripts/fetch-bs2-documents.mjs
  *     -> leest C:\Users\sonck\Downloads\bs2-token.txt
  *   (of:  $env:BS2_PROD_TOKEN="<jwt>"; node scripts/fetch-bs2-documents.mjs )

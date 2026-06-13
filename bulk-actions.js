@@ -10,7 +10,7 @@
  *   - public.bulk_archive_medewerkers(ids uuid[], archived bool)
  *
  * Client-side gebruik:
- *   var result = await besaBulkActions.archiveClienten(ids, true);
+ *   var result = await ffBulkActions.archiveClienten(ids, true);
  *   // result = { success: true, affected: N, action: 'archiveren' }
  *
  * Audit-log: 1 entry per bulk-call met 'BULK:N' resource_id.
@@ -19,9 +19,9 @@
   "use strict";
 
   async function archiveClienten(ids, archived) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
     if (!Array.isArray(ids) || ids.length === 0) throw new Error("Geen ids opgegeven");
-    var res = await global.besaSupabase.rpc("bulk_archive_clienten", {
+    var res = await global.ffSupabase.rpc("bulk_archive_clienten", {
       p_ids: ids,
       p_archived: archived !== false,  // default true (archiveren)
     });
@@ -30,9 +30,9 @@
   }
 
   async function archiveMedewerkers(ids, archived) {
-    if (!global.besaSupabase) throw new Error("Supabase niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase niet geladen");
     if (!Array.isArray(ids) || ids.length === 0) throw new Error("Geen ids opgegeven");
-    var res = await global.besaSupabase.rpc("bulk_archive_medewerkers", {
+    var res = await global.ffSupabase.rpc("bulk_archive_medewerkers", {
       p_ids: ids,
       p_archived: archived !== false,
     });
@@ -40,7 +40,7 @@
     return res.data;
   }
 
-  global.besaBulkActions = {
+  global.ffBulkActions = {
     archiveClienten: archiveClienten,
     archiveMedewerkers: archiveMedewerkers,
   };

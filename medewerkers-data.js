@@ -28,16 +28,16 @@
  *   window.medewerkersDB.ready                 → Promise (bootstrap)
  *
  * Events:
- *   "besa:medewerkers-updated" op `window` na elke mutatie of bootstrap.
+ *   "ff:medewerkers-updated" op `window` na elke mutatie of bootstrap.
  */
 (function (global) {
   "use strict";
 
   var CACHE_KEY = "employeeItems";
   var LEGACY_CACHE_KEY = "employees";
-  var MIGRATION_FLAG_KEY = "besaMedewerkersMigrationDone_v1";
+  var MIGRATION_FLAG_KEY = "ffMedewerkersMigrationDone_v1";
   var TABLE = "medewerkers";
-  var EVENT_NAME = "besa:medewerkers-updated";
+  var EVENT_NAME = "ff:medewerkers-updated";
 
   // Velden die als eigen kolom in de DB staan (niet in data jsonb).
   var TOP_LEVEL_FIELDS = [
@@ -203,11 +203,11 @@
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[medewerkersDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("achternaam", { ascending: true });
@@ -228,10 +228,10 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!window.besaSupabase) return false;
+      if (!window.ffSupabase) return false;
 
       // Lezen van bestaande Supabase-data: alleen migreren als die leeg is.
-      var head = await window.besaSupabase
+      var head = await window.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -249,7 +249,7 @@
 
       console.info("[medewerkersDB] Eenmalige migratie van " + local.length + " medewerkers naar Supabase…");
       var payload = local.map(function (emp) { return objToInsertPayload(emp); });
-      var ins = await window.besaSupabase
+      var ins = await window.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -269,11 +269,11 @@
   var bootstrapPromise = null;
   var realtimeSubscribed = false;
   function trySubscribeRealtime(attempt) {
-    // Bug #73 fix: medewerkers-data.js loads zonder defer, dus besaRealtime
+    // Bug #73 fix: medewerkers-data.js loads zonder defer, dus ffRealtime
     // is mogelijk nog niet beschikbaar bij bootstrap. Retry tot 5×.
     if (realtimeSubscribed) return;
-    if (global.besaRealtime && typeof global.besaRealtime.subscribe === "function") {
-      global.besaRealtime.subscribe("medewerkers", function () { refresh(); });
+    if (global.ffRealtime && typeof global.ffRealtime.subscribe === "function") {
+      global.ffRealtime.subscribe("medewerkers", function () { refresh(); });
       realtimeSubscribed = true;
       return;
     }
@@ -303,9 +303,9 @@
   }
 
   async function add(emp) {
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var payload = objToInsertPayload(emp);
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -320,13 +320,13 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var current = readCache().find(function (e) { return e.id === id; }) || {};
     // Fase E.11 — optimistic-locking check
-    if (global.besaOptimisticLock && current.laatstGewijzigd) {
-      var safe = await global.besaOptimisticLock.check("medewerkers", id, current.laatstGewijzigd);
+    if (global.ffOptimisticLock && current.laatstGewijzigd) {
+      var safe = await global.ffOptimisticLock.check("medewerkers", id, current.laatstGewijzigd);
       if (!safe) {
-        var answer = await global.besaOptimisticLock.showConflictModal({
+        var answer = await global.ffOptimisticLock.showConflictModal({
           recordName: ((current.voornaam || "") + " " + (current.achternaam || "")).trim() || id,
         });
         if (answer !== "reload") {
@@ -344,7 +344,7 @@
     });
     var dbPatch = objToUpdatePayload(patch, currentData);
     if (Object.keys(dbPatch).length === 0) return current.id ? current : null;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -362,8 +362,8 @@
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (e) { return e.id !== id; });
     writeCache(list);
@@ -404,13 +404,13 @@
    * binnen de huidige UX (gebruiker bewerkt 1 medewerker tegelijk).
    */
   function syncFromLocalUpsert(emp) {
-    if (!emp || !window.besaSupabase) return;
+    if (!emp || !window.ffSupabase) return;
     var id = emp.id || emp.empId;
     if (!id) return;
     update(id, emp).catch(function (err) {
       console.error("[medewerkersDB] sync upsert mislukt:", err);
-      if (typeof window.besaReportSyncFailure === "function") {
-        window.besaReportSyncFailure("Medewerker opslaan", err);
+      if (typeof window.ffReportSyncFailure === "function") {
+        window.ffReportSyncFailure("Medewerker opslaan", err);
       }
     });
   }

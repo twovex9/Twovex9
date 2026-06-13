@@ -23,7 +23,7 @@
  *  - GROEN  = de rest. ID/BHV/medicatie/meldcode/IBAN maken NOOIT rood.
  * Per categorie telt het beste exemplaar; een exemplaar zonder vervaldatum is
  * aanwezig & geldig. (De oude strikte 7-puntseis van Lionel 2026-06-04 is op
- * verzoek losgelaten omdat BS2 milder rekent — zie [[project_besa_hr_doc_status_bs2]].)
+ * verzoek losgelaten omdat BS2 milder rekent — zie [[project_ff_hr_doc_status_bs2]].)
  *
  * NB De doc-status staat LOS van planbaarheid: een rode/oranje medewerker kan
  * handmatig planbaar worden gezet (medewerker.js → isPlannable); de melding blijft
@@ -41,7 +41,7 @@
  *  - window.medewerkerWarnings.hasWarnings(employeeId) → bool
  *
  * status = "green" | "orange" | "red"
- * Event "besa:medewerker-warnings-updated" met { medewerkerId } in detail.
+ * Event "ff:medewerker-warnings-updated" met { medewerkerId } in detail.
  */
 (function (global) {
   "use strict";
@@ -131,7 +131,7 @@
     // 90/60/30-gelaagdheid (G10): bepaal de drempel-bucket voor een soon-warning.
     function tierOf(dd) { return dd <= 30 ? 30 : (dd <= 60 ? 60 : 90); }
 
-    // Regel conform BS2 (zie [[project_besa_hr_doc_status_bs2]]):
+    // Regel conform BS2 (zie [[project_ff_hr_doc_status_bs2]]):
     //  ROOD   = VOG ontbreekt, of contract ontbreekt/verlopen.
     //  ORANJE = document (VOG/contract/ID/BHV) vervalt binnen WARN_DAYS, of een
     //           opleiding/training is verlopen.
@@ -204,7 +204,7 @@
   }
 
   // Overgenomen BS2-documentstatus: als een medewerker een bs2_doc_status heeft
-  // (ingelezen uit BS2 — zie [[project_besa_hr_doc_status_bs2]]), is DAT de
+  // (ingelezen uit BS2 — zie [[project_ff_hr_doc_status_bs2]]), is DAT de
   // bron-van-waarheid voor de stoplicht-kleur, exact zoals BS2 'm berekent. We
   // geven de bijbehorende errors/warnings terug; statusFromResult leidt daar de
   // kleur (rood/oranje/groen) consistent uit af. Medewerkers zonder deze status
@@ -295,16 +295,16 @@
       delete _cache[employeeId];
     }
     try {
-      global.dispatchEvent(new CustomEvent("besa:medewerker-warnings-updated", {
+      global.dispatchEvent(new CustomEvent("ff:medewerker-warnings-updated", {
         detail: { medewerkerId: employeeId || null },
       }));
     } catch (e) { /* */ }
   }
 
-  global.addEventListener("besa:medewerker-documenten-updated", function (e) {
+  global.addEventListener("ff:medewerker-documenten-updated", function (e) {
     invalidate(e && e.detail ? e.detail.medewerkerId : null);
   });
-  global.addEventListener("besa:medewerkers-updated", function () {
+  global.addEventListener("ff:medewerkers-updated", function () {
     invalidate(null);
   });
 

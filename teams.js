@@ -448,9 +448,9 @@
       });
     });
 
-    window.addEventListener("besa:teams-updated", render);
-    window.addEventListener("besa:medewerkers-updated", render);
-    window.addEventListener("besa:locaties-updated", render);
+    window.addEventListener("ff:teams-updated", render);
+    window.addEventListener("ff:medewerkers-updated", render);
+    window.addEventListener("ff:locaties-updated", render);
   }
 
   function init() {

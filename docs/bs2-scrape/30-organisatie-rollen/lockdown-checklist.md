@@ -39,7 +39,7 @@
 - [x] C4. RLS: auth-only via `to authenticated`
 - [x] C5. FK: profiles.rol_id uuid → org_roles.id (matches uuid type)
 - [x] C6. Cache: 2 keys (org_role_sections_v1 + org_roles_with_counts_v1) in localStorage
-- [x] C7. besa:org-rollen-updated event op window → re-render
+- [x] C7. ff:org-rollen-updated event op window → re-render
 - [x] C8. Sectie + rol naam 1:1 match met BS2 (op naam + volgorde + groepering)
 - [x] C9. Section descriptions in DB (BS1 superset)
 - [x] C10. parity.md: 100% functionele pariteit + 6 BS1-superset features (descriptions/search/empty-state/totaal/cache/live-refresh)

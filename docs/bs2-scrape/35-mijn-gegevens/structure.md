@@ -1,7 +1,7 @@
 # Module 35 — Mijn-gegevens — STRUCTURE
 
 **BS2 URL**: `https://etf.acceptance.besasuite.nl/account` (via user-menu "Mijn profiel")
-**BS1 URL**: `https://besa-suite.vercel.app/mijn-gegevens.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/mijn-gegevens.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page (/account)
@@ -27,7 +27,7 @@ BS1 heeft een **ander concept** dan BS2:
 
 ### 3 secties
 
-#### Sectie 1: Wat staat er over jou in BESA-suite?
+#### Sectie 1: Wat staat er over jou in Future Flow?
 - 12-stat grid: NAAM / E-MAIL / ROL / MEDEWERKER-ID / FUNCTIE / FASE / DIENSTVERBAND / NOTITIES (HR) / DOCUMENTEN / VERZUIM-PERIODEN / PLANNING-SHIFTS / GEËXPORTEERD OP
 - 2 buttons:
   - **Download mijn data (JSON)** — complete data-export (AVG Art. 20)

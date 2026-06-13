@@ -15,7 +15,7 @@
  *   .add({recordId, declaratieId, medewerkerId, datum, locatie, actie,
  *         kmBerekend, kmNieuw, reden})           -> insert (triggert HR-melding)
  *   .markAfgehandeld(id, behandeldDoor)          -> status 'afgehandeld'
- * Event: "besa:km-afwijkingen-updated" op window.
+ * Event: "ff:km-afwijkingen-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -25,8 +25,8 @@
 
   function reportSilent(action, err) {
     try { console.error("[kmAfwijkingenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Kilometer-afwijkingen — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Kilometer-afwijkingen — " + action, err);
     }
   }
 
@@ -38,7 +38,7 @@
     try { localStorage.setItem(CACHE, JSON.stringify(Array.isArray(items) ? items : [])); } catch (e) { /* */ }
   }
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:km-afwijkingen-updated", { detail: { source: source || "km-afwijkingen-data" } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:km-afwijkingen-updated", { detail: { source: source || "km-afwijkingen-data" } })); }
     catch (e) { /* */ }
   }
 
@@ -74,8 +74,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("id,record_id,declaratie_id,medewerker_id,datum,locatie,actie,km_berekend,km_nieuw,reden,status,behandeld_door,behandeld_op,aanmaakdatum,laatst_gewijzigd")
       .order("aanmaakdatum", { ascending: false });
@@ -89,8 +89,8 @@
     if (readCache().length) dispatchUpdated("cache");
     readyPromise = (async function () {
       try {
-        if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-          try { await global.besaSupabaseReady; } catch (e) { /* */ }
+        if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+          try { await global.ffSupabaseReady; } catch (e) { /* */ }
         }
         setList(await fetchAll());
         dispatchUpdated("bootstrap");
@@ -105,7 +105,7 @@
   function getOpenSync() { return sortNewest(list().filter(function (r) { return r && r.status === "open"; })); }
 
   async function add(p) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!p || !p.medewerkerId) throw new Error("medewerkerId vereist");
     var row = {
       record_id: p.recordId || null,
@@ -119,7 +119,7 @@
       reden: p.reden || "",
       status: "open",
     };
-    var res = await global.besaSupabase.from(TABLE).insert(row).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(row).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var arr = list(); arr.push(obj); setList(arr);
@@ -128,7 +128,7 @@
   }
 
   async function markAfgehandeld(id, behandeldDoor) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (id == null) throw new Error("id vereist");
     var upd = {
       status: "afgehandeld",
@@ -136,7 +136,7 @@
       behandeld_op: new Date().toISOString(),
       laatst_gewijzigd: new Date().toISOString(),
     };
-    var res = await global.besaSupabase.from(TABLE).update(upd).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var arr = list();

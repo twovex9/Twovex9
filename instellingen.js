@@ -56,11 +56,11 @@
   // Beheer-tabs (Gebruikers / Entiteiten) zijn admin-only. Sinds de pagina open is voor
   // elke ingelogde gebruiker (iedereen moet z'n eigen profiel kunnen beheren —
   // video-feedback eigenaar 2026-06-07) moeten deze tabs hier verborgen worden voor wie
-  // geen edit-settings heeft. Admin-tier wint via besaCan.
+  // geen edit-settings heeft. Admin-tier wint via ffCan.
   function canManageSettings() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      return (typeof window.besaCan === "function") && window.besaCan("edit", "settings");
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      return (typeof window.ffCan === "function") && window.ffCan("edit", "settings");
     } catch (e) { return false; }
   }
 
@@ -73,9 +73,9 @@
   var NOTIF_MANAGER_ROLES = ["Eigenaar", "Directeur", "Admin", "Zorgcoördinator", "HR"];
   function canManageNotifications() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      if (window.besaPermissions && typeof window.besaPermissions.hasAnyRole === "function") {
-        return window.besaPermissions.hasAnyRole(NOTIF_MANAGER_ROLES);
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      if (window.ffPermissions && typeof window.ffPermissions.hasAnyRole === "function") {
+        return window.ffPermissions.hasAnyRole(NOTIF_MANAGER_ROLES);
       }
     } catch (e) { /* */ }
     return false;
@@ -194,8 +194,8 @@
     if (_rolesByEmail) return _rolesByEmail;
     var map = {};
     try {
-      if (window.besaSupabase) {
-        var res = await window.besaSupabase.from("bs2_role_users").select("user_email, bs2_roles!inner(name)");
+      if (window.ffSupabase) {
+        var res = await window.ffSupabase.from("bs2_role_users").select("user_email, bs2_roles!inner(name)");
         if (!res.error && Array.isArray(res.data)) {
           res.data.forEach(function (row) {
             var e = String(row.user_email || "").toLowerCase();
@@ -371,9 +371,9 @@
   }
 
   async function getEntCount(table) {
-    if (!table || !window.besaSupabase) return null;
+    if (!table || !window.ffSupabase) return null;
     try {
-      var r = await window.besaSupabase.from(table).select("*", { count: "exact", head: true });
+      var r = await window.ffSupabase.from(table).select("*", { count: "exact", head: true });
       return r.error ? null : r.count;
     } catch (e) { return null; }
   }
@@ -428,7 +428,7 @@
       if (window.profilesDB && window.profilesDB.getCurrentSync) {
         profile = window.profilesDB.getCurrentSync();
       }
-      if (!profile && window.besaCurrentProfile) profile = window.besaCurrentProfile;
+      if (!profile && window.ffCurrentProfile) profile = window.ffCurrentProfile;
     } catch (e) { /* */ }
     if (!profile) return;
     document.getElementById("inst-profiel-voornaam").value = profile.voornaam || "";
@@ -442,13 +442,13 @@
     var el = document.getElementById("inst-profiel-rol");
     if (!el) return;
     function paint() {
-      var rollen = (window.besaPermissions && typeof window.besaPermissions.getRoleNames === "function")
-        ? window.besaPermissions.getRoleNames() : [];
+      var rollen = (window.ffPermissions && typeof window.ffPermissions.getRoleNames === "function")
+        ? window.ffPermissions.getRoleNames() : [];
       el.value = rollen.length ? rollen.join(", ") : ((profile && profile.rol) || "");
     }
     paint();
-    if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-      window.besaPermissionsReady.then(paint).catch(function () { /* */ });
+    if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+      window.ffPermissionsReady.then(paint).catch(function () { /* */ });
     }
   }
 
@@ -668,7 +668,7 @@
     buildUsrColPanel();
     wireUsrColPanel();
     // Re-render bij profile-updates
-    window.addEventListener("besa:profile-updated", function () {
+    window.addEventListener("ff:profile-updated", function () {
       if (state.activeTab === "gebruikers") renderGebruikers();
     });
 
@@ -676,8 +676,8 @@
     // zodra de permissie-DB-load klaar is (koude cache).
     applyAdminTabVisibility();
     try {
-      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-        window.besaPermissionsReady.then(applyAdminTabVisibility);
+      if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+        window.ffPermissionsReady.then(applyAdminTabVisibility);
       }
     } catch (e) { /* */ }
 
@@ -729,14 +729,14 @@
       }
     });
 
-    window.addEventListener("besa:notification-types-updated", function () {
+    window.addEventListener("ff:notification-types-updated", function () {
       renderNt();
       if (state.activeTab === "mijn-notificaties") renderMijnNotificaties();
     });
-    window.addEventListener("besa:notification-prefs-updated", function () {
+    window.addEventListener("ff:notification-prefs-updated", function () {
       if (state.activeTab === "mijn-notificaties") renderMijnNotificaties();
     });
-    window.addEventListener("besa:profile-updated", loadProfielForm);
+    window.addEventListener("ff:profile-updated", loadProfielForm);
   }
 
   function init() {

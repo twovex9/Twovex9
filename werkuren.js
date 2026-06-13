@@ -417,7 +417,7 @@
       + byPart + datePart + '. Werkuren kunnen niet gewijzigd, toegevoegd of verwijderd worden. Ontgrendel eerst via Urendeclaraties.';
     el.hidden = false;
   }
-  window.addEventListener("besa:locked-months-updated", function () { updateGlobalLockBanner(); renderAll(); });
+  window.addEventListener("ff:locked-months-updated", function () { updateGlobalLockBanner(); renderAll(); });
 
   function updateLockButton() {
     var btn = $("wu-lock-btn"); var label = $("wu-lock-btn-label");
@@ -463,8 +463,8 @@
   // bewerkfunctie (video-eis eigenaar 2026-06-07).
   function wuCanEdit() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      return (typeof window.besaCan === "function") && window.besaCan("manage", "employee-registered-hours");
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      return (typeof window.ffCan === "function") && window.ffCan("manage", "employee-registered-hours");
     } catch (e) { return false; }
   }
 
@@ -767,7 +767,7 @@
   }
 
   function initChips() {
-    if (!window.besaFilterChips) return;
+    if (!window.ffFilterChips) return;
     var defs = [
       { name: "user", btn: "wu-filter-user-btn", label: "Selecteer Gebruiker", clear: "Alle gebruikers tonen", set: function (v) { state.filterUser = v; } },
       { name: "client", btn: "wu-filter-client-btn", label: "Selecteer Cliënt", clear: "Alle cliënten tonen", set: function (v) { state.filterClient = v; } },
@@ -778,7 +778,7 @@
     defs.forEach(function (d) {
       var btn = $(d.btn); if (!btn || btn.dataset.chipInited) return;
       var arr = []; state.optionArrays[d.name] = arr;
-      state.chips[d.name] = window.besaFilterChips.createSearchSelectChip({
+      state.chips[d.name] = window.ffFilterChips.createSearchSelectChip({
         button: btn, label: d.label, options: arr, clearLabel: d.clear,
         onChange: function (v) { d.set(v); renderAll(); updateFiltersClearBtn(); updateAgendaLink(); },
       });
@@ -938,7 +938,7 @@
   // Export
   // ---------------------------------------------------------------------------
   function doExport() {
-    if (typeof window.besaExport !== "function") { toast("error", "Export-helper niet geladen"); return; }
+    if (typeof window.ffExport !== "function") { toast("error", "Export-helper niet geladen"); return; }
     var entries = getFilteredEntries();
     var data = entries.map(function (r) {
       return {
@@ -955,7 +955,7 @@
         "Beschrijving": stripHtml(r.beschrijving),
       };
     });
-    window.besaExport({
+    window.ffExport({
       filename: "geregistreerde-uren",
       title: "Geregistreerde uren — " + periodLabel(),
       columns: ["Medewerker", "Datum", "Starttijd", "Eindtijd", "Duur", "Cliënt", "Dienst", "Locatie", "Zorgsoort", "Label", "Beschrijving"],
@@ -1080,17 +1080,17 @@
     });
 
     // Live re-render bij data-changes
-    window.addEventListener("besa:werkuren-updated", function () { refreshAllOptions(); renderAll(); });
-    window.addEventListener("besa:werkuren-vergrendeld-updated", updateLockButton);
-    window.addEventListener("besa:medewerkers-updated", function () { refreshAllOptions(); renderAll(); });
-    window.addEventListener("besa:clienten-updated", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
-    window.addEventListener("besa:beschikkingen-updated", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
+    window.addEventListener("ff:werkuren-updated", function () { refreshAllOptions(); renderAll(); });
+    window.addEventListener("ff:werkuren-vergrendeld-updated", updateLockButton);
+    window.addEventListener("ff:medewerkers-updated", function () { refreshAllOptions(); renderAll(); });
+    window.addEventListener("ff:clienten-updated", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
+    window.addEventListener("ff:beschikkingen-updated", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
     window.addEventListener("beschikkingen:changed", function () { rebuildLookups(); refreshAllOptions(); renderAll(); });
-    window.addEventListener("besa:locaties-updated", function () { rebuildLookups(); renderAll(); });
-    window.addEventListener("besa:werkuren-labels-updated", refreshAllOptions);
+    window.addEventListener("ff:locaties-updated", function () { rebuildLookups(); renderAll(); });
+    window.addEventListener("ff:werkuren-labels-updated", refreshAllOptions);
     // Re-render zodra permissies geladen zijn → kijkfunctie (HR/Facilitair) krijgt geen
     // bewerk-knoppen, bewerkers (manage-employee-registered-hours) wél.
-    try { if (window.besaPermissionsReady && window.besaPermissionsReady.then) window.besaPermissionsReady.then(renderAll); } catch (e) { /* */ }
+    try { if (window.ffPermissionsReady && window.ffPermissionsReady.then) window.ffPermissionsReady.then(renderAll); } catch (e) { /* */ }
   }
 
   function init() {

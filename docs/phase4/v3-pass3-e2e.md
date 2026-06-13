@@ -40,7 +40,7 @@
 | Validation: `BS1Test2026!` + `DifferentPass1!` → "Wachtwoorden komen niet overeen" | ✅ |
 | Submit `BS1Test2026!` × 2 → G.4 2FA modal opent | ✅ |
 | QR-code scant in authenticator app | ✅ (na bug #75 + #76 fix) |
-| Authenticator toont "BESA Suite ETF / artan+m@besasolutions.nl" | ✅ |
+| Authenticator toont "Future Flow ETF / artan+m@besasolutions.nl" | ✅ |
 | 6-cijfer code submit → AAL2 + must_setup_2fa=false | ✅ |
 | Land op home met "Welkom, Test" | ✅ |
 

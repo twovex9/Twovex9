@@ -31,7 +31,7 @@ Bij elke release-tag push (`git tag v2.0.0 && git push --tags`) draait de volled
 - `actions/setup-node@v4` met node 20 + npm cache
 - `npm ci`
 - `npx playwright install --with-deps chromium` (~120MB, eenmalig per run)
-- `npm run test:e2e` met `BESA_BASE_URL=https://besa-suite.vercel.app` (default)
+- `npm run test:e2e` met `FF_BASE_URL=https://futureflow-app.vercel.app` (default)
 - Upload `playwright-report/` artifact (30 dagen retention)
 - Upload `test-results/` artifact bij failure (screenshots + videos voor debug)
 
@@ -39,10 +39,10 @@ Bij elke release-tag push (`git tag v2.0.0 && git push --tags`) draait de volled
 
 Authenticated tests (S11/S12) skippen graceful zonder secrets. Voor volledige coverage:
 
-1. Open <https://github.com/ETFalkmaar/besa-suite-/settings/secrets/actions>
+1. Open <https://github.com/twovex9/twovex9/settings/secrets/actions>
 2. Add 2 secrets:
-   - `BESA_E2E_EMAIL` = test-user email
-   - `BESA_E2E_PASSWORD` = test-user wachtwoord
+   - `FF_E2E_EMAIL` = test-user email
+   - `FF_E2E_PASSWORD` = test-user wachtwoord
 3. Bij volgende release-tag draait full suite incl. 8+ authenticated tests
 
 ### Manual trigger

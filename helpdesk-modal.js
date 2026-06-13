@@ -14,8 +14,8 @@
   var settings = null;
 
   async function loadSettings() {
-    if (!global.besaSupabase) return null;
-    var res = await global.besaSupabase.from("helpdesk_settings").select("*").limit(1).maybeSingle();
+    if (!global.ffSupabase) return null;
+    var res = await global.ffSupabase.from("helpdesk_settings").select("*").limit(1).maybeSingle();
     return res.data || null;
   }
 
@@ -33,7 +33,7 @@
 
     var overlay = document.createElement("div");
     overlay.className = "modal-overlay";
-    overlay.id = "besa-helpdesk-modal";
+    overlay.id = "ff-helpdesk-modal";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.style.cssText = "display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99997;" +
@@ -46,7 +46,7 @@
     dialog.innerHTML = '' +
       '<div class="modal-header" style="padding:18px 22px;border-bottom:1px solid var(--line,#e5e7eb);display:flex;align-items:center;justify-content:space-between;">' +
         '<h2 style="margin:0;font-size:17px;color:var(--text,#1a1a1a);">Hulp nodig?</h2>' +
-        '<button type="button" id="besa-helpdesk-close" aria-label="Sluiten" style="background:none;border:0;font-size:22px;cursor:pointer;color:var(--text-muted,#666);line-height:1;">&times;</button>' +
+        '<button type="button" id="ff-helpdesk-close" aria-label="Sluiten" style="background:none;border:0;font-size:22px;cursor:pointer;color:var(--text-muted,#666);line-height:1;">&times;</button>' +
       '</div>' +
       '<div class="modal-body" style="padding:18px 22px;color:var(--text,#1a1a1a);">' +
         '<p style="margin:0 0 14px;color:var(--text-secondary,#444);">' + escapeHtml(beschrijving) + '</p>' +
@@ -71,7 +71,7 @@
     modalEl = buildModal();
     document.body.appendChild(modalEl);
 
-    var closeBtn = document.getElementById("besa-helpdesk-close");
+    var closeBtn = document.getElementById("ff-helpdesk-close");
     if (closeBtn) closeBtn.addEventListener("click", close);
     modalEl.addEventListener("click", function (e) {
       if (e.target === modalEl) close();
@@ -94,8 +94,8 @@
   function wireHelpButton() {
     var btn = document.querySelector('button[aria-label="Help"]');
     if (!btn) return;
-    if (btn.dataset.besaHelpdeskWired === "1") return;
-    btn.dataset.besaHelpdeskWired = "1";
+    if (btn.dataset.ffHelpdeskWired === "1") return;
+    btn.dataset.ffHelpdeskWired = "1";
     btn.addEventListener("click", show);
   }
 
@@ -112,7 +112,7 @@
     setTimeout(wireHelpButton, 1500);
   }
 
-  global.besaHelpdesk = {
+  global.ffHelpdesk = {
     show: show,
     close: close,
     reloadSettings: function () { return loadSettings().then(function (s) { settings = s || {}; }); },

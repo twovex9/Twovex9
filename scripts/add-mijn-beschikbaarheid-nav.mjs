@@ -2,7 +2,7 @@
 // "Mijn facturen"-top-link op elke pagina met de topbar. Open voor elke
 // ingelogde gebruiker (page-map null); ZZP'ers geven zo op de PC hun
 // beschikbaarheid + tijden door (zelfde plek als Mijn facturen / Mijn uitnodigingen).
-// Run vanuit besa-suite-etf/: `node scripts/add-mijn-beschikbaarheid-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-mijn-beschikbaarheid-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

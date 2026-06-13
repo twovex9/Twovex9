@@ -15,9 +15,9 @@
  * gedefinieerd in `supabase/migrations/v3_fase_e1_schema_gaps.sql`.
  *
  * Usage in data-laag:
- *   var conflict = await window.besaOptimisticLock.check("medewerkers", id, lastKnownUpdatedAt);
+ *   var conflict = await window.ffOptimisticLock.check("medewerkers", id, lastKnownUpdatedAt);
  *   if (conflict) {
- *     window.besaOptimisticLock.showConflictModal({recordName: "Oumaima Achefay"});
+ *     window.ffOptimisticLock.showConflictModal({recordName: "Oumaima Achefay"});
  *     return;
  *   }
  *   await supabase.from("medewerkers").update(payload).eq("id", id);
@@ -34,8 +34,8 @@
    * @returns {Promise<boolean>} - true = NO conflict (safe to update), false = CONFLICT
    */
   async function check(tableName, id, clientUpdatedAt) {
-    if (!global.besaSupabase) {
-      console.warn("[optimistic-lock] besaSupabase niet geladen, skip check");
+    if (!global.ffSupabase) {
+      console.warn("[optimistic-lock] ffSupabase niet geladen, skip check");
       return true;  // fail-open
     }
     if (!clientUpdatedAt) {
@@ -43,7 +43,7 @@
       return true;  // fail-open
     }
     try {
-      var res = await global.besaSupabase.rpc("check_optimistic_lock", {
+      var res = await global.ffSupabase.rpc("check_optimistic_lock", {
         p_table_name: tableName,
         p_id: String(id),
         p_client_updated_at: clientUpdatedAt,
@@ -73,7 +73,7 @@
       // Build modal overlay (matches BS1 huisstijl)
       var overlay = document.createElement("div");
       overlay.className = "modal-overlay modal-overlay--confirm";
-      overlay.id = "besa-optimistic-lock-modal";
+      overlay.id = "ff-optimistic-lock-modal";
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
       overlay.style.cssText = "display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99998;" +
@@ -100,8 +100,8 @@
           '</p>' +
         '</div>' +
         '<div class="modal-footer" style="padding:14px 24px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--line,#e5e7eb);">' +
-          '<button type="button" class="btn-outline" id="besa-ol-cancel">Annuleren</button>' +
-          '<button type="button" class="btn-primary" id="besa-ol-reload">Pagina herladen</button>' +
+          '<button type="button" class="btn-outline" id="ff-ol-cancel">Annuleren</button>' +
+          '<button type="button" class="btn-primary" id="ff-ol-reload">Pagina herladen</button>' +
         '</div>';
 
       overlay.appendChild(dialog);
@@ -112,8 +112,8 @@
         resolve(answer);
       }
 
-      document.getElementById("besa-ol-cancel").addEventListener("click", function () { cleanup("cancel"); });
-      document.getElementById("besa-ol-reload").addEventListener("click", function () {
+      document.getElementById("ff-ol-cancel").addEventListener("click", function () { cleanup("cancel"); });
+      document.getElementById("ff-ol-reload").addEventListener("click", function () {
         cleanup("reload");
         window.location.reload();
       });
@@ -138,7 +138,7 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  global.besaOptimisticLock = {
+  global.ffOptimisticLock = {
     check: check,
     showConflictModal: showConflictModal,
   };

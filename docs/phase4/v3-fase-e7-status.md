@@ -8,13 +8,13 @@
 
 ## Architecture
 
-`realtime-sync.js` levert `window.besaRealtime`:
+`realtime-sync.js` levert `window.ffRealtime`:
 - `subscribe(tableName, onChangeCallback)` → opens Supabase Realtime channel
 - Debounced 1.5s — multiple rapid changes binnen window → 1 callback
 - Auto-cleanup on `beforeunload`
 - Tracks active subscriptions
 
-Data-lagen (clienten + medewerkers) subscriben in hun bootstrap. Bij postgres_changes events op de bijbehorende tabel → debounced refresh + `besa:<naam>-updated` event → UI re-render.
+Data-lagen (clienten + medewerkers) subscriben in hun bootstrap. Bij postgres_changes events op de bijbehorende tabel → debounced refresh + `ff:<naam>-updated` event → UI re-render.
 
 ## SQL (LIVE in productie)
 
@@ -25,10 +25,10 @@ Data-lagen (clienten + medewerkers) subscriben in hun bootstrap. Bij postgres_ch
 
 ## Bug #73 — Subscribe retry voor non-defer scripts
 
-**Detectie via RUN #2**: `index.html` (medewerkers-data.js zonder `defer`) had `getActiveSubscriptions()` → `[]`. medewerkers-data.js bootstrap fired BEFORE realtime-sync.js (mét defer) had geladen → `if (besaRealtime)` check false → silent skip.
+**Detectie via RUN #2**: `index.html` (medewerkers-data.js zonder `defer`) had `getActiveSubscriptions()` → `[]`. medewerkers-data.js bootstrap fired BEFORE realtime-sync.js (mét defer) had geladen → `if (ffRealtime)` check false → silent skip.
 
 **Fix**: `trySubscribeRealtime(attempt)` retry-pattern in beide data-lagen:
-- Max 10 retries × 300ms = 3s wachten op besaRealtime
+- Max 10 retries × 300ms = 3s wachten op ffRealtime
 - Idempotent via `realtimeSubscribed` boolean
 - Fail-graceful (geen exceptions)
 
@@ -59,7 +59,7 @@ Data-lagen (clienten + medewerkers) subscriben in hun bootstrap. Bij postgres_ch
 ## Eindstand E.7
 
 - ✅ Real-time multi-user sync LIVE op 11 tabellen
-- ✅ `besaRealtime.subscribe()` werkt met text-PK én uuid-PK
+- ✅ `ffRealtime.subscribe()` werkt met text-PK én uuid-PK
 - ✅ Debounce 1.5s tegen UI-thrashing
 - ✅ Auto-cleanup on beforeunload
 - ✅ Bug #73 fix robust voor non-defer script-load scenarios

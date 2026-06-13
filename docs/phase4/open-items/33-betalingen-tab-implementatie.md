@@ -25,7 +25,7 @@ Filter logica in `client-detail.js` → `renderBetalingen()`:
 
 ### Lazy load
 
-Tab-content wordt alleen gerenderd wanneer de tab geactiveerd wordt (`setTab("p")` triggert `renderBetalingen()`). Plus live-refresh bij `besa:facturen-updated` event als de tab op dat moment actief is.
+Tab-content wordt alleen gerenderd wanneer de tab geactiveerd wordt (`setTab("p")` triggert `renderBetalingen()`). Plus live-refresh bij `ff:facturen-updated` event als de tab op dat moment actief is.
 
 ### Files gewijzigd
 

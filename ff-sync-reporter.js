@@ -1,6 +1,6 @@
 /* global window */
 /**
- * besa-sync-reporter.js — centrale foutafhandeling voor "fire-and-forget"
+ * ff-sync-reporter.js — centrale foutafhandeling voor "fire-and-forget"
  * Supabase synchronisaties.
  *
  * Veel page-scripts (planning, compensatie, salarisadministratie,
@@ -12,20 +12,20 @@
  *
  * Deze module biedt één gestandaardiseerd opvangpunt:
  *
- *   window.besaFireAndForget(promise, domain)
+ *   window.ffFireAndForget(promise, domain)
  *     - Slikt de error niet op: hij wordt gelogd én getoond aan de
  *       gebruiker via toast (of save-modal als fallback).
  *     - Throttled per "domain": dezelfde domain laat maximaal 1 toast per
  *       5 seconden zien zodat een herhaald-falende sync de UI niet
  *       overspoelt.
  *
- *   window.besaReportSyncFailure(domain, err)
+ *   window.ffReportSyncFailure(domain, err)
  *     - Variant zonder Promise: voor handmatige meldingen.
  *
  * Sinds Stage 8d:
  *   - Auth-fouten (PGRST301 / 401 / 403 / "JWT expired" etc.) worden
  *     gedetecteerd en NIET als rode "sync mislukt" toast getoond.
- *     In plaats daarvan wordt window.besaHandleAuthFailure(err) aangeroepen
+ *     In plaats daarvan wordt window.ffHandleAuthFailure(err) aangeroepen
  *     (door auth-guard.js geleverd) die netjes uitlogt + naar login.html
  *     redirect met ?next=<huidige-url>.
  *   - Een minimale fallback-handler staat hier voor het geval auth-guard
@@ -82,10 +82,10 @@
   }
 
   function dispatchAuthFailure(err) {
-    try { console.warn("[besa:sync] auth-fout gedetecteerd, redirect naar login:", err); }
+    try { console.warn("[ff:sync] auth-fout gedetecteerd, redirect naar login:", err); }
     catch (e) { /* */ }
-    if (typeof global.besaHandleAuthFailure === "function") {
-      try { global.besaHandleAuthFailure(err); return; }
+    if (typeof global.ffHandleAuthFailure === "function") {
+      try { global.ffHandleAuthFailure(err); return; }
       catch (e) { /* val terug op de fallback */ }
     }
     fallbackAuthFailure();
@@ -115,24 +115,24 @@
     if (typeof global.showSaveModal === "function") {
       try { global.showSaveModal(body, titel); return; } catch (e) { /* fall through */ }
     }
-    try { console.warn("[besa:sync] " + titel + ": " + body); } catch (e) { /* */ }
+    try { console.warn("[ff:sync] " + titel + ": " + body); } catch (e) { /* */ }
   }
 
   function fireAndForget(promise, domain) {
     if (!promise || typeof promise.then !== "function") return promise;
     return promise.catch(function (err) {
-      try { console.error("[besa:sync] " + (domain || "?") + " mislukt:", err); }
+      try { console.error("[ff:sync] " + (domain || "?") + " mislukt:", err); }
       catch (e) { /* */ }
       showFailureToast(domain || "Synchronisatie", err);
       return null;
     });
   }
 
-  global.besaFireAndForget = fireAndForget;
-  global.besaReportSyncFailure = function (domain, err) {
-    try { console.error("[besa:sync] " + (domain || "?") + " mislukt:", err); }
+  global.ffFireAndForget = fireAndForget;
+  global.ffReportSyncFailure = function (domain, err) {
+    try { console.error("[ff:sync] " + (domain || "?") + " mislukt:", err); }
     catch (e) { /* */ }
     showFailureToast(domain || "Synchronisatie", err);
   };
-  global.besaIsAuthError = isAuthError;
+  global.ffIsAuthError = isAuthError;
 })(typeof window !== "undefined" ? window : this);

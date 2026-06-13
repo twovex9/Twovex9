@@ -10,9 +10,9 @@
  *     incidenten waar de huidige user MELDER is).
  *
  * Re-render triggers:
- *   - besa:incidenten-updated
- *   - besa:medewerkers-updated, besa:clienten-updated, besa:locaties-updated
- *   - besa:profile-updated
+ *   - ff:incidenten-updated
+ *   - ff:medewerkers-updated, ff:clienten-updated, ff:locaties-updated
+ *   - ff:profile-updated
  */
 (function () {
   "use strict";
@@ -48,11 +48,11 @@
 
   function computeIncidentScope() {
     try {
-      var adminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
-      var can = (typeof window.besaCan === "function");
+      var adminTier = (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier());
+      var can = (typeof window.ffCan === "function");
       return !!(adminTier
-        || (can && window.besaCan("view", "incident-dashboard"))
-        || (can && window.besaCan("handle", "incidents")));
+        || (can && window.ffCan("view", "incident-dashboard"))
+        || (can && window.ffCan("handle", "incidents")));
     } catch (e) { return true; } // bij twijfel niets verbergen
   }
 
@@ -784,9 +784,9 @@
       }
     });
 
-    ["besa:incidenten-updated", "besa:clienten-updated", "besa:medewerkers-updated",
-     "besa:locaties-updated", "besa:profile-updated",
-     "besa:incident-categorieen-updated"].forEach(function (evt) {
+    ["ff:incidenten-updated", "ff:clienten-updated", "ff:medewerkers-updated",
+     "ff:locaties-updated", "ff:profile-updated",
+     "ff:incident-categorieen-updated"].forEach(function (evt) {
       window.addEventListener(evt, renderAll);
     });
   }
@@ -799,8 +799,8 @@
     renderAll();
     // Authoritatief: na DB-load van de permissies de scope (her)toepassen.
     try {
-      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-        window.besaPermissionsReady.then(function () {
+      if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+        window.ffPermissionsReady.then(function () {
           var before = canSeeAllIncidents;
           applyIncidentScope();
           // Alleen herrenderen als de scope wijzigde (bv. koude cache → nu vergrendeld).

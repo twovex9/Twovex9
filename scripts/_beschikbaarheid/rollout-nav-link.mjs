@@ -6,7 +6,7 @@
  * De link wordt direct ná het "Overzicht planning"-item ingevoegd (dat item komt
  * in alle pagina's met de Planning-dropdown voor → veilig anker).
  *
- * Run vanaf de repo-root van besa-suite-etf:
+ * Run vanaf de repo-root van future-flow:
  *   node scripts/_beschikbaarheid/rollout-nav-link.mjs
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";

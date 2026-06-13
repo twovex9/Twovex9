@@ -44,7 +44,7 @@
 - [x] C6. Data: 93 records (na Bug #48 +3 toegevoegd)
 - [x] C7. Content spot-check: alle 4 BS2 records aanwezig
 - [x] C8. CRUD: add/archive/restore/purge alle werken
-- [x] C9. besa:organisaties-updated event
+- [x] C9. ff:organisaties-updated event
 - [x] C10. parity.md: 100% functioneel, BS1 superset (broader context)
 
 ## D. ULTRA-DEEP — 9/9 modal × close-ways ✅

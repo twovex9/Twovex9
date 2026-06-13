@@ -41,7 +41,7 @@
         if (p && p.id) return p.id;
       }
     } catch (e) { /* */ }
-    return (window.besaCurrentProfile && window.besaCurrentProfile.id) || null;
+    return (window.ffCurrentProfile && window.ffCurrentProfile.id) || null;
   }
 
   function rows() {
@@ -106,8 +106,8 @@
       var btn = e.target.closest ? e.target.closest(".kmafw-handle-btn") : null;
       if (btn) handle(btn.getAttribute("data-id"));
     });
-    window.addEventListener("besa:km-afwijkingen-updated", render);
-    window.addEventListener("besa:medewerkers-updated", render);
+    window.addEventListener("ff:km-afwijkingen-updated", render);
+    window.addEventListener("ff:medewerkers-updated", render);
   }
 
   async function boot() {

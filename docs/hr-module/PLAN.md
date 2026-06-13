@@ -86,7 +86,7 @@ mijn-uren + mijn-beschikbaarheid · salarishuis (CAO-lookup + audit) · client-s
 - [x] G45 — `management_dashboard_v1` RPC gespiegeld naar `supabase/migrations/management_dashboard_v1.sql` (auditeerbaar; idempotent gevalideerd op prod). RLS-helpers al in Fase 0; bs2_*=datatabellen.
 - [x] G55 — generiek per-rol slug-plan-gereedschap `scripts/rol-permissies.mjs` (--list/--dump/--diff/--apply met dry-run+--yes; JSON-plannen reproduceerbaar/omkeerbaar). Getest read-only op prod (15 rollen; beleid dump→diff = 0/0).
 - [x] G56 — `strict: true` op de salaris-gevoelige pagina's (salarishuis ×2, salarisadministratie-exporter, loonstroken, compliance-dashboard): admin-tier-bypass uit, alleen expliciete rollen (zelfde fail-closed model als Financiën). Cold-cache fail-closed bestond al (PR #568).
-- [x] G57 — herbruikbare `besaApplyReadOnly(roles, {scope, banner})` in permissions.js: disable't invoer + verbergt muterende knoppen (MutationObserver voor dynamische content), admin-tier blijft volledig, zoekvelden blijven werken, data-ro-keep/-hide opt-outs, één banner.
+- [x] G57 — herbruikbare `ffApplyReadOnly(roles, {scope, banner})` in permissions.js: disable't invoer + verbergt muterende knoppen (MutationObserver voor dynamische content), admin-tier blijft volledig, zoekvelden blijven werken, data-ro-keep/-hide opt-outs, één banner.
 
 ### Fase 6 — Notificatie-cron + infra  [~]
 - [x] G8  — `notify_vervallende_documenten()` dagelijkse digest-cron (verlopen/30/60/90) → HR. Server-getest (dedup OK). `hr_v4_verloop_documenten_cron.sql`. KERN-DIFFERENTIATOR.
@@ -106,7 +106,7 @@ Geen open gaps meer. Enige acties die op de eigenaar wachten (geen code):
 - Salarisdata (schaal/trede/uurkostprijs) en opleidings-koppelingen vullen → personeelskosten-KPI's en SKJ-saldi worden vanzelf representatief (alles is al "eerlijk-bij-dunne-data" gelabeld).
 
 ## Test-eindeis
-2 opeenvolgende clean Chrome-runs (licht + donker) via QA-accounts per rol op futureflow-etf.vercel.app —
+2 opeenvolgende clean Chrome-runs (licht + donker) via QA-accounts per rol op futureflow-app.vercel.app —
 geen enkele bug/console-fout. Per-rol verificatie (Medewerker/HR/Directeur/Eigenaar) van de spec-rolmatrix.
 
 ### ✅ Acceptatie-resultaat 2026-06-09 (sessie #2) — GEHAALD voor het geleverde scope
@@ -119,7 +119,7 @@ extensie-`vendor.js` "No Listener"-melding, die niet van de app is):
 Mobiel (future-flow-mobile.vercel.app, qa-medewerker, licht+donker): /salaris (loonstroken+jaaropgaven+signed-URL) en /verlof (saldo + aanvraag → "In behandeling") end-to-end getest.
 
 ⚠️ qa-identity-switch in één tab: na cache-wis toont de 1e load alle nav-links; 1× reload → nav-hide
-pruned correct uit `besa-permissions-v2`. Echte gebruikers (persistente sessie) hebben dit niet.
+pruned correct uit `ff-permissions-v2`. Echte gebruikers (persistente sessie) hebben dit niet.
 
 NB: de loonstrook-mei-2026 + jaaropgave-2025 + bucketbestanden op test-medewerker `fa11c0de-…0001`
 zijn bewust NIET verwijderd (QA-demo-fixtures; verwijderen = destructief → eigenaarskeuze).

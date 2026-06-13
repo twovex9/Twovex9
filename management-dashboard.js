@@ -84,13 +84,13 @@
     }
     box.innerHTML = sorted.map(function (s) {
       var cls = s.ernst === "rood" ? "md-signal--rood" : "md-signal--oranje";
-      var btn = window.besaOplossen ? window.besaOplossen.signalBtn(s.domein, s.tekst) : "";
+      var btn = window.ffOplossen ? window.ffOplossen.signalBtn(s.domein, s.tekst) : "";
       return '<div class="md-signal ' + cls + '">'
         + '<span class="md-signal-dom">' + escHtml(s.domein || "") + "</span>"
         + '<span class="md-signal-txt">' + escHtml(s.tekst || "") + "</span>"
         + btn + "</div>";
     }).join("");
-    if (window.besaOplossen) window.besaOplossen.bindSignals(box);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(box);
   }
 
   // ─── Tegels + snelle statistieken ────────────────────────────────────────
@@ -145,9 +145,9 @@
       + (btnHtml || "")
       + "</div>";
   }
-  // navBtn-shortcut met guard; geeft "" als besa-oplossen ontbreekt.
+  // navBtn-shortcut met guard; geeft "" als ff-oplossen ontbreekt.
   function oplosBtn(url, knop, uitleg) {
-    return window.besaOplossen ? window.besaOplossen.navBtn(url, knop, uitleg) : "";
+    return window.ffOplossen ? window.ffOplossen.navBtn(url, knop, uitleg) : "";
   }
   function deltaHtml(d) {
     var fin = d.financien || {};
@@ -186,7 +186,7 @@
         metricCard("Nog te declareren", eur(fin.nog_te_declareren), "achterstand zorg → declaratie", null, nogDeclBtn),
         metricCard("Liquiditeit", escHtml(liq.status || "—"), "te ontvangen " + eur(liq.te_ontvangen) + " · te betalen " + eur(liq.te_betalen), liqAccent, liqBtn),
       ].join("");
-      if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
+      if (window.ffOplossen) window.ffOplossen.bindSignals(grid);
     }
     var note = $("md-fin-note");
     if (note) {
@@ -236,7 +236,7 @@
       );
     }
     grid.innerHTML = cards.join("");
-    if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(grid);
   }
 
   // ─── Domein: Planning ────────────────────────────────────────────────────
@@ -262,7 +262,7 @@
       metricCard("Oproepen uitstaand", intl(pl.oproepen_uitstaand), "wachten op bevestiging medewerker"),
       metricCard("Diensten vandaag", intl(pl.diensten_vandaag), "totaal ingepland"),
     ].join("");
-    if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
+    if (window.ffOplossen) window.ffOplossen.bindSignals(grid);
   }
 
   // ─── Domein: Incidenten & klachten ───────────────────────────────────────
@@ -297,7 +297,7 @@
         metricCard("Klachten in behandeling", intl(inc.klachten_in_behandeling), intl(inc.klachten_open) + " open klacht(en)", klachtAccent, klachtBtn),
         metricCard("Totaal openstaand", intl(inc.totaal_open), "alle openstaande incidenten"),
       ].join("");
-      if (window.besaOplossen) window.besaOplossen.bindSignals(grid);
+      if (window.ffOplossen) window.ffOplossen.bindSignals(grid);
     }
     var catBox = $("md-inc-cat");
     if (catBox) {
@@ -458,9 +458,9 @@
         } else { done(); }
       });
     }
-    window.addEventListener("besa:management-dashboard-updated", render);
-    window.addEventListener("besa:nieuws-updated", renderNews);
-    window.addEventListener("besa:profile-updated", renderGreeting);
+    window.addEventListener("ff:management-dashboard-updated", render);
+    window.addEventListener("ff:nieuws-updated", renderNews);
+    window.addEventListener("ff:profile-updated", renderGreeting);
     // Automatisch verversen elke 5 minuten (spec).
     setInterval(function () {
       if (window.managementDashboardDB && window.managementDashboardDB.refresh) window.managementDashboardDB.refresh();

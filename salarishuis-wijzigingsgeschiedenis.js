@@ -155,5 +155,5 @@
   });
 
   // Re-render zodra de Supabase-bootstrap of een log-actie de cache ververst.
-  window.addEventListener("besa:salarishuis-updated", render);
+  window.addEventListener("ff:salarishuis-updated", render);
 })();

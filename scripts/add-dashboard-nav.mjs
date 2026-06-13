@@ -2,7 +2,7 @@
 // Dashboard) toe direct ná de "Home"-link in de topbar van elke pagina.
 // Voor niet-bevoegde rollen wordt de link automatisch verborgen door
 // permissions-nav-hide.js (strict: alleen Eigenaar/Directeur).
-// Run vanuit besa-suite-etf/: `node scripts/add-dashboard-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-dashboard-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

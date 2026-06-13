@@ -579,7 +579,7 @@
   async function init() {
     if (!window.financienLocatiesDB) { renderNoAccess(); return; }
     wire();
-    try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (window.ffSupabaseReady) await window.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     await loadAll();
     // Toegangscheck: een niet-bevoegde user krijgt door RLS 0 rijen + de RPC weigert.
     // We doen een lichte dashboard-check om "geen toegang" netjes te tonen.

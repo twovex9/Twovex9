@@ -28,4 +28,4 @@
 - Per kolom: th-click → toggle Asc/Desc
 
 ## Events
-- `besa:beschikking-updated` event op window bij mutaties
+- `ff:beschikking-updated` event op window bij mutaties

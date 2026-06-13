@@ -13,7 +13,7 @@ Playwright-based browser tests die regressies vangen vóór ze in productie kome
 ## Eerste keer setup (~3 min)
 
 ```powershell
-cd "C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf"
+cd "C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow"
 npm install                  # installeert @playwright/test (~50MB)
 npm run test:e2e:install     # downloadt chromium (~120MB)
 ```
@@ -25,7 +25,7 @@ npm run test:e2e             # alle tests, headless
 npm run test:e2e:ui          # interactive mode met browser-UI
 ```
 
-Default test-target is **productie** (`https://besa-suite.vercel.app`).
+Default test-target is **productie** (`https://futureflow-app.vercel.app`).
 
 Voor lokaal testen:
 
@@ -34,7 +34,7 @@ Voor lokaal testen:
 python -m http.server 8000
 
 # Run tests tegen lokaal:
-$env:BESA_BASE_URL = "http://localhost:8000"
+$env:FF_BASE_URL = "http://localhost:8000"
 npm run test:e2e
 ```
 
@@ -43,7 +43,7 @@ npm run test:e2e
 Bij elke PR krijg je een Vercel preview URL. Test daartegen:
 
 ```powershell
-$env:BESA_BASE_URL = "https://besa-suite-PREVIEW-xxx.vercel.app"
+$env:FF_BASE_URL = "https://futureflow-app.vercel.app"
 npm run test:e2e
 ```
 

@@ -20,7 +20,7 @@
  *   kilometerDeclaratiesDB.getRecordsForDeclaratieSync(declId) → per-dag
  *   kilometerDeclaratiesDB.getRawBs2(id)  → volledige BS2-declaratie (on-demand)
  *
- * Events: "besa:kilometer-declaraties-updated" op window.
+ * Events: "ff:kilometer-declaraties-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -32,8 +32,8 @@
 
   function reportSilent(action, err) {
     try { console.error("[kilometerDeclaratiesDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Kilometer-declaraties — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Kilometer-declaraties — " + action, err);
     }
   }
 
@@ -51,7 +51,7 @@
   }
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:kilometer-declaraties-updated", {
+      global.dispatchEvent(new CustomEvent("ff:kilometer-declaraties-updated", {
         detail: { source: source || "kilometer-declaraties-data" },
       }));
     } catch (e) { /* */ }
@@ -128,14 +128,14 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var dRes = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var dRes = await global.ffSupabase
       .from(T_DECL)
       .select("id,medewerker_id,jaar,maand,status,total_kilometers,total_reimbursement,submitted_at,submission_status,is_editable,can_be_submitted,is_deadline_passed,data,aanmaakdatum,laatst_gewijzigd")
       .order("jaar", { ascending: false })
       .order("maand", { ascending: false });
     if (dRes.error) throw dRes.error;
-    var rRes = await global.besaSupabase
+    var rRes = await global.ffSupabase
       .from(T_REC)
       .select("id,declaratie_id,datum,beschrijving,kilometers,type,type_display,is_automatic,locatie_naam,locatie_bs2_id,client_id,client_naam,locatie_id,traject_type,vertrekadres,bestemmingsadres,reden,km_berekend,data,approval_status,approved_by,approved_by_naam,approved_at,rejection_reason,aanmaakdatum,laatst_gewijzigd")
       .order("datum", { ascending: true });
@@ -198,8 +198,8 @@
 
   // Volledige BS2-raw on-demand (NIET gecachet — DATA-SLIM).
   async function getRawBs2(id) {
-    if (!global.besaSupabase || id == null) return null;
-    var res = await global.besaSupabase
+    if (!global.ffSupabase || id == null) return null;
+    var res = await global.ffSupabase
       .from(T_DECL).select("data").eq("id", id).single();
     if (res.error) throw res.error;
     var d = res.data && res.data.data;
@@ -262,8 +262,8 @@
       }
     }
     setDecl(arr);
-    if (global.besaSupabase) {
-      var res = await global.besaSupabase.from(T_DECL).update({
+    if (global.ffSupabase) {
+      var res = await global.ffSupabase.from(T_DECL).update({
         total_kilometers: t.km,
         total_reimbursement: t.eur,
         laatst_gewijzigd: new Date().toISOString(),
@@ -274,7 +274,7 @@
   }
 
   async function addRecord(p) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!p || !p.declaratieId) throw new Error("declaratieId vereist");
     var nowIso = new Date().toISOString();
     var isWerk = p.type === "werkwerk";
@@ -307,7 +307,7 @@
       aanmaakdatum: nowIso,
       laatst_gewijzigd: nowIso,
     };
-    var res = await global.besaSupabase.from(T_REC).insert(row).select().single();
+    var res = await global.ffSupabase.from(T_REC).insert(row).select().single();
     if (res.error) throw res.error;
     var rec = recRowToObj(res.data || row);
     var rl = recList(); rl.push(rec); setRec(rl);
@@ -317,7 +317,7 @@
   }
 
   async function updateRecord(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (id == null) throw new Error("record-id vereist");
     var upd = { laatst_gewijzigd: new Date().toISOString() };
     if (patch && "datum" in patch) upd.datum = patch.datum || null;
@@ -338,7 +338,7 @@
     if (patch && "metClienten" in patch) {
       // Fetch huidige data zodat we niet andere keys overschrijven
       try {
-        var cur = await global.besaSupabase.from(T_REC).select("data").eq("id", id).maybeSingle();
+        var cur = await global.ffSupabase.from(T_REC).select("data").eq("id", id).maybeSingle();
         var existing = (cur && cur.data && cur.data.data) || {};
         upd.data = Object.assign({}, existing, { met_clienten: !!patch.metClienten });
       } catch (e) {
@@ -356,7 +356,7 @@
       upd.approved_at = null;
       upd.rejection_reason = null;
     }
-    var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(T_REC).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var rec = recRowToObj(res.data);
     var rl = recList();
@@ -370,12 +370,12 @@
   }
 
   async function deleteRecord(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (id == null) throw new Error("record-id vereist");
     var rl = recList();
     var found = rl.find(function (r) { return r && String(r.id) === String(id); });
     var declId = found ? found.declaratieId : null;
-    var res = await global.besaSupabase.from(T_REC).delete().eq("id", id);
+    var res = await global.ffSupabase.from(T_REC).delete().eq("id", id);
     if (res.error) throw res.error;
     setRec(rl.filter(function (r) { return r && String(r.id) !== String(id); }));
     if (declId) await persistDeclTotals(declId);
@@ -388,7 +388,7 @@
   // approved telt voortaan mee, rejected/pending niet. Idempotent qua cache.
   // ---------------------------------------------------------------------------
   async function setApproval(recId, p) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (recId == null) throw new Error("record-id vereist");
     var status = p && p.status;
     if (status !== "approved" && status !== "rejected") {
@@ -403,7 +403,7 @@
       rejection_reason: status === "rejected" ? ((p && p.reason) || "") : null,
       laatst_gewijzigd: nowIso,
     };
-    var res = await global.besaSupabase.from(T_REC).update(upd).eq("id", recId).select().single();
+    var res = await global.ffSupabase.from(T_REC).update(upd).eq("id", recId).select().single();
     if (res.error) throw res.error;
     var rec = recRowToObj(res.data);
     var rl = recList();
@@ -444,7 +444,7 @@
   }
 
   async function submitDecl(declId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (declId == null) throw new Error("declaratie-id vereist");
     var d = getByIdSync(declId);
     if (!d) throw new Error("Declaratie niet gevonden");
@@ -462,7 +462,7 @@
       color: "green",
       icon: "checkmark",
     };
-    var res = await global.besaSupabase.from(T_DECL).update({
+    var res = await global.ffSupabase.from(T_DECL).update({
       status: "submitted",
       submitted_at: nowIso,
       submission_status: submissionStatus,
@@ -498,7 +498,7 @@
    * teruggegeven.
    */
   async function ensureDraftFor(medewerkerId, year, month) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medewerkerId) throw new Error("medewerker-id vereist");
     var y = Number(year), m = Number(month);
     if (!isFinite(y) || !isFinite(m)) throw new Error("Ongeldige periode");
@@ -509,7 +509,7 @@
     });
     if (existing) return existing;
     // Anders: query Supabase voor het geval cache stale is
-    var q = await global.besaSupabase.from(T_DECL).select("*")
+    var q = await global.ffSupabase.from(T_DECL).select("*")
       .eq("medewerker_id", medewerkerId).eq("jaar", y).eq("maand", m).maybeSingle();
     if (q.error) throw q.error;
     if (q.data) {
@@ -547,7 +547,7 @@
       aanmaakdatum: nowIso,
       laatst_gewijzigd: nowIso,
     };
-    var res = await global.besaSupabase.from(T_DECL).insert(row).select().single();
+    var res = await global.ffSupabase.from(T_DECL).insert(row).select().single();
     if (res.error) throw res.error;
     var obj2 = declRowToObj(res.data);
     var arr2 = declList(); arr2.push(obj2); setDecl(arr2);

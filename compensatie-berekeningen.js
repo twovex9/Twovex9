@@ -340,7 +340,7 @@
 
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
   // ververst.
-  window.addEventListener("besa:comp-berekeningen-updated", function () {
+  window.addEventListener("ff:comp-berekeningen-updated", function () {
     try {
       allRows = loadRows();
       render();

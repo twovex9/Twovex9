@@ -53,7 +53,7 @@ Live test op salarisadministratie-exporter.html.
 - [x] C6. Data-pariteit: BS1=5-8 records vs BS2=15 (history = user-action-runtime, functioneel 100% match)
 - [x] C7. Content spot-check: schema match
 - [x] C8. CRUD: saladminDB.pushHistory + pushOrt + refresh werken
-- [x] C9. besa:saladmin-updated event
+- [x] C9. ff:saladmin-updated event
 - [x] C10. parity.md: 100% functioneel (history-count NA per design)
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅)

@@ -3,7 +3,7 @@
 **Datum**: 2026-05-12
 **Doel**: ALLES wat in Phase 1-4 als "niet-kritiek / voor toekomst / later" werd genoemd, hier gebundeld. Persistent in repo + memory zodat het na context-compactie of nieuwe sessie nog vindbaar is.
 
-**Belangrijke regel**: zodra een nieuw "voor-toekomst" item opkomt, **direct toevoegen aan dit document EN aan memory `project_besa_phase4.md`**. Niet alleen in chat-tekst noemen — die verdwijnt.
+**Belangrijke regel**: zodra een nieuw "voor-toekomst" item opkomt, **direct toevoegen aan dit document EN aan memory `project_ff_phase4.md`**. Niet alleen in chat-tekst noemen — die verdwijnt.
 
 ## Data — niet-kritieke gaps
 
@@ -155,7 +155,7 @@ Als < 9, opnieuw inserten met onze klaarliggende SQL.
 
 ### 17. Notification-bell flood auto-acknowledge (2026-05-12)
 
-**Status**: ✅ geïmplementeerd in `notification-bell.js`. Bij eerste load met > 1000 audit-events (Phase 3/4 import-flood) wordt automatisch `lastSeen = now()` gezet en een flag `besa:notification-bell:flood-ack-v1` in localStorage. Werkt eenmalig per browser.
+**Status**: ✅ geïmplementeerd in `notification-bell.js`. Bij eerste load met > 1000 audit-events (Phase 3/4 import-flood) wordt automatisch `lastSeen = now()` gezet en een flag `ff:notification-bell:flood-ack-v1` in localStorage. Werkt eenmalig per browser.
 
 **Rationale**: 2322 audit_log events na Phase 3 bulk-import zijn niet "nieuw voor de user" maar systeemtech. User zou anders nooit alles wegklikken.
 
@@ -344,7 +344,7 @@ Stappen zijn herhaalbaar zonder data-verlies (alles idempotent + archive ipv del
 
 **Voor v2 indien veel parallelle PRs**: aparte file per item (`docs/phase4/open-items/<nn>-<slug>.md`) → zero-conflict. Niet nu nodig — append-at-end is voldoende voor huidige tempo.
 
-**Ook persisted in**: `feedback_besa_workflow.md` memory file + `CLAUDE.md` regel (overleeft sessie-compactie en nieuwe Claude-sessies).
+**Ook persisted in**: `feedback_ff_workflow.md` memory file + `CLAUDE.md` regel (overleeft sessie-compactie en nieuwe Claude-sessies).
 
 ---
 

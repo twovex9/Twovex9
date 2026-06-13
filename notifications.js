@@ -106,9 +106,9 @@
           window.notificationsDB.markRead(n.id);
         }
         // Navigeer naar de bron-/oplospagina van de melding (centrale router in
-        // besa-oplossen.js); val terug op het oude nieuws-gedrag.
-        var nfix = (window.besaOplossen && window.besaOplossen.notificationFix)
-          ? window.besaOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
+        // ff-oplossen.js); val terug op het oude nieuws-gedrag.
+        var nfix = (window.ffOplossen && window.ffOplossen.notificationFix)
+          ? window.ffOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
         if (nfix && nfix.url) {
           window.location.href = nfix.url;
         } else if (n.related_entity_type === "nieuws" && n.related_entity_id) {
@@ -176,7 +176,7 @@
         await window.notificationsDB.ready;
       } catch (e) { /* */ }
       render();
-      window.addEventListener("besa:notifications-updated", render);
+      window.addEventListener("ff:notifications-updated", render);
       handleHashJump();
     } else {
       var empty = document.getElementById("notif-empty");

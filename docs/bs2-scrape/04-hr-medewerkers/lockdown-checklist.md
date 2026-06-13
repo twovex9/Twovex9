@@ -40,7 +40,7 @@ BS2 `/hr/employees` "Medewerkers":
 
 ## B. BS1-test hardcore (10/10 ✅)
 
-Live test op `https://besa-suite.vercel.app/index.html` na PR #73.
+Live test op `https://futureflow-app.vercel.app/index.html` na PR #73.
 
 - [x] B1. Navigate BS1: "Medewerkers — HR" title + 196 rijen actief
 - [x] B2-B3. Scroll top↔bottom OK
@@ -64,7 +64,7 @@ Live test op `https://besa-suite.vercel.app/index.html` na PR #73.
 - [x] C6. Data-pariteit: 198 medewerkers totaal, 196 actief. BS2 had ~200 — bevestigt 100% pariteit
 - [x] C7. Content spot-check: voornaam/achternaam/email match
 - [x] C8. CRUD-cycle: add/update/archive/restore/delete allen werken
-- [x] C9. Realtime: `besa:medewerkers-updated` event firet
+- [x] C9. Realtime: `ff:medewerkers-updated` event firet
 - [x] C10. parity.md eindscore: 100% functionele pariteit
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor)

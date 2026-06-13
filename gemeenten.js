@@ -554,6 +554,6 @@
     }
   }
 
-  window.addEventListener("besa:gemeenten-updated", render);
+  window.addEventListener("ff:gemeenten-updated", render);
   initialRender();
 })();

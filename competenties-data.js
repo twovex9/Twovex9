@@ -25,7 +25,7 @@
  *     - Promise die resolved zodra de eerste bootstrap klaar is.
  *
  * Events:
- *   "besa:competenties-updated" wordt op `window` gedispatcht zodra de cache
+ *   "ff:competenties-updated" wordt op `window` gedispatcht zodra de cache
  *   verandert (na bootstrap, add, update, delete). Pickers en lijsten kunnen
  *   hierop luisteren om live te herrenderen.
  *
@@ -37,7 +37,7 @@
 
   var CACHE_KEY = "competenties";
   var TABLE = "competenties";
-  var EVENT_NAME = "besa:competenties-updated";
+  var EVENT_NAME = "ff:competenties-updated";
 
   function rowToObj(row) {
     if (!row) return null;
@@ -68,11 +68,11 @@
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[competentiesDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: true });
@@ -112,8 +112,8 @@
   async function add(naam) {
     var trimmed = String(naam || "").trim();
     if (!trimmed) throw new Error("Naam is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert({ naam: trimmed, archived: false })
       .select()
@@ -128,7 +128,7 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var dbPatch = {};
     if (typeof patch.naam === "string") dbPatch.naam = patch.naam.trim();
     if (typeof patch.archived === "boolean") dbPatch.archived = patch.archived;
@@ -136,7 +136,7 @@
       var existing = readCache().find(function (c) { return c.id === id; });
       return existing || null;
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -154,8 +154,8 @@
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (c) { return c.id !== id; });
     writeCache(list);

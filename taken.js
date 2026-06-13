@@ -124,22 +124,22 @@
     return "—";
   }
   function getCurrentMedewerkerId() {
-    try { var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync()); return p ? (p.medewerkerId || p.medewerker_id || null) : null; } catch (e) { return null; }
+    try { var p = window.ffCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync()); return p ? (p.medewerkerId || p.medewerker_id || null) : null; } catch (e) { return null; }
   }
   function getCurrentAuthUserId() {
-    try { var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync()); return p && p.id ? p.id : null; } catch (e) { return null; }
+    try { var p = window.ffCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync()); return p && p.id ? p.id : null; } catch (e) { return null; }
   }
 
   // ─── Rol-/permissie-helpers (server-context met veilige fallback) ────────────
   function canManage() {
     if (ctx && typeof ctx.kan_beheren === "boolean") return ctx.kan_beheren;
-    try { if (window.besaIsAdminTier && window.besaIsAdminTier()) return true; } catch (e) { /* */ }
-    try { if (window.besaCan && window.besaCan("manage", "tasks")) return true; } catch (e) { /* */ }
+    try { if (window.ffIsAdminTier && window.ffIsAdminTier()) return true; } catch (e) { /* */ }
+    try { if (window.ffCan && window.ffCan("manage", "tasks")) return true; } catch (e) { /* */ }
     return false;
   }
   function isDirectie() {
     if (ctx && typeof ctx.is_directie === "boolean") return ctx.is_directie;
-    try { return !!(window.besaIsAdminTier && window.besaIsAdminTier()); } catch (e) { return false; }
+    try { return !!(window.ffIsAdminTier && window.ffIsAdminTier()); } catch (e) { return false; }
   }
   function myAfdelingen() { return (ctx && Array.isArray(ctx.afdelingen)) ? ctx.afdelingen : []; }
   function isMaker(t) { var uid = getCurrentAuthUserId(); return !!(t && uid && t.aangemaaktDoorId && String(t.aangemaaktDoorId) === String(uid)); }
@@ -150,7 +150,7 @@
     if (!t) return false;
     if (isMaker(t)) return true;
     try { if (window.profilesDB && window.profilesDB.isAdmin && window.profilesDB.isAdmin()) return true; } catch (e) { /* */ }
-    try { if (window.besaIsAdminTier && window.besaIsAdminTier()) return true; } catch (e) { /* */ }
+    try { if (window.ffIsAdminTier && window.ffIsAdminTier()) return true; } catch (e) { /* */ }
     return false;
   }
   function wachtOpGoedkeuring(t) { return !!t && t.type === "taak" && t.status === "Voltooid" && !t.archived && !t.goedgekeurdOp; }
@@ -444,8 +444,8 @@
   async function loadAssignableIds() {
     if (_assignableIds !== null) return _assignableIds;
     try {
-      if (window.besaSupabase) {
-        var r = await window.besaSupabase.rpc("taken_toewijsbare_mw_ids");
+      if (window.ffSupabase) {
+        var r = await window.ffSupabase.rpc("taken_toewijsbare_mw_ids");
         if (!r.error && Array.isArray(r.data)) {
           var map = {}; r.data.forEach(function (row) { if (row && row.id) map[row.id] = true; });
           _assignableIds = map; return _assignableIds;
@@ -907,7 +907,7 @@
     document.getElementById("taken-thread-send").addEventListener("click", submitThreadMessage);
     var threadInput = document.getElementById("taken-thread-input");
     if (threadInput) threadInput.addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitThreadMessage(); } });
-    window.addEventListener("besa:taak-thread-updated", function (e) { var d = e && e.detail; if (d && d.taakId && state.threadTaakId && String(d.taakId) === String(state.threadTaakId)) renderThread(); });
+    window.addEventListener("ff:taak-thread-updated", function (e) { var d = e && e.detail; if (d && d.taakId && state.threadTaakId && String(d.taakId) === String(state.threadTaakId)) renderThread(); });
 
     // Toolbar
     document.getElementById("taken-search").addEventListener("input", function (e) { state.search = e.target.value || ""; render(); });
@@ -961,8 +961,8 @@
     });
 
     // Data-events
-    window.addEventListener("besa:taken-updated", function () { populateTeamlidFilter(); render(); });
-    window.addEventListener("besa:medewerkers-updated", function () { populateTeamlidFilter(); render(); });
+    window.addEventListener("ff:taken-updated", function () { populateTeamlidFilter(); render(); });
+    window.addEventListener("ff:medewerkers-updated", function () { populateTeamlidFilter(); render(); });
 
     // Escape + overlay sluiten
     function isOpen(id, byDisplay) { var m = document.getElementById(id); if (!m) return false; return byDisplay ? getComputedStyle(m).display !== "none" : !m.hasAttribute("hidden"); }

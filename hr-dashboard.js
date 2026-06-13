@@ -163,13 +163,13 @@
       cb.innerHTML = '<h3 class="md-cat-title">Eerstvolgende aflopende contracten (12 mnd)</h3><div class="vl-krit-list">'
         + model.contractAflopen.slice(0, 10).map(function (c) {
           var st = c.dagen <= 30 ? "rood" : c.dagen <= 90 ? "oranje" : "groen";
-          var btn = window.besaOplossen ? window.besaOplossen.navBtn("hr", "Naar HR", "Verleng of werk het aflopende contract van " + c.naam + " bij in HR.") : "";
+          var btn = window.ffOplossen ? window.ffOplossen.navBtn("hr", "Naar HR", "Verleng of werk het aflopende contract van " + c.naam + " bij in HR.") : "";
           return '<div class="vl-krit-item">' + dot(st) + '<span class="vl-krit-loc">' + F.escHtml(c.naam) + "</span>"
             + '<span class="vl-krit-type">' + F.escHtml(c.functie) + (c.type ? " · " + F.escHtml(c.type) : "") + "</span>"
             + '<span class="vl-krit-tijd">' + fmtDate(c.datum) + " · over " + F.intl(c.dagen) + " dagen</span>"
             + btn + "</div>";
         }).join("") + "</div>";
-      if (window.besaOplossen) window.besaOplossen.bindSignals(cb);
+      if (window.ffOplossen) window.ffOplossen.bindSignals(cb);
     }
 
     // Documenten / VOG
@@ -193,13 +193,13 @@
         + model.verzuimActief.map(function (v) {
           var st = v.type === "lang" ? "rood" : "oranje";
           var sinds = F.parseDate(v.eerst_ziektedag);
-          var btn = window.besaOplossen ? window.besaOplossen.navBtn("hr", "Naar HR", "Bekijk de ziekmelding van " + (v.medewerker || "deze medewerker") + " en werk het verzuim bij in HR.") : "";
+          var btn = window.ffOplossen ? window.ffOplossen.navBtn("hr", "Naar HR", "Bekijk de ziekmelding van " + (v.medewerker || "deze medewerker") + " en werk het verzuim bij in HR.") : "";
           return '<div class="vl-krit-item">' + dot(st) + '<span class="vl-krit-loc">' + F.escHtml(v.medewerker || "—") + "</span>"
             + '<span class="vl-krit-type">' + (v.type === "lang" ? "Langdurig" : "Kortdurend") + "</span>"
             + '<span class="vl-krit-tijd">' + (sinds ? "sinds " + fmtDate(sinds) : "") + "</span>"
             + btn + "</div>";
         }).join("") + "</div>";
-      if (window.besaOplossen) window.besaOplossen.bindSignals(vb);
+      if (window.ffOplossen) window.ffOplossen.bindSignals(vb);
     }
 
     // Verdeling

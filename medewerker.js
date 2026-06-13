@@ -190,8 +190,8 @@ async function migrateEmployeeEditsByIdToSupabase() {
 }
 
 // Trigger de migratie zodra medewerkersDB klaar is (bootstrap event).
-window.addEventListener("besa:medewerkers-updated", function onceForMigrate() {
-  window.removeEventListener("besa:medewerkers-updated", onceForMigrate);
+window.addEventListener("ff:medewerkers-updated", function onceForMigrate() {
+  window.removeEventListener("ff:medewerkers-updated", onceForMigrate);
   migrateEmployeeEditsByIdToSupabase().catch(function (err) {
     console.error("[employeeEditsById migratie] onverwachte fout:", err);
   });
@@ -1018,7 +1018,7 @@ function renderPlanbaarPill(emp) {
 function openPlanbaarModal() {
   const emp = getSelectedEmployee();
   if (!emp || !emp.id) return;
-  if (typeof window.besaCan === "function" && !window.besaCan("manage-planning-employees")) {
+  if (typeof window.ffCan === "function" && !window.ffCan("manage-planning-employees")) {
     if (window.showActionFeedback) window.showActionFeedback("error", "Geen rechten om planbaarheid te wijzigen.");
     return;
   }
@@ -1105,10 +1105,10 @@ function renderEmployeeWarnings(empId) {
   function rowHtml(item) {
     // "Oplossen →"-knop met de bestemming (Documenten- of Opleiding-tab) + de
     // uitleg meegegeven via data-attributen, zodat de klik-handler ze terugleest.
-    var fix = (window.besaOplossen && window.besaOplossen.medewerkerFix)
-      ? window.besaOplossen.medewerkerFix(item) : null;
+    var fix = (window.ffOplossen && window.ffOplossen.medewerkerFix)
+      ? window.ffOplossen.medewerkerFix(item) : null;
     var btn = fix
-      ? window.besaOplossen.triggerHtml({
+      ? window.ffOplossen.triggerHtml({
           "data-fix-tab": fix.tab,
           "data-fix-knop": fix.knop,
           "data-fix-uitleg": fix.uitleg,
@@ -1146,13 +1146,13 @@ function renderEmployeeWarnings(empId) {
   if (section && !section.__oplosBound) {
     section.__oplosBound = true;
     section.addEventListener("click", function (ev) {
-      var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger");
-      if (!btn || !window.besaOplossen) return;
+      var btn = ev.target.closest && ev.target.closest(".ff-oplossen-trigger");
+      if (!btn || !window.ffOplossen) return;
       ev.preventDefault();
       ev.stopPropagation();
-      if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
+      if (window.ffOplossen.isOpenFor(btn)) { window.ffOplossen.closePopover(); return; }
       var tab = btn.getAttribute("data-fix-tab") || "documenten";
-      window.besaOplossen.openPopover(btn, {
+      window.ffOplossen.openPopover(btn, {
         uitleg: btn.getAttribute("data-fix-uitleg") || "",
         knopLabel: btn.getAttribute("data-fix-knop") || "Ga naar Documenten",
         onGaNaar: function () {
@@ -1170,8 +1170,8 @@ function renderEmployeeWarnings(empId) {
   try { paint(window.medewerkerWarnings.computeForIdSync(empId)); } catch (e) { /* */ }
   // Daarna ÉÉN KEER per medewerker refreshen uit Supabase (accurate vervaldata bij
   // eerste laad). Bewust NIET bij elke render: computeForId() roept
-  // medewerkerDocsDB.list() aan, dat "besa:medewerker-documenten-updated" dispatcht
-  // → medewerkerWarnings.invalidate() → "besa:medewerker-warnings-updated" → deze
+  // medewerkerDocsDB.list() aan, dat "ff:medewerker-documenten-updated" dispatcht
+  // → medewerkerWarnings.invalidate() → "ff:medewerker-warnings-updated" → deze
   // render opnieuw → computeForId() → … Dat is een ongeguarde refetch-loop (~130×/s)
   // die de hele detailpagina liet herrenderen en o.a. de onboarding-tab telkens
   // naar boven terugscrolde. Na de eerste netwerk-load is de documenten-cache vers;
@@ -1187,7 +1187,7 @@ function renderEmployeeWarnings(empId) {
   }
 }
 
-window.addEventListener("besa:medewerker-warnings-updated", function () {
+window.addEventListener("ff:medewerker-warnings-updated", function () {
   try {
     const emp = getSelectedEmployee();
     if (emp && emp.id) renderEmployeeWarnings(emp.id);
@@ -2073,7 +2073,7 @@ function initOnboardingTab() {
       mailBtn.disabled = true;
       mailBtn.textContent = "Versturen…";
       try {
-        var mailRes = await window.besaSupabase.functions.invoke("onboarding-mail", {
+        var mailRes = await window.ffSupabase.functions.invoke("onboarding-mail", {
           body: { kind: mailKind, medewerker_id: mailEmp.id, link: mailLink },
         });
         if (mailRes.error) {
@@ -2219,19 +2219,19 @@ function initOnboardingTab() {
   if (window.onboardingDB && window.onboardingDB.ready && typeof window.onboardingDB.ready.then === "function") {
     window.onboardingDB.ready.then(renderOnboardingTab).catch(function () { /* */ });
   }
-  window.addEventListener("besa:onboarding-updated", renderOnboardingTab);
-  window.addEventListener("besa:medewerkers-updated", renderOnboardingTab);
+  window.addEventListener("ff:onboarding-updated", renderOnboardingTab);
+  window.addEventListener("ff:medewerkers-updated", renderOnboardingTab);
   // Bij een documenten-wijziging (bv. HR uploadt in de Documenten-tab) onze
   // eigen docs-cache verversen. De _onbDocsBusy-guard voorkomt een event-loop.
-  window.addEventListener("besa:medewerker-documenten-updated", function () {
+  window.addEventListener("ff:medewerker-documenten-updated", function () {
     var emp = getSelectedEmployee();
     if (emp && emp.id) onbLoadDocs(emp.id, true);
     else renderOnboardingTab();
   });
-  window.addEventListener("besa:contracten-updated", renderOnboardingTab);
-  window.addEventListener("besa:contract-sjablonen-updated", renderOnboardingTab);
-  window.addEventListener("besa:inwerk-items-updated", renderOnboardingTab);
-  window.addEventListener("besa:inwerk-voortgang-updated", renderOnboardingTab);
+  window.addEventListener("ff:contracten-updated", renderOnboardingTab);
+  window.addEventListener("ff:contract-sjablonen-updated", renderOnboardingTab);
+  window.addEventListener("ff:inwerk-items-updated", renderOnboardingTab);
+  window.addEventListener("ff:inwerk-voortgang-updated", renderOnboardingTab);
 
   // Toegang-checklist: checkbox-toggle direct opslaan (release 7).
   document.addEventListener("change", async function (e) {
@@ -2529,8 +2529,8 @@ function initOffboardingTab() {
   if (window.offboardingDB && window.offboardingDB.ready && typeof window.offboardingDB.ready.then === "function") {
     window.offboardingDB.ready.then(renderOffboardingTab).catch(function () { /* */ });
   }
-  window.addEventListener("besa:offboarding-updated", renderOffboardingTab);
-  window.addEventListener("besa:medewerkers-updated", renderOffboardingTab);
+  window.addEventListener("ff:offboarding-updated", renderOffboardingTab);
+  window.addEventListener("ff:medewerkers-updated", renderOffboardingTab);
 }
 
 function initTabs() {
@@ -2799,7 +2799,7 @@ function initLocatiesSection() {
   // (anders toont de lijst alleen de fallback tot de eerste interactie).
   if (!window.__empLocatiesUpdateBound) {
     window.__empLocatiesUpdateBound = true;
-    window.addEventListener("besa:locaties-updated", () => {
+    window.addEventListener("ff:locaties-updated", () => {
       try { if (typeof window.__renderEmpLocaties === "function") window.__renderEmpLocaties(); } catch (e) { /* */ }
     });
   }
@@ -3064,7 +3064,7 @@ function initHrSalarisBerekening() {
     el.addEventListener("change", recomputeZzpKosten);
   });
   // Herbereken zodra het salarishuis (asynchroon) geladen is.
-  try { window.addEventListener("besa:salarishuis-updated", recomputeLoondienstSalaris); } catch (e) { /* */ }
+  try { window.addEventListener("ff:salarishuis-updated", recomputeLoondienstSalaris); } catch (e) { /* */ }
 }
 
 function initLoondienstContracturenValidation() {
@@ -3458,7 +3458,7 @@ function initVerzuimSection() {
               span.textContent = item.status || "Actief";
               td.appendChild(span);
             } else if (col === "beschrijving") {
-              td.innerHTML = window.besaSanitizeHtml(item.beschrijving || "");
+              td.innerHTML = window.ffSanitizeHtml(item.beschrijving || "");
             } else {
               td.textContent = isoToDisplay(item[col]) || "";
             }
@@ -3480,7 +3480,7 @@ function initVerzuimSection() {
             delBtn.setAttribute("disabled", "");
             try {
               await window.medewerkerVerzuimDB.remove(item.id);
-              // UI ververst zichzelf via besa:medewerker-verzuim-updated event.
+              // UI ververst zichzelf via ff:medewerker-verzuim-updated event.
             } catch (err) {
               reportVerzuimError("verwijderen mislukt", err);
             } finally {
@@ -3560,7 +3560,7 @@ function initVerzuimSection() {
 
   // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
   // andere tab, externe sync). Beide blokken (kort + lang) opnieuw renderen.
-  window.addEventListener("besa:medewerker-verzuim-updated", function () {
+  window.addEventListener("ff:medewerker-verzuim-updated", function () {
     Object.keys(renderers).forEach(function (t) {
       try { renderers[t](); } catch (e) { /* */ }
     });
@@ -3624,7 +3624,7 @@ function initVerzuimSection() {
           status: "Actief",
         });
         closeModal();
-        // UI ververst zichzelf via besa:medewerker-verzuim-updated event.
+        // UI ververst zichzelf via ff:medewerker-verzuim-updated event.
       } catch (err) {
         reportVerzuimError("toevoegen mislukt", err);
       } finally {
@@ -3730,7 +3730,7 @@ function initVerlofOverdragenModal() {
     saveBtn.setAttribute("disabled", "");
     try {
       await window.medewerkerVerlofOvergedragenDB.save(empId, st);
-      // UI ververst zichzelf via besa:medewerker-verlof-overgedragen-updated
+      // UI ververst zichzelf via ff:medewerker-verlof-overgedragen-updated
       // event (zie listener onderaan deze functie).
       closeModal();
       if (typeof showToast === "function") showToast("Overgedragen uren opgeslagen");
@@ -3743,7 +3743,7 @@ function initVerlofOverdragenModal() {
 
   // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
   // andere tab, externe sync).
-  window.addEventListener("besa:medewerker-verlof-overgedragen-updated", function () {
+  window.addEventListener("ff:medewerker-verlof-overgedragen-updated", function () {
     try { updateCards(readVerlofOvergedragenForCurrent()); } catch (e) { /* */ }
   });
 
@@ -4019,7 +4019,7 @@ function initNotitiesSection() {
         delBtn.setAttribute("disabled", "");
         try {
           await window.medewerkerNotitiesDB.remove(note.id);
-          // UI ververst zichzelf via besa:medewerker-notities-updated event.
+          // UI ververst zichzelf via ff:medewerker-notities-updated event.
         } catch (err) {
           reportNotitieError("verwijderen mislukt", err);
         } finally {
@@ -4031,7 +4031,7 @@ function initNotitiesSection() {
 
       const content = document.createElement("div");
       content.className = "emp-notitie-item-content";
-      content.innerHTML = window.besaSanitizeHtml(note.bodyHtml || "");
+      content.innerHTML = window.ffSanitizeHtml(note.bodyHtml || "");
 
       item.append(head, content);
       itemsEl.appendChild(item);
@@ -4058,7 +4058,7 @@ function initNotitiesSection() {
         createdAt: new Date().toISOString(),
       });
       body.innerHTML = "";
-      // UI ververst zichzelf via besa:medewerker-notities-updated event.
+      // UI ververst zichzelf via ff:medewerker-notities-updated event.
     } catch (err) {
       reportNotitieError("toevoegen mislukt", err);
     } finally {
@@ -4068,7 +4068,7 @@ function initNotitiesSection() {
 
   // Live re-render bij elke wijziging in de Supabase-cache (incl. bootstrap,
   // andere tab, externe sync).
-  window.addEventListener("besa:medewerker-notities-updated", function () {
+  window.addEventListener("ff:medewerker-notities-updated", function () {
     try { renderNotes(); } catch (e) { /* */ }
   });
 
@@ -4753,13 +4753,13 @@ function resolveDocsEmployeeUuid(emp) {
     emp = emp || getSelectedEmployee();
     var legacyKey = (emp && (emp.empId || emp.id || emp.naam)) || null;
     if (!legacyKey) return Promise.resolve(null);
-    var cached = window.__besaDocsEmpUuid;
+    var cached = window.__ffDocsEmpUuid;
     if (cached && cached.key === legacyKey && cached.uuid) return Promise.resolve(cached.uuid);
     var email = String((emp && emp.email) || "").trim();
-    if (!window.besaSupabase || !email) return Promise.resolve(null);
+    if (!window.ffSupabase || !email) return Promise.resolve(null);
     var vn = String((emp && emp.voornaam) || "").trim().toLowerCase();
     var an = String((emp && emp.achternaam) || "").trim().toLowerCase();
-    return window.besaSupabase
+    return window.ffSupabase
       .from("medewerkers").select("id,voornaam,achternaam,email").ilike("email", email)
       .then(function (res) {
         if (res.error || !res.data || !res.data.length) return null;
@@ -4772,7 +4772,7 @@ function resolveDocsEmployeeUuid(emp) {
           if (m) pick = m;
         }
         if (pick && pick.id) {
-          window.__besaDocsEmpUuid = { key: legacyKey, uuid: String(pick.id) };
+          window.__ffDocsEmpUuid = { key: legacyKey, uuid: String(pick.id) };
           return String(pick.id);
         }
         return null;
@@ -4785,7 +4785,7 @@ function getCurrentEmployeeIdForDocs() {
   var emp = getSelectedEmployee();
   if (!emp) return null;
   var legacyKey = emp.empId || emp.id || emp.naam || null;
-  var cached = window.__besaDocsEmpUuid;
+  var cached = window.__ffDocsEmpUuid;
   if (cached && cached.key === legacyKey && cached.uuid) return cached.uuid;
   return legacyKey;
 }
@@ -5631,7 +5631,7 @@ function initDocumentenSection() {
   // Re-render bij elke wijziging in de Supabase-cache (eigen page-acties +
   // achtergrond-migraties). Filter optioneel op huidige medewerker zodat
   // updates voor andere medewerkers de UI niet onnodig hertekenen.
-  window.addEventListener("besa:medewerker-documenten-updated", function (e) {
+  window.addEventListener("ff:medewerker-documenten-updated", function (e) {
     var detail = e && e.detail || {};
     var current = getCurrentEmployeeIdForDocs();
     if (detail.medewerkerId && current && String(detail.medewerkerId) !== String(current)) return;
@@ -5653,7 +5653,7 @@ function initDocumentenSection() {
     window.medewerkersDB.ready.then(fillForm).catch(function (e) { console.error("[medewerker] medewerkersDB.ready fout:", e); });
   }
   // En her-render telkens als medewerker-data verandert (real-time + Supabase-sync)
-  window.addEventListener("besa:medewerkers-updated", fillForm);
+  window.addEventListener("ff:medewerkers-updated", fillForm);
 })();
 
 initTabs();
@@ -5848,7 +5848,7 @@ initOffboardingTab();
       hmChk.addEventListener("change", syncTarief);
     }
     try { if (window.bureausDB && window.bureausDB.bootstrap) window.bureausDB.bootstrap(); } catch (e) { /* */ }
-    window.addEventListener("besa:bureaus-updated", function () { fillDropdown(); syncTarief(); });
+    window.addEventListener("ff:bureaus-updated", function () { fillDropdown(); syncTarief(); });
   }
   window.__loadBureauKeuze = load;
   window.__syncBureauTarief = syncTarief;

@@ -49,7 +49,7 @@ Live test na PR #83.
 - [x] C6. Data-pariteit: BS1=BS2=13 schalen ✅ (na cleanup 15 BS2-schaal duplicates + add Schaal 15)
 - [x] C7. Content spot-check: Schaal 4 t/m 14 + stagevergoeding + Schaal 15 (empty)
 - [x] C8. CRUD via salarishuisDB.refresh werkt
-- [x] C9. besa:salarishuis-updated event
+- [x] C9. ff:salarishuis-updated event
 - [x] C10. parity.md: 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor)

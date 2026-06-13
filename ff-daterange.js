@@ -1,6 +1,6 @@
 /* global window, document */
 /**
- * BesaDateRange — één herbruikbare datum-range-kalender (dubbele maand +
+ * FfDateRange — één herbruikbare datum-range-kalender (dubbele maand +
  * preset-keuze), BS2-conform qua UX maar in BS1-huisstijl + Nederlandse
  * labels (BS1 is een volledig NL-product).
  *
@@ -9,7 +9,7 @@
  * en dispatcht een "change"-event, zodat bestaande pagina-logica die al op
  * die inputs luisterde ongewijzigd blijft werken.
  *
- *   window.BesaDateRange.mount({
+ *   window.FfDateRange.mount({
  *     container, startInput, endInput,
  *     allowEmpty, emptyLabel, year, onApply
  *   }) -> { open, close, setRange, getRange, destroy }
@@ -65,7 +65,7 @@
     var startInput = opts.startInput;
     var endInput = opts.endInput;
     if (!container || !startInput || !endInput) {
-      throw new Error("BesaDateRange.mount: container/startInput/endInput vereist");
+      throw new Error("FfDateRange.mount: container/startInput/endInput vereist");
     }
     var allowEmpty = !!opts.allowEmpty;
     var emptyLabel = opts.emptyLabel || "Alle periodes";
@@ -79,28 +79,28 @@
       (selStart || new Date()).getMonth(), 1);
 
     // ---- DOM ----
-    var pill = el("button", "besa-dr-pill");
+    var pill = el("button", "ff-dr-pill");
     pill.type = "button";
     pill.setAttribute("aria-haspopup", "dialog");
     pill.setAttribute("aria-expanded", "false");
-    var pillIco = el("span", "besa-dr-pill-ico");
+    var pillIco = el("span", "ff-dr-pill-ico");
     pillIco.setAttribute("aria-hidden", "true");
     pillIco.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
-    var pillSep = el("span", "besa-dr-pill-sep");
+    var pillSep = el("span", "ff-dr-pill-sep");
     pillSep.setAttribute("aria-hidden", "true");
-    var pillTxt = el("span", "besa-dr-pill-txt");
+    var pillTxt = el("span", "ff-dr-pill-txt");
     pill.appendChild(pillIco);
     pill.appendChild(pillSep);
     pill.appendChild(pillTxt);
 
-    var pop = el("div", "besa-dr-pop");
+    var pop = el("div", "ff-dr-pop");
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", "Periode kiezen");
     pop.hidden = true;
 
     // Preset-keuze ("Select" in BS2).
-    var presetWrap = el("div", "besa-dr-preset");
-    var presetSel = el("select", "besa-dr-preset-sel");
+    var presetWrap = el("div", "ff-dr-preset");
+    var presetSel = el("select", "ff-dr-preset-sel");
     presetSel.setAttribute("aria-label", "Snelkeuze periode");
     function addOpt(val, label) {
       var o = el("option", null, label);
@@ -118,13 +118,13 @@
     presetWrap.appendChild(presetSel);
 
     // Navigatie + dubbele-maand titel.
-    var nav = el("div", "besa-dr-nav");
-    var prevBtn = el("button", "besa-dr-navbtn besa-dr-navbtn--prev");
+    var nav = el("div", "ff-dr-nav");
+    var prevBtn = el("button", "ff-dr-navbtn ff-dr-navbtn--prev");
     prevBtn.type = "button";
     prevBtn.setAttribute("aria-label", "Vorige maanden");
     prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>';
-    var navTitle = el("div", "besa-dr-title");
-    var nextBtn = el("button", "besa-dr-navbtn besa-dr-navbtn--next");
+    var navTitle = el("div", "ff-dr-title");
+    var nextBtn = el("button", "ff-dr-navbtn ff-dr-navbtn--next");
     nextBtn.type = "button";
     nextBtn.setAttribute("aria-label", "Volgende maanden");
     nextBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
@@ -132,12 +132,12 @@
     nav.appendChild(navTitle);
     nav.appendChild(nextBtn);
 
-    var grids = el("div", "besa-dr-grids");
+    var grids = el("div", "ff-dr-grids");
 
-    var footer = el("div", "besa-dr-footer");
-    var clearBtn = el("button", "btn-outline besa-dr-clear", "Wissen");
+    var footer = el("div", "ff-dr-footer");
+    var clearBtn = el("button", "btn-outline ff-dr-clear", "Wissen");
     clearBtn.type = "button";
-    var applyBtn = el("button", "btn-primary besa-dr-apply", "Toepassen");
+    var applyBtn = el("button", "btn-primary ff-dr-apply", "Toepassen");
     applyBtn.type = "button";
     if (allowEmpty) footer.appendChild(clearBtn);
     footer.appendChild(applyBtn);
@@ -147,22 +147,22 @@
     pop.appendChild(grids);
     pop.appendChild(footer);
 
-    container.classList.add("besa-dr");
+    container.classList.add("ff-dr");
     container.appendChild(pill);
     container.appendChild(pop);
 
     // ---- Render ----
     function buildMonth(base) {
-      var wrap = el("div", "besa-dr-month");
-      var cap = el("div", "besa-dr-mcap",
+      var wrap = el("div", "ff-dr-month");
+      var cap = el("div", "ff-dr-mcap",
         MONTHS[base.getMonth()].charAt(0).toUpperCase()
         + MONTHS[base.getMonth()].slice(1) + " " + base.getFullYear());
       wrap.appendChild(cap);
-      var head = el("div", "besa-dr-wk");
-      WEEKDAYS.forEach(function (w) { head.appendChild(el("span", "besa-dr-wkd", w)); });
+      var head = el("div", "ff-dr-wk");
+      WEEKDAYS.forEach(function (w) { head.appendChild(el("span", "ff-dr-wkd", w)); });
       wrap.appendChild(head);
 
-      var grid = el("div", "besa-dr-days");
+      var grid = el("div", "ff-dr-days");
       var first = new Date(base.getFullYear(), base.getMonth(), 1);
       var startWeekday = first.getDay(); // 0 = zondag
       var daysInMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
@@ -171,11 +171,11 @@
       // leidende dagen vorige maand (grijs, niet klikbaar — net als BS2)
       for (var lead = 0; lead < startWeekday; lead += 1) {
         var pd = new Date(base.getFullYear(), base.getMonth(), 1 - (startWeekday - lead));
-        grid.appendChild(el("span", "besa-dr-day besa-dr-day--out", String(pd.getDate())));
+        grid.appendChild(el("span", "ff-dr-day ff-dr-day--out", String(pd.getDate())));
       }
       for (var dnum = 1; dnum <= daysInMonth; dnum += 1) {
         var dd = new Date(base.getFullYear(), base.getMonth(), dnum);
-        var cell = el("button", "besa-dr-day", String(dnum));
+        var cell = el("button", "ff-dr-day", String(dnum));
         cell.type = "button";
         cell.setAttribute("data-iso", toISO(dd));
         if (sameDay(dd, today)) cell.classList.add("is-today");
@@ -191,7 +191,7 @@
       var totalCells = startWeekday + daysInMonth;
       var trail = (7 - (totalCells % 7)) % 7;
       for (var t = 1; t <= trail; t += 1) {
-        grid.appendChild(el("span", "besa-dr-day besa-dr-day--out", String(t)));
+        grid.appendChild(el("span", "ff-dr-day ff-dr-day--out", String(t)));
       }
       wrap.appendChild(grid);
       return wrap;
@@ -311,13 +311,13 @@
       renderPill();
       pop.hidden = false;
       pill.setAttribute("aria-expanded", "true");
-      container.classList.add("besa-dr--open");
+      container.classList.add("ff-dr--open");
       positionPop();
     }
     function close() {
       pop.hidden = true;
       pill.setAttribute("aria-expanded", "false");
-      container.classList.remove("besa-dr--open");
+      container.classList.remove("ff-dr--open");
     }
 
     // ---- events ----
@@ -355,7 +355,7 @@
     pop.addEventListener("click", function (e) { e.stopPropagation(); });
     document.addEventListener("click", function (e) {
       if (pop.hidden) return;
-      if (!e.target || !e.target.closest || !e.target.closest(".besa-dr")) close();
+      if (!e.target || !e.target.closest || !e.target.closest(".ff-dr")) close();
     });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && !pop.hidden) close();
@@ -384,5 +384,5 @@
     };
   }
 
-  global.BesaDateRange = { mount: mount };
+  global.FfDateRange = { mount: mount };
 })(typeof window !== "undefined" ? window : this);

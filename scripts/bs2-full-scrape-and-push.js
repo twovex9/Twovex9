@@ -2,7 +2,7 @@
 /**
  * bs2-full-scrape-and-push.js
  * ===========================
- * EÉN DevTools-script dat data uit BesaSuite2 (productie) ophaalt en DIRECT
+ * EÉN DevTools-script dat data uit FfSuite2 (productie) ophaalt en DIRECT
  * naar onze Supabase pusht. Geconsolideerd uit bs2-browser-snippet.js +
  * bs2-full-import.mjs, aangepast op de ECHTE productie-API.
  *

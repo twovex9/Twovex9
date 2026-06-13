@@ -9,7 +9,7 @@
  *
  * Bron van waarheid: Supabase tabel `onboarding_trajecten`.
  * Cache: localStorage "onboarding_trajecten_v1" + in-memory `_mem` (DATA-SLIM).
- * Event: `besa:onboarding-updated` voor live re-render.
+ * Event: `ff:onboarding-updated` voor live re-render.
  *
  * Gebruik:
  *   await window.onboardingDB.ready;
@@ -43,7 +43,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:onboarding-updated", { detail: { source: source || "onboarding-trajecten-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:onboarding-updated", { detail: { source: source || "onboarding-trajecten-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -65,15 +65,15 @@
   async function ensureSupabaseReady() {
     // Cold-load vangrail (les #13): wacht op sessie-rehydratie vóór de eerste
     // query, anders draait de RLS anoniem en komen er 0 rijen terug.
-    if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-      try { await global.besaSupabaseReady; } catch (e) { /* */ }
+    if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+      try { await global.ffSupabaseReady; } catch (e) { /* */ }
     }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     await ensureSupabaseReady();
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -90,7 +90,7 @@
         writeCache(items);
         dispatchUpdated("bootstrap");
       } catch (err) {
-        // READ-fout mag NOOIT besaReportSyncFailure aanroepen (zou auth-logout
+        // READ-fout mag NOOIT ffReportSyncFailure aanroepen (zou auth-logout
         // escaleren). Alleen loggen.
         console.error("[onboardingDB] Bootstrap mislukt:", err);
       }
@@ -115,7 +115,7 @@
 
   // Start (of haal bestaand) onboarding-traject voor een medewerker.
   async function start(medewerkerId, opts) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medewerkerId) throw new Error("medewerkerId verplicht");
     var existing = getForMedewerkerSync(medewerkerId);
     if (existing) return existing;
@@ -126,7 +126,7 @@
       data: safe.dienstverbandType ? { dienstverband_type: String(safe.dienstverbandType) } : {},
     };
     if (safe.aangemaaktDoor) payload.aangemaakt_door = safe.aangemaaktDoor;
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);
@@ -135,9 +135,9 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("id verplicht");
-    var res = await global.besaSupabase.from(TABLE).update(patch || {}).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(patch || {}).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);

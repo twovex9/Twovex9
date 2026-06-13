@@ -50,10 +50,10 @@ Bevinding tijdens S10 review: alle PII-tabellen (medewerkers, clienten, beschikk
 5. **Browser triggert auto-download** — `bs2-export-full.json` (15-20 MB verwacht)
 6. **Verplaats** bestand naar:
    ```
-   besa-suite-etf/scripts/bs2-exports/bs2-export-full.json
+   future-flow/scripts/bs2-exports/bs2-export-full.json
    ```
    (overschrijf de bestaande oude file)
-7. **Run import-pipeline** vanuit `besa-suite-etf/`:
+7. **Run import-pipeline** vanuit `future-flow/`:
    ```bash
    # PowerShell op Windows:
    $env:SUPABASE_SERVICE_KEY = "PLAK_SERVICE_KEY_HIER"

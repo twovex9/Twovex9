@@ -231,9 +231,9 @@
     $("vu-jaar-bovenwet").addEventListener("input", recompute);
     $("vu-copy-btn").addEventListener("click", copyToClipboard);
 
-    window.addEventListener("besa:medewerkers-updated", fillMedewerkers);
-    window.addEventListener("besa:medewerker-verlof-overgedragen-updated", recompute);
-    window.addEventListener("besa:verlof-updated", recompute);
+    window.addEventListener("ff:medewerkers-updated", fillMedewerkers);
+    window.addEventListener("ff:medewerker-verlof-overgedragen-updated", recompute);
+    window.addEventListener("ff:verlof-updated", recompute);
   }
 
   function init() {

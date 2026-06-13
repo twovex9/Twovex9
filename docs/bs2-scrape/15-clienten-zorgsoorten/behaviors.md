@@ -44,5 +44,5 @@
 
 ## Events
 
-- `besa:zorgsoorten-updated` event op window bij mutaties
+- `ff:zorgsoorten-updated` event op window bij mutaties
 - Schrijven naar Supabase via PostgREST

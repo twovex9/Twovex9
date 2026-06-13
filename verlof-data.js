@@ -11,7 +11,7 @@
  *  - verlofDB.indienen(id) / goedkeuren(id, opmerking) / afwijzen(id, opmerking) / annuleren(id)
  *  - verlofDB.getForMedewerkerSync(medewerkerId)
  *
- * Events: besa:verlof-updated
+ * Events: ff:verlof-updated
  */
 (function (global) {
   "use strict";
@@ -126,12 +126,12 @@
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:verlof-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:verlof-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -149,7 +149,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[verlofDB] Bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verlof — bootstrap", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Verlof — bootstrap", err);
       }
     })();
     return readyPromise;
@@ -163,11 +163,11 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var doc = Object.assign({}, rec || {});
     if (!doc.id) doc.id = generateId();
     var payload = objToPayload(doc);
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(sortItems(readCache().concat([obj])));
@@ -176,13 +176,13 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToPayload(merged);
     delete payload.id;
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache();
@@ -209,22 +209,22 @@
   // de planner-conflict-melding). Fail-silent — mag de flow nooit breken.
   async function notifyRolGroep(slugs, title, body, verlofId) {
     try {
-      if (!global.besaSupabase) return;
-      var rr = await global.besaSupabase.from("bs2_roles").select("id").in("slug", slugs);
+      if (!global.ffSupabase) return;
+      var rr = await global.ffSupabase.from("bs2_roles").select("id").in("slug", slugs);
       if (rr.error || !rr.data || !rr.data.length) return;
       var roleIds = rr.data.map(function (r) { return r.id; });
-      var ru = await global.besaSupabase.from("bs2_role_users").select("user_email").in("role_id", roleIds);
+      var ru = await global.ffSupabase.from("bs2_role_users").select("user_email").in("role_id", roleIds);
       if (ru.error) return;
       var set = {};
       (ru.data || []).forEach(function (r) { var e = String(r.user_email || "").trim().toLowerCase(); if (e) set[e] = true; });
       var emails = Object.keys(set);
       if (!emails.length) return;
-      var pr = await global.besaSupabase.from("profiles").select("id").in("email", emails);
+      var pr = await global.ffSupabase.from("profiles").select("id").in("email", emails);
       if (pr.error || !pr.data || !pr.data.length) return;
       var rows = pr.data.map(function (p) {
         return { user_id: p.id, type: "verlof_workflow", title: title, body: body, related_entity_type: "verlof", related_entity_id: verlofId || null };
       });
-      await global.besaSupabase.from("notifications").insert(rows);
+      await global.ffSupabase.from("notifications").insert(rows);
     } catch (e) { console.warn("[verlofDB] notifyRolGroep mislukt:", e); }
   }
 
@@ -268,7 +268,7 @@
    * verstoren of de UI in een logout-loop trekken.
    */
   async function notifyPlanningConflictsAfterApproval(verlof) {
-    if (!global.besaSupabase || !verlof) return;
+    if (!global.ffSupabase || !verlof) return;
     var mwDB = global.medewerkersDB;
     if (!mwDB || typeof mwDB.getByIdSync !== "function") return;
     var mw = mwDB.getByIdSync(verlof.medewerkerId);
@@ -280,7 +280,7 @@
     var startBoundary = String(verlof.startDatum) + "T00:00:00Z";
     var endBoundary = String(verlof.eindDatum) + "T23:59:59Z";
 
-    var planResp = await global.besaSupabase
+    var planResp = await global.ffSupabase
       .from("planning")
       .select("id, start_iso, einde_iso, teamlid, diensttype, locatie")
       .eq("teamlid", naam)
@@ -306,14 +306,14 @@
     var toekomstIds = toekomstDiensten.map(function (d) { return d.id; });
 
     // Conflict-flag op ALLE overlappende (verleden + toekomst) — historisch nuttig.
-    var updResp = await global.besaSupabase.from("planning").update({ conflict: true }).in("id", dienstIds);
+    var updResp = await global.ffSupabase.from("planning").update({ conflict: true }).in("id", dienstIds);
     if (updResp.error) {
       console.warn("[verlofDB] planning conflict-flag zetten mislukt:", updResp.error);
     }
 
     // Auto-afhaal ALLEEN op toekomstige diensten.
     if (toekomstIds.length > 0) {
-      var removeResp = await global.besaSupabase
+      var removeResp = await global.ffSupabase
         .from("planning")
         .update({ teamlid: "" })
         .in("id", toekomstIds);
@@ -323,7 +323,7 @@
     }
 
     // F5: Zoek Planner-rol ÉN Zorgcoördinator-rol (slug 'teamleider'; user-keuze: beide krijgen notif).
-    var rolesResp = await global.besaSupabase
+    var rolesResp = await global.ffSupabase
       .from("bs2_roles")
       .select("id, slug")
       .in("slug", ["planner", "teamleider"]);
@@ -334,7 +334,7 @@
     var roleIds = rolesResp.data.map(function (r) { return r.id; });
 
     // Planner + Zorgcoördinator emails (gecombineerd, gededupliceerd)
-    var pruResp = await global.besaSupabase
+    var pruResp = await global.ffSupabase
       .from("bs2_role_users")
       .select("user_email")
       .in("role_id", roleIds);
@@ -351,7 +351,7 @@
     if (emails.length === 0) return;
 
     // Profiles match
-    var profResp = await global.besaSupabase
+    var profResp = await global.ffSupabase
       .from("profiles")
       .select("id, email")
       .in("email", emails);
@@ -389,7 +389,7 @@
       });
     });
     if (rows.length === 0) return;
-    var insResp = await global.besaSupabase.from("notifications").insert(rows);
+    var insResp = await global.ffSupabase.from("notifications").insert(rows);
     if (insResp.error) {
       console.warn("[verlofDB] planner-notifications insert mislukt:", insResp.error);
     }
@@ -399,9 +399,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r && String(r.id) !== String(id); }));
     dispatchUpdated("remove");

@@ -12,7 +12,7 @@
 #   7. Initiëert build:check als test
 #
 # Gebruik:
-#   cd "C:\path\to\besa-suite-etf"
+#   cd "C:\path\to\future-flow"
 #   pwsh -ExecutionPolicy Bypass -File scripts\setup-machine.ps1
 #
 # Of vanuit PowerShell direct:
@@ -91,11 +91,11 @@ if ($inRepo -eq "true") {
     Write-Host "[check] In git repo ... OK" -ForegroundColor Green
     Write-Host "        Remote: $remote" -ForegroundColor Gray
     Write-Host "        Branch: $branch" -ForegroundColor Gray
-    if ($remote -notmatch "ETFalkmaar/besa-suite") {
-        Write-Host "        WARNING: remote is niet ETFalkmaar/besa-suite-" -ForegroundColor Yellow
+    if ($remote -notmatch "twovex9/twovex9") {
+        Write-Host "        WARNING: remote is niet twovex9/twovex9" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "[check] In git repo ... NEE (run dit script vanuit besa-suite-etf/)" -ForegroundColor Red
+    Write-Host "[check] In git repo ... NEE (run dit script vanuit future-flow/)" -ForegroundColor Red
 }
 
 # 6. Package install + build smoke test
@@ -113,10 +113,10 @@ if (Test-Path "package.json") {
 Write-Host ""
 Write-Host "## Externe services — handmatige login vereist" -ForegroundColor Cyan
 Write-Host "  [ ] Supabase Dashboard: https://supabase.com/dashboard/project/ukjflilnhigozfoxowmj" -ForegroundColor Gray
-Write-Host "  [ ] Vercel Dashboard:   https://vercel.com/etfalkmaars-projects/besa-suite" -ForegroundColor Gray
+Write-Host "  [ ] Vercel Dashboard:   https://vercel.com/etfalkmaars-projects/futureflow-app" -ForegroundColor Gray
 Write-Host "  [ ] BS2 (sandbox):       https://etf.acceptance.besasuite.nl" -ForegroundColor Gray
-Write-Host "  [ ] GitHub repo:         https://github.com/ETFalkmaar/besa-suite-" -ForegroundColor Gray
-Write-Host "  [ ] BS1 productie:       https://besa-suite.vercel.app" -ForegroundColor Gray
+Write-Host "  [ ] GitHub repo:         https://github.com/twovex9/twovex9" -ForegroundColor Gray
+Write-Host "  [ ] BS1 productie:       https://futureflow-app.vercel.app" -ForegroundColor Gray
 
 # 8. Volgende stappen
 Write-Host ""

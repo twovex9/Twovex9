@@ -28,8 +28,7 @@ Profile-edit in BS1 zit elders (`instellingen.html` → Mijn profiel-tab, Module
 ## BS1 superset features (compleet andere richting)
 
 BS1 mijn-gegevens.html is **niet** een BS2-mirror maar een **GDPR-compliance pagina** met:
-1. **AVG Art. 15 inzage** — wat staat er over je in BESA-suite
-2. **AVG Art. 20 portability** — JSON-download van eigen data
+1. **AVG Art. 15 inzage** — wat staat er over je in BS2. **AVG Art. 20 portability** — JSON-download van eigen data
 3. **AVG-rechten uitleg** — 5 rights (Art. 15/16/17/20/21)
 4. **Retention-policies** — 5 bewaartermijnen + `gdpr_retention_run_v1()`
 5. **Vernieuwen** — refresh data + GEËXPORTEERD OP timestamp

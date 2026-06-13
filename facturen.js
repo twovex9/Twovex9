@@ -47,7 +47,7 @@
   var baseFactBulk = typeof FACTUREN_BULK !== "undefined" && Array.isArray(FACTUREN_BULK) ? FACTUREN_BULK : [];
   var raw = baseFactBulk.slice();
   // Stage 7: facturen_supplement_v1 is gemigreerd naar Supabase. De data komt
-  // nu binnen via FACTUREN_BULK / besa:facturen-updated. Geen lokale parallel-
+  // nu binnen via FACTUREN_BULK / ff:facturen-updated. Geen lokale parallel-
   // state meer.
 
   function loadStrArrLS(lsKey) {
@@ -64,7 +64,7 @@
   var factPurged = loadStrArrLS(LS_FACT_PURGED);
 
   // Bouw raw + factArchived opnieuw op uit (mogelijk vernieuwde) FACTUREN_BULK.
-  // Wordt aangeroepen na "besa:facturen-updated" — als facturen-data.js
+  // Wordt aangeroepen na "ff:facturen-updated" — als facturen-data.js
   // de Supabase-data in window.FACTUREN_BULK heeft gezet.
   function rebuildFromBulk() {
     var bb = (typeof FACTUREN_BULK !== "undefined" && Array.isArray(FACTUREN_BULK)) ? FACTUREN_BULK : [];
@@ -270,7 +270,7 @@
     return (r.per != null && String(r.per).indexOf(year) !== -1);
   }
 
-  // Datum-range-filter (BesaDateRange). Periode-tekst van een rij is
+  // Datum-range-filter (FfDateRange). Periode-tekst van een rij is
   // "DD-MM-YYYY t/m DD-MM-YYYY"; fallback op enkel jaartal.
   function parsePeriodeRow(r) {
     var s = (r && r.per != null) ? String(r.per) : "";
@@ -1785,8 +1785,8 @@
 
   initFactExport();
   populatePeriodeOptions();
-  if (perRangeBox && perStartEl && perEndEl && window.BesaDateRange) {
-    perRangeWidget = window.BesaDateRange.mount({
+  if (perRangeBox && perStartEl && perEndEl && window.FfDateRange) {
+    perRangeWidget = window.FfDateRange.mount({
       container: perRangeBox,
       startInput: perStartEl,
       endInput: perEndEl,
@@ -1796,8 +1796,8 @@
       onApply: function () { onFilterChange(); }
     });
   }
-  if (addPerRangeBox && addPerStartEl && addPerEndEl && window.BesaDateRange) {
-    addPerWidget = window.BesaDateRange.mount({
+  if (addPerRangeBox && addPerStartEl && addPerEndEl && window.FfDateRange) {
+    addPerWidget = window.FfDateRange.mount({
       container: addPerRangeBox,
       startInput: addPerStartEl,
       endInput: addPerEndEl,
@@ -1818,7 +1818,7 @@
   // externe wijziging), bouw `raw` opnieuw op uit FACTUREN_BULK en re-render.
   // Dit zorgt dat een nieuwe gebruiker (lege localStorage) toch direct alle
   // 956+ facturen ziet, en dat archive/purge-acties op andere tabs doorkomen.
-  window.addEventListener("besa:facturen-updated", function () {
+  window.addEventListener("ff:facturen-updated", function () {
     factDataLoaded = true;
     // Pure server-modus (overzicht, geen filter): de server is gezaghebbend.
     // Niet rebuildFromBulk() doen — de bulk is in lazy-modus enkel de

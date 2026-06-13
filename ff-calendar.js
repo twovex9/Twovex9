@@ -1,5 +1,5 @@
 /*
- * besa-calendar.js
+ * ff-calendar.js
  * -----------------------------------------------------------------------------
  * Vervangt de kleine, niet-stijlbare native browser-datumkiezer door een grote,
  * comfortabele custom kalender-popup (ongeveer twee keer zo groot) — op ELKE
@@ -13,7 +13,7 @@
  * Het script enhanced ook datumvelden die later (in modals) worden toegevoegd,
  * via een MutationObserver. Alle stijl gebruikt design-tokens → licht én donker.
  *
- * Handmatig aanroepen kan ook:  window.besaCalendar.enhance(inputEl);
+ * Handmatig aanroepen kan ook:  window.ffCalendar.enhance(inputEl);
  */
 (function (global) {
   "use strict";
@@ -56,13 +56,13 @@
 
   // ---- CSS één keer injecteren ---------------------------------------------
   function injectStyles() {
-    if (document.getElementById("besa-cal-styles")) return;
+    if (document.getElementById("ff-cal-styles")) return;
     var css = [
       // De native picker-indicator verbergen we; we openen onze eigen kalender.
-      "input.besa-cal-input::-webkit-calendar-picker-indicator{display:none;-webkit-appearance:none;}",
-      "input.besa-cal-input{cursor:pointer;}",
+      "input.ff-cal-input::-webkit-calendar-picker-indicator{display:none;-webkit-appearance:none;}",
+      "input.ff-cal-input{cursor:pointer;}",
 
-      ".besa-cal-pop{",
+      ".ff-cal-pop{",
       "  position:fixed;z-index:100000;",
       "  background:var(--bg-card,var(--surface,#fff));",
       "  color:var(--text,#111);",
@@ -74,50 +74,50 @@
       "  font-family:inherit;",
       "  -webkit-user-select:none;user-select:none;",
       "}",
-      ".besa-cal-pop[hidden]{display:none;}",
+      ".ff-cal-pop[hidden]{display:none;}",
 
-      ".besa-cal-head{display:flex;align-items:center;gap:6px;margin-bottom:12px;}",
-      ".besa-cal-title{flex:1;text-align:center;font-size:16px;font-weight:650;color:var(--text,#111);letter-spacing:.01em;}",
-      ".besa-cal-nav{",
+      ".ff-cal-head{display:flex;align-items:center;gap:6px;margin-bottom:12px;}",
+      ".ff-cal-title{flex:1;text-align:center;font-size:16px;font-weight:650;color:var(--text,#111);letter-spacing:.01em;}",
+      ".ff-cal-nav{",
       "  appearance:none;border:1px solid var(--line,#e5e5e5);",
       "  background:var(--surface,#fff);color:var(--text-secondary,#404040);",
       "  width:34px;height:34px;border-radius:10px;cursor:pointer;",
       "  font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;",
       "  transition:background .12s,border-color .12s;",
       "}",
-      ".besa-cal-nav:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
-      ".besa-cal-nav:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:2px;}",
+      ".ff-cal-nav:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
+      ".ff-cal-nav:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:2px;}",
 
-      ".besa-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}",
-      ".besa-cal-dow span{text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#737373);padding:4px 0;}",
+      ".ff-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}",
+      ".ff-cal-dow span{text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#737373);padding:4px 0;}",
 
-      ".besa-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}",
-      ".besa-cal-day{",
+      ".ff-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}",
+      ".ff-cal-day{",
       "  appearance:none;border:0;background:transparent;color:var(--text,#111);",
       "  height:40px;border-radius:10px;cursor:pointer;",
       "  font-size:14px;font-weight:500;font-family:inherit;",
       "  display:flex;align-items:center;justify-content:center;",
       "  transition:background .1s,color .1s;",
       "}",
-      ".besa-cal-day:hover:not([disabled]){background:var(--fill-hover,rgba(0,0,0,.06));}",
-      ".besa-cal-day:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:-2px;}",
-      ".besa-cal-day.is-other{color:var(--text-muted,#9ca3af);opacity:.55;}",
-      ".besa-cal-day.is-today{box-shadow:inset 0 0 0 1.5px var(--blue,#2563eb);font-weight:650;}",
-      ".besa-cal-day.is-selected{background:var(--blue,#2563eb)!important;color:#fff!important;font-weight:650;}",
-      ".besa-cal-day[disabled]{color:var(--text-muted,#9ca3af);opacity:.35;cursor:not-allowed;}",
+      ".ff-cal-day:hover:not([disabled]){background:var(--fill-hover,rgba(0,0,0,.06));}",
+      ".ff-cal-day:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:-2px;}",
+      ".ff-cal-day.is-other{color:var(--text-muted,#9ca3af);opacity:.55;}",
+      ".ff-cal-day.is-today{box-shadow:inset 0 0 0 1.5px var(--blue,#2563eb);font-weight:650;}",
+      ".ff-cal-day.is-selected{background:var(--blue,#2563eb)!important;color:#fff!important;font-weight:650;}",
+      ".ff-cal-day[disabled]{color:var(--text-muted,#9ca3af);opacity:.35;cursor:not-allowed;}",
 
-      ".besa-cal-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#e5e5e5);}",
-      ".besa-cal-btn{",
+      ".ff-cal-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#e5e5e5);}",
+      ".ff-cal-btn{",
       "  appearance:none;border:1px solid var(--line,#e5e5e5);background:var(--surface,#fff);",
       "  color:var(--text-secondary,#404040);padding:7px 14px;border-radius:10px;cursor:pointer;",
       "  font-size:13px;font-weight:600;font-family:inherit;transition:background .12s,border-color .12s;",
       "}",
-      ".besa-cal-btn:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
-      ".besa-cal-btn--clear{color:var(--text-muted,#737373);}",
-      ".besa-cal-btn--today{color:var(--blue,#2563eb);border-color:var(--blue-soft,rgba(37,99,235,.4));}",
+      ".ff-cal-btn:hover{background:var(--fill-hover,rgba(0,0,0,.05));border-color:var(--line-strong,#d4d4d4);}",
+      ".ff-cal-btn--clear{color:var(--text-muted,#737373);}",
+      ".ff-cal-btn--today{color:var(--blue,#2563eb);border-color:var(--blue-soft,rgba(37,99,235,.4));}",
     ].join("\n");
     var style = document.createElement("style");
-    style.id = "besa-cal-styles";
+    style.id = "ff-cal-styles";
     style.textContent = css;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -131,36 +131,36 @@
   function buildPopup() {
     if (pop) return;
     pop = document.createElement("div");
-    pop.className = "besa-cal-pop";
+    pop.className = "ff-cal-pop";
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", "Kies een datum");
     pop.hidden = true;
 
     pop.innerHTML =
-      '<div class="besa-cal-head">' +
-      '  <button type="button" class="besa-cal-nav" data-act="py" aria-label="Vorig jaar">&laquo;</button>' +
-      '  <button type="button" class="besa-cal-nav" data-act="pm" aria-label="Vorige maand">&lsaquo;</button>' +
-      '  <div class="besa-cal-title" aria-live="polite"></div>' +
-      '  <button type="button" class="besa-cal-nav" data-act="nm" aria-label="Volgende maand">&rsaquo;</button>' +
-      '  <button type="button" class="besa-cal-nav" data-act="ny" aria-label="Volgend jaar">&raquo;</button>' +
+      '<div class="ff-cal-head">' +
+      '  <button type="button" class="ff-cal-nav" data-act="py" aria-label="Vorig jaar">&laquo;</button>' +
+      '  <button type="button" class="ff-cal-nav" data-act="pm" aria-label="Vorige maand">&lsaquo;</button>' +
+      '  <div class="ff-cal-title" aria-live="polite"></div>' +
+      '  <button type="button" class="ff-cal-nav" data-act="nm" aria-label="Volgende maand">&rsaquo;</button>' +
+      '  <button type="button" class="ff-cal-nav" data-act="ny" aria-label="Volgend jaar">&raquo;</button>' +
       '</div>' +
-      '<div class="besa-cal-dow">' + DOW.map(function (d) { return "<span>" + d + "</span>"; }).join("") + '</div>' +
-      '<div class="besa-cal-grid" role="grid"></div>' +
-      '<div class="besa-cal-foot">' +
-      '  <button type="button" class="besa-cal-btn besa-cal-btn--clear" data-act="clear">Wissen</button>' +
-      '  <button type="button" class="besa-cal-btn besa-cal-btn--today" data-act="today">Vandaag</button>' +
+      '<div class="ff-cal-dow">' + DOW.map(function (d) { return "<span>" + d + "</span>"; }).join("") + '</div>' +
+      '<div class="ff-cal-grid" role="grid"></div>' +
+      '<div class="ff-cal-foot">' +
+      '  <button type="button" class="ff-cal-btn ff-cal-btn--clear" data-act="clear">Wissen</button>' +
+      '  <button type="button" class="ff-cal-btn ff-cal-btn--today" data-act="today">Vandaag</button>' +
       '</div>';
 
     document.body.appendChild(pop);
     els = {
-      title: pop.querySelector(".besa-cal-title"),
-      grid: pop.querySelector(".besa-cal-grid"),
+      title: pop.querySelector(".ff-cal-title"),
+      grid: pop.querySelector(".ff-cal-grid"),
     };
 
     // Dag-selectie + navigatie + voet-acties.
     pop.addEventListener("click", function (e) {
       // Eerst: klik op een dag-cel?
-      var day = e.target.closest(".besa-cal-day");
+      var day = e.target.closest(".ff-cal-day");
       if (day) {
         if (!day.disabled) commit(new Date(+day.dataset.y, +day.dataset.m, +day.dataset.d));
         return;
@@ -226,7 +226,7 @@
       var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
       var other = d.getMonth() !== viewMonth;
       var disabled = isDisabled(d, c);
-      var cls = "besa-cal-day";
+      var cls = "ff-cal-day";
       if (other) cls += " is-other";
       if (sameDay(d, today)) cls += " is-today";
       if (selected && sameDay(d, selected)) cls += " is-selected";
@@ -240,12 +240,12 @@
   }
 
   function focusedDay() {
-    return pop.querySelector('.besa-cal-day[tabindex="0"]') || pop.querySelector(".besa-cal-day");
+    return pop.querySelector('.ff-cal-day[tabindex="0"]') || pop.querySelector(".ff-cal-day");
   }
 
   function onPopKey(e) {
     var cur = document.activeElement;
-    if (!cur || !cur.classList || !cur.classList.contains("besa-cal-day")) {
+    if (!cur || !cur.classList || !cur.classList.contains("ff-cal-day")) {
       if (e.key === "Escape") { close(true); }
       return;
     }
@@ -269,7 +269,7 @@
       setView(nd.getFullYear(), nd.getMonth());
     }
     // Zet focus op de nieuwe dag.
-    var sel = pop.querySelector('.besa-cal-day[data-y="' + nd.getFullYear() + '"][data-m="' + nd.getMonth() + '"][data-d="' + nd.getDate() + '"]');
+    var sel = pop.querySelector('.ff-cal-day[data-y="' + nd.getFullYear() + '"][data-m="' + nd.getMonth() + '"][data-d="' + nd.getDate() + '"]');
     if (sel) { sel.setAttribute("tabindex", "0"); sel.focus(); }
   }
 
@@ -328,9 +328,9 @@
   function enhance(input) {
     if (!input || input.nodeName !== "INPUT") return;
     if ((input.getAttribute("type") || "").toLowerCase() !== "date") return;
-    if (input.__besaCal) return;
-    input.__besaCal = true;
-    input.classList.add("besa-cal-input");
+    if (input.__ffCal) return;
+    input.__ffCal = true;
+    input.classList.add("ff-cal-input");
 
     // Native picker onderdrukken + onze kalender openen.
     input.addEventListener("mousedown", function (e) {
@@ -415,5 +415,5 @@
     init();
   }
 
-  global.besaCalendar = { enhance: enhance, enhanceAll: enhanceAll, open: openFor, close: close };
+  global.ffCalendar = { enhance: enhance, enhanceAll: enhanceAll, open: openFor, close: close };
 })(typeof window !== "undefined" ? window : this);

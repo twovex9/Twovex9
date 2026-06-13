@@ -1,7 +1,7 @@
 // Idempotente sweep: voeg "Overuren te beoordelen" toe aan de Facturen-dropdown,
 // direct NA de "Proforma's per locatie"-link. Voor niet-bevoegde rollen verbergt
 // permissions-nav-hide.js 'm automatisch (allowedRoles incl. Zorgcoördinator).
-// Run vanuit besa-suite-etf/: `node scripts/add-overuren-nav.mjs`
+// Run vanuit future-flow/: `node scripts/add-overuren-nav.mjs`
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

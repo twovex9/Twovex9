@@ -9,7 +9,7 @@
  *
  * Bron van waarheid: Supabase tabel `contracten`.
  * Cache: localStorage "contracten_v1" + in-memory `_mem` (DATA-SLIM).
- * Event: `besa:contracten-updated`.
+ * Event: `ff:contracten-updated`.
  */
 (function (global) {
   "use strict";
@@ -50,7 +50,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:contracten-updated", { detail: { source: source || "contracten-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:contracten-updated", { detail: { source: source || "contracten-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -94,15 +94,15 @@
   }
 
   async function ensureSupabaseReady() {
-    if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-      try { await global.besaSupabaseReady; } catch (e) { /* */ }
+    if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+      try { await global.ffSupabaseReady; } catch (e) { /* */ }
     }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     await ensureSupabaseReady();
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -141,10 +141,10 @@
   }
 
   async function add(item) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToPayload(item);
     if (!payload.medewerker_id) throw new Error("medewerkerId verplicht");
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);
@@ -153,9 +153,9 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("id verplicht");
-    var res = await global.besaSupabase.from(TABLE).update(objToPayload(patch)).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(objToPayload(patch)).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     upsertLocal(obj);
@@ -167,9 +167,9 @@
   function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
     writeCache(cache);

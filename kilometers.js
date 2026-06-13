@@ -186,8 +186,8 @@
   // (view-all) krijgen het volledige overzicht/dashboard van álle medewerkers.
   function canSeeAllKm() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return true;
-      return (typeof window.besaCan === "function") && window.besaCan("view-all", "mileage-declarations");
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return true;
+      return (typeof window.ffCan === "function") && window.ffCan("view-all", "mileage-declarations");
     } catch (e) { return false; }
   }
   function ownMedewerkerId() {
@@ -202,7 +202,7 @@
   // medewerker kan ook niet invoeren (er is geen declaratie om aan te koppelen).
   function canAddOwnKm() {
     try {
-      if (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier()) return false;
+      if (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier()) return false;
       return !!ownMedewerkerId();
     } catch (e) { return false; }
   }
@@ -508,7 +508,7 @@
     if (addBtn) {
       // Eigenaar/Directie/Admin voeren zelf geen kilometers in — voor het bestuur is
       // deze pagina puur een overzicht/dashboard van ingediende declaraties (video-eis).
-      var isAdminTier = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier());
+      var isAdminTier = (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier());
       addBtn.hidden = isAdminTier;
       addBtn.disabled = isAdminTier || !editable;
       addBtn.classList.toggle("is-disabled", isAdminTier || !editable);
@@ -1108,13 +1108,13 @@
         if (st) { st.textContent = "Vul eerst vertrek- en bestemmingsadres in."; st.className = "km-route-status km-route-status--err"; }
         return;
       }
-      if (!window.besaGeoDistance || !window.besaGeoDistance.calculateRouteText) {
+      if (!window.ffGeoDistance || !window.ffGeoDistance.calculateRouteText) {
         if (st) { st.textContent = "Afstandsberekening niet beschikbaar — vul de km handmatig in."; st.className = "km-route-status km-route-status--err"; }
         return;
       }
       berekenBtn.disabled = true;
       if (st) { st.textContent = "Berekenen…"; st.className = "km-route-status km-route-status--busy"; }
-      window.besaGeoDistance.calculateRouteText(vertrek, bestemming).then(function (res) {
+      window.ffGeoDistance.calculateRouteText(vertrek, bestemming).then(function (res) {
         if (res && res.error) {
           if (st) { st.textContent = res.error; st.className = "km-route-status km-route-status--err"; }
           return;
@@ -1433,7 +1433,7 @@
 
     var exportBtn = $("km-export-btn");
     if (exportBtn) exportBtn.addEventListener("click", function () {
-      if (typeof window.besaExport !== "function") { toast("error", "Export-helper niet geladen"); return; }
+      if (typeof window.ffExport !== "function") { toast("error", "Export-helper niet geladen"); return; }
       var data = getDecls().map(function (a) {
         return {
           Medewerker: declNaam(a),
@@ -1444,7 +1444,7 @@
           "Totale vergoeding": Number(a.totalReimbursement || 0).toFixed(2),
         };
       });
-      window.besaExport({
+      window.ffExport({
         filename: "kilometer-declaraties",
         title: "Kilometer declaraties",
         data: data,
@@ -1473,11 +1473,11 @@
       document.querySelectorAll(".th-sort.th-sort-open").forEach(function (h) { h.classList.remove("th-sort-open"); });
     });
 
-    window.addEventListener("besa:kilometer-declaraties-updated", function () {
+    window.addEventListener("ff:kilometer-declaraties-updated", function () {
       if ($("km-overview-view").hidden === false) renderOverview();
       if ($("km-detail-view").hidden === false) renderDetail();
     });
-    window.addEventListener("besa:medewerkers-updated", function () {
+    window.addEventListener("ff:medewerkers-updated", function () {
       if ($("km-overview-view").hidden === false) renderOverview();
       if ($("km-detail-view").hidden === false) renderDetail();
     });
@@ -1491,8 +1491,8 @@
       if ($("km-overview-view") && $("km-overview-view").hidden === false) renderOverview();
       if ($("km-detail-view") && $("km-detail-view").hidden === false) renderDetail();
     }
-    try { if (window.besaPermissionsReady && window.besaPermissionsReady.then) window.besaPermissionsReady.then(reRenderActive); } catch (e) { /* */ }
-    window.addEventListener("besa:profile-updated", reRenderActive);
+    try { if (window.ffPermissionsReady && window.ffPermissionsReady.then) window.ffPermissionsReady.then(reRenderActive); } catch (e) { /* */ }
+    window.addEventListener("ff:profile-updated", reRenderActive);
   }
 
   async function init() {
@@ -1500,7 +1500,7 @@
     wireUp();
     // Toon meteen de juiste view o.b.v. de URL — vóór de await. Anders flitst
     // een deep-link (?decl=<id>) eerst het overzicht: km-overview-view is
-    // standaard zichtbaar en de besa:kilometer-declaraties-updated-events
+    // standaard zichtbaar en de ff:kilometer-declaraties-updated-events
     // renderen dat overzicht terwijl medewerkersDB.ready (traag) nog laadt.
     var s0 = getRouteState();
     if (s0.mode === "detail") {
@@ -1512,7 +1512,7 @@
       await Promise.all([
         window.kilometerDeclaratiesDB && window.kilometerDeclaratiesDB.ready,
         window.medewerkersDB && window.medewerkersDB.ready,
-        window.besaPermissionsReady,   // admin-tier bekend vóór render (verberg invoerknop voor bestuur)
+        window.ffPermissionsReady,   // admin-tier bekend vóór render (verberg invoerknop voor bestuur)
       ]);
     } catch (e) { /* events herstellen de UI */ }
     var s = getRouteState();

@@ -13,7 +13,7 @@
 -- DIEHARD: niets verwijdert data. Floor-medewerkers tekenen af via de
 -- SECURITY DEFINER RPC `medicatie_afteken` (directe write blijft office-only).
 -- Hergebruikt bestaande helpers is_office_staff() / is_bureau_only_user() /
--- besa_planner_hr_user_ids() en het meldingen-/incidenten-model 1-op-1.
+-- ff_planner_hr_user_ids() en het meldingen-/incidenten-model 1-op-1.
 -- ============================================================================
 
 -- 1. Definitie-tabel: medicatie per cliënt -----------------------------------
@@ -321,7 +321,7 @@ begin
              and lower(btrim(pl.client)) = lower(btrim(med.client_naam))
              and (pl.start_iso at time zone 'UTC')::date = v_datum
           union
-          select uid from besa_planner_hr_user_ids() as uid
+          select uid from ff_planner_hr_user_ids() as uid
         loop
           insert into notifications (user_id, type, title, body, related_entity_type, related_entity_id)
           values (rcpt.user_id, 'medicatie_incident',

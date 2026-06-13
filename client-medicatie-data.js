@@ -23,8 +23,8 @@
  *     dosering:"10mg", dagdelen:["ochtend","middag"], aftekenen:true });
  *   var afts = await window.clientMedicatieDB.fetchAftekeningen("cl_322", "2026-06-07");
  *   await window.clientMedicatieDB.afteken(medId, "2026-06-07", "ochtend", "gegeven");
- *   window.addEventListener("besa:client-medicatie-updated", rerender);
- *   window.addEventListener("besa:client-medicatie-aftekening-updated", rerender);
+ *   window.addEventListener("ff:client-medicatie-updated", rerender);
+ *   window.addEventListener("ff:client-medicatie-aftekening-updated", rerender);
  */
 (function (global) {
   "use strict";
@@ -74,14 +74,14 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:client-medicatie-updated", {
+      global.dispatchEvent(new CustomEvent("ff:client-medicatie-updated", {
         detail: { source: source || "client-medicatie-data" },
       }));
     } catch (e) { /* */ }
   }
   function dispatchAftUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:client-medicatie-aftekening-updated", {
+      global.dispatchEvent(new CustomEvent("ff:client-medicatie-aftekening-updated", {
         detail: { source: source || "client-medicatie-data" },
       }));
     } catch (e) { /* */ }
@@ -89,7 +89,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[clientMedicatieDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medicatie — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Medicatie — " + action, err);
   }
 
   function toStrArray(v) {
@@ -162,8 +162,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("naam", { ascending: true });
@@ -197,11 +197,11 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!rec || !rec.clientId) throw new Error("clientId verplicht");
     if (!rec.naam || !String(rec.naam).trim()) throw new Error("naam verplicht");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache().slice();
@@ -212,12 +212,12 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache().slice();
@@ -232,9 +232,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });
     writeCache(cache);
@@ -282,9 +282,9 @@
    * "yyyy-mm-dd"; tot is inclusief). Wordt direct uit Supabase gehaald.
    */
   async function fetchAftekeningen(clientId, vanDatum, totDatum) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!clientId) return [];
-    var q = global.besaSupabase.from(AFT_TABLE).select("*").eq("client_id", String(clientId));
+    var q = global.ffSupabase.from(AFT_TABLE).select("*").eq("client_id", String(clientId));
     if (vanDatum) q = q.gte("datum", vanDatum);
     if (totDatum) q = q.lte("datum", totDatum);
     else if (vanDatum) q = q.lte("datum", vanDatum);
@@ -298,11 +298,11 @@
    * De medewerker wordt server-side uit auth.uid() bepaald.
    */
   async function afteken(medicatieId, datum, dagdeel, status, reden, notitie) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medicatieId) throw new Error("medicatieId verplicht");
     if (!datum) throw new Error("datum verplicht");
     if (["ochtend", "middag", "avond"].indexOf(dagdeel) < 0) throw new Error("Ongeldig dagdeel");
-    var res = await global.besaSupabase.rpc("medicatie_afteken", {
+    var res = await global.ffSupabase.rpc("medicatie_afteken", {
       p_medicatie_id: medicatieId,
       p_datum: datum,
       p_dagdeel: dagdeel,

@@ -1,6 +1,6 @@
 /* global window, document */
 /**
- * besa-audit.js — centrale audit-logger (wie deed wat, wanneer).
+ * ff-audit.js — centrale audit-logger (wie deed wat, wanneer).
  *
  * Probleem: public.audit_log werd alléén door DB-triggers gevuld → alles
  * "Systeem", geen echte gebruiker, geen login/logout. Deze module logt
@@ -20,7 +20,7 @@
  */
 (function (global) {
   "use strict";
-  if (global.besaAudit) return;
+  if (global.ffAudit) return;
 
   var TABLE = "audit_log";
   var inflight = 0;
@@ -29,7 +29,7 @@
     var id = null, label = "Onbekend";
     try {
       var p = (global.profilesDB && global.profilesDB.getCurrentSync && global.profilesDB.getCurrentSync())
-        || global.besaCurrentProfile || null;
+        || global.ffCurrentProfile || null;
       if (p) {
         id = p.id || null;
         var nm = [p.voornaam, p.achternaam].filter(Boolean).join(" ").trim();
@@ -82,7 +82,7 @@
   }
 
   async function write(row) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (inflight > 16) return; // burst-bescherming bij bulk-acties
     inflight++;
     try {
@@ -97,13 +97,13 @@
         status: row.status || "succes",
         user_agent: (global.navigator && global.navigator.userAgent) || null,
       };
-      var res = await global.besaSupabase.from(TABLE).insert(payload);
+      var res = await global.ffSupabase.from(TABLE).insert(payload);
       // Audit mag de UI nooit breken, maar een mislukte insert NIET volledig
       // stil slikken (anders zie je nooit dat er iets misging — zoals de
       // CHECK-constraint die alles weigerde). Alleen console, geen toast.
-      if (res && res.error) console.warn("[besa-audit] insert geweigerd:", res.error.message || res.error, payload);
+      if (res && res.error) console.warn("[ff-audit] insert geweigerd:", res.error.message || res.error, payload);
     } catch (e) {
-      console.warn("[besa-audit] log-exception (UI niet beïnvloed):", e && e.message || e);
+      console.warn("[ff-audit] log-exception (UI niet beïnvloed):", e && e.message || e);
     }
     finally { inflight--; }
   }
@@ -123,7 +123,7 @@
 
   function wrapFeedback() {
     var orig = global.showActionFeedback;
-    if (typeof orig !== "function" || orig.__besaAuditWrapped) return;
+    if (typeof orig !== "function" || orig.__ffAuditWrapped) return;
     var wrapped = function (action, target, extra) {
       try {
         var k = String(action || "").toLowerCase();
@@ -137,7 +137,7 @@
       } catch (e) { /* */ }
       return orig.apply(this, arguments);
     };
-    wrapped.__besaAuditWrapped = true;
+    wrapped.__ffAuditWrapped = true;
     global.showActionFeedback = wrapped;
   }
 
@@ -151,7 +151,7 @@
   // insert nu écht uitgevoerd werd i.p.v. meteen te falen.)
   // Inloggen/uitloggen wordt later veilig gelogd vanuit login.html
   // (na succesvolle signIn) en de uitlog-knop in auth-guard.js —
-  // BUITEN de onAuthStateChange-callback. besa-audit raakt de auth-flow
+  // BUITEN de onAuthStateChange-callback. ff-audit raakt de auth-flow
   // nooit meer aan.
   function wireAuth() { /* opzettelijk leeg — zie comment hierboven */ }
 
@@ -166,7 +166,7 @@
   function profileReady() {
     try {
       var p = (global.profilesDB && global.profilesDB.getCurrentSync && global.profilesDB.getCurrentSync())
-        || global.besaCurrentProfile || null;
+        || global.ffCurrentProfile || null;
       return !!(p && (p.id || p.email));
     } catch (e) { return false; }
   }
@@ -178,8 +178,8 @@
     function fin() { if (done) return; done = true; try { cb(); } catch (e) { /* */ } }
     if (profileReady()) return fin();
     try {
-      global.addEventListener("besa:profile-updated", function h() {
-        try { global.removeEventListener("besa:profile-updated", h); } catch (e) { /* */ }
+      global.addEventListener("ff:profile-updated", function h() {
+        try { global.removeEventListener("ff:profile-updated", h); } catch (e) { /* */ }
         fin();
       });
     } catch (e) { /* */ }
@@ -194,7 +194,7 @@
   function pageTitleClean() {
     try {
       return String(document.title || "")
-        .replace(/\s*[—|·-]\s*(Future Flow|Besa Suite|HR|Organisatie|ETF).*$/i, "").trim();
+        .replace(/\s*[—|·-]\s*(Future Flow|Future Flow|HR|Organisatie|ETF).*$/i, "").trim();
     } catch (e) { return ""; }
   }
   function pageLabel() {
@@ -206,11 +206,11 @@
     try {
       var key = (global.location.pathname || "") + (global.location.search || "");
       var now = Date.now();
-      var lastKey = global.sessionStorage.getItem("__besaAuditNavKey") || "";
-      var lastAt = Number(global.sessionStorage.getItem("__besaAuditNavAt") || 0);
+      var lastKey = global.sessionStorage.getItem("__ffAuditNavKey") || "";
+      var lastAt = Number(global.sessionStorage.getItem("__ffAuditNavAt") || 0);
       if (lastKey === key && (now - lastAt) < 4000) return; // redirect/reload-dedupe
-      global.sessionStorage.setItem("__besaAuditNavKey", key);
-      global.sessionStorage.setItem("__besaAuditNavAt", String(now));
+      global.sessionStorage.setItem("__ffAuditNavKey", key);
+      global.sessionStorage.setItem("__ffAuditNavAt", String(now));
     } catch (e) { /* */ }
     whenProfileReady(function () {
       log({ actie: "bekijken", details: ("Pagina geopend: " + pageLabel()) });
@@ -288,10 +288,10 @@
   function logSessionLoginOnce() {
     try {
       var hasSess = false;
-      try { hasSess = !!global.localStorage.getItem("sb-besa-auth"); } catch (e) { /* */ }
+      try { hasSess = !!global.localStorage.getItem("sb-ff-auth"); } catch (e) { /* */ }
       if (!hasSess) return; // login.html / uitgelogd → niet loggen
-      if (global.sessionStorage.getItem("__besaAuditLogin")) return; // al gelogd deze tab-sessie
-      global.sessionStorage.setItem("__besaAuditLogin", "1");
+      if (global.sessionStorage.getItem("__ffAuditLogin")) return; // al gelogd deze tab-sessie
+      global.sessionStorage.setItem("__ffAuditLogin", "1");
       whenProfileReady(function () {
         log({ resource: "Gebruiker", actie: "inloggen", details: "Ingelogd" });
       }, 6000);
@@ -305,7 +305,7 @@
     logPageView();
   }
 
-  global.besaAudit = { log: log };
+  global.ffAudit = { log: log };
 
   function init() {
     wrapFeedback();              // haak 1: alle CRUD via showActionFeedback

@@ -13,7 +13,7 @@ V1 had Playwright skelet met 13 unauthenticated tests (smoke + auth-redirect + p
 
 **Global-setup pattern**:
 1. `playwright.config.mjs` start `auth-setup.mjs` éénmaal vóór alle tests
-2. Auth-setup logt in via `BESA_E2E_EMAIL` + `BESA_E2E_PASSWORD` env-vars
+2. Auth-setup logt in via `FF_E2E_EMAIL` + `FF_E2E_PASSWORD` env-vars
 3. Sessie wordt bewaard in `tests/e2e/.auth/storage.json` (gitignored)
 4. Authenticated test-project laadt deze state per test — geen herhaalde logins
 
@@ -58,9 +58,9 @@ Test-user opzetten (eenmalig):
 Run lokaal:
 
 ```powershell
-cd "C:\Users\sonck\OneDrive\Desktop\ETF\besa suite git clone\besa-suite-etf"
-$env:BESA_E2E_EMAIL = "e2e-test@besasolutions.nl"
-$env:BESA_E2E_PASSWORD = "PLAK_WACHTWOORD_HIER"
+cd "C:\Users\sonck\OneDrive\Desktop\ETF\Future Flow git clone\future-flow"
+$env:FF_E2E_EMAIL = "e2e-test@besasolutions.nl"
+$env:FF_E2E_PASSWORD = "PLAK_WACHTWOORD_HIER"
 npm run test:e2e
 ```
 

@@ -8,7 +8,7 @@
 
 ### BS2 deep walk bevinding
 
-BS2 heeft GEEN aparte `/planning/finance` route — de "Financiën" knop in BS2 navigatie zit alleen in een `.besa-navigation__sizer-item` (responsive sizer, niet visueel). De **echte** Planning Financiën zit in de **KPI cards bovenaan de planning-pagina** + de **per-row chips per locatie**.
+BS2 heeft GEEN aparte `/planning/finance` route — de "Financiën" knop in BS2 navigatie zit alleen in een `.ff-navigation__sizer-item` (responsive sizer, niet visueel). De **echte** Planning Financiën zit in de **KPI cards bovenaan de planning-pagina** + de **per-row chips per locatie**.
 
 ### Gap-analyse BS2 ↔ BS1
 

@@ -8,14 +8,14 @@
 
 ## E.6 Read-audit (GDPR Art. 15)
 
-- `read-audit.js` LIVE: `window.besaReadAudit.log(resource, resource_id)`
+- `read-audit.js` LIVE: `window.ffReadAudit.log(resource, resource_id)`
 - Throttle 5 min per (resource + id) → max 1 entry per page-refresh-burst
 - Wired in `client-detail.html` + `medewerker.html` inline init-script
 - Logt `bekijken`-actie in `audit_log` met `gebruiker_label = email`
 
 ## E.11 Optimistic-lock (concurrent-edit protection)
 
-- `clienten-data.js` `update()` doet pre-check via `besaOptimisticLock.check()`
+- `clienten-data.js` `update()` doet pre-check via `ffOptimisticLock.check()`
 - `medewerkers-data.js` `update()` zelfde patroon
 - Conflict → modal "Wijziging geblokkeerd — record is door iemand anders gewijzigd"
 - 2 user-keuzes: Reload (page-refresh) of Annuleren (throw exception)
@@ -27,7 +27,7 @@
 ### CLEAN RUN #1 — client-detail.html (text-PK cliënten tabel)
 - read-audit + optimistic-lock scripts loaded ✅
 - Read-audit auto-logged: 1 entry in audit_log voor 'Cliënt' / 'bekijken' ✅
-- Throttle: 2nd `besaReadAudit.log()` binnen 5 min → blijft 1 entry ✅
+- Throttle: 2nd `ffReadAudit.log()` binnen 5 min → blijft 1 entry ✅
 - Stale `laatstGewijzigd` injected in localStorage 'clientenItems' cache ✅
 - `clientenDB.update()` → conflict-modal appeared ✅
 - Modal-title: "Wijziging geblokkeerd — record is door iemand anders gewijzigd" ✅

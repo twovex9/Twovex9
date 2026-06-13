@@ -6,7 +6,7 @@
  * RLS: lezen = authenticated; schrijven = HR. De aanvraag-formulieren (desktop
  * mijn-verlof) lezen de actieve typen hieruit, met de klassieke 7 als fallback.
  *
- * Events: besa:verloftypes-updated
+ * Events: ff:verloftypes-updated
  */
 (function (global) {
   "use strict";
@@ -44,12 +44,12 @@
     });
   }
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:verloftypes-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:verloftypes-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -63,7 +63,7 @@
         dispatchUpdated("bootstrap");
       } catch (err) {
         console.error("[verloftypesDB] bootstrap mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verloftypes — laden", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Verloftypes — laden", err);
       }
     })();
     return readyPromise;
@@ -83,7 +83,7 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = {
       code: (rec && rec.code) || slugify(rec && rec.label),
       label: String((rec && rec.label) || "").trim(),
@@ -91,7 +91,7 @@
       volgorde: Number(rec && rec.volgorde) || 0,
     };
     if (!payload.label) throw new Error("Label is verplicht");
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     writeCache(sortItems(readCache().concat([rowToObj(res.data)])));
     dispatchUpdated("add");
@@ -99,13 +99,13 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = {};
     if (partial && partial.label != null) payload.label = String(partial.label).trim();
     if (partial && partial.actief != null) payload.actief = !!partial.actief;
     if (partial && partial.volgorde != null) payload.volgorde = Number(partial.volgorde) || 0;
     payload.laatst_gewijzigd = new Date().toISOString();
-    var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     writeCache(sortItems(readCache().map(function (r) { return r.id === id ? obj : r; })));
@@ -114,8 +114,8 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     writeCache(readCache().filter(function (r) { return r.id !== id; }));
     dispatchUpdated("remove");

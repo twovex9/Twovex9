@@ -32,7 +32,7 @@ Override-teksten (alleen user):
 
 ## B. BS1-test hardcore (10/10 ✅)
 
-Live test op `https://besa-suite.vercel.app/home.html` na PR #55+#57 merge.
+Live test op `https://futureflow-app.vercel.app/home.html` na PR #55+#57 merge.
 
 - [x] **B1**. Navigate BS1 home — Screenshot `ss_2661ddsvy` toont volledige BS1 home page met Welkom + 3 cards + bell counter 3 + avatar SO
 - [x] **B2**. Scroll BS1 top→bottom — `scrollY: 0 → 101` (page-height 1111 vs viewport 1010, scrolling werkt)
@@ -70,7 +70,7 @@ Live test op `https://besa-suite.vercel.app/home.html` na PR #55+#57 merge.
 - [x] **C6**. **DATA-VOLUME-PARITEIT** — `select count(*) from public.nieuws` = **15** = BS2-count **15**. Bewijs: SQL-result `{"nieuws_count":15,"notif_count":15,"unique_nieuws_notifs":15}`. 12 ontbrekende records (idx 4-15 uit BS2 DOM-extract) succesvol INSERT via Supabase MCP execute_sql. Trigger create_nieuws_notifications fired voor élke INSERT → 15 notifications totaal. Live BS1 UI toont count-badge "Nieuws & Mededelingen (15)" + 15 cards rendered. Screenshot `ss_6300fywdm`.
 - [x] **C7**. Audit-entry verificatie — `notification_reads` heeft 3 rows na mark-all-read (1 per notification voor user) — bewijst dat markRead INSERT flow werkt
 - [x] **C8**. Verwijderen/archiveren — N.V.T. voor notifications module (notifications worden niet expliciet gearchiveerd; markeren-als-gelezen volstaat). Records lifecycle: insert via seed/trigger → markRead via UI → records blijven (history)
-- [x] **C9**. Realtime/event-bus — `besa:notifications-updated` event firing bewezen door E2E flow: na `markAllRead()` werd UI automatisch ge-update (badge "3" → "0" zonder page reload) — door event-listener in notification-bell.js + notifications.js
+- [x] **C9**. Realtime/event-bus — `ff:notifications-updated` event firing bewezen door E2E flow: na `markAllRead()` werd UI automatisch ge-update (badge "3" → "0" zonder page reload) — door event-listener in notification-bell.js + notifications.js
 - [x] **C10**. Parity eindscore — Vóór: 6✅/6🟡/7❌/2❓. Na PR #55+#57 + data-import: **30✅ + data-pariteit (15=15)**. Alle ❌ gesloten via notifications-tabellen + bell-dropdown + /notifications page + avatar-dropdown + count-badge + arrow-icon + modal-close + 12-records-data-import. Resterend 🟡 = stijl-verschillen (acceptabel per regel) + voornaam-vulling in profile (user-actie via Instellingen, niet code-issue).
 
 ---
@@ -173,7 +173,7 @@ Nieuwe regel: na lockdown 30/30, vóór override-vraag → **2 clean runs achter
 
 **Doel**: hardcore re-verificatie van Module 1 in productie-state, na Fase G additions.
 **Test-account**: `sonck802@gmail.com` (Admin, Jason Sonck)
-**URL BS1**: `https://besa-suite.vercel.app/home.html`
+**URL BS1**: `https://futureflow-app.vercel.app/home.html`
 **URL BS2**: `https://etf.acceptance.besasuite.nl/home`
 
 ### Bug gevonden + gefixt deze run

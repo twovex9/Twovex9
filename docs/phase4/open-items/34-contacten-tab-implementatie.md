@@ -37,7 +37,7 @@ Volgt het canonical patroon (zie werkpatronen sectie 6b):
 - Async write naar Supabase + cache-update + event-fire
 - `add`, `update`, `archive`, `restore`, `remove`
 - `getForClientSync(clientId)` voor render
-- Event: `besa:client-contacten-updated`
+- Event: `ff:client-contacten-updated`
 
 ### UI
 

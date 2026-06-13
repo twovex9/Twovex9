@@ -6,7 +6,7 @@
  *   2. Verwijdert de hardcoded Help-knop ("?") uit de topbar-icons.
  *
  * Beide bewerkingen zijn idempotent (al-gepatchte bestanden worden overgeslagen)
- * en raken verder NIETS aan. Run vanuit besa-suite-etf/:
+ * en raken verder NIETS aan. Run vanuit future-flow/:
  *   node scripts/theme-menu-migrate.mjs
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -16,10 +16,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const OLD_SNIPPET =
-  "var t=localStorage.getItem('besa-theme');" +
+  "var t=localStorage.getItem('ff-theme');" +
   "document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');";
 const NEW_SNIPPET =
-  "var t=localStorage.getItem('besa-theme');" +
+  "var t=localStorage.getItem('ff-theme');" +
   "var d=t==='dark'||(t==='system'&&window.matchMedia&&" +
   "window.matchMedia('(prefers-color-scheme: dark)').matches);" +
   "document.documentElement.setAttribute('data-theme',d?'dark':'light');";

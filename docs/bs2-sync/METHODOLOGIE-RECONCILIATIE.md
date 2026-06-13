@@ -59,7 +59,7 @@ BS1-nu vs BS2, 0 wezen, controle-record veld-voor-veld, backups, eerlijke noten.
 (beschikkingen/facturen/incidenten CHECK's; client-endpoints; medewerker-
 endpoints nog te ONTDEKKEN via STAP 1).
 
-## Templatescripts (`besa-suite-etf/scripts/`)
+## Templatescripts (`future-flow/scripts/`)
 clienten: inspect-clients.mjs / write-clients.mjs / test-clients.mjs.
 medewerkers: bs2-console-scrape-prof.js / write-prof.mjs / test-prof-scrape.mjs.
 Hergebruik als sjabloon.

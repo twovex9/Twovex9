@@ -72,7 +72,7 @@
     // Laat de pagina weten dat de doc-statussen (her)berekend zijn, zodat een
     // actieve "Vereist actie"-filter zich kan herevalueren.
     try {
-      global.dispatchEvent(new CustomEvent("besa:doc-status-painted"));
+      global.dispatchEvent(new CustomEvent("ff:doc-status-painted"));
     } catch (e) { /* */ }
   }
 
@@ -118,9 +118,9 @@
       });
     }
 
-    global.addEventListener("besa:medewerkers-updated", schedulePaint);
-    global.addEventListener("besa:medewerker-documenten-updated", schedulePaint);
-    global.addEventListener("besa:medewerker-warnings-updated", schedulePaint);
+    global.addEventListener("ff:medewerkers-updated", schedulePaint);
+    global.addEventListener("ff:medewerker-documenten-updated", schedulePaint);
+    global.addEventListener("ff:medewerker-warnings-updated", schedulePaint);
   }
 
   if (document.readyState === "loading") {

@@ -9,7 +9,7 @@ DB-fundament (RLS-policies, `taken_*`-functies, `taak_comments`,
 `taak_bijlagen`, bucket `taak-bijlagen`, meldingen-trigger) staat los van
 de frontend en geldt dus al voor élke client — óók de mobiele app.
 
-## Wat nog moet in `besa-suite-mobile`
+## Wat nog moet in `Future Flow-mobile`
 1. **Mijn taken** tonen (al deels: `src/lib/data/taken.ts`) + status zetten
    ("In behandeling" / "Voltooid") door de uitvoerder → schrijft `status_bs2`.
 2. **Gespreksdraad** lezen/schrijven (`taak_comments`) + **bijlage** uploaden

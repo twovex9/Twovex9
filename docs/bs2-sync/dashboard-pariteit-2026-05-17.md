@@ -12,7 +12,7 @@ wegnemen ("eerst data, dan formule").
   BS2 = cookie-auth (httpOnly); BS2's eigen fetch via een recorder opgevangen door
   de in-app `<select>`-preset per periode te zetten. Alle 6 periodes vastgelegd.
 - **BS1**: `window.bs2DashboardDB.computeKpis(start,end)` live op
-  `https://besa-suite.vercel.app/beschikkingen-dashboard.html`.
+  `https://futureflow-app.vercel.app/beschikkingen-dashboard.html`.
 - 6 periodes: ① 2026-01-01..12-31 ② 2026-03 ③ 2026-06 ④ 2025-Q1
   (Februari 2025 was geen preset → Q1 2025 substituut, dekt feb) ⑤ heel 2025
   ⑥ 2025-Q4. Genormaliseerd vergeleken (bedragen op 2 decimalen, arrays gesorteerd).

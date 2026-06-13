@@ -12,7 +12,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const THEME_SET = "document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');";
 const SIDEBAR_SET =
-  "var s=localStorage.getItem('besa-sidebar');" +
+  "var s=localStorage.getItem('ff-sidebar');" +
   "document.documentElement.setAttribute('data-sidebar',s==='collapsed'?'collapsed':'expanded');";
 const THEME_TAG = '<script src="theme.js?v=th1" defer></script>';
 const SC_TAG = '<script src="sidebar-collapse.js?v=sc1" defer></script>';

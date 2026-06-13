@@ -40,4 +40,4 @@
 
 ## Events
 
-- `besa:kilometers-updated` event op window
+- `ff:kilometers-updated` event op window

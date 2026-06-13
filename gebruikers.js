@@ -2,7 +2,7 @@
 /**
  * gebruikers.js — Gebruikersbeheer (admin-tier), geconsolideerd op bs2_role_users.
  *
- * - Toegankelijk voor admin-tier (Eigenaar/Admin/Directeur) — gecheckt via besaIsAdminTier()
+ * - Toegankelijk voor admin-tier (Eigenaar/Admin/Directeur) — gecheckt via ffIsAdminTier()
  *   (permissions.js, leest bs2_role_users) en server-side door de Edge Function.
  * - listUsers/reset/deactivate/create gaan via window.gebruikersDB (Edge Function admin-user-mgmt).
  * - MULTI-ROL: elke gebruiker kan meerdere rollen hebben. Toewijzen/verwijderen gebeurt
@@ -39,13 +39,13 @@
     var tries = 0;
     function check() {
       tries++;
-      var available = typeof window.besaIsAdminTier === "function" && typeof window.besaCurrentProfile !== "undefined";
+      var available = typeof window.ffIsAdminTier === "function" && typeof window.ffCurrentProfile !== "undefined";
       if (!available) {
         if (tries < 30) return setTimeout(check, 200);
         showNoAccess();
         return;
       }
-      if (!window.besaIsAdminTier()) {
+      if (!window.ffIsAdminTier()) {
         showNoAccess();
         return;
       }

@@ -15,7 +15,7 @@
  *     .lock(year, month)  — async insert (failt bij dubbele)
  *     .unlock(year, month) — async delete
  *
- * Events op window: "besa:locked-months-updated"
+ * Events op window: "ff:locked-months-updated"
  *
  * DATA-SLIM-pattern (les v3-modules): _mem fallback wanneer localStorage faalt.
  */
@@ -23,13 +23,13 @@
   "use strict";
 
   var TABLE = "locked_months";
-  var CACHE_KEY = "besa_locked_months_v1";
+  var CACHE_KEY = "ff_locked_months_v1";
 
   var _mem = null;
 
   function reportSilent(action, err) {
     try { console.error("[lockedMonthsDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Maand-vergrendeling — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Maand-vergrendeling — " + action, err);
   }
 
   function readCache() {
@@ -49,7 +49,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(_mem)); } catch (e) { /* */ }
   }
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:locked-months-updated", { detail: { source: source } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:locked-months-updated", { detail: { source: source } })); }
     catch (e) { /* */ }
   }
 
@@ -66,8 +66,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*").order("jaar", { ascending: false }).order("maand", { ascending: false });
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*").order("jaar", { ascending: false }).order("maand", { ascending: false });
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -105,19 +105,19 @@
   }
 
   async function lock(year, month) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var y = parseInt(year, 10);
     var m = parseInt(month, 10);
     if (!y || !m || m < 1 || m > 12) throw new Error("Ongeldig jaar/maand");
     if (isLockedSync(y, m)) return getLockSync(y, m);
 
-    var profile = global.besaCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
+    var profile = global.ffCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
     var byId = profile ? (profile.id || null) : null;
     var byName = profile ? ((profile.voornaam || "") + " " + (profile.achternaam || "")).trim() : "";
     if (!byName && profile && profile.email) byName = profile.email;
 
     var payload = { jaar: y, maand: m, vergrendeld_door: byId, vergrendeld_door_naam: byName };
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     var cache = readCache(); cache.push(obj);
@@ -127,11 +127,11 @@
   }
 
   async function unlock(year, month) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var y = parseInt(year, 10);
     var m = parseInt(month, 10);
     if (!y || !m) throw new Error("Ongeldig jaar/maand");
-    var res = await global.besaSupabase.from(TABLE).delete().eq("jaar", y).eq("maand", m);
+    var res = await global.ffSupabase.from(TABLE).delete().eq("jaar", y).eq("maand", m);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return !(r && r.jaar === y && r.maand === m); });
     writeCache(cache);

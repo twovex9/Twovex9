@@ -11,12 +11,12 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
 
   function reportSilent(action, err) {
     console.error("[dienstRecurringDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Herhaling — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Herhaling — " + action, err);
   }
 
   async function add(payload) {

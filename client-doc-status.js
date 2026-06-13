@@ -34,9 +34,9 @@
   var fetchInFlight = false;
 
   function getSupabase() {
-    return (global.besaSupabase
+    return (global.ffSupabase
       || (global.supabaseClient)
-      || (global.besaAuth && global.besaAuth.client)
+      || (global.ffAuth && global.ffAuth.client)
       || null);
   }
 
@@ -143,13 +143,13 @@
   function init() {
     observeTable();
     // Wacht op een actieve sessie (anders weigert RLS de issues) en haal dan op.
-    if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-      global.besaSupabaseReady.then(function () { loadStatus(); }).catch(function () { loadStatus(); });
+    if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+      global.ffSupabaseReady.then(function () { loadStatus(); }).catch(function () { loadStatus(); });
     } else {
       loadStatus();
     }
     // Re-render-triggers van de pagina → opnieuw verven met de gecachte status.
-    global.addEventListener("besa:clienten-updated", function () {
+    global.addEventListener("ff:clienten-updated", function () {
       // Cliëntenlijst gewijzigd: status kan ook veranderd zijn → opnieuw ophalen.
       loadStatus();
       schedulePaint();

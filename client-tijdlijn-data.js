@@ -14,7 +14,7 @@
 
   function reportSilent(action, err) {
     console.error("[clientTijdlijnDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Cliënt-tijdlijn — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Cliënt-tijdlijn — " + action, err);
   }
 
   async function fetchVoorClient(clientId) {
@@ -22,9 +22,9 @@
       if (!clientId) return [];
       // Wacht op sessie-rehydratie vóór de eerste query (cold-load vangrail:
       // anonieme SELECT geeft door RLS 0 rijen ZONDER error).
-      if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* */ } }
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase
+      if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* */ } }
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.ffSupabase
         .from(TABLE)
         .select("*")
         .eq("client_id", clientId)

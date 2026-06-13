@@ -1,5 +1,5 @@
 /**
- * besa-time-typing.js — vlot typbare tijdvelden (uu:mm)
+ * ff-time-typing.js — vlot typbare tijdvelden (uu:mm)
  *
  * Probleem: een native <input type="time"> dwingt de gebruiker om eerst het
  * uren-segment te vullen en daarna apart op het minuten-segment te klikken.
@@ -15,9 +15,9 @@
  * alle bestaande uitleescode (split op ":") werkt ongewijzigd door.
  *
  * Gebruik:
- *   - Markeer een veld met `data-besa-timetype` (of laat het een
- *     `<input type="time">` zijn binnen een container met `[data-besa-timetype]`).
- *   - Roep `window.BesaTimeTyping.enhance(inputEl)` aan voor dynamisch
+ *   - Markeer een veld met `data-ff-timetype` (of laat het een
+ *     `<input type="time">` zijn binnen een container met `[data-ff-timetype]`).
+ *   - Roep `window.FfTimeTyping.enhance(inputEl)` aan voor dynamisch
  *     toegevoegde velden, of laat de MutationObserver het automatisch oppikken.
  *
  * Het veld is volledig deterministisch: er kan nooit een ongeldige tijd
@@ -27,7 +27,7 @@
 (function (global) {
   "use strict";
 
-  var ENHANCED_FLAG = "__besaTimeTyping";
+  var ENHANCED_FLAG = "__ffTimeTyping";
 
   /**
    * Vorm een string losse cijfers (max 4) om naar een (mogelijk partiële)
@@ -129,14 +129,14 @@
     input.setAttribute("inputmode", "numeric");
     input.setAttribute("autocomplete", "off");
     input.setAttribute("maxlength", "5");
-    input.setAttribute("data-besa-timetype", "");
+    input.setAttribute("data-ff-timetype", "");
     if (!input.getAttribute("placeholder")) {
       input.setAttribute("placeholder", "uu:mm");
     }
     if (!input.getAttribute("aria-label") && !input.id) {
       input.setAttribute("aria-label", "Tijd (uu:mm)");
     }
-    input.classList.add("besa-time-input");
+    input.classList.add("ff-time-input");
 
     // Bestaande waarde netjes tonen (bv. bij bewerken van een dienst).
     if (startValue) {
@@ -179,11 +179,11 @@
   function enhanceWithin(root) {
     if (!root || !root.querySelectorAll) return;
     var nodes = root.querySelectorAll(
-      'input[data-besa-timetype], [data-besa-timetype] input[type="time"]'
+      'input[data-ff-timetype], [data-ff-timetype] input[type="time"]'
     );
     Array.prototype.forEach.call(nodes, enhance);
     // Ook het root-element zelf als het een te verrijken input is.
-    if (root.matches && root.matches('input[data-besa-timetype]')) enhance(root);
+    if (root.matches && root.matches('input[data-ff-timetype]')) enhance(root);
   }
 
   function init() {
@@ -196,7 +196,7 @@
           for (var j = 0; j < added.length; j++) {
             var node = added[j];
             if (node.nodeType !== 1) continue;
-            if (node.matches && node.matches('input[data-besa-timetype]')) {
+            if (node.matches && node.matches('input[data-ff-timetype]')) {
               enhance(node);
             } else {
               enhanceWithin(node);
@@ -208,7 +208,7 @@
     }
   }
 
-  global.BesaTimeTyping = {
+  global.FfTimeTyping = {
     enhance: enhance,
     enhanceWithin: enhanceWithin,
     formatDigits: formatDigits,

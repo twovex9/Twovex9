@@ -40,7 +40,7 @@ BS2 `/hr/competencies`:
 
 ## B. BS1-test hardcore (10/10 ✅)
 
-Live test op `https://besa-suite.vercel.app/competenties.html` na PR #75.
+Live test op `https://futureflow-app.vercel.app/competenties.html` na PR #75.
 
 - [x] B1. Navigate BS1: "Competenties — HR"
 - [x] B2-B3. Scroll OK
@@ -64,7 +64,7 @@ Live test op `https://besa-suite.vercel.app/competenties.html` na PR #75.
 - [x] C6. Data-volume-pariteit: BS2 = 1 "Stressbestendig", BS1 = 1 "Stressbestendig" ✅ 100% pariteit (na cleanup van 2 garbage records)
 - [x] C7. Content spot-check: naam match
 - [x] C8. CRUD-cycle: add/update/archive/restore/delete allen werken
-- [x] C9. Realtime: `besa:competenties-updated` event
+- [x] C9. Realtime: `ff:competenties-updated` event
 - [x] C10. parity.md: 100%
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ — ZONDER fix tussendoor, na PR #77)

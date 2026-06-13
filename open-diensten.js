@@ -303,9 +303,9 @@
       // zou bij een cache-miss alle andere kolommen op null zetten en de dienst
       // wissen.
       var d = openDienstenRaw.find(function (x) { return String(x.id) === String(dienstId); });
-      if (d && !((d.teamlid || "").trim()) && naam && window.besaSupabase) {
+      if (d && !((d.teamlid || "").trim()) && naam && window.ffSupabase) {
         try {
-          var up = await window.besaSupabase.from("planning").update({ teamlid: naam }).eq("id", dienstId);
+          var up = await window.ffSupabase.from("planning").update({ teamlid: naam }).eq("id", dienstId);
           if (!up.error) d.teamlid = naam; // lokaal bijwerken zodat de bezetting klopt
         } catch (e) { /* niet kritiek */ }
       }
@@ -396,8 +396,8 @@
       if (e.key === "Escape" && openModalDienstId != null) closeModal();
     });
 
-    window.addEventListener("besa:dienst-uitnodigingen-updated", function () { buildModel(); render(); refreshModal(); });
-    window.addEventListener("besa:medewerkers-updated", function () { render(); refreshModal(); });
+    window.addEventListener("ff:dienst-uitnodigingen-updated", function () { buildModel(); render(); refreshModal(); });
+    window.addEventListener("ff:medewerkers-updated", function () { render(); refreshModal(); });
   }
   function bindPager(id, fn) {
     var el = document.getElementById(id);
@@ -408,8 +408,8 @@
   // Directe, gerichte fetch op alleen de open toekomstige diensten (een paar
   // rijen) — robuuster én sneller dan de hele planning-cache laden.
   async function fetchOpenDiensten() {
-    if (!window.besaSupabase) return [];
-    var r = await window.besaSupabase
+    if (!window.ffSupabase) return [];
+    var r = await window.ffSupabase
       .from("planning")
       .select("id, start_iso, einde_iso, diensttype, locatie, client, teamlid, vereist_aantal_medewerkers, open_voor_aanmelding, archived")
       .eq("open_voor_aanmelding", true)
@@ -425,7 +425,7 @@
       openDienstenRaw = await fetchOpenDiensten();
     } catch (err) {
       openDienstenRaw = [];
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Open diensten — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Open diensten — laden", err);
     }
     var openIds = openDienstenRaw.map(function (d) { return d.id; });
     if (window.dienstUitnodigingenDB && window.dienstUitnodigingenDB.fetchForDiensten) {
@@ -438,7 +438,7 @@
   async function init() {
     bindEvents();
     render(); // "laden"
-    try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (window.ffSupabaseReady) await window.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     try { if (window.medewerkersDB && window.medewerkersDB.ready) await window.medewerkersDB.ready; } catch (e) { /* doorgaan */ }
     phase = "ready";
     await loadData();

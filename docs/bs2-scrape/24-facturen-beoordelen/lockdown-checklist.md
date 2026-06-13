@@ -50,7 +50,7 @@
   - Concept: 7
 - [x] C7. Content spot-check 15 Ingediend records aanwezig
 - [x] C8. CRUD: filter / search / archive werken
-- [x] C9. besa:facturen-updated event
+- [x] C9. ff:facturen-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset
 
 ## D. 2 CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅

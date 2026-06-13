@@ -13,14 +13,14 @@
  *
  * BS2-equivalent: floating dropdown rechtsboven (zie docs/bs2-scrape/01-home/structure.md)
  *
- * Refresh: bij init, bij besa:notifications-updated event, bij visibilitychange,
+ * Refresh: bij init, bij ff:notifications-updated event, bij visibilitychange,
  *          bij polling elke 60s.
  */
 (function () {
   "use strict";
 
-  if (!window.besaSupabase) return;
-  if (window.besaAuth && typeof window.besaAuth.isEnabled === "function" && !window.besaAuth.isEnabled()) return;
+  if (!window.ffSupabase) return;
+  if (window.ffAuth && typeof window.ffAuth.isEnabled === "function" && !window.ffAuth.isEnabled()) return;
 
   // Niet draaien op login.html
   var p = (window.location.pathname || "").toLowerCase();
@@ -72,8 +72,8 @@
   }
 
   function updateCounter() {
-    var counter = document.getElementById("besa-notification-counter");
-    var bell = document.getElementById("besa-notification-bell");
+    var counter = document.getElementById("ff-notification-counter");
+    var bell = document.getElementById("ff-notification-bell");
     if (!counter || !bell) return;
     var n = window.notificationsDB ? window.notificationsDB.countUnreadSync() : 0;
     counter.textContent = n > 99 ? "99+" : String(n);
@@ -85,11 +85,11 @@
   }
 
   function buildDropdown() {
-    var existing = document.getElementById("besa-notification-dropdown");
+    var existing = document.getElementById("ff-notification-dropdown");
     if (existing) existing.remove();
 
     var dd = document.createElement("div");
-    dd.id = "besa-notification-dropdown";
+    dd.id = "ff-notification-dropdown";
     dd.setAttribute("role", "menu");
     dd.setAttribute("aria-label", "Notificaties");
     dd.style.cssText = [
@@ -110,7 +110,7 @@
     ].join(";");
 
     // Klikken binnen de dropdown niet laten doorbubbelen naar de bel-knop:
-    // de dropdown is een child van <button id="besa-notification-bell">, dus
+    // de dropdown is een child van <button id="ff-notification-bell">, dus
     // zonder dit sluit elke klik (bv. op de tab "Gelezen") de dropdown meteen.
     dd.addEventListener("click", function (e) { e.stopPropagation(); });
 
@@ -127,12 +127,12 @@
     tabs.style.cssText = "display:flex;gap:0;border-bottom:1px solid var(--line);padding:8px 16px 0 16px";
     var tabOngelezen = document.createElement("button");
     tabOngelezen.type = "button";
-    tabOngelezen.className = "besa-notif-tab is-active";
+    tabOngelezen.className = "ff-notif-tab is-active";
     tabOngelezen.dataset.tab = "ongelezen";
     tabOngelezen.innerHTML = 'Ongelezen <span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;background:var(--blue);color:#fff;border-radius:var(--r-pill);font-size:var(--font-ui-badge);font-weight:700;margin-left:6px">' + unread.length + '</span>';
     var tabGelezen = document.createElement("button");
     tabGelezen.type = "button";
-    tabGelezen.className = "besa-notif-tab";
+    tabGelezen.className = "ff-notif-tab";
     tabGelezen.dataset.tab = "gelezen";
     tabGelezen.textContent = "Gelezen";
     [tabOngelezen, tabGelezen].forEach(function (t) {
@@ -147,7 +147,7 @@
     dd.appendChild(tabs);
 
     var list = document.createElement("div");
-    list.id = "besa-notif-list";
+    list.id = "ff-notif-list";
     list.style.cssText = "flex:1;overflow-y:auto;padding:4px 0";
     dd.appendChild(list);
 
@@ -165,9 +165,9 @@
         var row = document.createElement("a");
         // Spring direct naar de bron-/oplospagina van de melding (i.p.v. enkel
         // de notificatielijst). Valt terug op de notificatielijst als er geen
-        // bestemming bekend is. besa-oplossen.js draait in elke topbar mee.
-        var nfix = (window.besaOplossen && window.besaOplossen.notificationFix)
-          ? window.besaOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
+        // bestemming bekend is. ff-oplossen.js draait in elke topbar mee.
+        var nfix = (window.ffOplossen && window.ffOplossen.notificationFix)
+          ? window.ffOplossen.notificationFix(n.type, n.related_entity_type, n.related_entity_id) : null;
         row.href = nfix ? nfix.url : ("notifications.html#notif-" + n.id);
         row.dataset.notifId = n.id;
         row.style.cssText = "display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;text-decoration:none;color:var(--text);transition:background 0.15s ease";
@@ -195,7 +195,7 @@
     renderList("ongelezen");
 
     tabs.addEventListener("click", function (e) {
-      var t = e.target.closest(".besa-notif-tab");
+      var t = e.target.closest(".ff-notif-tab");
       if (!t) return;
       [tabOngelezen, tabGelezen].forEach(function (tab) {
         tab.classList.remove("is-active");
@@ -228,13 +228,13 @@
   }
 
   function closeDropdown() {
-    var dd = document.getElementById("besa-notification-dropdown");
+    var dd = document.getElementById("ff-notification-dropdown");
     if (dd) dd.remove();
     dropdownOpen = false;
   }
 
   function openDropdown() {
-    var bell = document.getElementById("besa-notification-bell");
+    var bell = document.getElementById("ff-notification-bell");
     if (!bell) return;
     closeDropdown();
     var dd = buildDropdown();
@@ -248,7 +248,7 @@
   }
 
   function outsideClickHandler(e) {
-    var bell = document.getElementById("besa-notification-bell");
+    var bell = document.getElementById("ff-notification-bell");
     if (bell && !bell.contains(e.target)) {
       closeDropdown();
     } else {
@@ -263,7 +263,7 @@
     injected = true;
 
     var wrap = document.createElement("button");
-    wrap.id = "besa-notification-bell";
+    wrap.id = "ff-notification-bell";
     wrap.type = "button";
     wrap.title = "Notificaties";
     wrap.setAttribute("aria-label", "Notificaties");
@@ -286,7 +286,7 @@
     ].join(";");
 
     wrap.innerHTML = buildBellSvg()
-      + '<span id="besa-notification-counter" style="'
+      + '<span id="ff-notification-counter" style="'
       + 'position:absolute;'
       + 'top:2px;right:0;'
       + 'min-width:18px;'
@@ -322,7 +322,7 @@
       }
     });
 
-    var badge = document.getElementById("besa-auth-badge");
+    var badge = document.getElementById("ff-auth-badge");
     if (badge && badge.parentElement === topbar) {
       badge.style.marginLeft = "0";
       topbar.insertBefore(wrap, badge);
@@ -340,8 +340,8 @@
 
   function reinjectIfBadgeArrives() {
     var observer = new MutationObserver(function () {
-      var bell = document.getElementById("besa-notification-bell");
-      var badge = document.getElementById("besa-auth-badge");
+      var bell = document.getElementById("ff-notification-bell");
+      var badge = document.getElementById("ff-auth-badge");
       if (bell && badge && badge.parentElement === bell.parentElement) {
         // De bel houdt margin-left:auto en duwt het paar naar rechts.
         // De badge MOET margin-left:0 krijgen — anders verdelen twee
@@ -362,7 +362,7 @@
     injectBell();
     reinjectIfBadgeArrives();
 
-    window.addEventListener("besa:notifications-updated", updateCounter);
+    window.addEventListener("ff:notifications-updated", updateCounter);
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible" && window.notificationsDB) {
         window.notificationsDB.refresh().then(updateCounter);

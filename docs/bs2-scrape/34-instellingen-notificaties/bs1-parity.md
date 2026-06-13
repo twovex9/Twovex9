@@ -25,7 +25,7 @@
 2. **Search input** — filter op naam + beschrijving
 3. **Gearchiveerd-toggle** — view archived types
 4. **Kanaal-keuze** — email of in-app per type
-5. **Real-time updates** — `besa:notification-types-updated` event
+5. **Real-time updates** — `ff:notification-types-updated` event
 6. **In-app notification-bell** — vervangt BS2 e-mails (per user-keuze 2026-05-13)
 
 ## Bug gefixt

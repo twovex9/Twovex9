@@ -102,7 +102,7 @@ Beleidsdocument | bd_09 | bewerken | Systeem | "09. Uitgifte en Gebruik Bankpas"
 
 (Gebruiker = "Systeem" omdat MCP geen `auth.uid()` heeft; via de UI met ingelogde user wordt het correct "Voornaam Achternaam" of email.)
 
-Live op `besa-suite.vercel.app/audit.html`: beide entries zichtbaar gemerged, gesorteerd op tijdstip DESC.
+Live op `futureflow-app.vercel.app/audit.html`: beide entries zichtbaar gemerged, gesorteerd op tijdstip DESC.
 
 ## Volgende mogelijke uitbreidingen (niet binnen scope van deze block)
 

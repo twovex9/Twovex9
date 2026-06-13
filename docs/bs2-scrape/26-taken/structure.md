@@ -1,7 +1,7 @@
 # Module 26 — Taken — STRUCTURE
 
 **BS2 URL**: `/tasks/list`
-**BS1 URL**: `https://besa-suite.vercel.app/taken.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/taken.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

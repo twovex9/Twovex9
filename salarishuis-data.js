@@ -105,15 +105,15 @@
   function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
 
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:salarishuis-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:salarishuis-updated")); } catch (e) { /* */ }
   }
 
   // ---------------------------------------------------------------------------
   // Async helpers Supabase
   // ---------------------------------------------------------------------------
   async function fetchAllScales() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE_SCHALEN)
       .select("id, title, rows, sort_order")
       .order("sort_order", { ascending: true });
@@ -128,8 +128,8 @@
   }
 
   async function fetchAllHistory() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE_HISTORY)
       .select("ts, actie, detail")
       .order("ts", { ascending: false })
@@ -143,8 +143,8 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
-      var head = await global.besaSupabase.from(TABLE_SCHALEN).select("id", { count: "exact", head: true });
+      if (!global.ffSupabase) return false;
+      var head = await global.ffSupabase.from(TABLE_SCHALEN).select("id", { count: "exact", head: true });
       if (head.error) return false;
       if ((head.count || 0) > 0) {
         try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
@@ -170,7 +170,7 @@
           sort_order: i * 10,
         };
       });
-      var ins = await global.besaSupabase.from(TABLE_SCHALEN).insert(payload).select();
+      var ins = await global.ffSupabase.from(TABLE_SCHALEN).insert(payload).select();
       if (ins.error) {
         console.error("[salarishuisDB] Migratie mislukt:", ins.error);
         return false;
@@ -205,11 +205,11 @@
 
   function reportSilent(action, err) {
     console.error("[salarishuisDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Salarishuis — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Salarishuis — " + action, err);
   }
 
   async function pushAllScalesAsync(list) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!Array.isArray(list)) return;
     try {
       var payload = list.map(function (s, i) {
@@ -220,10 +220,10 @@
           sort_order: i * 10,
         };
       });
-      var ups = await global.besaSupabase.from(TABLE_SCHALEN).upsert(payload, { onConflict: "id" });
+      var ups = await global.ffSupabase.from(TABLE_SCHALEN).upsert(payload, { onConflict: "id" });
       if (ups.error) reportSilent("upsert schalen", ups.error);
 
-      var existingHead = await global.besaSupabase.from(TABLE_SCHALEN).select("id");
+      var existingHead = await global.ffSupabase.from(TABLE_SCHALEN).select("id");
       if (!existingHead.error) {
         var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
         var localIds = payload.map(function (r) { return r.id; });
@@ -235,7 +235,7 @@
           toDelete = [];
         }
         if (toDelete.length) {
-          var del = await global.besaSupabase.from(TABLE_SCHALEN).delete().in("id", toDelete);
+          var del = await global.ffSupabase.from(TABLE_SCHALEN).delete().in("id", toDelete);
           if (del.error) reportSilent("delete schalen", del.error);
         }
       }
@@ -245,9 +245,9 @@
   }
 
   async function insertHistoryAsync(actie, detail, ts) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     try {
-      var ins = await global.besaSupabase.from(TABLE_HISTORY).insert({
+      var ins = await global.ffSupabase.from(TABLE_HISTORY).insert({
         ts: Number(ts) || Date.now(),
         actie: String(actie || ""),
         detail: detail != null ? String(detail) : "",

@@ -2,7 +2,7 @@
 // BS1 pages met de canonical full-dropdown variant (gelijk aan competenties.html).
 // Per page wordt is-active op de juiste anchor gezet.
 //
-// Run vanuit besa-suite-etf/: `node scripts/topnav-consistency.mjs`
+// Run vanuit future-flow/: `node scripts/topnav-consistency.mjs`
 
 import fs from "node:fs";
 import path from "node:path";

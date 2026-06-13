@@ -5,17 +5,17 @@
  */
 (function (global) {
   "use strict";
-  if (!global.besaSupabase) return;
-  var supa = global.besaSupabase;
+  if (!global.ffSupabase) return;
+  var supa = global.ffSupabase;
   var cache = null;
 
   function reportSilent(action, err) {
     console.error("[planningSettingsDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Planning instellingen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Planning instellingen — " + action, err);
   }
 
   function emit() {
-    try { window.dispatchEvent(new Event("besa:planning-settings-updated")); } catch (e) {}
+    try { window.dispatchEvent(new Event("ff:planning-settings-updated")); } catch (e) {}
   }
 
   async function fetch() {

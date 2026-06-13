@@ -48,7 +48,7 @@
 - [x] C6. Data: 251 records, 4 unique fases na Bug #43
 - [x] C7. Content spot-check: 99 actief+aanvraag matches BS2 default view
 - [x] C8. CRUD: add/archive/restore/purge alle werken
-- [x] C9. besa:beschikking-updated event op window
+- [x] C9. ff:beschikking-updated event op window
 - [x] C10. parity.md: 100% functioneel, BS1 superset
 
 ## D. ULTRA-DEEP CLEAN RUNS (2/2 ✅ ZONDER fix tussendoor)

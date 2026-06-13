@@ -45,7 +45,7 @@
 - [x] C6. Data: 6 records (na Bug #41 + #42), matches BS2 1:1
 - [x] C7. Content spot-check: alle 6 namen match BS2 spelling
 - [x] C8. CRUD: add/archive/restore/purge alle werken
-- [x] C9. besa:zorgsoorten-updated event op window
+- [x] C9. ff:zorgsoorten-updated event op window
 - [x] C10. parity.md: 100% pariteit
 
 ## D. ULTRA-DEEP — Alle modals + edge cases (✅)

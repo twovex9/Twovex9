@@ -2,16 +2,16 @@
 /**
  * permissions-gate.js — pagina-gate per rol/permissie.
  *
- * Werkt op basis van `window.BESA_PAGE_PERMISSIONS` (uit permissions-page-map.js)
- * en `window.besaCan` / `window.besaPermissions` (uit permissions.js).
+ * Werkt op basis van `window.FF_PAGE_PERMISSIONS` (uit permissions-page-map.js)
+ * en `window.ffCan` / `window.ffPermissions` (uit permissions.js).
  *
  * Flow:
  *   1. Skip op login.html en als geen pathname (root).
- *   2. Wacht op `besaPermissionsReady` zodat rol/permissies geladen zijn.
+ *   2. Wacht op `ffPermissionsReady` zodat rol/permissies geladen zijn.
  *   3. Lookup de pagina in de map. Geen entry of `null` → toegang OK.
  *   4. Admin-tier wint altijd.
  *   5. `{allowedRoles}` → controleer rol-namen.
- *      `{action, entity}` → `besaCan(action, entity)`.
+ *      `{action, entity}` → `ffCan(action, entity)`.
  *   6. Geen toegang → `sessionStorage`-flash + `location.replace('home.html')`.
  *
  * Laad NA permissions.js en permissions-page-map.js, vóór page-script.
@@ -32,7 +32,7 @@
       var hIdx = last.indexOf("#");
       if (hIdx !== -1) last = last.substring(0, hIdx);
       // Vercel clean URLs (/audit i.p.v. /audit.html) — voeg .html toe
-      // zodat de lookup in BESA_PAGE_PERMISSIONS werkt.
+      // zodat de lookup in FF_PAGE_PERMISSIONS werkt.
       if (last && last.indexOf(".") === -1) last += ".html";
       return last;
     } catch (e) {
@@ -42,7 +42,7 @@
 
   function setFlash(msg) {
     try {
-      global.sessionStorage && global.sessionStorage.setItem("besa-flash", msg);
+      global.sessionStorage && global.sessionStorage.setItem("ff-flash", msg);
     } catch (e) { /* ok */ }
   }
 
@@ -82,9 +82,9 @@
 
   function showAccessFlash() {
     var msg = null;
-    try { msg = global.sessionStorage && global.sessionStorage.getItem("besa-flash"); } catch (e) { msg = null; }
+    try { msg = global.sessionStorage && global.sessionStorage.getItem("ff-flash"); } catch (e) { msg = null; }
     if (!msg) return;
-    try { global.sessionStorage.removeItem("besa-flash"); } catch (e) { /* ok */ }
+    try { global.sessionStorage.removeItem("ff-flash"); } catch (e) { /* ok */ }
     var doc = global.document;
     if (doc && doc.body) renderFlash(msg);
     else if (doc) doc.addEventListener("DOMContentLoaded", function () { renderFlash(msg); });
@@ -93,28 +93,28 @@
   // ── Helpers voor de flash-vrije gate ──────────────────────────────────────
   function getRoleNames() {
     try {
-      return (global.besaPermissions && typeof global.besaPermissions.getRoleNames === "function")
-        ? (global.besaPermissions.getRoleNames() || []) : [];
+      return (global.ffPermissions && typeof global.ffPermissions.getRoleNames === "function")
+        ? (global.ffPermissions.getRoleNames() || []) : [];
     } catch (e) { return []; }
   }
 
   // Onthul de paginacontent (zet de visibility:hidden uit styles.css uit).
   function revealPage() {
-    try { global.document.documentElement.classList.add("besa-page-ready"); } catch (e) {}
+    try { global.document.documentElement.classList.add("ff-page-ready"); } catch (e) {}
   }
 
   // Zijn de permissies al geladen (cache of DB)? Zo ja → synchrone beslissing
   // mogelijk vóór de eerste paint (geen flits van geblokkeerde content).
   function permsLoaded() {
     try {
-      return !!(global.besaPermissions && typeof global.besaPermissions.debug === "function"
-        && global.besaPermissions.debug().loaded);
+      return !!(global.ffPermissions && typeof global.ffPermissions.debug === "function"
+        && global.ffPermissions.debug().loaded);
     } catch (e) { return false; }
   }
 
   function removeDenyPanel() {
     try {
-      var p = global.document.getElementById("besa-denied-panel");
+      var p = global.document.getElementById("ff-denied-panel");
       if (p && p.parentNode) p.parentNode.removeChild(p);
     } catch (e) {}
   }
@@ -126,14 +126,14 @@
     var doc = global.document;
     if (!doc) return;
     if (!doc.body) { doc.addEventListener("DOMContentLoaded", denyPage); return; }
-    if (doc.getElementById("besa-denied-panel")) return;
+    if (doc.getElementById("ff-denied-panel")) return;
     var wrap = doc.createElement("div");
-    wrap.id = "besa-denied-panel";
-    wrap.className = "besa-denied-panel";
+    wrap.id = "ff-denied-panel";
+    wrap.className = "ff-denied-panel";
     wrap.setAttribute("role", "alert");
     wrap.innerHTML =
-      '<div class="besa-denied-card">' +
-        '<div class="besa-denied-ico" aria-hidden="true">🔒</div>' +
+      '<div class="ff-denied-card">' +
+        '<div class="ff-denied-ico" aria-hidden="true">🔒</div>' +
         '<h1>Geen toegang</h1>' +
         '<p>Je hebt geen toegang tot deze pagina.</p>' +
         '<a href="home" class="btn-primary">Terug naar home</a>' +
@@ -155,7 +155,7 @@
       }
     } catch (e) { /* doorgaan */ }
 
-    var map = global.BESA_PAGE_PERMISSIONS || {};
+    var map = global.FF_PAGE_PERMISSIONS || {};
     var req = map[page];
     if (req === null || req === undefined) return "ok";   // expliciet/standaard open
 
@@ -170,7 +170,7 @@
 
     // Admin-tier wint — behalve bij strict-pagina's (bv. Financiën).
     try {
-      if (!req.strict && typeof global.besaIsAdminTier === "function" && global.besaIsAdminTier()) return "ok";
+      if (!req.strict && typeof global.ffIsAdminTier === "function" && global.ffIsAdminTier()) return "ok";
     } catch (e) { /* doorgaan */ }
 
     // Mode A: allowedRoles
@@ -181,10 +181,10 @@
       }
       return "denied";
     }
-    // Mode B: besaCan(action, entity)
+    // Mode B: ffCan(action, entity)
     if (req.action) {
       try {
-        return ((typeof global.besaCan === "function") && global.besaCan(req.action, req.entity)) ? "ok" : "denied";
+        return ((typeof global.ffCan === "function") && global.ffCan(req.action, req.entity)) ? "ok" : "denied";
       } catch (e) { return "denied"; }
     }
     return "ok";
@@ -236,8 +236,8 @@
 
     // 2) Autoritatief na auth + permissie-DB-load (koude cache beslist hier).
     Promise.resolve()
-      .then(function () { return global.besaSupabaseReady; })
-      .then(function () { return global.besaPermissionsReady; })
+      .then(function () { return global.ffSupabaseReady; })
+      .then(function () { return global.ffPermissionsReady; })
       .then(function () { act(decide()); })
       .catch(function () { if (decided === null) revealPage(); });
 

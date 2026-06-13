@@ -23,7 +23,7 @@
 ### Veroorzaker filter (dynamic)
 - `populateVeroorzakerFilter()` extraheert unieke `a.gebruiker` waarden uit data
 - Sorteert alfabetisch nl-locale
-- Re-populated bij `besa:audit-updated` event
+- Re-populated bij `ff:audit-updated` event
 
 ### Actie-type filter
 - Hardcoded dropdown met 7 opties (matchend met actie-badge colors)
@@ -62,7 +62,7 @@
 - localStorage key `audit_log_v2` met genormaliseerde merged items
 - First render → cache-only (snel)
 - Background refresh → DB-call (max 500 per bron)
-- Event `besa:audit-updated` → re-render trigger
+- Event `ff:audit-updated` → re-render trigger
 
 ## Action-badge colors (uit actieBadge function)
 | Actie | Color | Background |

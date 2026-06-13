@@ -1,7 +1,7 @@
 # Module 25 — Facturen alle (monthly) — STRUCTURE
 
 **BS2 URL**: `/invoices-module/monthly-invoices?status=submitted&status=approved&period=current`
-**BS1 URL**: `https://besa-suite.vercel.app/facturen.html`
+**BS1 URL**: `https://futureflow-app.vercel.app/facturen.html`
 **Scrape datum**: 2026-05-14
 
 ## BS2 page

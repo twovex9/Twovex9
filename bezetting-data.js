@@ -24,18 +24,18 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[bezettingDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Bezetting — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Bezetting — " + action, err);
   }
 
   async function ensureSupabase() {
     // Cold-load vangrail: wacht tot de sessie gerehydrateerd is (anders leest een
     // anonieme client door RLS/gate 0 rijen).
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatch(reason) {
-    try { global.dispatchEvent(new CustomEvent("besa:bezetting-updated", { detail: { reason: reason } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:bezetting-updated", { detail: { reason: reason } })); }
     catch (e) { /* */ }
   }
 
@@ -43,7 +43,7 @@
   async function load() {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase.rpc("bezetting_overzicht", {});
+      var res = await global.ffSupabase.rpc("bezetting_overzicht", {});
       if (res.error) throw res.error;
       _data = res.data || null;
     } catch (err) {
@@ -57,7 +57,7 @@
   async function listArchived() {
     try {
       await ensureSupabase();
-      var res = await global.besaSupabase
+      var res = await global.ffSupabase
         .from("kamers")
         .select("id, locatie_naam, nummer, verdieping, capaciteit, schoonmaak_status, notitie, volgorde")
         .eq("archived", true)
@@ -74,7 +74,7 @@
   // ── Mutatie-helper: roept een RPC aan en gooit een nette fout bij unauthorized/ok=false ──
   async function callRpc(name, args) {
     await ensureSupabase();
-    var res = await global.besaSupabase.rpc(name, args || {});
+    var res = await global.ffSupabase.rpc(name, args || {});
     if (res.error) throw res.error;
     var d = res.data;
     if (d && d.unauthorized) throw new Error("Je hebt geen rechten voor deze actie.");
@@ -149,11 +149,11 @@
   }
 
   function subscribeRealtime() {
-    if (_subscribed || !global.besaRealtime || !global.besaRealtime.subscribe) return;
+    if (_subscribed || !global.ffRealtime || !global.ffRealtime.subscribe) return;
     _subscribed = true;
     try {
-      global.besaRealtime.subscribe("kamers", function () { load(); });
-      global.besaRealtime.subscribe("kamer_toewijzingen", function () { load(); });
+      global.ffRealtime.subscribe("kamers", function () { load(); });
+      global.ffRealtime.subscribe("kamer_toewijzingen", function () { load(); });
     } catch (e) { reportSilent("realtime", e); }
   }
 
@@ -184,6 +184,6 @@
     subscribeRealtime: subscribeRealtime,
   };
 
-  if (global.besaSupabase) bootstrap();
-  else global.addEventListener("besa:supabase-ready", bootstrap, { once: true });
+  if (global.ffSupabase) bootstrap();
+  else global.addEventListener("ff:supabase-ready", bootstrap, { once: true });
 })(window);

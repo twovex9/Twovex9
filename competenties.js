@@ -8,7 +8,7 @@
  *
  * Het re-renderen na een externe update (bv. wanneer bootstrap de cache vult
  * vanuit Supabase, of een andere tab een wijziging maakt) gebeurt via het
- * "besa:competenties-updated" event op `window`.
+ * "ff:competenties-updated" event op `window`.
  */
 
 function fmtDate(iso) {
@@ -214,7 +214,7 @@ function countMedewerkers(compNaam) {
     }
   }
 
-  window.addEventListener("besa:competenties-updated", () => {
+  window.addEventListener("ff:competenties-updated", () => {
     render();
   });
 
@@ -350,7 +350,7 @@ function countMedewerkers(compNaam) {
         await window.competentiesDB.add(naam);
         if (naamInput) naamInput.value = "";
         closeAddModal();
-        // render() wordt aangeroepen via het besa:competenties-updated event
+        // render() wordt aangeroepen via het ff:competenties-updated event
       } catch (err) {
         console.error("Toevoegen mislukt:", err);
         if (typeof window.showActionFeedback === "function") {

@@ -29,9 +29,9 @@ Zonder user-override-tekst mag ik NIET zeggen "100% klaar / done / af / gereed".
 - [ ] **A9**. Test keyboard shortcuts (Escape/Enter/Tab) — Bewijs: gedrag-doc in `behaviors.md`
 - [ ] **A10**. Network-log + console-errors-check per actie — Bewijs: log-extract
 
-## B. BS1-test hardcore (10 items, fysiek op `besa-suite.vercel.app`)
+## B. BS1-test hardcore (10 items, fysiek op `futureflow-app.vercel.app`)
 
-- [ ] **B1**. Live `besa-suite.vercel.app/<module>.html` openen via Chrome MCP — Bewijs: screenshot-ID `ss_bs1_*_open`
+- [ ] **B1**. Live `futureflow-app.vercel.app/<module>.html` openen via Chrome MCP — Bewijs: screenshot-ID `ss_bs1_*_open`
 - [ ] **B2**. Scroll BS1 top→bottom — Bewijs: screenshot-IDs `ss_bs1_*_top` + `_bottom`
 - [ ] **B3**. Scroll BS1 bottom→top — Bewijs: screenshot-ID `ss_bs1_*_bottom-to-top`
 - [ ] **B4**. Klik élke knop in BS1 (NIET alleen DOM, fysiek!) — Bewijs: knoppen-tabel met N geklikt
@@ -52,7 +52,7 @@ Zonder user-override-tekst mag ik NIET zeggen "100% klaar / done / af / gereed".
 - [ ] **C6**. Test-record aanmaken via BS1-UI → SELECT in DB toont row — Bewijs: SQL select-result
 - [ ] **C7**. Test-record bewerken → audit-entry in `*_activiteiten` tabel — Bewijs: activiteiten select-result
 - [ ] **C8**. Test-record verwijderen/archiveren → `archived=true` OF row weg — Bewijs: SQL count-result
-- [ ] **C9**. Realtime/event-bus check (besa:* events firen bij mutatie) — Bewijs: console-log fragment
+- [ ] **C9**. Realtime/event-bus check (ff:* events firen bij mutatie) — Bewijs: console-log fragment
 - [ ] **C10**. Parity-eindscore: ❌=0, ❓=0, 🟡≤4 (niet-blokkerend) — Bewijs: tabel-counts uit `bs1-parity.md`
 
 ---

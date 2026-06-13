@@ -6,7 +6,7 @@
  * event dat de data-laag dispatched zodra Supabase-data binnen is.
  *
  * De Medewerkers-tab wordt door de gedeelde module
- * window.besaDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
+ * window.ffDetailMedewerkersTab.init geleverd (zelfde UI als HR > Medewerkers,
  * gefilterd op deze opleiding).
  */
 (function () {
@@ -79,10 +79,10 @@
 
   function ensureMedewerkersTab(opl) {
     if (medewerkersTab) return;
-    if (!window.besaDetailMedewerkersTab || typeof window.besaDetailMedewerkersTab.init !== "function") return;
+    if (!window.ffDetailMedewerkersTab || typeof window.ffDetailMedewerkersTab.init !== "function") return;
     var container = document.getElementById("opl-medewerkers-list");
     if (!container) return;
-    medewerkersTab = window.besaDetailMedewerkersTab.init({
+    medewerkersTab = window.ffDetailMedewerkersTab.init({
       container: container,
       entityType: "opleiding",
       entityId: oplId,
@@ -217,7 +217,7 @@
   }
 
   // Initial render: probeer cache. Als opleiding er nog niet in zit, wachten
-  // op besa:opleidingen-updated event (dat na bootstrap automatisch komt).
+  // op ff:opleidingen-updated event (dat na bootstrap automatisch komt).
   function tryInitialRender() {
     var opl = findOpleiding();
     if (opl) { hydrate(opl); return true; }
@@ -231,11 +231,11 @@
       var opl = findOpleiding();
       if (opl) {
         resolved = true;
-        window.removeEventListener("besa:opleidingen-updated", onUpdate);
+        window.removeEventListener("ff:opleidingen-updated", onUpdate);
         hydrate(opl);
       }
     }
-    window.addEventListener("besa:opleidingen-updated", onUpdate);
+    window.addEventListener("ff:opleidingen-updated", onUpdate);
 
     if (window.opleidingenDB && window.opleidingenDB.ready) {
       window.opleidingenDB.ready.then(function () {
@@ -246,7 +246,7 @@
     }
   } else {
     // Cache had de opleiding al; toch nog luisteren voor live-updates.
-    window.addEventListener("besa:opleidingen-updated", function () {
+    window.addEventListener("ff:opleidingen-updated", function () {
       var opl = findOpleiding();
       if (opl) hydrate(opl);
     });

@@ -28,7 +28,7 @@
 
   function meId() {
     try {
-      var p = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : window.besaCurrentProfile;
+      var p = (window.profilesDB && window.profilesDB.getCurrentSync) ? window.profilesDB.getCurrentSync() : window.ffCurrentProfile;
       return p ? (p.medewerkerId || p.medewerker_id || null) : null;
     } catch (e) { return null; }
   }
@@ -195,8 +195,8 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && modal && !modal.hidden) hideModal();
     });
-    window.addEventListener("besa:profile-updated", render);
-    window.addEventListener("besa:medewerker-documenten-updated", render);
+    window.addEventListener("ff:profile-updated", render);
+    window.addEventListener("ff:medewerker-documenten-updated", render);
   }
 
   function start() {

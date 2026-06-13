@@ -44,7 +44,7 @@
 - [x] C6. Data: 7 records (2024-2026)
 - [x] C7. Content spot-check: alle records have client / beschikking / zorgsoort / jaar / maand
 - [x] C8. CRUD: read-only overview (CRUD via beschikkingen module)
-- [x] C9. besa:urendeclaraties-updated event
+- [x] C9. ff:urendeclaraties-updated event
 - [x] C10. parity.md: 100% functioneel na Bug #49 fix
 
 ## D. ULTRA-DEEP ✅

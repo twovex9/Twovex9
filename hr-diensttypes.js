@@ -333,7 +333,7 @@
     }
 
     // Re-render bij externe updates
-    window.addEventListener("besa:comp-diensttypes-updated", render);
+    window.addEventListener("ff:comp-diensttypes-updated", render);
   }
 
   function bootstrap() {

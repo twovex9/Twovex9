@@ -7,7 +7,7 @@
  *  - Bij bootstrap fetcht deze module ALLE rijen (1 per medewerker met
  *    overdracht) en cachet ze onder "medewerker_verlof_overgedragen_v1".
  *  - Schrijfactie `save(empId, state)` doet een UPSERT op (medewerker_id);
- *    de cache wordt geüpdatet en `besa:medewerker-verlof-overgedragen-updated`
+ *    de cache wordt geüpdatet en `ff:medewerker-verlof-overgedragen-updated`
  *    event firet voor live re-render.
  *  - Eénmalige migratie van legacy localStorage["employeeEditsById"] →
  *    elke `[empId].verlofOvergedragen` object wordt 1× UPSERTed.
@@ -21,7 +21,7 @@
  *     bovenwetTotaal: 40, bovenwetGebruikt: 0, bovenwetBeschikbaar: 40,
  *     reden: "Overdracht 2025 → 2026",
  *   });
- *   window.addEventListener("besa:medewerker-verlof-overgedragen-updated", rerender);
+ *   window.addEventListener("ff:medewerker-verlof-overgedragen-updated", rerender);
  */
 (function (global) {
   "use strict";
@@ -48,7 +48,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:medewerker-verlof-overgedragen-updated", { detail: { source: source || "medewerker-verlof-overgedragen-data" } }));
+      global.dispatchEvent(new CustomEvent("ff:medewerker-verlof-overgedragen-updated", { detail: { source: source || "medewerker-verlof-overgedragen-data" } }));
     } catch (e) { /* */ }
   }
 
@@ -91,8 +91,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*");
     if (res.error) throw res.error;
@@ -102,9 +102,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -142,7 +142,7 @@
       }
 
       console.info("[medewerkerVerlofOvergedragenDB] Eenmalige migratie van " + rows.length + " verlof-overdracht-records naar Supabase…");
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .upsert(rows, { onConflict: "medewerker_id" })
         .select();
@@ -188,10 +188,10 @@
   // save() = upsert. Eén rij per medewerker (UNIQUE constraint op
   // medewerker_id). Geeft het opgeslagen object terug.
   async function save(medewerkerId, state) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medewerkerId) throw new Error("medewerkerId verplicht");
     var payload = objToUpsertPayload(medewerkerId, state);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .upsert(payload, { onConflict: "medewerker_id" })
       .select()
@@ -207,9 +207,9 @@
   }
 
   async function remove(medewerkerId) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!medewerkerId) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("medewerker_id", medewerkerId);

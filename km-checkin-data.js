@@ -9,11 +9,11 @@
 (function (global) {
   "use strict";
   var T = "km_checkins";
-  var CACHE = "besa_km_checkins_v1";
+  var CACHE = "ff_km_checkins_v1";
 
   function reportSilent(action, err) {
     console.error("[kmCheckinDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Check-in — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Check-in — " + action, err);
   }
   function readCache() {
     try { var r = JSON.parse(global.localStorage.getItem(CACHE) || "[]"); return Array.isArray(r) ? r : []; }
@@ -50,12 +50,12 @@
   }
 
   function dispatchUpdated(reason) {
-    try { global.dispatchEvent(new CustomEvent("besa:km-checkins-updated", { detail: { reason: reason } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:km-checkins-updated", { detail: { reason: reason } })); } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(T)
       .select("id,medewerker_id,profiel_id,medewerker_naam,datum,tijd,lat,lng,accuracy_m,locatie_id,locatie_naam,verwacht_lat,verwacht_lng,afstand_tot_locatie_m,status,bron,aanmaakdatum")
       .order("tijd", { ascending: false })
@@ -78,7 +78,7 @@
   async function refresh() { setItems(await fetchAll()); dispatchUpdated("refresh"); return list(); }
 
   async function add(p) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     p = p || {};
     var nowIso = new Date().toISOString();
     var row = {
@@ -99,7 +99,7 @@
       bron: p.bron || "web",
       data: p.data || {},
     };
-    var res = await global.besaSupabase.from(T).insert(row).select().single();
+    var res = await global.ffSupabase.from(T).insert(row).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data || row);
     var l = list(); l.unshift(obj); setItems(l);

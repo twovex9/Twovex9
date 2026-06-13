@@ -4,7 +4,7 @@
  * (Eigenaar/Directie, HR, Planner) + het verkeerslicht-overzicht.
  *
  * Eén bron van waarheid voor:
- *  - fetch-wrappers op de productie-Supabase (RPC + REST via window.besaSupabase);
+ *  - fetch-wrappers op de productie-Supabase (RPC + REST via window.ffSupabase);
  *  - classificatie van medewerkers (loondienst/zzp/stage) en hun locatie(s)
  *    via medewerkers.data.locatiesSelected (de canonieke koppeling, identiek aan
  *    financien_locaties_dashboard.sql);
@@ -20,9 +20,9 @@
 
   // ─── Supabase toegang ──────────────────────────────────────────────────────
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    return global.besaSupabase;
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    return global.ffSupabase;
   }
 
   /** RPC-aanroep. Geeft data terug of gooit. */

@@ -286,7 +286,7 @@
       });
     }
 
-    window.addEventListener("besa:contract-sjablonen-updated", render);
+    window.addEventListener("ff:contract-sjablonen-updated", render);
   }
 
   function bootstrap() {

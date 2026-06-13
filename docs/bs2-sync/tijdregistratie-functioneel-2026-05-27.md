@@ -221,7 +221,7 @@ destructieve/kritieke acties altijd via `showSliderConfirmModal`).
 
 **BS1-implementatie** (PR #3):
 - Knop **zichtbaar** per rij (niet verstopt)
-- Server-side XLSX-generatie via `besa-export.js`-patroon
+- Server-side XLSX-generatie via `ff-export.js`-patroon
   (bestaat al voor andere modules)
 - Bestandsnaam-format = exact `Urendeclaratie_<CLIENT>_<YYYY>-<MM>.xlsx`
   (NL-prefix conform huisstijl, ISO-datum)
@@ -240,7 +240,7 @@ naar `/home` (kapot voor admin-context). Geen werkende agenda-view in BS2.
 - Week- en maand-view kalender
 - Geregistreerde uren uit `werkuren` + geplande diensten uit `planning`
   naast elkaar (verschillende kleuren)
-- Filter op periode (BesaDateRange-component)
+- Filter op periode (FfDateRange-component)
 - Knop op `medewerkers-overzicht.html` + `medewerker-detail.html` ("Bekijk agenda")
 - Klikbare zijbalk-link op `werkuren.html` ("Open agenda van geselecteerde medewerker")
 
@@ -255,7 +255,7 @@ Override-knop** zichtbaar. BS2 ondersteunt dit niet.
 - Per-rij knop "Aantal aanpassen" in `urendeclaraties.html`, alleen voor rijen waar `disposition.care_type = 'Ambulant intern'`
 - Modal toont: huidige uren (read-only) + nieuwe uren (input) + verplicht reden-veld + opslaan
 - Origineel `ingediende_uren` blijft staan; `override_uren` overrides voor declaratie-berekening
-- Auditspoor in `audit_log` via bestaande `besa-audit.js` (kind: `override_hours`)
+- Auditspoor in `audit_log` via bestaande `ff-audit.js` (kind: `override_hours`)
 
 ## 12. Budget-overschrijdings indicator (BS2-bug + BS1-fix)
 
@@ -341,7 +341,7 @@ data klopt veld-voor-veld).
 
 - Permissie-uitsplitsing per rol (Pauline-rol bestaat niet; toekennen
   aan Finance/Salarisadministratie of nieuwe rol).
-- Mobile-app sub-features (zie `project_besa_mobile_app.md` in memory).
+- Mobile-app sub-features (zie `project_ff_mobile_app.md` in memory).
 - BS2-bug-rapport doorsturen naar BS2-leverancier (buiten scope BS1).
 
 ## Bron-bestanden

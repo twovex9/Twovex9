@@ -2,7 +2,7 @@
  * vóór auth-guard async de sessie heeft gecheckt.
  *
  * Voegt als ALLEREERSTE in <head> een synchrone snippet toe die, ALLEEN
- * wanneer er aantoonbaar GEEN sessie-token is (localStorage['sb-besa-auth']
+ * wanneer er aantoonbaar GEEN sessie-token is (localStorage['sb-ff-auth']
  * ontbreekt), direct (vóór de paint) naar /login redirect. Token aanwezig
  * -> niets doen (auth-guard's voorzichtige async flow + Supabase
  * autoRefresh blijven volledig intact -> geen valse logout/loop).
@@ -14,13 +14,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const MARKER = "besa-auth-preguard";
+const MARKER = "ff-auth-preguard";
 
 const SNIPPET =
   `<script>/*${MARKER}*/(function(){try{` +
   `var p=location.pathname,seg=(p.split('/').filter(Boolean).pop()||'');` +
   `if(seg==='login'||seg==='login.html')return;` +
-  `if(!localStorage.getItem('sb-besa-auth')){` +
+  `if(!localStorage.getItem('sb-ff-auth')){` +
   `location.replace('login?next='+encodeURIComponent(p+location.search+location.hash));}` +
   `}catch(e){}})();</script>`;
 

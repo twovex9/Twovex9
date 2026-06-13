@@ -27,4 +27,4 @@
 - `setCell(clientId, jaar, week, uren)` helper
 
 ## Events
-- `besa:uren-budget-updated` event op window
+- `ff:uren-budget-updated` event op window

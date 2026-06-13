@@ -49,4 +49,4 @@
 - 9/9 close-ways werkend ✅
 
 ## Events
-- `besa:beleidsdocumenten-updated` → re-render trigger
+- `ff:beleidsdocumenten-updated` → re-render trigger

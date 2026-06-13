@@ -26,7 +26,7 @@
  *   invoicesDB.markUnderReview(id, comment)
  *   invoicesDB.archive(id) / .restore(id)
  *
- * Event: "besa:invoices-updated" op window.
+ * Event: "ff:invoices-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -38,7 +38,7 @@
 
   function reportSilent(action, err) {
     try { console.error("[invoicesDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Facturen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Facturen — " + action, err);
   }
   function readCache() {
     try { var p = JSON.parse(localStorage.getItem(CACHE) || "[]"); return Array.isArray(p) ? p : []; }
@@ -49,7 +49,7 @@
     catch (e) { /* quota — _mem is de bron */ }
   }
   function dispatchUpdated(src) {
-    try { global.dispatchEvent(new CustomEvent("besa:invoices-updated", { detail: { source: src || "invoices-data" } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:invoices-updated", { detail: { source: src || "invoices-data" } })); }
     catch (e) { /* */ }
   }
 
@@ -115,8 +115,8 @@
     "aanmaakdatum,laatst_gewijzigd";
 
   async function fetchInvoices() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(T_INV).select(INV_COLS)
       .order("submitted_at", { ascending: false, nullsFirst: false })
       .order("aanmaakdatum", { ascending: false });
@@ -147,8 +147,8 @@
     if (invId == null) return [];
     var s = String(invId);
     if (_bf[s]) return _bf[s];
-    if (!global.besaSupabase) return [];
-    var res = await global.besaSupabase.from(T_BF)
+    if (!global.ffSupabase) return [];
+    var res = await global.ffSupabase.from(T_BF)
       .select("id,invoice_id,naam,title,description,unit,price,amount,total,sort_order,product,comments,is_group,is_blank_row,is_auto_generated,shift")
       .eq("invoice_id", invId)
       .order("sort_order", { ascending: true });
@@ -160,8 +160,8 @@
     if (invId == null) return [];
     var s = String(invId);
     if (_wf[s]) return _wf[s];
-    if (!global.besaSupabase) return [];
-    var res = await global.besaSupabase.from(T_WF)
+    if (!global.ffSupabase) return [];
+    var res = await global.ffSupabase.from(T_WF)
       .select("id,invoice_id,status,comment,user_id,user_name,created_at,data")
       .eq("invoice_id", invId)
       .order("created_at", { ascending: true });
@@ -170,8 +170,8 @@
     return _wf[s];
   }
   async function getRawBs2(invId) {
-    if (!global.besaSupabase || invId == null) return null;
-    var res = await global.besaSupabase.from(T_INV).select("data").eq("id", invId).single();
+    if (!global.ffSupabase || invId == null) return null;
+    var res = await global.ffSupabase.from(T_INV).select("data").eq("id", invId).single();
     if (res.error) throw res.error;
     var d = res.data && res.data.data;
     return (d && d.bs2_scrape) || null;
@@ -195,7 +195,7 @@
   // dataPayload (optioneel) = gestructureerde context bij de overgang
   // (bv. welke dienst(en) niet kloppen bij een afwijzing) → workflow.data jsonb.
   async function transition(id, newStatus, comment, flagPatch, stampField, dataPayload) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var nowIso = new Date().toISOString();
     var patch = Object.assign({
       status: newStatus,
@@ -204,7 +204,7 @@
       laatst_gewijzigd: nowIso,
     }, flagPatch || {});
     if (stampField) patch[stampField] = nowIso;
-    var up = await global.besaSupabase.from(T_INV).update(patch).eq("id", id);
+    var up = await global.ffSupabase.from(T_INV).update(patch).eq("id", id);
     if (up.error) throw up.error;
     var u = currentUser();
     var wfRow = {
@@ -212,7 +212,7 @@
       comment: comment || null, user_id: u.id, user_name: u.name, created_at: nowIso,
       data: dataPayload || null,
     };
-    var ins = await global.besaSupabase.from(T_WF).insert(wfRow);
+    var ins = await global.ffSupabase.from(T_WF).insert(wfRow);
     if (ins.error) throw ins.error;
     // _mem bijwerken (alleen de gewijzigde velden patchen)
     var arr = invList();
@@ -250,9 +250,9 @@
   }
 
   async function setArchived(id, val) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var nowIso = new Date().toISOString();
-    var res = await global.besaSupabase.from(T_INV)
+    var res = await global.ffSupabase.from(T_INV)
       .update({ gearchiveerd: !!val, deleted_at: val ? nowIso : null, laatst_gewijzigd: nowIso })
       .eq("id", id);
     if (res.error) throw res.error;
@@ -275,10 +275,10 @@
   // vs. systeemfactuur" op elk apparaat klopt en de goedkeuren-gate opnieuw
   // beoordeeld wordt. Bron-van-waarheid blijft Supabase.
   async function recomputeSystem(id, summary) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (id == null) throw new Error("Geen factuur-id");
     var nowIso = new Date().toISOString();
-    var res = await global.besaSupabase.from(T_INV)
+    var res = await global.ffSupabase.from(T_INV)
       .update({ system_generated_summary: summary, laatst_gewijzigd: nowIso })
       .eq("id", id);
     if (res.error) throw res.error;

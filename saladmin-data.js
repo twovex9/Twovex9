@@ -32,7 +32,7 @@
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* */ }
   }
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:saladmin-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:saladmin-updated")); } catch (e) { /* */ }
   }
 
   function rowToHistoryObj(row) {
@@ -62,8 +62,8 @@
   // Async helpers
   // ---------------------------------------------------------------------------
   async function fetchAllHistory() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE_HISTORY)
       .select("*")
       .order("created_at", { ascending: false });
@@ -72,9 +72,9 @@
   }
 
   async function fetchOrt(jaar) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var yr = jaar || ORT_DEFAULT_JAAR;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE_ORT)
       .select("data")
       .eq("jaar", yr)
@@ -89,8 +89,8 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
-      var head = await global.besaSupabase.from(TABLE_HISTORY).select("id", { count: "exact", head: true });
+      if (!global.ffSupabase) return false;
+      var head = await global.ffSupabase.from(TABLE_HISTORY).select("id", { count: "exact", head: true });
       if (head.error) return false;
       if ((head.count || 0) > 0) {
         try { localStorage.setItem(MIGRATION_FLAG_KEY, "1"); } catch (e) { /* */ }
@@ -99,12 +99,12 @@
       var localHistory = readCache(CACHE_HISTORY, []);
       if (Array.isArray(localHistory) && localHistory.length) {
         console.info("[saladminDB] Migratie van " + localHistory.length + " export-rijen…");
-        var ins = await global.besaSupabase.from(TABLE_HISTORY).insert(localHistory.map(historyObjToPayload));
+        var ins = await global.ffSupabase.from(TABLE_HISTORY).insert(localHistory.map(historyObjToPayload));
         if (ins.error) console.error("[saladminDB] migratie history mislukt:", ins.error);
       }
       var localOrt = readCache(CACHE_ORT, null);
       if (localOrt && typeof localOrt === "object") {
-        var ortIns = await global.besaSupabase
+        var ortIns = await global.ffSupabase
           .from(TABLE_ORT)
           .upsert({ jaar: ORT_DEFAULT_JAAR, data: localOrt }, { onConflict: "jaar" });
         if (ortIns.error) console.error("[saladminDB] migratie ort mislukt:", ortIns.error);
@@ -137,15 +137,15 @@
 
   function reportSilent(action, err) {
     console.error("[saladminDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Salarisadministratie — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Salarisadministratie — " + action, err);
   }
 
   /** Bulk full-overwrite van historie (upsert + delete missende ID's). */
   async function pushHistory(items) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!Array.isArray(items)) return;
     try {
-      var existingHead = await global.besaSupabase.from(TABLE_HISTORY).select("id");
+      var existingHead = await global.ffSupabase.from(TABLE_HISTORY).select("id");
       if (existingHead.error) { reportSilent("pushHistory select", existingHead.error); return; }
       var existingIds = (existingHead.data || []).map(function (r) { return r.id; });
       var localIds = items.map(function (r) { return r && r.id; }).filter(Boolean);
@@ -153,7 +153,7 @@
 
       if (items.length) {
         var payload = items.map(historyObjToPayload);
-        var ups = await global.besaSupabase.from(TABLE_HISTORY).upsert(payload, { onConflict: "id" });
+        var ups = await global.ffSupabase.from(TABLE_HISTORY).upsert(payload, { onConflict: "id" });
         if (ups.error) reportSilent("upsert history", ups.error);
       }
       // DIEHARD delete-guard: een lokale set die 0 id's deelt met de DB is stale/seed
@@ -165,7 +165,7 @@
         toDelete = [];
       }
       if (toDelete.length) {
-        var del = await global.besaSupabase.from(TABLE_HISTORY).delete().in("id", toDelete);
+        var del = await global.ffSupabase.from(TABLE_HISTORY).delete().in("id", toDelete);
         if (del.error) reportSilent("delete history", del.error);
       }
     } catch (err) {
@@ -175,11 +175,11 @@
 
   /** Sla het hele ORT-config object op voor het huidige jaar. */
   async function pushOrt(data, jaar) {
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     if (!data || typeof data !== "object") return;
     var yr = jaar || ORT_DEFAULT_JAAR;
     try {
-      var ups = await global.besaSupabase
+      var ups = await global.ffSupabase
         .from(TABLE_ORT)
         .upsert({ jaar: yr, data: data }, { onConflict: "jaar" });
       if (ups.error) reportSilent("upsert ort", ups.error);

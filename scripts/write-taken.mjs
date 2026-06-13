@@ -8,7 +8,7 @@
  * Idempotent: upsert op id (= BS2 task-id). `taken` was leeg → niet-
  * destructief; geen andere tabel wordt geraakt.
  *
- * DRAAIEN (PowerShell, vanuit besa-suite-etf/):
+ * DRAAIEN (PowerShell, vanuit future-flow/):
  *   node --env-file=scripts/.env scripts/write-taken.mjs
  * ==========================================================================*/
 import { readFileSync } from "node:fs";

@@ -1,7 +1,7 @@
 # [Module-naam] — BS1 PARITY-CHECK
 
 **Gescraped op**: YYYY-MM-DD
-**BS1-URL getest**: `https://besa-suite.vercel.app/<page>.html`
+**BS1-URL getest**: `https://futureflow-app.vercel.app/<page>.html`
 **Test-account**: `<email>` (admin-tier)
 **BS2-equivalent**: `https://etf.acceptance.besasuite.nl/<route>`
 

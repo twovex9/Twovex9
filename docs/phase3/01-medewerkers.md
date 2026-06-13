@@ -24,7 +24,7 @@ Alle 100 BS2-medewerkers koppelen aan bestaande BS1-medewerkers en BS2's metadat
        const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url) || '';
        if (url.includes('/api/')) {
          const data = await r.clone().json();
-         window.__besaResponses.push({ url, status: r.status, data });
+         window.__ffResponses.push({ url, status: r.status, data });
        }
      } catch(e) {}
      return r;

@@ -22,14 +22,14 @@
  *   setGemeenteArchivedById(id, bool), deleteGemeenteById(id)
  *
  * Events:
- *   "besa:gemeenten-updated" op `window` na elke mutatie of bootstrap.
+ *   "ff:gemeenten-updated" op `window` na elke mutatie of bootstrap.
  */
 (function (global) {
   "use strict";
 
   var CACHE_KEY = "hr_gemeenten_v1";
   var TABLE = "gemeenten";
-  var EVENT_NAME = "besa:gemeenten-updated";
+  var EVENT_NAME = "ff:gemeenten-updated";
 
   function rowToObj(row) {
     if (!row) return null;
@@ -46,7 +46,7 @@
   // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
   function reportSilent(action, err) {
     console.error("[gemeentenDB] " + action + " mislukt:", err);
-    if (window.besaReportSyncFailure) window.besaReportSyncFailure("Gemeenten — " + action, err);
+    if (window.ffReportSyncFailure) window.ffReportSyncFailure("Gemeenten — " + action, err);
   }
 
   function readCache() {
@@ -69,11 +69,11 @@
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[gemeentenDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("naam", { ascending: true });
@@ -105,8 +105,8 @@
   async function add(naam) {
     var t = String(naam == null ? "" : naam).trim();
     if (!t) throw new Error("Naam is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert({ naam: t, archived: false })
       .select()
@@ -132,7 +132,7 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var dbPatch = {};
     if (typeof patch.naam === "string") {
       var nm = patch.naam.trim();
@@ -144,7 +144,7 @@
       var existing = readCache().find(function (g) { return g.id === id; });
       return existing || null;
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -169,8 +169,8 @@
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (g) { return g.id !== id; });
     writeCache(list);

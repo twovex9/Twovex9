@@ -629,7 +629,7 @@
 
   // Re-render zodra de Supabase-bootstrap of een externe wijziging de cache
   // ververst.
-  window.addEventListener("besa:comp-feestdagen-updated", function () {
+  window.addEventListener("ff:comp-feestdagen-updated", function () {
     try {
       allRows = loadRows();
       render();

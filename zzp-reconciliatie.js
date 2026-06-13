@@ -102,7 +102,7 @@
   function start() {
     wire();
     if (window.zzpFacturenDB) {
-      if (window.besaSupabaseReady) window.besaSupabaseReady.then(function () { load(null, null); });
+      if (window.ffSupabaseReady) window.ffSupabaseReady.then(function () { load(null, null); });
       else load(null, null);
     }
   }

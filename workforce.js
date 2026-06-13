@@ -198,7 +198,7 @@
   // injecteren. De thead staat in workforce-planning.html; we mogen hier alleen
   // workforce.js bewerken, dus de <th> komt via JS.
   function ensureCapOplossenHead() {
-    if (!window.besaOplossen) return;
+    if (!window.ffOplossen) return;
     var table = $("wf-cap-table");
     var headRow = table ? table.querySelector("thead tr") : null;
     if (!headRow || headRow.querySelector('[data-col="oplossen"]')) return;
@@ -210,7 +210,7 @@
   function renderCapaciteit() {
     var rows = capFiltered();
     var tb = $("wf-cap-tbody");
-    var heeftOplos = !!window.besaOplossen;
+    var heeftOplos = !!window.ffOplossen;
     if (heeftOplos) ensureCapOplossenHead();
     var colspan = heeftOplos ? 9 : 8;
     if (!rows.length) {
@@ -222,7 +222,7 @@
         var oplosCel = "";
         if (heeftOplos) {
           var btn = (Number(r.open_uren) > 0 && (r.status === "rood" || r.status === "oranje"))
-            ? window.besaOplossen.navBtn("planning", "Naar planning", "Vul de openstaande diensten van deze locatie in.")
+            ? window.ffOplossen.navBtn("planning", "Naar planning", "Vul de openstaande diensten van deze locatie in.")
             : "";
           oplosCel = '<td data-col="oplossen">' + btn + '</td>';
         }
@@ -239,7 +239,7 @@
         '</tr>';
       }).join("");
     }
-    if (heeftOplos) window.besaOplossen.bindSignals(tb);
+    if (heeftOplos) window.ffOplossen.bindSignals(tb);
     $("wf-cap-range").textContent = rows.length + " van " + state.capRows.length;
 
     // KPI-strip

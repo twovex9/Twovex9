@@ -214,7 +214,7 @@
       tb.addEventListener("click", function (e) { var tr = e.target.closest(".zf-row"); if (tr) openRow(tr); });
       tb.addEventListener("keydown", function (e) { if (e.key === "Enter") { var tr = e.target.closest(".zf-row"); if (tr) openRow(tr); } });
     }
-    window.addEventListener("besa:zzp-facturen-updated", renderAll);
+    window.addEventListener("ff:zzp-facturen-updated", renderAll);
   }
 
   function start() {

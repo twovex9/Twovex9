@@ -1,7 +1,7 @@
 # Module 02: Planning — BS1 PARITY-CHECK
 
 **Gescraped op**: 2026-05-13 (initieel) → **2026-05-14 (PARITY-FIXES toegepast)**
-**BS1-URL getest**: `https://besa-suite.vercel.app/planning.html` + `/planning-beheer.html`
+**BS1-URL getest**: `https://futureflow-app.vercel.app/planning.html` + `/planning-beheer.html`
 **Test-account**: `sonck802@gmail.com` (admin-tier)
 **BS2-equivalent**: `https://etf.acceptance.besasuite.nl/planning/overview` + `/planning/management/*`
 

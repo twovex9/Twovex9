@@ -5,7 +5,7 @@
  * Werkt op /mijn-gegevens.html in een sectie "Mijn maandstaat":
  *  - maand + jaar selectors (default = vorige volledige maand)
  *  - "Toon maandstaat" knop → renderen visuele tabel met
- *      • ORT-uren per percentage (uit besaOrtEngine)
+ *      • ORT-uren per percentage (uit ffOrtEngine)
  *      • Werk-km + woon-werk-km + km-vergoeding
  *      • Vakantieverlof + totaal verlofuren
  *      • Diensttype-uren (Vroege/Late/Geen/Waakdienst)
@@ -175,8 +175,8 @@
     var y = state.year, m = state.month;
     var km = aggregateKilometers(emp.id, y, m);
     var verlof = aggregateVerlof(emp, y, m);
-    var ort = (window.besaOrtEngine && typeof window.besaOrtEngine.computeOrtForEmployee === "function")
-      ? window.besaOrtEngine.computeOrtForEmployee(emp.id, y, m)
+    var ort = (window.ffOrtEngine && typeof window.ffOrtEngine.computeOrtForEmployee === "function")
+      ? window.ffOrtEngine.computeOrtForEmployee(emp.id, y, m)
       : { ortUren: {}, diensttypeUren: {}, totaalGewerkteUren: 0, cao: null, recordCount: 0 };
 
     var naam = ((emp.voornaam || "") + " " + (emp.achternaam || "")).trim() || (emp.email || "—");
@@ -300,7 +300,7 @@
     });
 
     // Re-render bij data-updates
-    ["besa:profile-updated","besa:medewerkers-updated","besa:kilometer-declaraties-updated","besa:verlof-updated","besa:werkuren-updated"].forEach(function (ev) {
+    ["ff:profile-updated","ff:medewerkers-updated","ff:kilometer-declaraties-updated","ff:verlof-updated","ff:werkuren-updated"].forEach(function (ev) {
       window.addEventListener(ev, function () {
         state.employee = findEmployeeForCurrentUser();
         if (state.employee) renderResult();

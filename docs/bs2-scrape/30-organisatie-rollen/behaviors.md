@@ -7,13 +7,13 @@
 - Cache in `localStorage`:
   - Key `org_role_sections_v1`
   - Key `org_roles_with_counts_v1`
-- Event `besa:org-rollen-updated` (detail: source) → trigger re-render
+- Event `ff:org-rollen-updated` (detail: source) → trigger re-render
 - Cache-first render (snelle initial), background-fetch overschrijft cache
 
 ## Render flow
 1. `DOMContentLoaded` → `renderOrganogram()` met cache
 2. `orgRollenDB.ready` Promise → re-render na bootstrap (fresh data)
-3. Live re-render bij `besa:org-rollen-updated` event
+3. Live re-render bij `ff:org-rollen-updated` event
 
 ## Search
 - Input `#rollen-search` met debounce 150ms
@@ -39,7 +39,7 @@
 - 1 profile currently (admin) → "Medewerker" rol counter = 1
 
 ## Events
-- `besa:org-rollen-updated` event op window → triggert renderOrganogram()
+- `ff:org-rollen-updated` event op window → triggert renderOrganogram()
 - Source-detail: "cache" / "bootstrap" / "refresh"
 
 ## Geen modals in Module 30

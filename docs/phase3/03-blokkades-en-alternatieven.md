@@ -45,7 +45,7 @@ Voor PII-data (clienten, beschikkingen, facturen, planning, verzuim, incidenten)
 
 1. **Gebruiker** opent BS2 pagina (bv. `/clients`)
 2. Klikt op "Exporteer" → kiest Excel/CSV
-3. Slaat bestand op in `besa-suite-etf/scripts/bs2-exports/<resource>.csv`
+3. Slaat bestand op in `future-flow/scripts/bs2-exports/<resource>.csv`
 4. Plaatst een commentaarbericht in deze repo of in een chat: *"clienten.csv staat klaar"*
 5. **Claude** leest CSV via `Read`-tool of Node-script, schrijft INSERT-statements, voert via `mcp__supabase__execute_sql` uit
 
@@ -66,7 +66,7 @@ Theoretisch mogelijk: hook Vue Router `afterEach` callback, lees Vuex/Pinia stor
 Voor PII-data (cliënten, beschikkingen, facturen, planning, verzuim, incidenten):
 
 1. **User-actie**: Open BS2 in browser, gebruik "Exporteer naar Excel" knoppen
-2. Sla CSV-bestanden op in `besa-suite-etf/scripts/bs2-exports/`:
+2. Sla CSV-bestanden op in `future-flow/scripts/bs2-exports/`:
    - `clienten.csv`
    - `beschikkingen.csv`
    - `facturen.csv`

@@ -436,11 +436,11 @@
     var isave = document.getElementById("bz-invoer-save");
     if (isave) isave.addEventListener("click", saveInvoer);
     // Analoge klok-tijdkiezer naast de begin/eind-velden (naast native invoer).
-    if (window.BesaKlok && window.BesaKlok.enhance) {
+    if (window.FfKlok && window.FfKlok.enhance) {
       var bInp = document.getElementById("bz-invoer-begin");
       var eInp = document.getElementById("bz-invoer-eind");
-      if (bInp) window.BesaKlok.enhance(bInp, { titel: "Begintijd", nuKnop: true });
-      if (eInp) window.BesaKlok.enhance(eInp, { titel: "Eindtijd", nuKnop: true });
+      if (bInp) window.FfKlok.enhance(bInp, { titel: "Begintijd", nuKnop: true });
+      if (eInp) window.FfKlok.enhance(eInp, { titel: "Eindtijd", nuKnop: true });
     }
     var tbodyEl = document.getElementById("bz-tbody");
     if (tbodyEl) tbodyEl.addEventListener("click", function (e) {
@@ -451,8 +451,8 @@
       if (e.key === "Escape") { var m = document.getElementById("bz-invoer-modal"); if (m && !m.hidden) closeInvoer(); }
     });
 
-    window.addEventListener("besa:medewerkers-updated", function () { phase = "ready"; buildModel(); render(); });
-    window.addEventListener("besa:beschikbaarheid-updated", function () { buildModel(); render(); });
+    window.addEventListener("ff:medewerkers-updated", function () { phase = "ready"; buildModel(); render(); });
+    window.addEventListener("ff:beschikbaarheid-updated", function () { buildModel(); render(); });
   }
 
   function bindPager(id, fn) {
@@ -473,7 +473,7 @@
   async function init() {
     bindEvents();
     render(); // lege staat / "laden"
-    try { if (window.besaSupabaseReady) await window.besaSupabaseReady; } catch (e) { /* doorgaan */ }
+    try { if (window.ffSupabaseReady) await window.ffSupabaseReady; } catch (e) { /* doorgaan */ }
     try { if (window.medewerkersDB && window.medewerkersDB.ready) await window.medewerkersDB.ready; } catch (e) { /* doorgaan */ }
     phase = "ready";
     await loadData();

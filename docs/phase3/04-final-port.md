@@ -102,4 +102,4 @@ ea10da7  feat(audit): klikbare rij opent detail-modal
 3. Set env var + run `node scripts/bs2-full-import.mjs`
 4. Wacht ~2-5 min
 5. Verifieer counts in Supabase Studio (queries in README)
-6. Open BS1 live op `besa-suite.vercel.app` om data te bekijken
+6. Open BS1 live op `futureflow-app.vercel.app` om data te bekijken

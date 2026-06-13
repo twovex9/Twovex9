@@ -1,6 +1,6 @@
 /* global window, document, DOMParser */
 /**
- * besa-sanitize.js — minimale, afhankelijkheidsvrije HTML-sanitizer voor
+ * ff-sanitize.js — minimale, afhankelijkheidsvrije HTML-sanitizer voor
  * door gebruikers ingevoerde rich-text (nieuwsberichten, medewerker-notities,
  * verzuim-/beschikking-notities, planning-omschrijvingen).
  *
@@ -11,7 +11,7 @@
  * veilige allowlist van tags/attributen door; verwijder scripts, event-handlers
  * (on*) en gevaarlijke URL-schema's (javascript:/vbscript:/data: m.u.v. images).
  *
- * Gebruik:  el.innerHTML = window.besaSanitizeHtml(opgeslagenHtml);
+ * Gebruik:  el.innerHTML = window.ffSanitizeHtml(opgeslagenHtml);
  *
  * DOMParser voert tijdens het parsen geen scripts uit en laadt geen resources,
  * dus het parsen zelf is veilig; na het schonen is de innerHTML veilig toe te
@@ -93,5 +93,5 @@
     }
   }
 
-  global.besaSanitizeHtml = sanitizeHtml;
+  global.ffSanitizeHtml = sanitizeHtml;
 })(typeof window !== "undefined" ? window : this);

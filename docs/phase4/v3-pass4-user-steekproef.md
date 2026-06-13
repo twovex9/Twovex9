@@ -15,7 +15,7 @@ Pass 1-3 zijn automated/script-based. Pass 4 is **menselijke smoke-test** vlak v
 ## Flows om handmatig te testen (op cut-over-dag, T-15min)
 
 ### Flow 1 — Login + 2FA + Welkom-greeting
-- [ ] Open `https://besa-suite.vercel.app`
+- [ ] Open `https://futureflow-app.vercel.app`
 - [ ] Vul email + wachtwoord in
 - [ ] Voer 2FA-code uit jouw authenticator-app
 - [ ] Verwacht: land op home.html met "Welkom, [jouw voornaam]" + nieuws-cards

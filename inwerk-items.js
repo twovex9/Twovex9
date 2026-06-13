@@ -297,7 +297,7 @@
       });
     }
 
-    window.addEventListener("besa:inwerk-items-updated", render);
+    window.addEventListener("ff:inwerk-items-updated", render);
   }
 
   function bootstrap() {

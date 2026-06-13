@@ -13,7 +13,7 @@
   "use strict";
 
   var TABLE = "uren_budget";
-  var CACHE_KEY = "besaUrenBudgetV1";
+  var CACHE_KEY = "ffUrenBudgetV1";
   var MIGRATION_FLAG_KEY = "urenBudgetMigratedToSupabase.v1";
 
   function readCache() {
@@ -27,7 +27,7 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(obj || {})); } catch (e) { /* */ }
   }
   function dispatchUpdated() {
-    try { global.dispatchEvent(new CustomEvent("besa:uren-budget-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:uren-budget-updated")); } catch (e) { /* */ }
   }
 
   function rowsToObj(rows) {
@@ -63,8 +63,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return res.data || [];
   }
@@ -72,9 +72,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("client_id", { count: "exact", head: true });
       if (head.error) return false;
@@ -91,7 +91,7 @@
       }
 
       console.info("[urenBudgetDB] Eenmalige migratie van " + rows.length + " budget-cellen…");
-      var ins = await global.besaSupabase.from(TABLE).insert(rows).select();
+      var ins = await global.ffSupabase.from(TABLE).insert(rows).select();
       if (ins.error) {
         console.error("[urenBudgetDB] Migratie mislukt:", ins.error);
         return false;
@@ -124,19 +124,19 @@
 
   function reportSilent(action, err) {
     console.error("[urenBudgetDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Uren-budget — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Uren-budget — " + action, err);
   }
 
   /** Async cell-level upsert (of delete als uren=0). */
   async function setCell(clientId, jaar, week, uren) {
     if (!clientId) return;
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     var jr = parseInt(jaar, 10);
     var wk = parseInt(week, 10);
     var u = Number(uren);
     try {
       if (!isFinite(u) || u === 0) {
-        var del = await global.besaSupabase
+        var del = await global.ffSupabase
           .from(TABLE)
           .delete()
           .eq("client_id", clientId)
@@ -145,7 +145,7 @@
         if (del.error) reportSilent("delete", del.error);
         return;
       }
-      var ups = await global.besaSupabase
+      var ups = await global.ffSupabase
         .from(TABLE)
         .upsert({ client_id: clientId, jaar: jr, week: wk, uren: u }, { onConflict: "client_id,jaar,week" });
       if (ups.error) reportSilent("upsert", ups.error);

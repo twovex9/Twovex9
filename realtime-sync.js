@@ -6,16 +6,16 @@
  * Wanneer user A een record wijzigt, ziet user B die wijziging real-time zonder refresh.
  *
  * Werking:
- *   1. Per data-laag: roep besaRealtime.subscribe(tableName, onChangeCallback) aan
+ *   1. Per data-laag: roep ffRealtime.subscribe(tableName, onChangeCallback) aan
  *   2. Supabase Realtime stuurt postgres_changes events naar alle subscribers
- *   3. Data-laag refresht cache + fired existing besa:<naam>-updated event
+ *   3. Data-laag refresht cache + fired existing ff:<naam>-updated event
  *   4. UI re-rendert automatisch
  *
  * Vereist: Supabase Realtime moet enabled zijn op de relevante tabellen
  * (Supabase Studio → Database → Replication).
  *
  * Gebruik (vanuit data-laag):
- *   window.besaRealtime.subscribe("clienten", function() {
+ *   window.ffRealtime.subscribe("clienten", function() {
  *     refresh();  // re-fetch + dispatch event
  *   });
  *
@@ -29,7 +29,7 @@
   var debounceTimers = {};
 
   function subscribe(tableName, onChange) {
-    if (!global.besaSupabase || !global.besaSupabase.channel) {
+    if (!global.ffSupabase || !global.ffSupabase.channel) {
       console.warn("[realtime-sync] Supabase Realtime not available, skip subscribe for", tableName);
       return null;
     }
@@ -41,7 +41,7 @@
 
     var channelName = "realtime-" + tableName + "-" + Math.random().toString(36).slice(2, 8);
     try {
-      var channel = global.besaSupabase
+      var channel = global.ffSupabase
         .channel(channelName)
         .on(
           "postgres_changes",
@@ -79,7 +79,7 @@
   function unsubscribe(tableName) {
     if (!subscriptions[tableName]) return;
     try {
-      global.besaSupabase.removeChannel(subscriptions[tableName].channel);
+      global.ffSupabase.removeChannel(subscriptions[tableName].channel);
     } catch (e) { /* */ }
     delete subscriptions[tableName];
     if (debounceTimers[tableName]) {
@@ -97,7 +97,7 @@
   // Auto-cleanup on page-unload
   global.addEventListener("beforeunload", unsubscribeAll);
 
-  global.besaRealtime = {
+  global.ffRealtime = {
     subscribe: subscribe,
     unsubscribe: unsubscribe,
     unsubscribeAll: unsubscribeAll,

@@ -5,7 +5,7 @@
  * Bron = public.audit_log via auditDB.fetchPage (server-side paginatie +
  * sortering + filtering → toont ALLE rijen, niet meer de oude 500-cap).
  * Klikbare sorteerkoppen. Filters (Resource / Veroorzaker / Actie type)
- * + zoeken, server-side. besa-audit.js vult deze tabel met de echte
+ * + zoeken, server-side. ff-audit.js vult deze tabel met de echte
  * ingelogde gebruiker per actie + in-/uitloggen.
  */
 (function () {

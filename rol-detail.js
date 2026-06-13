@@ -31,11 +31,11 @@
 
   async function initReadOnly() {
     try {
-      if (window.besaPermissionsReady && typeof window.besaPermissionsReady.then === "function") {
-        await window.besaPermissionsReady;
+      if (window.ffPermissionsReady && typeof window.ffPermissionsReady.then === "function") {
+        await window.ffPermissionsReady;
       }
-      var canManage = (typeof window.besaIsAdminTier === "function" && window.besaIsAdminTier())
-        || (typeof window.besaCan === "function" && window.besaCan("manage", "roles"));
+      var canManage = (typeof window.ffIsAdminTier === "function" && window.ffIsAdminTier())
+        || (typeof window.ffCan === "function" && window.ffCan("manage", "roles"));
       readOnly = !canManage;
     } catch (e) { readOnly = true; } // fail-closed: bij twijfel niet bewerkbaar
   }

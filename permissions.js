@@ -13,21 +13,21 @@
  * Multi-rol = unie van rechten (user-keuze 2026-05-25):
  *   iemand met [Beleid, Facilitair, Planner] krijgt ALLE permissies van die drie rollen.
  *
- * Admin-tier (Eigenaar/Admin/Directeur) wint altijd in besaCan.
+ * Admin-tier (Eigenaar/Admin/Directeur) wint altijd in ffCan.
  *
  * Gebruik:
- *   await window.besaPermissionsReady;          // wacht tot DB-load klaar is
- *   if (besaCan("view", "employees")) { ... }   // → checkt slug "view-employees"
- *   if (besaIsAdminTier()) { ... }
+ *   await window.ffPermissionsReady;          // wacht tot DB-load klaar is
+ *   if (ffCan("view", "employees")) { ... }   // → checkt slug "view-employees"
+ *   if (ffIsAdminTier()) { ... }
  *
  * Geen eager bootstrap-race (les 2026-05-19, PR #293): wacht eerst op
- * `besaSupabaseReady` voordat we de DB benaderen. Falende reads gaan via
- * console.warn — NIET via besaReportSyncFailure (anders auth-logout-cascade).
+ * `ffSupabaseReady` voordat we de DB benaderen. Falende reads gaan via
+ * console.warn — NIET via ffReportSyncFailure (anders auth-logout-cascade).
  */
 (function (global) {
   "use strict";
 
-  var STORAGE_KEY = "besa-permissions-v2";
+  var STORAGE_KEY = "ff-permissions-v2";
   var TTL_MS = 60 * 60 * 1000; // 1 uur cache
   var ADMIN_TIER_NAMES = ["Eigenaar", "Admin", "Directeur"];
 
@@ -72,11 +72,11 @@
 
   async function waitForClient() {
     try {
-      if (global.besaSupabaseReady && typeof global.besaSupabaseReady.then === "function") {
-        await global.besaSupabaseReady;
+      if (global.ffSupabaseReady && typeof global.ffSupabaseReady.then === "function") {
+        await global.ffSupabaseReady;
       }
     } catch (e) { /* doorgaan; supabase kan tóch werken */ }
-    return global.besaSupabase || null;
+    return global.ffSupabase || null;
   }
 
   async function loadFromDb() {
@@ -173,7 +173,7 @@
     return true;
   }
 
-  function besaIsAdminTier() {
+  function ffIsAdminTier() {
     if (!state.loaded) return false;
     for (var i = 0; i < ADMIN_TIER_NAMES.length; i++) {
       if (state.roleNames.indexOf(ADMIN_TIER_NAMES[i]) !== -1) return true;
@@ -185,8 +185,8 @@
    * Check of huidige user een BS2-permissie heeft.
    *
    * Slug-conventie: `<action>-<entity>` (zoals BS2's bs2_permissions.slug).
-   *   besaCan("view", "employees")  →  permissionSlugs.has("view-employees")
-   *   besaCan("manage-clients")     →  permissionSlugs.has("manage-clients")
+   *   ffCan("view", "employees")  →  permissionSlugs.has("view-employees")
+   *   ffCan("manage-clients")     →  permissionSlugs.has("manage-clients")
    *
    * Admin-tier (Eigenaar/Admin/Directeur) krijgt altijd true.
    *
@@ -194,9 +194,9 @@
    * @param {string} [entity] - bv. "employees". Optioneel als de slug al volledig is in `action`.
    * @returns {boolean}
    */
-  function besaCan(action, entity) {
+  function ffCan(action, entity) {
     if (!state.loaded) return false;
-    if (besaIsAdminTier()) return true;
+    if (ffIsAdminTier()) return true;
     if (!action) return false;
     var slug = entity ? (action + "-" + entity) : action;
     return state.permissionSlugs.has(slug);
@@ -230,7 +230,7 @@
       fetchedAt: state.fetchedAt,
       roleNames: state.roleNames.slice(),
       permissionSlugs: Array.from(state.permissionSlugs),
-      adminTier: besaIsAdminTier(),
+      adminTier: ffIsAdminTier(),
     };
   }
 
@@ -258,12 +258,12 @@
   })();
 
   // Public API
-  global.besaCan = besaCan;
-  global.besaIsAdminTier = besaIsAdminTier;
-  global.besaPermissionsReady = bootPromise;
-  global.besaPermissions = {
-    can: besaCan,
-    isAdminTier: besaIsAdminTier,
+  global.ffCan = ffCan;
+  global.ffIsAdminTier = ffIsAdminTier;
+  global.ffPermissionsReady = bootPromise;
+  global.ffPermissions = {
+    can: ffCan,
+    isAdminTier: ffIsAdminTier,
     hasRole: hasRole,
     hasAnyRole: hasAnyRole,
     getRoleNames: getRoleNames,
@@ -277,8 +277,8 @@
   // ──────────────────────────────────────────────────────────────────────────
   // G57 — herbruikbare alleen-lezen-modus per rol.
   //
-  //   besaApplyReadOnly(["HR", "Facilitair"])                  // hele pagina
-  //   besaApplyReadOnly(["HR"], { scope: "#planning-root",
+  //   ffApplyReadOnly(["HR", "Facilitair"])                  // hele pagina
+  //   ffApplyReadOnly(["HR"], { scope: "#planning-root",
   //                               banner: "Kijkmodus: alleen-lezen voor HR" })
   //
   // Heeft de ingelogde gebruiker een van de opgegeven rollen (admin-tier wint
@@ -289,16 +289,16 @@
   // Opt-outs per element: data-ro-keep (blijft bruikbaar), data-ro-hide
   // (extra te verbergen element).
   // ──────────────────────────────────────────────────────────────────────────
-  function besaApplyReadOnly(roles, opts) {
+  function ffApplyReadOnly(roles, opts) {
     var doc = global.document;
     if (!doc || !Array.isArray(roles) || !roles.length) return false;
     if (!state.loaded) {
       // Permissies nog niet geladen → opnieuw zodra ze er zijn (de gate-laag
       // blijft intussen fail-closed voor strikte pagina's).
-      bootPromise.then(function () { besaApplyReadOnly(roles, opts); });
+      bootPromise.then(function () { ffApplyReadOnly(roles, opts); });
       return false;
     }
-    if (besaIsAdminTier()) return false;
+    if (ffIsAdminTier()) return false;
     var mine = getRoleNames();
     var match = roles.some(function (r) { return mine.indexOf(r) !== -1; });
     if (!match) return false;
@@ -328,25 +328,25 @@
       mo.observe(root, { childList: true, subtree: true });
     } catch (e) { /* zonder observer blijft de eerste lock staan */ }
 
-    if (!doc.getElementById("besa-readonly-banner")) {
+    if (!doc.getElementById("ff-readonly-banner")) {
       var b = doc.createElement("div");
-      b.id = "besa-readonly-banner";
-      b.className = "besa-readonly-banner";
+      b.id = "ff-readonly-banner";
+      b.className = "ff-readonly-banner";
       b.setAttribute("role", "note");
       b.textContent = o.banner || "Kijkmodus — je rol heeft alleen-lezen toegang tot deze pagina.";
       root.insertBefore(b, root.firstChild);
     }
     return true;
   }
-  global.besaApplyReadOnly = besaApplyReadOnly;
-  global.besaPermissions.applyReadOnly = besaApplyReadOnly;
+  global.ffApplyReadOnly = ffApplyReadOnly;
+  global.ffPermissions.applyReadOnly = ffApplyReadOnly;
 
   // Achterwaartse compat: een aantal docs/oude code-fragmenten gebruikt
-  // `besaPermissions.getCurrentRol()`. Geef de "primaire" rol terug (admin-tier
+  // `ffPermissions.getCurrentRol()`. Geef de "primaire" rol terug (admin-tier
   // wint, anders eerste in lijst). Niet gebruikt door nieuwe gate-laag.
-  global.besaPermissions.getCurrentRol = function () {
+  global.ffPermissions.getCurrentRol = function () {
     if (!state.loaded) return null;
-    if (besaIsAdminTier()) {
+    if (ffIsAdminTier()) {
       for (var i = 0; i < ADMIN_TIER_NAMES.length; i++) {
         if (state.roleNames.indexOf(ADMIN_TIER_NAMES[i]) !== -1) return ADMIN_TIER_NAMES[i];
       }

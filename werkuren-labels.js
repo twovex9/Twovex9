@@ -4,7 +4,7 @@
  *
  * Beheert de labels die in werkuren-modals als select-keuze gebruikt worden.
  * Volledige CRUD via werkurenLabelsDB met live-refresh via
- * "besa:werkuren-labels-updated" event.
+ * "ff:werkuren-labels-updated" event.
  */
 (function () {
   "use strict";
@@ -569,6 +569,6 @@
     else if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="cl-empty-cell">Labels laden…</td></tr>';
   }
 
-  window.addEventListener("besa:werkuren-labels-updated", render);
+  window.addEventListener("ff:werkuren-labels-updated", render);
   initialRender();
 })();

@@ -7,7 +7,7 @@
 
 ## Wat is gedaan
 
-BS1 krijgt een sidebar Exporteren-knop voor de huidige zichtbare planning (na alle filters). Klik → format-keuze modal (CSV / TXT / XLS / PDF) via bestaande `window.besaExport` helper.
+BS1 krijgt een sidebar Exporteren-knop voor de huidige zichtbare planning (na alle filters). Klik → format-keuze modal (CSV / TXT / XLS / PDF) via bestaande `window.ffExport` helper.
 
 ### UI
 
@@ -17,11 +17,11 @@ BS1 krijgt een sidebar Exporteren-knop voor de huidige zichtbare planning (na al
 
 ### JS
 
-`exportPlanningCsv()` upgraded van directe Blob-download → `besaExport`-call:
+`exportPlanningCsv()` upgraded van directe Blob-download → `ffExport`-call:
 - Pakt `getItemsForView()` (huidige filters + view-mode)
 - Mapt naar user-friendly NL kolommen: Datum, Start, Einde, Diensttype, Functie, Teamlid, Cliënt, Afdeling, Vestiging, Locatie, Uren, Tarief
 - Filename bevat periode-info: `planning-week-21.csv` of `planning-2026-05.csv` of `planning-2026-05-13.csv`
-- Fallback: directe CSV-download als `besaExport` niet geladen is
+- Fallback: directe CSV-download als `ffExport` niet geladen is
 
 ### Files
 
@@ -37,7 +37,7 @@ BS1 krijgt een sidebar Exporteren-knop voor de huidige zichtbare planning (na al
 - [ ] CSV-download bevat NL-headers + huidige zichtbare items
 - [ ] Filename: `planning-week-NN.csv` (in week-view) / `planning-YYYY-MM.csv` (month) / datum (day)
 - [ ] Lege view → "Geen gegevens" feedback (geen lege download)
-- [ ] Andere formats (TXT/XLS/PDF) werken via dezelfde besaExport helper
+- [ ] Andere formats (TXT/XLS/PDF) werken via dezelfde ffExport helper
 
 ## Acceptance (master-plan S5)
 

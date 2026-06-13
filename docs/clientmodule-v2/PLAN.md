@@ -11,12 +11,12 @@
 - `client_contacten` (relatie vrij tekstveld, is_primair; GEEN gezaghebbend/adres/organisatie), `client_documents` (bucket `client-documents` = PUBLIC ⚠️, 7 categorieën), `client_rapportages` (leeg; RLS volledig open ⚠️; auteur_id wordt niet geschreven), `client_vragenlijsten` (3 hard-coded templates: intake/evaluatie/afsluiting), `client_medicatie` (+ aftekenlijst via RPC + uurlijkse cron).
 - `beschikkingen` (151; geen gemeente/productcode-kolommen — gemeente komt van cliënt; `toegekend_uren`; fase-tekst). Verloop-herinneringen BESTAAN al: `beschikking_verloop_herinneringen()` (cron 07:00, mijlpalen 60/30/14/7/0 → notificaties directeur+zorgcoördinator+gekoppelde GW, log in `beschikking_verloop_log`). ⚠️ Dashboard-RPC's joinen via `clienten.data->>'bs2_id'`; frontend joint op `clienten.id` (dual-key).
 - `incidenten` (146, client_id text) + incidenten-analyse-module (7 rol-gegate views, deterministische heuristiek), `klachten` (0; client_id bestaat maar UI vult 'm niet).
-- Audit: `audit_log` + `trg_audit_clienten/beschikkingen/incidenten` + `besa-audit.js` (automatisch) + read-audit (AVG art. 15) + `anonymize_client`/`export_client_data`.
+- Audit: `audit_log` + `trg_audit_clienten/beschikkingen/incidenten` + `ff-audit.js` (automatisch) + read-audit (AVG art. 15) + `anonymize_client`/`export_client_data`.
 - Notificaties: `notifications`+`notification_reads`+bel; melding aanmaken = server-side insert vanuit SECURITY DEFINER fn/cron. pg_cron-patroon gevestigd (10 jobs). Edge-deploy via `scripts/deploy-functions.mjs`.
 - Rollen (bs2_roles; let op name≠slug): Eigenaar/eigenaar(1), Admin/admin(2), Directeur/directeur(2), Cliëntbeheer/**beschikkingen-test**(3), Planner/planner(3), Zorgcoördinator/**teamleider**(3), Facilitair, Finance, Gedragswetenschapper, HR, Salarisadministratie(4), Beleid, Medewerker(5), Detacheringsbureau. Resolutie via profiles.email→bs2_role_users→bs2_roles.slug.
 - Module-patroon (incidenten-analyse/mobiliteit): single-page + filter-chip viewtabs + `setVisible()` (style.display ÉN hidden), data-laag `callRpc` met fallback, SECURITY DEFINER RPC's met harde rol-check (fail-closed, UI cosmetisch), page-map-entry verplicht, topnav alleen via `scripts/rebuild-topnav.mjs`.
 
-**Kern-valkuilen:** `clienten.id`/`beschikkingen.id`/`client_documents.id` = **text** → alle nieuwe tabellen `client_id text`. Locatie = naamstring. `[hidden]` vs class-display → `setVisible`-helper. `toISOString()` UTC-shift → lokale isoDate. qa-identity-switch → eerst `besa-permissions-v2`-cache wissen. plpgsql: geen geneste functies; `max(uuid)` bestaat niet. schema.sql ≠ productie; DDL via db-exec.mjs. Topnav nooit per pagina bewerken. Nieuwe pagina ALTIJD in permissions-page-map.js (anders default open).
+**Kern-valkuilen:** `clienten.id`/`beschikkingen.id`/`client_documents.id` = **text** → alle nieuwe tabellen `client_id text`. Locatie = naamstring. `[hidden]` vs class-display → `setVisible`-helper. `toISOString()` UTC-shift → lokale isoDate. qa-identity-switch → eerst `ff-permissions-v2`-cache wissen. plpgsql: geen geneste functies; `max(uuid)` bestaat niet. schema.sql ≠ productie; DDL via db-exec.mjs. Topnav nooit per pagina bewerken. Nieuwe pagina ALTIJD in permissions-page-map.js (anders default open).
 
 ## Architectuurkeuzes (defaults, gekozen 2026-06-10)
 
@@ -133,7 +133,7 @@
 
 ## Test-/verificatieplan (elke fase)
 1. Server-side: RPC's per rol via qa-account-JWT's (password grant, anon-key) — bevoegd én onbevoegd.
-2. Live via Claude Chrome-extensie op https://futureflow-etf.vercel.app: qa-accounts per rol, licht+donker, 2 opeenvolgende clean runs (één fout = fixen en opnieuw beginnen met run 1). ⚠️ Vóór identity-switch: localStorage `besa-permissions-v2` wissen.
+2. Live via Claude Chrome-extensie op https://futureflow-app.vercel.app: qa-accounts per rol, licht+donker, 2 opeenvolgende clean runs (één fout = fixen en opnieuw beginnen met run 1). ⚠️ Vóór identity-switch: localStorage `ff-permissions-v2` wissen.
 3. Elke knop/modal/validatie van nieuwe UI aanraken; console-fouten = fail.
 4. Geen echte e-mails (alleen dry_run); admin-omgevingen read-only.
 

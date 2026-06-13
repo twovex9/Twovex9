@@ -1,6 +1,6 @@
 /* global window, document, Blob, URL */
 /**
- * besa-export.js — Generieke export-helper.
+ * ff-export.js — Generieke export-helper.
  *
  * Toont een keuze-modal met 4 formats: CSV, Tekstbestand (.txt), Excel (.xls)
  * en PDF. Op keuze wordt het bestand gegenereerd en via download getriggerd.
@@ -13,7 +13,7 @@
  * print-stylesheet. Browser dialog laat user kiezen "Save as PDF". Geen lib.
  *
  * Public API:
- *   window.besaExport({
+ *   window.ffExport({
  *     filename: "clienten",                 // zonder extensie
  *     title: "Cliënten",                    // gebruikt in PDF-header
  *     data: [{Voornaam: "Raymond", ...}],   // array van objecten
@@ -164,7 +164,7 @@
   // ---------------------------------------------------------------------------
   function openExportChoice(opts) {
     if (!opts || !Array.isArray(opts.data) || !Array.isArray(opts.columns)) {
-      console.error("[besaExport] Geldige data + columns vereist");
+      console.error("[ffExport] Geldige data + columns vereist");
       return;
     }
     // Note: modal opent ALTIJD — ook bij lege data. De 'Niets te exporteren'
@@ -177,38 +177,38 @@
     overlay.className = "modal-overlay";
     overlay.setAttribute("aria-hidden", "false");
     overlay.innerHTML =
-      "<div class='modal-card besa-export-modal' role='dialog' aria-modal='true' tabindex='-1'>" +
+      "<div class='modal-card ff-export-modal' role='dialog' aria-modal='true' tabindex='-1'>" +
         "<div class='modal-header'>" +
           "<h2 class='modal-title'>Exporteren</h2>" +
           "<button type='button' class='modal-close' aria-label='Sluiten'><span aria-hidden='true'>&times;</span></button>" +
         "</div>" +
         "<div class='modal-body'>" +
           "<p style='margin:0 0 4px;color:var(--text-secondary)'>Kies het exportformaat voor <strong>" + escHtml(title) + "</strong> (" + (opts.data || []).length + " regels)</p>" +
-          "<div class='besa-export-options'>" +
-            "<button type='button' class='besa-export-option' data-fmt='csv'>" +
-              "<span class='besa-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg></span>" +
-              "<span class='besa-export-label'>CSV</span>" +
-              "<span class='besa-export-ext'>.csv — Excel/LibreOffice</span>" +
+          "<div class='ff-export-options'>" +
+            "<button type='button' class='ff-export-option' data-fmt='csv'>" +
+              "<span class='ff-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg></span>" +
+              "<span class='ff-export-label'>CSV</span>" +
+              "<span class='ff-export-ext'>.csv — Excel/LibreOffice</span>" +
             "</button>" +
-            "<button type='button' class='besa-export-option' data-fmt='txt'>" +
-              "<span class='besa-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/></svg></span>" +
-              "<span class='besa-export-label'>Tekstbestand</span>" +
-              "<span class='besa-export-ext'>.txt — leesbaar als tekst</span>" +
+            "<button type='button' class='ff-export-option' data-fmt='txt'>" +
+              "<span class='ff-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/></svg></span>" +
+              "<span class='ff-export-label'>Tekstbestand</span>" +
+              "<span class='ff-export-ext'>.txt — leesbaar als tekst</span>" +
             "</button>" +
-            "<button type='button' class='besa-export-option' data-fmt='xls'>" +
-              "<span class='besa-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2'/><line x1='3' y1='9' x2='21' y2='9'/><line x1='3' y1='15' x2='21' y2='15'/><line x1='9' y1='3' x2='9' y2='21'/><line x1='15' y1='3' x2='15' y2='21'/></svg></span>" +
-              "<span class='besa-export-label'>Excel</span>" +
-              "<span class='besa-export-ext'>.xls — opent direct in Excel</span>" +
+            "<button type='button' class='ff-export-option' data-fmt='xls'>" +
+              "<span class='ff-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2'/><line x1='3' y1='9' x2='21' y2='9'/><line x1='3' y1='15' x2='21' y2='15'/><line x1='9' y1='3' x2='9' y2='21'/><line x1='15' y1='3' x2='15' y2='21'/></svg></span>" +
+              "<span class='ff-export-label'>Excel</span>" +
+              "<span class='ff-export-ext'>.xls — opent direct in Excel</span>" +
             "</button>" +
-            "<button type='button' class='besa-export-option' data-fmt='pdf'>" +
-              "<span class='besa-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><path d='M9 13h6'/><path d='M9 17h6'/></svg></span>" +
-              "<span class='besa-export-label'>PDF</span>" +
-              "<span class='besa-export-ext'>.pdf — via print-dialog</span>" +
+            "<button type='button' class='ff-export-option' data-fmt='pdf'>" +
+              "<span class='ff-export-icon'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><path d='M9 13h6'/><path d='M9 17h6'/></svg></span>" +
+              "<span class='ff-export-label'>PDF</span>" +
+              "<span class='ff-export-ext'>.pdf — via print-dialog</span>" +
             "</button>" +
           "</div>" +
         "</div>" +
         "<div class='modal-footer'>" +
-          "<button type='button' class='btn-outline besa-export-cancel'>Annuleren</button>" +
+          "<button type='button' class='btn-outline ff-export-cancel'>Annuleren</button>" +
         "</div>" +
       "</div>";
 
@@ -245,7 +245,7 @@
           w.showActionFeedback("exported", filename + "." + (fmt === "xls" ? "xls" : fmt));
         }
       } catch (err) {
-        console.error("[besaExport] Mislukt:", err);
+        console.error("[ffExport] Mislukt:", err);
         if (typeof w.showActionFeedback === "function") {
           w.showActionFeedback("error", "Export mislukt");
         }
@@ -254,16 +254,16 @@
     }
 
     overlay.querySelector(".modal-close").addEventListener("click", close);
-    overlay.querySelector(".besa-export-cancel").addEventListener("click", close);
+    overlay.querySelector(".ff-export-cancel").addEventListener("click", close);
     overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
-    overlay.querySelectorAll(".besa-export-option").forEach(function (btn) {
+    overlay.querySelectorAll(".ff-export-option").forEach(function (btn) {
       btn.addEventListener("click", function () { pick(btn.getAttribute("data-fmt")); });
     });
     w.document.addEventListener("keydown", onKey);
     w.document.body.appendChild(overlay);
     w.document.body.classList.add("modal-open");
-    try { overlay.querySelector(".besa-export-option").focus(); } catch (e) { /* */ }
+    try { overlay.querySelector(".ff-export-option").focus(); } catch (e) { /* */ }
   }
 
-  w.besaExport = openExportChoice;
+  w.ffExport = openExportChoice;
 })(window);

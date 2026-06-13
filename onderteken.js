@@ -3,7 +3,7 @@
  *
  * Leest ?token=<uuid> → GET edge function `client-ondertekening` voor de
  * verklaring-info → toont de verklaring (body_html ALTIJD door
- * window.besaSanitizeHtml) + handtekening-canvas (muis + touch) + verplichte
+ * window.ffSanitizeHtml) + handtekening-canvas (muis + touch) + verplichte
  * lees-checkbox → POST {token, handtekening_png_base64} → succes-scherm.
  *
  * Foutstates per fout-slug: onbekend / verlopen / ondertekend / ingetrokken.
@@ -131,8 +131,8 @@
     // body_html ALTIJD door de allowlist-sanitizer vóór innerHTML-injectie.
     var bodyEl = $("ond-verklaring");
     var rawHtml = String(info.body_html || "");
-    if (typeof window.besaSanitizeHtml === "function") {
-      bodyEl.innerHTML = window.besaSanitizeHtml(rawHtml);
+    if (typeof window.ffSanitizeHtml === "function") {
+      bodyEl.innerHTML = window.ffSanitizeHtml(rawHtml);
     } else {
       // Fail-safe: sanitizer niet geladen ⇒ volledig escapen (geen rauwe HTML).
       bodyEl.innerHTML = "<p>" + escapeHtml(rawHtml).replace(/\n/g, "<br>") + "</p>";

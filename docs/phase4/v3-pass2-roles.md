@@ -12,7 +12,7 @@ Fase F (2026-05-14, eindstatus `docs/phase4/v3-fase-f-status.md`) heeft de **13 
 
 Pass 2 verifieert dat:
 1. Alle 13 rollen correct in `org_roles` zitten
-2. `besaCan()` + `besaIsAdminTier()` werken zoals verwacht
+2. `ffCan()` + `ffIsAdminTier()` werken zoals verwacht
 3. Admin-tier vs non-admin-tier scheiding wordt afgedwongen in zowel UI als backend
 
 ---
@@ -76,13 +76,13 @@ if (!isAdminTier) return json({ error: 'Forbidden — alleen Eigenaar/Admin/Dire
 
 ```js
 // permissions.js
-function besaIsAdminTier() {
+function ffIsAdminTier() {
   var rol = getCurrentRol();
   return rol === "Eigenaar" || rol === "Admin" || rol === "Directeur";
 }
 
 // gebruikers.js
-if (!window.besaIsAdminTier()) {
+if (!window.ffIsAdminTier()) {
   showNoAccess();  // blocking modal met link naar home
   return;
 }

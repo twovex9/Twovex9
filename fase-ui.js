@@ -12,7 +12,7 @@
       .trim();
   }
 
-  g.besaFaseClientPillClass = function (f) {
+  g.ffFaseClientPillClass = function (f) {
     var t = normClientFase(f);
     if (t === "in aanvraag") return "cl-fase-pill cl-fase-pill--in-aanvraag";
     if (t === "uit zorg") return "cl-fase-pill cl-fase-pill--uit-zorg";
@@ -20,7 +20,7 @@
     return "cl-fase-pill cl-fase-pill--in-zorg";
   };
 
-  g.besaFaseClientSdotClass = function (f) {
+  g.ffFaseClientSdotClass = function (f) {
     var t = normClientFase(f);
     if (t === "in aanvraag") return "client-detail-sdot--fase-in-aanvraag";
     if (t === "uit zorg") return "client-detail-sdot--fase-uit-zorg";
@@ -28,7 +28,7 @@
     return "client-detail-sdot--fase-in-zorg";
   };
 
-  g.besaFaseBescDotClass = function (f) {
+  g.ffFaseBescDotClass = function (f) {
     f = String(f || "").toLowerCase();
     if (f === "in_aanvraag") return "bdtl-fase-dot bdtl-fase-dot--fase-in-aanvraag";
     if (f === "actief") return "bdtl-fase-dot bdtl-fase-dot--fase-actief";

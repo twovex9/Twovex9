@@ -25,5 +25,5 @@
 - Reset-knop wist alles
 
 ## Events
-- `besa:taken-updated` event
-- `besa:medewerkers-updated` re-vult Teamlid-filter
+- `ff:taken-updated` event
+- `ff:medewerkers-updated` re-vult Teamlid-filter

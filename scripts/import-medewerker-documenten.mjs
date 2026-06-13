@@ -17,7 +17,7 @@
  * Koppeling BS2-medewerker → BS1: medewerkers.data->>'bs2_id'
  * (fallback: e-mail; voornaam+achternaam als tiebreaker).
  *
- * GEBRUIK (vanuit de map besa-suite-etf), nadat je het token-snippet hebt
+ * GEBRUIK (vanuit de map future-flow), nadat je het token-snippet hebt
  * gedraaid (downloadt bs2-token.txt naar Downloads):
  *   node --env-file=scripts/.env scripts/import-medewerker-documenten.mjs
  */

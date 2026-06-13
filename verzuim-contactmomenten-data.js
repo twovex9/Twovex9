@@ -11,7 +11,7 @@
  *   .refresh() / .getAllSync() / .getForVerzuimSync(id)
  *   .add(rec) / .update(id, patch) / .delete(id)
  *
- * Event: besa:verzuim-contactmomenten-updated
+ * Event: ff:verzuim-contactmomenten-updated
  */
 (function (global) {
   "use strict";
@@ -21,7 +21,7 @@
 
   function reportSilent(action, err) {
     console.error("[verzuimContactmomentenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Verzuim-contactmomenten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Verzuim-contactmomenten — " + action, err);
   }
 
   function rowToObj(row) {
@@ -52,13 +52,13 @@
   }
 
   function emit() {
-    try { global.dispatchEvent(new CustomEvent("besa:verzuim-contactmomenten-updated")); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:verzuim-contactmomenten-updated")); } catch (e) { /* */ }
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) return [];
+    if (!global.ffSupabase) return [];
     try {
-      var res = await global.besaSupabase
+      var res = await global.ffSupabase
         .from(TABLE)
         .select("*")
         .order("datum", { ascending: false, nullsFirst: false });
@@ -90,12 +90,12 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
     if (!payload.verzuim_id) throw new Error("verzuimId is verplicht");
     if (!payload.datum) throw new Error("datum is verplicht");
     if (!payload.type) throw new Error("type is verplicht");
-    var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+    var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     (_mem = _mem || []).unshift(obj);
@@ -104,14 +104,14 @@
   }
 
   async function update(id, patch) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("id is verplicht");
     var upd = {};
     if (patch && "datum" in patch) upd.datum = patch.datum || null;
     if (patch && "type" in patch) upd.type = String(patch.type || "");
     if (patch && "notitie" in patch) upd.notitie = String(patch.notitie || "");
     if (patch && "data" in patch) upd.data = patch.data || {};
-    var res = await global.besaSupabase.from(TABLE).update(upd).eq("id", id).select().single();
+    var res = await global.ffSupabase.from(TABLE).update(upd).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
     if (_mem) {
@@ -124,8 +124,8 @@
   }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     if (_mem) _mem = _mem.filter(function (r) { return String(r.id) !== String(id); });
     emit();

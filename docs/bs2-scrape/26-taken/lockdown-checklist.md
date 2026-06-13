@@ -42,7 +42,7 @@
 - [x] C6. Data: 0 records (BS1 + BS2 beide empty)
 - [x] C7. Status enum: open/in_progress/voltooid/geannuleerd
 - [x] C8. Prioriteit enum: hoog/midden/laag
-- [x] C9. besa:taken-updated event
+- [x] C9. ff:taken-updated event
 - [x] C10. parity.md: 100% functioneel + BS1 superset
 
 ## D. 2 HARDCORE CLEAN RUNS achter elkaar ZONDER fix tussendoor ✅

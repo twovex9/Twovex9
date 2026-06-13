@@ -22,7 +22,7 @@
  *   getZorgsoortItems(), getZorgsoortById(id)
  *
  * Events:
- *   "besa:zorgsoorten-updated" op `window` na elke mutatie of bootstrap.
+ *   "ff:zorgsoorten-updated" op `window` na elke mutatie of bootstrap.
  *
  * Cache-formaat:
  *   { id, naam, tarieftype, archived, aanmaakdatum, laatstGewijzigd }
@@ -32,7 +32,7 @@
 
   var CACHE_KEY = "zorgsoorten";
   var TABLE = "zorgsoorten";
-  var EVENT_NAME = "besa:zorgsoorten-updated";
+  var EVENT_NAME = "ff:zorgsoorten-updated";
 
   function numOrNull(v) {
     if (v === null || v === undefined || v === "") return null;
@@ -76,11 +76,11 @@
   }
 
   async function fetchAll() {
-    if (!window.besaSupabase) {
+    if (!window.ffSupabase) {
       console.warn("[zorgsoortenDB] Supabase-client niet beschikbaar; cache wordt niet ververst.");
       return readCache();
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: true });
@@ -119,8 +119,8 @@
     var naam = String(src.naam || "").trim();
     if (!naam) throw new Error("Naam is verplicht.");
     if (!validTarief(src.tarieftype)) throw new Error("Tarieftype moet 'dag', 'uur' of 'week' zijn.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase
       .from(TABLE)
       .insert({
         naam: naam,
@@ -141,7 +141,7 @@
 
   async function update(id, patch) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
     var dbPatch = {};
     if (typeof patch.naam === "string") dbPatch.naam = patch.naam.trim();
     if (typeof patch.tarieftype === "string") {
@@ -155,7 +155,7 @@
       var existing = readCache().find(function (z) { return z.id === id; });
       return existing || null;
     }
-    var res = await window.besaSupabase
+    var res = await window.ffSupabase
       .from(TABLE)
       .update(dbPatch)
       .eq("id", id)
@@ -173,8 +173,8 @@
 
   async function remove(id) {
     if (!id) throw new Error("id is verplicht.");
-    if (!window.besaSupabase) throw new Error("Supabase-client niet beschikbaar.");
-    var res = await window.besaSupabase.from(TABLE).delete().eq("id", id);
+    if (!window.ffSupabase) throw new Error("Supabase-client niet beschikbaar.");
+    var res = await window.ffSupabase.from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var list = readCache().filter(function (z) { return z.id !== id; });
     writeCache(list);

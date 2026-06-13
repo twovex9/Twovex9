@@ -25,15 +25,15 @@
  *     .lock(medewerkerId, year, month)  → vergrendelt
  *     .unlock(medewerkerId, year, month) → ontgrendelt
  *
- * Events: "besa:werkuren-updated" / "besa:werkuren-labels-updated" /
- *         "besa:werkuren-vergrendeld-updated" op window.
+ * Events: "ff:werkuren-updated" / "ff:werkuren-labels-updated" /
+ *         "ff:werkuren-vergrendeld-updated" op window.
  */
 (function (global) {
   "use strict";
 
   function reportSilent(domain, action, err) {
     try { console.error("[" + domain + "] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure(domain + " — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure(domain + " — " + action, err);
   }
   function readCache(key) {
     try { var raw = localStorage.getItem(key); if (!raw) return []; var p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch (e) { return []; }
@@ -112,12 +112,12 @@
     }
 
     async function fetchAll() {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       // PostgREST cap't elke request op max 1000 rijen — pagineer om ALLE
       // werkuren op te halen (4000+), anders missen oudere maanden data.
       var PAGE = 1000, from = 0, all = [];
       for (;;) {
-        var res = await global.besaSupabase.from(TABLE).select("*").order("datum", { ascending: false }).range(from, from + PAGE - 1);
+        var res = await global.ffSupabase.from(TABLE).select("*").order("datum", { ascending: false }).range(from, from + PAGE - 1);
         if (res.error) throw res.error;
         var batch = res.data || [];
         all = all.concat(batch);
@@ -131,14 +131,14 @@
     function bootstrap() {
       if (readyPromise) return readyPromise;
       var c = readCache(CACHE_KEY);
-      if (c.length) dispatchEvt("besa:werkuren-updated", "cache");
+      if (c.length) dispatchEvt("ff:werkuren-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-updated", "refresh"); return items; }
+    async function refresh() { var items = await fetchAll(); _mem = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-updated", "refresh"); return items; }
     function getAllSync() { return _mem != null ? _mem : readCache(CACHE_KEY); }
     function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
     function getForMonthSync(year, month) {
@@ -154,41 +154,41 @@
     }
 
     async function add(rec) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       var payload = objToInsertPayload(rec);
       if (!payload.datum) throw new Error("Datum is verplicht");
-      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
       var cache = getAllSync().slice();
       var idx = cache.findIndex(function (r) { return r && String(r.id) === String(obj.id); });
       if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
       _mem = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-updated", "add");
+      dispatchEvt("ff:werkuren-updated", "add");
       return obj;
     }
     async function update(id, partial) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       if (!id) throw new Error("Geen id");
       var payload = objToUpdatePayload(partial || {});
-      var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+      var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
       var cache = getAllSync().slice();
       var idx = cache.findIndex(function (r) { return r && String(r.id) === String(id); });
       if (idx >= 0) cache[idx] = obj; else cache.unshift(obj);
       _mem = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-updated", "update");
+      dispatchEvt("ff:werkuren-updated", "update");
       return obj;
     }
     async function remove(id) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       if (!id) return false;
-      var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+      var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
       if (res.error) throw res.error;
       var cache = getAllSync().filter(function (r) { return r && String(r.id) !== String(id); });
       _mem = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-updated", "remove");
+      dispatchEvt("ff:werkuren-updated", "remove");
       return true;
     }
 
@@ -224,8 +224,8 @@
       };
     }
     async function fetchAll() {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).select("*").order("naam", { ascending: true });
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.ffSupabase.from(TABLE).select("*").order("naam", { ascending: true });
       if (res.error) throw res.error;
       return (res.data || []).map(rowToObj).filter(Boolean);
     }
@@ -233,41 +233,41 @@
     function bootstrap() {
       if (readyPromise) return readyPromise;
       var c = readCache(CACHE_KEY);
-      if (c.length) dispatchEvt("besa:werkuren-labels-updated", "cache");
+      if (c.length) dispatchEvt("ff:werkuren-labels-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-labels-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenLabelsDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-labels-updated", "refresh"); return items; }
+    async function refresh() { var items = await fetchAll(); _memLabels = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-labels-updated", "refresh"); return items; }
     function getAllSync() { return _memLabels != null ? _memLabels : readCache(CACHE_KEY); }
     function getByIdSync(id) { var s = String(id == null ? "" : id); return getAllSync().find(function (r) { return r && String(r.id) === s; }) || null; }
     async function add(rec) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       if (!rec || !rec.naam) throw new Error("Naam vereist");
       var payload = {
         id: rec.id || generateId(),
         naam: String(rec.naam).trim(),
         beschrijving: String(rec.beschrijving || ""),
       };
-      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
       var cache = getAllSync().slice(); cache.push(obj);
       cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
       _memLabels = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-labels-updated", "add");
+      dispatchEvt("ff:werkuren-labels-updated", "add");
       return obj;
     }
     async function update(id, partial) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       if (!id) throw new Error("Geen id");
       var payload = {};
       if (Object.prototype.hasOwnProperty.call(partial || {}, "naam")) payload.naam = String(partial.naam || "").trim();
       if (Object.prototype.hasOwnProperty.call(partial || {}, "beschrijving")) payload.beschrijving = String(partial.beschrijving || "");
       if (Object.prototype.hasOwnProperty.call(partial || {}, "archived")) payload.archived = !!partial.archived;
-      var res = await global.besaSupabase.from(TABLE).update(payload).eq("id", id).select().single();
+      var res = await global.ffSupabase.from(TABLE).update(payload).eq("id", id).select().single();
       if (res.error) throw res.error;
       var obj = rowToObj(res.data);
       var cache = getAllSync().slice();
@@ -275,18 +275,18 @@
       if (idx >= 0) cache[idx] = obj; else cache.push(obj);
       cache.sort(function (a, b) { return (a.naam || "").localeCompare(b.naam || "", "nl"); });
       _memLabels = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-labels-updated", "update");
+      dispatchEvt("ff:werkuren-labels-updated", "update");
       return obj;
     }
     async function archive(id) { return update(id, { archived: true }); }
     async function restore(id) { return update(id, { archived: false }); }
     async function remove(id) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).delete().eq("id", id);
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.ffSupabase.from(TABLE).delete().eq("id", id);
       if (res.error) throw res.error;
       var cache = getAllSync().filter(function (r) { return r && String(r.id) !== String(id); });
       _memLabels = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-labels-updated", "remove");
+      dispatchEvt("ff:werkuren-labels-updated", "remove");
       return true;
     }
     global.werkurenLabelsDB = {
@@ -315,8 +315,8 @@
       } : null;
     }
     async function fetchAll() {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).select("*");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.ffSupabase.from(TABLE).select("*");
       if (res.error) throw res.error;
       return (res.data || []).map(rowToObj).filter(Boolean);
     }
@@ -324,14 +324,14 @@
     function bootstrap() {
       if (readyPromise) return readyPromise;
       var c = readCache(CACHE_KEY);
-      if (c.length) dispatchEvt("besa:werkuren-vergrendeld-updated", "cache");
+      if (c.length) dispatchEvt("ff:werkuren-vergrendeld-updated", "cache");
       readyPromise = (async function () {
-        try { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "bootstrap"); }
+        try { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-vergrendeld-updated", "bootstrap"); }
         catch (err) { reportSilent("werkurenVergrendeldDB", "Bootstrap", err); }
       })();
       return readyPromise;
     }
-    async function refresh() { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("besa:werkuren-vergrendeld-updated", "refresh"); return items; }
+    async function refresh() { var items = await fetchAll(); _memLock = items; writeCache(CACHE_KEY, items); dispatchEvt("ff:werkuren-vergrendeld-updated", "refresh"); return items; }
     function getAllSync() { return _memLock != null ? _memLock : readCache(CACHE_KEY); }
     function isLockedSync(medewerkerId, year, month) {
       return getAllSync().some(function (r) {
@@ -340,25 +340,25 @@
       });
     }
     async function lock(medewerkerId, year, month) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
       if (!medewerkerId || !year || !month) throw new Error("medewerkerId + jaar + maand vereist");
       if (isLockedSync(medewerkerId, year, month)) return null;
-      var profile = global.besaCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
+      var profile = global.ffCurrentProfile || (global.profilesDB && global.profilesDB.getCurrentSync ? global.profilesDB.getCurrentSync() : null);
       var byId = profile ? (profile.id || null) : null;
       var payload = {
         id: generateId(), medewerker_id: medewerkerId, jaar: Number(year), maand: Number(month),
         vergrendeld_door: byId,
       };
-      var res = await global.besaSupabase.from(TABLE).insert(payload).select().single();
+      var res = await global.ffSupabase.from(TABLE).insert(payload).select().single();
       if (res.error) throw res.error;
       var cache = getAllSync().slice(); cache.push(rowToObj(res.data));
       _memLock = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-vergrendeld-updated", "lock");
+      dispatchEvt("ff:werkuren-vergrendeld-updated", "lock");
       return rowToObj(res.data);
     }
     async function unlock(medewerkerId, year, month) {
-      if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-      var res = await global.besaSupabase.from(TABLE).delete()
+      if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+      var res = await global.ffSupabase.from(TABLE).delete()
         .eq("medewerker_id", medewerkerId).eq("jaar", year).eq("maand", month);
       if (res.error) throw res.error;
       var cache = getAllSync().filter(function (r) {
@@ -366,7 +366,7 @@
           && Number(r.jaar) === Number(year) && Number(r.maand) === Number(month));
       });
       _memLock = cache; writeCache(CACHE_KEY, cache);
-      dispatchEvt("besa:werkuren-vergrendeld-updated", "unlock");
+      dispatchEvt("ff:werkuren-vergrendeld-updated", "unlock");
       return true;
     }
     global.werkurenVergrendeldDB = {

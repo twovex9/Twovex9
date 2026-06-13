@@ -4,7 +4,7 @@
  *
  * Zelfstandige module met EIGEN element-IDs (fz-*) zodat er geen botsing is met de
  * locatie-IDs op dezelfde pagina. De sectie volgt de periode-keuze van de hoofdpagina
- * via het custom event "besa:fin-periode" (gedispatcht door financien-locaties.js).
+ * via het custom event "ff:fin-periode" (gedispatcht door financien-locaties.js).
  *
  * Cijfers uit dezelfde read-only RPC's als het oude tabblad:
  *   financien_zorgsoorten_dashboard / financien_zorgsoort_detail
@@ -60,27 +60,27 @@
 
   // ─── data ───
   async function ensureSupabase() {
-    if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
   }
   async function loadData() {
     try {
       await ensureSupabase();
-      var res = await window.besaSupabase.rpc("financien_zorgsoorten_dashboard", {
+      var res = await window.ffSupabase.rpc("financien_zorgsoorten_dashboard", {
         p_start: isoOf(selStart), p_end: isoOf(selEnd),
       });
       if (res.error) throw res.error;
       _data = res.data || null;
     } catch (err) {
       if (window.console) console.error("[financien-locaties-zorgsoorten] laden mislukt:", err);
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Financiën-locaties — zorgsoorten", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Financiën-locaties — zorgsoorten", err);
     }
     return _data;
   }
   async function loadDetail(zorgsoort) {
     try {
       await ensureSupabase();
-      var res = await window.besaSupabase.rpc("financien_zorgsoort_detail", {
+      var res = await window.ffSupabase.rpc("financien_zorgsoort_detail", {
         p_zorgsoort: zorgsoort, p_start: isoOf(selStart), p_end: isoOf(selEnd),
       });
       if (res.error) throw res.error;
@@ -320,7 +320,7 @@
   }
 
   function wire() {
-    document.addEventListener("besa:fin-periode", onPeriode);
+    document.addEventListener("ff:fin-periode", onPeriode);
 
     var x = $("fz-modal-x"); if (x) x.addEventListener("click", closeModal);
     var bd = $("fz-modal-backdrop"); if (bd) bd.addEventListener("click", closeModal);

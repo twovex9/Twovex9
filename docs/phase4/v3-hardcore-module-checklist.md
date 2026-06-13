@@ -55,7 +55,7 @@
 
 ### Module 1 — Home (`home.html`)
 - BS2: `https://etf.acceptance.besasuite.nl/home`
-- BS1: `https://besa-suite.vercel.app/home.html`
+- BS1: `https://futureflow-app.vercel.app/home.html`
 - Items specifiek: Welkom + voornaam | Nieuws & Mededelingen tegelijk met BS2 (15 cards) | Card → modal | Modal close × / Escape / Overlay
 - Sidebar items: GEEN (home heeft geen sidebar)
 

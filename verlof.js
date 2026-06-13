@@ -29,10 +29,10 @@
   function currentUserKanBeoordelen(v) {
     if (!v || v.status !== "ingediend") return false;
     try {
-      if (window.besaIsAdminTier && window.besaIsAdminTier()) return true;
+      if (window.ffIsAdminTier && window.ffIsAdminTier()) return true;
       var rol = v.huidigeGoedkeurderRol || "HR";
-      if (window.besaPermissions && typeof window.besaPermissions.hasRole === "function") {
-        return window.besaPermissions.hasRole(rol);
+      if (window.ffPermissions && typeof window.ffPermissions.hasRole === "function") {
+        return window.ffPermissions.hasRole(rol);
       }
     } catch (e) { /* */ }
     return false;
@@ -121,7 +121,7 @@
 
   function getCurrentMedewerkerId() {
     try {
-      var p = window.besaCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync());
+      var p = window.ffCurrentProfile || (window.profilesDB && window.profilesDB.getCurrentSync && window.profilesDB.getCurrentSync());
       return p && p.medewerker_id ? p.medewerker_id : null;
     } catch (e) { return null; }
   }
@@ -472,8 +472,8 @@
       }
     });
 
-    window.addEventListener("besa:verlof-updated", render);
-    window.addEventListener("besa:medewerkers-updated", function () { fillMedewerkerSelect(); render(); });
+    window.addEventListener("ff:verlof-updated", render);
+    window.addEventListener("ff:medewerkers-updated", function () { fillMedewerkerSelect(); render(); });
   }
 
   function init() {

@@ -1,4 +1,4 @@
-# Go-live mass-mail template — BESA Suite ETF
+# Go-live mass-mail template — Future Flow ETF
 
 **Doel**: tekst die jij (eigenaar/admin) kopieert in jouw eigen mail-client (Outlook/Gmail/etc) en verstuurt naar alle medewerkers wanneer BS1 live gaat.
 
@@ -13,7 +13,7 @@
 ## Onderwerp
 
 ```
-Belangrijk: nieuwe BESA Suite gaat live op [CUT-OVER-DATUM]
+Belangrijk: nieuwe Future Flow gaat live op [CUT-OVER-DATUM]
 ```
 
 ---
@@ -24,13 +24,13 @@ Belangrijk: nieuwe BESA Suite gaat live op [CUT-OVER-DATUM]
 
 Beste collega,
 
-Op **[CUT-OVER-DATUM]** zetten we de overstap naar onze nieuwe BESA Suite. Dit is een groot moment voor ETF — onze eigen, veilige, GDPR-conforme omgeving die volledig draait op moderne infrastructuur (Supabase Pro EU-region + Vercel).
+Op **[CUT-OVER-DATUM]** zetten we de overstap naar onze nieuwe Future Flow. Dit is een groot moment voor ETF — onze eigen, veilige, GDPR-conforme omgeving die volledig draait op moderne infrastructuur (Supabase Pro EU-region + Vercel).
 
 ## Wat moet je doen?
 
 ### 1. Log voor het eerst in
 
-- **URL**: https://besa-suite.vercel.app
+- **URL**: https://futureflow-app.vercel.app
 - **Email**: jouw zakelijke e-mailadres (zelfde als in de oude omgeving)
 - **Tijdelijk wachtwoord**: `Welkom123`
 
@@ -88,11 +88,11 @@ Eigenaar — Embrace The Future
 ## Optioneel — herinneringsmail 1 dag van tevoren
 
 ```
-Onderwerp: Reminder: nieuwe BESA Suite live morgen — heb je 2FA-app al?
+Onderwerp: Reminder: nieuwe Future Flow live morgen — heb je 2FA-app al?
 
 Beste collega,
 
-Even een snelle reminder: morgen, [CUT-OVER-DATUM], gaat onze nieuwe BESA Suite live op https://besa-suite.vercel.app
+Even een snelle reminder: morgen, [CUT-OVER-DATUM], gaat onze nieuwe Future Flow live op https://futureflow-app.vercel.app
 
 Twee dingen om alvast te regelen vandaag:
 

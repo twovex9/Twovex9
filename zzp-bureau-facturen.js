@@ -200,7 +200,7 @@
   async function start() {
     wire();
     if (!window.zzpFacturenDB) return;
-    if (window.besaSupabaseReady) { try { await window.besaSupabaseReady; } catch (e) { /* ok */ } }
+    if (window.ffSupabaseReady) { try { await window.ffSupabaseReady; } catch (e) { /* ok */ } }
     var ctx = {};
     try { ctx = await zzpFacturenDB.getBureauContext(); } catch (e) { ctx = {}; }
     state.isReviewer = !!ctx.is_reviewer;

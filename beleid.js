@@ -382,7 +382,7 @@
     });
 
     // Re-render on data updates
-    window.addEventListener("besa:beleidsdocumenten-updated", render);
+    window.addEventListener("ff:beleidsdocumenten-updated", render);
   }
 
   /**

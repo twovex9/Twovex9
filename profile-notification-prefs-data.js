@@ -13,7 +13,7 @@
  *     getAllSync, refresh,
  *   };
  *
- * Events: besa:notification-prefs-updated
+ * Events: ff:notification-prefs-updated
  */
 (function (global) {
   "use strict";
@@ -43,17 +43,17 @@
     catch (e) { /* */ }
   }
   function dispatchUpdated(s) {
-    try { global.dispatchEvent(new CustomEvent("besa:notification-prefs-updated", { detail: { source: s || "data" } })); }
+    try { global.dispatchEvent(new CustomEvent("ff:notification-prefs-updated", { detail: { source: s || "data" } })); }
     catch (e) { /* */ }
   }
   function reportSilent(action, err) {
     console.error("[profileNotificationPrefsDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Notificatie-voorkeuren — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Notificatie-voorkeuren — " + action, err);
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase.from(TABLE).select("*");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase.from(TABLE).select("*");
     if (res.error) throw res.error;
     return (res.data || []).map(rowToObj).filter(Boolean);
   }
@@ -108,7 +108,7 @@
       notification_type_id: typeId,
       enabled: !!enabled,
     };
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .upsert(payload, { onConflict: "profile_id,notification_type_id" })
       .select()
@@ -129,7 +129,7 @@
 
   async function remove(profileId, typeId) {
     if (!profileId || !typeId) throw new Error("profileId + notificationTypeId vereist");
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("profile_id", profileId)

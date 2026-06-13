@@ -67,7 +67,7 @@ Reuse:
 - `GEBRUIKERS_COLUMN_CONFIG` + helpers (mirror Entiteiten patroon uit S17)
 - `escUsr()` HTML escape
 - localStorage `inst_gebruikers_columns_v1`
-- `besa:profile-updated` event triggert re-render
+- `ff:profile-updated` event triggert re-render
 
 ## Files
 

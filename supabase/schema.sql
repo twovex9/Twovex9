@@ -1,5 +1,5 @@
 -- ============================================================================
--- Besa Suite - Supabase schema
+-- Future Flow - Supabase schema
 -- ============================================================================
 --
 -- Hoe te draaien: open in Supabase Dashboard -> SQL Editor -> New query,

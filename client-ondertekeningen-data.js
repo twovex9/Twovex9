@@ -16,7 +16,7 @@
  *   - intrekken(id) → Promise<{ok}>
  *   - signedUrl(path) → Promise<string|null>        (600s geldig)
  *
- * Events: `besa:client-ondertekeningen-updated` (window) na elke mutatie.
+ * Events: `ff:client-ondertekeningen-updated` (window) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -26,25 +26,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[clientOndertekeningenDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Ondertekeningen — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Ondertekeningen — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:client-ondertekeningen-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:client-ondertekeningen-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   async function fetchVoorClient(clientId) {
     try {
       if (!clientId) return [];
       await ensureSupabase();
-      var r = await global.besaSupabase
+      var r = await global.ffSupabase
         .from("client_ondertekeningen")
         .select("*")
         .eq("client_id", clientId)
@@ -61,7 +61,7 @@
     if (_verklaringen) return _verklaringen;
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase
+      var r = await global.ffSupabase
         .from("ondertekening_verklaringen")
         .select("*")
         .order("type", { ascending: true });
@@ -78,7 +78,7 @@
   async function maakVerzoek(args) {
     await ensureSupabase();
     var a = args || {};
-    var r = await global.besaSupabase.rpc("ondertekening_maak_verzoek", {
+    var r = await global.ffSupabase.rpc("ondertekening_maak_verzoek", {
       p_client_id: a.clientId,
       p_verklaring_type: a.verklaringType,
       p_ondertekenaar_type: a.ondertekenaarType,
@@ -92,7 +92,7 @@
 
   async function intrekken(id) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("ondertekening_intrekken", { p_id: id });
+    var r = await global.ffSupabase.rpc("ondertekening_intrekken", { p_id: id });
     if (r.error) throw r.error;
     dispatchUpdated("intrekken");
     return r.data;
@@ -103,7 +103,7 @@
     try {
       if (!path) return null;
       await ensureSupabase();
-      var r = await global.besaSupabase.storage.from(BUCKET).createSignedUrl(path, 600);
+      var r = await global.ffSupabase.storage.from(BUCKET).createSignedUrl(path, 600);
       if (r.error) throw r.error;
       return (r.data && r.data.signedUrl) || null;
     } catch (err) {

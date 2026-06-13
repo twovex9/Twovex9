@@ -33,12 +33,12 @@
 
 ### Toggle
 - Klik toggle → `profileNotificationPrefsDB.set(typeId, on)`
-- Live re-render bij `besa:notification-prefs-updated` event
+- Live re-render bij `ff:notification-prefs-updated` event
 
 ## Events
-- `besa:notification-types-updated` → re-render beide tabs
-- `besa:notification-prefs-updated` → re-render Mijn notificaties tab
-- `besa:profile-updated` → re-render Mijn profiel form
+- `ff:notification-types-updated` → re-render beide tabs
+- `ff:notification-prefs-updated` → re-render Mijn notificaties tab
+- `ff:profile-updated` → re-render Mijn profiel form
 
 ## Modal close-ways (na Bug #68 fix)
 - X-button: ✅

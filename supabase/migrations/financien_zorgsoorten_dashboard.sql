@@ -20,7 +20,7 @@
 -- ───────────────────────────────────────────────────────────────────────────
 -- Veilige getal-parser (NL/EN-notatie → numeric of NULL; nooit een cast-error).
 -- ───────────────────────────────────────────────────────────────────────────
-create or replace function public.besa_parse_num(p text)
+create or replace function public.ff_parse_num(p text)
 returns numeric language sql immutable parallel safe
 as $$
   select case
@@ -85,12 +85,12 @@ begin
         when (lower(coalesce(m.data->>'bs2_employment_type',''))='hiring'
               or lower(coalesce(m.data->>'dienstverband','')) like '%inhuur%'
               or lower(coalesce(m.data->>'dienstverband','')) like '%zzp%')
-          then coalesce(public.besa_parse_num(m.data->>'uurAlgemeen'), 45)
+          then coalesce(public.ff_parse_num(m.data->>'uurAlgemeen'), 45)
         else
-          case when coalesce(public.besa_parse_num(m.data->>'salaris'),0) > 0
-                    and coalesce(public.besa_parse_num(m.data->>'contracturen'),0) > 0
-               then (public.besa_parse_num(m.data->>'salaris') * (1 + c_wgl))
-                    / (public.besa_parse_num(m.data->>'contracturen') * c_weken)
+          case when coalesce(public.ff_parse_num(m.data->>'salaris'),0) > 0
+                    and coalesce(public.ff_parse_num(m.data->>'contracturen'),0) > 0
+               then (public.ff_parse_num(m.data->>'salaris') * (1 + c_wgl))
+                    / (public.ff_parse_num(m.data->>'contracturen') * c_weken)
                else null end
       end as uurkosten
     from zp
@@ -260,11 +260,11 @@ begin
         when (lower(coalesce(m.data->>'bs2_employment_type',''))='hiring'
               or lower(coalesce(m.data->>'dienstverband','')) like '%inhuur%'
               or lower(coalesce(m.data->>'dienstverband','')) like '%zzp%')
-          then coalesce(public.besa_parse_num(m.data->>'uurAlgemeen'), 45)
-        else case when coalesce(public.besa_parse_num(m.data->>'salaris'),0) > 0
-                       and coalesce(public.besa_parse_num(m.data->>'contracturen'),0) > 0
-                  then (public.besa_parse_num(m.data->>'salaris') * (1 + c_wgl))
-                       / (public.besa_parse_num(m.data->>'contracturen') * c_weken)
+          then coalesce(public.ff_parse_num(m.data->>'uurAlgemeen'), 45)
+        else case when coalesce(public.ff_parse_num(m.data->>'salaris'),0) > 0
+                       and coalesce(public.ff_parse_num(m.data->>'contracturen'),0) > 0
+                  then (public.ff_parse_num(m.data->>'salaris') * (1 + c_wgl))
+                       / (public.ff_parse_num(m.data->>'contracturen') * c_weken)
                   else null end
       end as uurkosten
     from zp
@@ -326,4 +326,4 @@ $$;
 
 grant execute on function public.financien_zorgsoorten_dashboard(date,date) to anon, authenticated;
 grant execute on function public.financien_zorgsoort_detail(text,date,date) to anon, authenticated;
-grant execute on function public.besa_parse_num(text) to anon, authenticated;
+grant execute on function public.ff_parse_num(text) to anon, authenticated;

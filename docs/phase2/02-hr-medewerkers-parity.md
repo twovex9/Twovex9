@@ -68,7 +68,7 @@ Parity-check tussen BS2 `/hr/employees` en BS1 `index.html` (medewerkers-lijst).
 | Action | BS1 | BS2 |
 |---|---|---|
 | Kolommen (kolomkiezer) | ✅ | ✅ |
-| Exporteren | ✅ (besa-export.js) | ✅ |
+| Exporteren | ✅ (ff-export.js) | ✅ |
 | + Medewerker toevoegen | ✅ | ✅ |
 
 ## HR sub-nav (sidebar) vergelijking

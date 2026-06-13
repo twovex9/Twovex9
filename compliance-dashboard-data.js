@@ -7,8 +7,8 @@
   "use strict";
 
   function client() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    return global.besaSupabase;
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    return global.ffSupabase;
   }
 
   async function kpis() {

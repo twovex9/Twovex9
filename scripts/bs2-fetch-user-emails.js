@@ -8,7 +8,7 @@
  *   3. Plak DEZE HELE FILE in console + Enter
  *   4. Wacht ~10s — alle pages worden gefetched
  *   5. Browser downloadt automatisch `bs2-user-emails.json`
- *   6. Plaats bestand in: besa-suite-etf/scripts/bs2-exports/bs2-user-emails.json
+ *   6. Plaats bestand in: future-flow/scripts/bs2-exports/bs2-user-emails.json
  *   7. Run: node scripts/enrich-medewerker-emails.mjs
  *   8. Daarna: node scripts/onboard-bs2-employees.mjs --dry-run
  */
@@ -80,7 +80,7 @@
     a.click();
     URL.revokeObjectURL(url);
     console.log("💾 Download getriggerd → bs2-user-emails.json");
-    console.log("➡️  Plaats in: besa-suite-etf/scripts/bs2-exports/bs2-user-emails.json");
+    console.log("➡️  Plaats in: future-flow/scripts/bs2-exports/bs2-user-emails.json");
   } catch (err) {
     console.error("❌ Fout:", err.message || err);
     console.log("ℹ️  Probeer endpoint variants: /users-basic, /admin/users");

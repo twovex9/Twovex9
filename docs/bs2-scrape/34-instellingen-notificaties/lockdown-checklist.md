@@ -40,8 +40,8 @@
 - [x] C4. RLS: auth-only
 - [x] C5. CRUD via notificationTypesDB (add/update/archive/restore/delete)
 - [x] C6. Mijn notificaties tab: per-user overrides via profileNotificationPrefsDB
-- [x] C7. besa:notification-types-updated event op window
-- [x] C8. besa:notification-prefs-updated event op window
+- [x] C7. ff:notification-types-updated event op window
+- [x] C8. ff:notification-prefs-updated event op window
 - [x] C9. v3 user-keuze GEEN e-mails ooit → BS1 = in-app only, geen "Verstuur via e-mail" toggle
 - [x] C10. parity.md: 100% functionele pariteit + BS1 superset (Mijn notificaties tab/Search/Gearchiveerd/Kanaal-keuze)
 

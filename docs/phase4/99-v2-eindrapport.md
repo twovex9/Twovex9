@@ -1,4 +1,4 @@
-# BESA-suite v2 — Eindrapport (100% BS2 parity)
+# Future Flow v2 — Eindrapport (100% BS2 parity)
 
 **Datum**: 2026-05-13
 **Status**: ✅ **v2 STRUCTUREEL VOLTOOID** — BS1 heeft volledige feature-parity met BS2
@@ -7,12 +7,12 @@
 
 ## Samenvatting
 
-Vanaf 2026-05-13 heeft Claude in één sessie alle 19 sprints uit het v2-master-plan uitgevoerd. Resultaat: **BESA-suite 1 (besa-suite.vercel.app) is feature-equivalent met BESA-suite 2 (etf.acceptance.besasuite.nl)** voor alle 24 BS2 top-pages.
+Vanaf 2026-05-13 heeft Claude in één sessie alle 19 sprints uit het v2-master-plan uitgevoerd. Resultaat: **Future Flow 1 (futureflow-app.vercel.app) is feature-equivalent met BS2 (etf.acceptance.besasuite.nl)** voor alle 24 BS2 top-pages.
 
 ### Strikte parity-regel
 
 Tijdens deze sessie heeft user (2026-05-13) een absolute regel vastgesteld:
-> "Alles op BESA Suite 2 moet ook op onze BESA Suite. Altijd. Niets optioneel."
+> "Alles op BS2 moet ook op onze Future Flow. Altijd. Niets optioneel."
 
 Deze regel is doorgevoerd in **S17** (Entiteiten — was OPTIONEEL, nu STRICT geïmplementeerd) en **S18** (Final verify — elke gap direct gefixt).
 
@@ -131,8 +131,8 @@ Counts gemeten op 2026-05-13:
 - CI workflow: `.github/workflows/e2e.yml` voor release-tag triggers (S13)
 
 ### Memory + persistente regels
-- `~/.claude/.../memory/project_besa_v2_parity.md` — master-plan referentie, 4 KRITIEKE regels (geen-stop-tenzij + Chrome MCP verify + fix-until-correct + 100% BS2-parity)
-- `besa-suite-etf/CLAUDE.md` — Chrome MCP rule + Persistente werkwijze-regels
+- `~/.claude/.../memory/project_ff_v2_parity.md` — master-plan referentie, 4 KRITIEKE regels (geen-stop-tenzij + Chrome MCP verify + fix-until-correct + 100% BS2-parity)
+- `future-flow/CLAUDE.md` — Chrome MCP rule + Persistente werkwijze-regels
 - `docs/phase4/v2-master-plan.md` — bindende stappenplan (in repo)
 
 ## Wat is open voor v3 (na v2)

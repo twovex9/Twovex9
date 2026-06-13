@@ -21,7 +21,7 @@
  *   - overschrijdingBeslis(beschikkingId, jaar, maand, status, reden, verbruik, toegekend) → Promise<Object>
  *   - setToegekend(beschikkingId, uren, eenheid) → Promise<Object>
  *
- * Events: `besa:productie-updated` (window) na elke mutatie.
+ * Events: `ff:productie-updated` (window) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -30,25 +30,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[productieDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Productie — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Productie — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:productie-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:productie-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   // ── Rol-context ─────────────────────────────────────────────────────────────
   async function getContext() {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc("productie_mijn_context");
+      var r = await global.ffSupabase.rpc("productie_mijn_context");
       if (r.error) throw r.error;
       _context = r.data || null;
       return _context;
@@ -63,7 +63,7 @@
   async function callRpc(fn, startISO, endISO, label, fallback) {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc(fn, { p_start: startISO || null, p_end: endISO || null });
+      var r = await global.ffSupabase.rpc(fn, { p_start: startISO || null, p_end: endISO || null });
       if (r.error) throw r.error;
       return r.data == null ? fallback : r.data;
     } catch (err) {
@@ -80,7 +80,7 @@
   async function maandStatusAll() {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.from("productie_maandafsluiting").select("*").order("jaar", { ascending: false }).order("maand", { ascending: false });
+      var r = await global.ffSupabase.from("productie_maandafsluiting").select("*").order("jaar", { ascending: false }).order("maand", { ascending: false });
       if (r.error) throw r.error;
       return Array.isArray(r.data) ? r.data : [];
     } catch (err) { reportSilent("maandstatus", err); return []; }
@@ -88,7 +88,7 @@
 
   async function maandAfsluiten(jaar, maand, notitie) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("productie_maand_afsluiten", { p_jaar: jaar, p_maand: maand, p_notitie: notitie || null });
+    var r = await global.ffSupabase.rpc("productie_maand_afsluiten", { p_jaar: jaar, p_maand: maand, p_notitie: notitie || null });
     if (r.error) throw r.error;
     dispatchUpdated("maand-afsluiten");
     return r.data;
@@ -96,7 +96,7 @@
 
   async function maandHeropenen(jaar, maand) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("productie_maand_heropenen", { p_jaar: jaar, p_maand: maand });
+    var r = await global.ffSupabase.rpc("productie_maand_heropenen", { p_jaar: jaar, p_maand: maand });
     if (r.error) throw r.error;
     dispatchUpdated("maand-heropenen");
     return r.data;
@@ -106,7 +106,7 @@
   async function overschrijdingen() {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.from("productie_overschrijding_goedkeuring").select("*").order("laatst_gewijzigd", { ascending: false });
+      var r = await global.ffSupabase.from("productie_overschrijding_goedkeuring").select("*").order("laatst_gewijzigd", { ascending: false });
       if (r.error) throw r.error;
       return Array.isArray(r.data) ? r.data : [];
     } catch (err) { reportSilent("overschrijdingen", err); return []; }
@@ -114,7 +114,7 @@
 
   async function overschrijdingBeslis(beschikkingId, jaar, maand, status, reden, verbruik, toegekend) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("productie_overschrijding_beslis", {
+    var r = await global.ffSupabase.rpc("productie_overschrijding_beslis", {
       p_beschikking_id: beschikkingId, p_jaar: jaar, p_maand: maand, p_status: status,
       p_reden: reden || null, p_verbruik: verbruik == null ? null : verbruik, p_toegekend: toegekend == null ? null : toegekend,
     });
@@ -126,7 +126,7 @@
   // ── Toegekende omvang bijwerken ────────────────────────────────────────────────
   async function setToegekend(beschikkingId, uren, eenheid) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("productie_set_toegekend", {
+    var r = await global.ffSupabase.rpc("productie_set_toegekend", {
       p_beschikking_id: beschikkingId, p_uren: uren == null ? null : uren, p_eenheid: eenheid || null,
     });
     if (r.error) throw r.error;

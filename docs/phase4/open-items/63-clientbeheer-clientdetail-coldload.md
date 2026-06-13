@@ -5,7 +5,7 @@ Oorspronkelijk gevonden tijdens live-verificatie Clientbeheer-sprint; pre-existi
 lesson #13 sessie-rehydratie/anonieme-RLS kwestie, niet veroorzaakt door de sprint.
 
 ## Oplossing (toegepast)
-1. **PR #387** — `clienten-data.js fetchAll()` wacht nu op `window.besaSupabaseReady`
+1. **PR #387** — `clienten-data.js fetchAll()` wacht nu op `window.ffSupabaseReady`
    vóór de eerste SELECT → de query draait niet meer anoniem (0 rijen) bij een
    koude load; de cliëntenset komt betrouwbaar binnen.
 2. **PR #388** — `?v=`-bump op alle 16 pagina's die `clienten-data.js` laden, zodat
@@ -26,7 +26,7 @@ directe navigatie naar `client-detail?id=...` laadt de cliënt correct
 Een **directe** navigatie naar `client-detail?id=...` (zonder eerst de cliëntenlijst te
 bezoeken, of met lege localStorage-cache) kan de cliënt niet tonen: `clientenDB.getAllSync()`
 blijft `0`, de pagina toont "Cliëntdossier" + de "niet gevonden"-tekst. De bestaande
-reload-vangrail (`besa:clienten-updated` → `location.reload()`, client-detail.js ~r.224-242)
+reload-vangrail (`ff:clienten-updated` → `location.reload()`, client-detail.js ~r.224-242)
 herstelt niet wanneer de Supabase-client de sessie niet (op tijd) rehydrateert → de
 `to authenticated`-RLS-query geeft 0 rijen **zonder error** (anoniem).
 
@@ -41,7 +41,7 @@ herstelt niet wanneer de Supabase-client de sessie niet (op tijd) rehydrateert �
 ## Oplossingsrichting (apart, buiten Clientbeheer-scope)
 Versterk de centrale supabase-client rehydratie (zie lesson #13 / PR #289-#293):
 - `supabase-client.js` rehydratie-guard betrouwbaar maken op àlle koude detail-loads
-  (niet alleen lijst-pagina's), en data-lagen laten `await window.besaSupabaseReady`
+  (niet alleen lijst-pagina's), en data-lagen laten `await window.ffSupabaseReady`
   vóór hun eerste query.
 - Eventueel client-detail's reload-vangrail vervangen door een data-laag self-heal
   (refresh + her-render i.p.v. `location.reload()`), analoog aan de beschikking-detail

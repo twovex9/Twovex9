@@ -94,7 +94,7 @@
     return ICONEN[t] || ICONEN.overig;
   }
 
-  g.besaClientreis = {
+  g.ffClientreis = {
     STATUSSEN: STATUSSEN.slice(),
     label: label,
     pillClass: pillClass,

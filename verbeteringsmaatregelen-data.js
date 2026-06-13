@@ -7,7 +7,7 @@
  *  - Bootstrap fetcht alle items en cachet ze onder "verbeteringsmaatregelen_v1"
  *    voor instant render bij volgende page-load.
  *  - Schrijfacties (add/update/archive/restore/delete) zijn async naar Supabase;
- *    cache wordt geüpdatet en `besa:verbeteringsmaatregelen-updated` event vuurt
+ *    cache wordt geüpdatet en `ff:verbeteringsmaatregelen-updated` event vuurt
  *    voor live re-renders.
  *
  * Public API:
@@ -22,7 +22,7 @@
  *   verbeteringsmaatregelenDB.restore(id)
  *   verbeteringsmaatregelenDB.delete(id)
  *
- * Events: "besa:verbeteringsmaatregelen-updated" op window.
+ * Events: "ff:verbeteringsmaatregelen-updated" op window.
  */
 (function (global) {
   "use strict";
@@ -36,8 +36,8 @@
 
   function reportSilent(action, err) {
     try { console.error("[verbeteringsmaatregelenDB] " + action + " mislukt:", err); } catch (e) { /* */ }
-    if (global.besaReportSyncFailure) {
-      global.besaReportSyncFailure("Verbeteringsmaatregelen — " + action, err);
+    if (global.ffReportSyncFailure) {
+      global.ffReportSyncFailure("Verbeteringsmaatregelen — " + action, err);
     }
   }
 
@@ -58,7 +58,7 @@
 
   function dispatchUpdated(source) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:verbeteringsmaatregelen-updated", {
+      global.dispatchEvent(new CustomEvent("ff:verbeteringsmaatregelen-updated", {
         detail: { source: source || "verbeteringsmaatregelen-data" },
       }));
     } catch (e) { /* */ }
@@ -106,8 +106,8 @@
   }
 
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("aanmaakdatum", { ascending: false });
@@ -153,10 +153,10 @@
   }
 
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
     if (!payload.titel) throw new Error("Titel is verplicht");
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).insert(payload).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
@@ -168,10 +168,10 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id meegegeven aan update()");
     var payload = objToUpdatePayload(partial || {});
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).update(payload).eq("id", id).select().single();
     if (res.error) throw res.error;
     var obj = rowToObj(res.data);
@@ -187,9 +187,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE).delete().eq("id", id);
     if (res.error) throw res.error;
     var cache = readCache().filter(function (r) { return r && String(r.id) !== String(id); });

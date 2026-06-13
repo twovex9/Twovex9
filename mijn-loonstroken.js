@@ -11,8 +11,8 @@
     "juli", "augustus", "september", "oktober", "november", "december"];
 
   function supa() {
-    if (!window.besaSupabase) throw new Error("Supabase client niet geladen");
-    return window.besaSupabase;
+    if (!window.ffSupabase) throw new Error("Supabase client niet geladen");
+    return window.ffSupabase;
   }
   function tbody() { return document.getElementById("mls-tbody"); }
   function esc(s) { var t = document.createElement("div"); t.textContent = s == null ? "" : String(s); return t.innerHTML; }
@@ -39,7 +39,7 @@
         var mid = midOf(window.profilesDB.getCurrentSync());
         if (mid) return mid;
       }
-      return midOf(window.besaCurrentProfile);
+      return midOf(window.ffCurrentProfile);
     } catch (e) { return null; }
   }
 
@@ -98,7 +98,7 @@
     } catch (err) {
       console.error("[mijn-loonstroken] laden mislukt:", err);
       tb.innerHTML = '<tr><td colspan="4" class="mu-empty">Kon de loonstroken niet laden.</td></tr>';
-      if (window.besaReportSyncFailure) window.besaReportSyncFailure("Mijn loonstroken — laden", err);
+      if (window.ffReportSyncFailure) window.ffReportSyncFailure("Mijn loonstroken — laden", err);
     }
   }
 
@@ -111,7 +111,7 @@
       });
     }
     // Profiel kan asynchroon laden → herlaad zodra het profiel binnen is.
-    window.addEventListener("besa:profile-updated", function () { load(); });
+    window.addEventListener("ff:profile-updated", function () { load(); });
     load();
   }
 

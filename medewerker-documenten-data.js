@@ -24,7 +24,7 @@
  *  - medewerkerDocsDB.remove(id) → Promise<true>
  *  - medewerkerDocsDB.maybeMigrateFromEmployee(emp) → Promise<number>
  *
- * Events: "besa:medewerker-documenten-updated" met { medewerkerId } in detail.
+ * Events: "ff:medewerker-documenten-updated" met { medewerkerId } in detail.
  */
 (function (global) {
   "use strict";
@@ -81,14 +81,14 @@
   var SIGNED_URL_TTL = 3600;
   function reportSilent(action, err) {
     console.error("[medewerkerDocsDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medewerker-documenten — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Medewerker-documenten — " + action, err);
   }
   function attachSignedUrls(items) {
     var list = Array.isArray(items) ? items : [];
     var withPath = list.filter(function (d) { return d && d.storagePath; });
-    if (!withPath.length || !global.besaSupabase) return Promise.resolve(list);
+    if (!withPath.length || !global.ffSupabase) return Promise.resolve(list);
     var paths = withPath.map(function (d) { return d.storagePath; });
-    return global.besaSupabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL)
+    return global.ffSupabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL)
       .then(function (res) {
         if (res.error) throw res.error;
         var byPath = {};
@@ -113,8 +113,8 @@
   // die verlopen → openen geeft dan "400 InvalidJWT". Door bij élke klik
   // ("Bekijken"/download) een verse URL te minten, opent het document altijd.
   function getSignedUrl(storagePath) {
-    if (!storagePath || !global.besaSupabase) return Promise.resolve("");
-    return global.besaSupabase.storage.from(BUCKET).createSignedUrl(storagePath, SIGNED_URL_TTL)
+    if (!storagePath || !global.ffSupabase) return Promise.resolve("");
+    return global.ffSupabase.storage.from(BUCKET).createSignedUrl(storagePath, SIGNED_URL_TTL)
       .then(function (res) {
         if (res.error) throw res.error;
         return (res.data && res.data.signedUrl) || "";
@@ -126,8 +126,8 @@
   }
 
   function uploadToStorage(path, blob, mime) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .storage
       .from(BUCKET)
       .upload(path, blob, {
@@ -141,8 +141,8 @@
   }
 
   function deleteFromStorage(path) {
-    if (!path || !global.besaSupabase) return Promise.resolve();
-    return global.besaSupabase
+    if (!path || !global.ffSupabase) return Promise.resolve();
+    return global.ffSupabase
       .storage
       .from(BUCKET)
       .remove([path])
@@ -231,7 +231,7 @@
 
   function dispatchUpdated(medewerkerId) {
     try {
-      global.dispatchEvent(new CustomEvent("besa:medewerker-documenten-updated", {
+      global.dispatchEvent(new CustomEvent("ff:medewerker-documenten-updated", {
         detail: { medewerkerId: medewerkerId || null },
       }));
     } catch (e) { /* */ }
@@ -265,8 +265,8 @@
   // ---------------------------------------------------------------------------
 
   function fetchByEmployeeId(medewerkerId) {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .from(TABLE)
       .select("*")
       .eq("medewerker_id", medewerkerId)
@@ -279,7 +279,7 @@
   }
 
   function insertRow(payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -291,7 +291,7 @@
   }
 
   function updateRow(id, payload) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -304,7 +304,7 @@
   }
 
   function deleteRow(id) {
-    return global.besaSupabase
+    return global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id)
@@ -339,7 +339,7 @@
     return maybeUploadFile(row.medewerkerId, row.id, row.fileData, row.fileName, row.fileMime)
       .then(function (uploadRes) {
         if (!uploadRes.storagePath) return false;
-        return global.besaSupabase
+        return global.ffSupabase
           .from(TABLE)
           .update({ storage_path: uploadRes.storagePath, file_data: "" })
           .eq("id", row.id)
@@ -370,8 +370,8 @@
   // calls en kleine cache. Volledige rijen (incl. bestand) blijven via
   // list(medewerkerId) op de detailpagina lopen.
   function fetchAllLight() {
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
-    return global.besaSupabase
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    return global.ffSupabase
       .from(TABLE)
       .select("id,medewerker_id,naam,type,vervaldatum,archived,uploaddatum,laatst_gewijzigd")
       .then(function (res) {
@@ -418,7 +418,7 @@
     if (!allReadyPromise) {
       allReadyPromise = fetchAll().catch(function (err) {
         console.error("[medewerkerDocsDB] bulk-load mislukt:", err);
-        if (global.besaReportSyncFailure) global.besaReportSyncFailure("Medewerker-documenten — bulk-load", err);
+        if (global.ffReportSyncFailure) global.ffReportSyncFailure("Medewerker-documenten — bulk-load", err);
         allReadyPromise = null; // sta een nieuwe poging toe
         return readCache();
       });
@@ -457,7 +457,7 @@
 
   function list(medewerkerId) {
     return fetchByEmployeeId(medewerkerId).then(function (docs) {
-      // Dispatch "besa:medewerker-documenten-updated" ALLEEN als de server-
+      // Dispatch "ff:medewerker-documenten-updated" ALLEEN als de server-
       // documenten echt afwijken van wat al in de cache staat. Een onvoorwaardelijke
       // dispatch bij élke (ook ongewijzigde) read voedt refetch/re-render-loops bij
       // consumenten die op dit event opnieuw list()/renderen — de oorzaak van de
@@ -503,7 +503,7 @@
     cacheUpsertOne(localDoc);
     dispatchUpdated(localDoc.medewerkerId);
 
-    if (!global.besaSupabase) {
+    if (!global.ffSupabase) {
       return Promise.reject(new Error("Supabase client niet geladen"));
     }
 
@@ -540,7 +540,7 @@
     cacheUpsertOne(merged);
     dispatchUpdated(merged.medewerkerId);
 
-    if (!global.besaSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
+    if (!global.ffSupabase) return Promise.reject(new Error("Supabase client niet geladen"));
 
     var fileName = merged.fileName || (partial && partial.fileName) || existing.fileName || "";
     var fileMime = merged.fileMime || (partial && partial.fileMime) || existing.fileMime || "";
@@ -625,7 +625,7 @@
       if (global.localStorage.getItem(flag) === "1") return Promise.resolve(0);
     } catch (e) { /* */ }
 
-    if (!global.besaSupabase) return Promise.resolve(0);
+    if (!global.ffSupabase) return Promise.resolve(0);
 
     return fetchByEmployeeId(empId).then(function (existing) {
       if (existing && existing.length) {

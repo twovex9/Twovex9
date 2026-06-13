@@ -540,6 +540,6 @@
     }
   }
 
-  window.addEventListener("besa:bureaus-updated", render);
+  window.addEventListener("ff:bureaus-updated", render);
   initialRender();
 })();

@@ -348,11 +348,11 @@
     attachSettings();
     switchTab(currentTab);
 
-    window.addEventListener("besa:beschikbaarheidstypes-updated", renderAT);
-    window.addEventListener("besa:comp-diensttypes-updated", renderST);
-    window.addEventListener("besa:dienstwissels-updated", renderSW);
-    window.addEventListener("besa:medewerkers-updated", renderEmp);
-    window.addEventListener("besa:planning-settings-updated", renderSettings);
+    window.addEventListener("ff:beschikbaarheidstypes-updated", renderAT);
+    window.addEventListener("ff:comp-diensttypes-updated", renderST);
+    window.addEventListener("ff:dienstwissels-updated", renderSW);
+    window.addEventListener("ff:medewerkers-updated", renderEmp);
+    window.addEventListener("ff:planning-settings-updated", renderSettings);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

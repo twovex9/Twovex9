@@ -17,7 +17,7 @@
  *   - kpis(startISO, endISO) → Promise<Object>
  *   - beslis(sleutel, periode, type, locatie, titel, status, notitie, impactUren, impactEur) → Promise<Object>
  *
- * Events: `besa:workforce-updated` (window) na elke mutatie.
+ * Events: `ff:workforce-updated` (window) na elke mutatie.
  */
 (function (global) {
   "use strict";
@@ -26,25 +26,25 @@
 
   function reportSilent(action, err) {
     if (global.console) console.error("[workforceDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Workforce planning — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Workforce planning — " + action, err);
   }
 
   // Cold-load vangrail: wacht tot de sessie gerehydrateerd is, anders leest een
   // anonieme client door RLS 0 rijen (les uit eerdere cold-load bugs).
   async function ensureSupabase() {
-    if (global.besaSupabaseReady) { try { await global.besaSupabaseReady; } catch (e) { /* doorgaan */ } }
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (global.ffSupabaseReady) { try { await global.ffSupabaseReady; } catch (e) { /* doorgaan */ } }
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
   }
 
   function dispatchUpdated(source) {
-    try { global.dispatchEvent(new CustomEvent("besa:workforce-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
+    try { global.dispatchEvent(new CustomEvent("ff:workforce-updated", { detail: { source: source || "data" } })); } catch (e) { /* */ }
   }
 
   // ── Rol-context ─────────────────────────────────────────────────────────────
   async function getContext() {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc("workforce_mijn_context");
+      var r = await global.ffSupabase.rpc("workforce_mijn_context");
       if (r.error) throw r.error;
       _context = r.data || null;
       return _context;
@@ -59,7 +59,7 @@
   async function callRpc(fn, args, label, fallback) {
     try {
       await ensureSupabase();
-      var r = await global.besaSupabase.rpc(fn, args || {});
+      var r = await global.ffSupabase.rpc(fn, args || {});
       if (r.error) throw r.error;
       return r.data == null ? fallback : r.data;
     } catch (err) {
@@ -76,7 +76,7 @@
   // ── Beslissing op een AI-aanbeveling ────────────────────────────────────────────
   async function beslis(sleutel, periode, type, locatie, titel, status, notitie, impactUren, impactEur) {
     await ensureSupabase();
-    var r = await global.besaSupabase.rpc("workforce_aanbeveling_beslis", {
+    var r = await global.ffSupabase.rpc("workforce_aanbeveling_beslis", {
       p_sleutel: sleutel, p_periode: periode || null, p_type: type || null,
       p_locatie: locatie || null, p_titel: titel || null, p_status: status,
       p_notitie: notitie || null,

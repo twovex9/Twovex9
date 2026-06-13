@@ -34,10 +34,10 @@
   }
 
   async function callFn(body) {
-    if (!window.besaSupabase || !window.besaSupabase.functions) {
+    if (!window.ffSupabase || !window.ffSupabase.functions) {
       throw new Error("Verbinding met de server kon niet worden opgezet. Vernieuw de pagina.");
     }
-    var res = await window.besaSupabase.functions.invoke(FN, { body: body });
+    var res = await window.ffSupabase.functions.invoke(FN, { body: body });
     if (res.error) {
       var msg = res.error.message || "Er ging iets mis.";
       try {
@@ -168,8 +168,8 @@
       renderError("Deze inwerk-link is ongeldig. Vraag HR om een nieuwe link.");
       return;
     }
-    if (window.besaSupabaseReady && typeof window.besaSupabaseReady.then === "function") {
-      try { await window.besaSupabaseReady; } catch (e) { /* */ }
+    if (window.ffSupabaseReady && typeof window.ffSupabaseReady.then === "function") {
+      try { await window.ffSupabaseReady; } catch (e) { /* */ }
     }
     try {
       var info = await callFn({ action: "info", token: token });

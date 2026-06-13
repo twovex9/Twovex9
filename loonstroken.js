@@ -12,7 +12,7 @@
   "use strict";
 
   function $(id) { return document.getElementById(id); }
-  function supa() { return window.besaSupabase; }
+  function supa() { return window.ffSupabase; }
 
   var MAANDEN = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
   function maandLabel(j, m) { return MAANDEN[(m - 1 + 12) % 12] + " " + j; }

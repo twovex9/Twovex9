@@ -282,8 +282,8 @@
     var tbody = $("kl-tbody");
     tbody.addEventListener("click", onTbodyClick);
     tbody.addEventListener("change", onStatusChange);
-    window.addEventListener("besa:klachten-updated", render);
-    window.addEventListener("besa:clienten-updated", function () {
+    window.addEventListener("ff:klachten-updated", render);
+    window.addEventListener("ff:clienten-updated", function () {
       render();
       var m = $("kl-modal");
       if (m && !m.hasAttribute("hidden")) {
@@ -292,7 +292,7 @@
       }
     });
     if (window.clientenDB && window.clientenDB.ready && typeof window.clientenDB.ready.then === "function") {
-      window.clientenDB.ready.then(render, function () { /* fout-feedback via besa-sync-reporter */ });
+      window.clientenDB.ready.then(render, function () { /* fout-feedback via ff-sync-reporter */ });
     }
   }
 

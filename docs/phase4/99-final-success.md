@@ -91,7 +91,7 @@ Lees bij hervatting:
 1. `docs/phase4/00-plan.md` (canonical leidend doc)
 2. `docs/phase4/01-gap-analyse.md` (issues per pagina)
 3. Dit eindrapport (huidig)
-4. Memory: `~/.claude/projects/.../memory/project_besa_phase4.md`
+4. Memory: `~/.claude/projects/.../memory/project_ff_phase4.md`
 
 ## Commits Phase 4
 

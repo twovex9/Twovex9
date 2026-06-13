@@ -39,16 +39,16 @@
 
   function currentAuteur() {
     try {
-      if (global_besaProfile()) {
-        var p = global_besaProfile();
+      if (global_ffProfile()) {
+        var p = global_ffProfile();
         var nm = ((p.voornaam || "") + " " + (p.achternaam || "")).trim();
         return nm || p.email || "";
       }
     } catch (e) { /* */ }
     return "";
   }
-  function global_besaProfile() {
-    if (window.besaCurrentProfile) return window.besaCurrentProfile;
+  function global_ffProfile() {
+    if (window.ffCurrentProfile) return window.ffCurrentProfile;
     if (window.profilesDB && typeof window.profilesDB.getCurrentSync === "function") return window.profilesDB.getCurrentSync();
     return null;
   }
@@ -167,7 +167,7 @@
       });
     }
 
-    window.addEventListener("besa:organisatie-notities-updated", function () { renderNotities(orgId); });
+    window.addEventListener("ff:organisatie-notities-updated", function () { renderNotities(orgId); });
     if (window.organisatieNotitiesDB && window.organisatieNotitiesDB.ready) {
       window.organisatieNotitiesDB.ready.then(function () { renderNotities(orgId); });
     }
@@ -264,7 +264,7 @@
   // Wanneer de Supabase-bootstrap de cache vult (eerste page-load op een
   // nieuwe browser), proberen we opnieuw te initialiseren zodat de
   // detailpagina alsnog de juiste organisatie kan ophalen.
-  window.addEventListener("besa:organisaties-updated", function () {
+  window.addEventListener("ff:organisaties-updated", function () {
     try { init(); } catch (e) { /* */ }
   });
 })();

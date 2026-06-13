@@ -5,7 +5,7 @@
 
 ## Methodiek
 
-Per BS1-pagina geopend op `besa-suite.vercel.app`, screenshot + DOM-read via Chrome MCP. Vergeleken met verwachte data (records counts uit Supabase).
+Per BS1-pagina geopend op `futureflow-app.vercel.app`, screenshot + DOM-read via Chrome MCP. Vergeleken met verwachte data (records counts uit Supabase).
 
 ## Bevindingen per pagina
 

@@ -14,9 +14,9 @@
 
 ## Client-side (`permissions.js`)
 
-- `besaCan(action, entity)` — boolean check tegen MATRIX
-- `besaIsAdminTier()` — quick admin check
-- `besaPermissions.getCurrentRol/getMatrix` — debug helpers
+- `ffCan(action, entity)` — boolean check tegen MATRIX
+- `ffIsAdminTier()` — quick admin check
+- `ffPermissions.getCurrentRol/getMatrix` — debug helpers
 - 13 rollen in MATRIX (skipped 'Medewerker Test' per user-keuze)
 
 ## Wired in 59 HTML pagina's
@@ -28,7 +28,7 @@
 ## 2 HARDCORE CLEAN RUNS
 
 ### CLEAN RUN #1 — initial sanity check
-- 3 scripts loaded: besaCan / besaIsAdmin / besaPerms ✅
+- 3 scripts loaded: ffCan / ffIsAdmin / ffPerms ✅
 - 13 rollen in MATRIX ✅
 - JS-side currentRol: 'Admin' (uit legacy profiles.rol='admin')
 - RPC current_user_rol_name: 'Medewerker' (uit profiles.rol_id)
@@ -41,9 +41,9 @@
 - RPC is_role('Admin'): **true** ✅
 - JS js_currentRol: **'Admin'** ✅ (matches server!)
 - JS js_isAdmin: **true** ✅
-- besaCan('view', 'medewerkers'): true ✅
-- besaCan('view', 'facturen'): true ✅
-- besaCan('manage_users'): true ✅
+- ffCan('view', 'medewerkers'): true ✅
+- ffCan('view', 'facturen'): true ✅
+- ffCan('manage_users'): true ✅
 - **sync_check**: true (server + client agree) ✅
 - Console: 0 app-errors ✅
 
@@ -70,7 +70,7 @@
 ## Eindstand Fase F
 
 - ✅ Server-side helpers LIVE (3 RPCs)
-- ✅ Client-side besaCan + MATRIX LIVE
+- ✅ Client-side ffCan + MATRIX LIVE
 - ✅ Server + client sync verified
 - ✅ Admin profile rol_id data-fix applied
 - ✅ 2 HARDCORE CLEAN RUNS PASS ZONDER fix tussendoor
@@ -80,8 +80,8 @@
 ## v3 deferred items (UI integration follow-up)
 
 - RLS-policy refactor met `is_admin_tier()` + `is_role()` in policies (per-table)
-- Sidebar filtering: `if (!besaCan('view','facturen')) hide sidebar-link`
-- Button visibility: `if (besaCan('edit','medewerker'))` voor edit-buttons
+- Sidebar filtering: `if (!ffCan('view','facturen')) hide sidebar-link`
+- Button visibility: `if (ffCan('edit','medewerker'))` voor edit-buttons
 - Test-accounts per rol (12 totaal) voor side-by-side BS2-parity verification
 
 Voor nu: helper-functies beschikbaar voor toekomstige page-script integration.

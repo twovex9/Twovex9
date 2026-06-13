@@ -12,7 +12,7 @@ Eerste validatie van de port-loop. BS2 nieuws-feed → BS1 home + nieuws.html.
 |---|---|---|---|
 | Schema | titel, body, auteur, datum | `public.nieuws` met: id (uuid), titel, status, auteur (text), inhoud (text/html), image, image2, archived, datums | Geen — schema dekt alles |
 | Display page | Vertical feed met cards | `home.html` met `home-news-grid`, card-rendering in `home.js` | Geen — werkt |
-| Admin page | onbekend (waarschijnlijk via /hr/announcements) | `nieuws.html` + `nieuws.js` bestaan en werken live op `besa-suite.vercel.app/nieuws.html` | Geen — werkt |
+| Admin page | onbekend (waarschijnlijk via /hr/announcements) | `nieuws.html` + `nieuws.js` bestaan en werken live op `futureflow-app.vercel.app/nieuws.html` | Geen — werkt |
 | Data layer | n.v.t. | `nieuws-data.js` met add/update/archive/restore/delete CRUD via Supabase | Geen — werkt |
 
 ## Werk uitgevoerd
@@ -22,7 +22,7 @@ Eerste validatie van de port-loop. BS2 nieuws-feed → BS1 home + nieuws.html.
   - `bc1171ee-388d-4829-b65c-ab368f9138ec` — "Uitbetaling vakantiegeld en CAO-verhoging in mei" (Valerie Koster, 2026-05-08)
   - `43218371-790b-4b33-8271-44b2209d6af7` — "Verplichte e-learning: Werken met de meldcode in de jeugdzorg" (Valerie Koster, 2026-05-06)
 - Bodies opgemaakt met `<p>`-tags voor BS1 rich-text rendering
-- Verify: BS1 `besa-suite.vercel.app/home.html` toont alle 3 items klikbaar, met preview-text, auteur en datum
+- Verify: BS1 `futureflow-app.vercel.app/home.html` toont alle 3 items klikbaar, met preview-text, auteur en datum
 
 ## Code-wijzigingen
 **Geen.** Alle BS1 infrastructuur bestond al. Alleen data-porten.

@@ -53,7 +53,7 @@ Hierdoor blijft BS1 data ≥ BS2 data tot het moment dat we overschakelen.
    - [ ] Indien wel test-residuals: `node scripts/pre-launch-cleanup.mjs --live`
 
 2. **Smoke-test (15min vóór go-live)**:
-   - [ ] Login `https://besa-suite.vercel.app` als Eigenaar/Admin/Directeur
+   - [ ] Login `https://futureflow-app.vercel.app` als Eigenaar/Admin/Directeur
    - [ ] 2FA-challenge ✓
    - [ ] Visit `/gebruikers.html` → zie alle 100 medewerkers
    - [ ] Visit `/home.html` → "Welkom, [Naam]" + 15 nieuws cards

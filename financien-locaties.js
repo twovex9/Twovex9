@@ -928,31 +928,31 @@
       var d = el("div", "fin-signal " + (s.ernst === "rood" ? "fin-signal--rood" : "fin-signal--oranje"));
       d.appendChild(el("span", "fin-signal-dom", s.dom));
       d.appendChild(el("span", "fin-signal-txt", s.tekst));
-      if (window.besaOplossen) {
+      if (window.ffOplossen) {
         // Verlies-signalen: in-page drill-down naar de locatie (signalBtn zou hier
         // een lege string geven want 'verlies' verwijst naar deze pagina zelf).
         if (s.ernst === "rood") {
-          d.insertAdjacentHTML("beforeend", window.besaOplossen.triggerHtml({ "data-fin-verlies-loc": s.dom }));
+          d.insertAdjacentHTML("beforeend", window.ffOplossen.triggerHtml({ "data-fin-verlies-loc": s.dom }));
         } else {
-          var btnHtml = window.besaOplossen.signalBtn(s.dom, s.tekst);
+          var btnHtml = window.ffOplossen.signalBtn(s.dom, s.tekst);
           if (btnHtml) d.insertAdjacentHTML("beforeend", btnHtml);
         }
       }
       box.appendChild(d);
     });
-    if (window.besaOplossen) {
-      window.besaOplossen.bindSignals(box);
+    if (window.ffOplossen) {
+      window.ffOplossen.bindSignals(box);
       // Eigen delegated handler voor de verlies-knoppen (in-page drill-down).
       if (!box.__finVerliesBound) {
         box.__finVerliesBound = true;
         box.addEventListener("click", function (ev) {
-          var btn = ev.target.closest && ev.target.closest(".besa-oplossen-trigger[data-fin-verlies-loc]");
+          var btn = ev.target.closest && ev.target.closest(".ff-oplossen-trigger[data-fin-verlies-loc]");
           if (!btn) return;
           ev.preventDefault();
           ev.stopPropagation();
-          if (window.besaOplossen.isOpenFor(btn)) { window.besaOplossen.closePopover(); return; }
+          if (window.ffOplossen.isOpenFor(btn)) { window.ffOplossen.closePopover(); return; }
           var locName = btn.getAttribute("data-fin-verlies-loc");
-          window.besaOplossen.openPopover(btn, {
+          window.ffOplossen.openPopover(btn, {
             uitleg: "Bekijk de kosten en opbrengsten van deze locatie om het verlies te verklaren.",
             knopLabel: "Toon kosten",
             onGaNaar: function () { openDetail(locName); },
@@ -1063,7 +1063,7 @@
 
     // Laat de zorgsoort-sectie (apart script) dezelfde periode volgen.
     try {
-      document.dispatchEvent(new CustomEvent("besa:fin-periode", { detail: { start: selStart, end: selEnd } }));
+      document.dispatchEvent(new CustomEvent("ff:fin-periode", { detail: { start: selStart, end: selEnd } }));
     } catch (e) { /* CustomEvent niet beschikbaar — zorgsoort-sectie valt terug op eigen default */ }
   }
 

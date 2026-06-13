@@ -5,7 +5,7 @@
  * Architectuur:
  *  - Source of truth: Supabase tabel `organisaties`.
  *  - localStorage onder "hr_organisaties_v1" = read-cache.
- *  - Schrijfacties gaan async naar Supabase; cache + event "besa:organisaties-updated".
+ *  - Schrijfacties gaan async naar Supabase; cache + event "ff:organisaties-updated".
  *  - Backward-compat globals (sync writes via fire-and-forget shims) zodat
  *    organisatie.js / organisatie-detail.js / clienten.js niets hoeven te
  *    wijzigen op de write-paden.
@@ -32,7 +32,7 @@
   // de gebruiker krijgt een toast als een achtergrond-sync naar Supabase faalt.
   function reportSilent(action, err) {
     console.error("[organisatieDB] " + action + " mislukt:", err);
-    if (global.besaReportSyncFailure) global.besaReportSyncFailure("Organisaties — " + action, err);
+    if (global.ffReportSyncFailure) global.ffReportSyncFailure("Organisaties — " + action, err);
   }
 
   // ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@
 
   function dispatchUpdated() {
     try {
-      global.dispatchEvent(new CustomEvent("besa:organisaties-updated"));
+      global.dispatchEvent(new CustomEvent("ff:organisaties-updated"));
     } catch (e) { /* */ }
   }
 
@@ -106,8 +106,8 @@
   // Supabase fetch + bootstrap
   // ---------------------------------------------------------------------------
   async function fetchAll() {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
-    var res = await global.besaSupabase
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
+    var res = await global.ffSupabase
       .from(TABLE)
       .select("*")
       .order("naam", { ascending: true });
@@ -118,9 +118,9 @@
   async function maybeMigrateLocalToSupabase() {
     try {
       if (localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return false;
-      if (!global.besaSupabase) return false;
+      if (!global.ffSupabase) return false;
 
-      var head = await global.besaSupabase
+      var head = await global.ffSupabase
         .from(TABLE)
         .select("id", { count: "exact", head: true });
       if (head.error) return false;
@@ -137,7 +137,7 @@
 
       console.info("[organisatiesDB] Eenmalige migratie van " + local.length + " organisaties naar Supabase…");
       var payload = local.map(function (o) { return objToInsertPayload(o); });
-      var ins = await global.besaSupabase
+      var ins = await global.ffSupabase
         .from(TABLE)
         .insert(payload)
         .select();
@@ -188,9 +188,9 @@
   // Async CRUD
   // ---------------------------------------------------------------------------
   async function add(rec) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     var payload = objToInsertPayload(rec);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .insert(payload)
       .select()
@@ -205,13 +205,13 @@
   }
 
   async function update(id, partial) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) throw new Error("Geen id");
     var existing = getByIdSync(id) || {};
     var merged = Object.assign({}, existing, partial || {});
     merged.id = id;
     var payload = objToUpdatePayload(merged);
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .update(payload)
       .eq("id", id)
@@ -231,9 +231,9 @@
   async function restore(id) { return update(id, { archived: false }); }
 
   async function remove(id) {
-    if (!global.besaSupabase) throw new Error("Supabase client niet geladen");
+    if (!global.ffSupabase) throw new Error("Supabase client niet geladen");
     if (!id) return false;
-    var res = await global.besaSupabase
+    var res = await global.ffSupabase
       .from(TABLE)
       .delete()
       .eq("id", id);
@@ -297,7 +297,7 @@
     var out = list.map(normalizeItem).filter(Boolean);
     writeCache(out);
     dispatchUpdated();
-    if (!global.besaSupabase) return;
+    if (!global.ffSupabase) return;
     out.forEach(function (o) {
       var prev = oldMap[o.id];
       if (!prev) {
@@ -356,7 +356,7 @@
     cache.push(row);
     writeCache(cache);
     dispatchUpdated();
-    if (global.besaSupabase) {
+    if (global.ffSupabase) {
       add(row).catch(function (err) { reportSilent("toevoegen", err); });
     }
     return row;
@@ -379,7 +379,7 @@
     writeCache(cache);
     dispatchUpdated();
     if (oud !== t) propagateOrganisatieNaamWijziging(oud, t);
-    if (global.besaSupabase) {
+    if (global.ffSupabase) {
       update(id, cache[pos]).catch(function (err) { reportSilent("bijwerken", err); });
     }
     return cache[pos];
@@ -393,7 +393,7 @@
         cache[i].laatstGewijzigd = isoNow();
         writeCache(cache);
         dispatchUpdated();
-        if (global.besaSupabase) {
+        if (global.ffSupabase) {
           update(id, cache[i]).catch(function (err) { reportSilent("archiveren", err); });
         }
         return true;
@@ -411,7 +411,7 @@
         writeCache(cache);
         dispatchUpdated();
         if (naam) propagateOrganisatieVerwijderd(naam);
-        if (global.besaSupabase) {
+        if (global.ffSupabase) {
           remove(id).catch(function (err) { reportSilent("verwijderen", err); });
         }
         return true;

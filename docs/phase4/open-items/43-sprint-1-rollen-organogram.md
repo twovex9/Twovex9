@@ -42,7 +42,7 @@ Read-only client voor de organogram-view:
 - `getRolesSync()` — lijst rollen met counts
 - `getOrganogramSync()` — gegroepeerd `[{section, roles[], totalUsers}]`
 - Cache `org_role_sections_v1` + `org_roles_with_counts_v1`
-- Event `besa:org-rollen-updated`
+- Event `ff:org-rollen-updated`
 
 ### UI (`rollen.html` + `rollen.js`)
 
@@ -66,7 +66,7 @@ Read-only client voor de organogram-view:
 
 - [ ] CI groen (JS syntax + script-order checks)
 - [ ] Vercel deploy slaagt
-- [ ] Visueel: `https://besa-suite.vercel.app/rollen.html` toont 5 secties + 14 rollen
+- [ ] Visueel: `https://futureflow-app.vercel.app/rollen.html` toont 5 secties + 14 rollen
 - [ ] Search "Medewerker" filtert naar Uitvoerend Personeel sectie
 - [ ] Search "Specialisten" toont volledige sectie
 - [ ] Counts kloppen (1 admin-user moet zichtbaar zijn onder Admin of Medewerker)

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * v3 Fase E.7 — Wire realtime-sync.js naar alle HTML pagina's
- * met `besa-sync-reporter.js` (de standaard load-sequence-anchor).
+ * met `ff-sync-reporter.js` (de standaard load-sequence-anchor).
  *
  * Idempotent: skipt als script al aanwezig.
- * Plaatst NA optimistic-lock.js zodat besaRealtime + besaOptimisticLock
+ * Plaatst NA optimistic-lock.js zodat ffRealtime + ffOptimisticLock
  * beide klaar zijn voor data-lagen.
  */
 import fs from "fs";
