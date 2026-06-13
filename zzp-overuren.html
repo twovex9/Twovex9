@@ -20,17 +20,17 @@
   <meta name="apple-mobile-web-app-title" content="Future Flow">
   <style>
     .zo-num{text-align:right;font-variant-numeric:tabular-nums;}
-    .zo-meer{color:#15803d;font-weight:700;} .zo-minder{color:#b45309;font-weight:700;}
-    [data-theme="dark"] .zo-meer{color:#86efac;} [data-theme="dark"] .zo-minder{color:#fbbf24;}
+    .zo-meer{color:var(--green);font-weight:700;} .zo-minder{color:var(--yellow);font-weight:700;}
+    [data-theme="dark"] .zo-meer{color:var(--green);} [data-theme="dark"] .zo-minder{color:var(--yellow);}
     .zo-act{display:flex;gap:6px;justify-content:flex-end;}
     .zo-btn{font:inherit;font-size:12px;font-weight:600;padding:4px 11px;border-radius:7px;border:1px solid var(--border);cursor:pointer;background:var(--card,var(--surface));color:var(--text);}
     .zo-btn--ok{background:var(--blue);border-color:var(--blue);color:#fff;}
-    .zo-btn--no{color:#b91c1c;}
+    .zo-btn--no{color:var(--red);}
     .zo-reden{margin-top:8px;display:flex;gap:6px;}
     .zo-reden input{flex:1;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--border);border-radius:7px;background:var(--card,var(--surface));color:var(--text);}
-    .zo-bureau{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,#64748b);background:var(--chip-bg,rgba(100,116,139,.10));border-radius:5px;padding:1px 6px;margin-left:6px;}
-    .zo-intro{font-size:12.5px;color:var(--text-muted,#64748b);margin:0 0 14px;max-width:760px;}
-    .zo-empty{padding:30px;text-align:center;color:var(--text-muted,#64748b);}
+    .zo-bureau{display:inline-block;font-size:10.5px;font-weight:600;color:var(--text-muted,var(--text-muted));background:var(--chip-bg,rgba(100,116,139,.10));border-radius:5px;padding:1px 6px;margin-left:6px;}
+    .zo-intro{font-size:12.5px;color:var(--text-muted,var(--text-muted));margin:0 0 14px;max-width:760px;}
+    .zo-empty{padding:30px;text-align:center;color:var(--text-muted,var(--text-muted));}
   </style>
 </head>
 <body>
