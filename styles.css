@@ -2919,7 +2919,7 @@ h1 {
 .sa-mail-pass-status {
   font-weight: 600;
   font-size: 11.5px;
-  color: #16a34a;
+  color: var(--green);
 }
 @media (max-width: 560px) {
   .sa-mail-grid { grid-template-columns: 1fr; }
@@ -12495,7 +12495,7 @@ body.planning-dienst-open {
   margin-top: 10px;
   padding: 9px 11px;
   border: 1px solid #fecaca;
-  border-left: 3px solid #dc2626;
+  border-left: 3px solid var(--red);
   border-radius: 9px;
   background: #fef2f2;
   color: #991b1b;
@@ -12517,7 +12517,7 @@ body.planning-dienst-open {
   margin-top: 10px;
   padding: 9px 11px;
   border: 1px solid #bfdbfe;
-  border-left: 3px solid #2563eb;
+  border-left: 3px solid var(--blue);
   border-radius: 9px;
   background: #eff6ff;
   color: #1e3a8a;
@@ -13151,7 +13151,7 @@ button.planning-erm-new {
 }
 
 .planning-erm-card {
-  --erv-stripe: #2563eb;
+  --erv-stripe: var(--blue);
   position: relative;
   border-radius: 7px;
   background: var(--ps-f1f3f6);
