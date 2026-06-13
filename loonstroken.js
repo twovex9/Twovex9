@@ -25,7 +25,7 @@
     if (!el) return;
     el.textContent = text;
     el.hidden = false;
-    el.style.color = ok ? "#16a34a" : "#dc2626";
+    el.style.color = ok ? "var(--green)" : "var(--red)";
     el.style.fontWeight = "600";
     el.style.marginTop = "10px";
   }

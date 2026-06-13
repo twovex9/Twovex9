@@ -1126,7 +1126,7 @@
         F.pass.value = "";
         if (passStatus) {
           passStatus.textContent = c.wachtwoord_ingesteld ? "✓ ingesteld" : "— nog niet ingesteld";
-          passStatus.style.color = c.wachtwoord_ingesteld ? "#16a34a" : "var(--text-muted)";
+          passStatus.style.color = c.wachtwoord_ingesteld ? "var(--green)" : "var(--text-muted)";
         }
       } catch (err) {
         fb("error", "Instellingen laden mislukt", err && err.message ? err.message : String(err));
