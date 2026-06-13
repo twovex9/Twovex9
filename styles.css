@@ -27877,7 +27877,7 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
    Hergebruikt tk-kpi-grid / filter-chips / table-card; alleen module-eigen
    onderdelen (statusdot, benuttingsbalk, periode-stepper) hieronder.
    ===================================================================== */
-.prod-viewtabs { flex: 0 0 auto; margin-bottom: 12px; }
+.prod-viewtabs { flex: 0 0 auto; margin-top: 16px; margin-bottom: 12px; }
 .prod-period { display: inline-flex; align-items: center; gap: 6px; }
 .prod-period-step { padding: 6px 12px; font-size: var(--font-base); line-height: 1; }
 .prod-period-select { max-width: 150px; }
