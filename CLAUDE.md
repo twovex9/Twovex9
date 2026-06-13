@@ -15,6 +15,23 @@ Voortgang per module: zie [`docs/phase4/v3-hardcore-module-checklist.md`](docs/p
 
 ---
 
+## 🎨 ACTUELE STATUS — ETF Triade huisstijl-redesign (richting U) [2026-06-13]
+
+De website-restyle is **doorgevoerd én gemerged naar `main`** op **web (Twovex9)** en **mobiel (future-flow-mobile)**:
+
+- Logo-kleuren **blauw `#3a8fc4` / lime `#5f8a23` / mint** — app-breed via `:root`-tokens (geen lay-out gewijzigd, alleen kleur/contrast/diepte).
+- Dark mode = **ETF Dark** (richting V). Gevulde blauw/lime/mint **KPI-tegels** op de neutrale dashboard-rijen (`md-quickstats` / `bz-kpis` / `mob-kpis`).
+- **0 oude palet-kleuren** in de code; een **CI-guard** houdt ze tegen (web: stap *"House-style color consistency"* in `.github/workflows/ci.yml`; mobiel: workflow *"No old ETF palette colors"*).
+- Token-tabel + regels: `.claude/huisstijl.md` (sectie **"ETF Triade"**). Live-QA-checklist: `docs/phase4/etf-triade-live-qa-checklist.md`. Vervolg-item: `docs/phase4/open-items/67-etf-triade-dashboard-tegels.md`.
+
+### ⏳ NOG TE DOEN — live verificatie (vereist een LOKALE sessie met Chrome-extensie)
+
+Live klikronde via de **Chrome-extensie**, **web + mobiel**, met de **rol-logins**, en **2 clean runs**: bij **één** afwijking → fixen (code + push, CI-guard groen houden) en de **hele ronde opnieuw**, tot **twee volledige rondes zonder fouten**. Pas dán "100% in orde" rapporteren, mét screenshot-bewijs. Per pagina de 5 checks uit de checklist (kleuren / topbar+sidebar / knoppen+pills / modals+slider / dark mode).
+
+> ⚠️ Dit kan **alleen lokaal** (Claude-desktop-app of terminal). De **web/mobiel-cloudsessie** heeft **géén** Chrome-extensie en geen netwerk naar de live-app/Supabase (alleen GitHub + npm). Bevestigd 2026-06-13. Start dus lokaal voor de live-ronde.
+
+---
+
 Twee regelbestanden zijn bindend en worden elke sessie automatisch geladen via de imports hieronder. Beide moeten worden gevolgd, ook als de gebruiker er niet expliciet om vraagt:
 
 @.claude/huisstijl.md
