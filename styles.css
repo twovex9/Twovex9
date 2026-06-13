@@ -27629,7 +27629,10 @@ body.page-management-dashboard .md-domain { scroll-margin-top: calc(var(--md-top
 .md-cat { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 .md-cat-title { margin: 0 0 4px; font-size: var(--font-rg); font-weight: 600; color: var(--text-secondary); }
 .md-cat-row { display: grid; grid-template-columns: 130px 1fr 38px; align-items: center; gap: 10px; }
-.md-cat-lbl { font-size: var(--font-rg); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-cat-lbl { font-size: var(--font-rg); font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Statusbolletje vóór een per-locatie/categorie-label krijgt dezelfde afstand tot het woord
+   als de bolletjes in de "Diensten zonder bezetting"-lijst (.vl-krit-item, gap 10px). */
+.md-cat-lbl .vl-dot { margin-right: 10px; }
 .md-cat-bar { height: 10px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
 .md-cat-fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--blue); }
 .md-cat-val { font-size: var(--font-rg); font-weight: 600; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
