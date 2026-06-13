@@ -2051,7 +2051,7 @@ h1 {
 @media (max-width: 1199px) {
   .toolbar:not(.toolbar--news-only) {
     gap: 12px 14px;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .toolbar:not(.toolbar--news-only) .search {
